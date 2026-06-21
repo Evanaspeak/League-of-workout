@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --lol-gold: #c8aa6e;
+  --lol-gold-light: #f0e6d3;
+  --lol-dark: #0a0e1a;
+  --lol-dark-mid: #0f1923;
+  --lol-dark-light: #1a2634;
+  --lol-blue: #0bc4e3;
+  --lol-red: #c23b22;
+}
+
+body {
+  background-color: var(--lol-dark);
+  color: var(--lol-gold-light);
+  font-family: "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+.lol-panel {
+  background: var(--lol-dark-light);
+  border: 1px solid rgba(200, 170, 110, 0.3);
+  border-radius: 4px;
+}
+
+.lol-btn {
+  background: linear-gradient(to bottom, #c8aa6e, #a08840);
+  color: #0a0e1a;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.lol-btn:hover { opacity: 0.85; }
+.lol-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.lol-btn-blue {
+  background: linear-gradient(to bottom, #0bc4e3, #0890a8);
+  color: #0a0e1a;
+}
+
+.lol-btn-danger {
+  background: linear-gradient(to bottom, #c23b22, #8b2515);
+  color: #f0e6d3;
+}
+
+.lol-input {
+  background: rgba(10, 14, 26, 0.8);
+  border: 1px solid rgba(200, 170, 110, 0.4);
+  color: #f0e6d3;
+  padding: 8px 12px;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+}
+.lol-input:focus { border-color: #c8aa6e; box-shadow: 0 0 0 1px #c8aa6e40; }
+
+.lol-select {
+  background: rgba(10, 14, 26, 0.8);
+  border: 1px solid rgba(200, 170, 110, 0.4);
+  color: #f0e6d3;
+  padding: 8px 12px;
+  border-radius: 2px;
+  outline: none;
+}
+.lol-select:focus { border-color: #c8aa6e; }
+
+.gold-text { color: #c8aa6e; }
+.blue-text { color: #0bc4e3; }
+.win-text { color: #4caf50; }
+.loss-text { color: #ef5350; }
