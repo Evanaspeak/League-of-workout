@@ -15,10 +15,8 @@ const LANE_MAP: Record<string, string> = {
   BOTTOM: "ADC", UTILITY: "Support",
 };
 
-const QUEUE_MODE: Record<number, string> = {
-  450: "ARAM",
-  1700: "Arena", 1710: "Arena",
-};
+const ARAM_QUEUES = new Set([450]);
+const ARENA_QUEUES = new Set([1700, 1710, 1712, 1720, 1730, 1750]);
 
 const riotFetch = (url: string, apiKey: string) =>
   fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
@@ -69,10 +67,7 @@ export async function GET() {
             `https://${routing}.api.riotgames.com/lol/match/v5/matches/${id}`,
             apiKey
           );
-          if (!res.ok) {
-            console.error(`[match-history] ${id} → HTTP ${res.status}`);
-            return null;
-          }
+          if (!res.ok) return null;
 
           const match = await res.json();
           if (!match?.info?.participants) return null;
@@ -80,18 +75,13 @@ export async function GET() {
           const queueId: number = match.info.queueId ?? 0;
           const gameMode: string = match.info.gameMode ?? "";
           const participant = match.info.participants.find((p: { puuid: string }) => p.puuid === puuid);
-          if (!participant) {
-            console.error(`[match-history] ${id} → participant non trouvé (queueId=${queueId})`);
-            return null;
-          }
+          if (!participant) return null;
 
           let role: string;
-          if (gameMode === "CHERRY") {
+          if (gameMode === "CHERRY" || ARENA_QUEUES.has(queueId)) {
             role = "Arena";
-          } else if (gameMode === "ARAM" || queueId === 450) {
+          } else if (gameMode === "ARAM" || ARAM_QUEUES.has(queueId)) {
             role = "ARAM";
-          } else if (QUEUE_MODE[queueId]) {
-            role = QUEUE_MODE[queueId];
           } else {
             const pos = participant.teamPosition || participant.individualPosition || "";
             role = LANE_MAP[pos] ?? "Mid";
@@ -112,8 +102,7 @@ export async function GET() {
             alreadyLogged,
             pompesCalculees: alreadyLogged ? loggedMap.get(id) : null,
           };
-        } catch (e) {
-          console.error(`[match-history] ${id} → exception:`, e);
+        } catch {
           return null;
         }
       })
