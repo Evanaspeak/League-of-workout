@@ -12,6 +12,7 @@ type MatchEntry = {
   date: string;
   alreadyLogged: boolean;
   pompesCalculees: number | null;
+  indisponible?: boolean;
 };
 
 export default function GameHistoryPage() {
@@ -117,7 +118,11 @@ export default function GameHistoryPage() {
               </span>
 
               <div className="ml-auto flex items-center gap-3 shrink-0">
-                {m.alreadyLogged ? (
+                {m.indisponible ? (
+                  <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(240,230,211,0.35)" }}>
+                    Indisponible
+                  </span>
+                ) : m.alreadyLogged ? (
                   <>
                     <span className="text-sm gold-text font-bold">{m.pompesCalculees} pompes</span>
                     <span

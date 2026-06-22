@@ -18,8 +18,38 @@ const LANE_MAP: Record<string, string> = {
 const ARAM_QUEUES = new Set([450]);
 const ARENA_QUEUES = new Set([1700, 1710, 1712, 1720, 1730, 1750]);
 
-const riotFetch = (url: string, apiKey: string) =>
-  fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Données de match déjà traitées, gardées en mémoire pour éviter de
+// re-frapper l'API Riot à chaque visite de la page (cause des 429).
+type CachedMatch = {
+  champion: string;
+  role: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  result: string;
+  date: string;
+};
+const matchCache = new Map<string, CachedMatch>();
+
+// fetch Riot avec gestion du rate limit (429) et des erreurs serveur (5xx).
+// On respecte le header Retry-After quand il est présent.
+async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Response> {
+  let res: Response = new Response(null, { status: 500 });
+  for (let attempt = 0; attempt < tries; attempt++) {
+    res = await fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
+    if (res.status === 429 || res.status >= 500) {
+      if (attempt < tries - 1) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || (attempt + 1);
+        await sleep(retryAfter * 1000);
+        continue;
+      }
+    }
+    return res;
+  }
+  return res;
+}
 
 export async function GET() {
   const user = await prisma.user.findFirst();
@@ -53,33 +83,34 @@ export async function GET() {
   });
   const loggedMap = new Map(logged.map((g) => [g.riotMatchId, g.pompesCalculees]));
 
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  // On ne récupère sur Riot que les matchs absents du cache.
+  const missing = ids.filter((id) => !matchCache.has(id));
   const BATCH = 4;
-  const results: (object | null)[] = [];
 
-  for (let i = 0; i < ids.length; i += BATCH) {
-    if (i > 0) await sleep(400);
-    const batch = ids.slice(i, i + BATCH);
-    const batchResults = await Promise.all(
+  for (let i = 0; i < missing.length; i += BATCH) {
+    if (i > 0) await sleep(300);
+    const batch = missing.slice(i, i + BATCH);
+    await Promise.all(
       batch.map(async (id) => {
         try {
           const res = await riotFetch(
             `https://${routing}.api.riotgames.com/lol/match/v5/matches/${id}`,
             apiKey
           );
-          if (!res.ok) return null;
+          if (!res.ok) return;
 
           const match = await res.json();
-          if (!match?.info?.participants) return null;
+          if (!match?.info?.participants) return;
 
           const queueId: number = match.info.queueId ?? 0;
           const gameMode: string = match.info.gameMode ?? "";
+          const mapId: number = match.info.mapId ?? 0;
           const participant = match.info.participants.find((p: { puuid: string }) => p.puuid === puuid);
-          if (!participant) return null;
+          if (!participant) return;
 
           let role: string;
           if (gameMode === "CHERRY" || ARENA_QUEUES.has(queueId)) {
-            const mapId: number = match.info.mapId ?? 0;
+            // CHERRY sur la Faille hurlante (mapId 12) = "ARAM du chaos", sinon Arena
             role = mapId === 12 ? "ARAM" : "Arena";
           } else if (gameMode === "ARAM" || ARAM_QUEUES.has(queueId)) {
             role = "ARAM";
@@ -88,11 +119,8 @@ export async function GET() {
             role = LANE_MAP[pos] ?? "Mid";
           }
 
-          const alreadyLogged = loggedMap.has(id);
           const ts = match.info.gameEndTimestamp ?? match.info.gameCreation ?? Date.now();
-
-          return {
-            matchId: id,
+          matchCache.set(id, {
             champion: (participant.championName as string) ?? "?",
             role,
             kills: (participant.kills as number) ?? 0,
@@ -100,16 +128,37 @@ export async function GET() {
             assists: (participant.assists as number) ?? 0,
             result: participant.win ? "V" : "D",
             date: new Date(ts).toISOString(),
-            alreadyLogged,
-            pompesCalculees: alreadyLogged ? loggedMap.get(id) : null,
-          };
+          });
         } catch {
-          return null;
+          // ignoré : le match restera marqué indisponible ci-dessous
         }
       })
     );
-    results.push(...batchResults);
   }
 
-  return NextResponse.json(results.filter(Boolean));
+  // On renvoie les matchs dans l'ordre Riot ; un match non récupéré
+  // (erreur persistante) est marqué pour rester visible.
+  const results = ids.map((id) => {
+    const c = matchCache.get(id);
+    const alreadyLogged = loggedMap.has(id);
+    if (!c) {
+      return { matchId: id, champion: "?", role: "?", kills: 0, deaths: 0, assists: 0,
+        result: "?", date: new Date().toISOString(), alreadyLogged, pompesCalculees: null, indisponible: true };
+    }
+    return {
+      matchId: id,
+      champion: c.champion,
+      role: c.role,
+      kills: c.kills,
+      deaths: c.deaths,
+      assists: c.assists,
+      result: c.result,
+      date: c.date,
+      alreadyLogged,
+      pompesCalculees: alreadyLogged ? loggedMap.get(id) : null,
+      indisponible: false,
+    };
+  });
+
+  return NextResponse.json(results);
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const REGION_ROUTING: Record<string, string> = {
   EUW1: "europe", EUN1: "europe", TR1: "europe", RU: "europe",
   NA1: "americas", BR1: "americas", LA1: "americas", LA2: "americas",
@@ -16,6 +18,25 @@ const LANE_MAP: Record<string, string> = {
 const ARAM_QUEUES = new Set([450]);
 const ARENA_QUEUES = new Set([1700, 1710, 1712, 1720, 1730, 1750]);
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// fetch Riot avec retry sur 429 (rate limit) et 5xx, en respectant Retry-After.
+async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Response> {
+  let res: Response = new Response(null, { status: 500 });
+  for (let attempt = 0; attempt < tries; attempt++) {
+    res = await fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
+    if (res.status === 429 || res.status >= 500) {
+      if (attempt < tries - 1) {
+        const retryAfter = Number(res.headers.get("Retry-After")) || (attempt + 1);
+        await sleep(retryAfter * 1000);
+        continue;
+      }
+    }
+    return res;
+  }
+  return res;
+}
+
 export async function GET() {
   const user = await prisma.user.findFirst();
   if (!user?.riotPuuid) {
@@ -30,9 +51,9 @@ export async function GET() {
   const routing = REGION_ROUTING[user.riotRegion] ?? "europe";
   const puuid = user.riotPuuid;
 
-  const idsRes = await fetch(
+  const idsRes = await riotFetch(
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
-    { headers: { "X-Riot-Token": apiKey } }
+    apiKey
   );
   if (!idsRes.ok) {
     const err = await idsRes.json().catch(() => ({}));
@@ -49,9 +70,9 @@ export async function GET() {
     return NextResponse.json({ error: "Cette game est déjà loggée." }, { status: 409 });
   }
 
-  const matchRes = await fetch(
+  const matchRes = await riotFetch(
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/${ids[0]}`,
-    { headers: { "X-Riot-Token": apiKey } }
+    apiKey
   );
   if (!matchRes.ok) {
     return NextResponse.json({ error: `Erreur Riot API: ${matchRes.status}` }, { status: matchRes.status });
