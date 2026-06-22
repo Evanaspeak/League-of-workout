@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   const { riotId, region } = await req.json();
 
-  const apiKey = process.env.RIOT_API_KEY;
+  const apiKey = process.env.RIOT_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json({ error: "Clé API Riot manquante" }, { status: 500 });
   }
@@ -24,8 +24,7 @@ export async function POST(req: Request) {
   const routing = REGION_ROUTING[region] ?? "europe";
 
   const res = await fetch(
-    `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-    { headers: { "X-Riot-Token": apiKey } }
+    `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}?api_key=${apiKey}`
   );
 
   if (!res.ok) {

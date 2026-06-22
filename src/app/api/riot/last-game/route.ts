@@ -13,7 +13,6 @@ const LANE_MAP: Record<string, string> = {
   BOTTOM: "ADC", UTILITY: "Support",
 };
 
-// queueId → mode
 const QUEUE_MODE: Record<number, string> = {
   450: "ARAM",
   1700: "Arena",
@@ -26,7 +25,7 @@ export async function GET() {
     return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Profil." }, { status: 400 });
   }
 
-  const apiKey = process.env.RIOT_API_KEY;
+  const apiKey = process.env.RIOT_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json({ error: "Clé API Riot manquante (RIOT_API_KEY dans .env)" }, { status: 500 });
   }
@@ -34,10 +33,8 @@ export async function GET() {
   const routing = REGION_ROUTING[user.riotRegion] ?? "europe";
   const puuid = user.riotPuuid;
 
-  // Récupère l'ID de la dernière game
   const idsRes = await fetch(
-    `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
-    { headers: { "X-Riot-Token": apiKey } }
+    `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1&api_key=${apiKey}`
   );
   if (!idsRes.ok) {
     const err = await idsRes.json().catch(() => ({}));
@@ -49,16 +46,13 @@ export async function GET() {
     return NextResponse.json({ error: "Aucune game trouvée." }, { status: 404 });
   }
 
-  // Vérifie si déjà loggée
   const alreadyLogged = await prisma.game.findFirst({ where: { riotMatchId: ids[0] } });
   if (alreadyLogged) {
     return NextResponse.json({ error: "Cette game est déjà loggée." }, { status: 409 });
   }
 
-  // Récupère les détails
   const matchRes = await fetch(
-    `https://${routing}.api.riotgames.com/lol/match/v5/matches/${ids[0]}`,
-    { headers: { "X-Riot-Token": apiKey } }
+    `https://${routing}.api.riotgames.com/lol/match/v5/matches/${ids[0]}?api_key=${apiKey}`
   );
   if (!matchRes.ok) {
     return NextResponse.json({ error: `Erreur Riot API: ${matchRes.status}` }, { status: matchRes.status });
