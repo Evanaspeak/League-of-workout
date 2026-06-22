@@ -26,10 +26,18 @@ export default function HistoryPage() {
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
   const [sortBy, setSortBy] = useState<"date" | "pompes">("date");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/games").then((r) => r.json()).then((data) => { setGames(data); setLoading(false); });
   }, []);
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    await fetch(`/api/games/${id}`, { method: "DELETE" });
+    setGames((prev) => prev.filter((g) => g.id !== id));
+    setDeletingId(null);
+  };
 
   const filtered = games
     .filter((g) => filterRole === "Tous" || g.role === filterRole)
@@ -79,7 +87,6 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {/* Cumul total */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px" }}>
               <thead>
@@ -95,6 +102,7 @@ export default function HistoryPage() {
                   <th className="text-center px-3 py-1">Maîtrise</th>
                   <th className="text-right px-3 py-1">Pompes</th>
                   <th className="text-right px-3 py-1">Cumul</th>
+                  <th className="px-3 py-1"></th>
                 </tr>
               </thead>
               <tbody>
@@ -123,6 +131,18 @@ export default function HistoryPage() {
                         <td className="px-3 py-2 text-center blue-text">+{Math.round(g.surchargeCalculee * 100)}%</td>
                         <td className="px-3 py-2 text-right gold-text font-bold">{g.pompesCalculees}</td>
                         <td className="px-3 py-2 text-right" style={{ color: "rgba(200,170,110,0.6)" }}>{cumul}</td>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            onClick={() => handleDelete(g.id)}
+                            disabled={deletingId === g.id}
+                            title="Supprimer cette game"
+                            style={{ color: "rgba(220,80,80,0.7)", lineHeight: 1, background: "none", border: "none", cursor: "pointer", fontSize: "1rem", padding: "2px 6px", borderRadius: "4px" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(220,80,80,1)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(220,80,80,0.7)")}
+                          >
+                            {deletingId === g.id ? "…" : "✕"}
+                          </button>
+                        </td>
                       </tr>
                     );
                   });
