@@ -13,10 +13,14 @@ const LANE_MAP: Record<string, string> = {
   BOTTOM: "ADC", UTILITY: "Support",
 };
 
+// Queues qui ne sont pas sur la Summoner's Rift classique
 const QUEUE_MODE: Record<number, string> = {
   450: "ARAM",
   1700: "Arena",
   1710: "Arena",
+  1712: "Arena",
+  1720: "Arena",
+  1730: "Arena",
 };
 
 export async function GET() {
@@ -66,7 +70,15 @@ export async function GET() {
     return NextResponse.json({ error: "Participant non trouvé dans le match." }, { status: 404 });
   }
 
-  const role: string = QUEUE_MODE[queueId] ?? LANE_MAP[participant.teamPosition] ?? LANE_MAP[participant.individualPosition] ?? "Mid";
+  // Détection du rôle : priorité au mode de queue, puis teamPosition, puis fallback Arena si vide
+  let role: string;
+  if (QUEUE_MODE[queueId]) {
+    role = QUEUE_MODE[queueId];
+  } else {
+    const pos = participant.teamPosition || participant.individualPosition || "";
+    // teamPosition vide = mode non-SR (nouveau mode Arena, etc.)
+    role = LANE_MAP[pos] ?? (pos ? "Mid" : "Arena");
+  }
 
   return NextResponse.json({
     matchId: ids[0],
