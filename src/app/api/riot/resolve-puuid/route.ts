@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function POST(req: Request) {
   const { riotId: rawRiotId, region } = await req.json();
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
   }
 
   const data = await res.json();
-  const user = await prisma.user.findFirst();
+  const user = await getCurrentUser();
   if (user) {
     await prisma.user.update({
       where: { id: user.id },

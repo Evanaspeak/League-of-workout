@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore } from "@/lib/scoring";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const games = await prisma.game.findMany({
+    where: { userId: user.id },
     orderBy: { date: "desc" },
   });
   return NextResponse.json(games);
@@ -12,8 +17,8 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const user = await prisma.user.findFirst();
-  if (!user) return NextResponse.json({ error: "No user" }, { status: 404 });
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const [roleWeights, levelConfigs, masteryConfig] = await Promise.all([
     prisma.roleWeight.findUnique({ where: { role: body.role } }),

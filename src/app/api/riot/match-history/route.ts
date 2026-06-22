@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { detectRole } from "@/lib/riot-role";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +46,10 @@ async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Respon
 }
 
 export async function GET() {
-  const user = await prisma.user.findFirst();
-  if (!user?.riotPuuid) {
-    return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Profil." }, { status: 400 });
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user.riotPuuid) {
+    return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Réglages." }, { status: 400 });
   }
 
   const apiKey = process.env.RIOT_API_KEY;
@@ -71,13 +73,18 @@ export async function GET() {
   if (!ids.length) return NextResponse.json([]);
 
   const logged = await prisma.game.findMany({
-    where: { riotMatchId: { in: ids } },
+    where: { riotMatchId: { in: ids }, userId: user.id },
     select: { riotMatchId: true, pompesCalculees: true },
   });
   const loggedMap = new Map(logged.map((g) => [g.riotMatchId, g.pompesCalculees]));
 
+  // Clé de cache propre au joueur : les données mises en cache (champion, KDA…)
+  // dépendent du participant, donc du puuid. Sinon deux joueurs d'une même
+  // partie liraient les stats de l'autre.
+  const cacheKey = (id: string) => `${puuid}:${id}`;
+
   // On ne récupère sur Riot que les matchs absents du cache.
-  const missing = ids.filter((id) => !matchCache.has(id));
+  const missing = ids.filter((id) => !matchCache.has(cacheKey(id)));
   const BATCH = 4;
 
   for (let i = 0; i < missing.length; i += BATCH) {
@@ -101,7 +108,7 @@ export async function GET() {
           const role = detectRole(match.info, participant);
 
           const ts = match.info.gameEndTimestamp ?? match.info.gameCreation ?? Date.now();
-          matchCache.set(id, {
+          matchCache.set(cacheKey(id), {
             champion: (participant.championName as string) ?? "?",
             role,
             kills: (participant.kills as number) ?? 0,
@@ -120,7 +127,7 @@ export async function GET() {
   // On renvoie les matchs dans l'ordre Riot ; un match non récupéré
   // (erreur persistante) est marqué pour rester visible.
   const results = ids.map((id) => {
-    const c = matchCache.get(id);
+    const c = matchCache.get(cacheKey(id));
     const alreadyLogged = loggedMap.has(id);
     if (!c) {
       return { matchId: id, champion: "?", role: "?", kills: 0, deaths: 0, assists: 0,

@@ -4,31 +4,83 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
+// ─── Authentification (Auth.js / NextAuth) ──────────────────────────────────
+
 model User {
-  id            String  @id @default(cuid())
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+
+  // Données applicatives
   pseudo        String  @default("Joueur")
   riotId        String? // format: pseudo#tag
   riotPuuid     String?
   riotRegion    String  @default("EUW1")
   gainageMaxSec Int     @default(45)
-  games         Game[]
-  Goal          Goal?
+
+  // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
+  betaRank  Int?
+  createdAt DateTime @default(now())
+
+  games    Game[]
+  Goal     Goal?
+  accounts Account[]
+  sessions Session[]
 }
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Données de jeu ─────────────────────────────────────────────────────────
 
 model Game {
   id                  String   @id @default(cuid())
   userId              String
-  user                User     @relation(fields: [userId], references: [id])
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date                DateTime @default(now())
-  role                String   // Top | Jungle | Mid | ADC | Support | ARAM | Arena
+  role                String // Top | Jungle | Mid | ADC | Support | ARAM | Arena
   champion            String?
   kills               Int
   deaths              Int
   assists             Int
-  result              String   // V | D
+  result              String // V | D
   gainageSec          Int
   niveauCalcule       Int
   partiesAvantCalcule Int
@@ -38,7 +90,18 @@ model Game {
   pompesCalculees     Int
   source              String   @default("manuel") // manuel | riot_api
   riotMatchId         String?
+
+  @@index([userId])
 }
+
+model Goal {
+  id                  String @id @default(cuid())
+  userId              String @unique
+  user                User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  objectifTotalPompes Int    @default(1000)
+}
+
+// ─── Configuration de scoring (globale, partagée par tous les joueurs) ──────
 
 model RoleWeight {
   role           String  @id // Top | Jungle | Mid | ADC | Support | ARAM | Arena
@@ -49,21 +112,14 @@ model RoleWeight {
 }
 
 model LevelConfig {
-  niveau         Int   @id // 1-5
-  seuilGainageSec Int  // seuil max en secondes
-  multiplicateur Float
-  malusDefaite   Int
+  niveau          Int   @id // 1-5
+  seuilGainageSec Int // seuil max en secondes
+  multiplicateur  Float
+  malusDefaite    Int
 }
 
 model MasteryConfig {
   id             Int   @id @default(1)
   surchargeMax   Float @default(0.5)
   partiesPourMax Int   @default(100)
-}
-
-model Goal {
-  id                   String @id @default(cuid())
-  userId               String @unique
-  user                 User   @relation(fields: [userId], references: [id])
-  objectifTotalPompes  Int    @default(1000)
 }

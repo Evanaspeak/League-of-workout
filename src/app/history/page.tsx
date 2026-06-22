@@ -75,7 +75,6 @@ export default function HistoryPage() {
   const [matches, setMatches] = useState<MatchEntry[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [matchError, setMatchError] = useState("");
-  const [matchesLoaded, setMatchesLoaded] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
 
   // ── Add form ──
@@ -93,28 +92,27 @@ export default function HistoryPage() {
   const [riotLoading, setRiotLoading] = useState(false);
   const [riotError, setRiotError] = useState("");
 
-  // ─── Load pompe games on mount ───────────────────────────────────────────
+  // ─── Chargement initial (games + parties Riot) ───────────────────────────
   useEffect(() => {
-    fetch("/api/games")
-      .then((r) => r.json())
-      .then((data) => { setGames(data); setLoadingGames(false); });
-  }, []);
-
-  // ─── Load matches when "parties" view first activated ────────────────────
-  useEffect(() => {
-    if (view === "parties" && !matchesLoaded) {
+    const loadGames = async () => {
+      const data = await fetch("/api/games").then((r) => r.json());
+      if (Array.isArray(data)) setGames(data);
+      setLoadingGames(false);
+    };
+    const loadMatches = async () => {
       setLoadingMatches(true);
-      fetch("/api/riot/match-history")
-        .then((r) => r.json())
-        .then((data) => {
-          if (Array.isArray(data)) setMatches(data);
-          else setMatchError(data.error ?? "Réponse inattendue de l'API.");
-          setLoadingMatches(false);
-          setMatchesLoaded(true);
-        })
-        .catch(() => { setMatchError("Erreur de chargement."); setLoadingMatches(false); });
-    }
-  }, [view, matchesLoaded]);
+      try {
+        const data = await fetch("/api/riot/match-history").then((r) => r.json());
+        if (Array.isArray(data)) setMatches(data);
+        else setMatchError(data.error ?? "Réponse inattendue de l'API.");
+      } catch {
+        setMatchError("Erreur de chargement.");
+      }
+      setLoadingMatches(false);
+    };
+    loadGames();
+    loadMatches();
+  }, []);
 
   // ─── Quick-add from Riot history ─────────────────────────────────────────
   const handleQuickAdd = async (m: MatchEntry) => {

@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
-  const [roleWeights, levelConfigs, masteryConfig, goal, user] = await Promise.all([
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const [roleWeights, levelConfigs, masteryConfig, goal] = await Promise.all([
     prisma.roleWeight.findMany({ orderBy: { role: "asc" } }),
     prisma.levelConfig.findMany({ orderBy: { niveau: "asc" } }),
     prisma.masteryConfig.findFirst(),
-    prisma.goal.findFirst(),
-    prisma.user.findFirst(),
+    prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
   return NextResponse.json({ roleWeights, levelConfigs, masteryConfig, goal, user });
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { logout } from "@/lib/actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -305,6 +306,17 @@ export default function SettingsPage() {
       <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
         {savingSettings ? "Enregistrement..." : savedSettings ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
       </button>
+
+      {/* Déconnexion */}
+      <form action={logout} className="pt-2">
+        <button
+          type="submit"
+          className="w-full py-2 rounded text-sm"
+          style={{ background: "rgba(200,70,70,0.12)", color: "#e05555", border: "1px solid rgba(200,70,70,0.3)" }}
+        >
+          Se déconnecter
+        </button>
+      </form>
     </div>
   );
 }

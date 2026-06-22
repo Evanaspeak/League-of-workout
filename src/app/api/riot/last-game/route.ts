@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { detectRole } from "@/lib/riot-role";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +32,9 @@ async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Respon
 }
 
 export async function GET(req: Request) {
-  const user = await prisma.user.findFirst();
-  if (!user?.riotPuuid) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  if (!user.riotPuuid) {
     return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Réglages." }, { status: 400 });
   }
 
@@ -65,7 +67,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ matchId: ids[0] });
   }
 
-  const alreadyLogged = await prisma.game.findFirst({ where: { riotMatchId: ids[0] } });
+  const alreadyLogged = await prisma.game.findFirst({ where: { riotMatchId: ids[0], userId: user.id } });
   if (alreadyLogged) {
     return NextResponse.json({ error: "Cette game est déjà loggée." }, { status: 409 });
   }

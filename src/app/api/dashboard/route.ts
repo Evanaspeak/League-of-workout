@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
-  const [games, goal, user] = await Promise.all([
-    prisma.game.findMany({ orderBy: { date: "asc" } }),
-    prisma.goal.findFirst(),
-    prisma.user.findFirst(),
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const [games, goal] = await Promise.all([
+    prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
+    prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
 
   const totalGames = games.length;

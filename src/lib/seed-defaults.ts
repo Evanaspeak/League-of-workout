@@ -1,16 +1,13 @@
 import { prisma } from "./prisma";
 
+// Initialise la configuration de scoring GLOBALE (partagée par tous les joueurs).
+// Les comptes utilisateurs sont créés par l'authentification, plus ici.
 export async function seedDefaults() {
-  const [userCount, roleCount, levelCount, masteryCount] = await Promise.all([
-    prisma.user.count(),
+  const [roleCount, levelCount, masteryCount] = await Promise.all([
     prisma.roleWeight.count(),
     prisma.levelConfig.count(),
     prisma.masteryConfig.count(),
   ]);
-
-  if (userCount === 0) {
-    await prisma.user.create({ data: { pseudo: "Joueur", gainageMaxSec: 45 } });
-  }
 
   if (roleCount === 0) {
     await prisma.roleWeight.createMany({

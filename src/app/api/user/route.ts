@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seedDefaults } from "@/lib/seed-defaults";
+import { getCurrentUser } from "@/lib/auth-helpers";
 
 export async function GET() {
   await seedDefaults();
-  const user = await prisma.user.findFirst();
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   return NextResponse.json(user);
 }
 
 export async function PUT(req: Request) {
   const body = await req.json();
-  const user = await prisma.user.findFirst();
-  if (!user) return NextResponse.json({ error: "No user" }, { status: 404 });
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const updated = await prisma.user.update({
     where: { id: user.id },
@@ -27,12 +29,11 @@ export async function PUT(req: Request) {
 
   // Met à jour l'objectif si fourni
   if (body.objectifTotalPompes !== undefined) {
-    const existing = await prisma.goal.findUnique({ where: { userId: user.id } });
-    if (existing) {
-      await prisma.goal.update({ where: { userId: user.id }, data: { objectifTotalPompes: Number(body.objectifTotalPompes) } });
-    } else {
-      await prisma.goal.create({ data: { userId: user.id, objectifTotalPompes: Number(body.objectifTotalPompes) } });
-    }
+    await prisma.goal.upsert({
+      where: { userId: user.id },
+      update: { objectifTotalPompes: Number(body.objectifTotalPompes) },
+      create: { userId: user.id, objectifTotalPompes: Number(body.objectifTotalPompes) },
+    });
   }
 
   return NextResponse.json(updated);
