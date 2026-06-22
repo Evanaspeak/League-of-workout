@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { detectRole } from "@/lib/riot-role";
 
 export const dynamic = "force-dynamic";
 
@@ -9,14 +10,6 @@ const REGION_ROUTING: Record<string, string> = {
   KR: "asia", JP1: "asia",
   OC1: "sea", PH2: "sea", SG2: "sea", TH2: "sea", TW2: "sea", VN2: "sea",
 };
-
-const LANE_MAP: Record<string, string> = {
-  TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid",
-  BOTTOM: "ADC", UTILITY: "Support",
-};
-
-const ARAM_QUEUES = new Set([450]);
-const ARENA_QUEUES = new Set([1700, 1710, 1712, 1720, 1730, 1750]);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -71,12 +64,7 @@ export async function GET() {
     const mapId: number = info.mapId ?? 0;
     const participant = (info.participants ?? []).find((p: { puuid: string }) => p.puuid === puuid);
 
-    let role = "?";
-    if (participant) {
-      if (gameMode === "CHERRY" || ARENA_QUEUES.has(queueId)) role = mapId === 12 ? "ARAM" : "Arena";
-      else if (gameMode === "ARAM" || ARAM_QUEUES.has(queueId)) role = "ARAM";
-      else role = LANE_MAP[participant.teamPosition || participant.individualPosition || ""] ?? "Mid";
-    }
+    const role = participant ? detectRole(info, participant) : "?";
 
     const sampleKey = `${gameMode}/map${mapId}/q${queueId}`;
     if (!samples[sampleKey] && participant) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { detectRole } from "@/lib/riot-role";
 
 export const dynamic = "force-dynamic";
 
@@ -9,14 +10,6 @@ const REGION_ROUTING: Record<string, string> = {
   KR: "asia", JP1: "asia",
   OC1: "sea", PH2: "sea", SG2: "sea", TH2: "sea", TW2: "sea", VN2: "sea",
 };
-
-const LANE_MAP: Record<string, string> = {
-  TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid",
-  BOTTOM: "ADC", UTILITY: "Support",
-};
-
-const ARAM_QUEUES = new Set([450]);
-const ARENA_QUEUES = new Set([1700, 1710, 1712, 1720, 1730, 1750]);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -108,22 +101,10 @@ export async function GET() {
           const match = await res.json();
           if (!match?.info?.participants) return;
 
-          const queueId: number = match.info.queueId ?? 0;
-          const gameMode: string = match.info.gameMode ?? "";
-          const mapId: number = match.info.mapId ?? 0;
           const participant = match.info.participants.find((p: { puuid: string }) => p.puuid === puuid);
           if (!participant) return;
 
-          let role: string;
-          if (gameMode === "CHERRY" || ARENA_QUEUES.has(queueId)) {
-            // CHERRY sur la Faille hurlante (mapId 12) = "ARAM du chaos", sinon Arena
-            role = mapId === 12 ? "ARAM" : "Arena";
-          } else if (gameMode === "ARAM" || ARAM_QUEUES.has(queueId)) {
-            role = "ARAM";
-          } else {
-            const pos = participant.teamPosition || participant.individualPosition || "";
-            role = LANE_MAP[pos] ?? "Mid";
-          }
+          const role = detectRole(match.info, participant);
 
           const ts = match.info.gameEndTimestamp ?? match.info.gameCreation ?? Date.now();
           matchCache.set(id, {
