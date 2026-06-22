@@ -1,11 +1,10 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid,
 } from "recharts";
-
-const POLL_MS = 2 * 60 * 1000;
+import { useSession } from "@/lib/SessionContext";
 
 type DashData = {
   totalGames: number;
@@ -16,16 +15,6 @@ type DashData = {
   pompesByRole: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
   objectifTotalPompes: number;
-};
-
-type SessionGame = {
-  champion: string;
-  role: string;
-  kills: number;
-  deaths: number;
-  assists: number;
-  result: string;
-  pompes: number;
 };
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -48,124 +37,29 @@ function getLevelLabel(sec: number): string {
 
 export default function Dashboard() {
   const [data, setData] = useState<DashData | null>(null);
-
-  const [sessionActive, setSessionActive] = useState(false);
-  const [sessionGames, setSessionGames] = useState<SessionGame[]>([]);
-  const [sessionError, setSessionError] = useState("");
-  const [polling, setPolling] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [sessionLevel, setSessionLevel] = useState("");
-
   const [showGainageModal, setShowGainageModal] = useState(false);
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
     return "60";
   });
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const gainageRef = useRef<number>(60);
-  // ID de la dernière game connue au démarrage de la session : on ne logge
-  // que les parties JOUÉES APRÈS (matchId différent du point de départ).
-  const baselineRef = useRef<string | null>(null);
+  const { sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec, startSession, stopSession } = useSession();
 
   const loadDash = () => fetch("/api/dashboard").then((r) => r.json()).then(setData);
 
   useEffect(() => { loadDash(); }, []);
 
-  const stopSession = useCallback(() => {
-    setSessionActive(false);
-    setPolling(false);
-    setCountdown(0);
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
-  }, []);
+  // Rafraîchit les stats globales à chaque nouvelle game loggée en session.
+  useEffect(() => {
+    if (sessionGames.length > 0) loadDash();
+  }, [sessionGames.length]);
 
-  const doPoll = useCallback(async () => {
-    setPolling(true);
-    setCountdown(POLL_MS / 1000);
-    try {
-      const res = await fetch("/api/riot/last-game");
-      if (res.status === 409) { setPolling(false); return; }
-      if (res.status === 400) {
-        setSessionError("PUUID manquant. Configure ton Riot ID dans Réglages.");
-        stopSession();
-        return;
-      }
-      if (!res.ok) { setPolling(false); return; }
-      const riotData = await res.json();
-
-      // La dernière game est celle d'avant la session → on ne la logge pas.
-      if (riotData.matchId === baselineRef.current) { setPolling(false); return; }
-
-      const logRes = await fetch("/api/games", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          role: riotData.role,
-          champion: riotData.champion,
-          kills: riotData.kills,
-          deaths: riotData.deaths,
-          assists: riotData.assists,
-          result: riotData.result,
-          source: "riot_api",
-          riotMatchId: riotData.matchId,
-          gainageSec: gainageRef.current,
-        }),
-      });
-      if (logRes.ok) {
-        const { scoring } = await logRes.json();
-        baselineRef.current = riotData.matchId;
-        setSessionGames((prev) => [{
-          champion: riotData.champion,
-          role: riotData.role,
-          kills: riotData.kills,
-          deaths: riotData.deaths,
-          assists: riotData.assists,
-          result: riotData.result,
-          pompes: scoring.pompesFinales,
-        }, ...prev]);
-        loadDash();
-      }
-    } catch { /* retry next poll */ }
-    setPolling(false);
-  }, [stopSession]);
-
-  const startSession = useCallback(async (gainageSec: number) => {
-    gainageRef.current = gainageSec;
-    setSessionLevel(getLevelLabel(gainageSec));
-    setSessionActive(true);
-    setSessionGames([]);
-    setSessionError("");
-
-    // Point de départ : on mémorise la dernière game existante pour ne pas
-    // la compter (elle a été jouée avant le démarrage de la session).
-    baselineRef.current = null;
-    try {
-      const peekRes = await fetch("/api/riot/last-game?peek=1");
-      if (peekRes.ok) {
-        const { matchId } = await peekRes.json();
-        baselineRef.current = matchId;
-      }
-    } catch { /* pas de baseline : on loggera la prochaine game détectée */ }
-
-    doPoll();
-    intervalRef.current = setInterval(doPoll, POLL_MS);
-    setCountdown(POLL_MS / 1000);
-    countdownRef.current = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
-  }, [doPoll]);
-
-  const handleConfirmGainage = () => {
+  const handleConfirmGainage = async () => {
     const sec = Math.max(1, Number(gainageInput) || 60);
     localStorage.setItem("lastGainageSec", String(sec));
     setShowGainageModal(false);
-    startSession(sec);
+    await startSession(sec);
   };
-
-  useEffect(() => () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (countdownRef.current) clearInterval(countdownRef.current);
-  }, []);
 
   if (!data) return <div className="text-center py-20 gold-text">Chargement...</div>;
 
@@ -174,18 +68,13 @@ export default function Dashboard() {
     : 0;
   const roleData = Object.entries(data.pompesByRole).map(([role, pompes]) => ({ role, pompes }));
   const totalSessionPompes = sessionGames.reduce((s, g) => s + g.pompes, 0);
-  // sessionGames est stocké du plus récent au plus ancien → on remet en ordre
-  // chronologique pour le graphe (G1 = 1re game de la session).
-  const sessionChartData = [...sessionGames].reverse().map((g, i) => ({
-    label: `G${i + 1}`,
-    pompes: g.pompes,
-  }));
+  const sessionChartData = [...sessionGames].reverse().map((g, i) => ({ label: `G${i + 1}`, pompes: g.pompes }));
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold gold-text tracking-widest">DASHBOARD</h1>
 
-      {/* Stats */}
+      {/* Stats globales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Games jouées" value={data.totalGames} />
         <StatCard label="Winrate" value={`${data.winrate}%`} sub={`${data.wins}V / ${data.totalGames - data.wins}D`} />
@@ -230,7 +119,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.3)" }}>
               <div className="w-2 h-2 rounded-full" style={{ background: "#4caf50", boxShadow: "0 0 6px #4caf50", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">Session active</span>
-              <span className="text-xs gold-text">{sessionLevel} · gainage {gainageRef.current}s</span>
+              <span className="text-xs gold-text">{sessionLevel} · gainage {gainageSec}s</span>
               <span className="ml-auto text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
                 {polling ? "⟳ Vérification en cours..." : `Prochaine vérif. dans ${countdown}s`}
               </span>
@@ -250,7 +139,7 @@ export default function Dashboard() {
                   <div className="text-2xl font-bold win-text">
                     {sessionGames.filter((g) => g.result === "V").length}V
                   </div>
-                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>
+                  <div className="text-xs loss-text">
                     {sessionGames.filter((g) => g.result === "D").length}D
                   </div>
                 </div>
@@ -275,15 +164,10 @@ export default function Dashboard() {
 
             {sessionGames.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs gold-text font-semibold">
-                  Détail · {totalSessionPompes} pompes au total
-                </p>
+                <p className="text-xs gold-text font-semibold">Détail · {totalSessionPompes} pompes</p>
                 {sessionGames.map((g, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 px-3 py-2 rounded text-sm"
-                    style={{ background: "rgba(200,170,110,0.06)", border: "1px solid rgba(200,170,110,0.1)" }}
-                  >
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-sm"
+                    style={{ background: "rgba(200,170,110,0.06)", border: "1px solid rgba(200,170,110,0.1)" }}>
                     <span className={g.result === "V" ? "win-text font-bold" : "loss-text font-bold"}>
                       {g.result === "V" ? "V" : "D"}
                     </span>
@@ -315,7 +199,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Charts globaux */}
+      {/* Statistiques globales */}
       <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>
         Statistiques globales
       </h2>
@@ -360,7 +244,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Modal gainage */}
+      {/* Modal test de gainage */}
       {showGainageModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
@@ -377,8 +261,7 @@ export default function Dashboard() {
                 Durée (secondes)
               </label>
               <input
-                type="number"
-                min="1"
+                type="number" min="1"
                 className="lol-input text-center text-2xl font-bold"
                 value={gainageInput}
                 onChange={(e) => setGainageInput(e.target.value)}

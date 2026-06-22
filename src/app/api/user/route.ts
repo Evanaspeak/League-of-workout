@@ -19,7 +19,8 @@ export async function PUT(req: Request) {
       pseudo: body.pseudo,
       riotId: body.riotId,
       riotRegion: body.riotRegion,
-      gainageMaxSec: Number(body.gainageMaxSec),
+      // gainageMaxSec est optionnel : la valeur est maintenant saisie à chaque session.
+      ...(body.gainageMaxSec != null ? { gainageMaxSec: Number(body.gainageMaxSec) } : {}),
       ...(body.riotPuuid ? { riotPuuid: body.riotPuuid } : {}),
     },
   });

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "@/lib/SessionContext";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -10,6 +11,8 @@ const links = [
 
 export default function Nav() {
   const path = usePathname();
+  const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
+
   return (
     <nav style={{ background: "var(--lol-dark-mid)", borderBottom: "1px solid rgba(200,170,110,0.25)" }}>
       <div className="max-w-6xl mx-auto px-4 flex items-center gap-1 h-14">
@@ -28,6 +31,28 @@ export default function Nav() {
             {l.label}
           </Link>
         ))}
+
+        {sessionActive && (
+          <div className="ml-auto flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 px-3 py-1 rounded"
+              style={{ background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.3)" }}>
+              <div className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: "#4caf50", boxShadow: "0 0 6px #4caf50", animation: "pulse 1.5s infinite" }} />
+              <span className="text-xs win-text font-semibold">Session</span>
+              <span className="text-xs gold-text">{sessionGames.length} game{sessionGames.length > 1 ? "s" : ""}</span>
+              <span className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+                {polling ? "⟳" : `${countdown}s`}
+              </span>
+            </div>
+            <button
+              onClick={stopSession}
+              className="text-xs px-2 py-1 rounded"
+              style={{ background: "rgba(200,70,70,0.15)", color: "#e05555", border: "1px solid rgba(200,70,70,0.3)" }}
+            >
+              ⏹
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   );

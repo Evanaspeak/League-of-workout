@@ -18,6 +18,7 @@ export default function SettingsPage() {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
   const [puuidLoading, setPuuidLoading] = useState(false);
   const [puuidMsg, setPuuidMsg] = useState("");
   const [riotPuuid, setRiotPuuid] = useState("");
@@ -50,14 +51,20 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setSavingProfile(true);
     setSavedProfile(false);
-    await fetch("/api/user", {
+    setProfileError("");
+    const res = await fetch("/api/user", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(profileForm),
     });
     setSavingProfile(false);
-    setSavedProfile(true);
-    setTimeout(() => setSavedProfile(false), 2000);
+    if (res.ok) {
+      setSavedProfile(true);
+      setTimeout(() => setSavedProfile(false), 2000);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setProfileError(err.error ?? "Erreur lors de la sauvegarde.");
+    }
   };
 
   const handleResolvePuuid = async () => {
@@ -164,6 +171,7 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {profileError && <p className="text-sm loss-text">{profileError}</p>}
         <button className="lol-btn w-full" onClick={handleSaveProfile} disabled={savingProfile}>
           {savingProfile ? "Enregistrement..." : savedProfile ? "✓ Profil enregistré !" : "Enregistrer le profil"}
         </button>

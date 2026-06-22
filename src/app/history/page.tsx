@@ -538,9 +538,16 @@ export default function HistoryPage() {
                     </thead>
                     <tbody>
                       {(() => {
-                        let cumul = 0;
+                        // Calcul des cumuls : on part de la fin (game la plus ancienne)
+                        // vers le début pour que la ligne la plus récente affiche le total.
+                        const cumulMap = new Map<string, number>();
+                        let running = 0;
+                        for (let i = filtered.length - 1; i >= 0; i--) {
+                          running += filtered[i].pompesCalculees;
+                          cumulMap.set(filtered[i].id, running);
+                        }
                         return filtered.map((g) => {
-                          cumul += g.pompesCalculees;
+                          const cumul = cumulMap.get(g.id) ?? 0;
                           return (
                             <tr key={g.id} className="lol-panel" style={{ background: "var(--lol-dark-light)" }}>
                               <td className="px-3 py-2" style={{ color: "rgba(240,230,211,0.6)" }}>
