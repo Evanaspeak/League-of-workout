@@ -4,8 +4,14 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: Request) {
   const { riotId: rawRiotId, region } = await req.json();
 
-  // Strip invisible Unicode control/formatting characters injected by some clients
-  const riotId = rawRiotId.replace(/[​-‏ - ⁠-⁩﻿]/g, "").trim();
+  // Strip invisible Unicode directional/formatting chars injected by the League client (e.g. U+2066, U+2069)
+  const riotId = Array.from(rawRiotId as string)
+    .filter((c) => {
+      const code = c.codePointAt(0) ?? 0;
+      return code >= 0x20 && !(code >= 0x200b && code <= 0x206f) && code !== 0xfeff;
+    })
+    .join("")
+    .trim();
 
   const apiKey = process.env.RIOT_API_KEY?.trim();
   if (!apiKey) {
