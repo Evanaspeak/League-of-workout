@@ -33,12 +33,14 @@ export async function POST(req: Request) {
     });
   }
 
+  const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
+
   const scoring = calcScore({
     kills: Number(body.kills),
     deaths: Number(body.deaths),
     assists: Number(body.assists),
     result: body.result,
-    gainageSec: user.gainageMaxSec,
+    gainageSec,
     partiesAvant,
     roleWeights,
     levelConfigs,
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
       deaths: Number(body.deaths),
       assists: Number(body.assists),
       result: body.result,
-      gainageSec: user.gainageMaxSec,
+      gainageSec,
       niveauCalcule: scoring.niveau,
       partiesAvantCalcule: partiesAvant,
       surchargeCalculee: scoring.surcharge,

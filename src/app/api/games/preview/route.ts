@@ -26,17 +26,19 @@ export async function POST(req: Request) {
     });
   }
 
+  const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
+
   const scoring = calcScore({
     kills: Number(body.kills),
     deaths: Number(body.deaths),
     assists: Number(body.assists),
     result: body.result,
-    gainageSec: user.gainageMaxSec,
+    gainageSec,
     partiesAvant,
     roleWeights,
     levelConfigs,
     masteryConfig,
   });
 
-  return NextResponse.json({ scoring, partiesAvant, gainageSec: user.gainageMaxSec });
+  return NextResponse.json({ scoring, partiesAvant, gainageSec });
 }

@@ -1,35 +1,94 @@
 "use client";
 import { useEffect, useState } from "react";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 type RoleWeight = { role: string; poidsMort: number; poidsKill: number; poidsAssist: number; maitriseActive: boolean };
 type LevelConfig = { niveau: number; seuilGainageSec: number; multiplicateur: number; malusDefaite: number };
 type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 
+const REGIONS = ["EUW1", "EUN1", "NA1", "KR", "BR1", "JP1", "TR1", "RU", "OC1"];
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function SettingsPage() {
+  // ── Profile ──
+  const [profileForm, setProfileForm] = useState({
+    pseudo: "", riotId: "", riotRegion: "EUW1", objectifTotalPompes: 1000,
+  });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savedProfile, setSavedProfile] = useState(false);
+  const [puuidLoading, setPuuidLoading] = useState(false);
+  const [puuidMsg, setPuuidMsg] = useState("");
+  const [riotPuuid, setRiotPuuid] = useState("");
+
+  // ── Settings ──
   const [roleWeights, setRoleWeights] = useState<RoleWeight[]>([]);
   const [levelConfigs, setLevelConfigs] = useState<LevelConfig[]>([]);
   const [masteryConfig, setMasteryConfig] = useState<MasteryConfig | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [savedSettings, setSavedSettings] = useState(false);
 
   useEffect(() => {
-    fetch("/api/settings").then((r) => r.json()).then((d) => {
-      setRoleWeights(d.roleWeights);
-      setLevelConfigs(d.levelConfigs);
-      setMasteryConfig(d.masteryConfig);
+    Promise.all([
+      fetch("/api/user").then((r) => r.json()),
+      fetch("/api/settings").then((r) => r.json()),
+    ]).then(([u, s]) => {
+      setProfileForm({
+        pseudo: u.pseudo ?? "",
+        riotId: u.riotId ?? "",
+        riotRegion: u.riotRegion ?? "EUW1",
+        objectifTotalPompes: s.goal?.objectifTotalPompes ?? 1000,
+      });
+      setRiotPuuid(u.riotPuuid ?? "");
+      setRoleWeights(s.roleWeights);
+      setLevelConfigs(s.levelConfigs);
+      setMasteryConfig(s.masteryConfig);
     });
   }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    setSavedProfile(false);
+    await fetch("/api/user", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profileForm),
+    });
+    setSavingProfile(false);
+    setSavedProfile(true);
+    setTimeout(() => setSavedProfile(false), 2000);
+  };
+
+  const handleResolvePuuid = async () => {
+    if (!profileForm.riotId.includes("#")) { setPuuidMsg("Format invalide : pseudo#tag"); return; }
+    setPuuidLoading(true);
+    setPuuidMsg("");
+    const res = await fetch("/api/riot/resolve-puuid", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ riotId: profileForm.riotId, region: profileForm.riotRegion }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setPuuidMsg(`✓ Compte vérifié : ${data.gameName}#${data.tagLine}`);
+      setRiotPuuid(data.puuid ?? "");
+    } else {
+      setPuuidMsg(`✗ ${data.error}`);
+    }
+    setPuuidLoading(false);
+  };
+
+  const handleSaveSettings = async () => {
+    setSavingSettings(true);
     await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roleWeights, levelConfigs, masteryConfig }),
     });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSavingSettings(false);
+    setSavedSettings(true);
+    setTimeout(() => setSavedSettings(false), 2000);
   };
 
   const updateRole = (role: string, field: keyof RoleWeight, value: string | boolean) => {
@@ -46,7 +105,71 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold gold-text tracking-widest">RÉGLAGES</h1>
 
-      {/* Poids par rôle */}
+      {/* ── Profil ──────────────────────────────────────────────────────── */}
+      <div className="lol-panel p-5 space-y-4">
+        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Profil</h2>
+
+        <div>
+          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Pseudo affiché</label>
+          <input
+            className="lol-input"
+            value={profileForm.pseudo}
+            onChange={(e) => setProfileForm((f) => ({ ...f, pseudo: e.target.value }))}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Objectif total de pompes</label>
+          <input
+            type="number" min="0" className="lol-input"
+            value={profileForm.objectifTotalPompes}
+            onChange={(e) => setProfileForm((f) => ({ ...f, objectifTotalPompes: Number(e.target.value) }))}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>Compte Riot Games</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Riot ID (pseudo#tag)</label>
+              <input
+                className="lol-input" placeholder="Faker#KR1"
+                value={profileForm.riotId}
+                onChange={(e) => setProfileForm((f) => ({ ...f, riotId: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Région</label>
+              <select
+                className="lol-select w-full"
+                value={profileForm.riotRegion}
+                onChange={(e) => setProfileForm((f) => ({ ...f, riotRegion: e.target.value }))}
+              >
+                {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          </div>
+          <button
+            className="lol-btn lol-btn-blue w-full"
+            onClick={handleResolvePuuid}
+            disabled={puuidLoading || !profileForm.riotId}
+          >
+            {puuidLoading ? "Vérification..." : "Vérifier le compte Riot"}
+          </button>
+          {puuidMsg && (
+            <p className={`text-sm ${puuidMsg.startsWith("✓") ? "blue-text" : "loss-text"}`}>{puuidMsg}</p>
+          )}
+          {riotPuuid && (
+            <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>PUUID : {riotPuuid.slice(0, 20)}…</p>
+          )}
+        </div>
+
+        <button className="lol-btn w-full" onClick={handleSaveProfile} disabled={savingProfile}>
+          {savingProfile ? "Enregistrement..." : savedProfile ? "✓ Profil enregistré !" : "Enregistrer le profil"}
+        </button>
+      </div>
+
+      {/* ── Poids par rôle ──────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-3">
         <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Poids par rôle / mode</h2>
         <div className="overflow-x-auto">
@@ -89,9 +212,12 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Niveaux */}
+      {/* ── Niveaux (gainage) ───────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-3">
         <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Niveaux (gainage)</h2>
+        <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+          Le niveau est déterminé à chaque session par le test de gainage — ces seuils définissent les paliers.
+        </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -139,7 +265,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Maîtrise */}
+      {/* ── Maîtrise ────────────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
         <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Paramètres de maîtrise</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -168,8 +294,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <button className="lol-btn w-full text-base" onClick={handleSave} disabled={saving}>
-        {saving ? "Enregistrement..." : saved ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
+      <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
+        {savingSettings ? "Enregistrement..." : savedSettings ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
       </button>
     </div>
   );
