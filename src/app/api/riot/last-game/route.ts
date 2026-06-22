@@ -30,10 +30,10 @@ async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Respon
   return res;
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const user = await prisma.user.findFirst();
   if (!user?.riotPuuid) {
-    return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Profil." }, { status: 400 });
+    return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Réglages." }, { status: 400 });
   }
 
   const apiKey = process.env.RIOT_API_KEY;
@@ -56,6 +56,13 @@ export async function GET() {
   const ids: string[] = await idsRes.json();
   if (!ids.length) {
     return NextResponse.json({ error: "Aucune game trouvée." }, { status: 404 });
+  }
+
+  // Mode "peek" : renvoie juste l'ID de la dernière game, sans la logger.
+  // Sert à fixer un point de départ au démarrage d'une session.
+  const peek = new URL(req.url).searchParams.get("peek");
+  if (peek) {
+    return NextResponse.json({ matchId: ids[0] });
   }
 
   const alreadyLogged = await prisma.game.findFirst({ where: { riotMatchId: ids[0] } });

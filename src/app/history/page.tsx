@@ -129,12 +129,14 @@ export default function HistoryPage() {
       }),
     });
     if (res.ok) {
-      const { scoring } = await res.json();
+      const { game, scoring } = await res.json();
       setMatches((prev) => prev.map((x) =>
         x.matchId === m.matchId
           ? { ...x, alreadyLogged: true, pompesCalculees: scoring.pompesFinales }
           : x
       ));
+      // Sync immédiate de la vue Pompes (pas besoin de changer d'onglet).
+      setGames((prev) => [{ ...game, pompesCalculees: scoring.pompesFinales }, ...prev]);
     }
     setAddingId(null);
   };

@@ -65,6 +65,9 @@ export default function Dashboard() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gainageRef = useRef<number>(60);
+  // ID de la dernière game connue au démarrage de la session : on ne logge
+  // que les parties JOUÉES APRÈS (matchId différent du point de départ).
+  const baselineRef = useRef<string | null>(null);
 
   const loadDash = () => fetch("/api/dashboard").then((r) => r.json()).then(setData);
 
@@ -91,6 +94,10 @@ export default function Dashboard() {
       }
       if (!res.ok) { setPolling(false); return; }
       const riotData = await res.json();
+
+      // La dernière game est celle d'avant la session → on ne la logge pas.
+      if (riotData.matchId === baselineRef.current) { setPolling(false); return; }
+
       const logRes = await fetch("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,6 +115,7 @@ export default function Dashboard() {
       });
       if (logRes.ok) {
         const { scoring } = await logRes.json();
+        baselineRef.current = riotData.matchId;
         setSessionGames((prev) => [{
           champion: riotData.champion,
           role: riotData.role,
@@ -123,12 +131,24 @@ export default function Dashboard() {
     setPolling(false);
   }, [stopSession]);
 
-  const startSession = useCallback((gainageSec: number) => {
+  const startSession = useCallback(async (gainageSec: number) => {
     gainageRef.current = gainageSec;
     setSessionLevel(getLevelLabel(gainageSec));
     setSessionActive(true);
     setSessionGames([]);
     setSessionError("");
+
+    // Point de départ : on mémorise la dernière game existante pour ne pas
+    // la compter (elle a été jouée avant le démarrage de la session).
+    baselineRef.current = null;
+    try {
+      const peekRes = await fetch("/api/riot/last-game?peek=1");
+      if (peekRes.ok) {
+        const { matchId } = await peekRes.json();
+        baselineRef.current = matchId;
+      }
+    } catch { /* pas de baseline : on loggera la prochaine game détectée */ }
+
     doPoll();
     intervalRef.current = setInterval(doPoll, POLL_MS);
     setCountdown(POLL_MS / 1000);
@@ -154,6 +174,12 @@ export default function Dashboard() {
     : 0;
   const roleData = Object.entries(data.pompesByRole).map(([role, pompes]) => ({ role, pompes }));
   const totalSessionPompes = sessionGames.reduce((s, g) => s + g.pompes, 0);
+  // sessionGames est stocké du plus récent au plus ancien → on remet en ordre
+  // chronologique pour le graphe (G1 = 1re game de la session).
+  const sessionChartData = [...sessionGames].reverse().map((g, i) => ({
+    label: `G${i + 1}`,
+    pompes: g.pompes,
+  }));
 
   return (
     <div className="space-y-6">
@@ -211,9 +237,46 @@ export default function Dashboard() {
             </div>
 
             {sessionGames.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
+                  <div className="text-2xl font-bold gold-text">{sessionGames.length}</div>
+                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>games</div>
+                </div>
+                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
+                  <div className="text-2xl font-bold gold-text">{totalSessionPompes}</div>
+                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>pompes</div>
+                </div>
+                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
+                  <div className="text-2xl font-bold win-text">
+                    {sessionGames.filter((g) => g.result === "V").length}V
+                  </div>
+                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>
+                    {sessionGames.filter((g) => g.result === "D").length}D
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {sessionGames.length > 0 && (
+              <div className="lol-panel p-3" style={{ background: "rgba(200,170,110,0.04)" }}>
+                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "rgba(200,170,110,0.6)" }}>
+                  Pompes par partie (session)
+                </h3>
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart data={sessionChartData}>
+                    <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
+                    <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
+                    <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
+                    <Bar dataKey="pompes" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {sessionGames.length > 0 && (
               <div className="space-y-1">
                 <p className="text-xs gold-text font-semibold">
-                  {sessionGames.length} game{sessionGames.length > 1 ? "s" : ""} loggée{sessionGames.length > 1 ? "s" : ""} · {totalSessionPompes} pompes
+                  Détail · {totalSessionPompes} pompes au total
                 </p>
                 {sessionGames.map((g, i) => (
                   <div
@@ -252,7 +315,10 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Charts */}
+      {/* Charts globaux */}
+      <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>
+        Statistiques globales
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {roleData.length > 0 && (
           <div className="lol-panel p-4">
