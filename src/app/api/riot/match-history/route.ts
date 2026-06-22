@@ -79,7 +79,8 @@ export async function GET() {
 
           let role: string;
           if (gameMode === "CHERRY" || ARENA_QUEUES.has(queueId)) {
-            role = "Arena";
+            const mapId: number = match.info.mapId ?? 0;
+            role = mapId === 12 ? "ARAM" : "Arena";
           } else if (gameMode === "ARAM" || ARAM_QUEUES.has(queueId)) {
             role = "ARAM";
           } else {
