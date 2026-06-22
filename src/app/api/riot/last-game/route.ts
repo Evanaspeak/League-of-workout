@@ -13,7 +13,7 @@ const LANE_MAP: Record<string, string> = {
   BOTTOM: "ADC", UTILITY: "Support",
 };
 
-// queueId → mode
+// queueId → mode (fallback si gameMode absent)
 const QUEUE_MODE: Record<number, string> = {
   450: "ARAM",
   1700: "Arena",
@@ -66,6 +66,7 @@ export async function GET() {
 
   const match = await matchRes.json();
   const queueId: number = match.info.queueId;
+  const gameMode: string = match.info.gameMode ?? "";
   const participant = match.info.participants.find((p: { puuid: string }) => p.puuid === puuid);
 
   if (!participant) {
@@ -73,16 +74,15 @@ export async function GET() {
   }
 
   let role: string;
-  if (QUEUE_MODE[queueId]) {
+  if (gameMode === "CHERRY") {
+    role = "Arena";
+  } else if (gameMode === "ARAM") {
+    role = "ARAM";
+  } else if (QUEUE_MODE[queueId]) {
     role = QUEUE_MODE[queueId];
   } else {
     const pos = participant.teamPosition || participant.individualPosition || "";
-    if (pos) {
-      role = LANE_MAP[pos] ?? "Mid";
-    } else {
-      // Arena variants have >10 participants (2x6=12, 3x6=18); ARAM/SR have exactly 10
-      role = match.info.participants.length > 10 ? "Arena" : "ARAM";
-    }
+    role = LANE_MAP[pos] ?? "Mid";
   }
 
   return NextResponse.json({

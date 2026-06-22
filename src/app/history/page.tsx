@@ -53,7 +53,7 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold gold-text tracking-widest">HISTORIQUE</h1>
+      <h1 className="text-2xl font-bold gold-text tracking-widest">HISTORIQUE DE POMPES</h1>
 
       {/* Filtres */}
       <div className="lol-panel p-3 flex flex-wrap gap-3 items-center">

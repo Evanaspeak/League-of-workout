@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/", label: "Dashboard" },
   { href: "/game", label: "Dernière Game" },
-  { href: "/history", label: "Historique" },
+  { href: "/history", label: "Pompes" },
+  { href: "/game-history", label: "Parties" },
   { href: "/profile", label: "Profil" },
   { href: "/settings", label: "Réglages" },
 ];
