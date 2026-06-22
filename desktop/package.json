@@ -1,0 +1,26 @@
+{
+  "name": "league-of-workouts-desktop",
+  "version": "0.1.0",
+  "description": "App desktop + overlay pour League of Workouts",
+  "main": "src/main.js",
+  "author": "League of Workouts",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.leagueofworkouts.desktop",
+    "productName": "League of Workouts",
+    "files": [
+      "src/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

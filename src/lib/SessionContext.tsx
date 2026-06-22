@@ -2,6 +2,9 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 const POLL_MS = 2 * 60 * 1000;
+// Délai après la fin d'une partie (détectée nativement par l'app desktop) avant
+// d'interroger l'API Riot — le match met quelques secondes à y apparaître.
+const POST_GAME_DELAY_MS = 20 * 1000;
 
 export type SessionGame = {
   champion: string;
@@ -48,6 +51,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gainageRef = useRef<number>(60);
   const baselineRef = useRef<string | null>(null);
+  const sessionActiveRef = useRef(false);
 
   const stopSession = useCallback(() => {
     setSessionActive(false);
@@ -128,6 +132,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     intervalRef.current = setInterval(doPoll, POLL_MS);
     setCountdown(POLL_MS / 1000);
     countdownRef.current = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
+  }, [doPoll]);
+
+  // Garde une référence à jour de l'état de session pour les callbacks natifs.
+  useEffect(() => { sessionActiveRef.current = sessionActive; }, [sessionActive]);
+
+  // ── Intégration app desktop (Electron) ────────────────────────────────────
+  // Si on tourne dans l'app desktop, on écoute la détection NATIVE de fin de
+  // partie (API Live Client de League) pour logger tout de suite, sans attendre
+  // le prochain cycle du timer de 2 min. Le timer reste actif en filet de
+  // sécurité au cas où l'événement natif serait manqué.
+  useEffect(() => {
+    const lol = typeof window !== "undefined" ? window.electronLOL : undefined;
+    if (!lol?.onGameEnded) return;
+    return lol.onGameEnded(() => {
+      if (!sessionActiveRef.current) return;
+      setTimeout(() => { if (sessionActiveRef.current) doPoll(); }, POST_GAME_DELAY_MS);
+    });
   }, [doPoll]);
 
   // Nettoyage uniquement à la fermeture de l'app (le provider vit dans le layout).
