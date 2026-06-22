@@ -22,10 +22,16 @@ type DiagRow = {
   queueId?: number;
   gameMode?: string;
   mapId?: number;
+  gameName?: string | null;
+  gameType?: string | null;
   participantCount?: number;
   participantFound?: boolean;
   roleCalcule?: string;
   champion?: string | null;
+  placement?: number | null;
+  subteamPlacement?: number | null;
+  playerSubteamId?: number | null;
+  hasAugments?: boolean;
 };
 
 type DiagResult = {
@@ -160,11 +166,16 @@ export default function GameHistoryPage() {
                     <p key={row.id} style={{ color: row.httpStatus === 200 ? "rgba(240,230,211,0.6)" : "#e05555" }}>
                       {row.httpStatus !== 200
                         ? `HTTP ${row.httpStatus} (retry-after: ${row.retryAfter ?? "n/a"})`
-                        : `${row.gameMode}/map${row.mapId}/q${row.queueId} → ${row.roleCalcule} [${row.champion}] participants:${row.participantCount} found:${row.participantFound}`
+                        : `${row.gameMode}/map${row.mapId}/q${row.queueId} → ${row.roleCalcule} [${row.champion}] p:${row.participantCount} aug:${row.hasAugments ? "oui" : "non"} place:${row.placement ?? "-"} sub:${row.subteamPlacement ?? "-"} name:${row.gameName ?? "-"}`
                       }
                     </p>
                   ))}
                 </div>
+                <p className="gold-text mt-3">JSON brut complet (à copier-coller) :</p>
+                <pre className="text-left text-xs overflow-auto max-h-80 p-2 rounded"
+                  style={{ background: "rgba(0,0,0,0.4)", color: "rgba(240,230,211,0.6)", whiteSpace: "pre-wrap" }}>
+                  {JSON.stringify(diagResult, null, 2)}
+                </pre>
               </>
             )}
           </div>

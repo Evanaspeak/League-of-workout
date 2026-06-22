@@ -42,6 +42,17 @@ export async function GET() {
   }
   const ids: string[] = await idsRes.json();
 
+  // Échantillon brut complet (tous les champs scalaires de info + participant)
+  // pour la première partie de chaque combinaison gameMode/queueId rencontrée.
+  const samples: Record<string, unknown> = {};
+  const scalarsOnly = (obj: Record<string, unknown>) => {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === null || ["string", "number", "boolean"].includes(typeof v)) out[k] = v;
+    }
+    return out;
+  };
+
   const rows = [];
   for (const id of ids) {
     await sleep(150);
@@ -67,24 +78,39 @@ export async function GET() {
       else role = LANE_MAP[participant.teamPosition || participant.individualPosition || ""] ?? "Mid";
     }
 
+    const sampleKey = `${gameMode}/map${mapId}/q${queueId}`;
+    if (!samples[sampleKey] && participant) {
+      samples[sampleKey] = {
+        info: scalarsOnly(info as Record<string, unknown>),
+        participant: scalarsOnly(participant as Record<string, unknown>),
+      };
+    }
+
     rows.push({
       id,
       httpStatus: 200,
       queueId,
       gameMode,
       mapId,
+      gameName: info.gameName ?? null,
+      gameType: info.gameType ?? null,
       participantCount: (info.participants ?? []).length,
       participantFound: !!participant,
       roleCalcule: role,
       champion: participant?.championName ?? null,
+      // champs qui peuvent distinguer Arena (augments/placement) de ARAM du chaos
+      placement: participant?.placement ?? null,
+      subteamPlacement: participant?.subteamPlacement ?? null,
+      playerSubteamId: participant?.playerSubteamId ?? null,
+      hasAugments: !!(participant?.playerAugment1 || participant?.playerAugment2),
     });
   }
 
   const summary = rows.reduce((acc: Record<string, number>, r) => {
-    const k = r.httpStatus === 200 ? `${r.gameMode}/map${r.mapId}=>${r.roleCalcule}` : `HTTP_${r.httpStatus}`;
+    const k = r.httpStatus === 200 ? `${r.gameMode}/map${r.mapId}/q${r.queueId}=>${r.roleCalcule}` : `HTTP_${r.httpStatus}`;
     acc[k] = (acc[k] ?? 0) + 1;
     return acc;
   }, {});
 
-  return NextResponse.json({ total: ids.length, summary, rows });
+  return NextResponse.json({ total: ids.length, summary, samples, rows });
 }
