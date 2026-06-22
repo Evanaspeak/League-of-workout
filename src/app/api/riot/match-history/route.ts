@@ -53,17 +53,20 @@ async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Respon
 
 export async function GET() {
   const user = await prisma.user.findFirst();
+  console.log("[match-history] user:", user ? { id: user.id, puuid: user.riotPuuid?.substring(0, 12), region: user.riotRegion } : "null");
   if (!user?.riotPuuid) {
     return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Profil." }, { status: 400 });
   }
 
   const apiKey = process.env.RIOT_API_KEY;
+  console.log("[match-history] apiKey present:", !!apiKey);
   if (!apiKey) {
     return NextResponse.json({ error: "Clé API Riot manquante (RIOT_API_KEY dans .env)" }, { status: 500 });
   }
 
   const routing = REGION_ROUTING[user.riotRegion] ?? "europe";
   const puuid = user.riotPuuid;
+  console.log("[match-history] routing:", routing);
 
   const idsRes = await riotFetch(
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20`,
@@ -75,6 +78,7 @@ export async function GET() {
   }
 
   const ids: string[] = await idsRes.json();
+  console.log("[match-history] ids count:", ids.length, "first:", ids[0]);
   if (!ids.length) return NextResponse.json([]);
 
   const logged = await prisma.game.findMany({
@@ -85,6 +89,7 @@ export async function GET() {
 
   // On ne récupère sur Riot que les matchs absents du cache.
   const missing = ids.filter((id) => !matchCache.has(id));
+  console.log("[match-history] cached:", ids.length - missing.length, "missing:", missing.length);
   const BATCH = 4;
 
   for (let i = 0; i < missing.length; i += BATCH) {
@@ -97,6 +102,7 @@ export async function GET() {
             `https://${routing}.api.riotgames.com/lol/match/v5/matches/${id}`,
             apiKey
           );
+          console.log(`[match-history] match ${id.slice(-8)}: HTTP ${res.status}`);
           if (!res.ok) return;
 
           const match = await res.json();
@@ -160,5 +166,7 @@ export async function GET() {
     };
   });
 
+  const available = results.filter((r) => !r.indisponible).length;
+  console.log("[match-history] returning:", results.length, "total,", available, "available,", results.length - available, "indisponible");
   return NextResponse.json(results);
 }
