@@ -5,6 +5,10 @@ export async function POST(req: Request) {
   const { riotId, region } = await req.json();
 
   const apiKey = process.env.RIOT_API_KEY?.trim();
+  console.log("[debug] RIOT_API_KEY length:", apiKey?.length);
+  console.log("[debug] RIOT_API_KEY prefix:", apiKey?.slice(0, 10));
+  console.log("[debug] riotId recu:", riotId, "region:", region);
+
   if (!apiKey) {
     return NextResponse.json({ error: "Clé API Riot manquante" }, { status: 500 });
   }
@@ -22,12 +26,15 @@ export async function POST(req: Request) {
   };
 
   const routing = REGION_ROUTING[region] ?? "europe";
+  const url = `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}?api_key=${apiKey}`;
+  console.log("[debug] URL appelee:", url.replace(apiKey, apiKey.slice(0,10) + "..."));
 
-  const res = await fetch(
-    `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}?api_key=${apiKey}`
-  );
+  const res = await fetch(url);
+  console.log("[debug] Riot API status:", res.status);
 
   if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.log("[debug] Riot API error body:", body);
     return NextResponse.json({ error: `Joueur introuvable (${res.status})` }, { status: res.status });
   }
 
