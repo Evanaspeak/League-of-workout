@@ -45,7 +45,17 @@ export default function Dashboard() {
 
   const { sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec, startSession, stopSession } = useSession();
 
-  const loadDash = () => fetch("/api/dashboard").then((r) => r.json()).then(setData);
+  const loadDash = () =>
+    fetch("/api/dashboard").then(async (res) => {
+      if (!res.ok) {
+        // Session invalide (ex. cookie d'une ancienne base) → retour au login.
+        if (res.status === 401 && typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+        return;
+      }
+      setData(await res.json());
+    });
 
   useEffect(() => { loadDash(); }, []);
 
@@ -66,7 +76,7 @@ export default function Dashboard() {
   const progress = data.objectifTotalPompes > 0
     ? Math.min(100, Math.round((data.totalPompes / data.objectifTotalPompes) * 100))
     : 0;
-  const roleData = Object.entries(data.pompesByRole).map(([role, pompes]) => ({ role, pompes }));
+  const roleData = Object.entries(data.pompesByRole ?? {}).map(([role, pompes]) => ({ role, pompes }));
   const totalSessionPompes = sessionGames.reduce((s, g) => s + g.pompes, 0);
   const sessionChartData = [...sessionGames].reverse().map((g, i) => ({ label: `G${i + 1}`, pompes: g.pompes }));
 
@@ -218,7 +228,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {data.cumulByDate.length > 0 && (
+        {(data.cumulByDate ?? []).length > 0 && (
           <div className="lol-panel p-4">
             <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">Progression cumulative</h2>
             <ResponsiveContainer width="100%" height={200}>
