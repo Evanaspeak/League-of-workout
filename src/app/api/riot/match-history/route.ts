@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 const REGION_ROUTING: Record<string, string> = {
   EUW1: "europe", EUN1: "europe", TR1: "europe", RU: "europe",
   NA1: "americas", BR1: "americas", LA1: "americas", LA2: "americas",
@@ -18,6 +20,9 @@ const QUEUE_MODE: Record<number, string> = {
   1700: "Arena", 1710: "Arena",
 };
 
+const riotFetch = (url: string, apiKey: string) =>
+  fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
+
 export async function GET() {
   const user = await prisma.user.findFirst();
   if (!user?.riotPuuid) {
@@ -32,9 +37,9 @@ export async function GET() {
   const routing = REGION_ROUTING[user.riotRegion] ?? "europe";
   const puuid = user.riotPuuid;
 
-  const idsRes = await fetch(
+  const idsRes = await riotFetch(
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20`,
-    { headers: { "X-Riot-Token": apiKey } }
+    apiKey
   );
   if (!idsRes.ok) {
     const err = await idsRes.json().catch(() => ({}));
@@ -44,14 +49,12 @@ export async function GET() {
   const ids: string[] = await idsRes.json();
   if (!ids.length) return NextResponse.json([]);
 
-  // Vérifie lesquelles sont déjà loggées
   const logged = await prisma.game.findMany({
     where: { riotMatchId: { in: ids } },
     select: { riotMatchId: true, pompesCalculees: true },
   });
   const loggedMap = new Map(logged.map((g) => [g.riotMatchId, g.pompesCalculees]));
 
-  // Récupère les détails par lots de 4 avec 400ms entre chaque lot (évite le 429 dev key)
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const BATCH = 4;
   const results: (object | null)[] = [];
@@ -62,11 +65,14 @@ export async function GET() {
     const batchResults = await Promise.all(
       batch.map(async (id) => {
         try {
-          const res = await fetch(
+          const res = await riotFetch(
             `https://${routing}.api.riotgames.com/lol/match/v5/matches/${id}`,
-            { headers: { "X-Riot-Token": apiKey } }
+            apiKey
           );
-          if (!res.ok) return null;
+          if (!res.ok) {
+            console.error(`[match-history] ${id} → HTTP ${res.status}`);
+            return null;
+          }
 
           const match = await res.json();
           if (!match?.info?.participants) return null;
@@ -74,7 +80,10 @@ export async function GET() {
           const queueId: number = match.info.queueId ?? 0;
           const gameMode: string = match.info.gameMode ?? "";
           const participant = match.info.participants.find((p: { puuid: string }) => p.puuid === puuid);
-          if (!participant) return null;
+          if (!participant) {
+            console.error(`[match-history] ${id} → participant non trouvé (queueId=${queueId})`);
+            return null;
+          }
 
           let role: string;
           if (gameMode === "CHERRY") {
@@ -103,7 +112,8 @@ export async function GET() {
             alreadyLogged,
             pompesCalculees: alreadyLogged ? loggedMap.get(id) : null,
           };
-        } catch {
+        } catch (e) {
+          console.error(`[match-history] ${id} → exception:`, e);
           return null;
         }
       })
