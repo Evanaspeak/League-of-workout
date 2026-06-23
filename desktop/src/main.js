@@ -9,6 +9,10 @@ const { app, BrowserWindow, shell } = require("electron");
 const path = require("path");
 const { startLiveClientWatcher } = require("./liveclient");
 
+// Désactive les Client Hints (Sec-CH-UA) qui trahissent Electron auprès de
+// Google OAuth même quand le user-agent est spoofé en Chrome standard.
+app.commandLine.appendSwitch("disable-features", "UserAgentClientHint");
+
 // URL du backend. En dev : le serveur Next local. Surchargée par variable
 // d'environnement pour pointer vers le site déployé en prod.
 const BACKEND_URL = process.env.LOW_BACKEND_URL || "http://localhost:3000";
