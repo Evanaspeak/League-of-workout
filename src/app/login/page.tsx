@@ -5,11 +5,10 @@ import { DesktopLoginButton } from "@/components/DesktopLoginButton";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; mode?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const { error, mode } = await searchParams;
+  const { error } = await searchParams;
   const betaFull = error === "AccessDenied";
-  const isDesktop = mode === "desktop";
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center">
@@ -36,26 +35,22 @@ export default async function LoginPage({
         ) : (
           <div className="space-y-3">
             <form
-              action={async (formData: FormData) => {
+              action={async () => {
                 "use server";
-                const m = formData.get("mode") as string;
-                await signIn("google", { redirectTo: m === "desktop" ? "/?desktop_auth=1" : "/" });
+                await signIn("google", { redirectTo: "/" });
               }}
             >
-              <input type="hidden" name="mode" value={isDesktop ? "desktop" : "web"} />
               <button type="submit" className="lol-btn w-full">
                 Se connecter avec Google
               </button>
             </form>
 
             <form
-              action={async (formData: FormData) => {
+              action={async () => {
                 "use server";
-                const m = formData.get("mode") as string;
-                await signIn("discord", { redirectTo: m === "desktop" ? "/?desktop_auth=1" : "/" });
+                await signIn("discord", { redirectTo: "/" });
               }}
             >
-              <input type="hidden" name="mode" value={isDesktop ? "desktop" : "web"} />
               <button
                 type="submit"
                 className="lol-btn w-full"

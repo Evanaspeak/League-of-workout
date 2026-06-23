@@ -234,9 +234,9 @@ export default function Dashboard() {
           <div className="lol-panel p-4">
             <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">Progression cumulative</h2>
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={data.cumulByDate}>
+              <LineChart data={(data.cumulByDate ?? []).map((d, i) => ({ ...d, label: `G${i + 1}` }))}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(200,170,110,0.1)" />
-                <XAxis dataKey="date" tick={{ fill: "rgba(240,230,211,0.4)", fontSize: 10 }} />
+                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.4)", fontSize: 10 }} />
                 <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
                 <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
                 <Line dataKey="cumul" stroke="#0bc4e3" strokeWidth={2} dot={false} />

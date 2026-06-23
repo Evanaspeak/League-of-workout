@@ -131,25 +131,26 @@ function createWindow() {
 
   mainWindow.webContents.setUserAgent(CHROME_UA);
 
-  // Intercepte les redirections vers Google/Discord OAuth → ouvre dans Chrome.
+  // Intercepte les redirections OAuth → ouvre dans le navigateur système.
+  // Discord utilise discord.com/api/oauth2 ou discord.com/oauth2 selon la version.
+  function isOAuthUrl(url) {
+    return (
+      url.includes("accounts.google.com") ||
+      url.includes("discord.com") && url.includes("oauth2")
+    );
+  }
+
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    if (
-      url.startsWith("https://accounts.google.com") ||
-      url.startsWith("https://discord.com/oauth2")
-    ) {
+    if (isOAuthUrl(url)) {
       event.preventDefault();
       shell.openExternal(url);
       mainWindow.loadURL(WAITING_HTML);
     }
   });
 
-  // Même chose pour les popups OAuth.
+  // Même chose pour les popups OAuth (window.open).
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (
-      url.startsWith("https://accounts.google.com") ||
-      url.startsWith("https://discord.com/oauth2") ||
-      !url.startsWith(BACKEND_URL)
-    ) {
+    if (isOAuthUrl(url) || !url.startsWith(BACKEND_URL)) {
       shell.openExternal(url);
       return { action: "deny" };
     }
