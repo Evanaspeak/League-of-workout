@@ -236,8 +236,14 @@ function openAuthPopup() {
   authPopup.on("closed", () => { authPopup = null; });
 }
 
-// IPC : le preload l'expose via window.electronLOL.openBrowserLogin()
-ipcMain.on("open-browser-login", () => {
+// Google bloque l'OAuth dans Electron → on ouvre Chrome, flux port 3099 comme avant.
+ipcMain.on("open-google-login", () => {
+  shell.openExternal(`${BACKEND_URL}/login`);
+  if (mainWindow) mainWindow.loadURL(WAITING_HTML);
+});
+
+// Discord fonctionne bien dans un popup Electron natif.
+ipcMain.on("open-discord-popup", () => {
   openAuthPopup();
 });
 

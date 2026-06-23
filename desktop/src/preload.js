@@ -10,8 +10,10 @@ function subscribe(wantedType, callback) {
 
 contextBridge.exposeInMainWorld("electronLOL", {
   isDesktop: true,
-  // Ouvre la page de login dans le navigateur système (contourne les blocages OAuth).
-  openBrowserLogin: () => ipcRenderer.send("open-browser-login"),
+  // Google bloque l'OAuth dans Electron → ouvre le navigateur système.
+  openGoogleLogin: () => ipcRenderer.send("open-google-login"),
+  // Discord fonctionne dans un popup Electron natif.
+  openDiscordLogin: () => ipcRenderer.send("open-discord-popup"),
   onGameEnded: (callback) => subscribe("game-ended", callback),
   onGameStarted: (callback) => subscribe("game-started", callback),
 });

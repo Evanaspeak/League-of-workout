@@ -13,21 +13,20 @@ export function LoginButtons() {
   }, []);
 
   if (isDesktop) {
-    const openBrowser = () => window.electronLOL?.openBrowserLogin();
     return (
       <div className="space-y-3">
-        <button className="lol-btn w-full" onClick={openBrowser}>
+        <button className="lol-btn w-full" onClick={() => window.electronLOL?.openGoogleLogin()}>
           Se connecter avec Google
         </button>
         <button
           className="lol-btn w-full"
           style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
-          onClick={openBrowser}
+          onClick={() => window.electronLOL?.openDiscordLogin()}
         >
           Se connecter avec Discord
         </button>
         <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
-          Votre navigateur s&apos;ouvrira pour finaliser la connexion.
+          Google s&apos;ouvre dans votre navigateur · Discord reste dans l&apos;app.
         </p>
       </div>
     );
