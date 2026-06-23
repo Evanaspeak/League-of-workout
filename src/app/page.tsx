@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid,
@@ -82,6 +83,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <DesktopAuthHandler />
       <h1 className="text-2xl font-bold gold-text tracking-widest">DASHBOARD</h1>
 
       {/* Stats globales */}

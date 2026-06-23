@@ -1,13 +1,15 @@
 import { signIn } from "@/auth";
 import Link from "next/link";
+import { DesktopLoginButton } from "@/components/DesktopLoginButton";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; mode?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, mode } = await searchParams;
   const betaFull = error === "AccessDenied";
+  const isDesktop = mode === "desktop";
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center">
@@ -34,22 +36,26 @@ export default async function LoginPage({
         ) : (
           <div className="space-y-3">
             <form
-              action={async () => {
+              action={async (formData: FormData) => {
                 "use server";
-                await signIn("google", { redirectTo: "/" });
+                const m = formData.get("mode") as string;
+                await signIn("google", { redirectTo: m === "desktop" ? "/?desktop_auth=1" : "/" });
               }}
             >
+              <input type="hidden" name="mode" value={isDesktop ? "desktop" : "web"} />
               <button type="submit" className="lol-btn w-full">
                 Se connecter avec Google
               </button>
             </form>
 
             <form
-              action={async () => {
+              action={async (formData: FormData) => {
                 "use server";
-                await signIn("discord", { redirectTo: "/" });
+                const m = formData.get("mode") as string;
+                await signIn("discord", { redirectTo: m === "desktop" ? "/?desktop_auth=1" : "/" });
               }}
             >
+              <input type="hidden" name="mode" value={isDesktop ? "desktop" : "web"} />
               <button
                 type="submit"
                 className="lol-btn w-full"
@@ -62,6 +68,8 @@ export default async function LoginPage({
             <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
               Seuls les 100 premiers inscrits ont accès pendant la beta.
             </p>
+
+            <DesktopLoginButton />
           </div>
         )}
       </div>
