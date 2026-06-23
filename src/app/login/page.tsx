@@ -4,10 +4,24 @@ import { LoginButtons } from "@/components/LoginButtons";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; transferred?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, transferred } = await searchParams;
   const betaFull = error === "AccessDenied";
+
+  if (transferred === "1") {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="lol-panel p-8 w-full max-w-sm space-y-4 text-center">
+          <div className="text-4xl">✓</div>
+          <p className="gold-text font-bold text-lg">Connexion réussie</p>
+          <p className="text-sm" style={{ color: "rgba(240,230,211,0.6)" }}>
+            Vous êtes connecté dans l&apos;application. Vous pouvez fermer cet onglet.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center">

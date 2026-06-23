@@ -18,6 +18,11 @@ export function DesktopAuthHandler() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ jwt: data.jwt }),
+        }).then((r) => {
+          if (r.ok) {
+            // Electron a reçu la session → redirige Chrome hors de l'app
+            window.location.replace("/login?transferred=1");
+          }
         });
       })
       .catch(() => {});
