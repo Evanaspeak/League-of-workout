@@ -7,6 +7,8 @@ import { useEffect } from "react";
 export function DesktopAuthHandler() {
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Ne s'exécute que dans Chrome, pas dans l'app Electron.
+    if (window.electronLOL?.isDesktop) return;
     if (sessionStorage.getItem("desktop_synced")) return;
 
     fetch("/api/auth/desktop-token", { method: "POST" })
@@ -20,8 +22,8 @@ export function DesktopAuthHandler() {
           body: JSON.stringify({ jwt: data.jwt }),
         }).then((r) => {
           if (r.ok) {
-            // Electron a reçu la session → redirige Chrome hors de l'app
-            window.location.replace("/login?transferred=1");
+            // Electron a reçu la session → déconnecte Chrome et affiche la page de succès.
+            window.location.replace("/api/auth/desktop-complete");
           }
         });
       })
