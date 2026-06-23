@@ -1,6 +1,5 @@
-import { signIn } from "@/auth";
 import Link from "next/link";
-import { DesktopLoginButton } from "@/components/DesktopLoginButton";
+import { LoginButtons } from "@/components/LoginButtons";
 
 export default async function LoginPage({
   searchParams,
@@ -33,39 +32,7 @@ export default async function LoginPage({
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
-            <form
-              action={async () => {
-                "use server";
-                await signIn("google", { redirectTo: "/" });
-              }}
-            >
-              <button type="submit" className="lol-btn w-full">
-                Se connecter avec Google
-              </button>
-            </form>
-
-            <form
-              action={async () => {
-                "use server";
-                await signIn("discord", { redirectTo: "/" });
-              }}
-            >
-              <button
-                type="submit"
-                className="lol-btn w-full"
-                style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
-              >
-                Se connecter avec Discord
-              </button>
-            </form>
-
-            <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
-              Seuls les 100 premiers inscrits ont accès pendant la beta.
-            </p>
-
-            <DesktopLoginButton />
-          </div>
+          <LoginButtons />
         )}
       </div>
     </div>
