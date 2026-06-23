@@ -32,6 +32,39 @@ export async function GET() {
     cumulByDate.push({ date: g.date.toString().slice(0, 10), cumul });
   }
 
+  // Moyennes par période (heure / jour de semaine / mois)
+  const byHour: Record<number, { total: number; count: number }> = {};
+  const byWeekday: Record<number, { total: number; count: number }> = {};
+  const byMonth: Record<number, { total: number; count: number }> = {};
+
+  for (const g of games) {
+    const d = new Date(g.date);
+    const h = d.getHours();
+    const wd = d.getDay();
+    const mo = d.getMonth();
+    byHour[h] = byHour[h] ?? { total: 0, count: 0 };
+    byHour[h].total += g.pompesCalculees;
+    byHour[h].count++;
+    byWeekday[wd] = byWeekday[wd] ?? { total: 0, count: 0 };
+    byWeekday[wd].total += g.pompesCalculees;
+    byWeekday[wd].count++;
+    byMonth[mo] = byMonth[mo] ?? { total: 0, count: 0 };
+    byMonth[mo].total += g.pompesCalculees;
+    byMonth[mo].count++;
+  }
+
+  const weekdayOrder = [1, 2, 3, 4, 5, 6, 0];
+  const weekdayLabels = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const monthLabels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+
+  const statsByPeriod = {
+    hour: Array.from({ length: 24 }, (_, h) => ({ label: `${h}h`, avg: byHour[h] ? Math.round(byHour[h].total / byHour[h].count) : 0 }))
+      .filter((_, h) => !!byHour[h]),
+    weekday: weekdayOrder.map((wd, i) => ({ label: weekdayLabels[i], avg: byWeekday[wd] ? Math.round(byWeekday[wd].total / byWeekday[wd].count) : 0 })),
+    month: monthLabels.map((label, i) => ({ label, avg: byMonth[i] ? Math.round(byMonth[i].total / byMonth[i].count) : 0 }))
+      .filter((_, i) => !!byMonth[i]),
+  };
+
   return NextResponse.json({
     totalGames,
     wins,
@@ -41,6 +74,7 @@ export async function GET() {
     pompesByRole,
     pompesByNiveau,
     cumulByDate,
+    statsByPeriod,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,
     niveau: user?.gainageMaxSec ?? 45,
   });

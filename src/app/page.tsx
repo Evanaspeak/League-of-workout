@@ -7,6 +7,8 @@ import {
 } from "recharts";
 import { useSession } from "@/lib/SessionContext";
 
+type PeriodStat = { label: string; avg: number };
+
 type DashData = {
   totalGames: number;
   wins: number;
@@ -15,6 +17,7 @@ type DashData = {
   recordPompes: number;
   pompesByRole: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
+  statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
   objectifTotalPompes: number;
 };
 
@@ -39,6 +42,7 @@ function getLevelLabel(sec: number): string {
 export default function Dashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [showGainageModal, setShowGainageModal] = useState(false);
+  const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month">("weekday");
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
     return "60";
@@ -230,21 +234,66 @@ export default function Dashboard() {
           </div>
         )}
 
-        {(data.cumulByDate ?? []).length > 0 && (
-          <div className="lol-panel p-4">
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">Progression cumulative</h2>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={(data.cumulByDate ?? []).map((d, i) => ({ ...d, label: `G${i + 1}` }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(200,170,110,0.1)" />
-                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.4)", fontSize: 10 }} />
-                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
-                <Line dataKey="cumul" stroke="#0bc4e3" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {(data.cumulByDate ?? []).length > 0 && (() => {
+          const dateCount: Record<string, number> = {};
+          const cumulData = (data.cumulByDate ?? []).map((d) => {
+            const shortDate = new Date(d.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+            dateCount[shortDate] = (dateCount[shortDate] || 0) + 1;
+            const label = dateCount[shortDate] === 1 ? shortDate : `${shortDate} (${dateCount[shortDate]})`;
+            return { ...d, label };
+          });
+          return (
+            <div className="lol-panel p-4">
+              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">Progression cumulative</h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={cumulData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(200,170,110,0.1)" />
+                  <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.4)", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
+                  <Line dataKey="cumul" stroke="#0bc4e3" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          );
+        })()}
       </div>
+
+      {/* Analytiques par période */}
+      {data.statsByPeriod && data.totalGames > 0 && (
+        <div className="lol-panel p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Pompes moyennes / partie</h2>
+            <div className="flex gap-1">
+              {(["hour", "weekday", "month"] as const).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setStatsPeriod(key)}
+                  className="text-xs px-2 py-1 rounded"
+                  style={{
+                    background: statsPeriod === key ? "rgba(200,170,110,0.25)" : "rgba(200,170,110,0.06)",
+                    color: statsPeriod === key ? "#c8aa6e" : "rgba(240,230,211,0.4)",
+                    border: `1px solid ${statsPeriod === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
+                  }}
+                >
+                  {key === "hour" ? "Heure" : key === "weekday" ? "Jour" : "Mois"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={data.statsByPeriod[statsPeriod]}>
+              <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
+              <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+              <Tooltip
+                contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                formatter={(v: number) => [`${v} pompes`, "Moyenne"]}
+              />
+              <Bar dataKey="avg" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {data.totalGames === 0 && (
         <div className="lol-panel p-8 text-center space-y-2">

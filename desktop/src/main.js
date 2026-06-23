@@ -157,9 +157,7 @@ function createWindow() {
     return { action: "allow" };
   });
 
-  // Charge la page de login en mode desktop (pour que le redirectTo inclue
-  // ?desktop_auth=1 après un OAuth réussi).
-  mainWindow.loadURL(`${BACKEND_URL}/login?mode=desktop`);
+  mainWindow.loadURL(`${BACKEND_URL}/login`);
 
   stopWatcher = startLiveClientWatcher((event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -172,10 +170,75 @@ function createWindow() {
   });
 }
 
+// ── Popup d'authentification OAuth (reste dans Electron, pas de Chrome) ────
+
+let authPopup = null;
+
+function openAuthPopup() {
+  if (authPopup && !authPopup.isDestroyed()) {
+    authPopup.focus();
+    return;
+  }
+
+  authPopup = new BrowserWindow({
+    width: 520,
+    height: 720,
+    title: "Connexion – League of Workouts",
+    backgroundColor: "#0a1428",
+    parent: mainWindow ?? undefined,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      // Pas de preload → window.electronLOL absent → formulaires web classiques
+    },
+  });
+
+  authPopup.webContents.setUserAgent(CHROME_UA);
+  authPopup.loadURL(`${BACKEND_URL}/login`);
+
+  // Dès que l'OAuth est terminé, Auth.js redirige vers "/" : on transfère le cookie
+  authPopup.webContents.on("did-navigate", async (_event, url) => {
+    const path = url.split("?")[0];
+    const isDashboard =
+      url.startsWith(BACKEND_URL) &&
+      !path.startsWith(BACKEND_URL + "/login") &&
+      !path.startsWith(BACKEND_URL + "/api") &&
+      !path.startsWith(BACKEND_URL + "/waitlist");
+    if (isDashboard) {
+      try {
+        const popupCookies = await authPopup.webContents.session.cookies.get({
+          url: BACKEND_URL,
+          name: "authjs.session-token",
+        });
+        if (popupCookies.length > 0) {
+          const targetSession = mainWindow?.webContents?.session ?? electronSession.defaultSession;
+          await targetSession.cookies.set({
+            url: BACKEND_URL,
+            name: "authjs.session-token",
+            value: popupCookies[0].value,
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            path: "/",
+          });
+        }
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(BACKEND_URL);
+        }
+      } catch (err) {
+        console.error("[LOW] Erreur transfert session popup:", err);
+      } finally {
+        if (authPopup && !authPopup.isDestroyed()) authPopup.close();
+      }
+    }
+  });
+
+  authPopup.on("closed", () => { authPopup = null; });
+}
+
 // IPC : le preload l'expose via window.electronLOL.openBrowserLogin()
 ipcMain.on("open-browser-login", () => {
-  shell.openExternal(`${BACKEND_URL}/login?mode=desktop`);
-  if (mainWindow) mainWindow.loadURL(WAITING_HTML);
+  openAuthPopup();
 });
 
 app.whenReady().then(() => {
