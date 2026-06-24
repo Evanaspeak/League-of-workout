@@ -9,9 +9,12 @@ const links = [
   { href: "/settings", label: "Réglages" },
 ];
 
+const PUBLIC_PATHS = ["/login", "/waitlist"];
+
 export default function Nav() {
   const path = usePathname();
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
+  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
 
   return (
     <nav style={{
@@ -40,7 +43,7 @@ export default function Nav() {
           ⚔ L·O·W
         </Link>
 
-        {links.map((l) => {
+        {!isPublic && links.map((l) => {
           const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
           return (
             <Link
@@ -76,7 +79,7 @@ export default function Nav() {
           );
         })}
 
-        {sessionActive && (
+        {!isPublic && sessionActive && (
           <div className="ml-auto flex items-center gap-2 shrink-0">
             <div style={{
               display: "flex",

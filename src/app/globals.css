@@ -152,6 +152,24 @@ body {
 
 .fade-in { animation: fadeIn 0.25s ease forwards; }
 
+@keyframes splashSword {
+  0%   { opacity: 0; transform: scale(0.55) translateY(14px); filter: blur(6px); }
+  45%  { opacity: 1; transform: scale(1.08) translateY(0);    filter: blur(0); }
+  65%  { transform: scale(0.97); }
+  80%  { transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes splashTitle {
+  0%,35% { opacity: 0; transform: translateY(10px); }
+  100%   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes splashGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(200,170,110,0.9), 0 0 60px rgba(200,170,110,0.4); }
+  50%       { text-shadow: 0 0 50px rgba(200,170,110,1),   0 0 90px rgba(200,170,110,0.6); }
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg-base); }
