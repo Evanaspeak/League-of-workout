@@ -14,40 +14,108 @@ export default function Nav() {
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
 
   return (
-    <nav style={{ background: "var(--lol-dark-mid)", borderBottom: "1px solid rgba(200,170,110,0.25)" }}>
+    <nav style={{
+      background: "rgba(4,8,16,0.88)",
+      backdropFilter: "blur(14px)",
+      WebkitBackdropFilter: "blur(14px)",
+      borderBottom: "1px solid rgba(200,170,110,0.16)",
+      position: "sticky",
+      top: 0,
+      zIndex: 40,
+    }}>
       <div className="max-w-6xl mx-auto px-4 flex items-center gap-1 h-14">
-        <span className="gold-text font-bold text-lg mr-4 tracking-widest">⚔ LOW</span>
-        {links.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="px-3 py-1.5 text-sm rounded transition-colors"
-            style={{
-              color: path === l.href ? "#c8aa6e" : "rgba(240,230,211,0.6)",
-              background: path === l.href ? "rgba(200,170,110,0.12)" : "transparent",
-              fontWeight: path === l.href ? "600" : "400",
-            }}
-          >
-            {l.label}
-          </Link>
-        ))}
+        <Link
+          href="/"
+          style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "1rem",
+            letterSpacing: "0.14em",
+            color: "#C8AA6E",
+            textShadow: "0 0 22px rgba(200,170,110,0.5)",
+            textDecoration: "none",
+            marginRight: "1.5rem",
+            flexShrink: 0,
+          }}
+        >
+          ⚔ L·O·W
+        </Link>
+
+        {links.map((l) => {
+          const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              style={{
+                position: "relative",
+                padding: "4px 10px",
+                paddingBottom: 6,
+                fontSize: "0.78rem",
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: active ? "#C8AA6E" : "rgba(240,230,211,0.45)",
+                fontWeight: active ? "600" : "400",
+                textDecoration: "none",
+                transition: "color 0.15s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {l.label}
+              {active && (
+                <span style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 10,
+                  right: 10,
+                  height: 2,
+                  background: "linear-gradient(to right, transparent, #C8AA6E, transparent)",
+                  borderRadius: 1,
+                }} />
+              )}
+            </Link>
+          );
+        })}
 
         {sessionActive && (
-          <div className="ml-auto flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2 px-3 py-1 rounded"
-              style={{ background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.3)" }}>
-              <div className="w-2 h-2 rounded-full shrink-0"
-                style={{ background: "#4caf50", boxShadow: "0 0 6px #4caf50", animation: "pulse 1.5s infinite" }} />
-              <span className="text-xs win-text font-semibold">Session</span>
-              <span className="text-xs gold-text">{sessionGames.length} game{sessionGames.length > 1 ? "s" : ""}</span>
-              <span className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              padding: "4px 12px",
+              borderRadius: 999,
+              background: "rgba(34,197,94,0.07)",
+              border: "1px solid rgba(34,197,94,0.25)",
+            }}>
+              <span style={{
+                width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                background: "#22C55E",
+                boxShadow: "0 0 6px #22C55E",
+                animation: "pulse 1.5s ease-in-out infinite",
+                display: "inline-block",
+              }} />
+              <span style={{ fontSize: "0.7rem", color: "#22C55E", fontWeight: 700, letterSpacing: "0.06em" }}>LIVE</span>
+              <span style={{ fontSize: "0.7rem", color: "#C8AA6E" }}>{sessionGames.length}G</span>
+              <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)" }}>
                 {polling ? "⟳" : `${countdown}s`}
               </span>
             </div>
             <button
               onClick={stopSession}
-              className="text-xs px-2 py-1 rounded"
-              style={{ background: "rgba(200,70,70,0.15)", color: "#e05555", border: "1px solid rgba(200,70,70,0.3)" }}
+              title="Arrêter la session"
+              style={{
+                width: 28, height: 28,
+                borderRadius: "50%",
+                background: "rgba(194,59,34,0.15)",
+                border: "1px solid rgba(194,59,34,0.3)",
+                color: "#C23B22",
+                cursor: "pointer",
+                fontSize: "0.7rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
             >
               ⏹
             </button>

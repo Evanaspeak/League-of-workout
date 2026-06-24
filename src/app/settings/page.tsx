@@ -111,11 +111,11 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold gold-text tracking-widest">RÉGLAGES</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>RÉGLAGES</h1>
 
       {/* ── Profil ──────────────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
-        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Profil</h2>
+        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Profil</h2>
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Pseudo affiché</label>
@@ -180,7 +180,7 @@ export default function SettingsPage() {
 
       {/* ── Poids par rôle ──────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-3">
-        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Poids par rôle / mode</h2>
+        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Poids par rôle / mode</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -223,7 +223,7 @@ export default function SettingsPage() {
 
       {/* ── Niveaux (gainage) ───────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-3">
-        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Niveaux (gainage)</h2>
+        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Niveaux (gainage)</h2>
         <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
           Le niveau est déterminé à chaque session par le test de gainage — ces seuils définissent les paliers.
         </p>
@@ -276,7 +276,7 @@ export default function SettingsPage() {
 
       {/* ── Maîtrise ────────────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
-        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Paramètres de maîtrise</h2>
+        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Paramètres de maîtrise</h2>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
@@ -309,11 +309,7 @@ export default function SettingsPage() {
 
       {/* Déconnexion */}
       <form action={logout} className="pt-2">
-        <button
-          type="submit"
-          className="w-full py-2 rounded text-sm"
-          style={{ background: "rgba(200,70,70,0.12)", color: "#e05555", border: "1px solid rgba(200,70,70,0.3)" }}
-        >
+        <button type="submit" className="lol-btn lol-btn-danger w-full">
           Se déconnecter
         </button>
       </form>

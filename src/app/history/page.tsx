@@ -243,19 +243,28 @@ export default function HistoryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-bold gold-text tracking-widest">HISTORIQUE</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>HISTORIQUE</h1>
 
       {/* Tab toggle */}
-      <div className="flex gap-2">
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(200,170,110,0.14)" }}>
         {(["parties", "pompes"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setView(tab)}
-            className="px-5 py-2 rounded text-sm font-semibold transition-all"
             style={{
-              background: view === tab ? "rgba(200,170,110,0.18)" : "rgba(200,170,110,0.06)",
-              color: view === tab ? "#c8aa6e" : "rgba(240,230,211,0.5)",
-              border: `1px solid ${view === tab ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.15)"}`,
+              position: "relative",
+              padding: "6px 22px 8px",
+              background: "transparent",
+              border: "none",
+              borderBottom: `2px solid ${view === tab ? "#C8AA6E" : "transparent"}`,
+              marginBottom: -1,
+              color: view === tab ? "#C8AA6E" : "rgba(240,230,211,0.4)",
+              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+              fontSize: "0.75rem",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              transition: "color 0.15s, border-color 0.15s",
             }}
           >
             {tab === "parties" ? "Parties" : "Pompes"}
@@ -428,7 +437,7 @@ export default function HistoryPage() {
                 <div
                   key={m.matchId}
                   className="lol-panel px-4 py-3 flex items-center gap-3"
-                  style={{ background: "var(--lol-dark-light)" }}
+                  style={{ background: "var(--bg-raised)" }}
                 >
                   <span className="text-xs w-5 text-center" style={{ color: "rgba(200,170,110,0.4)" }}>{i + 1}</span>
 
@@ -547,7 +556,7 @@ export default function HistoryPage() {
                         return filtered.map((g) => {
                           const cumul = cumulMap.get(g.id) ?? 0;
                           return (
-                            <tr key={g.id} className="lol-panel" style={{ background: "var(--lol-dark-light)" }}>
+                            <tr key={g.id} style={{ background: "var(--bg-raised)", borderBottom: "1px solid rgba(200,170,110,0.08)" }}>
                               <td className="px-3 py-2" style={{ color: "rgba(240,230,211,0.6)" }}>
                                 {new Date(g.date).toLocaleDateString("fr-FR")}
                               </td>

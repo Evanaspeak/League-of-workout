@@ -20,7 +20,7 @@ export function DesktopLoginButton() {
       <button
         className="lol-btn w-full"
         style={{ background: "linear-gradient(to bottom, #1a3a5c, #0f2540)" }}
-        onClick={() => window.electronLOL?.openBrowserLogin()}
+        onClick={() => window.electronLOL?.openGoogleLogin()}
       >
         🌐 Se connecter via votre navigateur
       </button>

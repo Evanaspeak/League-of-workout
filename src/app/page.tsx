@@ -23,10 +23,10 @@ type DashData = {
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="lol-panel p-4 flex flex-col gap-1">
-      <span className="text-xs uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>{label}</span>
-      <span className="text-2xl font-bold gold-text">{value}</span>
-      {sub && <span className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>{sub}</span>}
+    <div className="stat-card p-4 flex flex-col gap-1 fade-in">
+      <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(200,170,110,0.55)" }}>{label}</span>
+      <span style={{ fontSize: "1.8rem", fontFamily: "var(--font-heading, 'Russo One', sans-serif)", color: "#C8AA6E", lineHeight: 1.1 }}>{value}</span>
+      {sub && <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.45)" }}>{sub}</span>}
     </div>
   );
 }
@@ -88,7 +88,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <DesktopAuthHandler />
-      <h1 className="text-2xl font-bold gold-text tracking-widest">DASHBOARD</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>DASHBOARD</h1>
 
       {/* Stats globales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -205,8 +205,7 @@ export default function Dashboard() {
             {sessionError && <p className="text-sm loss-text">{sessionError}</p>}
 
             <button
-              className="lol-btn w-full"
-              style={{ background: "linear-gradient(to bottom, #c23b22, #8b2515)", color: "#f0e6d3" }}
+              className="lol-btn lol-btn-danger w-full"
               onClick={stopSession}
             >
               ⏹ Arrêter la session
@@ -216,7 +215,7 @@ export default function Dashboard() {
       </div>
 
       {/* Statistiques globales */}
-      <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>
+      <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "rgba(200,170,110,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
         Statistiques globales
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -287,7 +286,7 @@ export default function Dashboard() {
               <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
               <Tooltip
                 contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                formatter={(v: number) => [`${v} pompes`, "Moyenne"]}
+                formatter={(v) => [`${v} pompes`, "Moyenne"]}
               />
               <Bar dataKey="avg" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
             </BarChart>
