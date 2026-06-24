@@ -236,7 +236,7 @@ export default function Dashboard() {
         {(data.cumulByDate ?? []).length > 0 && (() => {
           const dateCount: Record<string, number> = {};
           const cumulData = (data.cumulByDate ?? []).map((d) => {
-            const shortDate = new Date(d.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+            const shortDate = new Date(d.date.slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
             dateCount[shortDate] = (dateCount[shortDate] || 0) + 1;
             const label = dateCount[shortDate] === 1 ? shortDate : `${shortDate} (${dateCount[shortDate]})`;
             return { ...d, label };
