@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 import { authConfig } from "@/auth.config";
 
 // Nombre de places en beta : seuls les BETA_LIMIT premiers comptes sont admis.
@@ -39,13 +40,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async jwt({ token, user }) {
-      if (user?.id) token.uid = user.id;
+      if (user?.id) {
+        token.uid = user.id;
+        // Lit la préférence "rester connecté" posée par le client juste avant l'OAuth.
+        // Défaut = true pour rétrocompatibilité (sessions existantes).
+        const cs = await cookies();
+        const rm = cs.get("low_rm");
+        token.rm = rm ? rm.value === "1" : true;
+      }
       return token;
     },
 
     async session({ session, token }) {
       if (session.user && token.uid) {
         session.user.id = token.uid as string;
+        session.user.rememberMe = (token.rm as boolean) ?? true;
       }
       return session;
     },

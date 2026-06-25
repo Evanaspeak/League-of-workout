@@ -3,6 +3,7 @@ import { Russo_One, Chakra_Petch } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
+import { SessionGuard } from "@/components/SessionGuard";
 import { SessionProvider } from "@/lib/SessionContext";
 
 const russoOne = Russo_One({
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         <SessionProvider>
           <SplashScreen />
+          <SessionGuard />
           <Nav />
           <main className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
             {children}
