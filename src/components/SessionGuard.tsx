@@ -1,24 +1,21 @@
 "use client";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 const PUBLIC = ["/login", "/waitlist", "/api/"];
 
-// "Rester connecté" = false → on pose un cookie de session navigateur (sans maxAge).
-// Ce cookie disparaît quand le navigateur ferme. Au prochain démarrage,
-// son absence déclenche la déconnexion.
 export function SessionGuard() {
   const path = usePathname();
 
   useEffect(() => {
     if (PUBLIC.some((p) => path.startsWith(p))) return;
     if (typeof window === "undefined") return;
-    if (window.electronLOL?.isDesktop) return; // Desktop : toujours mémorisé
+    if (window.electronLOL?.isDesktop) return;
 
     const rm = localStorage.getItem("low_rm");
-    if (rm !== "false") return; // Mémorisé (ou préférence non définie) → rien à faire
+    if (rm !== "false") return;
 
-    // Détecte une connexion fraîche via le paramètre ?li=1 posé par auth-actions.
     const params = new URLSearchParams(window.location.search);
     const justLoggedIn = params.get("li") === "1";
 
@@ -26,16 +23,17 @@ export function SessionGuard() {
       params.delete("li");
       const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", clean);
-      // Pose le cookie de session (pas de maxAge = cookie de session navigateur).
       document.cookie = "low_session=1; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
       return;
     }
 
     const hasSession = document.cookie.split(";").some((c) => c.trim().startsWith("low_session="));
-    if (hasSession) return; // Navigateur toujours ouvert, OK
+    if (hasSession) return;
 
-    // Aucun cookie de session + pas de connexion fraîche = navigateur rouvert → déconnexion.
-    window.location.href = "/api/auth/session-expired";
+    // signOut() d'Auth.js supprime proprement tous ses cookies (__Secure-, __Host-, etc.)
+    signOut({ redirect: false }).then(() => {
+      window.location.href = "/login";
+    });
   }, [path]);
 
   return null;
