@@ -18,9 +18,11 @@ export async function GET() {
   const recordPompes = games.length > 0 ? Math.max(...games.map((g) => g.pompesCalculees)) : 0;
 
   const pompesByRole: Record<string, number> = {};
+  const gamesByRole: Record<string, number> = {};
   const pompesByNiveau: Record<number, number> = {};
   for (const g of games) {
     pompesByRole[g.role] = (pompesByRole[g.role] || 0) + g.pompesCalculees;
+    gamesByRole[g.role] = (gamesByRole[g.role] || 0) + 1;
     pompesByNiveau[g.niveauCalcule] = (pompesByNiveau[g.niveauCalcule] || 0) + g.pompesCalculees;
   }
 
@@ -72,6 +74,7 @@ export async function GET() {
     totalPompes,
     recordPompes,
     pompesByRole,
+    gamesByRole,
     pompesByNiveau,
     cumulByDate,
     statsByPeriod,

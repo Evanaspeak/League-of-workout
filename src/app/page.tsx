@@ -17,6 +17,7 @@ type DashData = {
   totalPompes: number;
   recordPompes: number;
   pompesByRole: Record<string, number>;
+  gamesByRole: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
   objectifTotalPompes: number;
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [showGainageModal, setShowGainageModal] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month">("weekday");
+  const [roleView, setRoleView] = useState<"total" | "avg">("total");
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
     return "60";
@@ -82,7 +84,12 @@ export default function Dashboard() {
   const progress = data.objectifTotalPompes > 0
     ? Math.min(100, Math.round((data.totalPompes / data.objectifTotalPompes) * 100))
     : 0;
-  const roleData = Object.entries(data.pompesByRole ?? {}).map(([role, pompes]) => ({ role, pompes }));
+  const roleData = Object.entries(data.pompesByRole ?? {}).map(([role, pompes]) => ({
+    role,
+    pompes: roleView === "avg"
+      ? Math.round(pompes / (data.gamesByRole?.[role] || 1))
+      : pompes,
+  }));
   const totalSessionPompes = sessionGames.reduce((s, g) => s + g.pompes, 0);
   const sessionChartData = [...sessionGames].reverse().map((g, i) => ({ label: `G${i + 1}`, pompes: g.pompes }));
 
@@ -223,12 +230,35 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {roleData.length > 0 && (
           <div className="lol-panel p-4">
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">Pompes par rôle</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+                Pompes par rôle{roleView === "avg" ? " · moy/partie" : " · total"}
+              </h2>
+              <div className="flex gap-1">
+                {(["total", "avg"] as const).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setRoleView(key)}
+                    className="text-xs px-2 py-1 rounded"
+                    style={{
+                      background: roleView === key ? "rgba(200,170,110,0.25)" : "rgba(200,170,110,0.06)",
+                      color: roleView === key ? "#c8aa6e" : "rgba(240,230,211,0.4)",
+                      border: `1px solid ${roleView === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
+                    }}
+                  >
+                    {key === "total" ? "Total" : "Moyenne"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={roleData}>
                 <XAxis dataKey="role" tick={{ fill: "#c8aa6e", fontSize: 11 }} />
                 <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
+                <Tooltip
+                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                  formatter={(v) => [`${v} pompes`, roleView === "avg" ? "Moyenne/partie" : "Total"]}
+                />
                 <Bar dataKey="pompes" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
