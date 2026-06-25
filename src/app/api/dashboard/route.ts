@@ -29,7 +29,7 @@ export async function GET() {
   let cumul = 0;
   for (const g of games) {
     cumul += g.pompesCalculees;
-    cumulByDate.push({ date: g.date.toString().slice(0, 10), cumul });
+    cumulByDate.push({ date: g.date.toISOString().slice(0, 10), cumul });
   }
 
   // Moyennes par période (heure / jour de semaine / mois)

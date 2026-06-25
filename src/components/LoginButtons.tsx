@@ -9,11 +9,13 @@ export function LoginButtons() {
   useEffect(() => {
     const desktop = !!window.electronLOL?.isDesktop;
     setIsDesktop(desktop);
-    if (desktop) setRememberMe(true);
+    // Restaure la préférence sauvegardée
+    const saved = localStorage.getItem("low_rm");
+    if (desktop || saved === "true") setRememberMe(true);
   }, []);
 
-  const setRmCookie = (val: boolean) => {
-    document.cookie = `low_rm=${val ? "1" : "0"}; max-age=300; path=/; SameSite=Lax`;
+  const saveRm = () => {
+    localStorage.setItem("low_rm", rememberMe ? "true" : "false");
   };
 
   const checkbox = (
@@ -21,6 +23,7 @@ export function LoginButtons() {
       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
       cursor: isDesktop ? "default" : "pointer",
       userSelect: "none",
+      marginTop: 4,
     }}>
       <input
         type="checkbox"
@@ -56,19 +59,20 @@ export function LoginButtons() {
 
   return (
     <div className="space-y-3">
-      <button
-        className="lol-btn w-full"
-        onClick={async () => { setRmCookie(rememberMe); await signInWithGoogle(); }}
-      >
-        Se connecter avec Google
-      </button>
-      <button
-        className="lol-btn w-full"
-        style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
-        onClick={async () => { setRmCookie(rememberMe); await signInWithDiscord(); }}
-      >
-        Se connecter avec Discord
-      </button>
+      <form action={signInWithGoogle} onSubmit={saveRm}>
+        <button type="submit" className="lol-btn w-full">
+          Se connecter avec Google
+        </button>
+      </form>
+      <form action={signInWithDiscord} onSubmit={saveRm}>
+        <button
+          type="submit"
+          className="lol-btn w-full"
+          style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
+        >
+          Se connecter avec Discord
+        </button>
+      </form>
       {checkbox}
       <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
         Seuls les 100 premiers inscrits ont accès pendant la beta.
