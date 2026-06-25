@@ -23,6 +23,9 @@ model User {
   riotRegion    String  @default("EUW1")
   gainageMaxSec Int     @default(45)
 
+  // Connexion email/mot de passe (optionnel, null pour les comptes OAuth)
+  passwordHash  String?
+
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?
   createdAt DateTime @default(now())

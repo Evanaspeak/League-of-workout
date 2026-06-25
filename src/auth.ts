@@ -1,23 +1,42 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import Credentials from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 
-// Nombre de places en beta : seuls les BETA_LIMIT premiers comptes sont admis.
 const BETA_LIMIT = 100;
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  providers: [
+    ...authConfig.providers,
+    Credentials({
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Mot de passe", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        });
+        if (!user?.passwordHash) return null;
+        const valid = await bcrypt.compare(credentials.password as string, user.passwordHash);
+        if (!valid) return null;
+        return user;
+      },
+    }),
+  ],
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   trustHost: true,
   callbacks: {
     ...authConfig.callbacks,
 
-    // Garde-fou beta : on n'autorise la création d'un compte que s'il reste
-    // de la place. Un utilisateur déjà inscrit (dans le quota) garde l'accès.
     async signIn({ account }) {
       if (!account) return true;
+      if (account.type === "credentials") return true;
 
       const existing = await prisma.account.findUnique({
         where: {
@@ -29,12 +48,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         include: { user: true },
       });
 
-      // Compte déjà lié → autorisé si son rang est dans le quota.
       if (existing) {
         return (existing.user.betaRank ?? Number.MAX_SAFE_INTEGER) <= BETA_LIMIT;
       }
 
-      // Nouveau compte → autorisé seulement si la beta n'est pas pleine.
       const count = await prisma.user.count();
       return count < BETA_LIMIT;
     },
@@ -53,8 +70,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   events: {
-    // À la création d'un compte : on lui attribue son rang d'inscription et
-    // on initialise son objectif de pompes par défaut.
     async createUser({ user }) {
       if (!user.id) return;
       const count = await prisma.user.count();
