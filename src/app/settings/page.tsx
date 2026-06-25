@@ -369,6 +369,33 @@ export default function SettingsPage() {
               <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
                 {savingSettings ? "Enregistrement..." : savedSettings ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
               </button>
+
+              {/* Outils de test bêta */}
+              <div style={{ borderTop: "1px solid rgba(200,170,110,0.1)", paddingTop: "1rem" }}>
+                <p style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+                  OUTILS DE TEST
+                </p>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("low_onboarded");
+                    localStorage.removeItem("splash");
+                    window.location.reload();
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "0.55rem",
+                    background: "transparent",
+                    border: "1px dashed rgba(200,170,110,0.2)",
+                    borderRadius: 4,
+                    color: "rgba(200,170,110,0.45)",
+                    fontSize: "0.78rem",
+                    cursor: "pointer",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  Rejouer l&apos;intro (splash + onboarding)
+                </button>
+              </div>
             </div>
           )}
         </div>
