@@ -10,6 +10,14 @@ type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 
 const REGIONS = ["EUW1", "EUN1", "NA1", "KR", "BR1", "JP1", "TR1", "RU", "OC1"];
 
+const HEADING: React.CSSProperties = {
+  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+  fontSize: "0.72rem",
+  color: "#C8AA6E",
+  letterSpacing: "0.16em",
+  textTransform: "uppercase",
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -17,6 +25,7 @@ export default function SettingsPage() {
   const [profileForm, setProfileForm] = useState({
     pseudo: "", riotId: "", riotRegion: "EUW1", objectifTotalPompes: 1000,
   });
+  const [betaRank, setBetaRank] = useState<number | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
@@ -24,7 +33,8 @@ export default function SettingsPage() {
   const [puuidMsg, setPuuidMsg] = useState("");
   const [riotPuuid, setRiotPuuid] = useState("");
 
-  // ── Settings ──
+  // ── Beta panel ──
+  const [showBeta, setShowBeta] = useState(false);
   const [roleWeights, setRoleWeights] = useState<RoleWeight[]>([]);
   const [levelConfigs, setLevelConfigs] = useState<LevelConfig[]>([]);
   const [masteryConfig, setMasteryConfig] = useState<MasteryConfig | null>(null);
@@ -42,6 +52,7 @@ export default function SettingsPage() {
         riotRegion: u.riotRegion ?? "EUW1",
         objectifTotalPompes: s.goal?.objectifTotalPompes ?? 1000,
       });
+      setBetaRank(u.betaRank ?? null);
       setRiotPuuid(u.riotPuuid ?? "");
       setRoleWeights(s.roleWeights);
       setLevelConfigs(s.levelConfigs);
@@ -107,15 +118,28 @@ export default function SettingsPage() {
     setLevelConfigs((prev) => prev.map((l) => l.niveau === niveau ? { ...l, [field]: Number(value) } : l));
   };
 
-  if (!masteryConfig) return <div className="text-center py-20 gold-text">Chargement...</div>;
-
   return (
     <div className="space-y-6">
       <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>RÉGLAGES</h1>
 
       {/* ── Profil ──────────────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
-        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Profil</h2>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={HEADING}>Profil</h2>
+          {betaRank !== null && (
+            <span style={{
+              fontSize: "0.65rem",
+              letterSpacing: "0.1em",
+              color: "rgba(200,170,110,0.5)",
+              background: "rgba(200,170,110,0.07)",
+              border: "1px solid rgba(200,170,110,0.15)",
+              borderRadius: 3,
+              padding: "2px 8px",
+            }}>
+              BÊTA #{betaRank}
+            </span>
+          )}
+        </div>
 
         <div>
           <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Pseudo affiché</label>
@@ -178,134 +202,177 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* ── Poids par rôle ──────────────────────────────────────────────── */}
-      <div className="lol-panel p-5 space-y-3">
-        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Poids par rôle / mode</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
-                <th className="text-left py-2 pr-3">Rôle</th>
-                <th className="text-center py-2 px-2">Poids Morts</th>
-                <th className="text-center py-2 px-2">Poids Kills</th>
-                <th className="text-center py-2 px-2">Poids Assists</th>
-                <th className="text-center py-2 px-2">Maîtrise</th>
-              </tr>
-            </thead>
-            <tbody>
-              {roleWeights.map((rw) => (
-                <tr key={rw.role} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
-                  <td className="py-2 pr-3 gold-text font-medium">{rw.role}</td>
-                  {(["poidsMort", "poidsKill", "poidsAssist"] as const).map((field) => (
-                    <td key={field} className="py-2 px-2 text-center">
-                      <input
-                        type="number" step="0.1" min="0"
-                        className="lol-input text-center w-20"
-                        value={rw[field]}
-                        onChange={(e) => updateRole(rw.role, field, e.target.value)}
-                      />
-                    </td>
-                  ))}
-                  <td className="py-2 px-2 text-center">
-                    <input
-                      type="checkbox"
-                      checked={rw.maitriseActive}
-                      onChange={(e) => updateRole(rw.role, "maitriseActive", e.target.checked)}
-                      className="w-4 h-4 accent-yellow-500"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}
+      {betaRank !== null && masteryConfig && (
+        <div>
+          <button
+            onClick={() => setShowBeta((v) => !v)}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0.75rem 1.1rem",
+              background: "rgba(200,170,110,0.04)",
+              border: "1px solid rgba(200,170,110,0.14)",
+              borderRadius: showBeta ? "6px 6px 0 0" : 6,
+              cursor: "pointer",
+              color: "rgba(200,170,110,0.6)",
+              fontSize: "0.72rem",
+              letterSpacing: "0.14em",
+              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            }}
+          >
+            <span>⚙ PARAMÈTRES AVANCÉS — BÊTA-TESTEURS</span>
+            <span style={{ transition: "transform 0.2s", display: "inline-block", transform: showBeta ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+          </button>
 
-      {/* ── Niveaux (gainage) ───────────────────────────────────────────── */}
-      <div className="lol-panel p-5 space-y-3">
-        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Niveaux (gainage)</h2>
-        <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
-          Le niveau est déterminé à chaque session par le test de gainage — ces seuils définissent les paliers.
-        </p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
-                <th className="text-left py-2 pr-3">Niveau</th>
-                <th className="text-center py-2 px-2">Seuil gainage (sec)</th>
-                <th className="text-center py-2 px-2">Multiplicateur</th>
-                <th className="text-center py-2 px-2">Malus défaite</th>
-              </tr>
-            </thead>
-            <tbody>
-              {levelConfigs.map((lc) => (
-                <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
-                  <td className="py-2 pr-3 gold-text font-bold">Niv. {lc.niveau}</td>
-                  <td className="py-2 px-2 text-center">
+          {showBeta && (
+            <div style={{
+              border: "1px solid rgba(200,170,110,0.14)",
+              borderTop: "none",
+              borderRadius: "0 0 6px 6px",
+              padding: "1.25rem",
+              background: "rgba(200,170,110,0.02)",
+            }} className="space-y-6">
+
+              <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.4)", lineHeight: 1.6 }}>
+                Ces paramètres définissent la formule de calcul des pompes. Ils sont partagés entre tous les joueurs.
+                Dans la version finale de l&apos;app, ces réglages ne seront pas accessibles aux utilisateurs.
+              </p>
+
+              {/* Poids par rôle */}
+              <div className="space-y-3">
+                <h2 style={HEADING}>Poids par rôle / mode</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
+                        <th className="text-left py-2 pr-3">Rôle</th>
+                        <th className="text-center py-2 px-2">Poids Morts</th>
+                        <th className="text-center py-2 px-2">Poids Kills</th>
+                        <th className="text-center py-2 px-2">Poids Assists</th>
+                        <th className="text-center py-2 px-2">Maîtrise</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {roleWeights.map((rw) => (
+                        <tr key={rw.role} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
+                          <td className="py-2 pr-3 gold-text font-medium">{rw.role}</td>
+                          {(["poidsMort", "poidsKill", "poidsAssist"] as const).map((field) => (
+                            <td key={field} className="py-2 px-2 text-center">
+                              <input
+                                type="number" step="0.1" min="0"
+                                className="lol-input text-center w-20"
+                                value={rw[field]}
+                                onChange={(e) => updateRole(rw.role, field, e.target.value)}
+                              />
+                            </td>
+                          ))}
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={rw.maitriseActive}
+                              onChange={(e) => updateRole(rw.role, "maitriseActive", e.target.checked)}
+                              className="w-4 h-4 accent-yellow-500"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Niveaux */}
+              <div className="space-y-3">
+                <h2 style={HEADING}>Niveaux (gainage)</h2>
+                <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+                  Le niveau est déterminé à chaque session par le test de gainage — ces seuils définissent les paliers.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
+                        <th className="text-left py-2 pr-3">Niveau</th>
+                        <th className="text-center py-2 px-2">Seuil gainage (sec)</th>
+                        <th className="text-center py-2 px-2">Multiplicateur</th>
+                        <th className="text-center py-2 px-2">Malus défaite</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {levelConfigs.map((lc) => (
+                        <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
+                          <td className="py-2 pr-3 gold-text font-bold">Niv. {lc.niveau}</td>
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="number" min="1"
+                              className="lol-input text-center w-24"
+                              value={lc.seuilGainageSec === 9999 ? "∞" : lc.seuilGainageSec}
+                              readOnly={lc.niveau === 5}
+                              style={lc.niveau === 5 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+                              onChange={(e) => lc.niveau !== 5 && updateLevel(lc.niveau, "seuilGainageSec", e.target.value)}
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="number" step="0.01" min="0"
+                              className="lol-input text-center w-24"
+                              value={lc.multiplicateur}
+                              onChange={(e) => updateLevel(lc.niveau, "multiplicateur", e.target.value)}
+                            />
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="number" min="0"
+                              className="lol-input text-center w-20"
+                              value={lc.malusDefaite}
+                              onChange={(e) => updateLevel(lc.niveau, "malusDefaite", e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Maîtrise */}
+              <div className="space-y-4">
+                <h2 style={HEADING}>Paramètres de maîtrise</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
+                      Surcharge max ({Math.round(masteryConfig.surchargeMax * 100)}%)
+                    </label>
+                    <input
+                      type="number" step="0.01" min="0" max="2"
+                      className="lol-input"
+                      value={masteryConfig.surchargeMax}
+                      onChange={(e) => setMasteryConfig((m) => m ? { ...m, surchargeMax: Number(e.target.value) } : m)}
+                    />
+                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>Bonus maxi quand 100% de maîtrise (défaut : 0.5 = 50%)</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Parties pour max</label>
                     <input
                       type="number" min="1"
-                      className="lol-input text-center w-24"
-                      value={lc.seuilGainageSec === 9999 ? "∞" : lc.seuilGainageSec}
-                      readOnly={lc.niveau === 5}
-                      style={lc.niveau === 5 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-                      onChange={(e) => lc.niveau !== 5 && updateLevel(lc.niveau, "seuilGainageSec", e.target.value)}
+                      className="lol-input"
+                      value={masteryConfig.partiesPourMax}
+                      onChange={(e) => setMasteryConfig((m) => m ? { ...m, partiesPourMax: Number(e.target.value) } : m)}
                     />
-                  </td>
-                  <td className="py-2 px-2 text-center">
-                    <input
-                      type="number" step="0.01" min="0"
-                      className="lol-input text-center w-24"
-                      value={lc.multiplicateur}
-                      onChange={(e) => updateLevel(lc.niveau, "multiplicateur", e.target.value)}
-                    />
-                  </td>
-                  <td className="py-2 px-2 text-center">
-                    <input
-                      type="number" min="0"
-                      className="lol-input text-center w-20"
-                      value={lc.malusDefaite}
-                      onChange={(e) => updateLevel(lc.niveau, "malusDefaite", e.target.value)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>Nbre de parties avant d&apos;atteindre le bonus max (défaut : 100)</p>
+                  </div>
+                </div>
+              </div>
 
-      {/* ── Maîtrise ────────────────────────────────────────────────────── */}
-      <div className="lol-panel p-5 space-y-4">
-        <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "#C8AA6E", letterSpacing: "0.16em", textTransform: "uppercase" }}>Paramètres de maîtrise</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
-              Surcharge max ({Math.round(masteryConfig.surchargeMax * 100)}%)
-            </label>
-            <input
-              type="number" step="0.01" min="0" max="2"
-              className="lol-input"
-              value={masteryConfig.surchargeMax}
-              onChange={(e) => setMasteryConfig((m) => m ? { ...m, surchargeMax: Number(e.target.value) } : m)}
-            />
-            <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>Bonus maxi quand 100% de maîtrise (défaut : 0.5 = 50%)</p>
-          </div>
-          <div>
-            <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Parties pour max</label>
-            <input
-              type="number" min="1"
-              className="lol-input"
-              value={masteryConfig.partiesPourMax}
-              onChange={(e) => setMasteryConfig((m) => m ? { ...m, partiesPourMax: Number(e.target.value) } : m)}
-            />
-            <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>Nbre de parties avant d&apos;atteindre le bonus max (défaut : 100)</p>
-          </div>
+              <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
+                {savingSettings ? "Enregistrement..." : savedSettings ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
+              </button>
+            </div>
+          )}
         </div>
-      </div>
-
-      <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
-        {savingSettings ? "Enregistrement..." : savedSettings ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
-      </button>
+      )}
 
       {/* Déconnexion */}
       <form action={logout} className="pt-2">
