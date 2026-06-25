@@ -13,13 +13,9 @@ export function SessionGuard() {
     if (typeof window === "undefined") return;
     if (window.electronLOL?.isDesktop) return;
 
-    const rm = localStorage.getItem("low_rm");
-    if (rm !== "false") return;
-
+    // Nettoie ?li=1 et pose le cookie de session peu importe l'option "Rester connecté"
     const params = new URLSearchParams(window.location.search);
-    const justLoggedIn = params.get("li") === "1";
-
-    if (justLoggedIn) {
+    if (params.get("li") === "1") {
       params.delete("li");
       const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", clean);
@@ -27,10 +23,14 @@ export function SessionGuard() {
       return;
     }
 
+    // Si "Rester connecté" est actif (ou jamais configuré), on ne déconnecte pas
+    const rm = localStorage.getItem("low_rm");
+    if (rm !== "false") return;
+
+    // Sinon : vérifie que la session de navigation est encore active
     const hasSession = document.cookie.split(";").some((c) => c.trim().startsWith("low_session="));
     if (hasSession) return;
 
-    // signOut() d'Auth.js supprime proprement tous ses cookies (__Secure-, __Host-, etc.)
     signOut({ redirect: false }).then(() => {
       window.location.href = "/login";
     });
