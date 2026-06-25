@@ -20,11 +20,39 @@ export async function GET() {
   const pompesByRole: Record<string, number> = {};
   const gamesByRole: Record<string, number> = {};
   const pompesByNiveau: Record<number, number> = {};
+  const champAgg: Record<string, { games: number; kills: number; deaths: number; assists: number; pompes: number }> = {};
+
   for (const g of games) {
     pompesByRole[g.role] = (pompesByRole[g.role] || 0) + g.pompesCalculees;
     gamesByRole[g.role] = (gamesByRole[g.role] || 0) + 1;
     pompesByNiveau[g.niveauCalcule] = (pompesByNiveau[g.niveauCalcule] || 0) + g.pompesCalculees;
+
+    const champ = g.champion ?? "Inconnu";
+    if (!champAgg[champ]) champAgg[champ] = { games: 0, kills: 0, deaths: 0, assists: 0, pompes: 0 };
+    champAgg[champ].games++;
+    champAgg[champ].kills += g.kills;
+    champAgg[champ].deaths += g.deaths;
+    champAgg[champ].assists += g.assists;
+    champAgg[champ].pompes += g.pompesCalculees;
   }
+
+  const champList = Object.entries(champAgg).map(([name, s]) => ({
+    name,
+    games: s.games,
+    avgKills: +(s.kills / s.games).toFixed(1),
+    avgDeaths: +(s.deaths / s.games).toFixed(1),
+    avgAssists: +(s.assists / s.games).toFixed(1),
+    kda: s.deaths === 0 ? null : +((s.kills + s.assists) / s.deaths).toFixed(2),
+    avgPompes: Math.round(s.pompes / s.games),
+  }));
+
+  const mostPlayed = champList.length > 0
+    ? champList.reduce((a, b) => b.games > a.games ? b : a)
+    : null;
+
+  const leastEfficient = champList.length > 0
+    ? champList.reduce((a, b) => b.avgPompes > a.avgPompes ? b : a)
+    : null;
 
   // Cumul par date pour le graphique
   const cumulByDate: { date: string; cumul: number }[] = [];
@@ -78,6 +106,8 @@ export async function GET() {
     pompesByNiveau,
     cumulByDate,
     statsByPeriod,
+    mostPlayed,
+    leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,
     niveau: user?.gainageMaxSec ?? 45,
   });

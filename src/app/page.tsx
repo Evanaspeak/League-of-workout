@@ -10,6 +10,16 @@ import { useSession } from "@/lib/SessionContext";
 
 type PeriodStat = { label: string; avg: number };
 
+type ChampSummary = {
+  name: string;
+  games: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  kda: number | null;
+  avgPompes: number;
+};
+
 type DashData = {
   totalGames: number;
   wins: number;
@@ -20,6 +30,8 @@ type DashData = {
   gamesByRole: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
+  mostPlayed: ChampSummary | null;
+  leastEfficient: ChampSummary | null;
   objectifTotalPompes: number;
 };
 
@@ -29,6 +41,55 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
       <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(200,170,110,0.55)" }}>{label}</span>
       <span style={{ fontSize: "1.8rem", fontFamily: "var(--font-heading, 'Russo One', sans-serif)", color: "#C8AA6E", lineHeight: 1.1 }}>{value}</span>
       {sub && <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.45)" }}>{sub}</span>}
+    </div>
+  );
+}
+
+function ChampionCard({ champ, badge, badgeColor }: { champ: ChampSummary; badge: string; badgeColor: string }) {
+  const kdaLabel = champ.kda === null ? "Perfect" : champ.kda.toFixed(2);
+  return (
+    <div className="lol-panel p-4 fade-in" style={{ position: "relative" }}>
+      <span style={{
+        position: "absolute", top: 10, right: 12,
+        fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
+        color: badgeColor, textTransform: "uppercase",
+        border: `1px solid ${badgeColor}55`, borderRadius: 4,
+        padding: "2px 7px", background: `${badgeColor}14`,
+      }}>{badge}</span>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <ChampionIcon name={champ.name} size={64} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "1.05rem", color: "#C8AA6E", lineHeight: 1.1,
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>{champ.name}</div>
+          <div style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.45)", marginTop: 2 }}>
+            {champ.games} partie{champ.games > 1 ? "s" : ""}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>KDA</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: "#C8AA6E" }}>{kdaLabel}</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>
+            {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
+          </div>
+        </div>
+        <div style={{ textAlign: "center", borderLeft: "1px solid rgba(200,170,110,0.12)", borderRight: "1px solid rgba(200,170,110,0.12)" }}>
+          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>Moy. pompes</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>/ partie</div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>Parties</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: "rgba(240,230,211,0.8)" }}>{champ.games}</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>jouées</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -124,6 +185,18 @@ export default function Dashboard() {
               ? ` · ${data.objectifTotalPompes - data.totalPompes} restantes`
               : " · Objectif atteint !"}
           </div>
+        </div>
+      )}
+
+      {/* Champion spotlights */}
+      {(data.mostPlayed || data.leastEfficient) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {data.mostPlayed && (
+            <ChampionCard champ={data.mostPlayed} badge="⚔ Plus joué" badgeColor="#c8aa6e" />
+          )}
+          {data.leastEfficient && (
+            <ChampionCard champ={data.leastEfficient} badge="💀 Plus difficile" badgeColor="#e84057" />
+          )}
         </div>
       )}
 
