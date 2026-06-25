@@ -27,7 +27,7 @@ export function SessionGuard() {
       const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", clean);
       // Pose le cookie de session (pas de maxAge = cookie de session navigateur).
-      document.cookie = "low_session=1; path=/; SameSite=Lax";
+      document.cookie = "low_session=1; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
       return;
     }
 
