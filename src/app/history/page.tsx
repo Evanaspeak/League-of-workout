@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ChampionIcon } from "@/components/ChampionIcon";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -439,7 +440,9 @@ export default function HistoryPage() {
                   className="lol-panel px-4 py-3 flex items-center gap-3"
                   style={{ background: "var(--bg-raised)" }}
                 >
-                  <span className="text-xs w-5 text-center" style={{ color: "rgba(200,170,110,0.4)" }}>{i + 1}</span>
+                  <span className="text-xs w-5 text-center shrink-0" style={{ color: "rgba(200,170,110,0.4)" }}>{i + 1}</span>
+
+                  <ChampionIcon name={m.champion} size={38} />
 
                   <span
                     className="font-bold text-sm w-16 text-center rounded px-2 py-0.5 shrink-0"
@@ -451,8 +454,8 @@ export default function HistoryPage() {
                     {m.result === "V" ? "Victoire" : m.result === "D" ? "Défaite" : m.result}
                   </span>
 
-                  <span className="gold-text font-semibold text-sm w-16 shrink-0">{m.role}</span>
-                  <span className="text-sm w-28 shrink-0" style={{ color: "rgba(240,230,211,0.85)" }}>{m.champion}</span>
+                  <span className="gold-text font-semibold text-sm w-14 shrink-0">{m.role}</span>
+                  <span className="text-sm w-24 shrink-0" style={{ color: "rgba(240,230,211,0.85)" }}>{m.champion}</span>
                   <span className="text-sm font-mono shrink-0" style={{ color: "rgba(240,230,211,0.7)" }}>
                     {m.kills} / <span style={{ color: "#e05555" }}>{m.deaths}</span> / {m.assists}
                   </span>
@@ -561,7 +564,12 @@ export default function HistoryPage() {
                                 {new Date(g.date).toLocaleDateString("fr-FR")}
                               </td>
                               <td className="px-3 py-2 gold-text font-medium">{g.role}</td>
-                              <td className="px-3 py-2" style={{ color: "rgba(240,230,211,0.8)" }}>{g.champion ?? "—"}</td>
+                              <td className="px-3 py-2">
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <ChampionIcon name={g.champion} size={26} />
+                                  <span style={{ color: "rgba(240,230,211,0.8)" }}>{g.champion ?? "—"}</span>
+                                </div>
+                              </td>
                               <td className="px-3 py-2 text-center" style={{ color: "rgba(240,230,211,0.8)" }}>
                                 {g.kills}/{g.deaths}/{g.assists}
                               </td>

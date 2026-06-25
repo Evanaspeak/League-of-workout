@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
+import { ChampionIcon } from "@/components/ChampionIcon";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid,
@@ -187,6 +188,7 @@ export default function Dashboard() {
                     <span className={g.result === "V" ? "win-text font-bold" : "loss-text font-bold"}>
                       {g.result === "V" ? "V" : "D"}
                     </span>
+                    <ChampionIcon name={g.champion} size={30} />
                     <span className="gold-text font-medium">{g.champion}</span>
                     <span className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>{g.role}</span>
                     <span className="text-xs" style={{ color: "rgba(240,230,211,0.6)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
