@@ -16,16 +16,11 @@ export function DesktopAuthHandler() {
       .then((data) => {
         if (!data?.jwt) return;
         sessionStorage.setItem("desktop_synced", "1");
-        return fetch("http://localhost:3099/set-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jwt: data.jwt }),
-        }).then((r) => {
-          if (r.ok) {
-            // Electron a reçu la session → déconnecte Chrome et affiche la page de succès.
-            window.location.replace("/api/auth/desktop-complete");
-          }
-        });
+        // Navigate instead of fetch — bypasses Chrome CORS/Private Network Access
+        // restrictions that block HTTPS→HTTP localhost fetch() requests.
+        window.location.assign(
+          `http://localhost:3099/set-session?t=${encodeURIComponent(data.jwt)}`
+        );
       })
       .catch(() => {});
   }, []);
