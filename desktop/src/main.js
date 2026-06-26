@@ -158,7 +158,7 @@ function startAuthSignalServer() {
 
 // ── Fenêtre principale ───────────────────────────────────────────────────────
 
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
     height: 800,
@@ -199,7 +199,18 @@ function createWindow() {
     return { action: "allow" };
   });
 
-  mainWindow.loadURL(`${BACKEND_URL}/login`);
+  // Démarrage : si un cookie de session persiste (Rester connecté), on ouvre
+  // directement le dashboard. Sinon la page de login. Le middleware sert de
+  // filet de sécurité : un cookie expiré/invalide sur "/" redirige vers /login.
+  let startUrl = `${BACKEND_URL}/login`;
+  try {
+    const cookies = await mainWindow.webContents.session.cookies.get({
+      url: BACKEND_URL,
+      name: "__Secure-authjs.session-token",
+    });
+    if (cookies.length > 0) startUrl = BACKEND_URL;
+  } catch {}
+  mainWindow.loadURL(startUrl);
 
   stopWatcher = startLiveClientWatcher((event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
