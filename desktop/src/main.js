@@ -277,7 +277,8 @@ function openAuthPopup() {
 
 // Google bloque l'OAuth dans Electron → on ouvre Chrome, flux port 3099 comme avant.
 ipcMain.on("open-google-login", () => {
-  shell.openExternal(`${BACKEND_URL}/login`);
+  // ?_desktop=1 est détecté par DesktopModeDetector → localStorage flag → DesktopAuthHandler actif
+  shell.openExternal(`${BACKEND_URL}/login?_desktop=1`);
   if (mainWindow) mainWindow.loadURL(WAITING_HTML);
 });
 
