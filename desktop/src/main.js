@@ -88,6 +88,8 @@ function startAuthSignalServer() {
             secure: true,
             sameSite: "lax",
             path: "/",
+            // 30-day expiration so the cookie survives app restarts (session cookies disappear on close)
+            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           });
 
           if (mainWindow && !mainWindow.isDestroyed()) {
@@ -124,6 +126,7 @@ function startAuthSignalServer() {
             secure: true,
             sameSite: "lax",
             path: "/",
+            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           });
 
           if (mainWindow && !mainWindow.isDestroyed()) {
@@ -259,6 +262,7 @@ function openAuthPopup() {
             secure: true,
             sameSite: "lax",
             path: "/",
+            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           });
         }
         if (mainWindow && !mainWindow.isDestroyed()) {
