@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'desktop-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (ex: 0.1.0)'
+        required: true
+        default: '0.1.0'
 
 jobs:
   build:
@@ -30,8 +36,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('desktop-v{0}', inputs.version) || github.ref_name }}
+          name: ${{ github.event_name == 'workflow_dispatch' && format('League of Workouts v{0}', inputs.version) || format('League of Workouts {0}', github.ref_name) }}
           files: desktop/dist/*.exe
-          name: "League of Workouts ${{ github.ref_name }}"
           generate_release_notes: false
           body: |
             ## Téléchargement
