@@ -47,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div style={{ display: "flex", justifyContent: "center", gap: "1.25rem" }}>
               <a href="/cgu" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>CGU</a>
               <a href="/confidentialite" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Confidentialité</a>
+              <a href="/telechargement" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Télécharger</a>
             </div>
           </footer>
         </SessionProvider>

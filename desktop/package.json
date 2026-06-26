@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "description": "App desktop + overlay pour League of Workouts",
   "main": "src/main.js",
-  "author": "League of Workouts",
+  "author": "Evan Tocquet <evantocquet@gmail.com>",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -21,6 +21,10 @@
     ],
     "win": {
       "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     }
   }
 }

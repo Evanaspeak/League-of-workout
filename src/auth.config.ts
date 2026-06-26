@@ -16,6 +16,7 @@ export const authConfig = {
         pathname.startsWith("/waitlist") ||
         pathname.startsWith("/cgu") ||
         pathname.startsWith("/confidentialite") ||
+        pathname.startsWith("/telechargement") ||
         pathname.startsWith("/api/auth");
       if (isPublic) return true;
       return !!auth?.user;
