@@ -23,14 +23,23 @@ jobs:
         run: npm ci
 
       - name: Build NSIS installer
-        run: npm run build
+        run: npx electron-builder --win --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload installer to Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: desktop/dist/*.exe
+          name: "League of Workouts ${{ github.ref_name }}"
+          generate_release_notes: false
+          body: |
+            ## Téléchargement
+
+            Installez l'application sur **Windows 10 / 11**.
+
+            1. Téléchargez le fichier `.exe` ci-dessous
+            2. Lancez l'installeur et suivez les étapes
+            3. Connectez-vous avec votre compte League of Workouts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
