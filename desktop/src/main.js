@@ -82,10 +82,10 @@ function startAuthSignalServer() {
 
           await ses.cookies.set({
             url: BACKEND_URL,
-            name: "authjs.session-token",
+            name: "__Secure-authjs.session-token",
             value: jwt,
             httpOnly: true,
-            secure: false,
+            secure: true,
             sameSite: "lax",
             path: "/",
           });
@@ -118,10 +118,10 @@ function startAuthSignalServer() {
 
           await ses.cookies.set({
             url: BACKEND_URL,
-            name: "authjs.session-token",
+            name: "__Secure-authjs.session-token",
             value: jwt,
             httpOnly: true,
-            secure: false,
+            secure: true,
             sameSite: "lax",
             path: "/",
           });
@@ -247,16 +247,16 @@ function openAuthPopup() {
       try {
         const popupCookies = await authPopup.webContents.session.cookies.get({
           url: BACKEND_URL,
-          name: "authjs.session-token",
+          name: "__Secure-authjs.session-token",
         });
         if (popupCookies.length > 0) {
           const targetSession = mainWindow?.webContents?.session ?? electronSession.defaultSession;
           await targetSession.cookies.set({
             url: BACKEND_URL,
-            name: "authjs.session-token",
+            name: "__Secure-authjs.session-token",
             value: popupCookies[0].value,
             httpOnly: true,
-            secure: false,
+            secure: true,
             sameSite: "lax",
             path: "/",
           });
