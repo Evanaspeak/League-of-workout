@@ -16,9 +16,9 @@ function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; transferred?: string }>;
+  searchParams: Promise<{ error?: string; transferred?: string; deleted?: string }>;
 }) {
-  const { error, transferred } = await searchParams;
+  const { error, transferred, deleted } = await searchParams;
   const betaFull = error === "AccessDenied";
 
   if (transferred === "1") {
@@ -61,6 +61,20 @@ export default async function LoginPage({
         boxShadow: "0 0 90px rgba(200,170,110,0.07), 0 20px 60px rgba(0,0,0,0.4)",
       }}>
         <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+
+        {deleted === "1" && (
+          <div style={{
+            padding: "0.7rem 0.9rem",
+            marginBottom: "1.5rem",
+            background: "rgba(34,197,94,0.1)",
+            border: "1px solid rgba(34,197,94,0.3)",
+            borderRadius: 4,
+            fontSize: "0.82rem",
+            color: "#22C55E",
+          }}>
+            Votre compte a bien été supprimé.
+          </div>
+        )}
 
         <div style={{ marginBottom: "2.25rem" }}>
           <div style={{

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { logout } from "@/lib/actions";
+import { logout, deleteAccount } from "@/lib/actions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,6 +32,11 @@ export default function SettingsPage() {
   const [puuidLoading, setPuuidLoading] = useState(false);
   const [puuidMsg, setPuuidMsg] = useState("");
   const [riotPuuid, setRiotPuuid] = useState("");
+
+  // ── Suppression de compte ──
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   // ── Beta panel ──
   const [showBeta, setShowBeta] = useState(false);
@@ -407,6 +412,105 @@ export default function SettingsPage() {
           Se déconnecter
         </button>
       </form>
+
+      {/* ── Zone de danger : suppression de compte ──────────────────────── */}
+      <div style={{
+        marginTop: "1.5rem",
+        padding: "1.25rem",
+        borderRadius: 6,
+        border: "1px solid rgba(232,64,87,0.3)",
+        background: "rgba(232,64,87,0.04)",
+      }}>
+        <h2 style={{ ...HEADING, color: "#e84057" }}>Zone de danger</h2>
+        <p style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.5)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
+          La suppression de votre compte est <strong>définitive</strong>. Toutes vos données
+          (profil, parties, statistiques, objectifs) seront effacées immédiatement et ne pourront
+          pas être récupérées.
+        </p>
+        <button
+          onClick={() => { setShowDeleteModal(true); setDeleteConfirm(""); }}
+          style={{
+            width: "100%",
+            padding: "0.6rem",
+            background: "transparent",
+            border: "1px solid rgba(232,64,87,0.5)",
+            borderRadius: 4,
+            color: "#e84057",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+            cursor: "pointer",
+          }}
+        >
+          Supprimer mon compte
+        </button>
+      </div>
+
+      {/* Modal de confirmation */}
+      {showDeleteModal && (
+        <div
+          onClick={() => !deleting && setShowDeleteModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.7)", padding: "1rem",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="lol-panel"
+            style={{ maxWidth: 420, width: "100%", padding: "1.75rem" }}
+          >
+            <h3 style={{
+              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+              fontSize: "1.05rem", color: "#e84057", letterSpacing: "0.1em", marginBottom: "0.75rem",
+            }}>
+              SUPPRIMER LE COMPTE
+            </h3>
+            <p style={{ fontSize: "0.85rem", color: "rgba(240,230,211,0.6)", lineHeight: 1.6, marginBottom: "1rem" }}>
+              Cette action est irréversible. Pour confirmer, tapez{" "}
+              <strong style={{ color: "#e84057" }}>SUPPRIMER</strong> ci-dessous.
+            </p>
+            <input
+              autoFocus
+              className="lol-input w-full"
+              placeholder="SUPPRIMER"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              style={{ marginBottom: "1rem" }}
+            />
+            <div style={{ display: "flex", gap: "0.6rem" }}>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                style={{
+                  flex: 1, padding: "0.55rem",
+                  background: "transparent",
+                  border: "1px solid rgba(200,170,110,0.3)",
+                  borderRadius: 4, color: "rgba(240,230,211,0.7)",
+                  fontSize: "0.85rem", cursor: "pointer",
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={async () => { setDeleting(true); await deleteAccount(); }}
+                disabled={deleteConfirm !== "SUPPRIMER" || deleting}
+                style={{
+                  flex: 1, padding: "0.55rem",
+                  background: deleteConfirm === "SUPPRIMER" ? "#e84057" : "rgba(232,64,87,0.25)",
+                  border: "none", borderRadius: 4, color: "#fff",
+                  fontSize: "0.85rem", fontWeight: 600,
+                  cursor: deleteConfirm === "SUPPRIMER" && !deleting ? "pointer" : "not-allowed",
+                  opacity: deleting ? 0.6 : 1,
+                }}
+              >
+                {deleting ? "Suppression…" : "Supprimer définitivement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

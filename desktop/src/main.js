@@ -88,6 +88,8 @@ function startAuthSignalServer() {
             secure: true,
             sameSite: "lax",
             path: "/",
+            // 30-day expiration so the cookie survives app restarts (session cookies disappear on close)
+            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           });
 
           if (mainWindow && !mainWindow.isDestroyed()) {
@@ -124,6 +126,7 @@ function startAuthSignalServer() {
             secure: true,
             sameSite: "lax",
             path: "/",
+            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           });
 
           if (mainWindow && !mainWindow.isDestroyed()) {
@@ -155,7 +158,7 @@ function startAuthSignalServer() {
 
 // ── Fenêtre principale ───────────────────────────────────────────────────────
 
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
     height: 800,
@@ -196,7 +199,18 @@ function createWindow() {
     return { action: "allow" };
   });
 
-  mainWindow.loadURL(`${BACKEND_URL}/login`);
+  // Démarrage : si un cookie de session persiste (Rester connecté), on ouvre
+  // directement le dashboard. Sinon la page de login. Le middleware sert de
+  // filet de sécurité : un cookie expiré/invalide sur "/" redirige vers /login.
+  let startUrl = `${BACKEND_URL}/login`;
+  try {
+    const cookies = await mainWindow.webContents.session.cookies.get({
+      url: BACKEND_URL,
+      name: "__Secure-authjs.session-token",
+    });
+    if (cookies.length > 0) startUrl = BACKEND_URL;
+  } catch {}
+  mainWindow.loadURL(startUrl);
 
   stopWatcher = startLiveClientWatcher((event) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -259,6 +273,7 @@ function openAuthPopup() {
             secure: true,
             sameSite: "lax",
             path: "/",
+            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
           });
         }
         if (mainWindow && !mainWindow.isDestroyed()) {
@@ -293,6 +308,21 @@ app.whenReady().then(() => {
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on("before-quit", async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    const rm = await mainWindow.webContents.executeJavaScript(
+      "localStorage.getItem('low_rm')"
+    );
+    if (rm === "false") {
+      await mainWindow.webContents.session.cookies.remove(
+        BACKEND_URL,
+        "__Secure-authjs.session-token"
+      );
+    }
+  } catch {}
 });
 
 app.on("window-all-closed", () => {
