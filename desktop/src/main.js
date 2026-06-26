@@ -295,6 +295,21 @@ app.whenReady().then(() => {
   });
 });
 
+app.on("before-quit", async () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    const rm = await mainWindow.webContents.executeJavaScript(
+      "localStorage.getItem('low_rm')"
+    );
+    if (rm === "false") {
+      await mainWindow.webContents.session.cookies.remove(
+        BACKEND_URL,
+        "__Secure-authjs.session-token"
+      );
+    }
+  } catch {}
+});
+
 app.on("window-all-closed", () => {
   if (stopWatcher) stopWatcher();
   if (process.platform !== "darwin") app.quit();
