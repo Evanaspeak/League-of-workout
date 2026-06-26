@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LoginButtons } from "@/components/LoginButtons";
+import { DesktopModeDetector } from "@/components/DesktopModeDetector";
 
 function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
   const s: React.CSSProperties = {
@@ -51,6 +52,7 @@ export default async function LoginPage({
 
   return (
     <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <DesktopModeDetector />
       <div className="lol-panel" style={{
         position: "relative",
         padding: "2.5rem 2rem",
