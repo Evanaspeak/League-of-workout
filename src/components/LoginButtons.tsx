@@ -48,8 +48,7 @@ export function LoginButtons() {
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    const desktop = !!window.electronLOL?.isDesktop;
-    setIsDesktop(desktop);
+    setIsDesktop(!!window.electronLOL?.isDesktop);
     const saved = localStorage.getItem("low_rm");
     if (saved === "false") setRememberMe(false);
   }, []);
@@ -64,11 +63,7 @@ export function LoginButtons() {
     setLoading(true);
     saveRm();
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) {
         setError("Email ou mot de passe incorrect");
       } else {
@@ -85,16 +80,8 @@ export function LoginButtons() {
     e.preventDefault();
     setError("");
     setSuccess("");
-
-    if (password !== confirmPassword) {
-      setError("Les mots de passe ne correspondent pas");
-      return;
-    }
-    if (password.length < 8) {
-      setError("Mot de passe trop court (min 8 caractères)");
-      return;
-    }
-
+    if (password !== confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
+    if (password.length < 8) { setError("Mot de passe trop court (min 8 caractères)"); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
@@ -103,17 +90,9 @@ export function LoginButtons() {
         body: JSON.stringify({ email, password, pseudo }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Erreur lors de la création du compte");
-        return;
-      }
-      // Auto-login after registration
+      if (!res.ok) { setError(data.error ?? "Erreur lors de la création du compte"); return; }
       saveRm();
-      const loginResult = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-      });
+      const loginResult = await signIn("credentials", { email, password, redirect: false });
       if (loginResult?.error) {
         setSuccess("Compte créé ! Connectez-vous maintenant.");
         setMode("login");
@@ -130,38 +109,17 @@ export function LoginButtons() {
   const checkbox = (
     <label style={{
       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-      cursor: isDesktop ? "default" : "pointer",
-      userSelect: "none",
-      marginTop: 4,
+      cursor: "pointer", userSelect: "none", marginTop: 4,
     }}>
       <input
         type="checkbox"
         checked={rememberMe}
-        disabled={isDesktop}
         onChange={(e) => setRememberMe(e.target.checked)}
-        style={{ accentColor: "#C8AA6E", width: 14, height: 14, cursor: "inherit" }}
+        style={{ accentColor: "#C8AA6E", width: 14, height: 14, cursor: "pointer" }}
       />
       <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.55)" }}>Rester connecté</span>
     </label>
   );
-
-  if (isDesktop) {
-    return (
-      <div className="space-y-3">
-        <button className="lol-btn w-full" onClick={() => window.electronLOL?.openGoogleLogin()}>
-          Se connecter avec Google
-        </button>
-        <button
-          className="lol-btn w-full"
-          style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
-          onClick={() => window.electronLOL?.openDiscordLogin()}
-        >
-          Se connecter avec Discord
-        </button>
-        {checkbox}
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -171,25 +129,28 @@ export function LoginButtons() {
         borderBottom: "1px solid rgba(200,170,110,0.12)",
         marginBottom: "1.25rem",
       }}>
-        <button style={TAB_STYLE(tab === "google")} onClick={() => setTab("google")}>
-          GOOGLE
-        </button>
-        <button style={TAB_STYLE(tab === "discord")} onClick={() => setTab("discord")}>
-          DISCORD
-        </button>
-        <button style={TAB_STYLE(tab === "email")} onClick={() => setTab("email")}>
-          EMAIL
-        </button>
+        <button style={TAB_STYLE(tab === "google")} onClick={() => setTab("google")}>GOOGLE</button>
+        <button style={TAB_STYLE(tab === "discord")} onClick={() => setTab("discord")}>DISCORD</button>
+        <button style={TAB_STYLE(tab === "email")} onClick={() => setTab("email")}>EMAIL</button>
       </div>
 
       {/* Google tab */}
       {tab === "google" && (
         <div className="space-y-3">
-          <form action={signInWithGoogle} onSubmit={saveRm}>
-            <button type="submit" className="lol-btn w-full">
+          {isDesktop ? (
+            <button
+              className="lol-btn w-full"
+              onClick={() => { saveRm(); window.electronLOL?.openGoogleLogin(); }}
+            >
               Se connecter avec Google
             </button>
-          </form>
+          ) : (
+            <form action={signInWithGoogle} onSubmit={saveRm}>
+              <button type="submit" className="lol-btn w-full">
+                Se connecter avec Google
+              </button>
+            </form>
+          )}
           {checkbox}
           <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center" }}>
             Seuls les 100 premiers inscrits ont accès.
@@ -200,15 +161,25 @@ export function LoginButtons() {
       {/* Discord tab */}
       {tab === "discord" && (
         <div className="space-y-3">
-          <form action={signInWithDiscord} onSubmit={saveRm}>
+          {isDesktop ? (
             <button
-              type="submit"
               className="lol-btn w-full"
               style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
+              onClick={() => { saveRm(); window.electronLOL?.openDiscordLogin(); }}
             >
               Se connecter avec Discord
             </button>
-          </form>
+          ) : (
+            <form action={signInWithDiscord} onSubmit={saveRm}>
+              <button
+                type="submit"
+                className="lol-btn w-full"
+                style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
+              >
+                Se connecter avec Discord
+              </button>
+            </form>
+          )}
           {checkbox}
           <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center" }}>
             Seuls les 100 premiers inscrits ont accès.
@@ -219,29 +190,19 @@ export function LoginButtons() {
       {/* Email tab */}
       {tab === "email" && (
         <div>
-          {/* Mode toggle */}
           <div style={{
-            display: "flex",
-            gap: 0,
-            marginBottom: "1rem",
-            background: "rgba(255,255,255,0.03)",
-            borderRadius: 4,
-            padding: 3,
+            display: "flex", gap: 0, marginBottom: "1rem",
+            background: "rgba(255,255,255,0.03)", borderRadius: 4, padding: 3,
           }}>
             <button
               onClick={() => { setMode("login"); setError(""); setSuccess(""); }}
               style={{
-                flex: 1,
-                padding: "0.4rem",
-                fontSize: "0.77rem",
-                border: "none",
-                borderRadius: 3,
+                flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
                 background: mode === "login" ? "rgba(200,170,110,0.15)" : "transparent",
                 color: mode === "login" ? "#C8AA6E" : "rgba(240,230,211,0.4)",
                 fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-                letterSpacing: "0.05em",
-                transition: "all 0.15s",
+                letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
               CONNEXION
@@ -249,17 +210,12 @@ export function LoginButtons() {
             <button
               onClick={() => { setMode("register"); setError(""); setSuccess(""); }}
               style={{
-                flex: 1,
-                padding: "0.4rem",
-                fontSize: "0.77rem",
-                border: "none",
-                borderRadius: 3,
+                flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
                 background: mode === "register" ? "rgba(200,170,110,0.15)" : "transparent",
                 color: mode === "register" ? "#C8AA6E" : "rgba(240,230,211,0.4)",
                 fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-                letterSpacing: "0.05em",
-                transition: "all 0.15s",
+                letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
               CRÉER UN COMPTE
@@ -268,27 +224,18 @@ export function LoginButtons() {
 
           {error && (
             <div style={{
-              padding: "0.6rem 0.8rem",
-              marginBottom: "0.75rem",
-              background: "rgba(232,64,87,0.1)",
-              border: "1px solid rgba(232,64,87,0.3)",
-              borderRadius: 4,
-              fontSize: "0.82rem",
-              color: "#e84057",
+              padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
+              background: "rgba(232,64,87,0.1)", border: "1px solid rgba(232,64,87,0.3)",
+              borderRadius: 4, fontSize: "0.82rem", color: "#e84057",
             }}>
               {error}
             </div>
           )}
-
           {success && (
             <div style={{
-              padding: "0.6rem 0.8rem",
-              marginBottom: "0.75rem",
-              background: "rgba(34,197,94,0.1)",
-              border: "1px solid rgba(34,197,94,0.3)",
-              borderRadius: 4,
-              fontSize: "0.82rem",
-              color: "#22C55E",
+              padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
+              background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)",
+              borderRadius: 4, fontSize: "0.82rem", color: "#22C55E",
             }}>
               {success}
             </div>
@@ -296,86 +243,33 @@ export function LoginButtons() {
 
           {mode === "login" ? (
             <form onSubmit={handleCredentialsLogin} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                style={INPUT_STYLE}
-              />
-              <input
-                type="password"
-                placeholder="Mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                style={INPUT_STYLE}
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="lol-btn w-full"
-                style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}
-              >
+              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+                required autoComplete="email" style={INPUT_STYLE} />
+              <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)}
+                required autoComplete="current-password" style={INPUT_STYLE} />
+              <button type="submit" disabled={loading} className="lol-btn w-full"
+                style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
                 {loading ? "Connexion…" : "Se connecter"}
               </button>
             </form>
           ) : (
             <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <input
-                type="text"
-                placeholder="Pseudo (affiché dans l'app)"
-                value={pseudo}
-                onChange={(e) => setPseudo(e.target.value)}
-                required
-                autoComplete="username"
-                style={INPUT_STYLE}
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                style={INPUT_STYLE}
-              />
-              <input
-                type="password"
-                placeholder="Mot de passe (min 8 caractères)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                style={INPUT_STYLE}
-              />
-              <input
-                type="password"
-                placeholder="Confirmer le mot de passe"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                autoComplete="new-password"
-                style={INPUT_STYLE}
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="lol-btn w-full"
-                style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}
-              >
+              <input type="text" placeholder="Pseudo (affiché dans l'app)" value={pseudo}
+                onChange={(e) => setPseudo(e.target.value)} required autoComplete="username" style={INPUT_STYLE} />
+              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+                required autoComplete="email" style={INPUT_STYLE} />
+              <input type="password" placeholder="Mot de passe (min 8 caractères)" value={password}
+                onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" style={INPUT_STYLE} />
+              <input type="password" placeholder="Confirmer le mot de passe" value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" style={INPUT_STYLE} />
+              <button type="submit" disabled={loading} className="lol-btn w-full"
+                style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
                 {loading ? "Création…" : "Créer mon compte"}
               </button>
             </form>
           )}
 
-          <div style={{ marginTop: "0.75rem" }}>
-            {checkbox}
-          </div>
-
+          <div style={{ marginTop: "0.75rem" }}>{checkbox}</div>
           <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center", marginTop: "0.75rem" }}>
             Seuls les 100 premiers inscrits ont accès.
           </p>
