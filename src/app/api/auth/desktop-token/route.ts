@@ -11,7 +11,10 @@ export async function POST() {
   }
 
   const cookieStore = await cookies();
-  const jwt = cookieStore.get("authjs.session-token")?.value;
+  // Auth.js uses __Secure- prefix on HTTPS (Vercel) but not on HTTP (localhost).
+  const jwt =
+    cookieStore.get("__Secure-authjs.session-token")?.value ??
+    cookieStore.get("authjs.session-token")?.value;
 
   if (!jwt) {
     return NextResponse.json({ error: "Token de session introuvable" }, { status: 401 });
