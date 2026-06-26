@@ -18,7 +18,7 @@ const { startLiveClientWatcher } = require("./liveclient");
 // Google OAuth même quand le user-agent est spoofé en Chrome standard.
 app.commandLine.appendSwitch("disable-features", "UserAgentClientHint");
 
-const BACKEND_URL = process.env.LOW_BACKEND_URL || "http://localhost:3000";
+const BACKEND_URL = process.env.LOW_BACKEND_URL || "https://league-of-workout.vercel.app";
 const AUTH_PORT = 3099;
 
 const CHROME_UA =
@@ -57,7 +57,7 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
 
 function startAuthSignalServer() {
   const server = http.createServer((req, res) => {
-    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+    res.setHeader("Access-Control-Allow-Origin", BACKEND_URL);
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 

@@ -14,6 +14,9 @@ export const authConfig = {
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/waitlist") ||
+        pathname.startsWith("/cgu") ||
+        pathname.startsWith("/confidentialite") ||
+        pathname.startsWith("/telechargement") ||
         pathname.startsWith("/api/auth");
       if (isPublic) return true;
       return !!auth?.user;

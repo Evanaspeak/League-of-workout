@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "App desktop + overlay pour League of Workouts",
   "main": "src/main.js",
-  "author": "League of Workouts",
+  "author": "Evan Tocquet <evantocquet@gmail.com>",
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",

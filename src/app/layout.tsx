@@ -36,12 +36,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
             {children}
           </main>
-          <footer className="text-center py-4 text-xs" style={{
+          <footer className="text-center py-4 text-xs space-y-1" style={{
             color: "rgba(200,170,110,0.25)",
             borderTop: "1px solid rgba(200,170,110,0.07)",
             letterSpacing: "0.06em",
           }}>
-            LEAGUE OF WORKOUTS · Powered by Riot Games API
+            <div>LEAGUE OF WORKOUTS · Powered by Riot Games API</div>
+            <div style={{ display: "flex", justifyContent: "center", gap: "1.25rem" }}>
+              <a href="/cgu" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>CGU</a>
+              <a href="/confidentialite" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Confidentialité</a>
+              <a href="/telechargement" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Télécharger</a>
+            </div>
           </footer>
         </SessionProvider>
       </body>
