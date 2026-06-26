@@ -107,6 +107,18 @@ export default async function LoginPage({
         ) : (
           <LoginButtons />
         )}
+
+        <p style={{
+          marginTop: "1.5rem",
+          fontSize: "0.7rem",
+          color: "rgba(240,230,211,0.25)",
+          lineHeight: 1.7,
+        }}>
+          En vous connectant, vous acceptez nos{" "}
+          <Link href="/cgu" style={{ color: "rgba(200,170,110,0.45)" }}>CGU</Link>
+          {" "}et notre{" "}
+          <Link href="/confidentialite" style={{ color: "rgba(200,170,110,0.45)" }}>politique de confidentialité</Link>.
+        </p>
       </div>
     </div>
   );
