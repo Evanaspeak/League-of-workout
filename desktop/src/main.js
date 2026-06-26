@@ -60,10 +60,46 @@ function startAuthSignalServer() {
     res.setHeader("Access-Control-Allow-Origin", BACKEND_URL);
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
 
     if (req.method === "OPTIONS") {
       res.writeHead(200);
       res.end();
+      return;
+    }
+
+    // GET /set-session?t=JWT — navigation-based handoff from Chrome (bypasses PNA/mixed-content)
+    if (req.method === "GET" && req.url && req.url.startsWith("/set-session")) {
+      try {
+        const urlObj = new URL(req.url, `http://127.0.0.1:${AUTH_PORT}`);
+        const jwt = urlObj.searchParams.get("t");
+        if (!jwt) throw new Error("missing token");
+
+        const ses = mainWindow
+          ? mainWindow.webContents.session
+          : electronSession.defaultSession;
+
+        await ses.cookies.set({
+          url: BACKEND_URL,
+          name: "authjs.session-token",
+          value: jwt,
+          httpOnly: true,
+          secure: false,
+          sameSite: "lax",
+          path: "/",
+        });
+
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(BACKEND_URL);
+        }
+
+        // Redirect Chrome away from localhost back to the app
+        res.writeHead(302, { Location: `${BACKEND_URL}/?desktop_auth=ok` });
+        res.end();
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "text/plain" });
+        res.end(String(err));
+      }
       return;
     }
 
