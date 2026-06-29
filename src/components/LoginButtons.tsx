@@ -55,6 +55,8 @@ export function LoginButtons() {
 
   const saveRm = () => {
     localStorage.setItem("low_rm", rememberMe ? "true" : "false");
+    // Pose low_session maintenant (survit à la redirection OAuth)
+    document.cookie = "low_session=1; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
   };
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
