@@ -44,3 +44,4 @@ next-env.d.ts
 dev.db
 .next/
 node_modules/
+__pycache__/
