@@ -8,7 +8,7 @@ import {
 } from "recharts";
 import { useSession } from "@/lib/SessionContext";
 
-type PeriodStat = { label: string; avg: number };
+type PeriodStat = { label: string; avg: number; total: number };
 
 type ChampSummary = {
   name: string;
@@ -107,6 +107,11 @@ export default function Dashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [showGainageModal, setShowGainageModal] = useState(false);
   const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
+  const [statsMode, setStatsMode] = useState<"avg" | "total">("avg");
+  const [calendarDate, setCalendarDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
+  const [dailyHourly, setDailyHourly] = useState<{ label: string; total: number }[] | null>(null);
+  const [dailySummary, setDailySummary] = useState<{ total: number; games: number } | null>(null);
+  const [dailyLoading, setDailyLoading] = useState(false);
   const [roleView, setRoleView] = useState<"total" | "avg">("total");
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
@@ -133,6 +138,19 @@ export default function Dashboard() {
   useEffect(() => {
     if (sessionGames.length > 0) loadDash();
   }, [sessionGames.length]);
+
+  useEffect(() => {
+    if (statsPeriod !== "daily") return;
+    setDailyLoading(true);
+    fetch(`/api/dashboard/daily?date=${calendarDate}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setDailyHourly(d.hourly ?? []);
+        setDailySummary({ total: d.total ?? 0, games: d.games ?? 0 });
+        setDailyLoading(false);
+      })
+      .catch(() => setDailyLoading(false));
+  }, [statsPeriod, calendarDate]);
 
   const handleConfirmGainage = async () => {
     const sec = Math.max(1, Number(gainageInput) || 60);
@@ -367,11 +385,30 @@ export default function Dashboard() {
       {/* Analytiques par période */}
       {data.statsByPeriod && data.totalGames > 0 && (
         <div className="lol-panel p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
             <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
-              {statsPeriod === "daily" ? "Total pompes / jour" : "Pompes moyennes / partie"}
+              {statsPeriod === "daily" ? "Détail journalier" : statsMode === "avg" ? "Pompes moyennes / partie" : "Pompes totales"}
             </h2>
-            <div className="flex gap-1">
+            <div className="flex gap-1 flex-wrap">
+              {statsPeriod !== "daily" && (
+                <>
+                  {(["avg", "total"] as const).map((m) => (
+                    <button
+                      key={m}
+                      onClick={() => setStatsMode(m)}
+                      className="text-xs px-2 py-1 rounded"
+                      style={{
+                        background: statsMode === m ? "rgba(11,196,227,0.2)" : "rgba(200,170,110,0.06)",
+                        color: statsMode === m ? "#0bc4e3" : "rgba(240,230,211,0.35)",
+                        border: `1px solid ${statsMode === m ? "rgba(11,196,227,0.4)" : "rgba(200,170,110,0.12)"}`,
+                      }}
+                    >
+                      {m === "avg" ? "Moyenne" : "Total"}
+                    </button>
+                  ))}
+                  <span style={{ width: 1, background: "rgba(200,170,110,0.15)", margin: "0 2px" }} />
+                </>
+              )}
               {(["hour", "weekday", "month", "daily"] as const).map((key) => (
                 <button
                   key={key}
@@ -383,26 +420,50 @@ export default function Dashboard() {
                     border: `1px solid ${statsPeriod === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
                   }}
                 >
-                  {key === "hour" ? "Heure" : key === "weekday" ? "Jour" : key === "month" ? "Mois" : "Journalier"}
+                  {key === "hour" ? "Heure" : key === "weekday" ? "Jour" : key === "month" ? "Mois" : "Calendrier"}
                 </button>
               ))}
             </div>
           </div>
+
           {statsPeriod === "daily" ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={(data.dailyPompes ?? []).map((d) => ({
-                label: new Date(d.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
-                total: d.total,
-              }))}>
-                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                  formatter={(v) => [`${v} pompes`, "Total du jour"]}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  type="date"
+                  className="lol-input"
+                  style={{ fontSize: "0.85rem", width: "auto" }}
+                  value={calendarDate}
+                  onChange={(e) => setCalendarDate(e.target.value)}
+                  max={new Date().toISOString().slice(0, 10)}
                 />
-                <Bar dataKey="total" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                {dailySummary && !dailyLoading && (
+                  <span className="text-sm" style={{ color: "rgba(240,230,211,0.5)" }}>
+                    <span className="gold-text font-bold">{dailySummary.total}</span> pompes ·{" "}
+                    <span style={{ color: "rgba(240,230,211,0.35)" }}>{dailySummary.games} partie{dailySummary.games > 1 ? "s" : ""}</span>
+                  </span>
+                )}
+              </div>
+              {dailyLoading ? (
+                <div className="text-center py-8 gold-text text-sm">Chargement...</div>
+              ) : dailyHourly && dailyHourly.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={dailyHourly}>
+                    <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
+                    <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                      formatter={(v) => [`${v} pompes`, "Total"]}
+                    />
+                    <Bar dataKey="total" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-8" style={{ color: "rgba(240,230,211,0.3)", fontSize: "0.85rem" }}>
+                  Aucune partie ce jour.
+                </div>
+              )}
+            </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.statsByPeriod[statsPeriod]}>
@@ -410,9 +471,9 @@ export default function Dashboard() {
                 <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
                 <Tooltip
                   contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                  formatter={(v) => [`${v} pompes`, "Moyenne"]}
+                  formatter={(v) => [`${v} pompes`, statsMode === "avg" ? "Moyenne / partie" : "Total"]}
                 />
-                <Bar dataKey="avg" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
+                <Bar dataKey={statsMode} fill="#c8aa6e" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

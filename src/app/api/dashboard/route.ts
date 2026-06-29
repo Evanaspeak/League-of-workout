@@ -88,11 +88,21 @@ export async function GET() {
   const monthLabels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
   const statsByPeriod = {
-    hour: Array.from({ length: 24 }, (_, h) => ({ label: `${h}h`, avg: byHour[h] ? Math.round(byHour[h].total / byHour[h].count) : 0 }))
-      .filter((_, h) => !!byHour[h]),
-    weekday: weekdayOrder.map((wd, i) => ({ label: weekdayLabels[i], avg: byWeekday[wd] ? Math.round(byWeekday[wd].total / byWeekday[wd].count) : 0 })),
-    month: monthLabels.map((label, i) => ({ label, avg: byMonth[i] ? Math.round(byMonth[i].total / byMonth[i].count) : 0 }))
-      .filter((_, i) => !!byMonth[i]),
+    hour: Array.from({ length: 24 }, (_, h) => ({
+      label: `${h}h`,
+      avg: byHour[h] ? Math.round(byHour[h].total / byHour[h].count) : 0,
+      total: byHour[h]?.total ?? 0,
+    })).filter((_, h) => !!byHour[h]),
+    weekday: weekdayOrder.map((wd, i) => ({
+      label: weekdayLabels[i],
+      avg: byWeekday[wd] ? Math.round(byWeekday[wd].total / byWeekday[wd].count) : 0,
+      total: byWeekday[wd]?.total ?? 0,
+    })),
+    month: monthLabels.map((label, i) => ({
+      label,
+      avg: byMonth[i] ? Math.round(byMonth[i].total / byMonth[i].count) : 0,
+      total: byMonth[i]?.total ?? 0,
+    })).filter((_, i) => !!byMonth[i]),
   };
 
   const byDayTotal: Record<string, number> = {};

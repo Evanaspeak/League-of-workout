@@ -1,7 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession as useNextAuthSession } from "next-auth/react";
 import { useSession } from "@/lib/SessionContext";
+
+const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -14,6 +17,8 @@ const PUBLIC_PATHS = ["/login", "/waitlist"];
 export default function Nav() {
   const path = usePathname();
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
+  const { data: authSession } = useNextAuthSession();
+  const isAdmin = authSession?.user?.email === ADMIN_EMAIL;
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
 
   return (
@@ -43,7 +48,7 @@ export default function Nav() {
           ⚔ L·O·W
         </Link>
 
-        {!isPublic && links.map((l) => {
+        {!isPublic && [...links, ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : [])].map((l) => {
           const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
           return (
             <Link

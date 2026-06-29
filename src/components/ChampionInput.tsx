@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { suggestChampions, findChampion } from "@/lib/champions";
+import { CHAMPIONS } from "@/lib/champions";
 
 interface Props {
   value: string;
@@ -9,17 +9,34 @@ interface Props {
 }
 
 export function ChampionInput({ value, onChange, onReset }: Props) {
+  const [champList, setChampList] = useState<string[]>(CHAMPIONS);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const isValid = !value || !!findChampion(value);
+  useEffect(() => {
+    fetch("/api/champions")
+      .then((r) => r.json())
+      .then((list) => { if (Array.isArray(list) && list.length > 0) setChampList(list); })
+      .catch(() => {});
+  }, []);
+
+  const suggest = (q: string, limit = 8) => {
+    if (!q) return [];
+    const lower = q.toLowerCase();
+    return champList.filter((c) => c.toLowerCase().includes(lower)).slice(0, limit);
+  };
+
+  const isKnown = (name: string) =>
+    !name || champList.some((c) => c.toLowerCase() === name.trim().toLowerCase());
+
+  const isValid = isKnown(value);
 
   const handleChange = (raw: string) => {
     onChange(raw);
     onReset?.();
-    const s = suggestChampions(raw, 8);
+    const s = suggest(raw, 8);
     setSuggestions(s);
     setOpen(s.length > 0 && raw.length > 0);
     setActiveIndex(-1);
@@ -68,7 +85,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
         onKeyDown={handleKeyDown}
         onFocus={() => {
           if (value) {
-            const s = suggestChampions(value, 8);
+            const s = suggest(value, 8);
             if (s.length) { setSuggestions(s); setOpen(true); }
           }
         }}
@@ -92,8 +109,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
               onMouseEnter={() => setActiveIndex(i)}
               style={{
                 display: "block", width: "100%", textAlign: "left",
-                padding: "7px 12px", border: "none", cursor: "pointer",
-                fontSize: "0.85rem",
+                padding: "7px 12px", border: "none", cursor: "pointer", fontSize: "0.85rem",
                 background: i === activeIndex ? "rgba(200,170,110,0.15)" : "transparent",
                 color: i === activeIndex ? "#C8AA6E" : "rgba(240,230,211,0.8)",
               }}

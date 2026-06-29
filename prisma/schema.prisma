@@ -126,3 +126,10 @@ model MasteryConfig {
   surchargeMax   Float @default(0.5)
   partiesPourMax Int   @default(100)
 }
+
+// ─── Configuration système (admin) ───────────────────────────────────────────
+
+model SystemConfig {
+  key   String @id
+  value String // JSON
+}
