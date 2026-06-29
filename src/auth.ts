@@ -36,22 +36,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!account) return true;
       if (account.type === "credentials") return true;
 
-      const existing = await prisma.account.findUnique({
-        where: {
-          provider_providerAccountId: {
-            provider: account.provider,
-            providerAccountId: account.providerAccountId,
+      try {
+        const existing = await prisma.account.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
           },
-        },
-        include: { user: true },
-      });
+          include: { user: true },
+        });
 
-      if (existing) {
-        return (existing.user.betaRank ?? Number.MAX_SAFE_INTEGER) <= BETA_LIMIT;
+        if (existing) {
+          return (existing.user.betaRank ?? Number.MAX_SAFE_INTEGER) <= BETA_LIMIT;
+        }
+
+        const count = await prisma.user.count();
+        return count < BETA_LIMIT;
+      } catch (err) {
+        console.error("[auth] signIn callback error:", err);
+        return true;
       }
-
-      const count = await prisma.user.count();
-      return count < BETA_LIMIT;
     },
 
     async jwt({ token, user }) {
@@ -70,14 +75,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     async createUser({ user }) {
       if (!user.id) return;
-      const count = await prisma.user.count();
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { betaRank: count, pseudo: user.name ?? "Joueur" },
-      });
-      await prisma.goal
-        .create({ data: { userId: user.id, objectifTotalPompes: 1000 } })
-        .catch(() => {});
+      try {
+        const count = await prisma.user.count();
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { betaRank: count, pseudo: user.name ?? "Joueur" },
+        });
+        await prisma.goal
+          .create({ data: { userId: user.id, objectifTotalPompes: 1000 } })
+          .catch(() => {});
+      } catch (err) {
+        console.error("[auth] createUser event error:", err);
+      }
     },
   },
 });
