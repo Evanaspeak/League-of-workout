@@ -55,6 +55,9 @@ export function LoginButtons() {
 
   const saveRm = () => {
     localStorage.setItem("low_rm", rememberMe ? "true" : "false");
+    if (!rememberMe) {
+      sessionStorage.setItem("low_alive", "1");
+    }
   };
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
