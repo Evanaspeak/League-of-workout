@@ -1,6 +1,11 @@
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { authConfig } from "@/auth.config";
+
+// On utilise le wrapper Auth.js pour lire la session (il sait déchiffrer le
+// cookie JWT v5 — contrairement à getToken qui échouait et renvoyait tout le
+// monde vers /login).
+const { auth } = NextAuth(authConfig);
 
 // Domaine canonique de production. Toute requête arrivant sur une URL de
 // déploiement Vercel (ex: league-of-workout-xxxx-projects.vercel.app) est
@@ -21,7 +26,7 @@ const PUBLIC_PREFIXES = [
   "/api/auth",
 ];
 
-export async function middleware(req: NextRequest) {
+export default auth((req) => {
   const host = req.headers.get("host") ?? "";
 
   // Canonicalisation du domaine (uniquement pour les URLs Vercel, jamais en local).
@@ -32,16 +37,13 @@ export async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
 
+  // Routes publiques : accès libre.
   if (pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  });
-
-  if (!token) {
+  // Routes protégées : req.auth est rempli par Auth.js si la session est valide.
+  if (!req.auth) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
@@ -49,7 +51,7 @@ export async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|riot\\.txt|.*\\.png$|.*\\.svg$).*)"],
