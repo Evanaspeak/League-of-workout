@@ -5,7 +5,13 @@ import Discord from "next-auth/providers/discord";
 // Configuration "edge-safe" (sans Prisma) — utilisée par le middleware pour
 // protéger les routes. La config complète (adapter + callbacks DB) est dans auth.ts.
 export const authConfig = {
-  providers: [Google, Discord],
+  providers: [
+    // allowDangerousEmailAccountLinking : lie automatiquement un compte OAuth à
+    // un utilisateur existant ayant le même email (évite l'erreur
+    // OAuthAccountNotLinked). Sûr car Google et Discord vérifient l'email.
+    Google({ allowDangerousEmailAccountLinking: true }),
+    Discord({ allowDangerousEmailAccountLinking: true }),
+  ],
   trustHost: true,
   session: { strategy: "jwt" as const },
   pages: { signIn: "/login" },
