@@ -13,26 +13,25 @@ export function SessionGuard() {
     if (typeof window === "undefined") return;
     if (window.electronLOL?.isDesktop) return;
 
-    // Nettoie ?li=1 de l'URL si présent
     const params = new URLSearchParams(window.location.search);
     if (params.get("li") === "1") {
+      // Première arrivée après connexion → marque la session navigateur comme active
+      sessionStorage.setItem("low_alive", "1");
       params.delete("li");
       const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", clean);
+      return;
     }
 
-    const setCookie = () => {
-      document.cookie = "low_session=1; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : "");
-    };
-
-    // Si "Rester connecté" est actif (ou jamais configuré), rafraîchit le cookie et s'arrête
+    // Si "Rester connecté" est actif (ou jamais configuré), pas de déconnexion auto
     const rm = localStorage.getItem("low_rm");
-    if (rm !== "false") { setCookie(); return; }
+    if (rm !== "false") return;
 
-    // Sinon : vérifie que la session de navigation est encore active
-    const hasSession = document.cookie.split(";").some((c) => c.trim().startsWith("low_session="));
-    if (hasSession) return;
+    // "Rester connecté" désactivé : la session n'est valide que tant que l'onglet reste ouvert
+    const alive = sessionStorage.getItem("low_alive");
+    if (alive) return;
 
+    // sessionStorage vide = le navigateur a été fermé et rouvert → déconnexion
     signOut({ redirect: false }).then(() => {
       window.location.href = "/login";
     });
