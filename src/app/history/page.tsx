@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
+import { ChampionInput } from "@/components/ChampionInput";
+import { findChampion } from "@/lib/champions";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -89,9 +91,24 @@ export default function HistoryPage() {
   const [addLogged, setAddLogged] = useState(false);
   const [addError, setAddError] = useState("");
 
+  // ── Date editing ──
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDateVal, setEditDateVal] = useState("");
+
   // ── Riot manual fetch ──
   const [riotLoading, setRiotLoading] = useState(false);
   const [riotError, setRiotError] = useState("");
+
+  // ─── Load localStorage on mount ──────────────────────────────────────────
+  useEffect(() => {
+    const savedSec = localStorage.getItem("lastGainageSec");
+    const savedRole = localStorage.getItem("lastRole");
+    setAddForm((f) => ({
+      ...f,
+      ...(savedSec ? { gainageSec: savedSec } : {}),
+      ...(savedRole ? { role: savedRole } : {}),
+    }));
+  }, []);
 
   // ─── Chargement initial (games + parties Riot) ───────────────────────────
   useEffect(() => {
@@ -142,7 +159,8 @@ export default function HistoryPage() {
 
   // ─── Manual add form ─────────────────────────────────────────────────────
   const openAddForm = (role?: string) => {
-    setAddForm((f) => ({ ...f, role: role ?? "Jungle" }));
+    const savedRole = localStorage.getItem("lastRole") ?? "Jungle";
+    setAddForm((f) => ({ ...f, role: role ?? savedRole }));
     setPreview(null);
     setAddLogged(false);
     setAddError("");
@@ -187,7 +205,7 @@ export default function HistoryPage() {
       setGames((prev) => [{ ...game, pompesCalculees: scoring.pompesFinales }, ...prev]);
       setAddLogged(true);
       setPreview(null);
-      setAddForm({ role: "Jungle", champion: "", kills: "", deaths: "", assists: "", result: "D", gainageSec: "60" });
+      setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
     } else {
       const err = await res.json();
       setAddError(err.error ?? "Erreur lors du log");
@@ -220,6 +238,18 @@ export default function HistoryPage() {
     setRiotLoading(false);
   };
 
+  // ─── Edit game date ──────────────────────────────────────────────────────
+  const handleEditDate = async (id: string) => {
+    if (!editDateVal) return;
+    await fetch(`/api/games/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: editDateVal }),
+    });
+    setGames((prev) => prev.map((g) => g.id === id ? { ...g, date: editDateVal } : g));
+    setEditingDateId(null);
+  };
+
   // ─── Delete pompe entry ──────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -239,7 +269,8 @@ export default function HistoryPage() {
     );
   const totalPompes = filtered.reduce((s, g) => s + g.pompesCalculees, 0);
 
-  const isAddReady = addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== "";
+  const isChampionValid = !addForm.champion || !!findChampion(addForm.champion);
+  const isAddReady = addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== "" && isChampionValid;
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -327,14 +358,21 @@ export default function HistoryPage() {
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Rôle</label>
                   <select className="lol-select w-full" value={addForm.role}
-                    onChange={(e) => { setAddForm((f) => ({ ...f, role: e.target.value })); setPreview(null); }}>
+                    onChange={(e) => {
+                      setAddForm((f) => ({ ...f, role: e.target.value }));
+                      localStorage.setItem("lastRole", e.target.value);
+                      setPreview(null);
+                    }}>
                     {ROLES_FORM.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Champion</label>
-                  <input className="lol-input" placeholder="ex: Lee Sin" value={addForm.champion}
-                    onChange={(e) => { setAddForm((f) => ({ ...f, champion: e.target.value })); setPreview(null); }} />
+                  <ChampionInput
+                    value={addForm.champion}
+                    onChange={(val) => setAddForm((f) => ({ ...f, champion: val }))}
+                    onReset={() => setPreview(null)}
+                  />
                 </div>
               </div>
 
@@ -373,7 +411,11 @@ export default function HistoryPage() {
                   </label>
                   <div className="flex items-center gap-2">
                     <input type="number" min="1" className="lol-input text-center" value={addForm.gainageSec}
-                      onChange={(e) => { setAddForm((f) => ({ ...f, gainageSec: e.target.value })); setPreview(null); }} />
+                      onChange={(e) => {
+                        setAddForm((f) => ({ ...f, gainageSec: e.target.value }));
+                        localStorage.setItem("lastGainageSec", e.target.value);
+                        setPreview(null);
+                      }} />
                     <span className="text-xs gold-text shrink-0">{getLevelLabel(Number(addForm.gainageSec) || 60)}</span>
                   </div>
                 </div>
@@ -561,7 +603,33 @@ export default function HistoryPage() {
                           return (
                             <tr key={g.id} style={{ background: "var(--bg-raised)", borderBottom: "1px solid rgba(200,170,110,0.08)" }}>
                               <td className="px-3 py-2" style={{ color: "rgba(240,230,211,0.6)" }}>
-                                {new Date(g.date).toLocaleDateString("fr-FR")}
+                                {editingDateId === g.id ? (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                    <input
+                                      type="datetime-local"
+                                      className="lol-input"
+                                      style={{ fontSize: "0.75rem", padding: "2px 6px" }}
+                                      value={editDateVal}
+                                      onChange={(e) => setEditDateVal(e.target.value)}
+                                    />
+                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "#4caf50", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✓</button>
+                                    <button onClick={() => setEditingDateId(null)} style={{ color: "#e05555", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✕</button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                    <span>{new Date(g.date).toLocaleDateString("fr-FR")}</span>
+                                    <button
+                                      onClick={() => {
+                                        const d = new Date(g.date);
+                                        const offset = d.getTimezoneOffset() * 60000;
+                                        setEditDateVal(new Date(d.getTime() - offset).toISOString().slice(0, 16));
+                                        setEditingDateId(g.id);
+                                      }}
+                                      title="Modifier la date"
+                                      style={{ color: "rgba(200,170,110,0.35)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
+                                    >✎</button>
+                                  </div>
+                                )}
                               </td>
                               <td className="px-3 py-2 gold-text font-medium">{g.role}</td>
                               <td className="px-3 py-2">
