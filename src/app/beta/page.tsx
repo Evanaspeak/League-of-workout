@@ -26,7 +26,12 @@ const FIELD_STYLE = {
   fontSize: "0.9rem",
   outline: "none",
   boxSizing: "border-box" as const,
+  colorScheme: "dark" as const,
 };
+
+// Style explicite des <option> : certains navigateurs rendent la liste native
+// en blanc et héritent de la couleur claire du select → texte illisible.
+const OPTION_STYLE = { background: "#0a0e1a", color: "#F0E6D3" };
 
 const LABEL_STYLE = {
   display: "block",
@@ -155,8 +160,8 @@ export default function BetaPage() {
               <div>
                 <label style={LABEL_STYLE}>Genre *</label>
                 <select style={FIELD_STYLE} value={form.genre} onChange={e => set("genre", e.target.value)} required>
-                  <option value="">—</option>
-                  {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+                  <option value="" style={OPTION_STYLE}>—</option>
+                  {GENRES.map(g => <option key={g} value={g} style={OPTION_STYLE}>{g}</option>)}
                 </select>
               </div>
               <div>
@@ -180,7 +185,7 @@ export default function BetaPage() {
               <div>
                 <label style={LABEL_STYLE}>Région *</label>
                 <select style={FIELD_STYLE} value={form.region} onChange={e => set("region", e.target.value)} required>
-                  {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  {REGIONS.map(r => <option key={r} value={r} style={OPTION_STYLE}>{r}</option>)}
                 </select>
               </div>
             </div>

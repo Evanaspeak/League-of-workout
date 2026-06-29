@@ -14,6 +14,7 @@ export const authConfig = {
       const isPublic =
         pathname === "/" ||
         pathname.startsWith("/beta") ||
+        pathname.startsWith("/api/beta") ||
         pathname.startsWith("/login") ||
         pathname.startsWith("/waitlist") ||
         pathname.startsWith("/cgu") ||

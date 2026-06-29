@@ -67,7 +67,7 @@ export function LoginButtons() {
       if (result?.error) {
         setError("Email ou mot de passe incorrect");
       } else {
-        window.location.href = "/?li=1";
+        window.location.href = "/dashboard?li=1";
       }
     } catch {
       setError("Erreur de connexion, réessayez");
@@ -97,7 +97,7 @@ export function LoginButtons() {
         setSuccess("Compte créé ! Connectez-vous maintenant.");
         setMode("login");
       } else {
-        window.location.href = "/?li=1";
+        window.location.href = "/dashboard?li=1";
       }
     } catch {
       setError("Erreur serveur, réessayez");
