@@ -5,7 +5,7 @@ import { sendBetaConfirmation } from "@/lib/email";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { pseudo, email, riotId, region, genre, age, poids, hoursPerWeek, currentSport, motivation, discovery, engagement } = body;
+    const { pseudo, email, riotId, region, genre, age, poids, hoursPerWeek, sportsHoursPerWeek, currentSport, motivation, discovery, engagement } = body;
 
     if (!pseudo || !email || !riotId || !region || !genre || !age || !poids || !hoursPerWeek || !motivation || !discovery || !engagement) {
       return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
         age: Number(age),
         poids: Number(poids),
         hoursPerWeek: String(hoursPerWeek),
+        sportsHoursPerWeek: Number(sportsHoursPerWeek ?? 0),
         currentSport: currentSport ? String(currentSport).trim() : null,
         motivation: String(motivation).trim(),
         discovery: String(discovery),

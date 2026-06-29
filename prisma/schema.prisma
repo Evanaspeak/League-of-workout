@@ -146,9 +146,10 @@ model BetaApplication {
   genre        String
   age          Int
   poids        Int
-  hoursPerWeek String
-  currentSport String?
-  motivation   String
+  hoursPerWeek       String
+  sportsHoursPerWeek Int    @default(0)
+  currentSport       String?
+  motivation         String
   discovery    String
   engagement   Int
   status       String   @default("pending") // pending | accepted | rejected

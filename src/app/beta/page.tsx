@@ -7,6 +7,15 @@ const HOURS = ["Moins de 5h", "5 à 10h", "10 à 20h", "Plus de 20h"];
 const DISCOVERY = ["Discord", "Reddit", "Twitter / X", "TikTok", "Un ami", "Autre"];
 const GENRES = ["Homme", "Femme", "Non-binaire", "Préfère ne pas préciser"];
 
+function sportLabel(h: number) {
+  if (h === 0) return "Sédentaire";
+  if (h <= 2) return "Peu actif";
+  if (h <= 5) return "Actif";
+  if (h <= 10) return "Sportif";
+  if (h <= 15) return "Très sportif";
+  return "Athlète";
+}
+
 const FIELD_STYLE = {
   width: "100%",
   background: "rgba(240,230,211,0.04)",
@@ -31,7 +40,7 @@ const LABEL_STYLE = {
 export default function BetaPage() {
   const [form, setForm] = useState({
     pseudo: "", email: "", riotId: "", region: "EUW", genre: "", age: "",
-    poids: "", hoursPerWeek: "", currentSport: "", motivation: "", discovery: "", engagement: 0,
+    poids: "", hoursPerWeek: "", currentSport: "", sportsHoursPerWeek: 0, motivation: "", discovery: "", engagement: 0,
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -50,7 +59,7 @@ export default function BetaPage() {
       const res = await fetch("/api/beta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, age: Number(form.age), poids: Number(form.poids) }),
+        body: JSON.stringify({ ...form, age: Number(form.age), poids: Number(form.poids), sportsHoursPerWeek: Number(form.sportsHoursPerWeek) }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Erreur"); return; }
@@ -196,7 +205,27 @@ export default function BetaPage() {
             <SectionTitle>Activité physique</SectionTitle>
 
             <div>
-              <label style={LABEL_STYLE}>Sport(s) pratiqué(s) actuellement <span style={{ opacity: 0.5 }}>(optionnel)</span></label>
+              <label style={LABEL_STYLE}>
+                Heures de sport par semaine *
+                <span style={{ float: "right", color: "#C8AA6E", fontFamily: "var(--font-heading)", letterSpacing: 0, textTransform: "none", fontSize: "0.85rem" }}>
+                  {form.sportsHoursPerWeek}h — {sportLabel(form.sportsHoursPerWeek)}
+                </span>
+              </label>
+              <input
+                type="range" min={0} max={20} step={1}
+                value={form.sportsHoursPerWeek}
+                onChange={e => set("sportsHoursPerWeek", Number(e.target.value))}
+                style={{ width: "100%", accentColor: "#C8AA6E", cursor: "pointer", height: 20 }}
+              />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", marginTop: 4 }}>
+                <span>0h — Sédentaire</span>
+                <span>10h</span>
+                <span>20h — Athlète</span>
+              </div>
+            </div>
+
+            <div>
+              <label style={LABEL_STYLE}>Sport(s) pratiqué(s) <span style={{ opacity: 0.5 }}>(optionnel)</span></label>
               <input style={FIELD_STYLE} placeholder="Ex: Course à pied, musculation, aucun..." value={form.currentSport} onChange={e => set("currentSport", e.target.value)} />
             </div>
 

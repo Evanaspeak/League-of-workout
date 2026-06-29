@@ -12,6 +12,7 @@ type Application = {
   age: number;
   poids: number;
   hoursPerWeek: string;
+  sportsHoursPerWeek: number;
   currentSport: string | null;
   motivation: string;
   discovery: string;
@@ -149,6 +150,7 @@ export default function AdminBetaApplications() {
                   <Info label="Âge" value={`${app.age} ans`} />
                   <Info label="Poids" value={`${app.poids} kg`} />
                   <Info label="Jeu / semaine" value={app.hoursPerWeek} />
+                  <Info label="Sport / semaine" value={`${app.sportsHoursPerWeek}h`} />
                   <Info label="Sport actuel" value={app.currentSport || "Aucun"} />
                   <Info label="Source" value={app.discovery} />
                 </div>
