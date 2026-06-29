@@ -17,6 +17,25 @@ git checkout main && git merge claude/excel-app-conversion-5hk2fg
 git push origin main
 ```
 
+## Versionnage des déploiements Vercel (IMPORTANT)
+À chaque mise en prod (merge sur `main`), nommer le **commit de merge** avec un
+préfixe de version incrémental `Vx — description` (V1, V2, V3…) pour que la
+dernière version soit immédiatement identifiable dans le dashboard Vercel
+(colonne "Source"). Le compteur est suivi via des tags git `prod-vX`.
+
+Procédure à chaque merge sur main :
+```bash
+# 1. Trouver le dernier numéro de version
+git tag --list 'prod-v*' --sort=-v:refname | head -1   # ex: prod-v3
+# 2. Merger en nommant le commit avec le numéro suivant (--no-ff obligatoire)
+git checkout main && git merge --no-ff claude/excel-app-conversion-5hk2fg \
+  -m "V4 — description courte du changement"
+# 3. Tag + push (commit ET tags)
+git tag prod-v4
+git push origin main --tags
+```
+Si aucun tag `prod-v*` n'existe, commencer à V1.
+
 ## Architecture fichiers clés
 
 ```
