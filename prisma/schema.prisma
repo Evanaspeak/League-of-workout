@@ -133,3 +133,23 @@ model SystemConfig {
   key   String @id
   value String // JSON
 }
+
+// ─── Candidatures bêta ───────────────────────────────────────────────────────
+
+model BetaApplication {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  pseudo       String
+  email        String   @unique
+  riotId       String
+  region       String
+  genre        String
+  age          Int
+  poids        Int
+  hoursPerWeek String
+  currentSport String?
+  motivation   String
+  discovery    String
+  engagement   Int
+  status       String   @default("pending") // pending | accepted | rejected
+}

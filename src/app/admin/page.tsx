@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import AdminChampionEditor from "./AdminChampionEditor";
+import AdminBetaApplications from "./AdminBetaApplications";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
 
@@ -25,6 +26,7 @@ export default async function AdminPage() {
           Accès restreint · {user.email}
         </p>
       </div>
+      <AdminBetaApplications />
       <AdminChampionEditor />
     </div>
   );

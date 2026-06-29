@@ -13,6 +13,7 @@ export const authConfig = {
       const { pathname } = request.nextUrl;
       const isPublic =
         pathname === "/" ||
+        pathname.startsWith("/beta") ||
         pathname.startsWith("/login") ||
         pathname.startsWith("/waitlist") ||
         pathname.startsWith("/cgu") ||

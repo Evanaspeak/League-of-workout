@@ -141,16 +141,18 @@ export default async function LandingPage() {
         }} />
 
         <div style={{ position: "relative", maxWidth: 760 }}>
-          <div style={{
-            display: "inline-block", marginBottom: 24,
-            padding: "4px 16px", borderRadius: 999,
-            border: "1px solid rgba(11,196,227,0.3)",
-            background: "rgba(11,196,227,0.06)",
-            fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase",
-            color: "#0bc4e3",
-          }}>
-            Bêta fermée — candidatures ouvertes
-          </div>
+          <Link href="/beta" style={{ textDecoration: "none" }}>
+            <div style={{
+              display: "inline-block", marginBottom: 24,
+              padding: "4px 16px", borderRadius: 999,
+              border: "1px solid rgba(11,196,227,0.3)",
+              background: "rgba(11,196,227,0.06)",
+              fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase",
+              color: "#0bc4e3", cursor: "pointer",
+            }}>
+              Bêta fermée — candidatures ouvertes →
+            </div>
+          </Link>
 
           <h1 style={{
             fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
@@ -186,7 +188,7 @@ export default async function LandingPage() {
               </a>
             )}
             <Link
-              href="/login"
+              href="/beta"
               style={{
                 padding: "14px 32px", borderRadius: 8, fontSize: "0.95rem",
                 border: "1px solid rgba(200,170,110,0.4)",
@@ -195,7 +197,7 @@ export default async function LandingPage() {
                 letterSpacing: "0.05em",
               }}
             >
-              Accéder à l&apos;app web →
+              Candidater à la bêta →
             </Link>
           </div>
         </div>
@@ -492,7 +494,7 @@ export default async function LandingPage() {
               </a>
             )}
             <Link
-              href="/login"
+              href="/beta"
               style={{
                 padding: "14px 36px", borderRadius: 8, fontSize: "1rem",
                 border: "1px solid rgba(200,170,110,0.4)",
@@ -501,7 +503,7 @@ export default async function LandingPage() {
                 letterSpacing: "0.05em",
               }}
             >
-              Créer un compte →
+              Candidater à la bêta →
             </Link>
           </div>
         </div>
