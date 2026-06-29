@@ -25,7 +25,7 @@ export default function Nav() {
       .then((s) => { if (s?.user?.email === ADMIN_EMAIL) setIsAdmin(true); })
       .catch(() => {});
   }, []);
-  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) => (p === "/" ? path === "/" : path.startsWith(p)));
 
   return (
     <nav style={{
