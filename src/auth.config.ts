@@ -6,6 +6,8 @@ import Discord from "next-auth/providers/discord";
 // protéger les routes. La config complète (adapter + callbacks DB) est dans auth.ts.
 export const authConfig = {
   providers: [Google, Discord],
+  trustHost: true,
+  session: { strategy: "jwt" as const },
   pages: { signIn: "/login" },
   callbacks: {
     // Détermine si une requête est autorisée (middleware).

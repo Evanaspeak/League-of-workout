@@ -32,12 +32,41 @@ const STATUS_LABELS: Record<string, string> = {
   rejected: "Refusé",
 };
 
+function exportToCSV(apps: Application[]) {
+  const headers = [
+    "Pseudo", "Email", "Riot ID", "Région", "Genre", "Âge", "Poids (kg)",
+    "Jeu / semaine", "Sport / semaine (h)", "Sport pratiqué",
+    "Motivation", "Source", "Engagement (/5)", "Statut", "Date",
+  ];
+  const rows = apps.map(app => [
+    app.pseudo, app.email, app.riotId, app.region, app.genre,
+    app.age, app.poids, app.hoursPerWeek, app.sportsHoursPerWeek,
+    app.currentSport ?? "",
+    app.motivation,
+    app.discovery, app.engagement,
+    STATUS_LABELS[app.status] ?? app.status,
+    new Date(app.createdAt).toLocaleDateString("fr-FR"),
+  ]);
+  const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+  const csv = [headers, ...rows].map(row => row.map(escape).join(";")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `candidatures-${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export default function AdminBetaApplications() {
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/beta")
@@ -57,7 +86,15 @@ export default function AdminBetaApplications() {
     setUpdating(null);
   }
 
-  const filtered = apps.filter(a => filter === "all" || a.status === filter);
+  const q = search.trim().toLowerCase();
+  const filtered = apps
+    .filter(a => filter === "all" || a.status === filter)
+    .filter(a =>
+      !q ||
+      a.pseudo.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q)
+    );
+
   const counts = {
     all: apps.length,
     pending: apps.filter(a => a.status === "pending").length,
@@ -69,16 +106,53 @@ export default function AdminBetaApplications() {
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#C8AA6E", letterSpacing: "0.1em" }}>
           CANDIDATURES BÊTA
         </h2>
-        <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.4)" }}>
-          {counts.accepted}/100 acceptés
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.4)" }}>
+            {counts.accepted}/100 acceptés
+          </span>
+          <button
+            onClick={() => exportToCSV(apps)}
+            title="Exporter toutes les candidatures en CSV (Excel)"
+            style={{
+              padding: "5px 14px", borderRadius: 6, fontSize: "0.78rem", cursor: "pointer",
+              border: "1px solid rgba(200,170,110,0.3)",
+              background: "rgba(200,170,110,0.07)",
+              color: "#C8AA6E",
+              display: "flex", alignItems: "center", gap: 6,
+            }}
+          >
+            ⬇ Export Excel
+          </button>
+        </div>
       </div>
 
-      {/* Filtres */}
+      {/* Recherche */}
+      <div style={{ marginBottom: 14 }}>
+        <input
+          type="text"
+          placeholder="Rechercher par pseudo ou email…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(200,170,110,0.2)",
+            borderRadius: 6,
+            color: "#F0E6D3",
+            fontSize: "0.85rem",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+
+      {/* Filtres statut */}
       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         {(["all", "pending", "accepted", "rejected"] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
@@ -94,7 +168,7 @@ export default function AdminBetaApplications() {
 
       {filtered.length === 0 && (
         <p style={{ color: "rgba(240,230,211,0.35)", fontSize: "0.875rem", padding: "20px 0" }}>
-          Aucune candidature{filter !== "all" ? " dans cette catégorie" : ""}.
+          {q ? `Aucun résultat pour "${search}".` : `Aucune candidature${filter !== "all" ? " dans cette catégorie" : ""}.`}
         </p>
       )}
 
