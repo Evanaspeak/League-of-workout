@@ -10,7 +10,7 @@ export const metadata = {
 const DOWNLOAD_URL = process.env.NEXT_PUBLIC_DOWNLOAD_URL;
 
 const STATS = [
-  { value: "1/4", label: "adultes dans le monde ne respectent pas les recommandations d'activité physique (OMS, 2022)" },
+  { value: "-30%", label: "de pas quotidiens chez les gamers par rapport à la population générale (Withings)" },
   { value: "13h", label: "de jeu par semaine en moyenne — soit près de 2h par jour (ESA, 2023)" },
   { value: "4ème", label: "cause de mortalité mondiale — la sédentarité, devant l'obésité (OMS)" },
   { value: "+20%", label: "de mémoire et concentration après 20 min d'exercice modéré (PNAS / Univ. Illinois)" },
