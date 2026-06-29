@@ -10,10 +10,10 @@ export const metadata = {
 const DOWNLOAD_URL = process.env.NEXT_PUBLIC_DOWNLOAD_URL;
 
 const STATS = [
-  { value: "73%", label: "des gamers ne pratiquent aucun sport régulier" },
-  { value: "6h30", label: "de jeu en moyenne par session pour un joueur PC" },
-  { value: "4ème", label: "cause de mortalité mondiale — la sédentarité (OMS)" },
-  { value: "+23%", label: "de performances cognitives avec une activité régulière" },
+  { value: "1/4", label: "adultes dans le monde ne respectent pas les recommandations d'activité physique (OMS, 2022)" },
+  { value: "13h", label: "de jeu par semaine en moyenne — soit près de 2h par jour (ESA, 2023)" },
+  { value: "4ème", label: "cause de mortalité mondiale — la sédentarité, devant l'obésité (OMS)" },
+  { value: "+20%", label: "de mémoire et concentration après 20 min d'exercice modéré (PNAS / Univ. Illinois)" },
 ];
 
 const STEPS = [
@@ -273,10 +273,10 @@ export default async function LandingPage() {
             borderRadius: 16, padding: "40px 32px",
           }}>
             {[
-              { label: "Temps assis moyen / jour", value: "10h+", color: "#ef5350" },
-              { label: "Sessions de sport / semaine", value: "< 1", color: "#ef5350" },
-              { label: "Risque CV sédentarité", value: "+34%", color: "#ef5350" },
-              { label: "Douleurs dos signalées", value: "68%", color: "#ef5350" },
+              { label: "Temps assis moyen / jour (gamer PC)", value: "8-10h", color: "#ef5350" },
+              { label: "Adultes insuffisamment actifs (OMS)", value: "1 sur 4", color: "#ef5350" },
+              { label: "Décès liés à la sédentarité / an (OMS)", value: "3,2M", color: "#ef5350" },
+              { label: "Risque maladies chroniques", value: "+20-30%", color: "#ef5350" },
             ].map((item) => (
               <div key={item.label} style={{
                 display: "flex", justifyContent: "space-between", alignItems: "center",
