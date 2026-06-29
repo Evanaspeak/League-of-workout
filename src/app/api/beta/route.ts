@@ -11,9 +11,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
     }
 
-    const existing = await prisma.betaApplication.findUnique({ where: { email } });
-    if (existing) {
-      return NextResponse.json({ error: "Cette adresse email a déjà une candidature." }, { status: 409 });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (normalizedEmail === "evantocquet@gmail.com") {
+      await prisma.betaApplication.deleteMany({ where: { email: normalizedEmail } });
+    } else {
+      const existing = await prisma.betaApplication.findUnique({ where: { email: normalizedEmail } });
+      if (existing) {
+        return NextResponse.json({ error: "Cette adresse email a déjà une candidature." }, { status: 409 });
+      }
     }
 
     await prisma.betaApplication.create({
