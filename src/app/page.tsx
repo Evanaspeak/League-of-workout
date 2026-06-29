@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { auth } from "@/auth";
-import MuscleMap from "@/components/MuscleMap";
 
 export const metadata = {
   title: "League of Workout — Transforme tes défaites en pompes",
@@ -77,6 +76,23 @@ const PUSHUP_REASONS = [
     title: "L'un des exercices les plus complets",
     desc: "Mouvement poly-articulaire : une seule répétition sollicite poitrine, bras et épaules tout en gainant l'ensemble du tronc. La moitié du corps entraînée d'un coup.",
   },
+];
+
+const MUSCLE_ROLES: Record<string, { color: string; label: string }> = {
+  Primaire: { color: "#C8AA6E", label: "Moteur principal" },
+  Secondaire: { color: "#0bc4e3", label: "Assistance" },
+  Gainage: { color: "#4caf50", label: "Stabilisation / gainage" },
+};
+
+const PUSHUP_MUSCLES = [
+  { name: "Pectoraux", region: "Poitrine", role: "Primaire", desc: "Moteur principal de la poussée (grand pectoral)." },
+  { name: "Triceps", region: "Arrière du bras", role: "Primaire", desc: "Étendent le coude à chaque remontée." },
+  { name: "Deltoïdes antérieurs", region: "Épaules", role: "Primaire", desc: "Stabilisent l'épaule et participent à la poussée." },
+  { name: "Grand dentelé", region: "Côtes / omoplates", role: "Secondaire", desc: "Plaque les omoplates et protège l'articulation." },
+  { name: "Sangle abdominale", region: "Tronc", role: "Gainage", desc: "Grand droit, transverse et obliques maintiennent le corps rigide." },
+  { name: "Érecteurs du rachis", region: "Bas du dos", role: "Gainage", desc: "Gardent la colonne alignée, sans creux lombaire." },
+  { name: "Fessiers", region: "Bassin", role: "Gainage", desc: "Verrouillent le bassin dans l'axe du corps." },
+  { name: "Quadriceps", region: "Cuisses", role: "Gainage", desc: "Jambes gainées et tendues pour tenir la planche." },
 ];
 
 const PUSHUP_SOURCES = [
@@ -390,9 +406,60 @@ export default async function LandingPage() {
           </p>
         </div>
 
-        {/* Carte musculaire interactive (face / dos, surbrillance par rôle) */}
-        <div style={{ marginTop: 28 }}>
-          <MuscleMap />
+        {/* Légende des rôles */}
+        <div style={{
+          display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 18,
+          margin: "20px 0 32px",
+        }}>
+          {Object.entries(MUSCLE_ROLES).map(([role, { color, label }]) => (
+            <div key={role} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{
+                width: 10, height: 10, borderRadius: "50%", background: color,
+                boxShadow: `0 0 8px ${color}66`,
+              }} />
+              <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.55)" }}>
+                <strong style={{ color, fontWeight: 600 }}>{role}</strong> · {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16,
+        }}>
+          {PUSHUP_MUSCLES.map((m) => {
+            const c = MUSCLE_ROLES[m.role].color;
+            return (
+              <div key={m.name} style={{
+                background: "rgba(4,8,16,0.5)",
+                border: "1px solid rgba(200,170,110,0.1)",
+                borderLeft: `3px solid ${c}`,
+                borderRadius: 12, padding: "18px 20px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
+                  <span style={{
+                    fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                    fontSize: "0.92rem", color: "#F0E6D3",
+                  }}>
+                    {m.name}
+                  </span>
+                  <span style={{
+                    flexShrink: 0, padding: "2px 9px", borderRadius: 999, fontSize: "0.66rem",
+                    letterSpacing: "0.04em", textTransform: "uppercase",
+                    color: c, border: `1px solid ${c}40`, background: `${c}12`,
+                  }}>
+                    {m.role}
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "rgba(200,170,110,0.45)", marginBottom: 8, letterSpacing: "0.03em" }}>
+                  {m.region}
+                </div>
+                <p style={{ fontSize: "0.82rem", lineHeight: 1.6, color: "rgba(240,230,211,0.55)" }}>
+                  {m.desc}
+                </p>
+              </div>
+            );
+          })}
         </div>
 
         {/* Sources */}

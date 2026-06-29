@@ -175,9 +175,3 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-base); }
 ::-webkit-scrollbar-thumb { background: rgba(200, 170, 110, 0.2); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(200, 170, 110, 0.38); }
-
-/* ── Responsive landing / muscle map ────────────────────────────────────── */
-@media (max-width: 760px) {
-  .landing-two-col { grid-template-columns: 1fr !important; }
-  .muscle-map-grid { grid-template-columns: 1fr !important; }
-}
