@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import Link from "next/link";
+import { auth } from "@/auth";
 
 export const metadata = {
   title: "League of Workout — Transforme tes défaites en pompes",
@@ -67,8 +66,10 @@ const FEATURES = [
 ];
 
 export default async function LandingPage() {
+  // On lit la session pour adapter le bouton de la nav, mais on NE redirige plus :
+  // la page d'accueil reste accessible même connecté.
   const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  const isLoggedIn = !!session?.user;
 
   return (
     <div style={{ background: "#040810", minHeight: "100dvh", color: "#F0E6D3" }}>
@@ -102,7 +103,7 @@ export default async function LandingPage() {
               </a>
             )}
             <Link
-              href="/login"
+              href={isLoggedIn ? "/dashboard" : "/login"}
               style={{
                 padding: "6px 18px", borderRadius: 6, fontSize: "0.8rem",
                 background: "linear-gradient(135deg, #C8AA6E, #a8893e)",
@@ -110,7 +111,7 @@ export default async function LandingPage() {
                 letterSpacing: "0.05em",
               }}
             >
-              Se connecter
+              {isLoggedIn ? "Mon espace" : "Se connecter"}
             </Link>
           </div>
         </div>
