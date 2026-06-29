@@ -21,20 +21,21 @@ git push origin main
 À chaque mise en prod (merge sur `main`), nommer le **commit de merge** avec un
 préfixe de version incrémental `Vx — description` (V1, V2, V3…) pour que la
 dernière version soit immédiatement identifiable dans le dashboard Vercel
-(colonne "Source"). Le compteur est suivi via des tags git `prod-vX`.
+(colonne "Source"). Le compteur se déduit de l'historique de `main`
+(les tags ne sont pas poussables sur ce remote).
 
 Procédure à chaque merge sur main :
 ```bash
-# 1. Trouver le dernier numéro de version
-git tag --list 'prod-v*' --sort=-v:refname | head -1   # ex: prod-v3
-# 2. Merger en nommant le commit avec le numéro suivant (--no-ff obligatoire)
+# 1. Trouver le dernier numéro de version dans l'historique de main
+git log main --grep='^V[0-9]' --pretty='%s' | head -1   # ex: "V3 — ..."
+# 2. Merger en nommant le commit de merge avec le numéro suivant (--no-ff obligatoire)
 git checkout main && git merge --no-ff claude/excel-app-conversion-5hk2fg \
   -m "V4 — description courte du changement"
-# 3. Tag + push (commit ET tags)
-git tag prod-v4
-git push origin main --tags
+git push origin main
 ```
-Si aucun tag `prod-v*` n'existe, commencer à V1.
+Si aucun commit `Vx` n'existe encore, commencer à V1. **Ne pas** utiliser de
+tags git (`git push --tags` échoue côté proxy) — le numéro vit dans le message
+du commit de merge.
 
 ## Architecture fichiers clés
 
