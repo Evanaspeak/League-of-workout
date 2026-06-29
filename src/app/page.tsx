@@ -65,6 +65,51 @@ const FEATURES = [
   { title: "Objectifs personnalisés", desc: "Définis ton objectif de pompes et suis ta progression semaine après semaine." },
 ];
 
+const PUSHUP_REASONS = [
+  {
+    icon: "🏠",
+    title: "Faisable partout, sans rien",
+    desc: "Aucun matériel, aucun abonnement, aucun déplacement. Le poids de ton corps suffit. Tu peux en faire dans 1 m², entre deux games.",
+  },
+  {
+    icon: "🧱",
+    title: "L'un des exercices les plus complets",
+    desc: "Mouvement poly-articulaire : une seule répétition sollicite poitrine, bras et épaules tout en gainant l'ensemble du tronc. La moitié du corps entraînée d'un coup.",
+  },
+];
+
+const MUSCLE_ROLES: Record<string, { color: string; label: string }> = {
+  Primaire: { color: "#C8AA6E", label: "Moteur principal" },
+  Secondaire: { color: "#0bc4e3", label: "Assistance" },
+  Gainage: { color: "#4caf50", label: "Stabilisation / gainage" },
+};
+
+const PUSHUP_MUSCLES = [
+  { name: "Pectoraux", region: "Poitrine", role: "Primaire", desc: "Moteur principal de la poussée (grand pectoral)." },
+  { name: "Triceps", region: "Arrière du bras", role: "Primaire", desc: "Étendent le coude à chaque remontée." },
+  { name: "Deltoïdes antérieurs", region: "Épaules", role: "Primaire", desc: "Stabilisent l'épaule et participent à la poussée." },
+  { name: "Grand dentelé", region: "Côtes / omoplates", role: "Secondaire", desc: "Plaque les omoplates et protège l'articulation." },
+  { name: "Sangle abdominale", region: "Tronc", role: "Gainage", desc: "Grand droit, transverse et obliques maintiennent le corps rigide." },
+  { name: "Érecteurs du rachis", region: "Bas du dos", role: "Gainage", desc: "Gardent la colonne alignée, sans creux lombaire." },
+  { name: "Fessiers", region: "Bassin", role: "Gainage", desc: "Verrouillent le bassin dans l'axe du corps." },
+  { name: "Quadriceps", region: "Cuisses", role: "Gainage", desc: "Jambes gainées et tendues pour tenir la planche." },
+];
+
+const PUSHUP_SOURCES = [
+  {
+    label: "Yang et al., JAMA Network Open (2019) — la capacité à faire des pompes est fortement associée à un risque cardiovasculaire plus faible",
+    href: "https://doi.org/10.1001/jamanetworkopen.2018.8341",
+  },
+  {
+    label: "Calatayud et al., J. Strength & Conditioning Research (2015) — à activation musculaire comparable, pompes et développé couché produisent des gains de force similaires",
+    href: "https://pubmed.ncbi.nlm.nih.gov/?term=Calatayud+bench+press+push-up+comparable+strength+gains",
+  },
+  {
+    label: "Cogley et al., J. Strength & Conditioning Research (2005) — analyse EMG de l'activation des pectoraux et triceps pendant les pompes",
+    href: "https://pubmed.ncbi.nlm.nih.gov/?term=Cogley+muscle+activation+hand+positions+push-up",
+  },
+];
+
 export default async function LandingPage() {
   // On lit la session pour adapter le bouton de la nav, mais on NE redirige plus :
   // la page d'accueil reste accessible même connecté.
@@ -296,6 +341,145 @@ export default async function LandingPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* POURQUOI LES POMPES */}
+      <section style={{ padding: "100px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <p style={{
+          textAlign: "center", fontSize: "0.75rem", letterSpacing: "0.14em",
+          textTransform: "uppercase", color: "#C8AA6E", marginBottom: 12,
+        }}>
+          La solution la plus simple
+        </p>
+        <h2 style={{
+          fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+          fontSize: "clamp(1.8rem, 3vw, 2.4rem)", textAlign: "center", marginBottom: 16,
+        }}>
+          Pourquoi les pompes ?
+        </h2>
+        <p style={{
+          textAlign: "center", fontSize: "1rem", color: "rgba(240,230,211,0.55)",
+          maxWidth: 620, margin: "0 auto 56px", lineHeight: 1.7,
+        }}>
+          Parce que c&apos;est l&apos;un des exercices les plus faciles à réaliser à la maison
+          — et l&apos;un des plus complets. Zéro matériel, et la quasi-totalité du haut
+          du corps qui travaille en même temps.
+        </p>
+
+        {/* Deux arguments */}
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: 20, marginBottom: 64,
+        }}>
+          {PUSHUP_REASONS.map((r) => (
+            <div key={r.title} style={{
+              background: "rgba(200,170,110,0.04)",
+              border: "1px solid rgba(200,170,110,0.14)",
+              borderRadius: 16, padding: "32px 28px",
+            }}>
+              <div style={{ fontSize: "1.7rem", marginBottom: 16 }}>{r.icon}</div>
+              <h3 style={{
+                fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                fontSize: "1.05rem", color: "#C8AA6E", marginBottom: 12,
+              }}>
+                {r.title}
+              </h3>
+              <p style={{ fontSize: "0.9rem", lineHeight: 1.7, color: "rgba(240,230,211,0.6)" }}>
+                {r.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Muscles travaillés */}
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
+          <h3 style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "clamp(1.3rem, 2.4vw, 1.7rem)", color: "#F0E6D3", marginBottom: 10,
+          }}>
+            Les muscles travaillés
+          </h3>
+          <p style={{ fontSize: "0.92rem", color: "rgba(240,230,211,0.5)", maxWidth: 540, margin: "0 auto", lineHeight: 1.65 }}>
+            Une pompe est un mouvement complet : pas seulement les bras, mais toute
+            la chaîne avant du corps et le gainage profond.
+          </p>
+        </div>
+
+        {/* Légende des rôles */}
+        <div style={{
+          display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 18,
+          margin: "20px 0 32px",
+        }}>
+          {Object.entries(MUSCLE_ROLES).map(([role, { color, label }]) => (
+            <div key={role} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{
+                width: 10, height: 10, borderRadius: "50%", background: color,
+                boxShadow: `0 0 8px ${color}66`,
+              }} />
+              <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.55)" }}>
+                <strong style={{ color, fontWeight: 600 }}>{role}</strong> · {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16,
+        }}>
+          {PUSHUP_MUSCLES.map((m) => {
+            const c = MUSCLE_ROLES[m.role].color;
+            return (
+              <div key={m.name} style={{
+                background: "rgba(4,8,16,0.5)",
+                border: "1px solid rgba(200,170,110,0.1)",
+                borderLeft: `3px solid ${c}`,
+                borderRadius: 12, padding: "18px 20px",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, gap: 8 }}>
+                  <span style={{
+                    fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                    fontSize: "0.92rem", color: "#F0E6D3",
+                  }}>
+                    {m.name}
+                  </span>
+                  <span style={{
+                    flexShrink: 0, padding: "2px 9px", borderRadius: 999, fontSize: "0.66rem",
+                    letterSpacing: "0.04em", textTransform: "uppercase",
+                    color: c, border: `1px solid ${c}40`, background: `${c}12`,
+                  }}>
+                    {m.role}
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "rgba(200,170,110,0.45)", marginBottom: 8, letterSpacing: "0.03em" }}>
+                  {m.region}
+                </div>
+                <p style={{ fontSize: "0.82rem", lineHeight: 1.6, color: "rgba(240,230,211,0.55)" }}>
+                  {m.desc}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sources */}
+        <div style={{ marginTop: 40 }}>
+          <p style={{
+            fontSize: "0.7rem", letterSpacing: "0.12em", textTransform: "uppercase",
+            color: "rgba(200,170,110,0.45)", marginBottom: 12, textAlign: "center",
+          }}>
+            Sources
+          </p>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 auto", maxWidth: 760, display: "flex", flexDirection: "column", gap: 8 }}>
+            {PUSHUP_SOURCES.map((s) => (
+              <li key={s.href} style={{ fontSize: "0.78rem", lineHeight: 1.6, color: "rgba(240,230,211,0.45)", textAlign: "center" }}>
+                <a href={s.href} target="_blank" rel="noopener noreferrer"
+                  style={{ color: "rgba(11,196,227,0.7)", textDecoration: "none" }}>
+                  {s.label} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
