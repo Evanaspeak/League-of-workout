@@ -7,12 +7,12 @@ import { useSession } from "@/lib/SessionContext";
 const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 const links = [
-  { href: "/", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/history", label: "Historique" },
   { href: "/settings", label: "Réglages" },
 ];
 
-const PUBLIC_PATHS = ["/login", "/waitlist"];
+const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
 
 export default function Nav() {
   const path = usePathname();

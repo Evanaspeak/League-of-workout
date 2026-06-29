@@ -1,545 +1,539 @@
-"use client";
-import { useEffect, useState } from "react";
-import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
-import { ChampionIcon } from "@/components/ChampionIcon";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid,
-} from "recharts";
-import { useSession } from "@/lib/SessionContext";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import Link from "next/link";
 
-type PeriodStat = { label: string; avg: number; total: number };
-
-type ChampSummary = {
-  name: string;
-  games: number;
-  avgKills: number;
-  avgDeaths: number;
-  avgAssists: number;
-  kda: number | null;
-  avgPompes: number;
+export const metadata = {
+  title: "League of Workout — Transforme tes défaites en pompes",
+  description: "L'application qui connecte ton compte Riot et calcule tes pompes après chaque game. Scoring intelligent basé sur ton KDA, ton rôle et ta maîtrise du champion.",
 };
 
-type DashData = {
-  totalGames: number;
-  wins: number;
-  winrate: number;
-  totalPompes: number;
-  recordPompes: number;
-  pompesByRole: Record<string, number>;
-  gamesByRole: Record<string, number>;
-  cumulByDate: { date: string; cumul: number }[];
-  statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
-  dailyPompes: { date: string; total: number }[];
-  mostPlayed: ChampSummary | null;
-  leastEfficient: ChampSummary | null;
-  objectifTotalPompes: number;
-};
+const DOWNLOAD_URL = process.env.NEXT_PUBLIC_DOWNLOAD_URL;
 
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+const STATS = [
+  { value: "73%", label: "des gamers ne pratiquent aucun sport régulier" },
+  { value: "6h30", label: "de jeu en moyenne par session pour un joueur PC" },
+  { value: "4ème", label: "cause de mortalité mondiale — la sédentarité (OMS)" },
+  { value: "+23%", label: "de performances cognitives avec une activité régulière" },
+];
+
+const STEPS = [
+  {
+    num: "01",
+    title: "Connecte ton compte Riot",
+    desc: "Entre ton Riot ID et ta région dans les réglages. L'app se synchronise automatiquement avec ton historique.",
+  },
+  {
+    num: "02",
+    title: "Joue tes games normalement",
+    desc: "Active le mode session et joue. L'app détecte chaque partie en temps réel grâce à l'API Riot.",
+  },
+  {
+    num: "03",
+    title: "Fais tes pompes",
+    desc: "Après chaque game, ton score est calculé selon ton KDA, ton rôle et ta maîtrise du champion. Plus tu performes, moins tu souffres.",
+  },
+];
+
+const BENEFITS = [
+  {
+    icon: "⚡",
+    title: "Concentration",
+    desc: "L'exercice physique augmente le flux sanguin cérébral, améliorant la concentration et les prises de décision en game.",
+  },
+  {
+    icon: "🎯",
+    title: "Réflexes",
+    desc: "Une activité physique régulière réduit les temps de réaction. Tes réflexes en jeu s'améliorent avec ton cardio.",
+  },
+  {
+    icon: "🧠",
+    title: "Mental",
+    desc: "L'exercice libère des endorphines qui réduisent le stress et la tilté. Tu joues mieux quand tu vas bien.",
+  },
+  {
+    icon: "❤️",
+    title: "Santé long terme",
+    desc: "Rester assis plus de 6h par jour augmente de 34% les risques cardiovasculaires. Les pompes cassent ce cycle.",
+  },
+];
+
+const FEATURES = [
+  { title: "Détection automatique", desc: "Chaque partie est détectée en temps réel via l'API Riot. Zéro saisie manuelle." },
+  { title: "Scoring intelligent", desc: "Calcul basé sur ton KDA, ton rôle, ta maîtrise du champion et ton niveau de gainage." },
+  { title: "Mode session live", desc: "Polling toutes les 2 minutes pendant tes sessions. Le compteur tourne en fond." },
+  { title: "Historique complet", desc: "Visualise tes pompes par rôle, par champion, par période. Graphiques et stats." },
+  { title: "App desktop", desc: "Application Windows pour un overlay discret pendant tes games." },
+  { title: "Objectifs personnalisés", desc: "Définis ton objectif de pompes et suis ta progression semaine après semaine." },
+];
+
+export default async function LandingPage() {
+  const session = await auth();
+  if (session?.user) redirect("/dashboard");
+
   return (
-    <div className="stat-card p-4 flex flex-col gap-1 fade-in">
-      <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(200,170,110,0.55)" }}>{label}</span>
-      <span style={{ fontSize: "1.8rem", fontFamily: "var(--font-heading, 'Russo One', sans-serif)", color: "#C8AA6E", lineHeight: 1.1 }}>{value}</span>
-      {sub && <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.45)" }}>{sub}</span>}
-    </div>
-  );
-}
+    <div style={{ background: "#040810", minHeight: "100dvh", color: "#F0E6D3" }}>
 
-function ChampionCard({ champ, badge, badgeColor }: { champ: ChampSummary; badge: string; badgeColor: string }) {
-  const kdaLabel = champ.kda === null ? "Perfect" : champ.kda.toFixed(2);
-  return (
-    <div className="lol-panel p-4 fade-in" style={{ position: "relative" }}>
-      <span style={{
-        position: "absolute", top: 10, right: 12,
-        fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
-        color: badgeColor, textTransform: "uppercase",
-        border: `1px solid ${badgeColor}55`, borderRadius: 4,
-        padding: "2px 7px", background: `${badgeColor}14`,
-      }}>{badge}</span>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <ChampionIcon name={champ.name} size={64} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
+      {/* NAV */}
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 40,
+        background: "rgba(4,8,16,0.88)",
+        backdropFilter: "blur(14px)",
+        borderBottom: "1px solid rgba(200,170,110,0.16)",
+      }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{
             fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1.05rem", color: "#C8AA6E", lineHeight: 1.1,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          }}>{champ.name}</div>
-          <div style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.45)", marginTop: 2 }}>
-            {champ.games} partie{champ.games > 1 ? "s" : ""}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>KDA</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: "#C8AA6E" }}>{kdaLabel}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>
-            {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
-          </div>
-        </div>
-        <div style={{ textAlign: "center", borderLeft: "1px solid rgba(200,170,110,0.12)", borderRight: "1px solid rgba(200,170,110,0.12)" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>Moy. pompes</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>/ partie</div>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>Parties</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: "rgba(240,230,211,0.8)" }}>{champ.games}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>jouées</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function getLevelLabel(sec: number): string {
-  if (sec <= 45) return "Niveau 1";
-  if (sec <= 90) return "Niveau 2";
-  if (sec <= 150) return "Niveau 3";
-  if (sec <= 240) return "Niveau 4";
-  return "Niveau 5";
-}
-
-export default function Dashboard() {
-  const [data, setData] = useState<DashData | null>(null);
-  const [showGainageModal, setShowGainageModal] = useState(false);
-  const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
-  const [statsMode, setStatsMode] = useState<"avg" | "total">("avg");
-  const [calendarDate, setCalendarDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [dailyHourly, setDailyHourly] = useState<{ label: string; total: number }[] | null>(null);
-  const [dailySummary, setDailySummary] = useState<{ total: number; games: number } | null>(null);
-  const [dailyLoading, setDailyLoading] = useState(false);
-  const [roleView, setRoleView] = useState<"total" | "avg">("total");
-  const [gainageInput, setGainageInput] = useState(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
-    return "60";
-  });
-
-  const { sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec, startSession, stopSession } = useSession();
-
-  const loadDash = () =>
-    fetch("/api/dashboard").then(async (res) => {
-      if (!res.ok) {
-        // Session invalide (ex. cookie d'une ancienne base) → retour au login.
-        if (res.status === 401 && typeof window !== "undefined") {
-          window.location.href = "/login";
-        }
-        return;
-      }
-      setData(await res.json());
-    });
-
-  useEffect(() => { loadDash(); }, []);
-
-  // Rafraîchit les stats globales à chaque nouvelle game loggée en session.
-  useEffect(() => {
-    if (sessionGames.length > 0) loadDash();
-  }, [sessionGames.length]);
-
-  useEffect(() => {
-    if (statsPeriod !== "daily") return;
-    setDailyLoading(true);
-    fetch(`/api/dashboard/daily?date=${calendarDate}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setDailyHourly(d.hourly ?? []);
-        setDailySummary({ total: d.total ?? 0, games: d.games ?? 0 });
-        setDailyLoading(false);
-      })
-      .catch(() => setDailyLoading(false));
-  }, [statsPeriod, calendarDate]);
-
-  const handleConfirmGainage = async () => {
-    const sec = Math.max(1, Number(gainageInput) || 60);
-    localStorage.setItem("lastGainageSec", String(sec));
-    setShowGainageModal(false);
-    await startSession(sec);
-  };
-
-  if (!data) return <div className="text-center py-20 gold-text">Chargement...</div>;
-
-  const progress = data.objectifTotalPompes > 0
-    ? Math.min(100, Math.round((data.totalPompes / data.objectifTotalPompes) * 100))
-    : 0;
-  const roleData = Object.entries(data.pompesByRole ?? {}).map(([role, pompes]) => ({
-    role,
-    pompes: roleView === "avg"
-      ? Math.round(pompes / (data.gamesByRole?.[role] || 1))
-      : pompes,
-  }));
-  const totalSessionPompes = sessionGames.reduce((s, g) => s + g.pompes, 0);
-  const sessionChartData = [...sessionGames].reverse().map((g, i) => ({ label: `G${i + 1}`, pompes: g.pompes }));
-
-  return (
-    <div className="space-y-6">
-      <DesktopAuthHandler />
-      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>DASHBOARD</h1>
-
-      {/* Stats globales */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Games jouées" value={data.totalGames} />
-        <StatCard label="Winrate" value={`${data.winrate}%`} sub={`${data.wins}V / ${data.totalGames - data.wins}D`} />
-        <StatCard label="Total pompes" value={data.totalPompes} />
-        <StatCard label="Record / game" value={data.recordPompes} sub="pompes" />
-      </div>
-
-      {data.objectifTotalPompes > 0 && (
-        <div className="lol-panel p-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="gold-text font-semibold">Objectif : {data.objectifTotalPompes} pompes</span>
-            <span className="blue-text">{progress}%</span>
-          </div>
-          <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(200,170,110,0.15)" }}>
-            <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${progress}%`, background: "linear-gradient(to right, #0bc4e3, #c8aa6e)" }}
-            />
-          </div>
-          <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>
-            {data.totalPompes} / {data.objectifTotalPompes} pompes
-            {data.objectifTotalPompes - data.totalPompes > 0
-              ? ` · ${data.objectifTotalPompes - data.totalPompes} restantes`
-              : " · Objectif atteint !"}
-          </div>
-        </div>
-      )}
-
-      {/* Champion spotlights */}
-      {(data.mostPlayed || data.leastEfficient) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {data.mostPlayed && (
-            <ChampionCard champ={data.mostPlayed} badge="⚔ Plus joué" badgeColor="#c8aa6e" />
-          )}
-          {data.leastEfficient && (
-            <ChampionCard champ={data.leastEfficient} badge="💀 Plus difficile" badgeColor="#e84057" />
-          )}
-        </div>
-      )}
-
-      {/* Mode Session */}
-      <div className="lol-panel p-4 space-y-3">
-        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Mode Session</h2>
-        <p className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>
-          Lance une session avant de jouer — chaque partie est détectée et loggée automatiquement toutes les 2 min.
-        </p>
-
-        {!sessionActive ? (
-          <button className="lol-btn w-full" onClick={() => setShowGainageModal(true)}>
-            ▶ Démarrer une session
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.3)" }}>
-              <div className="w-2 h-2 rounded-full" style={{ background: "#4caf50", boxShadow: "0 0 6px #4caf50", animation: "pulse 1.5s infinite" }} />
-              <span className="text-sm win-text font-semibold">Session active</span>
-              <span className="text-xs gold-text">{sessionLevel} · gainage {gainageSec}s</span>
-              <span className="ml-auto text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
-                {polling ? "⟳ Vérification en cours..." : `Prochaine vérif. dans ${countdown}s`}
-              </span>
-            </div>
-
-            {sessionGames.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
-                  <div className="text-2xl font-bold gold-text">{sessionGames.length}</div>
-                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>games</div>
-                </div>
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
-                  <div className="text-2xl font-bold gold-text">{totalSessionPompes}</div>
-                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>pompes</div>
-                </div>
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
-                  <div className="text-2xl font-bold win-text">
-                    {sessionGames.filter((g) => g.result === "V").length}V
-                  </div>
-                  <div className="text-xs loss-text">
-                    {sessionGames.filter((g) => g.result === "D").length}D
-                  </div>
-                </div>
-              </div>
+            fontSize: "1rem", letterSpacing: "0.14em", color: "#C8AA6E",
+            textShadow: "0 0 22px rgba(200,170,110,0.5)",
+          }}>
+            ⚔ L·O·W
+          </span>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            {DOWNLOAD_URL && (
+              <a
+                href={DOWNLOAD_URL}
+                style={{
+                  padding: "6px 16px", borderRadius: 6, fontSize: "0.8rem",
+                  border: "1px solid rgba(200,170,110,0.35)", color: "#C8AA6E",
+                  textDecoration: "none", letterSpacing: "0.05em",
+                }}
+              >
+                Télécharger
+              </a>
             )}
-
-            {sessionGames.length > 0 && (
-              <div className="lol-panel p-3" style={{ background: "rgba(200,170,110,0.04)" }}>
-                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "rgba(200,170,110,0.6)" }}>
-                  Pompes par partie (session)
-                </h3>
-                <ResponsiveContainer width="100%" height={140}>
-                  <BarChart data={sessionChartData}>
-                    <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                    <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
-                    <Bar dataKey="pompes" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-
-            {sessionGames.length > 0 && (
-              <div className="space-y-1">
-                <p className="text-xs gold-text font-semibold">Détail · {totalSessionPompes} pompes</p>
-                {sessionGames.map((g, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-sm"
-                    style={{ background: "rgba(200,170,110,0.06)", border: "1px solid rgba(200,170,110,0.1)" }}>
-                    <span className={g.result === "V" ? "win-text font-bold" : "loss-text font-bold"}>
-                      {g.result === "V" ? "V" : "D"}
-                    </span>
-                    <ChampionIcon name={g.champion} size={30} />
-                    <span className="gold-text font-medium">{g.champion}</span>
-                    <span className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>{g.role}</span>
-                    <span className="text-xs" style={{ color: "rgba(240,230,211,0.6)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
-                    <span className="ml-auto gold-text font-bold">{g.pompes} 💪</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {sessionGames.length === 0 && !polling && (
-              <p className="text-xs text-center" style={{ color: "rgba(240,230,211,0.4)" }}>
-                En attente de la prochaine partie...
-              </p>
-            )}
-
-            {sessionError && <p className="text-sm loss-text">{sessionError}</p>}
-
-            <button
-              className="lol-btn lol-btn-danger w-full"
-              onClick={stopSession}
+            <Link
+              href="/login"
+              style={{
+                padding: "6px 18px", borderRadius: 6, fontSize: "0.8rem",
+                background: "linear-gradient(135deg, #C8AA6E, #a8893e)",
+                color: "#040810", fontWeight: 700, textDecoration: "none",
+                letterSpacing: "0.05em",
+              }}
             >
-              ⏹ Arrêter la session
-            </button>
+              Se connecter
+            </Link>
           </div>
-        )}
-      </div>
-
-      {/* Statistiques globales */}
-      <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "rgba(200,170,110,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
-        Statistiques globales
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {roleData.length > 0 && (
-          <div className="lol-panel p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
-                Pompes par rôle{roleView === "avg" ? " · moy/partie" : " · total"}
-              </h2>
-              <div className="flex gap-1">
-                {(["total", "avg"] as const).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setRoleView(key)}
-                    className="text-xs px-2 py-1 rounded"
-                    style={{
-                      background: roleView === key ? "rgba(200,170,110,0.25)" : "rgba(200,170,110,0.06)",
-                      color: roleView === key ? "#c8aa6e" : "rgba(240,230,211,0.4)",
-                      border: `1px solid ${roleView === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
-                    }}
-                  >
-                    {key === "total" ? "Total" : "Moyenne"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={roleData}>
-                <XAxis dataKey="role" tick={{ fill: "#c8aa6e", fontSize: 11 }} />
-                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                  formatter={(v) => [`${v} pompes`, roleView === "avg" ? "Moyenne/partie" : "Total"]}
-                />
-                <Bar dataKey="pompes" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {(data.cumulByDate ?? []).length > 0 && (() => {
-          const dateCount: Record<string, number> = {};
-          const cumulData = (data.cumulByDate ?? []).map((d) => {
-            const shortDate = new Date(d.date.slice(0, 10) + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-            dateCount[shortDate] = (dateCount[shortDate] || 0) + 1;
-            const label = dateCount[shortDate] === 1 ? shortDate : `${shortDate} (${dateCount[shortDate]})`;
-            return { ...d, label };
-          });
-          return (
-            <div className="lol-panel p-4">
-              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">Progression cumulative</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={cumulData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(200,170,110,0.1)" />
-                  <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.4)", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
-                  <Line dataKey="cumul" stroke="#0bc4e3" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          );
-        })()}
-      </div>
-
-      {/* Analytiques par période */}
-      {data.statsByPeriod && data.totalGames > 0 && (
-        <div className="lol-panel p-4">
-          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
-              {statsPeriod === "daily" ? "Détail journalier" : statsMode === "avg" ? "Pompes moyennes / partie" : "Pompes totales"}
-            </h2>
-            <div className="flex gap-1 flex-wrap">
-              {statsPeriod !== "daily" && (
-                <>
-                  {(["avg", "total"] as const).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setStatsMode(m)}
-                      className="text-xs px-2 py-1 rounded"
-                      style={{
-                        background: statsMode === m ? "rgba(11,196,227,0.2)" : "rgba(200,170,110,0.06)",
-                        color: statsMode === m ? "#0bc4e3" : "rgba(240,230,211,0.35)",
-                        border: `1px solid ${statsMode === m ? "rgba(11,196,227,0.4)" : "rgba(200,170,110,0.12)"}`,
-                      }}
-                    >
-                      {m === "avg" ? "Moyenne" : "Total"}
-                    </button>
-                  ))}
-                  <span style={{ width: 1, background: "rgba(200,170,110,0.15)", margin: "0 2px" }} />
-                </>
-              )}
-              {(["hour", "weekday", "month", "daily"] as const).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setStatsPeriod(key)}
-                  className="text-xs px-2 py-1 rounded"
-                  style={{
-                    background: statsPeriod === key ? "rgba(200,170,110,0.25)" : "rgba(200,170,110,0.06)",
-                    color: statsPeriod === key ? "#c8aa6e" : "rgba(240,230,211,0.4)",
-                    border: `1px solid ${statsPeriod === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
-                  }}
-                >
-                  {key === "hour" ? "Heure" : key === "weekday" ? "Jour" : key === "month" ? "Mois" : "Calendrier"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {statsPeriod === "daily" ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <input
-                  type="date"
-                  className="lol-input"
-                  style={{ fontSize: "0.85rem", width: "auto" }}
-                  value={calendarDate}
-                  onChange={(e) => setCalendarDate(e.target.value)}
-                  max={new Date().toISOString().slice(0, 10)}
-                />
-                {dailySummary && !dailyLoading && (
-                  <span className="text-sm" style={{ color: "rgba(240,230,211,0.5)" }}>
-                    <span className="gold-text font-bold">{dailySummary.total}</span> pompes ·{" "}
-                    <span style={{ color: "rgba(240,230,211,0.35)" }}>{dailySummary.games} partie{dailySummary.games > 1 ? "s" : ""}</span>
-                  </span>
-                )}
-              </div>
-              {dailyLoading ? (
-                <div className="text-center py-8 gold-text text-sm">Chargement...</div>
-              ) : dailyHourly && dailyHourly.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={dailyHourly}>
-                    <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                    <Tooltip
-                      contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                      formatter={(v) => [`${v} pompes`, "Total"]}
-                    />
-                    <Bar dataKey="total" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center py-8" style={{ color: "rgba(240,230,211,0.3)", fontSize: "0.85rem" }}>
-                  Aucune partie ce jour.
-                </div>
-              )}
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data.statsByPeriod[statsPeriod]}>
-                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                <Tooltip
-                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                  formatter={(v) => [`${v} pompes`, statsMode === "avg" ? "Moyenne / partie" : "Total"]}
-                />
-                <Bar dataKey={statsMode} fill="#c8aa6e" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
         </div>
-      )}
+      </nav>
 
-      {data.totalGames === 0 && (
-        <div className="lol-panel p-8 text-center space-y-2">
-          <div className="text-4xl">⚔</div>
-          <p className="gold-text font-semibold">Aucune game loggée</p>
-          <p className="text-sm" style={{ color: "rgba(240,230,211,0.5)" }}>
-            Va sur <strong>Historique</strong> pour logger ta première partie.
+      {/* HERO */}
+      <section style={{
+        minHeight: "92dvh", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        padding: "80px 24px 60px",
+        position: "relative", overflow: "hidden",
+        textAlign: "center",
+      }}>
+        {/* Background glow */}
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,170,110,0.07) 0%, transparent 70%)",
+        }} />
+        <div style={{
+          position: "absolute", top: "20%", left: "10%", width: 300, height: 300,
+          borderRadius: "50%", background: "rgba(11,196,227,0.04)",
+          filter: "blur(80px)", pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", top: "30%", right: "8%", width: 250, height: 250,
+          borderRadius: "50%", background: "rgba(200,170,110,0.05)",
+          filter: "blur(60px)", pointerEvents: "none",
+        }} />
+
+        <div style={{ position: "relative", maxWidth: 760 }}>
+          <div style={{
+            display: "inline-block", marginBottom: 24,
+            padding: "4px 16px", borderRadius: 999,
+            border: "1px solid rgba(11,196,227,0.3)",
+            background: "rgba(11,196,227,0.06)",
+            fontSize: "0.75rem", letterSpacing: "0.12em", textTransform: "uppercase",
+            color: "#0bc4e3",
+          }}>
+            Bêta fermée — candidatures ouvertes
+          </div>
+
+          <h1 style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "clamp(2.4rem, 6vw, 4.5rem)",
+            lineHeight: 1.08, marginBottom: 24,
+            background: "linear-gradient(135deg, #F0E6D3 0%, #C8AA6E 50%, #0bc4e3 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}>
+            Transforme tes défaites<br />en pompes
+          </h1>
+
+          <p style={{
+            fontSize: "clamp(1rem, 2vw, 1.2rem)", lineHeight: 1.65,
+            color: "rgba(240,230,211,0.65)", marginBottom: 40, maxWidth: 580, margin: "0 auto 40px",
+          }}>
+            League of Workout connecte ton compte Riot et calcule automatiquement
+            tes pompes après chaque partie. Plus t&apos;es bon, moins tu souffres.
           </p>
-        </div>
-      )}
 
-      {/* Modal test de gainage */}
-      {showGainageModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.7)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowGainageModal(false); }}
-        >
-          <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5">
-            <h2 className="gold-text font-bold text-lg uppercase tracking-widest">Test de gainage</h2>
-            <p className="text-sm" style={{ color: "rgba(240,230,211,0.7)" }}>
-              Effectue ton test de gainage maintenant. Combien de secondes as-tu tenu ?
-            </p>
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
-                Durée (secondes)
-              </label>
-              <input
-                type="number" min="1"
-                className="lol-input text-center text-2xl font-bold"
-                value={gainageInput}
-                onChange={(e) => setGainageInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleConfirmGainage()}
-                autoFocus
-              />
-            </div>
-            {gainageInput && Number(gainageInput) > 0 && (
-              <div className="text-center p-3 rounded" style={{ background: "rgba(200,170,110,0.1)", border: "1px solid rgba(200,170,110,0.3)" }}>
-                <span className="gold-text font-bold text-xl">{getLevelLabel(Number(gainageInput))}</span>
-                <span className="text-sm ml-2" style={{ color: "rgba(240,230,211,0.5)" }}>pour cette session</span>
-              </div>
+          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+            {DOWNLOAD_URL && (
+              <a
+                href={DOWNLOAD_URL}
+                style={{
+                  padding: "14px 32px", borderRadius: 8, fontSize: "0.95rem",
+                  background: "linear-gradient(135deg, #C8AA6E, #a8893e)",
+                  color: "#040810", fontWeight: 700, textDecoration: "none",
+                  letterSpacing: "0.05em", boxShadow: "0 4px 24px rgba(200,170,110,0.3)",
+                }}
+              >
+                Télécharger l&apos;app Windows
+              </a>
             )}
-            <div className="flex gap-3">
-              <button
-                className="flex-1 py-2 rounded text-sm"
-                style={{ background: "rgba(200,170,110,0.1)", color: "rgba(240,230,211,0.6)", border: "1px solid rgba(200,170,110,0.2)" }}
-                onClick={() => setShowGainageModal(false)}
-              >
-                Annuler
-              </button>
-              <button
-                className="lol-btn flex-1"
-                onClick={handleConfirmGainage}
-                disabled={!gainageInput || Number(gainageInput) < 1}
-              >
-                Démarrer ▶
-              </button>
-            </div>
+            <Link
+              href="/login"
+              style={{
+                padding: "14px 32px", borderRadius: 8, fontSize: "0.95rem",
+                border: "1px solid rgba(200,170,110,0.4)",
+                background: "rgba(200,170,110,0.06)",
+                color: "#C8AA6E", textDecoration: "none",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Accéder à l&apos;app web →
+            </Link>
           </div>
         </div>
-      )}
+      </section>
+
+      {/* STATS BAR */}
+      <section style={{
+        borderTop: "1px solid rgba(200,170,110,0.12)",
+        borderBottom: "1px solid rgba(200,170,110,0.12)",
+        background: "rgba(200,170,110,0.03)",
+        padding: "48px 24px",
+      }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <p style={{
+            textAlign: "center", fontSize: "0.75rem", letterSpacing: "0.14em",
+            textTransform: "uppercase", color: "rgba(200,170,110,0.5)", marginBottom: 40,
+          }}>
+            La réalité des gamers
+          </p>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 32,
+          }}>
+            {STATS.map((s) => (
+              <div key={s.value} style={{ textAlign: "center" }}>
+                <div style={{
+                  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                  fontSize: "clamp(2rem, 4vw, 3rem)", color: "#C8AA6E",
+                  textShadow: "0 0 30px rgba(200,170,110,0.4)", lineHeight: 1,
+                  marginBottom: 10,
+                }}>
+                  {s.value}
+                </div>
+                <div style={{ fontSize: "0.85rem", color: "rgba(240,230,211,0.5)", lineHeight: 1.5 }}>
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* LE PROBLÈME */}
+      <section style={{ padding: "100px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center",
+        }}
+          className="landing-two-col"
+        >
+          <div>
+            <p style={{
+              fontSize: "0.75rem", letterSpacing: "0.14em", textTransform: "uppercase",
+              color: "#0bc4e3", marginBottom: 16,
+            }}>
+              Le problème
+            </p>
+            <h2 style={{
+              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+              fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", lineHeight: 1.2, marginBottom: 24,
+            }}>
+              On est tous assis à<br />ne rien faire pendant<br />
+              <span style={{ color: "#C8AA6E" }}>des heures</span>
+            </h2>
+            <p style={{ fontSize: "1rem", lineHeight: 1.75, color: "rgba(240,230,211,0.6)", marginBottom: 16 }}>
+              Une session LoL moyenne dure 6h30. Entre les games, les lobbies, les replays et le stream,
+              on reste assis des journées entières. Le corps paie la note.
+            </p>
+            <p style={{ fontSize: "1rem", lineHeight: 1.75, color: "rgba(240,230,211,0.6)" }}>
+              La sédentarité chronique augmente les risques cardiovasculaires, réduit la concentration
+              et dégrade les performances cognitives — exactement ce dont tu as besoin pour carry.
+            </p>
+          </div>
+          <div style={{
+            background: "rgba(200,170,110,0.04)",
+            border: "1px solid rgba(200,170,110,0.14)",
+            borderRadius: 16, padding: "40px 32px",
+          }}>
+            {[
+              { label: "Temps assis moyen / jour", value: "10h+", color: "#ef5350" },
+              { label: "Sessions de sport / semaine", value: "< 1", color: "#ef5350" },
+              { label: "Risque CV sédentarité", value: "+34%", color: "#ef5350" },
+              { label: "Douleurs dos signalées", value: "68%", color: "#ef5350" },
+            ].map((item) => (
+              <div key={item.label} style={{
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                padding: "16px 0",
+                borderBottom: "1px solid rgba(200,170,110,0.08)",
+              }}>
+                <span style={{ fontSize: "0.9rem", color: "rgba(240,230,211,0.55)" }}>{item.label}</span>
+                <span style={{
+                  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                  fontSize: "1.4rem", color: item.color,
+                }}>
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* COMMENT ÇA MARCHE */}
+      <section style={{
+        padding: "80px 24px",
+        background: "rgba(11,196,227,0.02)",
+        borderTop: "1px solid rgba(11,196,227,0.08)",
+        borderBottom: "1px solid rgba(11,196,227,0.08)",
+      }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <p style={{
+            textAlign: "center", fontSize: "0.75rem", letterSpacing: "0.14em",
+            textTransform: "uppercase", color: "#0bc4e3", marginBottom: 12,
+          }}>
+            Comment ça marche
+          </p>
+          <h2 style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "clamp(1.8rem, 3vw, 2.4rem)", textAlign: "center", marginBottom: 60,
+          }}>
+            3 étapes, c&apos;est tout
+          </h2>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24,
+          }}>
+            {STEPS.map((step) => (
+              <div key={step.num} style={{
+                background: "rgba(4,8,16,0.6)",
+                border: "1px solid rgba(200,170,110,0.14)",
+                borderRadius: 16, padding: "36px 28px",
+                position: "relative",
+              }}>
+                <div style={{
+                  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                  fontSize: "3rem", color: "rgba(200,170,110,0.12)",
+                  position: "absolute", top: 20, right: 24, lineHeight: 1,
+                }}>
+                  {step.num}
+                </div>
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%",
+                  background: "rgba(200,170,110,0.1)",
+                  border: "1px solid rgba(200,170,110,0.3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  marginBottom: 20,
+                  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                  fontSize: "0.85rem", color: "#C8AA6E",
+                }}>
+                  {step.num}
+                </div>
+                <h3 style={{
+                  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                  fontSize: "1.1rem", color: "#F0E6D3", marginBottom: 12,
+                }}>
+                  {step.title}
+                </h3>
+                <p style={{ fontSize: "0.9rem", lineHeight: 1.7, color: "rgba(240,230,211,0.55)" }}>
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BIENFAITS */}
+      <section style={{ padding: "100px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <p style={{
+          textAlign: "center", fontSize: "0.75rem", letterSpacing: "0.14em",
+          textTransform: "uppercase", color: "#C8AA6E", marginBottom: 12,
+        }}>
+          Pourquoi s&apos;y mettre
+        </p>
+        <h2 style={{
+          fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+          fontSize: "clamp(1.8rem, 3vw, 2.4rem)", textAlign: "center", marginBottom: 16,
+        }}>
+          L&apos;exercice améliore ton jeu
+        </h2>
+        <p style={{
+          textAlign: "center", fontSize: "1rem", color: "rgba(240,230,211,0.5)",
+          maxWidth: 520, margin: "0 auto 60px", lineHeight: 1.7,
+        }}>
+          Ce n&apos;est pas juste de la santé. C&apos;est un avantage compétitif.
+        </p>
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 20,
+        }}>
+          {BENEFITS.map((b) => (
+            <div key={b.title} style={{
+              background: "rgba(200,170,110,0.04)",
+              border: "1px solid rgba(200,170,110,0.12)",
+              borderRadius: 14, padding: "28px 24px",
+              transition: "border-color 0.2s",
+            }}>
+              <div style={{ fontSize: "1.6rem", marginBottom: 14 }}>{b.icon}</div>
+              <h3 style={{
+                fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                fontSize: "1rem", color: "#C8AA6E", marginBottom: 10,
+              }}>
+                {b.title}
+              </h3>
+              <p style={{ fontSize: "0.875rem", lineHeight: 1.7, color: "rgba(240,230,211,0.55)" }}>
+                {b.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section style={{
+        padding: "80px 24px",
+        background: "rgba(200,170,110,0.025)",
+        borderTop: "1px solid rgba(200,170,110,0.1)",
+        borderBottom: "1px solid rgba(200,170,110,0.1)",
+      }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <p style={{
+            textAlign: "center", fontSize: "0.75rem", letterSpacing: "0.14em",
+            textTransform: "uppercase", color: "#C8AA6E", marginBottom: 12,
+          }}>
+            Fonctionnalités
+          </p>
+          <h2 style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "clamp(1.8rem, 3vw, 2.4rem)", textAlign: "center", marginBottom: 56,
+          }}>
+            Tout est automatique
+          </h2>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16,
+          }}>
+            {FEATURES.map((f) => (
+              <div key={f.title} style={{
+                display: "flex", gap: 16, padding: "20px 20px",
+                background: "rgba(4,8,16,0.5)",
+                border: "1px solid rgba(200,170,110,0.1)",
+                borderRadius: 12,
+              }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: "#0bc4e3", marginTop: 6, flexShrink: 0,
+                  boxShadow: "0 0 8px rgba(11,196,227,0.6)",
+                }} />
+                <div>
+                  <div style={{
+                    fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                    fontSize: "0.9rem", color: "#F0E6D3", marginBottom: 6,
+                  }}>
+                    {f.title}
+                  </div>
+                  <div style={{ fontSize: "0.825rem", color: "rgba(240,230,211,0.5)", lineHeight: 1.6 }}>
+                    {f.desc}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section style={{
+        padding: "120px 24px", textAlign: "center",
+        position: "relative", overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(200,170,110,0.07) 0%, transparent 70%)",
+        }} />
+        <div style={{ position: "relative", maxWidth: 600, margin: "0 auto" }}>
+          <h2 style={{
+            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+            fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.15, marginBottom: 20,
+          }}>
+            Prêt à commencer ?
+          </h2>
+          <p style={{
+            fontSize: "1rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.7, marginBottom: 40,
+          }}>
+            Rejoins la bêta et transforme chaque défaite en séance de sport.
+          </p>
+          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+            {DOWNLOAD_URL && (
+              <a
+                href={DOWNLOAD_URL}
+                style={{
+                  padding: "14px 36px", borderRadius: 8, fontSize: "1rem",
+                  background: "linear-gradient(135deg, #C8AA6E, #a8893e)",
+                  color: "#040810", fontWeight: 700, textDecoration: "none",
+                  letterSpacing: "0.05em", boxShadow: "0 4px 24px rgba(200,170,110,0.3)",
+                }}
+              >
+                Télécharger l&apos;app
+              </a>
+            )}
+            <Link
+              href="/login"
+              style={{
+                padding: "14px 36px", borderRadius: 8, fontSize: "1rem",
+                border: "1px solid rgba(200,170,110,0.4)",
+                background: "rgba(200,170,110,0.06)",
+                color: "#C8AA6E", textDecoration: "none",
+                letterSpacing: "0.05em",
+              }}
+            >
+              Créer un compte →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{
+        borderTop: "1px solid rgba(200,170,110,0.1)",
+        padding: "32px 24px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        flexWrap: "wrap", gap: 16,
+        maxWidth: 1100, margin: "0 auto",
+        fontSize: "0.8rem", color: "rgba(240,230,211,0.3)",
+      }}>
+        <span style={{ fontFamily: "var(--font-heading)", color: "rgba(200,170,110,0.4)", letterSpacing: "0.1em" }}>
+          ⚔ L·O·W
+        </span>
+        <div style={{ display: "flex", gap: 24 }}>
+          <Link href="/cgu" style={{ color: "rgba(240,230,211,0.3)", textDecoration: "none" }}>CGU</Link>
+          <Link href="/confidentialite" style={{ color: "rgba(240,230,211,0.3)", textDecoration: "none" }}>Confidentialité</Link>
+          <Link href="/login" style={{ color: "rgba(240,230,211,0.3)", textDecoration: "none" }}>Se connecter</Link>
+        </div>
+        <span>League of Workout n&apos;est pas affilié à Riot Games.</span>
+      </footer>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .landing-two-col {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export default function TelechargementPage() {
 
         <div style={{ marginTop: "1.5rem" }}>
           <Link
-            href="/"
+            href="/dashboard"
             style={{ fontSize: "0.78rem", color: "rgba(200,170,110,0.45)", textDecoration: "none" }}
           >
             ← Retour au dashboard
