@@ -32,8 +32,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   trustHost: true,
   callbacks: {
-    ...authConfig.callbacks,
-
     async signIn({ account }) {
       if (!account) return true;
       if (account.type === "credentials") return true;
