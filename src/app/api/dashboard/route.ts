@@ -95,6 +95,15 @@ export async function GET() {
       .filter((_, i) => !!byMonth[i]),
   };
 
+  const byDayTotal: Record<string, number> = {};
+  for (const g of games) {
+    const day = g.date.toISOString().slice(0, 10);
+    byDayTotal[day] = (byDayTotal[day] || 0) + g.pompesCalculees;
+  }
+  const dailyPompes = Object.entries(byDayTotal)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, total]) => ({ date, total }));
+
   return NextResponse.json({
     totalGames,
     wins,
@@ -106,6 +115,7 @@ export async function GET() {
     pompesByNiveau,
     cumulByDate,
     statsByPeriod,
+    dailyPompes,
     mostPlayed,
     leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,

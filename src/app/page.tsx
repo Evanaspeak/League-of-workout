@@ -30,6 +30,7 @@ type DashData = {
   gamesByRole: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
+  dailyPompes: { date: string; total: number }[];
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
   objectifTotalPompes: number;
@@ -105,7 +106,7 @@ function getLevelLabel(sec: number): string {
 export default function Dashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [showGainageModal, setShowGainageModal] = useState(false);
-  const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month">("weekday");
+  const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
   const [roleView, setRoleView] = useState<"total" | "avg">("total");
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
@@ -367,9 +368,11 @@ export default function Dashboard() {
       {data.statsByPeriod && data.totalGames > 0 && (
         <div className="lol-panel p-4">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Pompes moyennes / partie</h2>
+            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+              {statsPeriod === "daily" ? "Total pompes / jour" : "Pompes moyennes / partie"}
+            </h2>
             <div className="flex gap-1">
-              {(["hour", "weekday", "month"] as const).map((key) => (
+              {(["hour", "weekday", "month", "daily"] as const).map((key) => (
                 <button
                   key={key}
                   onClick={() => setStatsPeriod(key)}
@@ -380,22 +383,39 @@ export default function Dashboard() {
                     border: `1px solid ${statsPeriod === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
                   }}
                 >
-                  {key === "hour" ? "Heure" : key === "weekday" ? "Jour" : "Mois"}
+                  {key === "hour" ? "Heure" : key === "weekday" ? "Jour" : key === "month" ? "Mois" : "Journalier"}
                 </button>
               ))}
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.statsByPeriod[statsPeriod]}>
-              <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-              <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-              <Tooltip
-                contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
-                formatter={(v) => [`${v} pompes`, "Moyenne"]}
-              />
-              <Bar dataKey="avg" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {statsPeriod === "daily" ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={(data.dailyPompes ?? []).map((d) => ({
+                label: new Date(d.date + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" }),
+                total: d.total,
+              }))}>
+                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
+                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                  formatter={(v) => [`${v} pompes`, "Total du jour"]}
+                />
+                <Bar dataKey="total" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={data.statsByPeriod[statsPeriod]}>
+                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
+                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                  formatter={(v) => [`${v} pompes`, "Moyenne"]}
+                />
+                <Bar dataKey="avg" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       )}
 
