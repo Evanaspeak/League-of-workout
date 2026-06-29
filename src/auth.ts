@@ -31,6 +31,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   trustHost: true,
+  // Renvoie les erreurs Auth.js vers /login (au lieu de la page d'erreur par
+  // défaut qui plante en 500) + log la cause réelle dans les logs Vercel.
+  pages: { signIn: "/login", error: "/login" },
+  logger: {
+    error(error) {
+      console.error("[auth][error]", error);
+    },
+  },
   callbacks: {
     async signIn({ account }) {
       if (!account) return true;
