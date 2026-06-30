@@ -45,6 +45,8 @@ export default function AdminUserList() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -61,6 +63,17 @@ export default function AdminUserList() {
     (u.email ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  async function deleteUser(id: string) {
+    setDeleting(id);
+    const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setUsers(prev => prev.filter(u => u.id !== id));
+      setExpanded(null);
+    }
+    setDeleting(null);
+    setConfirmDelete(null);
+  }
+
   if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>Chargement...</div>;
 
   return (
@@ -69,9 +82,6 @@ export default function AdminUserList() {
         <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#C8AA6E", letterSpacing: "0.1em" }}>
           BÊTA-TESTEURS ({users.length})
         </h2>
-        <span style={{ fontSize: "0.72rem", color: "rgba(240,230,211,0.3)", letterSpacing: "0.08em" }}>
-          LECTURE SEULE
-        </span>
       </div>
 
       <input
@@ -133,7 +143,7 @@ export default function AdminUserList() {
                   <Stat label="Dernière partie" value={daysSince(u.lastGame) ?? "jamais"} />
                   <Stat label="Dernier niveau" value={u.lastLevel ? `Niv. ${u.lastLevel}` : "—"} />
                 </div>
-                <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12 }}>
+                <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <p style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.4)", marginBottom: 8 }}>
                     Coefficients personnels
                   </p>
@@ -143,6 +153,49 @@ export default function AdminUserList() {
                     <Stat label="Région" value={u.riotRegion} />
                     <Stat label="Inscrit le" value={new Date(u.createdAt).toLocaleDateString("fr-FR")} />
                   </div>
+                </div>
+
+                {/* Delete zone */}
+                <div style={{ borderTop: "1px solid rgba(239,83,80,0.15)", paddingTop: 12 }}>
+                  {confirmDelete === u.id ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: "0.78rem", color: "#ef5350" }}>
+                        Supprimer définitivement ce compte et toutes ses données ?
+                      </span>
+                      <button
+                        onClick={() => deleteUser(u.id)}
+                        disabled={deleting === u.id}
+                        style={{
+                          padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer",
+                          background: "rgba(239,83,80,0.15)", border: "1px solid rgba(239,83,80,0.5)",
+                          color: "#ef5350", fontWeight: 600,
+                        }}
+                      >
+                        {deleting === u.id ? "..." : "Confirmer"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(null)}
+                        style={{
+                          padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer",
+                          background: "transparent", border: "1px solid rgba(240,230,211,0.15)",
+                          color: "rgba(240,230,211,0.5)",
+                        }}
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={e => { e.stopPropagation(); setConfirmDelete(u.id); }}
+                      style={{
+                        padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer",
+                        background: "transparent", border: "1px dashed rgba(239,83,80,0.3)",
+                        color: "rgba(239,83,80,0.6)",
+                      }}
+                    >
+                      Supprimer ce compte
+                    </button>
+                  )}
                 </div>
               </div>
             )}
