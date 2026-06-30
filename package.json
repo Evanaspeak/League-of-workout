@@ -13,7 +13,9 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
     "@libsql/client": "^0.17.4",
+    "@neondatabase/serverless": "^1.1.0",
     "@prisma/adapter-libsql": "^7.8.0",
+    "@prisma/adapter-neon": "^7.8.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@types/pg": "^8.20.0",
