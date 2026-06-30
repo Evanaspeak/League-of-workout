@@ -65,6 +65,8 @@ export default function AdminBetaApplications() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all");
   const [search, setSearch] = useState("");
 
@@ -74,6 +76,14 @@ export default function AdminBetaApplications() {
       .then(d => { if (d.applications) setApps(d.applications); })
       .finally(() => setLoading(false));
   }, []);
+
+  async function deleteApplication(id: string) {
+    setDeleting(id);
+    const res = await fetch(`/api/admin/beta/${id}`, { method: "DELETE" });
+    if (res.ok) { setApps(prev => prev.filter(a => a.id !== id)); setExpanded(null); }
+    setDeleting(null);
+    setConfirmDelete(null);
+  }
 
   async function updateStatus(id: string, status: string) {
     setUpdating(id);
@@ -270,6 +280,33 @@ export default function AdminBetaApplications() {
                       Remettre en attente
                     </button>
                   )}
+                  <div style={{ marginLeft: "auto" }}>
+                    {confirmDelete === app.id ? (
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <span style={{ fontSize: "0.75rem", color: "#ef5350" }}>Supprimer définitivement ?</span>
+                        <button
+                          onClick={() => deleteApplication(app.id)}
+                          disabled={deleting === app.id}
+                          style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "rgba(239,83,80,0.15)", border: "1px solid rgba(239,83,80,0.5)", color: "#ef5350", fontWeight: 600 }}
+                        >
+                          {deleting === app.id ? "..." : "Confirmer"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(null)}
+                          style={{ padding: "4px 8px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(240,230,211,0.15)", color: "rgba(240,230,211,0.4)" }}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDelete(app.id)}
+                        style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(239,83,80,0.3)", color: "rgba(239,83,80,0.5)" }}
+                      >
+                        Supprimer
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
