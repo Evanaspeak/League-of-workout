@@ -65,7 +65,7 @@ export function SplashScreen() {
             animation: "splashTitle 1.6s ease 0.2s forwards",
             opacity: 0,
           }}>
-            POWERED BY RIOT GAMES
+            VIA RIOT GAMES API
           </div>
 
           <div style={{
