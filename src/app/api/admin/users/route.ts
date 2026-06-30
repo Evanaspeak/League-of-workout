@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { getLevel } from "@/lib/scoring";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
 
@@ -9,6 +10,8 @@ export async function GET() {
   if (!me || me.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
+
+  const levelConfigs = await prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } });
 
   const users = await prisma.user.findMany({
     select: {
@@ -51,6 +54,8 @@ export async function GET() {
     const avgPompes = totalGames > 0 ? Math.round(totalPompes / totalGames) : 0;
     const lastLevel = games[0]?.niveauCalcule ?? null;
 
+    const lvl = levelConfigs.length > 0 ? getLevel(u.gainageMaxSec, levelConfigs) : null;
+
     return {
       id: u.id,
       email: u.email,
@@ -68,6 +73,9 @@ export async function GET() {
       gamesThisWeek,
       gamesThisMonth,
       lastLevel,
+      niveauActuel: lvl?.niveau ?? null,
+      multiplicateur: lvl?.multiplicateur ?? null,
+      malusDefaite: lvl?.malusDefaite ?? null,
     };
   });
 
