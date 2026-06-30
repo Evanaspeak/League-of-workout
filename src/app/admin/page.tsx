@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import AdminChampionEditor from "./AdminChampionEditor";
 import AdminBetaApplications from "./AdminBetaApplications";
+import AdminUserList from "./AdminUserList";
 import AdminTools from "./AdminTools";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
@@ -28,6 +29,7 @@ export default async function AdminPage() {
         </p>
       </div>
       <AdminBetaApplications />
+      <AdminUserList />
       <AdminChampionEditor />
       <AdminTools />
     </div>
