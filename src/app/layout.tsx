@@ -49,6 +49,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/confidentialite" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Confidentialité</a>
               <a href="/telechargement" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Télécharger</a>
             </div>
+            <div style={{ maxWidth: 640, margin: "0 auto", lineHeight: 1.6 }}>
+              League of Workouts n&apos;est pas approuvé par Riot Games et ne reflète pas les points de vue ou opinions de Riot Games ni de quiconque impliqué officiellement dans la production ou la gestion des propriétés Riot Games. League of Legends et Riot Games sont des marques ou marques déposées de Riot Games, Inc.
+            </div>
           </footer>
         </SessionProvider>
       </body>
