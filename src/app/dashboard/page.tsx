@@ -178,6 +178,32 @@ export default function Dashboard() {
       <DesktopAuthHandler />
       <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>DASHBOARD</h1>
 
+      {/* Bannière bêta — synchronisation en attente */}
+      <div style={{
+        padding: "12px 16px",
+        borderRadius: 8,
+        background: "rgba(11,196,227,0.06)",
+        border: "1px solid rgba(11,196,227,0.25)",
+        display: "flex",
+        gap: 12,
+        alignItems: "flex-start",
+      }}>
+        <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: 1 }}>⏳</span>
+        <div>
+          <p style={{ fontSize: "0.82rem", color: "#0bc4e3", fontWeight: 600, marginBottom: 4 }}>
+            Synchronisation automatique bientôt disponible
+          </p>
+          <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.6 }}>
+            En attente de l&apos;autorisation officielle de Riot Games pour activer la synchro automatique de tes parties.
+            En attendant,{" "}
+            <a href="/history" style={{ color: "#0bc4e3", textDecoration: "underline" }}>
+              ajoute tes parties manuellement
+            </a>
+            {" "}depuis l&apos;onglet Historique.
+          </p>
+        </div>
+      </div>
+
       {/* Stats globales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="Games jouées" value={data.totalGames} />
