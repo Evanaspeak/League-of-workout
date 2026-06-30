@@ -18,6 +18,9 @@ type UserStat = {
   gamesThisWeek: number;
   gamesThisMonth: number;
   lastLevel: number | null;
+  niveauActuel: number | null;
+  multiplicateur: number | null;
+  malusDefaite: number | null;
 };
 
 function daysSince(date: string | null) {
@@ -148,7 +151,10 @@ export default function AdminUserList() {
                     Coefficients personnels
                   </p>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
-                    <Stat label="Gainage max (s)" value={String(u.gainageMaxSec)} />
+                    <Stat label="Gainage max (s)" value={`${u.gainageMaxSec}s`} />
+                    <Stat label="Niveau actuel" value={u.niveauActuel ? `Niv. ${u.niveauActuel}` : "—"} />
+                    <Stat label="Multiplicateur" value={u.multiplicateur != null ? `×${u.multiplicateur}` : "—"} />
+                    <Stat label="Malus défaite" value={u.malusDefaite != null ? `${u.malusDefaite} pompes` : "—"} />
                     <Stat label="Riot ID" value={u.riotId ?? "non renseigné"} />
                     <Stat label="Région" value={u.riotRegion} />
                     <Stat label="Inscrit le" value={new Date(u.createdAt).toLocaleDateString("fr-FR")} />
