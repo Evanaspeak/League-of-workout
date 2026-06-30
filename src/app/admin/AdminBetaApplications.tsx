@@ -187,14 +187,12 @@ export default function AdminBetaApplications() {
                 background: expanded === app.id ? "rgba(200,170,110,0.04)" : "transparent",
               }}
             >
-              <div style={{ flexShrink: 0 }}>
-                <div style={{ fontSize: "0.9rem", color: "#F0E6D3", fontWeight: 600 }}>{app.pseudo}</div>
-                <div style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.4)" }}>{app.riotId} · {app.region}</div>
-              </div>
               <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: "0.9rem", color: "#F0E6D3", fontWeight: 600 }}>{app.pseudo}</div>
                 <div style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {app.email}
                 </div>
+                <div style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.4)" }}>{app.riotId} · {app.region}</div>
               </div>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                 <EngagementDots value={app.engagement} />
