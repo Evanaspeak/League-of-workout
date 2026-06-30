@@ -5,8 +5,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 
-const BETA_LIMIT = 100;
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -40,30 +38,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
-    async signIn({ account }) {
+    async signIn({ user, account }) {
       if (!account) return true;
       if (account.type === "credentials") return true;
 
+      const email = user.email?.toLowerCase() ?? "";
+
+      // Admin toujours autorisé
+      if (email === "evantocquet@gmail.com") return true;
+
       try {
-        const existing = await prisma.account.findUnique({
-          where: {
-            provider_providerAccountId: {
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-            },
-          },
-          include: { user: true },
+        const application = await prisma.betaApplication.findUnique({
+          where: { email },
+          select: { status: true },
         });
 
-        if (existing) {
-          return (existing.user.betaRank ?? Number.MAX_SAFE_INTEGER) <= BETA_LIMIT;
-        }
+        if (application?.status === "accepted") return true;
+        if (application?.status === "rejected") return "/login?error=BetaRejected";
+        if (application?.status === "pending") return "/login?error=BetaPending";
 
-        const count = await prisma.user.count();
-        return count < BETA_LIMIT;
+        // Aucune candidature
+        return "/login?error=AccessDenied";
       } catch (err) {
         console.error("[auth] signIn callback error:", err);
-        return true;
+        return true; // fail open si la DB est indisponible
       }
     },
 
