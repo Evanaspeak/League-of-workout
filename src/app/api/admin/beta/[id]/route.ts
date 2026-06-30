@@ -31,3 +31,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Erreur base de données" }, { status: 500 });
   }
 }
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const user = await getCurrentUser();
+  if (!user || user.email !== ADMIN_EMAIL) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+
+  const { id } = await params;
+
+  try {
+    await prisma.betaApplication.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Erreur base de données" }, { status: 500 });
+  }
+}
