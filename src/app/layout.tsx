@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             borderTop: "1px solid rgba(200,170,110,0.07)",
             letterSpacing: "0.06em",
           }}>
-            <div>LEAGUE OF WORKOUTS · Powered by Riot Games API</div>
+            <div>LEAGUE OF WORKOUTS · Via Riot Games API</div>
             <div style={{ display: "flex", justifyContent: "center", gap: "1.25rem" }}>
               <a href="/cgu" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>CGU</a>
               <a href="/confidentialite" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Confidentialité</a>
