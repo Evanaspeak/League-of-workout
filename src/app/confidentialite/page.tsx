@@ -98,8 +98,8 @@ export default function ConfidentialitePage() {
           fonctionnement de l'Application :
         </p>
         <ul>
-          <li><strong>Vercel</strong> — hébergement de l'application (États-Unis, Privacy Shield)</li>
-          <li><strong>Neon</strong> — base de données PostgreSQL (États-Unis, Privacy Shield)</li>
+          <li><strong>Vercel</strong> — hébergement de l'application (États-Unis, Clauses Contractuelles Types)</li>
+          <li><strong>Neon</strong> — base de données PostgreSQL (États-Unis, Clauses Contractuelles Types)</li>
           <li><strong>Riot Games API</strong> — récupération des données de parties publiques</li>
           <li><strong>Google / Discord</strong> — authentification OAuth (optionnel)</li>
         </ul>
