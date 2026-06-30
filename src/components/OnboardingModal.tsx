@@ -21,6 +21,11 @@ const STEPS = [
     body: "Avant chaque session, tu effectues un test de gainage chronométré. Plus tu tiens longtemps, plus ton niveau est élevé — et plus le multiplicateur de pompes est important.\n\nC'est ton niveau physique qui détermine l'intensité.",
   },
   {
+    icon: "🩺",
+    title: "Écoute ton corps",
+    body: "Si en cours de série tu sens que c'est trop difficile, pas de panique — passe en appui sur les genoux plutôt que sur les pieds.\n\nL'important : aller jusqu'au bout de la série quoi qu'il arrive. Adapter l'exercice n'est pas abandonner, c'est progresser intelligemment.",
+  },
+  {
     icon: "🏆",
     title: "Ton objectif",
     body: "Tu te fixes un objectif total de pompes à atteindre (par défaut : 1 000). Chaque session contribue à te rapprocher de ce chiffre.\n\nSuis ta progression sur le dashboard et dépasse tes limites !",
