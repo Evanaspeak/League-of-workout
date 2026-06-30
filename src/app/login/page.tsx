@@ -146,7 +146,7 @@ export default async function LoginPage({
                 Tu n&apos;as pas encore de candidature acceptée.
               </p>
             </div>
-            <Link href="/waitlist" className="lol-btn" style={{ display: "inline-block" }}>
+            <Link href="/beta" className="lol-btn" style={{ display: "inline-block" }}>
               Candidater à la bêta
             </Link>
           </div>
