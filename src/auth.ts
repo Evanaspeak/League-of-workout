@@ -48,6 +48,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (email === "evantocquet@gmail.com") return true;
 
       try {
+        // 1. Vérifier la liste blanche manuelle (email Google ≠ email candidature)
+        const whitelist = await prisma.systemConfig.findUnique({
+          where: { key: "betaWhitelistEmails" },
+          select: { value: true },
+        });
+        const whitelistEmails: string[] = whitelist ? JSON.parse(whitelist.value) : [];
+        if (whitelistEmails.includes(email)) return true;
+
+        // 2. Vérifier la candidature acceptée
         const application = await prisma.betaApplication.findUnique({
           where: { email },
           select: { status: true },
