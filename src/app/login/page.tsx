@@ -20,6 +20,8 @@ export default async function LoginPage({
 }) {
   const { error, transferred, deleted } = await searchParams;
   const betaFull = error === "AccessDenied";
+  const betaPending = error === "BetaPending";
+  const betaRejected = error === "BetaRejected";
 
   if (transferred === "1") {
     return (
@@ -103,7 +105,21 @@ export default async function LoginPage({
           </p>
         </div>
 
-        {betaFull ? (
+        {betaPending ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{
+              padding: "1rem",
+              borderRadius: 6,
+              background: "rgba(200,170,110,0.08)",
+              border: "1px solid rgba(200,170,110,0.25)",
+            }}>
+              <p style={{ fontWeight: 600, color: "#C8AA6E", marginBottom: "0.3rem" }}>Candidature en cours</p>
+              <p style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.6 }}>
+                Ta candidature est en cours d&apos;examen. Tu recevras un email quand elle sera validée.
+              </p>
+            </div>
+          </div>
+        ) : betaRejected ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{
               padding: "1rem",
@@ -111,13 +127,27 @@ export default async function LoginPage({
               background: "rgba(194,59,34,0.1)",
               border: "1px solid rgba(194,59,34,0.28)",
             }}>
-              <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>Beta complète</p>
+              <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>Candidature non retenue</p>
+              <p style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.6 }}>
+                Ta candidature n&apos;a pas été sélectionnée pour cette vague de beta.
+              </p>
+            </div>
+          </div>
+        ) : betaFull ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{
+              padding: "1rem",
+              borderRadius: 6,
+              background: "rgba(194,59,34,0.1)",
+              border: "1px solid rgba(194,59,34,0.28)",
+            }}>
+              <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>Accès refusé</p>
               <p style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.55)" }}>
-                Les 100 places de beta sont déjà prises.
+                Tu n&apos;as pas encore de candidature acceptée.
               </p>
             </div>
             <Link href="/waitlist" className="lol-btn" style={{ display: "inline-block" }}>
-              Rejoindre la liste d&apos;attente
+              Candidater à la bêta
             </Link>
           </div>
         ) : (
