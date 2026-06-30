@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import AdminChampionEditor from "./AdminChampionEditor";
 import AdminBetaApplications from "./AdminBetaApplications";
 import AdminUserList from "./AdminUserList";
+import AdminCoefficients from "./AdminCoefficients";
 import AdminTools from "./AdminTools";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
@@ -30,6 +31,7 @@ export default async function AdminPage() {
       </div>
       <AdminBetaApplications />
       <AdminUserList />
+      <AdminCoefficients />
       <AdminChampionEditor />
       <AdminTools />
     </div>
