@@ -58,6 +58,8 @@ export default function AdminUserList() {
   const [search, setSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [resettingPwd, setResettingPwd] = useState<string | null>(null);
+  const [newPasswords, setNewPasswords] = useState<Record<string, string>>({});
 
   useEffect(() => {
     Promise.all([
@@ -75,6 +77,14 @@ export default function AdminUserList() {
     u.pseudo.toLowerCase().includes(search.toLowerCase()) ||
     (u.email ?? "").toLowerCase().includes(search.toLowerCase())
   );
+
+  async function resetPassword(id: string) {
+    setResettingPwd(id);
+    const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: "POST" });
+    const data = await res.json();
+    if (res.ok) setNewPasswords(prev => ({ ...prev, [id]: data.password }));
+    setResettingPwd(null);
+  }
 
   async function deleteUser(id: string) {
     setDeleting(id);
@@ -156,11 +166,26 @@ export default function AdminUserList() {
                 {/* Infos perso */}
                 <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>Profil</SectionTitle>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 12 }}>
                     <Stat label="Riot ID" value={u.riotId ?? "non renseigné"} />
                     <Stat label="Région" value={u.riotRegion} />
                     <Stat label="Inscrit le" value={new Date(u.createdAt).toLocaleDateString("fr-FR")} />
                   </div>
+                  {newPasswords[u.id] ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.3)" }}>
+                      <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.5)" }}>Nouveau mot de passe :</span>
+                      <code style={{ fontSize: "0.88rem", color: "#4caf50", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
+                      <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", marginLeft: 4 }}>· visible une seule fois</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={e => { e.stopPropagation(); resetPassword(u.id); }}
+                      disabled={resettingPwd === u.id}
+                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(200,170,110,0.35)", color: "rgba(200,170,110,0.7)" }}
+                    >
+                      {resettingPwd === u.id ? "..." : "Réinitialiser le mot de passe"}
+                    </button>
+                  )}
                 </div>
 
                 {/* Gainage & niveau */}
