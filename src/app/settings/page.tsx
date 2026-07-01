@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { logout, deleteAccount } from "@/lib/actions";
+import { useT, useLocale } from "@/lib/i18n/LocaleContext";
+import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
+import { translateApiError } from "@/lib/i18n/apiErrors";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +24,8 @@ const HEADING: React.CSSProperties = {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const t = useT(settingsDict);
+  const { locale } = useLocale();
   // ── Profile ──
   const [profileForm, setProfileForm] = useState({
     pseudo: "", riotId: "", riotRegion: "EUW1", objectifTotalPompes: 1000,
@@ -80,12 +85,12 @@ export default function SettingsPage() {
       setTimeout(() => setSavedProfile(false), 2000);
     } else {
       const err = await res.json().catch(() => ({}));
-      setProfileError(err.error ?? "Erreur lors de la sauvegarde.");
+      setProfileError(err.error ? translateApiError(err.error, locale) : t.erreurSauvegarde);
     }
   };
 
   const handleResolvePuuid = async () => {
-    if (!profileForm.riotId.includes("#")) { setPuuidMsg("Format invalide : pseudo#tag"); return; }
+    if (!profileForm.riotId.includes("#")) { setPuuidMsg(t.formatInvalide); return; }
     setPuuidLoading(true);
     setPuuidMsg("");
     const res = await fetch("/api/riot/resolve-puuid", {
@@ -95,10 +100,10 @@ export default function SettingsPage() {
     });
     const data = await res.json();
     if (res.ok) {
-      setPuuidMsg(`✓ Compte vérifié : ${data.gameName}#${data.tagLine}`);
+      setPuuidMsg(t.compteVerifie(data.gameName, data.tagLine));
       setRiotPuuid(data.puuid ?? "");
     } else {
-      setPuuidMsg(`✗ ${data.error}`);
+      setPuuidMsg(`✗ ${translateApiError(data.error, locale)}`);
     }
     setPuuidLoading(false);
   };
@@ -125,12 +130,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>RÉGLAGES</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>{t.title}</h1>
 
       {/* ── Profil ──────────────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h2 style={HEADING}>Profil</h2>
+          <h2 style={HEADING}>{t.profil}</h2>
           {betaRank !== null && (
             <span style={{
               fontSize: "0.65rem",
@@ -141,13 +146,13 @@ export default function SettingsPage() {
               borderRadius: 3,
               padding: "2px 8px",
             }}>
-              BÊTA #{betaRank}
+              {t.betaRank(betaRank)}
             </span>
           )}
         </div>
 
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Pseudo affiché</label>
+          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.pseudoAffiche}</label>
           <input
             className="lol-input"
             value={profileForm.pseudo}
@@ -156,7 +161,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Objectif total de pompes</label>
+          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.objectifTotalPompes}</label>
           <input
             type="number" min="0" className="lol-input"
             value={profileForm.objectifTotalPompes}
@@ -165,10 +170,10 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>Compte Riot Games</h3>
+          <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>{t.compteRiot}</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Riot ID (pseudo#tag)</label>
+              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.riotIdLabel}</label>
               <input
                 className="lol-input" placeholder="Faker#KR1"
                 value={profileForm.riotId}
@@ -176,7 +181,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Région</label>
+              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.region}</label>
               <select
                 className="lol-select w-full"
                 value={profileForm.riotRegion}
@@ -191,19 +196,19 @@ export default function SettingsPage() {
             onClick={handleResolvePuuid}
             disabled={puuidLoading || !profileForm.riotId}
           >
-            {puuidLoading ? "Vérification..." : "Vérifier le compte Riot"}
+            {puuidLoading ? t.verificationEnCours : t.verifierCompteRiot}
           </button>
           {puuidMsg && (
             <p className={`text-sm ${puuidMsg.startsWith("✓") ? "blue-text" : "loss-text"}`}>{puuidMsg}</p>
           )}
           {riotPuuid && (
-            <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>PUUID : {riotPuuid.slice(0, 20)}…</p>
+            <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>{t.puuidLabel(riotPuuid.slice(0, 20))}</p>
           )}
         </div>
 
         {profileError && <p className="text-sm loss-text">{profileError}</p>}
         <button className="lol-btn w-full" onClick={handleSaveProfile} disabled={savingProfile}>
-          {savingProfile ? "Enregistrement..." : savedProfile ? "✓ Profil enregistré !" : "Enregistrer le profil"}
+          {savingProfile ? t.enregistrementEnCours : savedProfile ? t.profilEnregistre : t.enregistrerProfil}
         </button>
       </div>
 
@@ -228,7 +233,7 @@ export default function SettingsPage() {
               fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
             }}
           >
-            <span>⚙ PARAMÈTRES AVANCÉS — BÊTA-TESTEURS</span>
+            <span>{t.parametresAvancesBeta}</span>
             <span style={{ transition: "transform 0.2s", display: "inline-block", transform: showBeta ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
           </button>
 
@@ -242,22 +247,21 @@ export default function SettingsPage() {
             }} className="space-y-6">
 
               <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.4)", lineHeight: 1.6 }}>
-                Ces paramètres définissent la formule de calcul des pompes. Ils sont partagés entre tous les joueurs.
-                Dans la version finale de l&apos;app, ces réglages ne seront pas accessibles aux utilisateurs.
+                {t.betaExplication}
               </p>
 
               {/* Poids par rôle */}
               <div className="space-y-3">
-                <h2 style={HEADING}>Poids par rôle / mode</h2>
+                <h2 style={HEADING}>{t.poidsParRole}</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
-                        <th className="text-left py-2 pr-3">Rôle</th>
-                        <th className="text-center py-2 px-2">Poids Morts</th>
-                        <th className="text-center py-2 px-2">Poids Kills</th>
-                        <th className="text-center py-2 px-2">Poids Assists</th>
-                        <th className="text-center py-2 px-2">Maîtrise</th>
+                        <th className="text-left py-2 pr-3">{t.role}</th>
+                        <th className="text-center py-2 px-2">{t.poidsMorts}</th>
+                        <th className="text-center py-2 px-2">{t.poidsKills}</th>
+                        <th className="text-center py-2 px-2">{t.poidsAssists}</th>
+                        <th className="text-center py-2 px-2">{t.maitrise}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -291,24 +295,24 @@ export default function SettingsPage() {
 
               {/* Niveaux */}
               <div className="space-y-3">
-                <h2 style={HEADING}>Niveaux (gainage)</h2>
+                <h2 style={HEADING}>{t.niveauxGainage}</h2>
                 <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
-                  Le niveau est déterminé à chaque session par le test de gainage — ces seuils définissent les paliers.
+                  {t.niveauxExplication}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
-                        <th className="text-left py-2 pr-3">Niveau</th>
-                        <th className="text-center py-2 px-2">Seuil gainage (sec)</th>
-                        <th className="text-center py-2 px-2">Multiplicateur</th>
-                        <th className="text-center py-2 px-2">Malus défaite</th>
+                        <th className="text-left py-2 pr-3">{t.niveau}</th>
+                        <th className="text-center py-2 px-2">{t.seuilGainageSec}</th>
+                        <th className="text-center py-2 px-2">{t.multiplicateur}</th>
+                        <th className="text-center py-2 px-2">{t.malusDefaite}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {levelConfigs.map((lc) => (
                         <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
-                          <td className="py-2 pr-3 gold-text font-bold">Niv. {lc.niveau}</td>
+                          <td className="py-2 pr-3 gold-text font-bold">{t.niveauAbrev(lc.niveau)}</td>
                           <td className="py-2 px-2 text-center">
                             <input
                               type="number" min="1"
@@ -344,11 +348,11 @@ export default function SettingsPage() {
 
               {/* Maîtrise */}
               <div className="space-y-4">
-                <h2 style={HEADING}>Paramètres de maîtrise</h2>
+                <h2 style={HEADING}>{t.parametresMaitrise}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
-                      Surcharge max ({Math.round(masteryConfig.surchargeMax * 100)}%)
+                      {t.surchargeMax(Math.round(masteryConfig.surchargeMax * 100))}
                     </label>
                     <input
                       type="number" step="0.01" min="0" max="2"
@@ -356,29 +360,29 @@ export default function SettingsPage() {
                       value={masteryConfig.surchargeMax}
                       onChange={(e) => setMasteryConfig((m) => m ? { ...m, surchargeMax: Number(e.target.value) } : m)}
                     />
-                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>Bonus maxi quand 100% de maîtrise (défaut : 0.5 = 50%)</p>
+                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>{t.surchargeMaxDetail}</p>
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>Parties pour max</label>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.partiesPourMax}</label>
                     <input
                       type="number" min="1"
                       className="lol-input"
                       value={masteryConfig.partiesPourMax}
                       onChange={(e) => setMasteryConfig((m) => m ? { ...m, partiesPourMax: Number(e.target.value) } : m)}
                     />
-                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>Nbre de parties avant d&apos;atteindre le bonus max (défaut : 100)</p>
+                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>{t.partiesPourMaxDetail}</p>
                   </div>
                 </div>
               </div>
 
               <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
-                {savingSettings ? "Enregistrement..." : savedSettings ? "✓ Réglages sauvegardés !" : "Sauvegarder les réglages"}
+                {savingSettings ? t.enregistrementEnCours : savedSettings ? t.reglagesSauvegardes : t.sauvegarderReglages}
               </button>
 
               {/* Outils de test bêta */}
               <div style={{ borderTop: "1px solid rgba(200,170,110,0.1)", paddingTop: "1rem" }}>
                 <p style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
-                  OUTILS DE TEST
+                  {t.outilsDeTest}
                 </p>
                 <button
                   onClick={() => {
@@ -398,7 +402,7 @@ export default function SettingsPage() {
                     letterSpacing: "0.06em",
                   }}
                 >
-                  Rejouer l&apos;intro (splash + onboarding)
+                  {t.rejouerIntro}
                 </button>
               </div>
             </div>
@@ -409,7 +413,7 @@ export default function SettingsPage() {
       {/* Déconnexion */}
       <form action={logout} className="pt-2">
         <button type="submit" className="lol-btn lol-btn-danger w-full">
-          Se déconnecter
+          {t.seDeconnecter}
         </button>
       </form>
 
@@ -421,11 +425,9 @@ export default function SettingsPage() {
         border: "1px solid rgba(232,64,87,0.3)",
         background: "rgba(232,64,87,0.04)",
       }}>
-        <h2 style={{ ...HEADING, color: "#e84057" }}>Zone de danger</h2>
+        <h2 style={{ ...HEADING, color: "#e84057" }}>{t.zoneDeDanger}</h2>
         <p style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.5)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
-          La suppression de votre compte est <strong>définitive</strong>. Toutes vos données
-          (profil, parties, statistiques, objectifs) seront effacées immédiatement et ne pourront
-          pas être récupérées.
+          {t.suppressionExplication}
         </p>
         <button
           onClick={() => { setShowDeleteModal(true); setDeleteConfirm(""); }}
@@ -442,7 +444,7 @@ export default function SettingsPage() {
             cursor: "pointer",
           }}
         >
-          Supprimer mon compte
+          {t.supprimerMonCompte}
         </button>
       </div>
 
@@ -465,16 +467,21 @@ export default function SettingsPage() {
               fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
               fontSize: "1.05rem", color: "#e84057", letterSpacing: "0.1em", marginBottom: "0.75rem",
             }}>
-              SUPPRIMER LE COMPTE
+              {t.supprimerLeCompte}
             </h3>
             <p style={{ fontSize: "0.85rem", color: "rgba(240,230,211,0.6)", lineHeight: 1.6, marginBottom: "1rem" }}>
-              Cette action est irréversible. Pour confirmer, tapez{" "}
-              <strong style={{ color: "#e84057" }}>SUPPRIMER</strong> ci-dessous.
+              {locale === "fr" ? (
+                <>Cette action est irréversible. Pour confirmer, tapez{" "}
+                  <strong style={{ color: "#e84057" }}>{t.confirmMot}</strong> ci-dessous.</>
+              ) : (
+                <>This action is irreversible. To confirm, type{" "}
+                  <strong style={{ color: "#e84057" }}>{t.confirmMot}</strong> below.</>
+              )}
             </p>
             <input
               autoFocus
               className="lol-input w-full"
-              placeholder="SUPPRIMER"
+              placeholder={t.confirmMot}
               value={deleteConfirm}
               onChange={(e) => setDeleteConfirm(e.target.value)}
               style={{ marginBottom: "1rem" }}
@@ -491,21 +498,21 @@ export default function SettingsPage() {
                   fontSize: "0.85rem", cursor: "pointer",
                 }}
               >
-                Annuler
+                {t.annuler}
               </button>
               <button
                 onClick={async () => { setDeleting(true); await deleteAccount(); }}
-                disabled={deleteConfirm !== "SUPPRIMER" || deleting}
+                disabled={deleteConfirm !== t.confirmMot || deleting}
                 style={{
                   flex: 1, padding: "0.55rem",
-                  background: deleteConfirm === "SUPPRIMER" ? "#e84057" : "rgba(232,64,87,0.25)",
+                  background: deleteConfirm === t.confirmMot ? "#e84057" : "rgba(232,64,87,0.25)",
                   border: "none", borderRadius: 4, color: "#fff",
                   fontSize: "0.85rem", fontWeight: 600,
-                  cursor: deleteConfirm === "SUPPRIMER" && !deleting ? "pointer" : "not-allowed",
+                  cursor: deleteConfirm === t.confirmMot && !deleting ? "pointer" : "not-allowed",
                   opacity: deleting ? 0.6 : 1,
                 }}
               >
-                {deleting ? "Suppression…" : "Supprimer définitivement"}
+                {deleting ? t.suppressionEnCours : t.supprimerDefinitivement}
               </button>
             </div>
           </div>

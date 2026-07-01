@@ -1,4 +1,7 @@
+"use client";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { waitlist as waitlistDict } from "@/lib/i18n/dictionaries/waitlist";
 
 function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
   const s: React.CSSProperties = {
@@ -12,6 +15,7 @@ function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 }
 
 export default function WaitlistPage() {
+  const t = useT(waitlistDict);
   return (
     <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div className="lol-panel" style={{
@@ -31,14 +35,13 @@ export default function WaitlistPage() {
           letterSpacing: "0.15em",
           marginBottom: "1.25rem",
         }}>
-          LISTE D&apos;ATTENTE
+          {t.title}
         </h1>
         <p style={{ fontSize: "0.84rem", color: "rgba(240,230,211,0.6)", lineHeight: 1.7, marginBottom: "1.75rem" }}>
-          La beta est limitée à 100 testeurs et toutes les places sont prises.
-          Une prochaine vague d&apos;accès est prévue — reviens bientôt&nbsp;!
+          {t.body}
         </p>
         <Link href="/login" className="lol-btn" style={{ display: "inline-block" }}>
-          Retour
+          {t.retour}
         </Link>
       </div>
     </div>

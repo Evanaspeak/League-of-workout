@@ -3,14 +3,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/SessionContext";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { nav as navDict } from "@/lib/i18n/dictionaries/nav";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
-
-const links = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/history", label: "Historique" },
-  { href: "/settings", label: "Réglages" },
-];
 
 const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
 
@@ -18,6 +15,13 @@ export default function Nav() {
   const path = usePathname();
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
+  const t = useT(navDict);
+
+  const links = [
+    { href: "/dashboard", label: t.dashboard },
+    { href: "/history", label: t.historique },
+    { href: "/settings", label: t.reglages },
+  ];
 
   useEffect(() => {
     fetch("/api/auth/session")
@@ -54,7 +58,7 @@ export default function Nav() {
           ⚔ L·O·W
         </Link>
 
-        {!isPublic && [...links, ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : [])].map((l) => {
+        {!isPublic && [...links, ...(isAdmin ? [{ href: "/admin", label: t.admin }] : [])].map((l) => {
           const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
           return (
             <Link
@@ -90,8 +94,9 @@ export default function Nav() {
           );
         })}
 
-        {!isPublic && sessionActive && (
-          <div className="ml-auto flex items-center gap-2 shrink-0">
+        <div className="ml-auto flex items-center gap-2 shrink-0">
+          {!isPublic && sessionActive && (
+            <>
             <div style={{
               display: "flex",
               alignItems: "center",
@@ -108,7 +113,7 @@ export default function Nav() {
                 animation: "pulse 1.5s ease-in-out infinite",
                 display: "inline-block",
               }} />
-              <span style={{ fontSize: "0.7rem", color: "#22C55E", fontWeight: 700, letterSpacing: "0.06em" }}>LIVE</span>
+              <span style={{ fontSize: "0.7rem", color: "#22C55E", fontWeight: 700, letterSpacing: "0.06em" }}>{t.live}</span>
               <span style={{ fontSize: "0.7rem", color: "#C8AA6E" }}>{sessionGames.length}G</span>
               <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)" }}>
                 {polling ? "⟳" : `${countdown}s`}
@@ -116,7 +121,7 @@ export default function Nav() {
             </div>
             <button
               onClick={stopSession}
-              title="Arrêter la session"
+              title={t.stopSession}
               style={{
                 width: 28, height: 28,
                 borderRadius: "50%",
@@ -133,8 +138,10 @@ export default function Nav() {
             >
               ⏹
             </button>
-          </div>
-        )}
+            </>
+          )}
+          <LanguageSwitcher />
+        </div>
       </div>
     </nav>
   );

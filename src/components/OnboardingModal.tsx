@@ -1,38 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/onboardingModal";
 
 const PUBLIC = ["/login", "/waitlist"];
 
-const STEPS = [
-  {
-    icon: "⚔",
-    title: "Bienvenue dans\nLeague of Workouts",
-    body: "L'app qui transforme tes parties de League of Legends en séances de sport. Chaque game = des pompes. Plus tu perfomes, moins tu en fais.",
-  },
-  {
-    icon: "💪",
-    title: "Comment ça marche ?",
-    body: "À la fin de chaque partie, l'app calcule automatiquement ton nombre de pompes en fonction de ton KDA, de ton rôle et du résultat de la partie.\n\nVictoire avec un bon score → peu de pompes.\nDéfaite avec un mauvais KDA → beaucoup de pompes.",
-  },
-  {
-    icon: "🧱",
-    title: "Le test de gainage",
-    body: "Avant chaque session, tu effectues un test de gainage chronométré. Plus tu tiens longtemps, plus ton niveau est élevé — et plus le multiplicateur de pompes est important.\n\nC'est ton niveau physique qui détermine l'intensité.",
-  },
-  {
-    icon: "🩺",
-    title: "Écoute ton corps",
-    body: "Si en cours de série tu sens que c'est trop difficile, pas de panique — passe en appui sur les genoux plutôt que sur les pieds.\n\nL'important : aller jusqu'au bout de la série quoi qu'il arrive. Adapter l'exercice n'est pas abandonner, c'est progresser intelligemment.",
-  },
-  {
-    icon: "🏆",
-    title: "Ton objectif",
-    body: "Tu te fixes un objectif total de pompes à atteindre (par défaut : 1 000). Chaque session contribue à te rapprocher de ce chiffre.\n\nSuis ta progression sur le dashboard et dépasse tes limites !",
-  },
-];
-
 export function OnboardingModal() {
+  const t = useT(onboardingModalDict);
+  const STEPS = t.steps;
   const path = usePathname();
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
@@ -42,8 +18,8 @@ export function OnboardingModal() {
     if (PUBLIC.some((p) => path.startsWith(p))) return;
     if (localStorage.getItem("low_onboarded")) return;
     // Attend que le splash soit terminé avant d'afficher
-    const t = setTimeout(() => setVisible(true), 2800);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setVisible(true), 2800);
+    return () => clearTimeout(timer);
   }, [path]);
 
   const close = () => {
@@ -171,7 +147,7 @@ export function OnboardingModal() {
             className="lol-btn"
             style={{ flex: 1, fontSize: "0.88rem", letterSpacing: "0.1em" }}
           >
-            {step < STEPS.length - 1 ? "SUIVANT →" : "C'EST PARTI !"}
+            {step < STEPS.length - 1 ? t.suivant : t.cestParti}
           </button>
         </div>
 
@@ -189,7 +165,7 @@ export function OnboardingModal() {
               letterSpacing: "0.05em",
             }}
           >
-            Passer l&apos;introduction
+            {t.passerIntroduction}
           </button>
         )}
       </div>

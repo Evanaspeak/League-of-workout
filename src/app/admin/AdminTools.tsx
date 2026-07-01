@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useLocale, useT } from "@/lib/i18n/LocaleContext";
+import { translateApiError } from "@/lib/i18n/apiErrors";
+import { adminTools } from "@/lib/i18n/dictionaries/adminTools";
 
 export default function AdminTools() {
+  const t = useT(adminTools);
+  const { locale } = useLocale();
   const [emails, setEmails] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -23,8 +28,8 @@ export default function AdminTools() {
       body: JSON.stringify({ email: input.trim() }),
     });
     const d = await res.json();
-    if (d.emails) { setEmails(d.emails); setInput(""); setMsg("✓ Ajouté"); }
-    else setMsg(d.error ?? "Erreur");
+    if (d.emails) { setEmails(d.emails); setInput(""); setMsg(t.added); }
+    else setMsg(translateApiError(d.error, locale) || t.error);
     setSaving(false);
     setTimeout(() => setMsg(""), 3000);
   }
@@ -47,23 +52,23 @@ export default function AdminTools() {
         letterSpacing: "0.1em",
         marginBottom: 16,
       }}>
-        OUTILS ADMIN
+        {t.title}
       </h2>
 
       {/* Liste blanche d'emails */}
       <div style={{ marginBottom: 20 }}>
         <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.45)", marginBottom: 8 }}>
-          Liste blanche — email de connexion alternatif
+          {t.whitelistTitle}
         </p>
         <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.4)", lineHeight: 1.6, marginBottom: 10 }}>
-          Utilise cette liste si l&apos;email Google d&apos;un testeur est différent de celui rempli dans la candidature.
+          {t.whitelistExplanation}
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && add()}
-            placeholder="email@gmail.com"
+            placeholder={t.emailPlaceholder}
             style={{
               flex: 1, padding: "7px 12px", borderRadius: 6, fontSize: "0.85rem",
               background: "rgba(240,230,211,0.04)", border: "1px solid rgba(200,170,110,0.2)",
@@ -79,7 +84,7 @@ export default function AdminTools() {
               color: "#4caf50", fontWeight: 600,
             }}
           >
-            {saving ? "..." : "Autoriser"}
+            {saving ? "..." : t.authorize}
           </button>
         </div>
         {msg && <p style={{ fontSize: "0.78rem", color: msg.startsWith("✓") ? "#4caf50" : "#ef5350", marginBottom: 8 }}>{msg}</p>}
@@ -99,14 +104,14 @@ export default function AdminTools() {
           </div>
         )}
         {emails.length === 0 && (
-          <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.25)" }}>Aucun email en liste blanche.</p>
+          <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.25)" }}>{t.noEmails}</p>
         )}
       </div>
 
       {/* Rejouer intro */}
       <div style={{ borderTop: "1px solid rgba(200,170,110,0.1)", paddingTop: 14 }}>
         <p style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
-          TEST
+          {t.testSection}
         </p>
         <button
           onClick={() => {
@@ -126,7 +131,7 @@ export default function AdminTools() {
             letterSpacing: "0.06em",
           }}
         >
-          ↺ Rejouer l&apos;intro (splash + onboarding)
+          {t.replayIntro}
         </button>
       </div>
     </div>

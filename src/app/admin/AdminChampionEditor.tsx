@@ -1,8 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { CHAMPIONS } from "@/lib/champions";
+import { useLocale, useT } from "@/lib/i18n/LocaleContext";
+import { translateApiError } from "@/lib/i18n/apiErrors";
+import { adminChampionEditor } from "@/lib/i18n/dictionaries/adminChampionEditor";
 
 export default function AdminChampionEditor() {
+  const t = useT(adminChampionEditor);
+  const { locale } = useLocale();
   const [text, setText] = useState("");
   const [isDefault, setIsDefault] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,10 +36,10 @@ export default function AdminChampionEditor() {
     const data = await res.json();
     setSaving(false);
     if (res.ok) {
-      setMsg({ type: "ok", text: `Sauvegardé — ${data.count} champions actifs.` });
+      setMsg({ type: "ok", text: t.saved(data.count) });
       setIsDefault(false);
     } else {
-      setMsg({ type: "err", text: data.error ?? "Erreur" });
+      setMsg({ type: "err", text: translateApiError(data.error, locale) ?? t.error });
     }
   };
 
@@ -45,7 +50,7 @@ export default function AdminChampionEditor() {
     setText(CHAMPIONS.join("\n"));
     setIsDefault(true);
     setSaving(false);
-    setMsg({ type: "ok", text: "Liste réinitialisée aux valeurs par défaut." });
+    setMsg({ type: "ok", text: t.resetDone });
   };
 
   const count = text.split("\n").map((s) => s.trim()).filter(Boolean).length;
@@ -54,9 +59,9 @@ export default function AdminChampionEditor() {
     <div className="lol-panel p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">Liste des Champions</h2>
+          <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.title}</h2>
           <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>
-            Un champion par ligne · s&apos;applique à tous les comptes
+            {t.subtitle}
           </p>
         </div>
         <span className="text-xs px-3 py-1 rounded" style={{
@@ -64,15 +69,15 @@ export default function AdminChampionEditor() {
           border: "1px solid rgba(200,170,110,0.2)",
           color: "rgba(200,170,110,0.7)",
         }}>
-          {loading ? "…" : `${count} champions`}
+          {loading ? t.loadingShort : t.championsCount(count)}
           {isDefault && !loading && (
-            <span style={{ color: "rgba(240,230,211,0.35)", marginLeft: 6 }}>(défaut)</span>
+            <span style={{ color: "rgba(240,230,211,0.35)", marginLeft: 6 }}>{t.defaultTag}</span>
           )}
         </span>
       </div>
 
       {loading ? (
-        <div className="text-center py-10 gold-text text-sm">Chargement...</div>
+        <div className="text-center py-10 gold-text text-sm">{t.loading}</div>
       ) : (
         <textarea
           value={text}
@@ -100,7 +105,7 @@ export default function AdminChampionEditor() {
           onClick={save}
           disabled={saving || loading}
         >
-          {saving ? "Sauvegarde..." : "Sauvegarder"}
+          {saving ? t.saving : t.save}
         </button>
         <button
           onClick={reset}
@@ -113,7 +118,7 @@ export default function AdminChampionEditor() {
             cursor: isDefault ? "default" : "pointer",
           }}
         >
-          Réinitialiser
+          {t.reset}
         </button>
       </div>
     </div>

@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { CHAMPIONS } from "@/lib/champions";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { championInput as championInputDict } from "@/lib/i18n/dictionaries/championInput";
 
 interface Props {
   value: string;
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export function ChampionInput({ value, onChange, onReset }: Props) {
+  const t = useT(championInputDict);
   const [champList, setChampList] = useState<string[]>(CHAMPIONS);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -79,7 +82,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
     <div ref={containerRef} style={{ position: "relative" }}>
       <input
         className="lol-input"
-        placeholder="ex: Lee Sin"
+        placeholder={t.placeholder}
         value={value}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -93,7 +96,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
         autoComplete="off"
       />
       {value && !isValid && (
-        <div style={{ fontSize: "0.7rem", color: "#e05555", marginTop: 2 }}>Champion non reconnu</div>
+        <div style={{ fontSize: "0.7rem", color: "#e05555", marginTop: 2 }}>{t.championNonReconnu}</div>
       )}
       {open && (
         <div style={{

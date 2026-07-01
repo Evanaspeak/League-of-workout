@@ -4,6 +4,7 @@ import AdminChampionEditor from "./AdminChampionEditor";
 import AdminBetaApplications from "./AdminBetaApplications";
 import AdminUserList from "./AdminUserList";
 import AdminTools from "./AdminTools";
+import AdminHeader from "./AdminHeader";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
 
@@ -15,19 +16,7 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{
-        fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-        fontSize: "1.5rem",
-        color: "#C8AA6E",
-        letterSpacing: "0.18em",
-      }}>
-        ADMINISTRATION
-      </h1>
-      <div className="lol-panel p-4 space-y-1">
-        <p className="text-xs" style={{ color: "rgba(200,170,110,0.5)", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Accès restreint · {user.email}
-        </p>
-      </div>
+      <AdminHeader email={user.email} />
       <AdminBetaApplications />
       <AdminUserList />
       <AdminChampionEditor />
