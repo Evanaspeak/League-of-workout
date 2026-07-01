@@ -1,0 +1,26 @@
+export const adminTools = {
+  fr: {
+    title: "OUTILS ADMIN",
+    whitelistTitle: "Liste blanche — email de connexion alternatif",
+    whitelistExplanation: "Utilise cette liste si l'email Google d'un testeur est différent de celui rempli dans la candidature.",
+    emailPlaceholder: "email@gmail.com",
+    authorize: "Autoriser",
+    added: "✓ Ajouté",
+    error: "Erreur",
+    noEmails: "Aucun email en liste blanche.",
+    testSection: "TEST",
+    replayIntro: "↺ Rejouer l'intro (splash + onboarding)",
+  },
+  en: {
+    title: "ADMIN TOOLS",
+    whitelistTitle: "Whitelist — alternate login email",
+    whitelistExplanation: "Use this list if a tester's Google email differs from the one filled in their application.",
+    emailPlaceholder: "email@gmail.com",
+    authorize: "Authorize",
+    added: "✓ Added",
+    error: "Error",
+    noEmails: "No emails in the whitelist.",
+    testSection: "TEST",
+    replayIntro: "↺ Replay intro (splash + onboarding)",
+  },
+};

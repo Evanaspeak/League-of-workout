@@ -5,7 +5,9 @@ import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
 import { SessionGuard } from "@/components/SessionGuard";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import { Footer } from "@/components/Footer";
 import { SessionProvider } from "@/lib/SessionContext";
+import { LocaleProvider } from "@/lib/i18n/LocaleContext";
 
 const russoOne = Russo_One({
   weight: "400",
@@ -30,30 +32,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`h-full ${russoOne.variable} ${chakraPetch.variable}`}>
       <body className="min-h-full flex flex-col">
-        <SessionProvider>
-          <SplashScreen />
-          <SessionGuard />
-          <OnboardingModal />
-          <Nav />
-          <main className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
-            {children}
-          </main>
-          <footer className="text-center py-4 text-xs space-y-1" style={{
-            color: "rgba(200,170,110,0.25)",
-            borderTop: "1px solid rgba(200,170,110,0.07)",
-            letterSpacing: "0.06em",
-          }}>
-            <div>LEAGUE OF WORKOUTS · Via Riot Games API</div>
-            <div style={{ display: "flex", justifyContent: "center", gap: "1.25rem" }}>
-              <a href="/cgu" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>CGU</a>
-              <a href="/confidentialite" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Confidentialité</a>
-              <a href="/telechargement" style={{ color: "rgba(200,170,110,0.35)", textDecoration: "none" }}>Télécharger</a>
-            </div>
-            <div style={{ maxWidth: 640, margin: "0 auto", lineHeight: 1.6 }}>
-              League of Workouts n&apos;est pas approuvé par Riot Games et ne reflète pas les points de vue ou opinions de Riot Games ni de quiconque impliqué officiellement dans la production ou la gestion des propriétés Riot Games. League of Legends et Riot Games sont des marques ou marques déposées de Riot Games, Inc.
-            </div>
-          </footer>
-        </SessionProvider>
+        <LocaleProvider>
+          <SessionProvider>
+            <SplashScreen />
+            <SessionGuard />
+            <OnboardingModal />
+            <Nav />
+            <main className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
+              {children}
+            </main>
+            <Footer />
+          </SessionProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

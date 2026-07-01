@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { adminBetaApplications } from "@/lib/i18n/dictionaries/adminBetaApplications";
 
 type Application = {
   id: string;
@@ -26,26 +28,16 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "#ef5350",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "En attente",
-  accepted: "Accepté",
-  rejected: "Refusé",
-};
-
-function exportToCSV(apps: Application[]) {
-  const headers = [
-    "Pseudo", "Email", "Riot ID", "Région", "Genre", "Âge", "Poids (kg)",
-    "Jeu / semaine", "Sport / semaine (h)", "Sport pratiqué",
-    "Motivation", "Source", "Engagement (/5)", "Statut", "Date",
-  ];
+function exportToCSV(apps: Application[], t: ReturnType<typeof useT<typeof adminBetaApplications>>, statusLabels: Record<string, string>, dateLocale: string) {
+  const headers = t.csvHeaders;
   const rows = apps.map(app => [
     app.pseudo, app.email, app.riotId, app.region, app.genre,
     app.age, app.poids, app.hoursPerWeek, app.sportsHoursPerWeek,
     app.currentSport ?? "",
     app.motivation,
     app.discovery, app.engagement,
-    STATUS_LABELS[app.status] ?? app.status,
-    new Date(app.createdAt).toLocaleDateString("fr-FR"),
+    statusLabels[app.status] ?? app.status,
+    new Date(app.createdAt).toLocaleDateString(dateLocale),
   ]);
   const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
   const csv = [headers, ...rows].map(row => row.map(escape).join(";")).join("\n");
@@ -53,7 +45,7 @@ function exportToCSV(apps: Application[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `candidatures-${new Date().toISOString().split("T")[0]}.csv`;
+  a.download = `${t.csvFilenamePrefix}-${new Date().toISOString().split("T")[0]}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -61,6 +53,13 @@ function exportToCSV(apps: Application[]) {
 }
 
 export default function AdminBetaApplications() {
+  const t = useT(adminBetaApplications);
+  const dateLocale = useDateLocale();
+  const STATUS_LABELS: Record<string, string> = {
+    pending: t.statusPending,
+    accepted: t.statusAccepted,
+    rejected: t.statusRejected,
+  };
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -112,22 +111,22 @@ export default function AdminBetaApplications() {
     rejected: apps.filter(a => a.status === "rejected").length,
   };
 
-  if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>Chargement...</div>;
+  if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>{t.loading}</div>;
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#C8AA6E", letterSpacing: "0.1em" }}>
-          CANDIDATURES BÊTA
+          {t.title}
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.4)" }}>
-            {counts.accepted}/100 acceptés
+            {t.acceptedOutOf(counts.accepted)}
           </span>
           <button
-            onClick={() => exportToCSV(apps)}
-            title="Exporter toutes les candidatures en CSV (Excel)"
+            onClick={() => exportToCSV(apps, t, STATUS_LABELS, dateLocale)}
+            title={t.exportTitle}
             style={{
               padding: "5px 14px", borderRadius: 6, fontSize: "0.78rem", cursor: "pointer",
               border: "1px solid rgba(200,170,110,0.3)",
@@ -136,7 +135,7 @@ export default function AdminBetaApplications() {
               display: "flex", alignItems: "center", gap: 6,
             }}
           >
-            ⬇ Export Excel
+            {t.exportButton}
           </button>
         </div>
       </div>
@@ -145,7 +144,7 @@ export default function AdminBetaApplications() {
       <div style={{ marginBottom: 14 }}>
         <input
           type="text"
-          placeholder="Rechercher par pseudo ou email…"
+          placeholder={t.searchPlaceholder}
           value={search}
           onChange={e => setSearch(e.target.value)}
           style={{
@@ -171,14 +170,14 @@ export default function AdminBetaApplications() {
             background: filter === f ? "rgba(200,170,110,0.1)" : "transparent",
             color: filter === f ? "#C8AA6E" : "rgba(240,230,211,0.4)",
           }}>
-            {f === "all" ? "Tous" : STATUS_LABELS[f]} ({counts[f]})
+            {f === "all" ? t.filterAll : STATUS_LABELS[f]} ({counts[f]})
           </button>
         ))}
       </div>
 
       {filtered.length === 0 && (
         <p style={{ color: "rgba(240,230,211,0.35)", fontSize: "0.875rem", padding: "20px 0" }}>
-          {q ? `Aucun résultat pour "${search}".` : `Aucune candidature${filter !== "all" ? " dans cette catégorie" : ""}.`}
+          {q ? t.noResultsFor(search) : t.noApplications(filter !== "all")}
         </p>
       )}
 
@@ -215,7 +214,7 @@ export default function AdminBetaApplications() {
                   {STATUS_LABELS[app.status]}
                 </span>
                 <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.25)" }}>
-                  {new Date(app.createdAt).toLocaleDateString("fr-FR")}
+                  {new Date(app.createdAt).toLocaleDateString(dateLocale)}
                 </span>
               </div>
             </div>
@@ -228,16 +227,16 @@ export default function AdminBetaApplications() {
                 background: "rgba(4,8,16,0.4)",
               }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
-                  <Info label="Genre" value={app.genre} />
-                  <Info label="Âge" value={`${app.age} ans`} />
-                  <Info label="Poids" value={`${app.poids} kg`} />
-                  <Info label="Jeu / semaine" value={app.hoursPerWeek} />
-                  <Info label="Sport / semaine" value={`${app.sportsHoursPerWeek}h`} />
-                  <Info label="Sport actuel" value={app.currentSport || "Aucun"} />
-                  <Info label="Source" value={app.discovery} />
+                  <Info label={t.genre} value={app.genre} />
+                  <Info label={t.age} value={t.ageSuffix(app.age)} />
+                  <Info label={t.weight} value={`${app.poids} kg`} />
+                  <Info label={t.gamePerWeek} value={app.hoursPerWeek} />
+                  <Info label={t.sportPerWeek} value={`${app.sportsHoursPerWeek}h`} />
+                  <Info label={t.currentSport} value={app.currentSport || t.none} />
+                  <Info label={t.source} value={app.discovery} />
                 </div>
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 6 }}>Motivation</div>
+                  <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 6 }}>{t.motivation}</div>
                   <p style={{ fontSize: "0.875rem", color: "rgba(240,230,211,0.7)", lineHeight: 1.6 }}>{app.motivation}</p>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
@@ -251,7 +250,7 @@ export default function AdminBetaApplications() {
                         color: "#4caf50", fontWeight: 600,
                       }}
                     >
-                      {updating === app.id ? "..." : "✓ Accepter"}
+                      {updating === app.id ? "..." : t.accept}
                     </button>
                   )}
                   {app.status !== "rejected" && (
@@ -264,7 +263,7 @@ export default function AdminBetaApplications() {
                         color: "#ef5350", fontWeight: 600,
                       }}
                     >
-                      {updating === app.id ? "..." : "✕ Refuser"}
+                      {updating === app.id ? "..." : t.reject}
                     </button>
                   )}
                   {app.status !== "pending" && (
@@ -277,25 +276,25 @@ export default function AdminBetaApplications() {
                         color: "rgba(240,230,211,0.4)",
                       }}
                     >
-                      Remettre en attente
+                      {t.backToPending}
                     </button>
                   )}
                   <div style={{ marginLeft: "auto" }}>
                     {confirmDelete === app.id ? (
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        <span style={{ fontSize: "0.75rem", color: "#ef5350" }}>Supprimer définitivement ?</span>
+                        <span style={{ fontSize: "0.75rem", color: "#ef5350" }}>{t.deleteConfirm}</span>
                         <button
                           onClick={() => deleteApplication(app.id)}
                           disabled={deleting === app.id}
                           style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "rgba(239,83,80,0.15)", border: "1px solid rgba(239,83,80,0.5)", color: "#ef5350", fontWeight: 600 }}
                         >
-                          {deleting === app.id ? "..." : "Confirmer"}
+                          {deleting === app.id ? "..." : t.confirm}
                         </button>
                         <button
                           onClick={() => setConfirmDelete(null)}
                           style={{ padding: "4px 8px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(240,230,211,0.15)", color: "rgba(240,230,211,0.4)" }}
                         >
-                          Annuler
+                          {t.cancel}
                         </button>
                       </div>
                     ) : (
@@ -303,7 +302,7 @@ export default function AdminBetaApplications() {
                         onClick={() => setConfirmDelete(app.id)}
                         style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(239,83,80,0.3)", color: "rgba(239,83,80,0.5)" }}
                       >
-                        Supprimer
+                        {t.delete}
                       </button>
                     )}
                   </div>

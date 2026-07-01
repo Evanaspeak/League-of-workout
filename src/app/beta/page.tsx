@@ -1,19 +1,17 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useLocale, useT } from "@/lib/i18n/LocaleContext";
+import { translateApiError } from "@/lib/i18n/apiErrors";
+import { beta } from "@/lib/i18n/dictionaries/beta";
 
-const REGIONS = ["EUW", "EUNE", "NA", "LAN", "LAS", "BR", "OCE", "KR", "JP", "TR", "RU"];
-const HOURS = ["Moins de 5h", "5 à 10h", "10 à 20h", "Plus de 20h"];
-const DISCOVERY = ["Discord", "Reddit", "Twitter / X", "TikTok", "Un ami", "Autre"];
-const GENRES = ["Homme", "Femme", "Non-binaire", "Préfère ne pas préciser"];
-
-function sportLabel(h: number) {
-  if (h === 0) return "Sédentaire";
-  if (h <= 2) return "Peu actif";
-  if (h <= 5) return "Actif";
-  if (h <= 10) return "Sportif";
-  if (h <= 15) return "Très sportif";
-  return "Athlète";
+function sportLabel(h: number, t: ReturnType<typeof useT<typeof beta>>) {
+  if (h === 0) return t.sportSedentary;
+  if (h <= 2) return t.sportLowActive;
+  if (h <= 5) return t.sportActive;
+  if (h <= 10) return t.sportAthletic;
+  if (h <= 15) return t.sportVeryAthletic;
+  return t.sportAthlete;
 }
 
 const FIELD_STYLE = {
@@ -43,6 +41,12 @@ const LABEL_STYLE = {
 };
 
 export default function BetaPage() {
+  const t = useT(beta);
+  const { locale } = useLocale();
+  const REGIONS = t.regions;
+  const HOURS = t.hours;
+  const DISCOVERY = t.discovery;
+  const GENRES = t.genres;
   const [form, setForm] = useState({
     pseudo: "", email: "", riotId: "", region: "EUW", genre: "", age: "",
     poids: "", hoursPerWeek: "", currentSport: "", sportsHoursPerWeek: 0, motivation: "", discovery: "", engagement: 0,
@@ -67,10 +71,10 @@ export default function BetaPage() {
         body: JSON.stringify({ ...form, age: Number(form.age), poids: Number(form.poids), sportsHoursPerWeek: Number(form.sportsHoursPerWeek) }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Erreur"); return; }
+      if (!res.ok) { setError(translateApiError(data.error, locale) || t.genericError); return; }
       setSuccess(true);
     } catch {
-      setError("Erreur réseau, réessaie.");
+      setError(t.networkError);
     } finally {
       setLoading(false);
     }
@@ -89,7 +93,7 @@ export default function BetaPage() {
             ⚔ L·O·W
           </Link>
           <Link href="/login" style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.4)", textDecoration: "none" }}>
-            Déjà un compte ? Se connecter →
+            {t.alreadyAccount}
           </Link>
         </div>
       </nav>
@@ -104,17 +108,16 @@ export default function BetaPage() {
             background: "rgba(11,196,227,0.06)",
             fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#0bc4e3",
           }}>
-            100 places disponibles
+            {t.spotsAvailable}
           </div>
           <h1 style={{
             fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
             fontSize: "clamp(1.8rem, 4vw, 2.6rem)", lineHeight: 1.15, marginBottom: 16,
           }}>
-            Candidature bêta
+            {t.heading}
           </h1>
           <p style={{ fontSize: "0.95rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.7 }}>
-            On sélectionne 100 joueurs pour tester League of Workout avant le lancement officiel.
-            Remplis ce formulaire et on te contacte par email si tu es retenu.
+            {t.intro}
           </p>
         </div>
 
@@ -125,65 +128,64 @@ export default function BetaPage() {
           }}>
             <div style={{ fontSize: "2.5rem", marginBottom: 16 }}>✓</div>
             <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1.3rem", color: "#4caf50", marginBottom: 12 }}>
-              Candidature envoyée !
+              {t.successTitle}
             </h2>
             <p style={{ color: "rgba(240,230,211,0.6)", lineHeight: 1.7 }}>
-              Un email de confirmation t&apos;a été envoyé. On passe en revue toutes les candidatures
-              et on te contacte si tu fais partie des 100 sélectionnés.
+              {t.successBody}
             </p>
             <Link href="/" style={{
               display: "inline-block", marginTop: 28, padding: "10px 24px",
               borderRadius: 8, border: "1px solid rgba(200,170,110,0.3)",
               color: "#C8AA6E", textDecoration: "none", fontSize: "0.85rem",
             }}>
-              ← Retour à l&apos;accueil
+              {t.backHome}
             </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* SECTION IDENTITÉ */}
-            <SectionTitle>Qui es-tu ?</SectionTitle>
+            <SectionTitle>{t.sectionIdentity}</SectionTitle>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
-                <label style={LABEL_STYLE}>Pseudo *</label>
-                <input style={FIELD_STYLE} placeholder="Ton pseudo" value={form.pseudo} onChange={e => set("pseudo", e.target.value)} required />
+                <label style={LABEL_STYLE}>{t.pseudoLabel}</label>
+                <input style={FIELD_STYLE} placeholder={t.pseudoPlaceholder} value={form.pseudo} onChange={e => set("pseudo", e.target.value)} required />
               </div>
               <div>
-                <label style={LABEL_STYLE}>Email *</label>
+                <label style={LABEL_STYLE}>{t.emailLabel}</label>
                 <input style={FIELD_STYLE} type="email" placeholder="ton@email.com" value={form.email} onChange={e => set("email", e.target.value)} required />
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
               <div>
-                <label style={LABEL_STYLE}>Genre *</label>
+                <label style={LABEL_STYLE}>{t.genreLabel}</label>
                 <select style={FIELD_STYLE} value={form.genre} onChange={e => set("genre", e.target.value)} required>
                   <option value="" style={OPTION_STYLE}>—</option>
                   {GENRES.map(g => <option key={g} value={g} style={OPTION_STYLE}>{g}</option>)}
                 </select>
               </div>
               <div>
-                <label style={LABEL_STYLE}>Âge *</label>
+                <label style={LABEL_STYLE}>{t.ageLabel}</label>
                 <input style={FIELD_STYLE} type="number" min={13} max={99} placeholder="25" value={form.age} onChange={e => set("age", e.target.value)} required />
               </div>
               <div>
-                <label style={LABEL_STYLE}>Poids (kg) *</label>
+                <label style={LABEL_STYLE}>{t.weightLabel}</label>
                 <input style={FIELD_STYLE} type="number" min={30} max={300} placeholder="75" value={form.poids} onChange={e => set("poids", e.target.value)} required />
               </div>
             </div>
 
             {/* SECTION LoL */}
-            <SectionTitle>Ton profil de joueur</SectionTitle>
+            <SectionTitle>{t.sectionPlayerProfile}</SectionTitle>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
-                <label style={LABEL_STYLE}>Riot ID *</label>
-                <input style={FIELD_STYLE} placeholder="Pseudo#TAG" value={form.riotId} onChange={e => set("riotId", e.target.value)} required />
+                <label style={LABEL_STYLE}>{t.riotIdLabel}</label>
+                <input style={FIELD_STYLE} placeholder={t.riotIdPlaceholder} value={form.riotId} onChange={e => set("riotId", e.target.value)} required />
               </div>
               <div>
-                <label style={LABEL_STYLE}>Région *</label>
+                <label style={LABEL_STYLE}>{t.regionLabel}</label>
                 <select style={FIELD_STYLE} value={form.region} onChange={e => set("region", e.target.value)} required>
                   {REGIONS.map(r => <option key={r} value={r} style={OPTION_STYLE}>{r}</option>)}
                 </select>
@@ -191,7 +193,7 @@ export default function BetaPage() {
             </div>
 
             <div>
-              <label style={LABEL_STYLE}>Heures de jeu par semaine *</label>
+              <label style={LABEL_STYLE}>{t.hoursPerWeekLabel}</label>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {HOURS.map(h => (
                   <button key={h} type="button" onClick={() => set("hoursPerWeek", h)} style={{
@@ -207,13 +209,13 @@ export default function BetaPage() {
             </div>
 
             {/* SECTION SPORT */}
-            <SectionTitle>Activité physique</SectionTitle>
+            <SectionTitle>{t.sectionPhysicalActivity}</SectionTitle>
 
             <div>
               <label style={LABEL_STYLE}>
-                Heures de sport par semaine *
+                {t.sportHoursLabel}
                 <span style={{ float: "right", color: "#C8AA6E", fontFamily: "var(--font-heading)", letterSpacing: 0, textTransform: "none", fontSize: "0.85rem" }}>
-                  {form.sportsHoursPerWeek}h — {sportLabel(form.sportsHoursPerWeek)}
+                  {t.sportHoursHint(form.sportsHoursPerWeek, sportLabel(form.sportsHoursPerWeek, t))}
                 </span>
               </label>
               <input
@@ -223,25 +225,25 @@ export default function BetaPage() {
                 style={{ width: "100%", accentColor: "#C8AA6E", cursor: "pointer", height: 20 }}
               />
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", marginTop: 4 }}>
-                <span>0h — Sédentaire</span>
-                <span>10h</span>
-                <span>20h — Athlète</span>
+                <span>{t.sportRangeMin}</span>
+                <span>{t.sportRangeMid}</span>
+                <span>{t.sportRangeMax}</span>
               </div>
             </div>
 
             <div>
-              <label style={LABEL_STYLE}>Sport(s) pratiqué(s) <span style={{ opacity: 0.5 }}>(optionnel)</span></label>
-              <input style={FIELD_STYLE} placeholder="Ex: Course à pied, musculation, aucun..." value={form.currentSport} onChange={e => set("currentSport", e.target.value)} />
+              <label style={LABEL_STYLE}>{t.currentSportLabel} <span style={{ opacity: 0.5 }}>{t.optional}</span></label>
+              <input style={FIELD_STYLE} placeholder={t.currentSportPlaceholder} value={form.currentSport} onChange={e => set("currentSport", e.target.value)} />
             </div>
 
             {/* SECTION ENGAGEMENT */}
-            <SectionTitle>Ton engagement</SectionTitle>
+            <SectionTitle>{t.sectionEngagement}</SectionTitle>
 
             <div>
-              <label style={LABEL_STYLE}>Motivation *</label>
+              <label style={LABEL_STYLE}>{t.motivationLabel}</label>
               <textarea
                 style={{ ...FIELD_STYLE, minHeight: 100, resize: "vertical" }}
-                placeholder="Pourquoi veux-tu tester League of Workout ? Qu'est-ce qui t'a convaincu ?"
+                placeholder={t.motivationPlaceholder}
                 value={form.motivation}
                 onChange={e => set("motivation", e.target.value)}
                 required
@@ -249,7 +251,7 @@ export default function BetaPage() {
             </div>
 
             <div>
-              <label style={LABEL_STYLE}>Assurance d&apos;engagement * <span style={{ color: "rgba(240,230,211,0.4)", textTransform: "none", letterSpacing: 0 }}>— À quel point vas-tu vraiment le faire ?</span></label>
+              <label style={LABEL_STYLE}>{t.engagementLabel} <span style={{ color: "rgba(240,230,211,0.4)", textTransform: "none", letterSpacing: 0 }}>{t.engagementSublabel}</span></label>
               <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                 {[1, 2, 3, 4, 5].map(n => (
                   <button key={n} type="button" onClick={() => set("engagement", n)} style={{
@@ -264,13 +266,13 @@ export default function BetaPage() {
                   </button>
                 ))}
                 <span style={{ alignSelf: "center", fontSize: "0.8rem", color: "rgba(240,230,211,0.4)", marginLeft: 8 }}>
-                  {form.engagement === 0 ? "" : form.engagement <= 2 ? "On verra..." : form.engagement === 3 ? "Motivé" : form.engagement === 4 ? "Très motivé" : "100% engagé 🔥"}
+                  {form.engagement === 0 ? "" : form.engagement <= 2 ? t.engagement1 : form.engagement === 3 ? t.engagement3 : form.engagement === 4 ? t.engagement4 : t.engagement5}
                 </span>
               </div>
             </div>
 
             <div>
-              <label style={LABEL_STYLE}>Comment as-tu entendu parler du projet ? *</label>
+              <label style={LABEL_STYLE}>{t.discoveryLabel}</label>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 {DISCOVERY.map(d => (
                   <button key={d} type="button" onClick={() => set("discovery", d)} style={{
@@ -308,7 +310,7 @@ export default function BetaPage() {
                 marginTop: 8,
               }}
             >
-              {loading ? "Envoi en cours..." : "Envoyer ma candidature"}
+              {loading ? t.sendingInProgress : t.submit}
             </button>
           </form>
         )}

@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { adminUserList } from "@/lib/i18n/dictionaries/adminUserList";
 
 type UserStat = {
   id: string;
@@ -33,13 +35,13 @@ type ScoringConfig = {
   mastery: MasteryConfig | null;
 };
 
-function daysSince(date: string | null) {
+function daysSince(date: string | null, t: ReturnType<typeof useT<typeof adminUserList>>) {
   if (!date) return null;
   const diff = Date.now() - new Date(date).getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  if (days === 0) return "aujourd'hui";
-  if (days === 1) return "hier";
-  return `il y a ${days}j`;
+  if (days === 0) return t.today;
+  if (days === 1) return t.yesterday;
+  return t.daysAgo(days);
 }
 
 function ActivityDot({ value, max }: { value: number; max: number }) {
@@ -51,6 +53,8 @@ function ActivityDot({ value, max }: { value: number; max: number }) {
 }
 
 export default function AdminUserList() {
+  const t = useT(adminUserList);
+  const dateLocale = useDateLocale();
   const [users, setUsers] = useState<UserStat[]>([]);
   const [scoring, setScoring] = useState<ScoringConfig>({ roles: [], levels: [], mastery: null });
   const [loading, setLoading] = useState(true);
@@ -94,20 +98,20 @@ export default function AdminUserList() {
     setConfirmDelete(null);
   }
 
-  if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>Chargement...</div>;
+  if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>{t.loading}</div>;
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#C8AA6E", letterSpacing: "0.1em" }}>
-          BÊTA-TESTEURS ({users.length})
+          {t.title(users.length)}
         </h2>
       </div>
 
       <input
         value={search}
         onChange={e => setSearch(e.target.value)}
-        placeholder="Rechercher par pseudo ou email…"
+        placeholder={t.searchPlaceholder}
         style={{
           width: "100%", marginBottom: 16, padding: "8px 12px", borderRadius: 6,
           background: "rgba(240,230,211,0.04)", border: "1px solid rgba(200,170,110,0.2)",
@@ -116,7 +120,7 @@ export default function AdminUserList() {
       />
 
       {filtered.length === 0 && (
-        <p style={{ color: "rgba(240,230,211,0.3)", fontSize: "0.85rem", padding: "12px 0" }}>Aucun résultat.</p>
+        <p style={{ color: "rgba(240,230,211,0.3)", fontSize: "0.85rem", padding: "12px 0" }}>{t.noResults}</p>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -139,10 +143,10 @@ export default function AdminUserList() {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, alignItems: "center", flexShrink: 0, fontSize: "0.78rem" }}>
-                <span style={{ color: "#0bc4e3" }}>{u.totalGames} parties</span>
-                <span style={{ color: "#C8AA6E" }}>{u.totalPompes} pompes</span>
+                <span style={{ color: "#0bc4e3" }}>{u.totalGames} {t.gamesSuffix}</span>
+                <span style={{ color: "#C8AA6E" }}>{u.totalPompes} {t.pompesSuffix}</span>
                 <span style={{ color: "rgba(240,230,211,0.3)" }}>
-                  {u.gamesThisWeek > 0 ? `${u.gamesThisWeek}/sem` : "inactif"}
+                  {u.gamesThisWeek > 0 ? t.perWeek(u.gamesThisWeek) : t.inactive}
                 </span>
               </div>
             </div>
@@ -153,29 +157,29 @@ export default function AdminUserList() {
 
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 14 }}>
-                  <Stat label="Total parties" value={String(u.totalGames)} />
-                  <Stat label="Total pompes" value={String(u.totalPompes)} />
-                  <Stat label="Moy. pompes/partie" value={u.totalGames > 0 ? String(u.avgPompes) : "—"} />
-                  <Stat label="Winrate" value={u.totalGames > 0 ? `${u.winrate}%` : "—"} />
-                  <Stat label="Parties (7j)" value={String(u.gamesThisWeek)} />
-                  <Stat label="Parties (30j)" value={String(u.gamesThisMonth)} />
-                  <Stat label="Dernière partie" value={daysSince(u.lastGame) ?? "jamais"} />
-                  <Stat label="Dernier niveau" value={u.lastLevel ? `Niv. ${u.lastLevel}` : "—"} />
+                  <Stat label={t.totalGames} value={String(u.totalGames)} />
+                  <Stat label={t.totalPompes} value={String(u.totalPompes)} />
+                  <Stat label={t.avgPompesPerGame} value={u.totalGames > 0 ? String(u.avgPompes) : "—"} />
+                  <Stat label={t.winrate} value={u.totalGames > 0 ? `${u.winrate}%` : "—"} />
+                  <Stat label={t.games7d} value={String(u.gamesThisWeek)} />
+                  <Stat label={t.games30d} value={String(u.gamesThisMonth)} />
+                  <Stat label={t.lastGame} value={daysSince(u.lastGame, t) ?? t.never} />
+                  <Stat label={t.lastLevel} value={u.lastLevel ? t.levelAbrev(u.lastLevel) : "—"} />
                 </div>
 
                 {/* Infos perso */}
                 <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
-                  <SectionTitle>Profil</SectionTitle>
+                  <SectionTitle>{t.profile}</SectionTitle>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 12 }}>
-                    <Stat label="Riot ID" value={u.riotId ?? "non renseigné"} />
-                    <Stat label="Région" value={u.riotRegion} />
-                    <Stat label="Inscrit le" value={new Date(u.createdAt).toLocaleDateString("fr-FR")} />
+                    <Stat label={t.riotId} value={u.riotId ?? t.notProvided} />
+                    <Stat label={t.region} value={u.riotRegion} />
+                    <Stat label={t.registeredOn} value={new Date(u.createdAt).toLocaleDateString(dateLocale)} />
                   </div>
                   {newPasswords[u.id] ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.3)" }}>
-                      <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.5)" }}>Nouveau mot de passe :</span>
+                      <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.5)" }}>{t.newPassword}</span>
                       <code style={{ fontSize: "0.88rem", color: "#4caf50", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
-                      <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", marginLeft: 4 }}>· visible une seule fois</span>
+                      <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", marginLeft: 4 }}>{t.visibleOnce}</span>
                     </div>
                   ) : (
                     <button
@@ -183,34 +187,34 @@ export default function AdminUserList() {
                       disabled={resettingPwd === u.id}
                       style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(200,170,110,0.35)", color: "rgba(200,170,110,0.7)" }}
                     >
-                      {resettingPwd === u.id ? "..." : "Réinitialiser le mot de passe"}
+                      {resettingPwd === u.id ? "..." : t.resetPassword}
                     </button>
                   )}
                 </div>
 
                 {/* Gainage & niveau */}
                 <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
-                  <SectionTitle>Gainage (réglage personnel)</SectionTitle>
+                  <SectionTitle>{t.plankSettings}</SectionTitle>
                   <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-                    <Stat label="Gainage max (s)" value={`${u.gainageMaxSec}s`} />
-                    <Stat label="Niveau actuel" value={u.niveauActuel != null ? `Niv. ${u.niveauActuel}` : "—"} />
-                    <Stat label="Multiplicateur" value={u.multiplicateur != null ? `×${u.multiplicateur}` : "—"} />
-                    <Stat label="Malus défaite" value={u.malusDefaite != null ? `${u.malusDefaite} pompes` : "—"} />
+                    <Stat label={t.plankMax} value={`${u.gainageMaxSec}s`} />
+                    <Stat label={t.currentLevel} value={u.niveauActuel != null ? t.levelAbrev(u.niveauActuel) : "—"} />
+                    <Stat label={t.multiplier} value={u.multiplicateur != null ? `×${u.multiplicateur}` : "—"} />
+                    <Stat label={t.lossPenalty} value={u.malusDefaite != null ? `${u.malusDefaite} ${t.pompesUnit}` : "—"} />
                   </div>
                 </div>
 
                 {/* Niveaux */}
                 {scoring.levels.length > 0 && (
                   <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
-                    <SectionTitle>Niveaux de gainage (globaux)</SectionTitle>
+                    <SectionTitle>{t.plankLevelsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                         <thead>
                           <tr style={thRowStyle}>
-                            <th style={thStyle}>Niveau</th>
-                            <th style={thStyle}>Seuil (s)</th>
-                            <th style={thStyle}>Multiplicateur</th>
-                            <th style={thStyle}>Malus défaite</th>
+                            <th style={thStyle}>{t.level}</th>
+                            <th style={thStyle}>{t.threshold}</th>
+                            <th style={thStyle}>{t.multiplier}</th>
+                            <th style={thStyle}>{t.lossPenalty}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -221,12 +225,12 @@ export default function AdminUserList() {
                             }}>
                               <td style={tdStyle}>
                                 <span style={{ color: l.niveau === u.niveauActuel ? "#C8AA6E" : "rgba(240,230,211,0.6)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
-                                  Niv. {l.niveau}{l.niveau === u.niveauActuel ? " ◀" : ""}
+                                  {t.levelAbrev(l.niveau)}{l.niveau === u.niveauActuel ? " ◀" : ""}
                                 </span>
                               </td>
                               <td style={tdStyle}>{l.seuilGainageSec === 9999 ? "∞" : `${l.seuilGainageSec}s`}</td>
                               <td style={tdStyle}>×{l.multiplicateur}</td>
-                              <td style={tdStyle}>{l.malusDefaite} pompes</td>
+                              <td style={tdStyle}>{l.malusDefaite} {t.pompesUnit}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -238,16 +242,16 @@ export default function AdminUserList() {
                 {/* Poids par rôle */}
                 {scoring.roles.length > 0 && (
                   <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
-                    <SectionTitle>Poids KDA par rôle (globaux)</SectionTitle>
+                    <SectionTitle>{t.kdaWeightsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                         <thead>
                           <tr style={thRowStyle}>
-                            <th style={thStyle}>Rôle</th>
-                            <th style={thStyle}>Morts</th>
-                            <th style={thStyle}>Kills</th>
-                            <th style={thStyle}>Assists</th>
-                            <th style={thStyle}>Maîtrise</th>
+                            <th style={thStyle}>{t.role}</th>
+                            <th style={thStyle}>{t.deaths}</th>
+                            <th style={thStyle}>{t.kills}</th>
+                            <th style={thStyle}>{t.assists}</th>
+                            <th style={thStyle}>{t.mastery}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -259,7 +263,7 @@ export default function AdminUserList() {
                               <td style={tdStyle}>{r.poidsAssist}</td>
                               <td style={tdStyle}>
                                 <span style={{ color: r.maitriseActive ? "#4caf50" : "rgba(240,230,211,0.25)" }}>
-                                  {r.maitriseActive ? "oui" : "non"}
+                                  {r.maitriseActive ? t.yes : t.no}
                                 </span>
                               </td>
                             </tr>
@@ -273,10 +277,10 @@ export default function AdminUserList() {
                 {/* Maîtrise */}
                 {scoring.mastery && (
                   <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
-                    <SectionTitle>Maîtrise du champion (globale)</SectionTitle>
+                    <SectionTitle>{t.championMasteryGlobal}</SectionTitle>
                     <div style={{ display: "flex", gap: 24 }}>
-                      <Stat label="Surcharge max" value={`+${Math.round(scoring.mastery.surchargeMax * 100)}%`} />
-                      <Stat label="Parties pour le max" value={`${scoring.mastery.partiesPourMax} parties`} />
+                      <Stat label={t.maxOverload} value={`+${Math.round(scoring.mastery.surchargeMax * 100)}%`} />
+                      <Stat label={t.gamesForMaxLabel} value={t.gamesForMax(scoring.mastery.partiesPourMax)} />
                     </div>
                   </div>
                 )}
@@ -286,20 +290,20 @@ export default function AdminUserList() {
                   {confirmDelete === u.id ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <span style={{ fontSize: "0.78rem", color: "#ef5350" }}>
-                        Supprimer définitivement ce compte et toutes ses données ?
+                        {t.deleteConfirm}
                       </span>
                       <button
                         onClick={() => deleteUser(u.id)}
                         disabled={deleting === u.id}
                         style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "rgba(239,83,80,0.15)", border: "1px solid rgba(239,83,80,0.5)", color: "#ef5350", fontWeight: 600 }}
                       >
-                        {deleting === u.id ? "..." : "Confirmer"}
+                        {deleting === u.id ? "..." : t.confirm}
                       </button>
                       <button
                         onClick={() => setConfirmDelete(null)}
                         style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(240,230,211,0.15)", color: "rgba(240,230,211,0.5)" }}
                       >
-                        Annuler
+                        {t.cancel}
                       </button>
                     </div>
                   ) : (
@@ -307,7 +311,7 @@ export default function AdminUserList() {
                       onClick={e => { e.stopPropagation(); setConfirmDelete(u.id); }}
                       style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(239,83,80,0.3)", color: "rgba(239,83,80,0.6)" }}
                     >
-                      Supprimer ce compte
+                      {t.deleteAccount}
                     </button>
                   )}
                 </div>

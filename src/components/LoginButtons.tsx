@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
+import { useT, useLocale } from "@/lib/i18n/LocaleContext";
+import { loginButtons as loginButtonsDict } from "@/lib/i18n/dictionaries/loginButtons";
+import { translateApiError } from "@/lib/i18n/apiErrors";
 
 type Tab = "google" | "discord" | "email";
 type Mode = "login" | "register";
@@ -33,6 +36,8 @@ const INPUT_STYLE: React.CSSProperties = {
 };
 
 export function LoginButtons() {
+  const t = useT(loginButtonsDict);
+  const { locale } = useLocale();
   const [tab, setTab] = useState<Tab>("google");
   const [mode, setMode] = useState<Mode>("login");
   const [isDesktop, setIsDesktop] = useState(false);
@@ -68,12 +73,12 @@ export function LoginButtons() {
     try {
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) {
-        setError("Email ou mot de passe incorrect");
+        setError(t.erreurEmailMotDePasse);
       } else {
         window.location.href = "/dashboard?li=1";
       }
     } catch {
-      setError("Erreur de connexion, réessayez");
+      setError(t.erreurConnexion);
     } finally {
       setLoading(false);
     }
@@ -83,8 +88,8 @@ export function LoginButtons() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (password !== confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
-    if (password.length < 8) { setError("Mot de passe trop court (min 8 caractères)"); return; }
+    if (password !== confirmPassword) { setError(t.erreurMotDePasseDifferents); return; }
+    if (password.length < 8) { setError(t.erreurMotDePasseTropCourt); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
@@ -93,17 +98,17 @@ export function LoginButtons() {
         body: JSON.stringify({ email, password, pseudo }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Erreur lors de la création du compte"); return; }
+      if (!res.ok) { setError(data.error ? translateApiError(data.error, locale) : t.erreurCreationCompte); return; }
       saveRm();
       const loginResult = await signIn("credentials", { email, password, redirect: false });
       if (loginResult?.error) {
-        setSuccess("Compte créé ! Connectez-vous maintenant.");
+        setSuccess(t.compteCreeConnexion);
         setMode("login");
       } else {
         window.location.href = "/dashboard?li=1";
       }
     } catch {
-      setError("Erreur serveur, réessayez");
+      setError(t.erreurServeur);
     } finally {
       setLoading(false);
     }
@@ -120,7 +125,7 @@ export function LoginButtons() {
         onChange={(e) => setRememberMe(e.target.checked)}
         style={{ accentColor: "#C8AA6E", width: 14, height: 14, cursor: "pointer" }}
       />
-      <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.55)" }}>Rester connecté</span>
+      <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.55)" }}>{t.resterConnecte}</span>
     </label>
   );
 
@@ -132,9 +137,9 @@ export function LoginButtons() {
         borderBottom: "1px solid rgba(200,170,110,0.12)",
         marginBottom: "1.25rem",
       }}>
-        <button style={TAB_STYLE(tab === "google")} onClick={() => setTab("google")}>GOOGLE</button>
-        <button style={TAB_STYLE(tab === "discord")} onClick={() => setTab("discord")}>DISCORD</button>
-        <button style={TAB_STYLE(tab === "email")} onClick={() => setTab("email")}>EMAIL</button>
+        <button style={TAB_STYLE(tab === "google")} onClick={() => setTab("google")}>{t.google}</button>
+        <button style={TAB_STYLE(tab === "discord")} onClick={() => setTab("discord")}>{t.discord}</button>
+        <button style={TAB_STYLE(tab === "email")} onClick={() => setTab("email")}>{t.email}</button>
       </div>
 
       {/* Google tab */}
@@ -145,18 +150,18 @@ export function LoginButtons() {
               className="lol-btn w-full"
               onClick={() => { saveRm(); window.electronLOL?.openGoogleLogin(); }}
             >
-              Se connecter avec Google
+              {t.connexionAvecGoogle}
             </button>
           ) : (
             <form action={signInWithGoogle} onSubmit={saveRm}>
               <button type="submit" className="lol-btn w-full">
-                Se connecter avec Google
+                {t.connexionAvecGoogle}
               </button>
             </form>
           )}
           {checkbox}
           <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center" }}>
-            Seuls les 100 premiers inscrits ont accès.
+            {t.seulement100}
           </p>
         </div>
       )}
@@ -170,7 +175,7 @@ export function LoginButtons() {
               style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
               onClick={() => { saveRm(); window.electronLOL?.openDiscordLogin(); }}
             >
-              Se connecter avec Discord
+              {t.connexionAvecDiscord}
             </button>
           ) : (
             <form action={signInWithDiscord} onSubmit={saveRm}>
@@ -179,13 +184,13 @@ export function LoginButtons() {
                 className="lol-btn w-full"
                 style={{ background: "linear-gradient(to bottom, #5865F2, #404EED)", color: "#fff" }}
               >
-                Se connecter avec Discord
+                {t.connexionAvecDiscord}
               </button>
             </form>
           )}
           {checkbox}
           <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center" }}>
-            Seuls les 100 premiers inscrits ont accès.
+            {t.seulement100}
           </p>
         </div>
       )}
@@ -208,7 +213,7 @@ export function LoginButtons() {
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
-              CONNEXION
+              {t.connexion}
             </button>
             <button
               onClick={() => { setMode("register"); setError(""); setSuccess(""); }}
@@ -221,7 +226,7 @@ export function LoginButtons() {
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
-              CRÉER UN COMPTE
+              {t.creerUnCompte}
             </button>
           </div>
 
@@ -246,35 +251,35 @@ export function LoginButtons() {
 
           {mode === "login" ? (
             <form onSubmit={handleCredentialsLogin} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <input type="email" placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
                 required autoComplete="email" style={INPUT_STYLE} />
-              <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)}
+              <input type="password" placeholder={t.motDePassePlaceholder} value={password} onChange={(e) => setPassword(e.target.value)}
                 required autoComplete="current-password" style={INPUT_STYLE} />
               <button type="submit" disabled={loading} className="lol-btn w-full"
                 style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
-                {loading ? "Connexion…" : "Se connecter"}
+                {loading ? t.connexionEnCours : t.seConnecter}
               </button>
             </form>
           ) : (
             <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <input type="text" placeholder="Pseudo (affiché dans l'app)" value={pseudo}
+              <input type="text" placeholder={t.pseudoPlaceholder} value={pseudo}
                 onChange={(e) => setPseudo(e.target.value)} required autoComplete="username" style={INPUT_STYLE} />
-              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}
+              <input type="email" placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
                 required autoComplete="email" style={INPUT_STYLE} />
-              <input type="password" placeholder="Mot de passe (min 8 caractères)" value={password}
+              <input type="password" placeholder={t.motDePasseMinPlaceholder} value={password}
                 onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" style={INPUT_STYLE} />
-              <input type="password" placeholder="Confirmer le mot de passe" value={confirmPassword}
+              <input type="password" placeholder={t.confirmerMotDePassePlaceholder} value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" style={INPUT_STYLE} />
               <button type="submit" disabled={loading} className="lol-btn w-full"
                 style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
-                {loading ? "Création…" : "Créer mon compte"}
+                {loading ? t.creationEnCours : t.creerMonCompte}
               </button>
             </form>
           )}
 
           <div style={{ marginTop: "0.75rem" }}>{checkbox}</div>
           <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center", marginTop: "0.75rem" }}>
-            Seuls les 100 premiers inscrits ont accès.
+            {t.seulement100}
           </p>
         </div>
       )}
