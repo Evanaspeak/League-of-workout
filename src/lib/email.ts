@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const FROM = "League of Workout <noreply@league-of-workout.vercel.app>";
+const FROM = "Win or Workout <noreply@winorworkout.com>";
 
 export async function sendBetaConfirmation(to: string, pseudo: string) {
   if (!resend) return;
@@ -41,7 +41,7 @@ export async function sendBetaAcceptance(to: string, pseudo: string) {
           Tu fais partie des <strong style="color:#C8AA6E;">100 bêta testeurs</strong> de League of Workout.
           Ton accès est maintenant activé.
         </p>
-        <a href="https://league-of-workout.vercel.app/login"
+        <a href="https://winorworkout.com/login"
            style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#C8AA6E,#a8893e);color:#040810;font-weight:700;text-decoration:none;border-radius:8px;margin-bottom:24px;">
           Accéder à l'app →
         </a>
