@@ -42,9 +42,9 @@ type DashData = {
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
     <div className="stat-card p-4 flex flex-col gap-1 fade-in">
-      <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(200,170,110,0.55)" }}>{label}</span>
-      <span style={{ fontSize: "1.8rem", fontFamily: "var(--font-heading, 'Russo One', sans-serif)", color: "#C8AA6E", lineHeight: 1.1 }}>{value}</span>
-      {sub && <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.45)" }}>{sub}</span>}
+      <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(152,162,176,0.55)" }}>{label}</span>
+      <span style={{ fontSize: "1.8rem", fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", color: "#ECEFF4", lineHeight: 1.1 }}>{value}</span>
+      {sub && <span style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.45)" }}>{sub}</span>}
     </div>
   );
 }
@@ -65,11 +65,11 @@ function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSummary; ba
         <ChampionIcon name={champ.name} size={64} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1.05rem", color: "#C8AA6E", lineHeight: 1.1,
+            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontSize: "1.05rem", color: "#ECEFF4", lineHeight: 1.1,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>{champ.name}</div>
-          <div style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.45)", marginTop: 2 }}>
+          <div style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)", marginTop: 2 }}>
             {t.gamesCount(champ.games)}
           </div>
         </div>
@@ -77,21 +77,21 @@ function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSummary; ba
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>{t.kda}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: "#C8AA6E" }}>{kdaLabel}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>
+          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.kda}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "#ECEFF4" }}>{kdaLabel}</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>
             {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
           </div>
         </div>
-        <div style={{ textAlign: "center", borderLeft: "1px solid rgba(200,170,110,0.12)", borderRight: "1px solid rgba(200,170,110,0.12)" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>{t.avgPompes}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>{t.perGame}</div>
+        <div style={{ textAlign: "center", borderLeft: "1px solid rgba(152,162,176,0.12)", borderRight: "1px solid rgba(152,162,176,0.12)" }}>
+          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.avgPompes}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>{t.perGame}</div>
         </div>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 3 }}>{t.games}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.95rem", color: "rgba(240,230,211,0.8)" }}>{champ.games}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>{t.played}</div>
+          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.games}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "rgba(236,239,244,0.8)" }}>{champ.games}</div>
+          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>{t.played}</div>
         </div>
       </div>
     </div>
@@ -182,26 +182,26 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <DesktopAuthHandler />
-      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>{t.pageTitle}</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.pageTitle}</h1>
 
       {/* Bannière bêta — synchronisation en attente */}
       <div style={{
         padding: "12px 16px",
         borderRadius: 8,
-        background: "rgba(11,196,227,0.06)",
-        border: "1px solid rgba(11,196,227,0.25)",
+        background: "rgba(110,155,255,0.06)",
+        border: "1px solid rgba(110,155,255,0.25)",
         display: "flex",
         gap: 12,
         alignItems: "flex-start",
       }}>
         <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: 1 }}>⏳</span>
         <div>
-          <p style={{ fontSize: "0.82rem", color: "#0bc4e3", fontWeight: 600, marginBottom: 4 }}>
+          <p style={{ fontSize: "0.82rem", color: "#6E9BFF", fontWeight: 600, marginBottom: 4 }}>
             {t.syncBannerTitle}
           </p>
-          <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.6 }}>
+          <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.55)", lineHeight: 1.6 }}>
             {t.syncBannerBodyStart}{" "}
-            <a href="/history" style={{ color: "#0bc4e3", textDecoration: "underline" }}>
+            <a href="/history" style={{ color: "#6E9BFF", textDecoration: "underline" }}>
               {t.syncBannerLink}
             </a>
             {" "}{t.syncBannerBodyEnd}
@@ -223,13 +223,13 @@ export default function Dashboard() {
             <span className="gold-text font-semibold">{t.objective(data.objectifTotalPompes)}</span>
             <span className="blue-text">{progress}%</span>
           </div>
-          <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(200,170,110,0.15)" }}>
+          <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(152,162,176,0.15)" }}>
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${progress}%`, background: "linear-gradient(to right, #0bc4e3, #c8aa6e)" }}
+              style={{ width: `${progress}%`, background: "linear-gradient(to right, #6E9BFF, #ECEFF4)" }}
             />
           </div>
-          <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>
+          <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
             {t.objectiveProgress(data.totalPompes, data.objectifTotalPompes)}
             {data.objectifTotalPompes - data.totalPompes > 0
               ? t.objectiveRemaining(data.objectifTotalPompes - data.totalPompes)
@@ -242,10 +242,10 @@ export default function Dashboard() {
       {(data.mostPlayed || data.leastEfficient) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {data.mostPlayed && (
-            <ChampionCard champ={data.mostPlayed} badge={t.mostPlayedBadge} badgeColor="#c8aa6e" t={t} />
+            <ChampionCard champ={data.mostPlayed} badge={t.mostPlayedBadge} badgeColor="#ECEFF4" t={t} />
           )}
           {data.leastEfficient && (
-            <ChampionCard champ={data.leastEfficient} badge={t.leastEfficientBadge} badgeColor="#e84057" t={t} />
+            <ChampionCard champ={data.leastEfficient} badge={t.leastEfficientBadge} badgeColor="#FF5A47" t={t} />
           )}
         </div>
       )}
@@ -253,7 +253,7 @@ export default function Dashboard() {
       {/* Mode Session */}
       <div className="lol-panel p-4 space-y-3">
         <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.sessionModeTitle}</h2>
-        <p className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>
+        <p className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
           {t.sessionModeDesc}
         </p>
 
@@ -263,26 +263,26 @@ export default function Dashboard() {
           </button>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.3)" }}>
-              <div className="w-2 h-2 rounded-full" style={{ background: "#4caf50", boxShadow: "0 0 6px #4caf50", animation: "pulse 1.5s infinite" }} />
+            <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
+              <div className="w-2 h-2 rounded-full" style={{ background: "#2FD98A", boxShadow: "0 0 6px #2FD98A", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">{t.sessionActive}</span>
               <span className="text-xs gold-text">{sessionLevel} · {t.gainageLabel(gainageSec)}</span>
-              <span className="ml-auto text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+              <span className="ml-auto text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
                 {polling ? t.checking : t.nextCheck(countdown)}
               </span>
             </div>
 
             {sessionGames.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
+                <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
                   <div className="text-2xl font-bold gold-text">{sessionGames.length}</div>
-                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>games</div>
+                  <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>games</div>
                 </div>
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
+                <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
                   <div className="text-2xl font-bold gold-text">{totalSessionPompes}</div>
-                  <div className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>pompes</div>
+                  <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>pompes</div>
                 </div>
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(200,170,110,0.06)" }}>
+                <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
                   <div className="text-2xl font-bold win-text">
                     {sessionGames.filter((g) => g.result === "V").length}V
                   </div>
@@ -294,16 +294,16 @@ export default function Dashboard() {
             )}
 
             {sessionGames.length > 0 && (
-              <div className="lol-panel p-3" style={{ background: "rgba(200,170,110,0.04)" }}>
-                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "rgba(200,170,110,0.6)" }}>
+              <div className="lol-panel p-3" style={{ background: "rgba(152,162,176,0.04)" }}>
+                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "rgba(152,162,176,0.6)" }}>
                   {t.pompesPerGameSession}
                 </h3>
                 <ResponsiveContainer width="100%" height={140}>
                   <BarChart data={sessionChartData}>
-                    <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                    <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
-                    <Bar dataKey="pompes" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
+                    <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
+                    <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
+                    <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #ECEFF440", color: "#ECEFF4" }} />
+                    <Bar dataKey="pompes" fill="#6E9BFF" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -314,14 +314,14 @@ export default function Dashboard() {
                 <p className="text-xs gold-text font-semibold">{t.detail(totalSessionPompes)}</p>
                 {sessionGames.map((g, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-sm"
-                    style={{ background: "rgba(200,170,110,0.06)", border: "1px solid rgba(200,170,110,0.1)" }}>
+                    style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.1)" }}>
                     <span className={g.result === "V" ? "win-text font-bold" : "loss-text font-bold"}>
                       {g.result === "V" ? "V" : "D"}
                     </span>
                     <ChampionIcon name={g.champion} size={30} />
                     <span className="gold-text font-medium">{g.champion}</span>
-                    <span className="text-xs" style={{ color: "rgba(240,230,211,0.5)" }}>{g.role}</span>
-                    <span className="text-xs" style={{ color: "rgba(240,230,211,0.6)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
+                    <span className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>{g.role}</span>
+                    <span className="text-xs" style={{ color: "rgba(236,239,244,0.6)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
                     <span className="ml-auto gold-text font-bold">{g.pompes} 💪</span>
                   </div>
                 ))}
@@ -329,7 +329,7 @@ export default function Dashboard() {
             )}
 
             {sessionGames.length === 0 && !polling && (
-              <p className="text-xs text-center" style={{ color: "rgba(240,230,211,0.4)" }}>
+              <p className="text-xs text-center" style={{ color: "rgba(236,239,244,0.4)" }}>
                 {t.waitingNextGame}
               </p>
             )}
@@ -347,7 +347,7 @@ export default function Dashboard() {
       </div>
 
       {/* Statistiques globales */}
-      <h2 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "0.72rem", color: "rgba(200,170,110,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+      <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
         {t.globalStats}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -364,9 +364,9 @@ export default function Dashboard() {
                     onClick={() => setRoleView(key)}
                     className="text-xs px-2 py-1 rounded"
                     style={{
-                      background: roleView === key ? "rgba(200,170,110,0.25)" : "rgba(200,170,110,0.06)",
-                      color: roleView === key ? "#c8aa6e" : "rgba(240,230,211,0.4)",
-                      border: `1px solid ${roleView === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
+                      background: roleView === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
+                      color: roleView === key ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                      border: `1px solid ${roleView === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                     }}
                   >
                     {key === "total" ? t.total : t.average}
@@ -376,13 +376,13 @@ export default function Dashboard() {
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={roleData}>
-                <XAxis dataKey="role" tick={{ fill: "#c8aa6e", fontSize: 11 }} />
-                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                <XAxis dataKey="role" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
+                <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                 <Tooltip
-                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                  contentStyle={{ background: "#1a2634", border: "1px solid #ECEFF440", color: "#ECEFF4" }}
                   formatter={(v) => [t.tooltipPompesLabel(v as number), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
                 />
-                <Bar dataKey="pompes" fill="#c8aa6e" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="pompes" fill="#ECEFF4" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -401,11 +401,11 @@ export default function Dashboard() {
               <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">{t.cumulativeProgress}</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={cumulData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(200,170,110,0.1)" />
-                  <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.4)", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }} />
-                  <Line dataKey="cumul" stroke="#0bc4e3" strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(152,162,176,0.1)" />
+                  <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.4)", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                  <Tooltip contentStyle={{ background: "#1a2634", border: "1px solid #ECEFF440", color: "#ECEFF4" }} />
+                  <Line dataKey="cumul" stroke="#6E9BFF" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -429,15 +429,15 @@ export default function Dashboard() {
                       onClick={() => setStatsMode(m)}
                       className="text-xs px-2 py-1 rounded"
                       style={{
-                        background: statsMode === m ? "rgba(11,196,227,0.2)" : "rgba(200,170,110,0.06)",
-                        color: statsMode === m ? "#0bc4e3" : "rgba(240,230,211,0.35)",
-                        border: `1px solid ${statsMode === m ? "rgba(11,196,227,0.4)" : "rgba(200,170,110,0.12)"}`,
+                        background: statsMode === m ? "rgba(110,155,255,0.2)" : "rgba(152,162,176,0.06)",
+                        color: statsMode === m ? "#6E9BFF" : "rgba(236,239,244,0.35)",
+                        border: `1px solid ${statsMode === m ? "rgba(110,155,255,0.4)" : "rgba(152,162,176,0.12)"}`,
                       }}
                     >
                       {m === "avg" ? t.average : t.total}
                     </button>
                   ))}
-                  <span style={{ width: 1, background: "rgba(200,170,110,0.15)", margin: "0 2px" }} />
+                  <span style={{ width: 1, background: "rgba(152,162,176,0.15)", margin: "0 2px" }} />
                 </>
               )}
               {(["hour", "weekday", "month", "daily"] as const).map((key) => (
@@ -446,9 +446,9 @@ export default function Dashboard() {
                   onClick={() => setStatsPeriod(key)}
                   className="text-xs px-2 py-1 rounded"
                   style={{
-                    background: statsPeriod === key ? "rgba(200,170,110,0.25)" : "rgba(200,170,110,0.06)",
-                    color: statsPeriod === key ? "#c8aa6e" : "rgba(240,230,211,0.4)",
-                    border: `1px solid ${statsPeriod === key ? "rgba(200,170,110,0.5)" : "rgba(200,170,110,0.12)"}`,
+                    background: statsPeriod === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
+                    color: statsPeriod === key ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                    border: `1px solid ${statsPeriod === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                   }}
                 >
                   {key === "hour" ? t.hour : key === "weekday" ? t.weekday : key === "month" ? t.month : t.calendar}
@@ -469,9 +469,9 @@ export default function Dashboard() {
                   max={new Date().toISOString().slice(0, 10)}
                 />
                 {dailySummary && !dailyLoading && (
-                  <span className="text-sm" style={{ color: "rgba(240,230,211,0.5)" }}>
+                  <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>
                     <span className="gold-text font-bold">{dailySummary.total}</span> {t.pompesUnit} ·{" "}
-                    <span style={{ color: "rgba(240,230,211,0.35)" }}>{t.gamesCount(dailySummary.games)}</span>
+                    <span style={{ color: "rgba(236,239,244,0.35)" }}>{t.gamesCount(dailySummary.games)}</span>
                   </span>
                 )}
               </div>
@@ -480,17 +480,17 @@ export default function Dashboard() {
               ) : dailyHourly && dailyHourly.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={dailyHourly}>
-                    <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                    <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
+                    <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                     <Tooltip
-                      contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                      contentStyle={{ background: "#1a2634", border: "1px solid #ECEFF440", color: "#ECEFF4" }}
                       formatter={(v) => [t.tooltipPompesLabel(v as number), t.tooltipTotal]}
                     />
-                    <Bar dataKey="total" fill="#0bc4e3" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="total" fill="#6E9BFF" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="text-center py-8" style={{ color: "rgba(240,230,211,0.3)", fontSize: "0.85rem" }}>
+                <div className="text-center py-8" style={{ color: "rgba(236,239,244,0.3)", fontSize: "0.85rem" }}>
                   {t.noGameThisDay}
                 </div>
               )}
@@ -498,13 +498,13 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.statsByPeriod[statsPeriod]}>
-                <XAxis dataKey="label" tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 10 }} />
-                <YAxis tick={{ fill: "rgba(240,230,211,0.5)", fontSize: 11 }} />
+                <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
+                <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                 <Tooltip
-                  contentStyle={{ background: "#1a2634", border: "1px solid #c8aa6e40", color: "#f0e6d3" }}
+                  contentStyle={{ background: "#1a2634", border: "1px solid #ECEFF440", color: "#ECEFF4" }}
                   formatter={(v) => [t.tooltipPompesLabel(v as number), statsMode === "avg" ? t.tooltipAvgPerGameFull : t.tooltipTotal]}
                 />
-                <Bar dataKey={statsMode} fill="#c8aa6e" radius={[2, 2, 0, 0]} />
+                <Bar dataKey={statsMode} fill="#ECEFF4" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -513,9 +513,11 @@ export default function Dashboard() {
 
       {data.totalGames === 0 && (
         <div className="lol-panel p-8 text-center space-y-2">
-          <div className="text-4xl">⚔</div>
+          <div style={{ display: "flex", justifyContent: "center", padding: "6px 0" }}>
+            <span aria-hidden style={{ width: 10, height: 34, background: "var(--ember)", transform: "skewX(-18deg)", borderRadius: 2, display: "inline-block" }} />
+          </div>
           <p className="gold-text font-semibold">{t.noGameLogged}</p>
-          <p className="text-sm" style={{ color: "rgba(240,230,211,0.5)" }}>
+          <p className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>
             {t.goToHistoryStart} <strong>{t.historyLabel}</strong> {t.goToHistoryEnd}
           </p>
         </div>
@@ -530,11 +532,11 @@ export default function Dashboard() {
         >
           <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5">
             <h2 className="gold-text font-bold text-lg uppercase tracking-widest">{t.gainageModalTitle}</h2>
-            <p className="text-sm" style={{ color: "rgba(240,230,211,0.7)" }}>
+            <p className="text-sm" style={{ color: "rgba(236,239,244,0.7)" }}>
               {t.gainageModalDesc}
             </p>
             <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
+              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                 {t.durationSeconds}
               </label>
               <input
@@ -547,15 +549,15 @@ export default function Dashboard() {
               />
             </div>
             {gainageInput && Number(gainageInput) > 0 && (
-              <div className="text-center p-3 rounded" style={{ background: "rgba(200,170,110,0.1)", border: "1px solid rgba(200,170,110,0.3)" }}>
+              <div className="text-center p-3 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
                 <span className="gold-text font-bold text-xl">{getLevelLabel(Number(gainageInput), t)}</span>
-                <span className="text-sm ml-2" style={{ color: "rgba(240,230,211,0.5)" }}>{t.forThisSession}</span>
+                <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>{t.forThisSession}</span>
               </div>
             )}
             <div className="flex gap-3">
               <button
                 className="flex-1 py-2 rounded text-sm"
-                style={{ background: "rgba(200,170,110,0.1)", color: "rgba(240,230,211,0.6)", border: "1px solid rgba(200,170,110,0.2)" }}
+                style={{ background: "rgba(152,162,176,0.1)", color: "rgba(236,239,244,0.6)", border: "1px solid rgba(152,162,176,0.2)" }}
                 onClick={() => setShowGainageModal(false)}
               >
                 {t.cancel}

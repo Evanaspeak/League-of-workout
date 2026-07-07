@@ -14,9 +14,9 @@ type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 const REGIONS = ["EUW1", "EUN1", "NA1", "KR", "BR1", "JP1", "TR1", "RU", "OC1"];
 
 const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
   fontSize: "0.72rem",
-  color: "#C8AA6E",
+  color: "#ECEFF4",
   letterSpacing: "0.16em",
   textTransform: "uppercase",
 };
@@ -130,7 +130,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>{t.title}</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.title}</h1>
 
       {/* ── Profil ──────────────────────────────────────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
@@ -140,9 +140,9 @@ export default function SettingsPage() {
             <span style={{
               fontSize: "0.65rem",
               letterSpacing: "0.1em",
-              color: "rgba(200,170,110,0.5)",
-              background: "rgba(200,170,110,0.07)",
-              border: "1px solid rgba(200,170,110,0.15)",
+              color: "rgba(152,162,176,0.5)",
+              background: "rgba(152,162,176,0.07)",
+              border: "1px solid rgba(152,162,176,0.15)",
               borderRadius: 3,
               padding: "2px 8px",
             }}>
@@ -152,7 +152,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.pseudoAffiche}</label>
+          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.pseudoAffiche}</label>
           <input
             className="lol-input"
             value={profileForm.pseudo}
@@ -161,7 +161,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.objectifTotalPompes}</label>
+          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.objectifTotalPompes}</label>
           <input
             type="number" min="0" className="lol-input"
             value={profileForm.objectifTotalPompes}
@@ -170,10 +170,10 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(200,170,110,0.6)" }}>{t.compteRiot}</h3>
+          <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(152,162,176,0.6)" }}>{t.compteRiot}</h3>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.riotIdLabel}</label>
+              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.riotIdLabel}</label>
               <input
                 className="lol-input" placeholder="Faker#KR1"
                 value={profileForm.riotId}
@@ -181,7 +181,7 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.region}</label>
+              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.region}</label>
               <select
                 className="lol-select w-full"
                 value={profileForm.riotRegion}
@@ -202,7 +202,7 @@ export default function SettingsPage() {
             <p className={`text-sm ${puuidMsg.startsWith("✓") ? "blue-text" : "loss-text"}`}>{puuidMsg}</p>
           )}
           {riotPuuid && (
-            <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>{t.puuidLabel(riotPuuid.slice(0, 20))}</p>
+            <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.puuidLabel(riotPuuid.slice(0, 20))}</p>
           )}
         </div>
 
@@ -223,14 +223,14 @@ export default function SettingsPage() {
               alignItems: "center",
               justifyContent: "space-between",
               padding: "0.75rem 1.1rem",
-              background: "rgba(200,170,110,0.04)",
-              border: "1px solid rgba(200,170,110,0.14)",
+              background: "rgba(152,162,176,0.04)",
+              border: "1px solid rgba(152,162,176,0.14)",
               borderRadius: showBeta ? "6px 6px 0 0" : 6,
               cursor: "pointer",
-              color: "rgba(200,170,110,0.6)",
+              color: "rgba(152,162,176,0.6)",
               fontSize: "0.72rem",
               letterSpacing: "0.14em",
-              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
             }}
           >
             <span>{t.parametresAvancesBeta}</span>
@@ -239,14 +239,14 @@ export default function SettingsPage() {
 
           {showBeta && (
             <div style={{
-              border: "1px solid rgba(200,170,110,0.14)",
+              border: "1px solid rgba(152,162,176,0.14)",
               borderTop: "none",
               borderRadius: "0 0 6px 6px",
               padding: "1.25rem",
-              background: "rgba(200,170,110,0.02)",
+              background: "rgba(152,162,176,0.02)",
             }} className="space-y-6">
 
-              <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.4)", lineHeight: 1.6 }}>
+              <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.4)", lineHeight: 1.6 }}>
                 {t.betaExplication}
               </p>
 
@@ -256,7 +256,7 @@ export default function SettingsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
+                      <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left py-2 pr-3">{t.role}</th>
                         <th className="text-center py-2 px-2">{t.poidsMorts}</th>
                         <th className="text-center py-2 px-2">{t.poidsKills}</th>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                     </thead>
                     <tbody>
                       {roleWeights.map((rw) => (
-                        <tr key={rw.role} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
+                        <tr key={rw.role} style={{ borderTop: "1px solid rgba(152,162,176,0.1)" }}>
                           <td className="py-2 pr-3 gold-text font-medium">{rw.role}</td>
                           {(["poidsMort", "poidsKill", "poidsAssist"] as const).map((field) => (
                             <td key={field} className="py-2 px-2 text-center">
@@ -296,13 +296,13 @@ export default function SettingsPage() {
               {/* Niveaux */}
               <div className="space-y-3">
                 <h2 style={HEADING}>{t.niveauxGainage}</h2>
-                <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+                <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
                   {t.niveauxExplication}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
+                      <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left py-2 pr-3">{t.niveau}</th>
                         <th className="text-center py-2 px-2">{t.seuilGainageSec}</th>
                         <th className="text-center py-2 px-2">{t.multiplicateur}</th>
@@ -311,7 +311,7 @@ export default function SettingsPage() {
                     </thead>
                     <tbody>
                       {levelConfigs.map((lc) => (
-                        <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(200,170,110,0.1)" }}>
+                        <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(152,162,176,0.1)" }}>
                           <td className="py-2 pr-3 gold-text font-bold">{t.niveauAbrev(lc.niveau)}</td>
                           <td className="py-2 px-2 text-center">
                             <input
@@ -351,7 +351,7 @@ export default function SettingsPage() {
                 <h2 style={HEADING}>{t.parametresMaitrise}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                       {t.surchargeMax(Math.round(masteryConfig.surchargeMax * 100))}
                     </label>
                     <input
@@ -360,17 +360,17 @@ export default function SettingsPage() {
                       value={masteryConfig.surchargeMax}
                       onChange={(e) => setMasteryConfig((m) => m ? { ...m, surchargeMax: Number(e.target.value) } : m)}
                     />
-                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>{t.surchargeMaxDetail}</p>
+                    <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>{t.surchargeMaxDetail}</p>
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.partiesPourMax}</label>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.partiesPourMax}</label>
                     <input
                       type="number" min="1"
                       className="lol-input"
                       value={masteryConfig.partiesPourMax}
                       onChange={(e) => setMasteryConfig((m) => m ? { ...m, partiesPourMax: Number(e.target.value) } : m)}
                     />
-                    <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>{t.partiesPourMaxDetail}</p>
+                    <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>{t.partiesPourMaxDetail}</p>
                   </div>
                 </div>
               </div>
@@ -380,8 +380,8 @@ export default function SettingsPage() {
               </button>
 
               {/* Outils de test bêta */}
-              <div style={{ borderTop: "1px solid rgba(200,170,110,0.1)", paddingTop: "1rem" }}>
-                <p style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+              <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: "1rem" }}>
+                <p style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
                   {t.outilsDeTest}
                 </p>
                 <button
@@ -394,9 +394,9 @@ export default function SettingsPage() {
                     width: "100%",
                     padding: "0.55rem",
                     background: "transparent",
-                    border: "1px dashed rgba(200,170,110,0.2)",
+                    border: "1px dashed rgba(152,162,176,0.2)",
                     borderRadius: 4,
-                    color: "rgba(200,170,110,0.45)",
+                    color: "rgba(152,162,176,0.45)",
                     fontSize: "0.78rem",
                     cursor: "pointer",
                     letterSpacing: "0.06em",
@@ -422,11 +422,11 @@ export default function SettingsPage() {
         marginTop: "1.5rem",
         padding: "1.25rem",
         borderRadius: 6,
-        border: "1px solid rgba(232,64,87,0.3)",
-        background: "rgba(232,64,87,0.04)",
+        border: "1px solid rgba(255,90,71,0.3)",
+        background: "rgba(255,90,71,0.04)",
       }}>
-        <h2 style={{ ...HEADING, color: "#e84057" }}>{t.zoneDeDanger}</h2>
-        <p style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.5)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
+        <h2 style={{ ...HEADING, color: "#FF5A47" }}>{t.zoneDeDanger}</h2>
+        <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
           {t.suppressionExplication}
         </p>
         <button
@@ -435,9 +435,9 @@ export default function SettingsPage() {
             width: "100%",
             padding: "0.6rem",
             background: "transparent",
-            border: "1px solid rgba(232,64,87,0.5)",
+            border: "1px solid rgba(255,90,71,0.5)",
             borderRadius: 4,
-            color: "#e84057",
+            color: "#FF5A47",
             fontSize: "0.85rem",
             fontWeight: 600,
             letterSpacing: "0.04em",
@@ -464,18 +464,18 @@ export default function SettingsPage() {
             style={{ maxWidth: 420, width: "100%", padding: "1.75rem" }}
           >
             <h3 style={{
-              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-              fontSize: "1.05rem", color: "#e84057", letterSpacing: "0.1em", marginBottom: "0.75rem",
+              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+              fontSize: "1.05rem", color: "#FF5A47", letterSpacing: "0.1em", marginBottom: "0.75rem",
             }}>
               {t.supprimerLeCompte}
             </h3>
-            <p style={{ fontSize: "0.85rem", color: "rgba(240,230,211,0.6)", lineHeight: 1.6, marginBottom: "1rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.6, marginBottom: "1rem" }}>
               {locale === "fr" ? (
                 <>Cette action est irréversible. Pour confirmer, tapez{" "}
-                  <strong style={{ color: "#e84057" }}>{t.confirmMot}</strong> ci-dessous.</>
+                  <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong> ci-dessous.</>
               ) : (
                 <>This action is irreversible. To confirm, type{" "}
-                  <strong style={{ color: "#e84057" }}>{t.confirmMot}</strong> below.</>
+                  <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong> below.</>
               )}
             </p>
             <input
@@ -493,8 +493,8 @@ export default function SettingsPage() {
                 style={{
                   flex: 1, padding: "0.55rem",
                   background: "transparent",
-                  border: "1px solid rgba(200,170,110,0.3)",
-                  borderRadius: 4, color: "rgba(240,230,211,0.7)",
+                  border: "1px solid rgba(152,162,176,0.3)",
+                  borderRadius: 4, color: "rgba(236,239,244,0.7)",
                   fontSize: "0.85rem", cursor: "pointer",
                 }}
               >
@@ -505,7 +505,7 @@ export default function SettingsPage() {
                 disabled={deleteConfirm !== t.confirmMot || deleting}
                 style={{
                   flex: 1, padding: "0.55rem",
-                  background: deleteConfirm === t.confirmMot ? "#e84057" : "rgba(232,64,87,0.25)",
+                  background: deleteConfirm === t.confirmMot ? "#FF5A47" : "rgba(255,90,71,0.25)",
                   border: "none", borderRadius: 4, color: "#fff",
                   fontSize: "0.85rem", fontWeight: 600,
                   cursor: deleteConfirm === t.confirmMot && !deleting ? "pointer" : "not-allowed",

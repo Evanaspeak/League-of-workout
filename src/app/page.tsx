@@ -2,8 +2,8 @@ import { auth } from "@/auth";
 import LandingClient from "./LandingClient";
 
 export const metadata = {
-  title: "League of Workout — Transforme tes défaites en pompes",
-  description: "L'application qui connecte ton compte Riot et calcule tes pompes après chaque game. Scoring intelligent basé sur ton KDA, ton rôle et ta maîtrise du champion.",
+  title: "Win or Workout — Gagne ta game, ou paie en pompes",
+  description: "Win or Workout suit tes parties et calcule ta dette de pompes après chaque game, selon ta performance. League of Legends aujourd'hui — d'autres jeux bientôt.",
 };
 
 export default async function LandingPage() {

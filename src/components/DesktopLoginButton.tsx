@@ -13,8 +13,8 @@ export function DesktopLoginButton() {
   if (!isDesktop) return null;
 
   return (
-    <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(200,170,110,0.15)" }}>
-      <p className="text-xs text-center" style={{ color: "rgba(240,230,211,0.45)" }}>
+    <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(152,162,176,0.15)" }}>
+      <p className="text-xs text-center" style={{ color: "rgba(236,239,244,0.45)" }}>
         Google et Discord bloquent la connexion dans l&apos;app ?
       </p>
       <button

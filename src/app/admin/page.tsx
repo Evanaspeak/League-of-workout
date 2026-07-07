@@ -7,7 +7,7 @@ import AdminHeader from "./AdminHeader";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
 
-export const metadata = { title: "Admin — League of Workouts" };
+export const metadata = { title: "Admin — Win or Workout" };
 
 export default async function AdminPage() {
   const user = await getCurrentUser();

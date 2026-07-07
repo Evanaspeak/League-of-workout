@@ -67,12 +67,13 @@ export function ChampionIcon({ name, size = 38 }: Props) {
     return (
       <div style={{
         width: size, height: size, borderRadius: r, flexShrink: 0,
-        background: "rgba(200,170,110,0.1)",
-        border: "1px solid rgba(200,170,110,0.2)",
+        background: "rgba(152,162,176,0.1)",
+        border: "1px solid rgba(152,162,176,0.2)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: size * 0.48, color: "rgba(200,170,110,0.35)",
+        fontSize: size * 0.42, fontWeight: 600, color: "rgba(152,162,176,0.5)",
+        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
       }}>
-        ⚔
+        {name ? name.charAt(0).toUpperCase() : "?"}
       </div>
     );
   }
@@ -86,7 +87,7 @@ export function ChampionIcon({ name, size = 38 }: Props) {
       onError={() => setFailed(true)}
       style={{
         borderRadius: r,
-        border: "1px solid rgba(200,170,110,0.25)",
+        border: "1px solid rgba(152,162,176,0.25)",
         objectFit: "cover",
         flexShrink: 0,
         display: "block",

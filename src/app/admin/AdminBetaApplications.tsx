@@ -23,9 +23,9 @@ type Application = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: "#C8AA6E",
-  accepted: "#4caf50",
-  rejected: "#ef5350",
+  pending: "#ECEFF4",
+  accepted: "#2FD98A",
+  rejected: "#FF5A47",
 };
 
 function exportToCSV(apps: Application[], t: ReturnType<typeof useT<typeof adminBetaApplications>>, statusLabels: Record<string, string>, dateLocale: string) {
@@ -111,17 +111,17 @@ export default function AdminBetaApplications() {
     rejected: apps.filter(a => a.status === "rejected").length,
   };
 
-  if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>{t.loading}</div>;
+  if (loading) return <div style={{ color: "rgba(236,239,244,0.4)", padding: 16 }}>{t.loading}</div>;
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#C8AA6E", letterSpacing: "0.1em" }}>
+        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#ECEFF4", letterSpacing: "0.1em" }}>
           {t.title}
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.4)" }}>
+          <span style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.4)" }}>
             {t.acceptedOutOf(counts.accepted)}
           </span>
           <button
@@ -129,9 +129,9 @@ export default function AdminBetaApplications() {
             title={t.exportTitle}
             style={{
               padding: "5px 14px", borderRadius: 6, fontSize: "0.78rem", cursor: "pointer",
-              border: "1px solid rgba(200,170,110,0.3)",
-              background: "rgba(200,170,110,0.07)",
-              color: "#C8AA6E",
+              border: "1px solid rgba(152,162,176,0.3)",
+              background: "rgba(152,162,176,0.07)",
+              color: "#ECEFF4",
               display: "flex", alignItems: "center", gap: 6,
             }}
           >
@@ -151,9 +151,9 @@ export default function AdminBetaApplications() {
             width: "100%",
             padding: "8px 12px",
             background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(200,170,110,0.2)",
+            border: "1px solid rgba(152,162,176,0.2)",
             borderRadius: 6,
-            color: "#F0E6D3",
+            color: "#ECEFF4",
             fontSize: "0.85rem",
             outline: "none",
             boxSizing: "border-box",
@@ -166,9 +166,9 @@ export default function AdminBetaApplications() {
         {(["all", "pending", "accepted", "rejected"] as const).map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: "5px 14px", borderRadius: 6, fontSize: "0.78rem", cursor: "pointer",
-            border: filter === f ? "1px solid #C8AA6E" : "1px solid rgba(200,170,110,0.2)",
-            background: filter === f ? "rgba(200,170,110,0.1)" : "transparent",
-            color: filter === f ? "#C8AA6E" : "rgba(240,230,211,0.4)",
+            border: filter === f ? "1px solid #ECEFF4" : "1px solid rgba(152,162,176,0.2)",
+            background: filter === f ? "rgba(152,162,176,0.1)" : "transparent",
+            color: filter === f ? "#ECEFF4" : "rgba(236,239,244,0.4)",
           }}>
             {f === "all" ? t.filterAll : STATUS_LABELS[f]} ({counts[f]})
           </button>
@@ -176,7 +176,7 @@ export default function AdminBetaApplications() {
       </div>
 
       {filtered.length === 0 && (
-        <p style={{ color: "rgba(240,230,211,0.35)", fontSize: "0.875rem", padding: "20px 0" }}>
+        <p style={{ color: "rgba(236,239,244,0.35)", fontSize: "0.875rem", padding: "20px 0" }}>
           {q ? t.noResultsFor(search) : t.noApplications(filter !== "all")}
         </p>
       )}
@@ -184,7 +184,7 @@ export default function AdminBetaApplications() {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.map(app => (
           <div key={app.id} style={{
-            border: "1px solid rgba(200,170,110,0.12)",
+            border: "1px solid rgba(152,162,176,0.12)",
             borderRadius: 10, overflow: "hidden",
           }}>
             {/* Row */}
@@ -193,15 +193,15 @@ export default function AdminBetaApplications() {
               style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "12px 16px", cursor: "pointer",
-                background: expanded === app.id ? "rgba(200,170,110,0.04)" : "transparent",
+                background: expanded === app.id ? "rgba(152,162,176,0.04)" : "transparent",
               }}
             >
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.9rem", color: "#F0E6D3", fontWeight: 600 }}>{app.pseudo}</div>
-                <div style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: "0.9rem", color: "#ECEFF4", fontWeight: 600 }}>{app.pseudo}</div>
+                <div style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {app.email}
                 </div>
-                <div style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.4)" }}>{app.riotId} · {app.region}</div>
+                <div style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.4)" }}>{app.riotId} · {app.region}</div>
               </div>
               <div style={{ display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
                 <EngagementDots value={app.engagement} />
@@ -213,7 +213,7 @@ export default function AdminBetaApplications() {
                 }}>
                   {STATUS_LABELS[app.status]}
                 </span>
-                <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.25)" }}>
+                <span style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.25)" }}>
                   {new Date(app.createdAt).toLocaleDateString(dateLocale)}
                 </span>
               </div>
@@ -223,8 +223,8 @@ export default function AdminBetaApplications() {
             {expanded === app.id && (
               <div style={{
                 padding: "16px 20px 20px",
-                borderTop: "1px solid rgba(200,170,110,0.1)",
-                background: "rgba(4,8,16,0.4)",
+                borderTop: "1px solid rgba(152,162,176,0.1)",
+                background: "rgba(12,14,17,0.4)",
               }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
                   <Info label={t.genre} value={app.genre} />
@@ -236,8 +236,8 @@ export default function AdminBetaApplications() {
                   <Info label={t.source} value={app.discovery} />
                 </div>
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.5)", marginBottom: 6 }}>{t.motivation}</div>
-                  <p style={{ fontSize: "0.875rem", color: "rgba(240,230,211,0.7)", lineHeight: 1.6 }}>{app.motivation}</p>
+                  <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 6 }}>{t.motivation}</div>
+                  <p style={{ fontSize: "0.875rem", color: "rgba(236,239,244,0.7)", lineHeight: 1.6 }}>{app.motivation}</p>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
                   {app.status !== "accepted" && (
@@ -246,8 +246,8 @@ export default function AdminBetaApplications() {
                       disabled={updating === app.id}
                       style={{
                         padding: "7px 18px", borderRadius: 6, fontSize: "0.82rem", cursor: "pointer",
-                        background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.4)",
-                        color: "#4caf50", fontWeight: 600,
+                        background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.4)",
+                        color: "#2FD98A", fontWeight: 600,
                       }}
                     >
                       {updating === app.id ? "..." : t.accept}
@@ -259,8 +259,8 @@ export default function AdminBetaApplications() {
                       disabled={updating === app.id}
                       style={{
                         padding: "7px 18px", borderRadius: 6, fontSize: "0.82rem", cursor: "pointer",
-                        background: "rgba(239,83,80,0.08)", border: "1px solid rgba(239,83,80,0.3)",
-                        color: "#ef5350", fontWeight: 600,
+                        background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+                        color: "#FF5A47", fontWeight: 600,
                       }}
                     >
                       {updating === app.id ? "..." : t.reject}
@@ -272,8 +272,8 @@ export default function AdminBetaApplications() {
                       disabled={updating === app.id}
                       style={{
                         padding: "7px 18px", borderRadius: 6, fontSize: "0.82rem", cursor: "pointer",
-                        background: "transparent", border: "1px solid rgba(200,170,110,0.2)",
-                        color: "rgba(240,230,211,0.4)",
+                        background: "transparent", border: "1px solid rgba(152,162,176,0.2)",
+                        color: "rgba(236,239,244,0.4)",
                       }}
                     >
                       {t.backToPending}
@@ -282,17 +282,17 @@ export default function AdminBetaApplications() {
                   <div style={{ marginLeft: "auto" }}>
                     {confirmDelete === app.id ? (
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        <span style={{ fontSize: "0.75rem", color: "#ef5350" }}>{t.deleteConfirm}</span>
+                        <span style={{ fontSize: "0.75rem", color: "#FF5A47" }}>{t.deleteConfirm}</span>
                         <button
                           onClick={() => deleteApplication(app.id)}
                           disabled={deleting === app.id}
-                          style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "rgba(239,83,80,0.15)", border: "1px solid rgba(239,83,80,0.5)", color: "#ef5350", fontWeight: 600 }}
+                          style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "rgba(255,90,71,0.15)", border: "1px solid rgba(255,90,71,0.5)", color: "#FF5A47", fontWeight: 600 }}
                         >
                           {deleting === app.id ? "..." : t.confirm}
                         </button>
                         <button
                           onClick={() => setConfirmDelete(null)}
-                          style={{ padding: "4px 8px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(240,230,211,0.15)", color: "rgba(240,230,211,0.4)" }}
+                          style={{ padding: "4px 8px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(236,239,244,0.15)", color: "rgba(236,239,244,0.4)" }}
                         >
                           {t.cancel}
                         </button>
@@ -300,7 +300,7 @@ export default function AdminBetaApplications() {
                     ) : (
                       <button
                         onClick={() => setConfirmDelete(app.id)}
-                        style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(239,83,80,0.3)", color: "rgba(239,83,80,0.5)" }}
+                        style={{ padding: "4px 10px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(255,90,71,0.3)", color: "rgba(255,90,71,0.5)" }}
                       >
                         {t.delete}
                       </button>
@@ -319,8 +319,8 @@ export default function AdminBetaApplications() {
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.45)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: "0.85rem", color: "rgba(240,230,211,0.75)" }}>{value}</div>
+      <div style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.45)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: "0.85rem", color: "rgba(236,239,244,0.75)" }}>{value}</div>
     </div>
   );
 }
@@ -331,7 +331,7 @@ function EngagementDots({ value }: { value: number }) {
       {[1, 2, 3, 4, 5].map(n => (
         <div key={n} style={{
           width: 6, height: 6, borderRadius: "50%",
-          background: n <= value ? "#C8AA6E" : "rgba(200,170,110,0.15)",
+          background: n <= value ? "#ECEFF4" : "rgba(152,162,176,0.15)",
         }} />
       ))}
     </div>

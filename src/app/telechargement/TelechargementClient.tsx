@@ -3,19 +3,6 @@ import Link from "next/link";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { telechargement as telechargementDict } from "@/lib/i18n/dictionaries/telechargement";
 
-function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const s: React.CSSProperties = {
-    position: "absolute",
-    width: 18,
-    height: 18,
-    ...(pos === "tl" && { top: 0, left: 0, borderTop: "2px solid #C8AA6E", borderLeft: "2px solid #C8AA6E" }),
-    ...(pos === "tr" && { top: 0, right: 0, borderTop: "2px solid #C8AA6E", borderRight: "2px solid #C8AA6E" }),
-    ...(pos === "bl" && { bottom: 0, left: 0, borderBottom: "2px solid #C8AA6E", borderLeft: "2px solid #C8AA6E" }),
-    ...(pos === "br" && { bottom: 0, right: 0, borderBottom: "2px solid #C8AA6E", borderRight: "2px solid #C8AA6E" }),
-  };
-  return <span style={s} />;
-}
-
 export function TelechargementClient({ downloadUrl }: { downloadUrl: string | null }) {
   const t = useT(telechargementDict);
   return (
@@ -30,19 +17,30 @@ export function TelechargementClient({ downloadUrl }: { downloadUrl: string | nu
           width: "100%",
           maxWidth: 480,
           textAlign: "center",
-          boxShadow: "0 0 80px rgba(200,170,110,0.07), 0 20px 60px rgba(0,0,0,0.4)",
+          overflow: "hidden",
         }}
       >
-        <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+        <span aria-hidden style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 2,
+          background: "linear-gradient(90deg, transparent 15%, var(--ember) 50%, transparent 85%)",
+        }} />
 
-        <div style={{ fontSize: "2.8rem", marginBottom: "1rem" }}>🖥️</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.2rem" }}>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--steel)"
+            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <rect x="2" y="4" width="20" height="13" rx="2" />
+            <path d="M8 21h8M12 17v4" />
+          </svg>
+        </div>
 
         <h1
           style={{
-            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1.1rem",
-            color: "#C8AA6E",
-            letterSpacing: "0.16em",
+            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontWeight: 700,
+            fontSize: "1.4rem",
+            color: "var(--bone)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             marginBottom: "0.5rem",
           }}
         >
@@ -52,7 +50,7 @@ export function TelechargementClient({ downloadUrl }: { downloadUrl: string | nu
         <p
           style={{
             fontSize: "0.82rem",
-            color: "rgba(240,230,211,0.45)",
+            color: "rgba(236,239,244,0.45)",
             marginBottom: "2rem",
             lineHeight: 1.7,
           }}
@@ -74,10 +72,10 @@ export function TelechargementClient({ downloadUrl }: { downloadUrl: string | nu
             style={{
               padding: "1rem 1.25rem",
               borderRadius: 6,
-              background: "rgba(200,170,110,0.05)",
-              border: "1px solid rgba(200,170,110,0.15)",
+              background: "rgba(152,162,176,0.05)",
+              border: "1px solid rgba(152,162,176,0.15)",
               fontSize: "0.85rem",
-              color: "rgba(240,230,211,0.5)",
+              color: "rgba(236,239,244,0.5)",
               lineHeight: 1.7,
             }}
           >
@@ -89,14 +87,14 @@ export function TelechargementClient({ downloadUrl }: { downloadUrl: string | nu
           style={{
             marginTop: "2rem",
             paddingTop: "1.5rem",
-            borderTop: "1px solid rgba(200,170,110,0.08)",
+            borderTop: "1px solid rgba(152,162,176,0.08)",
             fontSize: "0.75rem",
-            color: "rgba(240,230,211,0.3)",
+            color: "rgba(236,239,244,0.3)",
             lineHeight: 1.8,
             textAlign: "left",
           }}
         >
-          <p style={{ fontWeight: 600, color: "rgba(240,230,211,0.45)", marginBottom: "0.5rem" }}>
+          <p style={{ fontWeight: 600, color: "rgba(236,239,244,0.45)", marginBottom: "0.5rem" }}>
             {t.commentCaFonctionne}
           </p>
           <ul style={{ paddingLeft: "1.2rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
@@ -110,7 +108,7 @@ export function TelechargementClient({ downloadUrl }: { downloadUrl: string | nu
         <div style={{ marginTop: "1.5rem" }}>
           <Link
             href="/dashboard"
-            style={{ fontSize: "0.78rem", color: "rgba(200,170,110,0.45)", textDecoration: "none" }}
+            style={{ fontSize: "0.78rem", color: "rgba(152,162,176,0.45)", textDecoration: "none" }}
           >
             {t.retourDashboard}
           </Link>

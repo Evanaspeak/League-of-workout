@@ -51,7 +51,7 @@ function daysSince(date: string | null, t: ReturnType<typeof useT<typeof adminUs
 
 function ActivityDot({ value, max }: { value: number; max: number }) {
   const ratio = max > 0 ? value / max : 0;
-  const color = ratio === 0 ? "rgba(200,170,110,0.1)" : ratio < 0.3 ? "#ef5350" : ratio < 0.7 ? "#C8AA6E" : "#4caf50";
+  const color = ratio === 0 ? "rgba(152,162,176,0.1)" : ratio < 0.3 ? "#FF5A47" : ratio < 0.7 ? "#ECEFF4" : "#2FD98A";
   return (
     <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
   );
@@ -103,12 +103,12 @@ export default function AdminUserList() {
     setConfirmDelete(null);
   }
 
-  if (loading) return <div style={{ color: "rgba(240,230,211,0.4)", padding: 16 }}>{t.loading}</div>;
+  if (loading) return <div style={{ color: "rgba(236,239,244,0.4)", padding: 16 }}>{t.loading}</div>;
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#C8AA6E", letterSpacing: "0.1em" }}>
+        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#ECEFF4", letterSpacing: "0.1em" }}>
           {t.title(users.length)}
         </h2>
       </div>
@@ -119,38 +119,38 @@ export default function AdminUserList() {
         placeholder={t.searchPlaceholder}
         style={{
           width: "100%", marginBottom: 16, padding: "8px 12px", borderRadius: 6,
-          background: "rgba(240,230,211,0.04)", border: "1px solid rgba(200,170,110,0.2)",
-          color: "#F0E6D3", fontSize: "0.85rem", outline: "none", boxSizing: "border-box",
+          background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
+          color: "#ECEFF4", fontSize: "0.85rem", outline: "none", boxSizing: "border-box",
         }}
       />
 
       {filtered.length === 0 && (
-        <p style={{ color: "rgba(240,230,211,0.3)", fontSize: "0.85rem", padding: "12px 0" }}>{t.noResults}</p>
+        <p style={{ color: "rgba(236,239,244,0.3)", fontSize: "0.85rem", padding: "12px 0" }}>{t.noResults}</p>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filtered.map(u => (
-          <div key={u.id} style={{ border: "1px solid rgba(200,170,110,0.12)", borderRadius: 8, overflow: "hidden" }}>
+          <div key={u.id} style={{ border: "1px solid rgba(152,162,176,0.12)", borderRadius: 8, overflow: "hidden" }}>
 
             {/* Ligne compacte */}
             <div
               onClick={() => setExpanded(expanded === u.id ? null : u.id)}
               style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-                cursor: "pointer", background: expanded === u.id ? "rgba(200,170,110,0.04)" : "transparent",
+                cursor: "pointer", background: expanded === u.id ? "rgba(152,162,176,0.04)" : "transparent",
               }}
             >
               <ActivityDot value={u.gamesThisWeek} max={maxWeekly} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.88rem", color: "#F0E6D3", fontWeight: 600 }}>{u.pseudo}</div>
-                <div style={{ fontSize: "0.72rem", color: "rgba(240,230,211,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: "0.88rem", color: "#ECEFF4", fontWeight: 600 }}>{u.pseudo}</div>
+                <div style={{ fontSize: "0.72rem", color: "rgba(236,239,244,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {u.email}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, alignItems: "center", flexShrink: 0, fontSize: "0.78rem" }}>
-                <span style={{ color: "#0bc4e3" }}>{u.totalGames} {t.gamesSuffix}</span>
-                <span style={{ color: "#C8AA6E" }}>{u.totalPompes} {t.pompesSuffix}</span>
-                <span style={{ color: "rgba(240,230,211,0.3)" }}>
+                <span style={{ color: "#6E9BFF" }}>{u.totalGames} {t.gamesSuffix}</span>
+                <span style={{ color: "#ECEFF4" }}>{u.totalPompes} {t.pompesSuffix}</span>
+                <span style={{ color: "rgba(236,239,244,0.3)" }}>
                   {u.gamesThisWeek > 0 ? t.perWeek(u.gamesThisWeek) : t.inactive}
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function AdminUserList() {
 
             {/* Profil déroulant */}
             {expanded === u.id && (
-              <div style={{ padding: "14px 18px 18px", borderTop: "1px solid rgba(200,170,110,0.1)", background: "rgba(4,8,16,0.4)" }}>
+              <div style={{ padding: "14px 18px 18px", borderTop: "1px solid rgba(152,162,176,0.1)", background: "rgba(12,14,17,0.4)" }}>
 
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 14 }}>
@@ -173,7 +173,7 @@ export default function AdminUserList() {
                 </div>
 
                 {/* Infos perso */}
-                <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.profile}</SectionTitle>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 12 }}>
                     <Stat label={t.email} value={u.email ?? t.notProvided} />
@@ -187,16 +187,16 @@ export default function AdminUserList() {
                     <Stat label={t.sportPerWeek} value={u.sportsHoursPerWeek != null ? `${u.sportsHoursPerWeek} h` : t.notProvided} />
                   </div>
                   {newPasswords[u.id] ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.3)" }}>
-                      <span style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.5)" }}>{t.newPassword}</span>
-                      <code style={{ fontSize: "0.88rem", color: "#4caf50", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
-                      <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", marginLeft: 4 }}>{t.visibleOnce}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(47,217,138,0.08)", border: "1px solid rgba(47,217,138,0.3)" }}>
+                      <span style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.5)" }}>{t.newPassword}</span>
+                      <code style={{ fontSize: "0.88rem", color: "#2FD98A", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
+                      <span style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", marginLeft: 4 }}>{t.visibleOnce}</span>
                     </div>
                   ) : (
                     <button
                       onClick={e => { e.stopPropagation(); resetPassword(u.id); }}
                       disabled={resettingPwd === u.id}
-                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(200,170,110,0.35)", color: "rgba(200,170,110,0.7)" }}
+                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(152,162,176,0.35)", color: "rgba(152,162,176,0.7)" }}
                     >
                       {resettingPwd === u.id ? "..." : t.resetPassword}
                     </button>
@@ -204,7 +204,7 @@ export default function AdminUserList() {
                 </div>
 
                 {/* Gainage & niveau */}
-                <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.plankSettings}</SectionTitle>
                   <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
                     <Stat label={t.plankMax} value={`${u.gainageMaxSec}s`} />
@@ -216,7 +216,7 @@ export default function AdminUserList() {
 
                 {/* Niveaux */}
                 {scoring.levels.length > 0 && (
-                  <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                  <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.plankLevelsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
@@ -231,11 +231,11 @@ export default function AdminUserList() {
                         <tbody>
                           {scoring.levels.map(l => (
                             <tr key={l.niveau} style={{
-                              borderTop: "1px solid rgba(200,170,110,0.06)",
-                              background: l.niveau === u.niveauActuel ? "rgba(200,170,110,0.07)" : "transparent",
+                              borderTop: "1px solid rgba(152,162,176,0.06)",
+                              background: l.niveau === u.niveauActuel ? "rgba(152,162,176,0.07)" : "transparent",
                             }}>
                               <td style={tdStyle}>
-                                <span style={{ color: l.niveau === u.niveauActuel ? "#C8AA6E" : "rgba(240,230,211,0.6)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
+                                <span style={{ color: l.niveau === u.niveauActuel ? "#ECEFF4" : "rgba(236,239,244,0.6)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
                                   {t.levelAbrev(l.niveau)}{l.niveau === u.niveauActuel ? " ◀" : ""}
                                 </span>
                               </td>
@@ -252,7 +252,7 @@ export default function AdminUserList() {
 
                 {/* Poids par rôle */}
                 {scoring.roles.length > 0 && (
-                  <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                  <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.kdaWeightsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
@@ -267,13 +267,13 @@ export default function AdminUserList() {
                         </thead>
                         <tbody>
                           {scoring.roles.map(r => (
-                            <tr key={r.role} style={{ borderTop: "1px solid rgba(200,170,110,0.06)" }}>
-                              <td style={tdStyle}><span style={{ color: "#F0E6D3", fontWeight: 600 }}>{r.role}</span></td>
+                            <tr key={r.role} style={{ borderTop: "1px solid rgba(152,162,176,0.06)" }}>
+                              <td style={tdStyle}><span style={{ color: "#ECEFF4", fontWeight: 600 }}>{r.role}</span></td>
                               <td style={tdStyle}>{r.poidsMort}</td>
                               <td style={tdStyle}>{r.poidsKill}</td>
                               <td style={tdStyle}>{r.poidsAssist}</td>
                               <td style={tdStyle}>
-                                <span style={{ color: r.maitriseActive ? "#4caf50" : "rgba(240,230,211,0.25)" }}>
+                                <span style={{ color: r.maitriseActive ? "#2FD98A" : "rgba(236,239,244,0.25)" }}>
                                   {r.maitriseActive ? t.yes : t.no}
                                 </span>
                               </td>
@@ -287,7 +287,7 @@ export default function AdminUserList() {
 
                 {/* Maîtrise */}
                 {scoring.mastery && (
-                  <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                  <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.championMasteryGlobal}</SectionTitle>
                     <div style={{ display: "flex", gap: 24 }}>
                       <Stat label={t.maxOverload} value={`+${Math.round(scoring.mastery.surchargeMax * 100)}%`} />
@@ -297,22 +297,22 @@ export default function AdminUserList() {
                 )}
 
                 {/* Suppression */}
-                <div style={{ borderTop: "1px solid rgba(239,83,80,0.15)", paddingTop: 12 }}>
+                <div style={{ borderTop: "1px solid rgba(255,90,71,0.15)", paddingTop: 12 }}>
                   {confirmDelete === u.id ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.78rem", color: "#ef5350" }}>
+                      <span style={{ fontSize: "0.78rem", color: "#FF5A47" }}>
                         {t.deleteConfirm}
                       </span>
                       <button
                         onClick={() => deleteUser(u.id)}
                         disabled={deleting === u.id}
-                        style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "rgba(239,83,80,0.15)", border: "1px solid rgba(239,83,80,0.5)", color: "#ef5350", fontWeight: 600 }}
+                        style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "rgba(255,90,71,0.15)", border: "1px solid rgba(255,90,71,0.5)", color: "#FF5A47", fontWeight: 600 }}
                       >
                         {deleting === u.id ? "..." : t.confirm}
                       </button>
                       <button
                         onClick={() => setConfirmDelete(null)}
-                        style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(240,230,211,0.15)", color: "rgba(240,230,211,0.5)" }}
+                        style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(236,239,244,0.15)", color: "rgba(236,239,244,0.5)" }}
                       >
                         {t.cancel}
                       </button>
@@ -320,7 +320,7 @@ export default function AdminUserList() {
                   ) : (
                     <button
                       onClick={e => { e.stopPropagation(); setConfirmDelete(u.id); }}
-                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(239,83,80,0.3)", color: "rgba(239,83,80,0.6)" }}
+                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(255,90,71,0.3)", color: "rgba(255,90,71,0.6)" }}
                     >
                       {t.deleteAccount}
                     </button>
@@ -338,20 +338,20 @@ export default function AdminUserList() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.4)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: "0.88rem", color: "rgba(240,230,211,0.8)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value}</div>
+      <div style={{ fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.4)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: "0.88rem", color: "rgba(236,239,244,0.8)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value}</div>
     </div>
   );
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.4)", marginBottom: 8 }}>
+    <p style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.4)", marginBottom: 8 }}>
       {children}
     </p>
   );
 }
 
-const thRowStyle: React.CSSProperties = { color: "rgba(200,170,110,0.45)", fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.08em" };
+const thRowStyle: React.CSSProperties = { color: "rgba(152,162,176,0.45)", fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.08em" };
 const thStyle: React.CSSProperties = { textAlign: "left", padding: "4px 8px 8px 0", fontWeight: 500 };
-const tdStyle: React.CSSProperties = { padding: "6px 8px 6px 0", color: "rgba(240,230,211,0.65)" };
+const tdStyle: React.CSSProperties = { padding: "6px 8px 6px 0", color: "rgba(236,239,244,0.65)" };

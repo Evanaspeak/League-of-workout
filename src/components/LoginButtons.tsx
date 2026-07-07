@@ -13,24 +13,26 @@ type Mode = "login" | "register";
 const TAB_STYLE = (active: boolean): React.CSSProperties => ({
   flex: 1,
   padding: "0.55rem 0.25rem",
-  fontSize: "0.78rem",
-  letterSpacing: "0.06em",
-  fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+  fontSize: "0.9rem",
+  fontWeight: 600,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
   background: "transparent",
   border: "none",
-  borderBottom: active ? "2px solid #C8AA6E" : "2px solid transparent",
-  color: active ? "#C8AA6E" : "rgba(240,230,211,0.4)",
+  borderBottom: active ? "2px solid var(--ember)" : "2px solid transparent",
+  color: active ? "var(--bone)" : "var(--faint)",
   cursor: "pointer",
   transition: "color 0.2s, border-color 0.2s",
 });
 
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
-  padding: "0.6rem 0.8rem",
-  background: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(200,170,110,0.2)",
-  borderRadius: 4,
-  color: "#F0E6D3",
+  padding: "0.65rem 0.85rem",
+  background: "rgba(12,14,17,0.6)",
+  border: "1px solid var(--line-strong)",
+  borderRadius: 8,
+  color: "var(--bone)",
   fontSize: "0.88rem",
   outline: "none",
   boxSizing: "border-box",
@@ -147,9 +149,9 @@ export function LoginButtons() {
         type="checkbox"
         checked={rememberMe}
         onChange={(e) => setRememberMe(e.target.checked)}
-        style={{ accentColor: "#C8AA6E", width: 14, height: 14, cursor: "pointer" }}
+        style={{ accentColor: "var(--ember)", width: 14, height: 14, cursor: "pointer" }}
       />
-      <span style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.55)" }}>{t.resterConnecte}</span>
+      <span style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.55)" }}>{t.resterConnecte}</span>
     </label>
   );
 
@@ -158,7 +160,7 @@ export function LoginButtons() {
       {/* Tab bar */}
       <div style={{
         display: "flex",
-        borderBottom: "1px solid rgba(200,170,110,0.12)",
+        borderBottom: "1px solid var(--line)",
         marginBottom: "1.25rem",
       }}>
         <button style={TAB_STYLE(tab === "code")} onClick={() => setTab("code")}>{t.code}</button>
@@ -173,8 +175,8 @@ export function LoginButtons() {
           {error && (
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.25rem",
-              background: "rgba(232,64,87,0.1)", border: "1px solid rgba(232,64,87,0.3)",
-              borderRadius: 4, fontSize: "0.82rem", color: "#e84057",
+              background: "rgba(255,90,71,0.1)", border: "1px solid rgba(255,90,71,0.3)",
+              borderRadius: 4, fontSize: "0.82rem", color: "#FF5A47",
             }}>
               {error}
             </div>
@@ -189,9 +191,9 @@ export function LoginButtons() {
             </button>
           </form>
           {checkbox}
-          <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center", marginTop: "0.5rem" }}>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center", marginTop: "0.5rem" }}>
             {t.noCodeYet}{" "}
-            <Link href="/beta" style={{ color: "#C8AA6E", textDecoration: "none" }}>{t.getAccess}</Link>
+            <Link href="/beta" style={{ color: "var(--ember)", textDecoration: "none", fontWeight: 600 }}>{t.getAccess}</Link>
           </p>
         </div>
       )}
@@ -214,7 +216,7 @@ export function LoginButtons() {
             </form>
           )}
           {checkbox}
-          <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center" }}>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center" }}>
             {t.seulement100}
           </p>
         </div>
@@ -243,7 +245,7 @@ export function LoginButtons() {
             </form>
           )}
           {checkbox}
-          <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center" }}>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center" }}>
             {t.seulement100}
           </p>
         </div>
@@ -261,9 +263,9 @@ export function LoginButtons() {
               style={{
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
-                background: mode === "login" ? "rgba(200,170,110,0.15)" : "transparent",
-                color: mode === "login" ? "#C8AA6E" : "rgba(240,230,211,0.4)",
-                fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                background: mode === "login" ? "rgba(152,162,176,0.15)" : "transparent",
+                color: mode === "login" ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
@@ -274,9 +276,9 @@ export function LoginButtons() {
               style={{
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
-                background: mode === "register" ? "rgba(200,170,110,0.15)" : "transparent",
-                color: mode === "register" ? "#C8AA6E" : "rgba(240,230,211,0.4)",
-                fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+                background: mode === "register" ? "rgba(152,162,176,0.15)" : "transparent",
+                color: mode === "register" ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
@@ -287,8 +289,8 @@ export function LoginButtons() {
           {error && (
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
-              background: "rgba(232,64,87,0.1)", border: "1px solid rgba(232,64,87,0.3)",
-              borderRadius: 4, fontSize: "0.82rem", color: "#e84057",
+              background: "rgba(255,90,71,0.1)", border: "1px solid rgba(255,90,71,0.3)",
+              borderRadius: 4, fontSize: "0.82rem", color: "#FF5A47",
             }}>
               {error}
             </div>
@@ -296,8 +298,8 @@ export function LoginButtons() {
           {success && (
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
-              background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)",
-              borderRadius: 4, fontSize: "0.82rem", color: "#22C55E",
+              background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)",
+              borderRadius: 4, fontSize: "0.82rem", color: "#2FD98A",
             }}>
               {success}
             </div>
@@ -332,7 +334,7 @@ export function LoginButtons() {
           )}
 
           <div style={{ marginTop: "0.75rem" }}>{checkbox}</div>
-          <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center", marginTop: "0.75rem" }}>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center", marginTop: "0.75rem" }}>
             {t.seulement100}
           </p>
         </div>

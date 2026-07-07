@@ -1,6 +1,6 @@
 export const loginButtons = {
   fr: {
-    code: "PSEUDO + CODE",
+    code: "Code",
     google: "GOOGLE",
     discord: "DISCORD",
     email: "EMAIL",
@@ -33,7 +33,7 @@ export const loginButtons = {
     erreurServeur: "Erreur serveur, réessayez",
   },
   en: {
-    code: "USERNAME + CODE",
+    code: "Code",
     google: "GOOGLE",
     discord: "DISCORD",
     email: "EMAIL",

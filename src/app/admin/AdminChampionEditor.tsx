@@ -60,18 +60,18 @@ export default function AdminChampionEditor() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.title}</h2>
-          <p className="text-xs mt-1" style={{ color: "rgba(240,230,211,0.4)" }}>
+          <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>
             {t.subtitle}
           </p>
         </div>
         <span className="text-xs px-3 py-1 rounded" style={{
-          background: "rgba(200,170,110,0.1)",
-          border: "1px solid rgba(200,170,110,0.2)",
-          color: "rgba(200,170,110,0.7)",
+          background: "rgba(152,162,176,0.1)",
+          border: "1px solid rgba(152,162,176,0.2)",
+          color: "rgba(152,162,176,0.7)",
         }}>
           {loading ? t.loadingShort : t.championsCount(count)}
           {isDefault && !loading && (
-            <span style={{ color: "rgba(240,230,211,0.35)", marginLeft: 6 }}>{t.defaultTag}</span>
+            <span style={{ color: "rgba(236,239,244,0.35)", marginLeft: 6 }}>{t.defaultTag}</span>
           )}
         </span>
       </div>
@@ -91,9 +91,9 @@ export default function AdminChampionEditor() {
 
       {msg && (
         <div className="text-sm px-3 py-2 rounded" style={{
-          background: msg.type === "ok" ? "rgba(76,175,80,0.1)" : "rgba(220,80,80,0.1)",
-          border: `1px solid ${msg.type === "ok" ? "rgba(76,175,80,0.3)" : "rgba(220,80,80,0.3)"}`,
-          color: msg.type === "ok" ? "#4caf50" : "#e05555",
+          background: msg.type === "ok" ? "rgba(47,217,138,0.1)" : "rgba(220,80,80,0.1)",
+          border: `1px solid ${msg.type === "ok" ? "rgba(47,217,138,0.3)" : "rgba(220,80,80,0.3)"}`,
+          color: msg.type === "ok" ? "#2FD98A" : "#e05555",
         }}>
           {msg.text}
         </div>
@@ -112,9 +112,9 @@ export default function AdminChampionEditor() {
           disabled={saving || loading || isDefault}
           className="px-5 py-2 rounded text-sm"
           style={{
-            background: "rgba(200,170,110,0.08)",
-            border: "1px solid rgba(200,170,110,0.2)",
-            color: isDefault ? "rgba(240,230,211,0.2)" : "rgba(200,170,110,0.6)",
+            background: "rgba(152,162,176,0.08)",
+            border: "1px solid rgba(152,162,176,0.2)",
+            color: isDefault ? "rgba(236,239,244,0.2)" : "rgba(152,162,176,0.6)",
             cursor: isDefault ? "default" : "pointer",
           }}
         >

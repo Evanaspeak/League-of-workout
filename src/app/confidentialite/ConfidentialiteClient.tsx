@@ -13,12 +13,12 @@ export default function ConfidentialiteClient() {
     <div style={{ maxWidth: 720, margin: "0 auto" }} className="space-y-8 py-4">
       <div>
         <h1 style={{
-          fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-          fontSize: "1.4rem", color: "#C8AA6E", letterSpacing: "0.16em",
+          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+          fontSize: "1.4rem", color: "#ECEFF4", letterSpacing: "0.16em",
         }}>
           {t.pageTitle}
         </h1>
-        <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.35)", marginTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.35)", marginTop: "0.5rem" }}>
           {t.versionLabel(DATE)}
         </p>
       </div>
@@ -26,7 +26,7 @@ export default function ConfidentialiteClient() {
       <Section title={t.article1.title}>
         <p>
           {t.article1.role}<br />
-          {t.article1.contactLabel} <a href={`mailto:${CONTACT}`} style={{ color: "#C8AA6E" }}>{CONTACT}</a>
+          {t.article1.contactLabel} <a href={`mailto:${CONTACT}`} style={{ color: "#ECEFF4" }}>{CONTACT}</a>
         </p>
       </Section>
 
@@ -84,12 +84,12 @@ export default function ConfidentialiteClient() {
         </ul>
         <p>
           {t.article7.exerciseLabel}{" "}
-          <a href={`mailto:${CONTACT}`} style={{ color: "#C8AA6E" }}>{CONTACT}</a>
+          <a href={`mailto:${CONTACT}`} style={{ color: "#ECEFF4" }}>{CONTACT}</a>
         </p>
         <p>
           {t.article7.cnilPrefix}{" "}
           <strong>{t.article7.cnilName}</strong> {t.article7.cnilFull}{" "}
-          <span style={{ color: "rgba(200,170,110,0.7)" }}>www.cnil.fr</span>.
+          <span style={{ color: "rgba(152,162,176,0.7)" }}>www.cnil.fr</span>.
         </p>
       </Section>
 
@@ -101,8 +101,8 @@ export default function ConfidentialiteClient() {
         {t.article9.paragraphs.map((p, i) => <p key={i}>{p}</p>)}
       </Section>
 
-      <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(200,170,110,0.1)" }}>
-        <Link href="/cgu" style={{ color: "rgba(200,170,110,0.6)", fontSize: "0.82rem" }}>
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(152,162,176,0.1)" }}>
+        <Link href="/cgu" style={{ color: "rgba(152,162,176,0.6)", fontSize: "0.82rem" }}>
           {t.footerLink}
         </Link>
       </div>
@@ -114,14 +114,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <div className="space-y-3">
       <h2 style={{
-        fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-        fontSize: "0.8rem", color: "#C8AA6E", letterSpacing: "0.12em",
+        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+        fontSize: "0.8rem", color: "#ECEFF4", letterSpacing: "0.12em",
       }}>
         {title}
       </h2>
       <div style={{
         fontSize: "0.875rem",
-        color: "rgba(240,230,211,0.6)",
+        color: "rgba(236,239,244,0.6)",
         lineHeight: 1.8,
       }} className="space-y-2">
         {children}

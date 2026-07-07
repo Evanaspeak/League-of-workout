@@ -2,19 +2,9 @@
 import Link from "next/link";
 import { LoginButtons } from "@/components/LoginButtons";
 import { DesktopModeDetector } from "@/components/DesktopModeDetector";
+import { Wordmark } from "@/components/Wordmark";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { login as loginDict } from "@/lib/i18n/dictionaries/login";
-
-function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const s: React.CSSProperties = {
-    position: "absolute", width: 18, height: 18,
-    ...(pos === "tl" && { top: 0, left: 0, borderTop: "2px solid #C8AA6E", borderLeft: "2px solid #C8AA6E" }),
-    ...(pos === "tr" && { top: 0, right: 0, borderTop: "2px solid #C8AA6E", borderRight: "2px solid #C8AA6E" }),
-    ...(pos === "bl" && { bottom: 0, left: 0, borderBottom: "2px solid #C8AA6E", borderLeft: "2px solid #C8AA6E" }),
-    ...(pos === "br" && { bottom: 0, right: 0, borderBottom: "2px solid #C8AA6E", borderRight: "2px solid #C8AA6E" }),
-  };
-  return <span style={s} />;
-}
 
 export function LoginClient({
   betaFull,
@@ -31,28 +21,43 @@ export function LoginClient({
 }) {
   const t = useT(loginDict);
 
+  const card: React.CSSProperties = {
+    position: "relative",
+    background: "var(--carbon)",
+    border: "1px solid var(--line)",
+    borderRadius: 16,
+    padding: "2.5rem 2rem",
+    width: "100%",
+    textAlign: "center",
+    overflow: "hidden",
+  };
+
+  // Liseré ember en haut de la carte — la signature de la marque
+  const topSlash = (
+    <span aria-hidden style={{
+      position: "absolute", top: 0, left: 0, right: 0, height: 2,
+      background: "linear-gradient(90deg, transparent 15%, var(--ember) 50%, transparent 85%)",
+    }} />
+  );
+
   if (transferred === "1") {
     return (
       <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="lol-panel" style={{
-          position: "relative",
-          padding: "2.5rem 2rem",
-          width: "100%", maxWidth: 360,
-          textAlign: "center",
-          boxShadow: "0 0 60px rgba(200,170,110,0.07)",
-        }}>
-          <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-          <div style={{ fontSize: "2.2rem", color: "#22C55E", marginBottom: "1rem" }}>✓</div>
+        <div style={{ ...card, maxWidth: 360 }}>
+          {topSlash}
+          <div style={{ fontSize: "2rem", color: "var(--victory)", marginBottom: "1rem" }}>✓</div>
           <p style={{
-            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1rem",
-            color: "#C8AA6E",
-            letterSpacing: "0.12em",
+            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontWeight: 600,
+            fontSize: "1.15rem",
+            color: "var(--bone)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
             marginBottom: "0.75rem",
           }}>
             {t.connexionReussieTitle}
           </p>
-          <p style={{ fontSize: "0.84rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.65 }}>
+          <p style={{ fontSize: "0.84rem", color: "var(--muted)", lineHeight: 1.65 }}>
             {t.connexionReussieBody}<br />{t.connexionReussieClose}
           </p>
         </div>
@@ -63,52 +68,28 @@ export function LoginClient({
   return (
     <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <DesktopModeDetector />
-      <div className="lol-panel" style={{
-        position: "relative",
-        padding: "2.5rem 2rem",
-        width: "100%", maxWidth: 390,
-        textAlign: "center",
-        boxShadow: "0 0 90px rgba(200,170,110,0.07), 0 20px 60px rgba(0,0,0,0.4)",
-      }}>
-        <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+      <div style={{ ...card, maxWidth: 400 }}>
+        {topSlash}
 
         {deleted === "1" && (
           <div style={{
             padding: "0.7rem 0.9rem",
             marginBottom: "1.5rem",
-            background: "rgba(34,197,94,0.1)",
-            border: "1px solid rgba(34,197,94,0.3)",
-            borderRadius: 4,
+            background: "var(--victory-soft)",
+            border: "1px solid rgba(47,217,138,0.3)",
+            borderRadius: 8,
             fontSize: "0.82rem",
-            color: "#22C55E",
+            color: "var(--victory)",
           }}>
             {t.compteSupprime}
           </div>
         )}
 
-        <div style={{ marginBottom: "2.25rem" }}>
-          <div style={{
-            fontSize: "2rem",
-            marginBottom: "0.875rem",
-            color: "#C8AA6E",
-            textShadow: "0 0 24px rgba(200,170,110,0.6)",
-          }}>⚔</div>
-          <h1 style={{
-            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1.15rem",
-            color: "#C8AA6E",
-            letterSpacing: "0.16em",
-            textShadow: "0 0 22px rgba(200,170,110,0.3)",
-            margin: 0,
-          }}>
-            {t.appTitle}
-          </h1>
-          <p style={{
-            fontSize: "0.73rem",
-            color: "rgba(240,230,211,0.35)",
-            letterSpacing: "0.08em",
-            marginTop: "0.5rem",
-          }}>
+        <div style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.8rem" }}>
+            <Wordmark fontSize="1.35rem" />
+          </div>
+          <p className="eyebrow" style={{ marginTop: "0.4rem" }}>
             {t.accesReserve}
           </p>
         </div>
@@ -117,12 +98,12 @@ export function LoginClient({
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{
               padding: "1rem",
-              borderRadius: 6,
-              background: "rgba(200,170,110,0.08)",
-              border: "1px solid rgba(200,170,110,0.25)",
+              borderRadius: 10,
+              background: "rgba(236,239,244,0.04)",
+              border: "1px solid var(--line-strong)",
             }}>
-              <p style={{ fontWeight: 600, color: "#C8AA6E", marginBottom: "0.3rem" }}>{t.candidatureEnCours}</p>
-              <p style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.6 }}>
+              <p style={{ fontWeight: 600, color: "var(--bone)", marginBottom: "0.3rem" }}>{t.candidatureEnCours}</p>
+              <p style={{ fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.6 }}>
                 {t.candidatureEnCoursBody}
               </p>
             </div>
@@ -131,12 +112,12 @@ export function LoginClient({
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{
               padding: "1rem",
-              borderRadius: 6,
-              background: "rgba(194,59,34,0.1)",
-              border: "1px solid rgba(194,59,34,0.28)",
+              borderRadius: 10,
+              background: "rgba(255,90,71,0.08)",
+              border: "1px solid rgba(255,90,71,0.28)",
             }}>
               <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>{t.candidatureNonRetenue}</p>
-              <p style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.6 }}>
+              <p style={{ fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.6 }}>
                 {t.candidatureNonRetenueBody}
               </p>
             </div>
@@ -145,12 +126,12 @@ export function LoginClient({
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             <div style={{
               padding: "1rem",
-              borderRadius: 6,
-              background: "rgba(194,59,34,0.1)",
-              border: "1px solid rgba(194,59,34,0.28)",
+              borderRadius: 10,
+              background: "rgba(255,90,71,0.08)",
+              border: "1px solid rgba(255,90,71,0.28)",
             }}>
               <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>{t.accesRefuse}</p>
-              <p style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.55)" }}>
+              <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
                 {t.accesRefuseBody}
               </p>
             </div>
@@ -165,13 +146,13 @@ export function LoginClient({
         <p style={{
           marginTop: "1.5rem",
           fontSize: "0.7rem",
-          color: "rgba(240,230,211,0.25)",
+          color: "rgba(236,239,244,0.3)",
           lineHeight: 1.7,
         }}>
           {t.mentionsAcceptation}{" "}
-          <Link href="/cgu" style={{ color: "rgba(200,170,110,0.45)" }}>{t.cgu}</Link>
+          <Link href="/cgu" style={{ color: "var(--faint)" }}>{t.cgu}</Link>
           {" "}{t.et}{" "}
-          <Link href="/confidentialite" style={{ color: "rgba(200,170,110,0.45)" }}>{t.politiqueConfidentialite}</Link>.
+          <Link href="/confidentialite" style={{ color: "var(--faint)" }}>{t.politiqueConfidentialite}</Link>.
         </p>
       </div>
     </div>

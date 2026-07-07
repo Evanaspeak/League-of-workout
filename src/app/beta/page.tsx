@@ -4,30 +4,43 @@ import Link from "next/link";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { betaAccess } from "@/lib/i18n/dictionaries/betaAccess";
+import { Wordmark } from "@/components/Wordmark";
 
 const FIELD_STYLE = {
   width: "100%",
-  background: "rgba(240,230,211,0.04)",
-  border: "1px solid rgba(200,170,110,0.2)",
+  background: "rgba(12,14,17,0.6)",
+  border: "1px solid var(--line-strong)",
   borderRadius: 8,
   padding: "12px 14px",
-  color: "#F0E6D3",
+  color: "var(--bone)",
   fontSize: "0.95rem",
   outline: "none",
   boxSizing: "border-box" as const,
   colorScheme: "dark" as const,
 };
 
-const OPTION_STYLE = { background: "#0a0e1a", color: "#F0E6D3" };
+const OPTION_STYLE = { background: "#14171C", color: "#ECEFF4" };
 
 const LABEL_STYLE = {
   display: "block",
-  fontSize: "0.75rem",
-  letterSpacing: "0.08em",
+  fontFamily: "var(--font-mono, 'IBM Plex Mono', monospace)",
+  fontSize: "0.68rem",
+  letterSpacing: "0.14em",
   textTransform: "uppercase" as const,
-  color: "rgba(200,170,110,0.7)",
+  color: "var(--steel)",
   marginBottom: 6,
 };
+
+function CopyIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden
+      style={{ display: "inline-block", verticalAlign: "-2px" }}>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+    </svg>
+  );
+}
 
 export default function BetaPage() {
   const t = useT(betaAccess);
@@ -76,89 +89,115 @@ export default function BetaPage() {
   }
 
   return (
-    <div style={{ background: "#040810", minHeight: "100dvh", color: "#F0E6D3" }}>
+    <div className="full-bleed" style={{
+      background: "var(--ink)",
+      minHeight: "100dvh",
+      color: "var(--bone)",
+      marginTop: "-1.5rem",
+      marginBottom: "-1.5rem",
+    }}>
       <nav style={{
         position: "sticky", top: 0, zIndex: 40,
-        background: "rgba(4,8,16,0.88)", backdropFilter: "blur(14px)",
-        borderBottom: "1px solid rgba(200,170,110,0.16)",
+        background: "rgba(12,14,17,0.85)", backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
+        borderBottom: "1px solid var(--line)",
       }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", letterSpacing: "0.14em", color: "#C8AA6E", textDecoration: "none" }}>
-            ⚔ L·O·W
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Link href="/" style={{ textDecoration: "none", display: "inline-flex" }}>
+            <Wordmark fontSize="1.05rem" />
           </Link>
-          <Link href="/login" style={{ fontSize: "0.8rem", color: "rgba(240,230,211,0.4)", textDecoration: "none" }}>
+          <Link href="/login" style={{ fontSize: "0.8rem", color: "var(--faint)", textDecoration: "none" }}>
             {t.alreadyAccount}
           </Link>
         </div>
       </nav>
 
-      <div style={{ maxWidth: 520, margin: "0 auto", padding: "60px 24px 100px" }}>
+      <div style={{ maxWidth: 520, margin: "0 auto", padding: "56px 24px 100px" }}>
         {code ? (
           /* ── Écran succès : le code ── */
           <div style={{
-            background: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.3)",
+            position: "relative",
+            background: "var(--carbon)",
+            border: "1px solid var(--line)",
             borderRadius: 16, padding: "36px 28px", textAlign: "center",
+            overflow: "hidden",
           }}>
+            <span aria-hidden style={{
+              position: "absolute", top: 0, left: 0, right: 0, height: 2,
+              background: "linear-gradient(90deg, transparent 15%, var(--victory) 50%, transparent 85%)",
+            }} />
             <div style={{
               display: "inline-block", marginBottom: 20, padding: "4px 16px", borderRadius: 999,
-              border: "1px solid rgba(76,175,80,0.3)", background: "rgba(76,175,80,0.08)",
-              fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#4caf50",
+              border: "1px solid rgba(47,217,138,0.3)", background: "var(--victory-soft)",
+              fontFamily: "var(--font-mono, 'IBM Plex Mono', monospace)",
+              fontSize: "0.68rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--victory)",
             }}>
               {t.successBadge}
             </div>
-            <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "1.5rem", marginBottom: 8 }}>{t.successTitle}</h1>
+            <h1 style={{
+              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+              fontWeight: 700, textTransform: "uppercase",
+              fontSize: "1.6rem", marginBottom: 8,
+            }}>
+              {t.successTitle}
+            </h1>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "24px 0" }}>
-              <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.6)" }}>{t.yourPseudo}</div>
-              <div style={{ fontSize: "1.1rem", color: "#F0E6D3", fontWeight: 600 }}>{pseudo}</div>
-              <div style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.6)", marginTop: 8 }}>{t.yourCode}</div>
+              <div style={LABEL_STYLE}>{t.yourPseudo}</div>
+              <div style={{ fontSize: "1.1rem", color: "var(--bone)", fontWeight: 600 }}>{pseudo}</div>
+              <div style={{ ...LABEL_STYLE, marginTop: 8 }}>{t.yourCode}</div>
               <div
                 onClick={copyCode}
+                className="mono-num"
                 style={{
-                  fontFamily: "var(--font-heading)", fontSize: "2rem", letterSpacing: "0.25em",
-                  color: "#C8AA6E", cursor: "pointer", userSelect: "all",
-                  padding: "14px", borderRadius: 10, background: "rgba(200,170,110,0.08)",
-                  border: "1px dashed rgba(200,170,110,0.35)",
+                  fontSize: "1.9rem", fontWeight: 600, letterSpacing: "0.22em",
+                  color: "var(--bone)", cursor: "pointer", userSelect: "all",
+                  padding: "14px", borderRadius: 10, background: "rgba(12,14,17,0.7)",
+                  border: "1px dashed var(--line-strong)",
                 }}
                 title={t.copy}
               >
                 {code}
               </div>
               <button onClick={copyCode} style={{
-                fontSize: "0.78rem", color: copied ? "#4caf50" : "rgba(240,230,211,0.5)",
+                fontSize: "0.78rem", color: copied ? "var(--victory)" : "var(--muted)",
                 background: "transparent", border: "none", cursor: "pointer", padding: 4,
+                display: "inline-flex", alignItems: "center", gap: 6, justifyContent: "center",
               }}>
-                {copied ? t.copied : `⧉ ${t.copy}`}
+                <CopyIcon /> {copied ? t.copied : t.copy}
               </button>
             </div>
 
-            <p style={{ fontSize: "0.82rem", color: "rgba(239,180,80,0.85)", lineHeight: 1.6, marginBottom: 24 }}>
-              ⚠ {t.codeWarning}
+            <p style={{ fontSize: "0.82rem", color: "#F5B84B", lineHeight: 1.6, marginBottom: 24 }}>
+              {t.codeWarning}
             </p>
 
-            <Link href="/login" style={{
-              display: "inline-block", padding: "12px 28px", borderRadius: 8,
-              background: "linear-gradient(135deg, #C8AA6E, #a8893e)", color: "#040810",
-              fontWeight: 700, textDecoration: "none", fontSize: "0.9rem",
-            }}>
+            <Link href="/login" className="lol-btn" style={{ padding: "12px 28px", fontSize: "0.95rem" }}>
               {t.goLogin}
             </Link>
           </div>
         ) : (
           /* ── Formulaire ── */
           <>
-            <div style={{ marginBottom: 40, textAlign: "center" }}>
+            <div style={{ marginBottom: 40 }}>
               <div style={{
-                display: "inline-block", marginBottom: 20, padding: "4px 16px", borderRadius: 999,
-                border: "1px solid rgba(11,196,227,0.3)", background: "rgba(11,196,227,0.06)",
-                fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#0bc4e3",
+                display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 22,
               }}>
-                {t.badge}
+                <span style={{
+                  width: 7, height: 7, borderRadius: "50%",
+                  background: "var(--victory)",
+                  animation: "pulse 2s ease-in-out infinite",
+                }} />
+                <span className="eyebrow">{t.badge}</span>
               </div>
-              <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "clamp(1.8rem, 4vw, 2.4rem)", lineHeight: 1.15, marginBottom: 14 }}>
+              <h1 style={{
+                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontWeight: 700, textTransform: "uppercase",
+                fontSize: "clamp(2rem, 4.5vw, 2.7rem)", lineHeight: 1.05, marginBottom: 14,
+              }}>
                 {t.heading}
               </h1>
-              <p style={{ fontSize: "0.95rem", color: "rgba(240,230,211,0.55)", lineHeight: 1.7 }}>
+              <p style={{ fontSize: "0.95rem", color: "var(--muted)", lineHeight: 1.7 }}>
                 {t.intro}
               </p>
             </div>
@@ -168,31 +207,31 @@ export default function BetaPage() {
                 <label style={LABEL_STYLE}>{t.pseudoLabel}</label>
                 <input style={FIELD_STYLE} placeholder={t.pseudoPlaceholder} value={pseudo}
                   onChange={e => setPseudo(e.target.value)} required minLength={2} maxLength={24} autoFocus />
-                <p style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.4)", marginTop: 6 }}>{t.pseudoHint}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--faint)", marginTop: 6 }}>{t.pseudoHint}</p>
               </div>
 
               <div>
                 <label style={LABEL_STYLE}>
-                  {t.emailLabel} <span style={{ opacity: 0.5, textTransform: "none", letterSpacing: 0 }}>· {t.emailOptional}</span>
+                  {t.emailLabel} <span style={{ opacity: 0.6, textTransform: "none", letterSpacing: 0 }}>· {t.emailOptional}</span>
                 </label>
                 <input style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
                   onChange={e => setEmail(e.target.value)} autoComplete="email" />
-                <p style={{ fontSize: "0.75rem", color: "rgba(200,170,110,0.55)", marginTop: 6 }}>{t.emailHint}</p>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 6 }}>{t.emailHint}</p>
               </div>
 
               {/* Section optionnelle repliable */}
-              <div style={{ border: "1px solid rgba(200,170,110,0.12)", borderRadius: 10, overflow: "hidden" }}>
+              <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
                 <button type="button" onClick={() => setShowOptional(o => !o)} style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "12px 16px", background: "rgba(240,230,211,0.02)", border: "none", cursor: "pointer",
-                  color: "rgba(240,230,211,0.7)", fontSize: "0.85rem",
+                  padding: "12px 16px", background: "var(--carbon)", border: "none", cursor: "pointer",
+                  color: "var(--muted)", fontSize: "0.85rem",
                 }}>
                   <span>{t.optionalTitle}</span>
-                  <span style={{ color: "rgba(200,170,110,0.6)" }}>{showOptional ? "−" : "+"}</span>
+                  <span style={{ color: "var(--steel)" }}>{showOptional ? "−" : "+"}</span>
                 </button>
                 {showOptional && (
-                  <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid rgba(200,170,110,0.1)" }}>
-                    <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.4)", lineHeight: 1.5, margin: 0 }}>{t.optionalHint}</p>
+                  <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid var(--line)" }}>
+                    <p style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.5, margin: 0 }}>{t.optionalHint}</p>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                       <div>
                         <label style={LABEL_STYLE}>{t.genreLabel}</label>
@@ -224,21 +263,15 @@ export default function BetaPage() {
 
               {error && (
                 <div style={{
-                  background: "rgba(239,83,80,0.08)", border: "1px solid rgba(239,83,80,0.3)",
-                  borderRadius: 8, padding: "10px 16px", fontSize: "0.875rem", color: "#ef5350",
+                  background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+                  borderRadius: 8, padding: "10px 16px", fontSize: "0.875rem", color: "var(--loss)",
                 }}>
                   {error}
                 </div>
               )}
 
-              <button type="submit" disabled={pseudo.trim().length < 2 || loading} style={{
-                padding: "14px 32px", borderRadius: 8, fontSize: "1rem",
-                background: pseudo.trim().length >= 2 ? "linear-gradient(135deg, #C8AA6E, #a8893e)" : "rgba(200,170,110,0.15)",
-                color: pseudo.trim().length >= 2 ? "#040810" : "rgba(200,170,110,0.4)",
-                fontWeight: 700, cursor: pseudo.trim().length >= 2 && !loading ? "pointer" : "not-allowed",
-                border: "none", letterSpacing: "0.05em",
-                boxShadow: pseudo.trim().length >= 2 ? "0 4px 24px rgba(200,170,110,0.25)" : "none",
-                transition: "all 0.2s",
+              <button type="submit" disabled={pseudo.trim().length < 2 || loading} className="lol-btn" style={{
+                padding: "14px 32px", fontSize: "1rem",
               }}>
                 {loading ? t.submitting : t.submit}
               </button>

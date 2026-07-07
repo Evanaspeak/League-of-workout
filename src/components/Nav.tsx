@@ -6,10 +6,13 @@ import { useSession } from "@/lib/SessionContext";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { nav as navDict } from "@/lib/i18n/dictionaries/nav";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { Wordmark } from "./Wordmark";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
+// Ces pages gèrent leur propre chrome (nav intégrée) : pas de double barre.
+const SELF_CHROMED = ["/", "/beta"];
 
 export default function Nav() {
   const path = usePathname();
@@ -29,14 +32,19 @@ export default function Nav() {
       .then((s) => { if (s?.user?.email === ADMIN_EMAIL) setIsAdmin(true); })
       .catch(() => {});
   }, []);
+
+  if (SELF_CHROMED.some((p) => (p === "/" ? path === "/" : path.startsWith(p)))) {
+    return null;
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => (p === "/" ? path === "/" : path.startsWith(p)));
 
   return (
     <nav style={{
-      background: "rgba(4,8,16,0.88)",
+      background: "rgba(12,14,17,0.85)",
       backdropFilter: "blur(14px)",
       WebkitBackdropFilter: "blur(14px)",
-      borderBottom: "1px solid rgba(200,170,110,0.16)",
+      borderBottom: "1px solid var(--line)",
       position: "sticky",
       top: 0,
       zIndex: 40,
@@ -44,18 +52,9 @@ export default function Nav() {
       <div className="max-w-6xl mx-auto px-4 flex items-center gap-1 h-14">
         <Link
           href="/"
-          style={{
-            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1rem",
-            letterSpacing: "0.14em",
-            color: "#C8AA6E",
-            textShadow: "0 0 22px rgba(200,170,110,0.5)",
-            textDecoration: "none",
-            marginRight: "1.5rem",
-            flexShrink: 0,
-          }}
+          style={{ textDecoration: "none", marginRight: "1.75rem", flexShrink: 0, display: "inline-flex" }}
         >
-          ⚔ L·O·W
+          <Wordmark fontSize="1.05rem" />
         </Link>
 
         {!isPublic && [...links, ...(isAdmin ? [{ href: "/admin", label: t.admin }] : [])].map((l) => {
@@ -68,11 +67,12 @@ export default function Nav() {
                 position: "relative",
                 padding: "4px 10px",
                 paddingBottom: 6,
-                fontSize: "0.78rem",
-                letterSpacing: "0.07em",
+                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontSize: "0.92rem",
+                fontWeight: active ? 600 : 500,
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: active ? "#C8AA6E" : "rgba(240,230,211,0.45)",
-                fontWeight: active ? "600" : "400",
+                color: active ? "var(--bone)" : "var(--faint)",
                 textDecoration: "none",
                 transition: "color 0.15s",
                 whiteSpace: "nowrap",
@@ -86,8 +86,8 @@ export default function Nav() {
                   left: 10,
                   right: 10,
                   height: 2,
-                  background: "linear-gradient(to right, transparent, #C8AA6E, transparent)",
-                  borderRadius: 1,
+                  background: "var(--ember)",
+                  transform: "skewX(-18deg)",
                 }} />
               )}
             </Link>
@@ -103,40 +103,41 @@ export default function Nav() {
               gap: 7,
               padding: "4px 12px",
               borderRadius: 999,
-              background: "rgba(34,197,94,0.07)",
-              border: "1px solid rgba(34,197,94,0.25)",
+              background: "var(--victory-soft)",
+              border: "1px solid rgba(47,217,138,0.3)",
             }}>
               <span style={{
                 width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                background: "#22C55E",
-                boxShadow: "0 0 6px #22C55E",
+                background: "var(--victory)",
                 animation: "pulse 1.5s ease-in-out infinite",
                 display: "inline-block",
               }} />
-              <span style={{ fontSize: "0.7rem", color: "#22C55E", fontWeight: 700, letterSpacing: "0.06em" }}>{t.live}</span>
-              <span style={{ fontSize: "0.7rem", color: "#C8AA6E" }}>{sessionGames.length}G</span>
-              <span style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)" }}>
+              <span style={{ fontSize: "0.7rem", color: "var(--victory)", fontWeight: 700, letterSpacing: "0.06em" }}>{t.live}</span>
+              <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--bone)" }}>{sessionGames.length}G</span>
+              <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--faint)" }}>
                 {polling ? "⟳" : `${countdown}s`}
               </span>
             </div>
             <button
               onClick={stopSession}
               title={t.stopSession}
+              aria-label={t.stopSession}
               style={{
                 width: 28, height: 28,
                 borderRadius: "50%",
-                background: "rgba(194,59,34,0.15)",
-                border: "1px solid rgba(194,59,34,0.3)",
-                color: "#C23B22",
+                background: "rgba(255,90,71,0.12)",
+                border: "1px solid rgba(255,90,71,0.3)",
+                color: "var(--loss)",
                 cursor: "pointer",
-                fontSize: "0.7rem",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 flexShrink: 0,
               }}
             >
-              ⏹
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="currentColor" aria-hidden>
+                <rect width="9" height="9" rx="1.5" />
+              </svg>
             </button>
             </>
           )}
