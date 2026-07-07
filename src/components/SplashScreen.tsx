@@ -48,14 +48,23 @@ export function SplashScreen() {
         <>
           <div style={{ display: "flex", alignItems: "center", gap: "clamp(14px, 2.5vw, 22px)", overflow: "hidden", padding: "0.5rem 0" }}>
             <span style={{ ...word, animation: "splashWord 0.5s ease 0.1s both" }}>WIN</span>
-            <span style={{
-              width: "clamp(8px, 1.4vw, 12px)",
-              height: "clamp(2.4rem, 7.5vw, 3.7rem)",
-              background: "var(--ember)",
-              borderRadius: 2,
-              animation: "splashSlash 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
-            }} />
-            <span style={{ ...word, animation: "splashWord 0.5s ease 0.28s both" }}>WORKOUT</span>
+            <span style={{ display: "flex", gap: "clamp(4px, 0.7vw, 7px)" }}>
+              <span style={{
+                width: "clamp(7px, 1.2vw, 10px)",
+                height: "clamp(2.4rem, 7.5vw, 3.7rem)",
+                background: "var(--ember)",
+                borderRadius: 2,
+                animation: "splashSlash 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
+              }} />
+              <span style={{
+                width: "clamp(7px, 1.2vw, 10px)",
+                height: "clamp(2.4rem, 7.5vw, 3.7rem)",
+                background: "var(--amber)",
+                borderRadius: 2,
+                animation: "splashSlash 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both",
+              }} />
+            </span>
+            <span style={{ ...word, animation: "splashWord 0.5s ease 0.34s both" }}>WORKOUT</span>
           </div>
 
           <div style={{

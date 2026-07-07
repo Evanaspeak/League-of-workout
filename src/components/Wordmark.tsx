@@ -1,5 +1,6 @@
 /**
- * Wordmark "WIN/WORKOUT" — le slash ember incarne le "or" de la marque.
+ * Wordmark "WIN//WORKOUT" — le double slash incarne le "or" de la marque
+ * (le `//` du code), en dégradé de feu : braise → ambre.
  * Purement présentational : à envelopper dans un <Link> si besoin.
  */
 export function Wordmark({
@@ -9,13 +10,22 @@ export function Wordmark({
   fontSize?: string;
   muted?: boolean;
 }) {
+  const bar = (color: string): React.CSSProperties => ({
+    width: "0.13em",
+    height: "0.98em",
+    background: color,
+    transform: "skewX(-18deg)",
+    borderRadius: "0.04em",
+    flexShrink: 0,
+  });
+
   return (
     <span
       aria-label="Win or Workout"
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: "0.32em",
+        gap: "0.3em",
         fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
         fontWeight: 700,
         fontSize,
@@ -27,17 +37,10 @@ export function Wordmark({
       }}
     >
       <span aria-hidden>Win</span>
-      <span
-        aria-hidden
-        style={{
-          width: "0.16em",
-          height: "0.98em",
-          background: "var(--ember)",
-          transform: "skewX(-18deg)",
-          borderRadius: "0.04em",
-          flexShrink: 0,
-        }}
-      />
+      <span aria-hidden style={{ display: "inline-flex", gap: "0.09em" }}>
+        <span style={bar("var(--ember)")} />
+        <span style={bar("var(--amber)")} />
+      </span>
       <span aria-hidden>Workout</span>
     </span>
   );

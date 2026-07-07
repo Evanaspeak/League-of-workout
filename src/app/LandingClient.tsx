@@ -8,6 +8,40 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const DOWNLOAD_URL = process.env.NEXT_PUBLIC_DOWNLOAD_URL;
 
+/* Chaque icône a sa couleur — la palette vit dans le contenu */
+const ICON_COLORS: Record<string, string> = {
+  home: "var(--amber)",
+  layers: "var(--violet)",
+  zap: "var(--amber)",
+  target: "var(--signal)",
+  brain: "var(--violet)",
+  heart: "var(--ember)",
+};
+
+/* Reveal au scroll : ajoute .is-visible aux éléments .reveal quand ils entrent */
+function useRevealOnScroll() {
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll(".reveal"));
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-visible");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
 /* ── Icônes SVG (stroke, style unique — pas d'emoji) ─────────────────────── */
 function Icon({ name, size = 20, color = "var(--steel)" }: { name: string; size?: number; color?: string }) {
   const paths: Record<string, React.ReactNode> = {
@@ -176,6 +210,7 @@ function DebtFeed({
 /* ── Landing ─────────────────────────────────────────────────────────────── */
 export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   const t = useT(landing);
+  useRevealOnScroll();
 
   const h2: React.CSSProperties = {
     fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -220,20 +255,33 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
       </nav>
 
       {/* HERO */}
-      <section style={{ padding: "0 24px" }}>
+      <section style={{ padding: "0 24px", position: "relative", overflow: "hidden" }}>
+        {/* Halos d'ambiance */}
+        <div aria-hidden style={{
+          position: "absolute", top: "-12%", left: "-6%", width: 520, height: 520,
+          borderRadius: "50%", background: "rgba(157,124,255,0.13)",
+          filter: "blur(100px)", pointerEvents: "none",
+        }} />
+        <div aria-hidden style={{
+          position: "absolute", bottom: "-8%", right: "-4%", width: 460, height: 460,
+          borderRadius: "50%", background: "rgba(255,77,46,0.11)",
+          filter: "blur(110px)", pointerEvents: "none",
+        }} />
+
         <div className="wow-hero" style={{
           maxWidth: 1200, margin: "0 auto",
           display: "grid", gridTemplateColumns: "1.05fr 0.95fr",
           gap: 56, alignItems: "center",
           minHeight: "calc(100dvh - 60px)",
           paddingTop: 48, paddingBottom: 64,
+          position: "relative",
         }}>
           {/* Colonne texte */}
           <div>
             <Link href="/beta" style={{ textDecoration: "none" }}>
-              <span style={{
+              <span className="hero-rise" style={{
                 display: "inline-flex", alignItems: "center", gap: 10,
-                marginBottom: 28,
+                marginBottom: 28, animationDelay: "0.05s",
               }}>
                 <span style={{
                   width: 7, height: 7, borderRadius: "50%",
@@ -244,7 +292,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
               </span>
             </Link>
 
-            <h1 style={{
+            <h1 className="hero-rise" style={{
               fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
               fontWeight: 700,
               textTransform: "uppercase",
@@ -252,30 +300,33 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
               lineHeight: 0.98,
               letterSpacing: "0.01em",
               margin: "0 0 26px",
+              animationDelay: "0.12s",
             }}>
               <span style={{ display: "block", color: "var(--bone)" }}>{t.heroTitleLine1}</span>
-              <span style={{ display: "block", color: "var(--ember)" }}>{t.heroTitleLine2}</span>
+              <span className="brand-fire" style={{ display: "block", paddingBottom: "0.08em" }}>{t.heroTitleLine2}</span>
             </h1>
 
-            <p style={{
+            <p className="hero-rise" style={{
               fontSize: "clamp(1rem, 1.6vw, 1.1rem)", lineHeight: 1.65,
               color: "var(--muted)", maxWidth: 500, marginBottom: 30,
+              animationDelay: "0.2s",
             }}>
               {t.heroSubtitle}
             </p>
 
             {/* Jeux supportés */}
-            <div className="mono-num" style={{
+            <div className="mono-num hero-rise" style={{
               display: "flex", flexWrap: "wrap", alignItems: "center",
               gap: "8px 14px", marginBottom: 38,
               fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase",
+              animationDelay: "0.28s",
             }}>
               <span style={{ color: "var(--victory)" }}>{t.heroGamesLive}</span>
               <Slash height={11} />
               <span style={{ color: "var(--faint)" }}>{t.heroGamesNext}</span>
             </div>
 
-            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+            <div className="hero-rise" style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", animationDelay: "0.36s" }}>
               <Link href="/beta" className="wow-cta">
                 {t.heroBeta}
               </Link>
@@ -285,12 +336,13 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             </div>
 
             {DOWNLOAD_URL && (
-              <a href={DOWNLOAD_URL} className="mono-num" style={{
+              <a href={DOWNLOAD_URL} className="mono-num hero-rise" style={{
                 display: "inline-block", marginTop: 22,
                 fontSize: "0.72rem", letterSpacing: "0.08em",
                 color: "var(--faint)", textDecoration: "none",
                 borderBottom: "1px solid var(--line-strong)",
                 paddingBottom: 2,
+                animationDelay: "0.44s",
               }}>
                 {t.heroDownload} ↓
               </a>
@@ -298,7 +350,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
 
           {/* Colonne feed */}
-          <div className="wow-hero-feed" style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div className="wow-hero-feed hero-rise" style={{ display: "flex", justifyContent: "flex-end", animationDelay: "0.3s" }}>
             <DebtFeed
               title={t.feedTitle}
               count={t.feedCount}
@@ -322,11 +374,11 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 32,
           }}>
-            {t.stats.map((s) => (
-              <div key={s.value}>
+            {t.stats.map((s, i) => (
+              <div key={s.value} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
                 <div className="mono-num" style={{
                   fontSize: "clamp(1.7rem, 3vw, 2.3rem)", fontWeight: 600,
-                  color: "var(--bone)", lineHeight: 1, marginBottom: 10,
+                  color: "var(--amber)", lineHeight: 1, marginBottom: 10,
                 }}>
                   {s.value}
                 </div>
@@ -344,7 +396,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         <div className="wow-grid-2" style={{
           display: "grid", gridTemplateColumns: "1fr 1fr", gap: 56, alignItems: "center",
         }}>
-          <div>
+          <div className="reveal">
             <p className="eyebrow" style={{ marginBottom: 18 }}>{t.problemEyebrow}</p>
             <h2 style={{ ...h2, marginBottom: 24 }}>
               {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
@@ -357,10 +409,11 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
               {t.problemPara2}
             </p>
           </div>
-          <div style={{
+          <div className="reveal" style={{
             background: "var(--carbon)",
             border: "1px solid var(--line)",
             borderRadius: 16, padding: "12px 28px",
+            transitionDelay: "120ms",
           }}>
             {t.problemStats.map((item, i) => (
               <div key={item.label} style={{
@@ -393,14 +446,15 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div className="wow-grid-2" style={{
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 72,
           }}>
-            {t.pushupReasons.map((r) => (
-              <div key={r.title} style={{
+            {t.pushupReasons.map((r, i) => (
+              <div key={r.title} className="reveal" style={{
                 background: "var(--carbon)",
                 border: "1px solid var(--line)",
                 borderRadius: 16, padding: "30px 28px",
+                transitionDelay: `${i * 100}ms`,
               }}>
                 <div style={{ marginBottom: 18 }}>
-                  <Icon name={r.icon} size={24} color="var(--steel)" />
+                  <Icon name={r.icon} size={24} color={ICON_COLORS[r.icon] ?? "var(--steel)"} />
                 </div>
                 <h3 style={{
                   fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -443,14 +497,15 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14,
           }}>
-            {t.pushupMuscles.map((m) => {
+            {t.pushupMuscles.map((m, i) => {
               const c = t.muscleRoles[m.role as keyof typeof t.muscleRoles].color;
               return (
-                <div key={m.name} style={{
+                <div key={m.name} className="reveal" style={{
                   background: "var(--carbon)",
                   border: "1px solid var(--line)",
                   borderLeft: `3px solid ${c}`,
                   borderRadius: 12, padding: "18px 20px",
+                  transitionDelay: `${(i % 4) * 60}ms`,
                 }}>
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
                     <span style={{
@@ -501,11 +556,12 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20,
           }}>
-            {t.steps.map((step) => (
-              <div key={step.num} style={{
+            {t.steps.map((step, i) => (
+              <div key={step.num} className="reveal" style={{
                 background: "var(--ink)",
                 border: "1px solid var(--line)",
                 borderRadius: 16, padding: "30px 28px",
+                transitionDelay: `${i * 110}ms`,
               }}>
                 <div className="mono-num" style={{
                   display: "inline-flex", alignItems: "center", gap: 10,
@@ -541,14 +597,15 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         <div style={{
           display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16,
         }}>
-          {t.benefits.map((b) => (
-            <div key={b.title} style={{
+          {t.benefits.map((b, i) => (
+            <div key={b.title} className="reveal" style={{
               background: "var(--carbon)",
               border: "1px solid var(--line)",
               borderRadius: 14, padding: "26px 24px",
+              transitionDelay: `${i * 90}ms`,
             }}>
               <div style={{ marginBottom: 16 }}>
-                <Icon name={b.icon} size={22} color="var(--steel)" />
+                <Icon name={b.icon} size={22} color={ICON_COLORS[b.icon] ?? "var(--steel)"} />
               </div>
               <h3 style={{
                 fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -576,12 +633,13 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14,
           }}>
-            {t.features.map((f) => (
-              <div key={f.title} style={{
+            {t.features.map((f, i) => (
+              <div key={f.title} className="reveal" style={{
                 display: "flex", gap: 16, padding: "20px",
                 background: "var(--carbon)",
                 border: "1px solid var(--line)",
                 borderRadius: 12,
+                transitionDelay: `${(i % 3) * 70}ms`,
               }}>
                 <div style={{ paddingTop: 5 }}>
                   <Slash height={13} />
@@ -606,14 +664,14 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         padding: "110px 24px",
         textAlign: "center",
       }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+        <div className="reveal" style={{ maxWidth: 720, margin: "0 auto" }}>
           <h2 style={{
             fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
             fontWeight: 700, textTransform: "uppercase",
             fontSize: "clamp(2.2rem, 4.6vw, 3.4rem)",
-            lineHeight: 1.02, marginBottom: 18, color: "var(--bone)",
+            lineHeight: 1.02, marginBottom: 18,
           }}>
-            {t.ctaTitle}
+            <span className="brand-fire" style={{ paddingBottom: "0.08em" }}>{t.ctaTitle}</span>
           </h2>
           <p style={{ fontSize: "0.97rem", color: "var(--muted)", lineHeight: 1.7, marginBottom: 38 }}>
             {t.ctaSubtitle}
@@ -633,10 +691,12 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       <style>{`
         .wow-cta {
+          position: relative;
+          overflow: hidden;
           display: inline-block;
           padding: 13px 30px;
           border-radius: 8px;
-          background: var(--ember);
+          background: linear-gradient(135deg, #FF4D2E 0%, #FF7A35 100%);
           color: #fff;
           font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
           font-weight: 600;
@@ -644,13 +704,24 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           letter-spacing: 0.09em;
           text-transform: uppercase;
           text-decoration: none;
-          transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+          transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+        }
+        .wow-cta::after {
+          content: "";
+          position: absolute;
+          top: 0; bottom: 0;
+          left: -80%;
+          width: 55%;
+          background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+          transform: skewX(-20deg);
+          pointer-events: none;
         }
         .wow-cta:hover {
-          background: #FF6448;
           transform: translateY(-1px);
-          box-shadow: 0 8px 28px rgba(255, 77, 46, 0.3);
+          filter: brightness(1.07);
+          box-shadow: 0 8px 30px rgba(255, 110, 46, 0.4);
         }
+        .wow-cta:hover::after { animation: sheen 0.65s ease; }
         .wow-ghost {
           display: inline-block;
           padding: 13px 30px;

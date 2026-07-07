@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 /* ════════════════════════════════════════════════════════════════════════
-   WIN OR WORKOUT — Design System
-   Concept : le scoreboard règle la dette. Deux pôles sémantiques :
-   VICTORY (vert)  = la game est gagnée.
-   EMBER   (braise) = la dette de pompes — CTA, défaites, le "/" de la marque.
-   Le chrome (bordures, labels) reste neutre graphite : la couleur ne sert
-   que quand elle veut dire quelque chose.
+   WIN OR WORKOUT — Design System (V26)
+   Concept : le scoreboard règle la dette.
+   EMBER   (braise)  = la dette, l'action — CTA, défaites, le "//" de la marque.
+   AMBER   (ambre)   = les valeurs, les records — l'« or » des stats.
+   VICTORY (vert)    = la game est gagnée.
+   VIOLET  (gaming)  = ambiance, graphiques, profondeur.
+   Le chrome (bordures, labels) reste graphite ; la couleur porte le sens
+   et la chaleur.
    ════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -29,6 +31,10 @@
   --ember:      #FF4D2E;
   --ember-deep: #E03A1C;
   --ember-soft: rgba(255, 77, 46, 0.12);
+  --amber:      #FFB454; /* valeurs, records, chaleur — l'« or » des stats */
+  --amber-soft: rgba(255, 180, 84, 0.12);
+  --violet:      #9D7CFF; /* ambiance gaming, graphiques */
+  --violet-soft: rgba(157, 124, 255, 0.10);
   --victory:      #2FD98A;
   --victory-soft: rgba(47, 217, 138, 0.10);
   --signal:      #6E9BFF; /* info / live / liens in-app */
@@ -37,16 +43,19 @@
   --win:  #2FD98A;
   --loss: #FF5A47;
 
+  /* Dégradé de marque : le feu, du rouge braise à l'ambre */
+  --brand-gradient: linear-gradient(135deg, #FF4D2E 0%, #FF8A3D 62%, #FFB454 100%);
+
   /* Aliases legacy (anciens tokens gold/cyan → nouvelle palette) */
   --bg-deep:   var(--ink);
   --bg-base:   #101319;
   --bg-raised: var(--carbon);
   --bg-high:   var(--carbon-2);
-  --gold:        var(--bone);
+  --gold:        var(--amber);
   --gold-light:  var(--bone);
-  --gold-dim:    rgba(236, 239, 244, 0.45);
-  --gold-subtle: rgba(236, 239, 244, 0.07);
-  --gold-glow:   rgba(255, 77, 46, 0.18);
+  --gold-dim:    rgba(255, 180, 84, 0.5);
+  --gold-subtle: rgba(255, 180, 84, 0.08);
+  --gold-glow:   rgba(255, 180, 84, 0.2);
   --cyan: var(--signal);
   --red:  var(--ember-deep);
   --border:       var(--line);
@@ -58,6 +67,11 @@ html { height: 100%; }
 
 body {
   background-color: var(--ink);
+  /* Halos d'ambiance : violet en haut, braise en bas — le noir n'est jamais plat */
+  background-image:
+    radial-gradient(ellipse 75% 55% at 15% -8%,  rgba(157, 124, 255, 0.08) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 45% at 95% 110%, rgba(255, 77, 46, 0.07)  0%, transparent 58%);
+  background-attachment: fixed;
   color: var(--bone);
   font-family: var(--font-body, 'Barlow', 'Segoe UI', sans-serif);
   min-height: 100%;
@@ -80,21 +94,26 @@ body {
   border-radius: 12px;
 }
 
-/* ── Stat Cards ─────────────────────────────────────────────────────────── */
+/* ── Stat Cards : liseré ambre + glow au survol ─────────────────────────── */
 .stat-card {
-  background: var(--carbon);
+  background: linear-gradient(180deg, rgba(255, 180, 84, 0.045) 0%, var(--carbon) 34%);
   border: 1px solid var(--line);
+  border-top: 2px solid var(--amber);
   border-radius: 12px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .stat-card:hover {
   border-color: var(--line-strong);
+  border-top-color: var(--amber);
   transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(255, 180, 84, 0.12);
 }
 
 /* ── Buttons ────────────────────────────────────────────────────────────── */
 .lol-btn {
-  background: var(--ember);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #FF4D2E 0%, #FF7A35 100%);
   color: #fff;
   font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
   font-weight: 600;
@@ -105,15 +124,27 @@ body {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
   display: inline-block;
   text-align: center;
 }
-.lol-btn:hover:not(:disabled) {
-  background: #FF6448;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(255, 77, 46, 0.28);
+.lol-btn::after {
+  /* Sheen : un éclat balaie le bouton au survol */
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -80%;
+  width: 55%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
 }
+.lol-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 8px 28px rgba(255, 100, 46, 0.35);
+}
+.lol-btn:hover:not(:disabled)::after { animation: sheen 0.65s ease; }
 .lol-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .lol-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .lol-btn:focus-visible { outline: 2px solid var(--bone); outline-offset: 2px; }
@@ -124,10 +155,12 @@ body {
   border: 1px solid var(--line-strong);
   box-shadow: none;
 }
+.lol-btn-blue::after { display: none; }
 .lol-btn-blue:hover:not(:disabled) {
   background: rgba(236, 239, 244, 0.06);
   border-color: rgba(236, 239, 244, 0.32);
   box-shadow: none;
+  filter: none;
 }
 
 .lol-btn-danger {
@@ -135,9 +168,11 @@ body {
   color: var(--loss);
   border: 1px solid rgba(255, 90, 71, 0.35);
 }
+.lol-btn-danger::after { display: none; }
 .lol-btn-danger:hover:not(:disabled) {
   background: rgba(255, 90, 71, 0.1);
   box-shadow: none;
+  filter: none;
 }
 
 /* ── Inputs ─────────────────────────────────────────────────────────────── */
@@ -154,8 +189,8 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .lol-input:focus {
-  border-color: rgba(236, 239, 244, 0.4);
-  box-shadow: 0 0 0 3px rgba(236, 239, 244, 0.07);
+  border-color: rgba(255, 180, 84, 0.5);
+  box-shadow: 0 0 0 3px rgba(255, 180, 84, 0.1);
 }
 .lol-input::placeholder { color: var(--faint); }
 .lol-input:read-only { opacity: 0.5; cursor: not-allowed; }
@@ -172,10 +207,10 @@ body {
   cursor: pointer;
   transition: border-color 0.15s;
 }
-.lol-select:focus { border-color: rgba(236, 239, 244, 0.4); }
+.lol-select:focus { border-color: rgba(255, 180, 84, 0.5); }
 
 /* ── Utility ────────────────────────────────────────────────────────────── */
-.gold-text  { color: var(--bone); font-weight: 600; }
+.gold-text  { color: var(--amber); font-weight: 600; }
 .blue-text  { color: var(--signal); }
 .win-text   { color: var(--win); }
 .loss-text  { color: var(--loss); }
@@ -194,6 +229,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Texte en dégradé de marque (grands titres) */
+.brand-fire {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
 /* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -206,13 +250,43 @@ body {
 }
 .fade-in { animation: fadeIn 0.25s ease forwards; }
 
+/* Apparition montante — cartes du dashboard (délai par carte en inline) */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: riseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Stagger du hero au chargement (landing) */
+@keyframes heroRise {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-rise { animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Reveal au scroll (IntersectionObserver ajoute .is-visible) */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes sheen {
+  from { left: -80%; }
+  to   { left: 130%; }
+}
+
 @keyframes feedIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes splashSlash {
-  0%   { transform: translateX(-120%) skewX(-18deg); }
+  0%   { transform: translateX(-140%) skewX(-18deg); }
   100% { transform: translateX(0) skewX(-18deg); }
 }
 
@@ -222,7 +296,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fade-in { animation: none; }
+  .fade-in, .rise, .hero-rise { animation: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
