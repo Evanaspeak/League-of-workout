@@ -257,6 +257,15 @@ body {
 }
 .rise { animation: riseIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* Transition entre les pages (via app/template.tsx, remonté à chaque navigation).
+   Pas de fill-mode : le transform disparaît à la fin de l'animation, pour ne pas
+   casser les position:fixed (modales) ni les sticky à l'intérieur de la page. */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: pageEnter 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
+
 /* Stagger du hero au chargement (landing) */
 @keyframes heroRise {
   from { opacity: 0; transform: translateY(22px); }
@@ -296,7 +305,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fade-in, .rise, .hero-rise { animation: none; }
+  .fade-in, .rise, .hero-rise, .page-enter { animation: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
