@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { redirect } from "next/navigation";
 import AdminChampionEditor from "./AdminChampionEditor";
-import AdminBetaApplications from "./AdminBetaApplications";
 import AdminUserList from "./AdminUserList";
 import AdminTools from "./AdminTools";
 import AdminHeader from "./AdminHeader";
@@ -17,7 +16,6 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6">
       <AdminHeader email={user.email} />
-      <AdminBetaApplications />
       <AdminUserList />
       <AdminChampionEditor />
       <AdminTools />

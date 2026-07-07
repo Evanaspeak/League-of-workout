@@ -41,6 +41,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Pseudo invalide (lettres, chiffres, espaces uniquement)" }, { status: 400 });
     }
 
+    // Email optionnel (pour la récupération de compte). Si fourni : valider + unicité.
+    const rawEmail = String(body.email ?? "").trim().toLowerCase();
+    let email: string | null = null;
+    if (rawEmail) {
+      if (!rawEmail.includes("@") || rawEmail.length < 5) {
+        return NextResponse.json({ error: "Email invalide" }, { status: 400 });
+      }
+      const emailTaken = await prisma.user.findUnique({ where: { email: rawEmail }, select: { id: true } });
+      if (emailTaken) {
+        return NextResponse.json({ error: "Un compte existe déjà avec cet email" }, { status: 409 });
+      }
+      email = rawEmail;
+    }
+
     const count = await prisma.user.count();
     if (count >= BETA_LIMIT) {
       return NextResponse.json({ error: "Beta complète — les 100 places sont prises." }, { status: 403 });
@@ -61,6 +75,7 @@ export async function POST(request: Request) {
     const user = await prisma.user.create({
       data: {
         pseudo,
+        email,
         passwordHash,
         betaRank: count + 1,
         genre: body.genre ? String(body.genre) : null,
