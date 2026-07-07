@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
+import Link from "next/link";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { loginButtons as loginButtonsDict } from "@/lib/i18n/dictionaries/loginButtons";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 
-type Tab = "google" | "discord" | "email";
+type Tab = "code" | "google" | "discord" | "email";
 type Mode = "login" | "register";
 
 const TAB_STYLE = (active: boolean): React.CSSProperties => ({
@@ -38,7 +39,7 @@ const INPUT_STYLE: React.CSSProperties = {
 export function LoginButtons() {
   const t = useT(loginButtonsDict);
   const { locale } = useLocale();
-  const [tab, setTab] = useState<Tab>("google");
+  const [tab, setTab] = useState<Tab>("code");
   const [mode, setMode] = useState<Mode>("login");
   const [isDesktop, setIsDesktop] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -51,6 +52,29 @@ export function LoginButtons() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+
+  // Pseudo + code form state
+  const [codePseudo, setCodePseudo] = useState("");
+  const [codeValue, setCodeValue] = useState("");
+
+  const handleCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    saveRm();
+    try {
+      const result = await signIn("credentials", { email: codePseudo, password: codeValue, redirect: false });
+      if (result?.error) {
+        setError(t.erreurPseudoCode);
+      } else {
+        window.location.href = "/dashboard?li=1";
+      }
+    } catch {
+      setError(t.erreurConnexion);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     setIsDesktop(!!window.electronLOL?.isDesktop);
@@ -137,10 +161,40 @@ export function LoginButtons() {
         borderBottom: "1px solid rgba(200,170,110,0.12)",
         marginBottom: "1.25rem",
       }}>
+        <button style={TAB_STYLE(tab === "code")} onClick={() => setTab("code")}>{t.code}</button>
         <button style={TAB_STYLE(tab === "google")} onClick={() => setTab("google")}>{t.google}</button>
         <button style={TAB_STYLE(tab === "discord")} onClick={() => setTab("discord")}>{t.discord}</button>
         <button style={TAB_STYLE(tab === "email")} onClick={() => setTab("email")}>{t.email}</button>
       </div>
+
+      {/* Pseudo + Code tab (méthode principale) */}
+      {tab === "code" && (
+        <div className="space-y-3">
+          {error && (
+            <div style={{
+              padding: "0.6rem 0.8rem", marginBottom: "0.25rem",
+              background: "rgba(232,64,87,0.1)", border: "1px solid rgba(232,64,87,0.3)",
+              borderRadius: 4, fontSize: "0.82rem", color: "#e84057",
+            }}>
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleCodeLogin} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+            <input type="text" placeholder={t.codePseudoPlaceholder} value={codePseudo} onChange={(e) => setCodePseudo(e.target.value)}
+              required autoComplete="username" style={INPUT_STYLE} />
+            <input type="text" placeholder={t.codePlaceholder} value={codeValue} onChange={(e) => setCodeValue(e.target.value)}
+              required autoComplete="one-time-code" style={{ ...INPUT_STYLE, letterSpacing: "0.15em" }} />
+            <button type="submit" disabled={loading} className="lol-btn w-full" style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
+              {loading ? t.connexionEnCours : t.seConnecter}
+            </button>
+          </form>
+          {checkbox}
+          <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)", textAlign: "center", marginTop: "0.5rem" }}>
+            {t.noCodeYet}{" "}
+            <Link href="/beta" style={{ color: "#C8AA6E", textDecoration: "none" }}>{t.getAccess}</Link>
+          </p>
+        </div>
+      )}
 
       {/* Google tab */}
       {tab === "google" && (

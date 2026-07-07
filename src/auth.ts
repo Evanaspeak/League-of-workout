@@ -12,25 +12,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig.providers,
     Credentials({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Mot de passe", type: "password" },
+        // "identifier" = email OU pseudo ; "password" = mot de passe OU code.
+        email: { label: "Email ou pseudo", type: "text" },
+        password: { label: "Mot de passe ou code", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const email = credentials.email as string;
+        const identifier = (credentials.email as string).trim();
+        const secret = credentials.password as string;
 
-        // Verrouillage par compte (pas par IP, pour éviter le contournement
-        // via botnet distribué) : 5 échecs / 15 min.
-        if (await isRateLimited(email, "login")) return null;
+        // Verrouillage par identifiant (pas par IP, pour éviter le
+        // contournement via botnet distribué) : 5 échecs / 15 min.
+        if (await isRateLimited(identifier.toLowerCase(), "login")) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Un "@" => email (unique). Sinon => pseudo (compte pseudo+code),
+        // recherche insensible à la casse parmi les comptes avec un code/mdp.
+        const user = identifier.includes("@")
+          ? await prisma.user.findUnique({ where: { email: identifier } })
+          : await prisma.user.findFirst({
+              where: {
+                pseudo: { equals: identifier, mode: "insensitive" },
+                passwordHash: { not: null },
+              },
+            });
+
         if (!user?.passwordHash) {
-          await recordAttempt(email, "login");
+          await recordAttempt(identifier.toLowerCase(), "login");
           return null;
         }
-        const valid = await bcrypt.compare(credentials.password as string, user.passwordHash);
+        const valid = await bcrypt.compare(secret, user.passwordHash);
         if (!valid) {
-          await recordAttempt(email, "login");
+          await recordAttempt(identifier.toLowerCase(), "login");
           return null;
         }
         return user;
