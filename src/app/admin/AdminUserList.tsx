@@ -337,9 +337,9 @@ export default function AdminUserList() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div style={{ minWidth: 0 }}>
       <div style={{ fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.4)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: "0.88rem", color: "rgba(240,230,211,0.8)" }}>{value}</div>
+      <div style={{ fontSize: "0.88rem", color: "rgba(240,230,211,0.8)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value}</div>
     </div>
   );
 }
