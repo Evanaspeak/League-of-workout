@@ -34,7 +34,8 @@ export async function POST(req: Request) {
   const routing = REGION_ROUTING[region] ?? "europe";
 
   const res = await fetch(
-    `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}?api_key=${apiKey}`
+    `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
+    { headers: { "X-Riot-Token": apiKey } }
   );
 
   if (!res.ok) {

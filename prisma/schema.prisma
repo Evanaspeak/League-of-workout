@@ -71,6 +71,16 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// Rate-limiting login/register — une ligne par tentative, purgée après la fenêtre.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  key       String // email (login) ou IP (register)
+  kind      String // "login" | "register"
+  createdAt DateTime @default(now())
+
+  @@index([key, kind, createdAt])
+}
+
 // ─── Données de jeu ─────────────────────────────────────────────────────────
 
 model Game {
