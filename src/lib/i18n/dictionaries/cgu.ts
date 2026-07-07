@@ -5,7 +5,7 @@ export const cgu = {
     article1: {
       title: "1. Présentation",
       paragraphs: [
-        "League of Workouts (ci-après « l'Application ») est un service développé et exploité par Evan Tocquet, développeur indépendant (ci-après « l'Éditeur »). L'Application propose un suivi gamifié de l'activité physique basé sur les performances en jeu sur League of Legends.",
+        "Win or Workout (ci-après « l'Application ») est un service développé et exploité par Evan Tocquet, développeur indépendant (ci-après « l'Éditeur »). L'Application propose un suivi gamifié de l'activité physique basé sur les performances en jeu sur League of Legends.",
         "L'accès à l'Application est actuellement limité à une phase bêta fermée de 100 utilisateurs maximum.",
       ],
     },
@@ -36,7 +36,7 @@ export const cgu = {
       title: "5. Propriété intellectuelle",
       paragraphs: [
         "L'Application, son code, son design et ses contenus sont la propriété exclusive d'Evan Tocquet. Toute reproduction ou utilisation non autorisée est interdite.",
-        "League of Legends et les données associées sont la propriété de Riot Games, Inc. League of Workouts n'est pas affilié à Riot Games et utilise l'API Riot Games conformément à ses conditions d'utilisation.",
+        "League of Legends et les données associées sont la propriété de Riot Games, Inc. Win or Workout n'est pas affilié à Riot Games et utilise l'API Riot Games conformément à ses conditions d'utilisation.",
       ],
     },
     article6: {
@@ -70,7 +70,7 @@ export const cgu = {
     article1: {
       title: "1. Introduction",
       paragraphs: [
-        "League of Workouts (hereinafter \"the Application\") is a service developed and operated by Evan Tocquet, an independent developer (hereinafter \"the Publisher\"). The Application provides a gamified physical activity tracker based on in-game performance in League of Legends.",
+        "Win or Workout (hereinafter \"the Application\") is a service developed and operated by Evan Tocquet, an independent developer (hereinafter \"the Publisher\"). The Application provides a gamified physical activity tracker based on in-game performance in League of Legends.",
         "Access to the Application is currently limited to a closed beta phase of a maximum of 100 users.",
       ],
     },
@@ -101,7 +101,7 @@ export const cgu = {
       title: "5. Intellectual Property",
       paragraphs: [
         "The Application, its code, design, and content are the exclusive property of Evan Tocquet. Any unauthorized reproduction or use is prohibited.",
-        "League of Legends and its associated data are the property of Riot Games, Inc. League of Workouts is not affiliated with Riot Games and uses the Riot Games API in accordance with its terms of use.",
+        "League of Legends and its associated data are the property of Riot Games, Inc. Win or Workout is not affiliated with Riot Games and uses the Riot Games API in accordance with its terms of use.",
       ],
     },
     article6: {

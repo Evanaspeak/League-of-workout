@@ -48,7 +48,7 @@ export default function AdminTools() {
       <h2 style={{
         fontFamily: "var(--font-heading)",
         fontSize: "1rem",
-        color: "#C8AA6E",
+        color: "#ECEFF4",
         letterSpacing: "0.1em",
         marginBottom: 16,
       }}>
@@ -57,10 +57,10 @@ export default function AdminTools() {
 
       {/* Liste blanche d'emails */}
       <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(200,170,110,0.45)", marginBottom: 8 }}>
+        <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.45)", marginBottom: 8 }}>
           {t.whitelistTitle}
         </p>
-        <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.4)", lineHeight: 1.6, marginBottom: 10 }}>
+        <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.4)", lineHeight: 1.6, marginBottom: 10 }}>
           {t.whitelistExplanation}
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -71,8 +71,8 @@ export default function AdminTools() {
             placeholder={t.emailPlaceholder}
             style={{
               flex: 1, padding: "7px 12px", borderRadius: 6, fontSize: "0.85rem",
-              background: "rgba(240,230,211,0.04)", border: "1px solid rgba(200,170,110,0.2)",
-              color: "#F0E6D3", outline: "none",
+              background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
+              color: "#ECEFF4", outline: "none",
             }}
           />
           <button
@@ -80,22 +80,22 @@ export default function AdminTools() {
             disabled={saving || !input.trim()}
             style={{
               padding: "7px 16px", borderRadius: 6, fontSize: "0.82rem", cursor: "pointer",
-              background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.35)",
-              color: "#4caf50", fontWeight: 600,
+              background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.35)",
+              color: "#2FD98A", fontWeight: 600,
             }}
           >
             {saving ? "..." : t.authorize}
           </button>
         </div>
-        {msg && <p style={{ fontSize: "0.78rem", color: msg.startsWith("✓") ? "#4caf50" : "#ef5350", marginBottom: 8 }}>{msg}</p>}
+        {msg && <p style={{ fontSize: "0.78rem", color: msg.startsWith("✓") ? "#2FD98A" : "#FF5A47", marginBottom: 8 }}>{msg}</p>}
         {emails.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {emails.map(e => (
-              <div key={e} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", borderRadius: 4, background: "rgba(76,175,80,0.06)", border: "1px solid rgba(76,175,80,0.15)" }}>
-                <span style={{ fontSize: "0.82rem", color: "rgba(240,230,211,0.7)" }}>{e}</span>
+              <div key={e} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", borderRadius: 4, background: "rgba(47,217,138,0.06)", border: "1px solid rgba(47,217,138,0.15)" }}>
+                <span style={{ fontSize: "0.82rem", color: "rgba(236,239,244,0.7)" }}>{e}</span>
                 <button
                   onClick={() => remove(e)}
-                  style={{ background: "none", border: "none", color: "#ef5350", cursor: "pointer", fontSize: "0.85rem", padding: "0 4px" }}
+                  style={{ background: "none", border: "none", color: "#FF5A47", cursor: "pointer", fontSize: "0.85rem", padding: "0 4px" }}
                 >
                   ✕
                 </button>
@@ -104,13 +104,13 @@ export default function AdminTools() {
           </div>
         )}
         {emails.length === 0 && (
-          <p style={{ fontSize: "0.78rem", color: "rgba(240,230,211,0.25)" }}>{t.noEmails}</p>
+          <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.25)" }}>{t.noEmails}</p>
         )}
       </div>
 
       {/* Rejouer intro */}
-      <div style={{ borderTop: "1px solid rgba(200,170,110,0.1)", paddingTop: 14 }}>
-        <p style={{ fontSize: "0.7rem", color: "rgba(240,230,211,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+      <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: 14 }}>
+        <p style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
           {t.testSection}
         </p>
         <button
@@ -123,9 +123,9 @@ export default function AdminTools() {
             width: "100%",
             padding: "0.55rem",
             background: "transparent",
-            border: "1px dashed rgba(200,170,110,0.2)",
+            border: "1px dashed rgba(152,162,176,0.2)",
             borderRadius: 4,
-            color: "rgba(200,170,110,0.45)",
+            color: "rgba(152,162,176,0.45)",
             fontSize: "0.78rem",
             cursor: "pointer",
             letterSpacing: "0.06em",

@@ -13,34 +13,30 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "radial-gradient(circle at 50% 40%, #0a1220 0%, #040810 70%)",
+          background: "#0C0E11",
         }}
       >
-        <div
+        <span
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 132,
-            height: 132,
-            borderRadius: 30,
-            border: "4px solid #C8AA6E",
-            boxShadow: "0 0 30px rgba(200,170,110,0.35)",
+            color: "#ECEFF4",
+            fontSize: 104,
+            fontWeight: 800,
+            fontFamily: "sans-serif",
+            lineHeight: 1,
           }}
         >
-          <span
-            style={{
-              color: "#C8AA6E",
-              fontSize: 88,
-              fontWeight: 800,
-              fontFamily: "sans-serif",
-              lineHeight: 1,
-              textShadow: "0 0 24px rgba(200,170,110,0.5)",
-            }}
-          >
-            W
-          </span>
-        </div>
+          W
+        </span>
+        <div
+          style={{
+            width: 20,
+            height: 94,
+            background: "#FF4D2E",
+            transform: "skewX(-18deg)",
+            borderRadius: 4,
+            marginLeft: 14,
+          }}
+        />
       </div>
     ),
     { ...size }

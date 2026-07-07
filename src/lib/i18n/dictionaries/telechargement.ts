@@ -1,6 +1,6 @@
 export const telechargement = {
   fr: {
-    metaTitle: "Téléchargement — League of Workouts",
+    metaTitle: "Téléchargement — Win or Workout",
     title: "APPLICATION DESKTOP",
     description: "Intègre le client League of Legends en temps réel.",
     compatibilite: "Compatible Windows 10 / 11.",
@@ -8,13 +8,13 @@ export const telechargement = {
     bientotDisponible: "Bientôt disponible — le lien de téléchargement sera ajouté ici dès la sortie.",
     commentCaFonctionne: "Comment ça fonctionne ?",
     etape1: "Installez l'application sur votre PC Windows.",
-    etape2: "Connectez-vous avec votre compte League of Workouts.",
+    etape2: "Connectez-vous avec votre compte Win or Workout.",
     etape3: "Lancez une partie — l'application détecte automatiquement les résultats.",
     etape4: "Les pompes s'accumulent en temps réel sans intervention manuelle.",
     retourDashboard: "← Retour au dashboard",
   },
   en: {
-    metaTitle: "Download — League of Workouts",
+    metaTitle: "Download — Win or Workout",
     title: "DESKTOP APP",
     description: "Integrates with the League of Legends client in real time.",
     compatibilite: "Compatible with Windows 10 / 11.",
@@ -22,7 +22,7 @@ export const telechargement = {
     bientotDisponible: "Coming soon — the download link will be added here on release.",
     commentCaFonctionne: "How does it work?",
     etape1: "Install the app on your Windows PC.",
-    etape2: "Log in with your League of Workouts account.",
+    etape2: "Log in with your Win or Workout account.",
     etape3: "Start a game — the app automatically detects the results.",
     etape4: "Push-ups accumulate in real time with no manual input.",
     retourDashboard: "← Back to dashboard",

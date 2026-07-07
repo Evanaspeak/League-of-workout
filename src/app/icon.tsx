@@ -13,14 +13,13 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#040810",
+          background: "#0C0E11",
           borderRadius: 7,
-          border: "1.5px solid #C8AA6E",
         }}
       >
         <span
           style={{
-            color: "#C8AA6E",
+            color: "#ECEFF4",
             fontSize: 19,
             fontWeight: 800,
             fontFamily: "sans-serif",
@@ -29,6 +28,16 @@ export default function Icon() {
         >
           W
         </span>
+        <div
+          style={{
+            width: 4,
+            height: 17,
+            background: "#FF4D2E",
+            transform: "skewX(-18deg)",
+            borderRadius: 1,
+            marginLeft: 3,
+          }}
+        />
       </div>
     ),
     { ...size }

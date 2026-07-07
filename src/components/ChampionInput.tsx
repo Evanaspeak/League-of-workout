@@ -101,7 +101,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
       {open && (
         <div style={{
           position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100,
-          background: "#0d1117", border: "1px solid rgba(200,170,110,0.35)",
+          background: "#0d1117", border: "1px solid rgba(152,162,176,0.35)",
           borderRadius: 6, marginTop: 2, overflow: "hidden",
         }}>
           {suggestions.map((s, i) => (
@@ -113,8 +113,8 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
               style={{
                 display: "block", width: "100%", textAlign: "left",
                 padding: "7px 12px", border: "none", cursor: "pointer", fontSize: "0.85rem",
-                background: i === activeIndex ? "rgba(200,170,110,0.15)" : "transparent",
-                color: i === activeIndex ? "#C8AA6E" : "rgba(240,230,211,0.8)",
+                background: i === activeIndex ? "rgba(152,162,176,0.15)" : "transparent",
+                color: i === activeIndex ? "#ECEFF4" : "rgba(236,239,244,0.8)",
               }}
             >
               {s}

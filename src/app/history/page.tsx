@@ -282,10 +282,10 @@ export default function HistoryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      <h1 style={{ fontFamily: "var(--font-heading, 'Russo One', sans-serif)", fontSize: "1.5rem", color: "#C8AA6E", letterSpacing: "0.18em" }}>{t.pageTitle}</h1>
+      <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.pageTitle}</h1>
 
       {/* Tab toggle */}
-      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(200,170,110,0.14)" }}>
+      <div style={{ display: "flex", gap: 0, borderBottom: "1px solid rgba(152,162,176,0.14)" }}>
         {(["parties", "pompes"] as const).map((tab) => (
           <button
             key={tab}
@@ -295,10 +295,10 @@ export default function HistoryPage() {
               padding: "6px 22px 8px",
               background: "transparent",
               border: "none",
-              borderBottom: `2px solid ${view === tab ? "#C8AA6E" : "transparent"}`,
+              borderBottom: `2px solid ${view === tab ? "#ECEFF4" : "transparent"}`,
               marginBottom: -1,
-              color: view === tab ? "#C8AA6E" : "rgba(240,230,211,0.4)",
-              fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
+              color: view === tab ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
               fontSize: "0.75rem",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
@@ -316,10 +316,10 @@ export default function HistoryPage() {
         <div className="space-y-4">
 
           {/* ARAM du chaos banner */}
-          <div className="lol-panel p-4 flex items-start gap-3" style={{ borderColor: "rgba(200,170,110,0.25)" }}>
+          <div className="lol-panel p-4 flex items-start gap-3" style={{ borderColor: "rgba(152,162,176,0.25)" }}>
             <span className="text-lg" style={{ lineHeight: 1.2 }}>⚠️</span>
             <div className="flex-1 space-y-2">
-              <p className="text-sm" style={{ color: "rgba(240,230,211,0.75)" }}>
+              <p className="text-sm" style={{ color: "rgba(236,239,244,0.75)" }}>
                 <span className="gold-text font-semibold">{t.aramTitle}</span>{" "}
                 {t.aramDesc}
               </p>
@@ -337,7 +337,7 @@ export default function HistoryPage() {
             <button
               className="lol-btn text-sm px-4"
               onClick={() => openAddForm()}
-              style={{ background: "rgba(200,170,110,0.15)" }}
+              style={{ background: "rgba(152,162,176,0.15)" }}
             >
               {t.addBtn}
             </button>
@@ -351,19 +351,19 @@ export default function HistoryPage() {
                 <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.addGameTitle}</h2>
                 <button
                   onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
-                  style={{ color: "rgba(240,230,211,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
+                  style={{ color: "rgba(236,239,244,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
                 >✕</button>
               </div>
 
               {addLogged && (
-                <div className="text-center p-3 rounded" style={{ background: "rgba(76,175,80,0.1)", border: "1px solid rgba(76,175,80,0.3)" }}>
+                <div className="text-center p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
                   <span className="win-text font-semibold">{t.gameLogged}</span>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.role}</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.role}</label>
                   <select className="lol-select w-full" value={addForm.role}
                     onChange={(e) => {
                       setAddForm((f) => ({ ...f, role: e.target.value }));
@@ -374,7 +374,7 @@ export default function HistoryPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.champion}</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.champion}</label>
                   <ChampionInput
                     value={addForm.champion}
                     onChange={(val) => setAddForm((f) => ({ ...f, champion: val }))}
@@ -386,7 +386,7 @@ export default function HistoryPage() {
               <div className="grid grid-cols-3 gap-3">
                 {(["kills", "deaths", "assists"] as const).map((field) => (
                   <div key={field}>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                       {field === "kills" ? t.kills : field === "deaths" ? t.deaths : t.assists}
                     </label>
                     <input type="number" min="0" className="lol-input text-center" value={addForm[field]}
@@ -397,14 +397,14 @@ export default function HistoryPage() {
 
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>{t.result}</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.result}</label>
                   <div className="flex gap-2">
                     {(["V", "D"] as const).map((r) => (
                       <button key={r} className="flex-1 py-2 rounded text-sm font-bold"
                         style={{
-                          background: addForm.result === r ? (r === "V" ? "rgba(76,175,80,0.25)" : "rgba(239,83,80,0.25)") : "rgba(200,170,110,0.08)",
-                          border: `1px solid ${addForm.result === r ? (r === "V" ? "#4caf50" : "#ef5350") : "rgba(200,170,110,0.2)"}`,
-                          color: addForm.result === r ? (r === "V" ? "#4caf50" : "#ef5350") : "rgba(240,230,211,0.6)",
+                          background: addForm.result === r ? (r === "V" ? "rgba(47,217,138,0.25)" : "rgba(255,90,71,0.25)") : "rgba(152,162,176,0.08)",
+                          border: `1px solid ${addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(152,162,176,0.2)"}`,
+                          color: addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(236,239,244,0.6)",
                         }}
                         onClick={() => { setAddForm((f) => ({ ...f, result: r })); setPreview(null); }}>
                         {r === "V" ? t.victory : t.defeat}
@@ -413,7 +413,7 @@ export default function HistoryPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(200,170,110,0.7)" }}>
+                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                     {t.gainageTime}
                   </label>
                   <div className="flex items-center gap-2">
@@ -435,30 +435,30 @@ export default function HistoryPage() {
               {preview && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(200,170,110,0.08)" }}>
-                      <span style={{ color: "rgba(240,230,211,0.6)" }}>{t.level}</span>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.level}</span>
                       <span className="gold-text font-bold">{preview.scoring.niveau}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(200,170,110,0.08)" }}>
-                      <span style={{ color: "rgba(240,230,211,0.6)" }}>{t.multiplier}</span>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.multiplier}</span>
                       <span className="gold-text font-bold">×{preview.scoring.multiplicateur}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(200,170,110,0.08)" }}>
-                      <span style={{ color: "rgba(240,230,211,0.6)" }}>{t.baseScore}</span>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.baseScore}</span>
                       <span className="gold-text font-bold">{preview.scoring.scoreBase}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(200,170,110,0.08)" }}>
-                      <span style={{ color: "rgba(240,230,211,0.6)" }}>{t.defeatMalus}</span>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.defeatMalus}</span>
                       <span className={preview.scoring.malus > 0 ? "loss-text font-bold" : "gold-text font-bold"}>+{preview.scoring.malus}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(200,170,110,0.08)" }}>
-                      <span style={{ color: "rgba(240,230,211,0.6)" }}>{t.mastery(preview.partiesAvant)}</span>
+                    <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.mastery(preview.partiesAvant)}</span>
                       <span className="blue-text font-bold">+{Math.round(preview.scoring.surcharge * 100)}%</span>
                     </div>
                   </div>
-                  <div className="text-center p-4 rounded" style={{ background: "rgba(200,170,110,0.1)", border: "1px solid rgba(200,170,110,0.3)" }}>
+                  <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
                     <div className="text-4xl font-bold gold-text">{preview.scoring.pompesFinales}</div>
-                    <div className="text-sm mt-1" style={{ color: "rgba(240,230,211,0.6)" }}>{t.pompesLabel}</div>
+                    <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{t.pompesLabel}</div>
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
                     {addLogging ? t.saving : t.logThisGame}
@@ -476,11 +476,11 @@ export default function HistoryPage() {
             <div className="lol-panel p-6 text-center loss-text">{matchError}</div>
           ) : matches.length === 0 ? (
             <div className="lol-panel p-8 text-center">
-              <p style={{ color: "rgba(240,230,211,0.5)" }}>{t.noGameFound}</p>
+              <p style={{ color: "rgba(236,239,244,0.5)" }}>{t.noGameFound}</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs" style={{ color: "rgba(240,230,211,0.4)" }}>
+              <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
                 {t.last20Games}
               </p>
               {matches.map((m, i) => (
@@ -489,7 +489,7 @@ export default function HistoryPage() {
                   className="lol-panel px-4 py-3 flex items-center gap-3"
                   style={{ background: "var(--bg-raised)" }}
                 >
-                  <span className="text-xs w-5 text-center shrink-0" style={{ color: "rgba(200,170,110,0.4)" }}>{i + 1}</span>
+                  <span className="text-xs w-5 text-center shrink-0" style={{ color: "rgba(152,162,176,0.4)" }}>{i + 1}</span>
 
                   <ChampionIcon name={m.champion} size={38} />
 
@@ -504,21 +504,21 @@ export default function HistoryPage() {
                   </span>
 
                   <span className="gold-text font-semibold text-sm w-14 shrink-0">{m.role}</span>
-                  <span className="text-sm w-24 shrink-0" style={{ color: "rgba(240,230,211,0.85)" }}>{m.champion}</span>
-                  <span className="text-sm font-mono shrink-0" style={{ color: "rgba(240,230,211,0.7)" }}>
+                  <span className="text-sm w-24 shrink-0" style={{ color: "rgba(236,239,244,0.85)" }}>{m.champion}</span>
+                  <span className="text-sm font-mono shrink-0" style={{ color: "rgba(236,239,244,0.7)" }}>
                     {m.kills} / <span style={{ color: "#e05555" }}>{m.deaths}</span> / {m.assists}
                   </span>
-                  <span className="text-xs shrink-0" style={{ color: "rgba(240,230,211,0.35)" }}>
+                  <span className="text-xs shrink-0" style={{ color: "rgba(236,239,244,0.35)" }}>
                     {(() => { try { return new Date(m.date).toLocaleDateString(dateLocale); } catch { return m.date; } })()}
                   </span>
 
                   <div className="ml-auto flex items-center gap-3 shrink-0">
                     {m.indisponible ? (
-                      <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(240,230,211,0.35)" }}>{t.unavailable}</span>
+                      <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(236,239,244,0.35)" }}>{t.unavailable}</span>
                     ) : m.alreadyLogged ? (
                       <>
                         <span className="text-sm gold-text font-bold">{t.pompesCount(m.pompesCalculees ?? 0)}</span>
-                        <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(200,170,110,0.1)", color: "rgba(200,170,110,0.5)" }}>
+                        <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "rgba(152,162,176,0.5)" }}>
                           {t.loggedBadge}
                         </span>
                       </>
@@ -549,13 +549,13 @@ export default function HistoryPage() {
               {/* Filters */}
               <div className="lol-panel p-3 flex flex-wrap gap-3 items-center">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: "rgba(200,170,110,0.6)" }}>{t.roleLabel}</span>
+                  <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.roleLabel}</span>
                   <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
                     {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: "rgba(200,170,110,0.6)" }}>{t.resultLabel}</span>
+                  <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.resultLabel}</span>
                   <select className="lol-select text-sm" value={filterResult} onChange={(e) => setFilterResult(e.target.value)}>
                     <option value="Tous">{t.all}</option>
                     <option value="V">{t.victory}</option>
@@ -563,7 +563,7 @@ export default function HistoryPage() {
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: "rgba(200,170,110,0.6)" }}>{t.sortLabel}</span>
+                  <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.sortLabel}</span>
                   <select className="lol-select text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "pompes")}>
                     <option value="date">{t.date}</option>
                     <option value="pompes">{t.pompes}</option>
@@ -574,13 +574,13 @@ export default function HistoryPage() {
 
               {filtered.length === 0 ? (
                 <div className="lol-panel p-8 text-center">
-                  <p style={{ color: "rgba(240,230,211,0.5)" }}>{t.noGameToDisplay}</p>
+                  <p style={{ color: "rgba(236,239,244,0.5)" }}>{t.noGameToDisplay}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px" }}>
                     <thead>
-                      <tr style={{ color: "rgba(200,170,110,0.6)" }} className="text-xs uppercase tracking-wider">
+                      <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left px-3 py-1">{t.tableDate}</th>
                         <th className="text-left px-3 py-1">{t.tableRole}</th>
                         <th className="text-left px-3 py-1">{t.tableChampion}</th>
@@ -608,8 +608,8 @@ export default function HistoryPage() {
                         return filtered.map((g) => {
                           const cumul = cumulMap.get(g.id) ?? 0;
                           return (
-                            <tr key={g.id} style={{ background: "var(--bg-raised)", borderBottom: "1px solid rgba(200,170,110,0.08)" }}>
-                              <td className="px-3 py-2" style={{ color: "rgba(240,230,211,0.6)" }}>
+                            <tr key={g.id} style={{ background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" }}>
+                              <td className="px-3 py-2" style={{ color: "rgba(236,239,244,0.6)" }}>
                                 {editingDateId === g.id ? (
                                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                     <input
@@ -619,7 +619,7 @@ export default function HistoryPage() {
                                       value={editDateVal}
                                       onChange={(e) => setEditDateVal(e.target.value)}
                                     />
-                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "#4caf50", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✓</button>
+                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "#2FD98A", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✓</button>
                                     <button onClick={() => setEditingDateId(null)} style={{ color: "#e05555", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✕</button>
                                   </div>
                                 ) : (
@@ -633,7 +633,7 @@ export default function HistoryPage() {
                                         setEditingDateId(g.id);
                                       }}
                                       title={t.editDateTitle}
-                                      style={{ color: "rgba(200,170,110,0.35)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
+                                      style={{ color: "rgba(152,162,176,0.35)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
                                     >✎</button>
                                   </div>
                                 )}
@@ -642,10 +642,10 @@ export default function HistoryPage() {
                               <td className="px-3 py-2">
                                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                   <ChampionIcon name={g.champion} size={26} />
-                                  <span style={{ color: "rgba(240,230,211,0.8)" }}>{g.champion ?? "—"}</span>
+                                  <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
                                 </div>
                               </td>
-                              <td className="px-3 py-2 text-center" style={{ color: "rgba(240,230,211,0.8)" }}>
+                              <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.8)" }}>
                                 {g.kills}/{g.deaths}/{g.assists}
                               </td>
                               <td className="px-3 py-2 text-center font-bold">
@@ -654,11 +654,11 @@ export default function HistoryPage() {
                                 </span>
                               </td>
                               <td className="px-3 py-2 text-center gold-text">{g.niveauCalcule}</td>
-                              <td className="px-3 py-2 text-center" style={{ color: "rgba(240,230,211,0.7)" }}>{g.scoreCalcule}</td>
+                              <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.7)" }}>{g.scoreCalcule}</td>
                               <td className="px-3 py-2 text-center loss-text">+{g.malusCalcule}</td>
                               <td className="px-3 py-2 text-center blue-text">+{Math.round(g.surchargeCalculee * 100)}%</td>
                               <td className="px-3 py-2 text-right gold-text font-bold">{g.pompesCalculees}</td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(200,170,110,0.6)" }}>{cumul}</td>
+                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{cumul}</td>
                               <td className="px-3 py-2 text-center">
                                 <button
                                   onClick={() => handleDelete(g.id)}

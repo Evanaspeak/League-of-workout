@@ -3,17 +3,6 @@ import Link from "next/link";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { waitlist as waitlistDict } from "@/lib/i18n/dictionaries/waitlist";
 
-function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const s: React.CSSProperties = {
-    position: "absolute", width: 18, height: 18,
-    ...(pos === "tl" && { top: 0, left: 0, borderTop: "2px solid #C8AA6E", borderLeft: "2px solid #C8AA6E" }),
-    ...(pos === "tr" && { top: 0, right: 0, borderTop: "2px solid #C8AA6E", borderRight: "2px solid #C8AA6E" }),
-    ...(pos === "bl" && { bottom: 0, left: 0, borderBottom: "2px solid #C8AA6E", borderLeft: "2px solid #C8AA6E" }),
-    ...(pos === "br" && { bottom: 0, right: 0, borderBottom: "2px solid #C8AA6E", borderRight: "2px solid #C8AA6E" }),
-  };
-  return <span style={s} />;
-}
-
 export default function WaitlistPage() {
   const t = useT(waitlistDict);
   return (
@@ -23,21 +12,32 @@ export default function WaitlistPage() {
         padding: "2.5rem 2rem",
         width: "100%", maxWidth: 380,
         textAlign: "center",
-        boxShadow: "0 0 80px rgba(200,170,110,0.06), 0 20px 60px rgba(0,0,0,0.35)",
+        overflow: "hidden",
       }}>
-        <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+        <span aria-hidden style={{
+          position: "absolute", top: 0, left: 0, right: 0, height: 2,
+          background: "linear-gradient(90deg, transparent 15%, var(--ember) 50%, transparent 85%)",
+        }} />
 
-        <div style={{ fontSize: "2rem", marginBottom: "1rem", color: "rgba(200,170,110,0.6)" }}>⏳</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.2rem" }}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--steel)"
+            strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 3" />
+          </svg>
+        </div>
         <h1 style={{
-          fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-          fontSize: "1.05rem",
-          color: "#C8AA6E",
-          letterSpacing: "0.15em",
+          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+          fontWeight: 700,
+          fontSize: "1.3rem",
+          color: "var(--bone)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
           marginBottom: "1.25rem",
         }}>
           {t.title}
         </h1>
-        <p style={{ fontSize: "0.84rem", color: "rgba(240,230,211,0.6)", lineHeight: 1.7, marginBottom: "1.75rem" }}>
+        <p style={{ fontSize: "0.84rem", color: "var(--muted)", lineHeight: 1.7, marginBottom: "1.75rem" }}>
           {t.body}
         </p>
         <Link href="/login" className="lol-btn" style={{ display: "inline-block" }}>

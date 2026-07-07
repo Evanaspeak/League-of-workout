@@ -32,14 +32,14 @@ export function LanguageSwitcher() {
           gap: 5,
           padding: "4px 8px",
           borderRadius: 6,
-          background: "rgba(240,230,211,0.04)",
-          border: "1px solid rgba(200,170,110,0.18)",
+          background: "rgba(236,239,244,0.04)",
+          border: "1px solid rgba(152,162,176,0.18)",
           cursor: "pointer",
           fontSize: "0.85rem",
         }}
       >
         <span style={{ lineHeight: 1 }}>{current.flag}</span>
-        <span style={{ fontSize: "0.65rem", color: "rgba(240,230,211,0.4)" }}>▾</span>
+        <span style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>▾</span>
       </button>
 
       {open && (
@@ -48,8 +48,8 @@ export function LanguageSwitcher() {
             position: "absolute",
             top: "calc(100% + 6px)",
             right: 0,
-            background: "rgba(10,14,22,0.98)",
-            border: "1px solid rgba(200,170,110,0.2)",
+            background: "rgba(20,23,28,0.98)",
+            border: "1px solid rgba(152,162,176,0.2)",
             borderRadius: 8,
             overflow: "hidden",
             minWidth: 140,
@@ -67,11 +67,11 @@ export function LanguageSwitcher() {
                 gap: 8,
                 width: "100%",
                 padding: "8px 12px",
-                background: o.code === locale ? "rgba(200,170,110,0.08)" : "transparent",
+                background: o.code === locale ? "rgba(152,162,176,0.08)" : "transparent",
                 border: "none",
                 cursor: "pointer",
                 fontSize: "0.8rem",
-                color: o.code === locale ? "#C8AA6E" : "rgba(240,230,211,0.65)",
+                color: o.code === locale ? "#ECEFF4" : "rgba(236,239,244,0.65)",
                 textAlign: "left",
               }}
             >

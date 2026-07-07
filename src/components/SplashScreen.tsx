@@ -14,12 +14,21 @@ export function SplashScreen() {
     }
     sessionStorage.setItem("splash", "1");
     setState("animating");
-    const t1 = setTimeout(() => setOut(true), 2000);
-    const t2 = setTimeout(() => setState("gone"), 2650);
+    const t1 = setTimeout(() => setOut(true), 1700);
+    const t2 = setTimeout(() => setState("gone"), 2200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   if (state === "gone") return null;
+
+  const word: React.CSSProperties = {
+    fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+    fontWeight: 700,
+    fontSize: "clamp(2.2rem, 7vw, 3.4rem)",
+    letterSpacing: "0.08em",
+    color: "var(--bone)",
+    lineHeight: 1,
+  };
 
   return (
     <div style={{
@@ -30,53 +39,36 @@ export function SplashScreen() {
       alignItems: "center",
       justifyContent: "center",
       flexDirection: "column",
-      background: "#040810",
-      backgroundImage: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(200,170,110,0.07) 0%, transparent 70%)",
+      background: "var(--ink)",
       opacity: state === "animating" && out ? 0 : 1,
-      transition: state === "animating" ? "opacity 0.65s ease" : "none",
+      transition: state === "animating" ? "opacity 0.5s ease" : "none",
       pointerEvents: out ? "none" : "all",
     }}>
       {state === "animating" && (
         <>
-          <div style={{
-            fontSize: "4rem",
-            color: "#C8AA6E",
-            animation: "splashSword 1.1s cubic-bezier(0.34,1.56,0.64,1) forwards, splashGlow 1.8s ease-in-out 1.1s infinite",
-            marginBottom: "1.1rem",
-            lineHeight: 1,
-          }}>⚔</div>
-
-          <div style={{
-            fontFamily: "var(--font-heading, 'Russo One', sans-serif)",
-            fontSize: "1.25rem",
-            letterSpacing: "0.28em",
-            color: "#C8AA6E",
-            textShadow: "0 0 24px rgba(200,170,110,0.45)",
-            animation: "splashTitle 1.4s ease forwards",
-            marginBottom: "0.5rem",
-          }}>
-            LEAGUE OF WORKOUTS
+          <div style={{ display: "flex", alignItems: "center", gap: "clamp(14px, 2.5vw, 22px)", overflow: "hidden", padding: "0.5rem 0" }}>
+            <span style={{ ...word, animation: "splashWord 0.5s ease 0.1s both" }}>WIN</span>
+            <span style={{
+              width: "clamp(8px, 1.4vw, 12px)",
+              height: "clamp(2.4rem, 7.5vw, 3.7rem)",
+              background: "var(--ember)",
+              borderRadius: 2,
+              animation: "splashSlash 0.45s cubic-bezier(0.22, 1, 0.36, 1) both",
+            }} />
+            <span style={{ ...word, animation: "splashWord 0.5s ease 0.28s both" }}>WORKOUT</span>
           </div>
 
           <div style={{
-            fontSize: "0.65rem",
-            letterSpacing: "0.22em",
-            color: "rgba(200,170,110,0.3)",
-            animation: "splashTitle 1.6s ease 0.2s forwards",
-            opacity: 0,
+            fontFamily: "var(--font-mono, 'IBM Plex Mono', monospace)",
+            fontSize: "0.62rem",
+            letterSpacing: "0.34em",
+            textTransform: "uppercase",
+            color: "var(--faint)",
+            marginTop: "1.1rem",
+            animation: "splashWord 0.6s ease 0.55s both",
           }}>
-            VIA RIOT GAMES API
+            Beta
           </div>
-
-          <div style={{
-            position: "absolute",
-            bottom: "2.5rem",
-            width: 60,
-            height: 1,
-            background: "linear-gradient(to right, transparent, rgba(200,170,110,0.4), transparent)",
-            animation: "splashTitle 1.6s ease 0.4s forwards",
-            opacity: 0,
-          }} />
         </>
       )}
     </div>
