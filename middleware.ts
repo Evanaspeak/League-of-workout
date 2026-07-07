@@ -13,7 +13,7 @@ const { auth } = NextAuth(authConfig);
 // le domaine de déploiement mais le callback Google arrive sur le domaine
 // canonique → erreur "Invalid code verifier" → double connexion.
 const CANONICAL_HOST =
-  process.env.AUTH_CANONICAL_HOST ?? "league-of-workout.vercel.app";
+  process.env.AUTH_CANONICAL_HOST ?? "winorworkout.com";
 
 const PUBLIC_PREFIXES = [
   "/beta",
