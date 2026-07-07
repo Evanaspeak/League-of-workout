@@ -23,6 +23,11 @@ export async function GET() {
       riotRegion: true,
       gainageMaxSec: true,
       createdAt: true,
+      genre: true,
+      age: true,
+      poids: true,
+      taille: true,
+      sportsHoursPerWeek: true,
       games: {
         select: {
           date: true,
@@ -65,6 +70,11 @@ export async function GET() {
       riotRegion: u.riotRegion,
       gainageMaxSec: u.gainageMaxSec,
       createdAt: u.createdAt,
+      genre: u.genre,
+      age: u.age,
+      poids: u.poids,
+      taille: u.taille,
+      sportsHoursPerWeek: u.sportsHoursPerWeek,
       totalGames,
       totalPompes,
       avgPompes,

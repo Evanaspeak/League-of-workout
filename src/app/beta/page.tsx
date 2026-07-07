@@ -34,6 +34,7 @@ export default function BetaPage() {
   const { locale } = useLocale();
 
   const [pseudo, setPseudo] = useState("");
+  const [email, setEmail] = useState("");
   const [genre, setGenre] = useState("");
   const [age, setAge] = useState("");
   const [poids, setPoids] = useState("");
@@ -54,7 +55,7 @@ export default function BetaPage() {
       const res = await fetch("/api/beta-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pseudo, genre, age, poids, taille, sportsHoursPerWeek }),
+        body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek }),
       });
       const data = await res.json();
       if (!res.ok) { setError(translateApiError(data.error, locale) || t.genericError); return; }
@@ -168,6 +169,15 @@ export default function BetaPage() {
                 <input style={FIELD_STYLE} placeholder={t.pseudoPlaceholder} value={pseudo}
                   onChange={e => setPseudo(e.target.value)} required minLength={2} maxLength={24} autoFocus />
                 <p style={{ fontSize: "0.75rem", color: "rgba(240,230,211,0.4)", marginTop: 6 }}>{t.pseudoHint}</p>
+              </div>
+
+              <div>
+                <label style={LABEL_STYLE}>
+                  {t.emailLabel} <span style={{ opacity: 0.5, textTransform: "none", letterSpacing: 0 }}>· {t.emailOptional}</span>
+                </label>
+                <input style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
+                  onChange={e => setEmail(e.target.value)} autoComplete="email" />
+                <p style={{ fontSize: "0.75rem", color: "rgba(200,170,110,0.55)", marginTop: 6 }}>{t.emailHint}</p>
               </div>
 
               {/* Section optionnelle repliable */}

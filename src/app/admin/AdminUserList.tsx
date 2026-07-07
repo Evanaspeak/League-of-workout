@@ -12,6 +12,11 @@ type UserStat = {
   riotRegion: string;
   gainageMaxSec: number;
   createdAt: string;
+  genre: string | null;
+  age: number | null;
+  poids: number | null;
+  taille: number | null;
+  sportsHoursPerWeek: number | null;
   totalGames: number;
   totalPompes: number;
   avgPompes: number;
@@ -171,9 +176,15 @@ export default function AdminUserList() {
                 <div style={{ borderTop: "1px solid rgba(200,170,110,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.profile}</SectionTitle>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 12 }}>
+                    <Stat label={t.email} value={u.email ?? t.notProvided} />
                     <Stat label={t.riotId} value={u.riotId ?? t.notProvided} />
                     <Stat label={t.region} value={u.riotRegion} />
                     <Stat label={t.registeredOn} value={new Date(u.createdAt).toLocaleDateString(dateLocale)} />
+                    <Stat label={t.gender} value={u.genre ?? t.notProvided} />
+                    <Stat label={t.age} value={u.age != null ? `${u.age}` : t.notProvided} />
+                    <Stat label={t.weight} value={u.poids != null ? `${u.poids} kg` : t.notProvided} />
+                    <Stat label={t.height} value={u.taille != null ? `${u.taille} cm` : t.notProvided} />
+                    <Stat label={t.sportPerWeek} value={u.sportsHoursPerWeek != null ? `${u.sportsHoursPerWeek} h` : t.notProvided} />
                   </div>
                   {newPasswords[u.id] ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.3)" }}>
