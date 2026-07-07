@@ -23,8 +23,16 @@ model User {
   riotRegion    String  @default("EUW1")
   gainageMaxSec Int     @default(45)
 
-  // Connexion email/mot de passe (optionnel, null pour les comptes OAuth)
+  // Connexion email/mot de passe OU pseudo/code (null pour les comptes OAuth).
+  // Pour les comptes "pseudo+code", le code est haché ici et email reste null.
   passwordHash  String?
+
+  // Infos physiques optionnelles (remplies à l'inscription si l'utilisateur veut).
+  genre              String?
+  age                Int?
+  poids              Int?
+  taille             Int?
+  sportsHoursPerWeek Int?
 
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?
