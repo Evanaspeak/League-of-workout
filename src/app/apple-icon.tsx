@@ -19,7 +19,7 @@ export default function AppleIcon() {
         <span
           style={{
             color: "#ECEFF4",
-            fontSize: 104,
+            fontSize: 100,
             fontWeight: 800,
             fontFamily: "sans-serif",
             lineHeight: 1,
@@ -29,14 +29,30 @@ export default function AppleIcon() {
         </span>
         <div
           style={{
-            width: 20,
-            height: 94,
-            background: "#FF4D2E",
-            transform: "skewX(-18deg)",
-            borderRadius: 4,
+            display: "flex",
+            gap: 10,
             marginLeft: 14,
           }}
-        />
+        >
+          <div
+            style={{
+              width: 15,
+              height: 88,
+              background: "#FF4D2E",
+              transform: "skewX(-18deg)",
+              borderRadius: 4,
+            }}
+          />
+          <div
+            style={{
+              width: 15,
+              height: 88,
+              background: "#FFB454",
+              transform: "skewX(-18deg)",
+              borderRadius: 4,
+            }}
+          />
+        </div>
       </div>
     ),
     { ...size }

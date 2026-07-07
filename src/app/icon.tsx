@@ -30,14 +30,30 @@ export default function Icon() {
         </span>
         <div
           style={{
-            width: 4,
-            height: 17,
-            background: "#FF4D2E",
-            transform: "skewX(-18deg)",
-            borderRadius: 1,
+            display: "flex",
+            gap: 2,
             marginLeft: 3,
           }}
-        />
+        >
+          <div
+            style={{
+              width: 3,
+              height: 16,
+              background: "#FF4D2E",
+              transform: "skewX(-18deg)",
+              borderRadius: 1,
+            }}
+          />
+          <div
+            style={{
+              width: 3,
+              height: 16,
+              background: "#FFB454",
+              transform: "skewX(-18deg)",
+              borderRadius: 1,
+            }}
+          />
+        </div>
       </div>
     ),
     { ...size }
