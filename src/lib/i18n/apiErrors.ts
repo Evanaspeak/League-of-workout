@@ -26,6 +26,7 @@ const ERROR_MAP: Record<string, string> = {
   "Partie introuvable": "Game not found",
   "Date invalide": "Invalid date",
   "Identifiants invalides": "Invalid credentials",
+  "Trop de tentatives. Réessaie plus tard.": "Too many attempts. Try again later.",
 };
 
 export function translateApiError(message: string | undefined | null, locale: Locale): string {

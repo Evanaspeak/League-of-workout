@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
+import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -16,12 +17,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
-        if (!user?.passwordHash) return null;
+        const email = credentials.email as string;
+
+        // Verrouillage par compte (pas par IP, pour éviter le contournement
+        // via botnet distribué) : 5 échecs / 15 min.
+        if (await isRateLimited(email, "login")) return null;
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.passwordHash) {
+          await recordAttempt(email, "login");
+          return null;
+        }
         const valid = await bcrypt.compare(credentials.password as string, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          await recordAttempt(email, "login");
+          return null;
+        }
         return user;
       },
     }),
@@ -70,7 +81,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return "/login?error=AccessDenied";
       } catch (err) {
         console.error("[auth] signIn callback error:", err);
-        return true; // fail open si la DB est indisponible
+        // Fail-closed : si la DB est indisponible, on refuse plutôt que
+        // d'accepter n'importe quel compte Google/Discord sans vérification
+        // bêta. getCurrentUser() échouerait de toute façon derrière.
+        return "/login?error=AccessDenied";
       }
     },
 
