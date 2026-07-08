@@ -28,6 +28,7 @@ export const authConfig = {
         pathname.startsWith("/cgu") ||
         pathname.startsWith("/confidentialite") ||
         pathname.startsWith("/telechargement") ||
+        pathname.startsWith("/recuperation") ||
         pathname.startsWith("/api/auth");
       if (isPublic) return true;
       return !!auth?.user;

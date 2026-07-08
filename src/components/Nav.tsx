@@ -12,7 +12,7 @@ const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
 // Ces pages gèrent leur propre chrome (nav intégrée) : pas de double barre.
-const SELF_CHROMED = ["/", "/beta"];
+const SELF_CHROMED = ["/", "/beta", "/recuperation"];
 
 export default function Nav() {
   const path = usePathname();

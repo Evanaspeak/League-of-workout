@@ -195,6 +195,9 @@ export function LoginButtons() {
             {t.noCodeYet}{" "}
             <Link href="/beta" style={{ color: "var(--ember)", textDecoration: "none", fontWeight: 600 }}>{t.getAccess}</Link>
           </p>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center", marginTop: "0.25rem" }}>
+            <Link href="/recuperation" style={{ color: "rgba(236,239,244,0.5)", textDecoration: "underline" }}>{t.forgotCode}</Link>
+          </p>
         </div>
       )}
 
