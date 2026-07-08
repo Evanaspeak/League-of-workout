@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/onboardingModal";
 
-const PUBLIC = ["/login", "/waitlist", "/beta"];
+const PUBLIC = ["/login", "/waitlist", "/beta", "/recuperation"];
 
 /* Icônes stroke SVG des étapes d'onboarding */
 function StepIcon({ name }: { name: string }) {

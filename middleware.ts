@@ -23,6 +23,7 @@ const PUBLIC_PREFIXES = [
   "/cgu",
   "/confidentialite",
   "/telechargement",
+  "/recuperation",
   "/api/auth",
 ];
 
