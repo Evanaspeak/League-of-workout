@@ -1,5 +1,10 @@
 import { LoginClient } from "./LoginClient";
 
+export const metadata = {
+  title: "Connexion",
+  robots: { index: false },
+};
+
 export default async function LoginPage({
   searchParams,
 }: {

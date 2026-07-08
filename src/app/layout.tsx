@@ -31,8 +31,19 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://winorworkout.com"),
   title: { default: "Win or Workout", template: "%s — Win or Workout" },
   description: "Tu gagnes ta game, ou tu paies en pompes. L'app qui convertit tes parties en entraînement.",
+  applicationName: "Win or Workout",
+  openGraph: {
+    type: "website",
+    siteName: "Win or Workout",
+    locale: "fr_FR",
+    url: "https://winorworkout.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
