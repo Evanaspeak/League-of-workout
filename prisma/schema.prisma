@@ -34,6 +34,11 @@ model User {
   taille             Int?
   sportsHoursPerWeek Int?
 
+  // Exercice choisi pour payer sa dette : pompes | squats | boxe.
+  exercice           String @default("pompes")
+  // Seuil de rappel pendant une session, en points d'effort. 0 = désactivé.
+  rappelSeuilPoints  Int    @default(45)
+
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?
   createdAt DateTime @default(now())
@@ -108,7 +113,11 @@ model Game {
   surchargeCalculee   Float
   scoreCalcule        Int
   malusCalcule        Int
+  // Coût en POINTS D'EFFORT (1 point = 1 pompe). Le nom est historique :
+  // la quantité réellement affichée dépend de `exercice` ci-dessous.
   pompesCalculees     Int
+  // Exercice actif au moment où la partie a été enregistrée.
+  exercice            String   @default("pompes")
   source              String   @default("manuel") // manuel | riot_api
   riotMatchId         String?
 

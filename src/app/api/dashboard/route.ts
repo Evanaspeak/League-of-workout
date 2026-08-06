@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { toExerciceId, RAPPEL_SEUIL_DEFAUT } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -130,5 +131,8 @@ export async function GET() {
     leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,
     niveau: user?.gainageMaxSec ?? 45,
+    // Exercice courant : sert à convertir les points d'effort à l'affichage.
+    exercice: toExerciceId(user?.exercice),
+    rappelSeuilPoints: user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT,
   });
 }

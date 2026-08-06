@@ -7,7 +7,9 @@ export async function GET() {
   await seedDefaults();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  return NextResponse.json(user);
+  // Le hash du mot de passe ne doit jamais quitter le serveur.
+  const { passwordHash: _passwordHash, ...safeUser } = user;
+  return NextResponse.json(safeUser);
 }
 
 export async function PUT(req: Request) {

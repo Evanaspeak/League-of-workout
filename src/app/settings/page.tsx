@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { logout, deleteAccount } from "@/lib/actions";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
+import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
+import {
+  EXERCICES, EXERCICE_DEFAUT, EXERCICE_IDS, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS,
+  formaterCompact, toExerciceId, type ExerciceId,
+} from "@/lib/exercices";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,7 +30,22 @@ const HEADING: React.CSSProperties = {
 
 export default function SettingsPage() {
   const t = useT(settingsDict);
+  const tExo = useT(exercicesDict);
   const { locale } = useLocale();
+
+  const EXO_LABELS: Record<ExerciceId, { nom: string; desc: string }> = {
+    pompes: { nom: tExo.pompesNom, desc: tExo.pompesDesc },
+    squats: { nom: tExo.squatsNom, desc: tExo.squatsDesc },
+    boxe: { nom: tExo.boxeNom, desc: tExo.boxeDesc },
+  };
+
+  /** « 38 pompes » pour les répétitions, « 4 min 26 » pour le temps. */
+  const quantiteAvecNom = (points: number, id: ExerciceId) => {
+    const valeur = formaterCompact(points, id);
+    return EXERCICES[id].unite === "reps"
+      ? `${valeur} ${EXO_LABELS[id].nom.toLowerCase()}`
+      : valeur;
+  };
   // ── Profile ──
   const [profileForm, setProfileForm] = useState({
     pseudo: "", riotId: "", riotRegion: "EUW1", objectifTotalPompes: 1000,
@@ -51,6 +71,12 @@ export default function SettingsPage() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [savedSettings, setSavedSettings] = useState(false);
 
+  // ── Exercice & rappel ──
+  const [exercice, setExercice] = useState<ExerciceId>(EXERCICE_DEFAUT);
+  const [rappelSeuil, setRappelSeuil] = useState<number>(RAPPEL_SEUIL_DEFAUT);
+  const [savingExo, setSavingExo] = useState(false);
+  const [savedExo, setSavedExo] = useState(false);
+
   useEffect(() => {
     Promise.all([
       fetch("/api/user").then((r) => r.json()),
@@ -67,8 +93,29 @@ export default function SettingsPage() {
       setRoleWeights(s.roleWeights);
       setLevelConfigs(s.levelConfigs);
       setMasteryConfig(s.masteryConfig);
+      setExercice(toExerciceId(s.user?.exercice));
+      setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
     });
   }, []);
+
+  const handleSaveExo = async (nextExercice: ExerciceId, nextSeuil: number) => {
+    setExercice(nextExercice);
+    setRappelSeuil(nextSeuil);
+    setSavingExo(true);
+    setSavedExo(false);
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userPrefs: { exercice: nextExercice, rappelSeuilPoints: nextSeuil },
+      }),
+    });
+    setSavingExo(false);
+    if (res.ok) {
+      setSavedExo(true);
+      setTimeout(() => setSavedExo(false), 2000);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setSavingProfile(true);
@@ -210,6 +257,92 @@ export default function SettingsPage() {
         <button className="lol-btn w-full" onClick={handleSaveProfile} disabled={savingProfile}>
           {savingProfile ? t.enregistrementEnCours : savedProfile ? t.profilEnregistre : t.enregistrerProfil}
         </button>
+      </div>
+
+      {/* ── Exercice & rappel ───────────────────────────────────────────── */}
+      <div className="lol-panel p-5 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 style={HEADING}>{tExo.sectionTitle}</h2>
+          {savingExo ? (
+            <span className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>…</span>
+          ) : savedExo ? (
+            <span className="text-xs win-text">✓</span>
+          ) : null}
+        </div>
+        <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          {tExo.sectionHint}
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10 }}>
+          {EXERCICE_IDS.map((id) => {
+            const actif = id === exercice;
+            return (
+              <button
+                key={id}
+                onClick={() => handleSaveExo(id, rappelSeuil)}
+                aria-pressed={actif}
+                style={{
+                  textAlign: "left",
+                  padding: "14px 16px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  background: actif ? "rgba(255,180,84,0.07)" : "rgba(236,239,244,0.02)",
+                  border: `1px solid ${actif ? "var(--amber)" : "var(--line)"}`,
+                  transition: "border-color 0.15s, background 0.15s",
+                }}
+              >
+                <div style={{
+                  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                  fontWeight: 600, fontSize: "1.05rem", textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  color: actif ? "var(--amber)" : "var(--bone)",
+                  marginBottom: 4,
+                }}>
+                  {EXO_LABELS[id].nom}
+                </div>
+                <div style={{ fontSize: "0.76rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.5 }}>
+                  {EXO_LABELS[id].desc}
+                </div>
+                <div className="mono-num" style={{ fontSize: "0.78rem", color: "var(--amber)", marginTop: 8 }}>
+                  {quantiteAvecNom(38, id)}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)" }}>{tExo.exempleIntro}</p>
+
+        {/* Rappel en session */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 style={HEADING}>{tExo.rappelTitle}</h2>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+            {tExo.rappelHint}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {RAPPEL_SEUILS.map((seuil) => {
+              const actif = seuil === rappelSeuil;
+              return (
+                <button
+                  key={seuil}
+                  onClick={() => handleSaveExo(exercice, seuil)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {seuil === 0 ? tExo.rappelDesactive : tExo.rappelValeur(quantiteAvecNom(seuil, exercice))}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}

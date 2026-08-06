@@ -1,5 +1,8 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, type ExerciceId,
+} from "@/lib/exercices";
 
 const POLL_MS = 2 * 60 * 1000;
 // Délai après la fin d'une partie (détectée nativement par l'app desktop) avant
@@ -26,6 +29,16 @@ type SessionCtx = {
   gainageSec: number;
   startSession: (gainageSec: number) => Promise<void>;
   stopSession: () => void;
+  // ── Rappel fractionné ──
+  /** Points d'effort accumulés et non encore acquittés. */
+  dettePoints: number;
+  /** Le seuil est franchi : il est temps d'aller payer. */
+  rappelActif: boolean;
+  exercice: ExerciceId;
+  /** Marque la dette comme payée et repart de zéro. */
+  acquitterRappel: () => void;
+  /** Masque le rappel : il reviendra au palier suivant. */
+  reporterRappel: () => void;
 };
 
 const SessionContext = createContext<SessionCtx | null>(null);
@@ -53,10 +66,48 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const baselineRef = useRef<string | null>(null);
   const sessionActiveRef = useRef(false);
 
+  // ── Rappel fractionné ──
+  const [dettePoints, setDettePoints] = useState(0);
+  const dettePointsRef = useRef(0);
+  const [rappelActif, setRappelActif] = useState(false);
+  const [exercice, setExercice] = useState<ExerciceId>(EXERCICE_DEFAUT);
+  // Seuil configuré par l'utilisateur (0 = rappel désactivé).
+  const seuilRef = useRef<number>(RAPPEL_SEUIL_DEFAUT);
+  // Palier au-delà duquel le prochain rappel se déclenche.
+  const prochainRappelRef = useRef<number>(RAPPEL_SEUIL_DEFAUT);
+  const exerciceRef = useRef<ExerciceId>(EXERCICE_DEFAUT);
+
+  const notifier = useCallback((points: number) => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    const quantite = formaterCompact(points, exerciceRef.current);
+    try {
+      new Notification("Win or Workout", {
+        body: `${quantite} à faire maintenant.`,
+        icon: "/icon",
+        tag: "wow-rappel",
+      });
+    } catch { /* certains navigateurs refusent hors service worker */ }
+  }, []);
+
+  const acquitterRappel = useCallback(() => {
+    setRappelActif(false);
+    dettePointsRef.current = 0;
+    setDettePoints(0);
+    prochainRappelRef.current = seuilRef.current;
+  }, []);
+
+  const reporterRappel = useCallback(() => {
+    setRappelActif(false);
+    // Le rappel réapparaîtra seulement au palier suivant.
+    prochainRappelRef.current = dettePointsRef.current + seuilRef.current;
+  }, []);
+
   const stopSession = useCallback(() => {
     setSessionActive(false);
     setPolling(false);
     setCountdown(0);
+    setRappelActif(false);
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
   }, []);
@@ -105,6 +156,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           result: riotData.result,
           pompes: scoring.pompesFinales,
         }, ...prev]);
+
+        // Accumule la dette et déclenche le rappel au franchissement du palier,
+        // pour fractionner l'effort au lieu de tout reporter en fin de soirée.
+        // Le calcul passe par une ref : un updater React peut être rejoué, ce
+        // qui enverrait la notification en double.
+        const total = dettePointsRef.current + scoring.pompesFinales;
+        dettePointsRef.current = total;
+        setDettePoints(total);
+        if (seuilRef.current > 0 && total >= prochainRappelRef.current) {
+          setRappelActif(true);
+          notifier(total);
+        }
       }
     } catch { /* retry next poll */ }
     setPolling(false);
@@ -117,6 +180,28 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setSessionActive(true);
     setSessionGames([]);
     setSessionError("");
+
+    // Repart d'une dette vierge à chaque session.
+    dettePointsRef.current = 0;
+    setDettePoints(0);
+    setRappelActif(false);
+
+    // Récupère les préférences de rappel de l'utilisateur.
+    try {
+      const u = await fetch("/api/user").then((r) => r.json());
+      const ex = toExerciceId(u?.exercice);
+      const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
+      setExercice(ex);
+      exerciceRef.current = ex;
+      seuilRef.current = seuil;
+      prochainRappelRef.current = seuil;
+    } catch { /* valeurs par défaut conservées */ }
+
+    // Le clic sur « démarrer » est le geste utilisateur qu'exigent les
+    // navigateurs pour pouvoir demander l'autorisation de notifier.
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
 
     // Capture la dernière game existante comme point de départ.
     baselineRef.current = null;
@@ -162,6 +247,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       sessionActive, sessionGames, sessionError,
       polling, countdown, sessionLevel, gainageSec,
       startSession, stopSession,
+      dettePoints, rappelActif, exercice, acquitterRappel, reporterRappel,
     }}>
       {children}
     </SessionContext.Provider>

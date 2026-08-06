@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { isExerciceId } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -19,6 +20,35 @@ export async function PUT(req: Request) {
   const body = await req.json();
 
   const updates: Promise<unknown>[] = [];
+
+  // Préférences propres à l'utilisateur : toujours authentifiées et scopées à
+  // son propre compte (contrairement à la config de scoring, volontairement
+  // partagée entre bêta-testeurs).
+  if (body.userPrefs) {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+    const data: { exercice?: string; rappelSeuilPoints?: number } = {};
+
+    if (body.userPrefs.exercice !== undefined) {
+      if (!isExerciceId(body.userPrefs.exercice)) {
+        return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
+      }
+      data.exercice = body.userPrefs.exercice;
+    }
+
+    if (body.userPrefs.rappelSeuilPoints !== undefined) {
+      const seuil = Number(body.userPrefs.rappelSeuilPoints);
+      if (!Number.isFinite(seuil) || seuil < 0 || seuil > 1000) {
+        return NextResponse.json({ error: "Seuil de rappel invalide" }, { status: 400 });
+      }
+      data.rappelSeuilPoints = Math.round(seuil);
+    }
+
+    if (Object.keys(data).length > 0) {
+      updates.push(prisma.user.update({ where: { id: user.id }, data }));
+    }
+  }
 
   if (body.roleWeights) {
     for (const rw of body.roleWeights) {

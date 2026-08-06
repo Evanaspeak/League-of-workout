@@ -6,6 +6,7 @@ import { findChampion } from "@/lib/champions";
 import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
+import { formaterCompact, toExerciceId, type ExerciceId } from "@/lib/exercices";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,7 @@ type Game = {
   malusCalcule: number;
   surchargeCalculee: number;
   pompesCalculees: number;
+  exercice?: ExerciceId;
   source: string;
 };
 
@@ -75,6 +77,7 @@ export default function HistoryPage() {
 
   // ── Pompes view ──
   const [games, setGames] = useState<Game[]>([]);
+  const [exerciceCourant, setExerciceCourant] = useState<ExerciceId>("pompes");
   const [loadingGames, setLoadingGames] = useState(true);
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
@@ -118,6 +121,13 @@ export default function HistoryPage() {
   }, []);
 
   // ─── Chargement initial (games + parties Riot) ───────────────────────────
+  useEffect(() => {
+    fetch("/api/user")
+      .then((r) => r.json())
+      .then((u) => setExerciceCourant(toExerciceId(u?.exercice)))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const loadGames = async () => {
       const data = await fetch("/api/games").then((r) => r.json());
@@ -457,7 +467,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                    <div className="text-4xl font-bold gold-text">{preview.scoring.pompesFinales}</div>
+                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exerciceCourant)}</div>
                     <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{t.pompesLabel}</div>
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
@@ -517,7 +527,7 @@ export default function HistoryPage() {
                       <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(236,239,244,0.35)" }}>{t.unavailable}</span>
                     ) : m.alreadyLogged ? (
                       <>
-                        <span className="text-sm gold-text font-bold">{t.pompesCount(m.pompesCalculees ?? 0)}</span>
+                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, exerciceCourant)}</span>
                         <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "rgba(152,162,176,0.5)" }}>
                           {t.loggedBadge}
                         </span>
@@ -569,7 +579,7 @@ export default function HistoryPage() {
                     <option value="pompes">{t.pompes}</option>
                   </select>
                 </div>
-                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndPompes(filtered.length, totalPompes)}</span>
+                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndTotal(filtered.length, formaterCompact(totalPompes, exerciceCourant))}</span>
               </div>
 
               {filtered.length === 0 ? (
@@ -657,8 +667,8 @@ export default function HistoryPage() {
                               <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.7)" }}>{g.scoreCalcule}</td>
                               <td className="px-3 py-2 text-center loss-text">+{g.malusCalcule}</td>
                               <td className="px-3 py-2 text-center blue-text">+{Math.round(g.surchargeCalculee * 100)}%</td>
-                              <td className="px-3 py-2 text-right gold-text font-bold">{g.pompesCalculees}</td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{cumul}</td>
+                              <td className="px-3 py-2 text-right gold-text font-bold">{formaterCompact(g.pompesCalculees, toExerciceId(g.exercice))}</td>
+                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, exerciceCourant)}</td>
                               <td className="px-3 py-2 text-center">
                                 <button
                                   onClick={() => handleDelete(g.id)}
