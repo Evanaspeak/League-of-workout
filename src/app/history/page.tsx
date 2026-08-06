@@ -7,7 +7,7 @@ import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICE_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, type ExerciceId,
+  EXERCICE_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
@@ -43,6 +43,7 @@ type MatchEntry = {
   date: string;
   alreadyLogged: boolean;
   pompesCalculees: number | null;
+  exercice?: ExerciceId | null;
   indisponible?: boolean;
 };
 
@@ -76,6 +77,14 @@ function getLevelLabel(sec: number, locale: "fr" | "en"): string {
 export default function HistoryPage() {
   const t = useT(history);
   const tExo = useT(exercicesDict);
+  const nomsExo: Record<ExerciceId, string> = {
+    pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
+  };
+  /** « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité. */
+  const resumeParExo = (parExercice: Record<string, number>) => {
+    const parts = ventiler(parExercice).map((v) => `${nomsExo[v.id]} ${v.valeur}`);
+    return parts.length > 0 ? parts.join(" · ") : "—";
+  };
   const dateLocale = useDateLocale();
   const { locale } = useLocale();
   const [view, setView] = useState<"parties" | "pompes">("parties");
@@ -83,6 +92,7 @@ export default function HistoryPage() {
   // ── Pompes view ──
   const [games, setGames] = useState<Game[]>([]);
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
+  const [exerciceAjout, setExerciceAjout] = useState<ExerciceId>(EXERCICE_DEFAUT);
   const [loadingGames, setLoadingGames] = useState(true);
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
@@ -129,18 +139,14 @@ export default function HistoryPage() {
   useEffect(() => {
     fetch("/api/user")
       .then((r) => r.json())
-      .then((u) => setExercicesSel(toExerciceIds(u?.exercices)))
+      .then((u) => {
+        const prefs = toExerciceIds(u?.exercices);
+        setExercicesSel(prefs);
+        setExerciceAjout(prefs[0]);
+      })
       .catch(() => {});
   }, []);
 
-  // Le choix fait ici devient la préférence, comme au lancement d'une session.
-  const saveExercices = (next: ExerciceId[]) => {
-    fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { exercices: next } }),
-    }).catch(() => {});
-  };
 
   useEffect(() => {
     const loadGames = async () => {
@@ -179,7 +185,7 @@ export default function HistoryPage() {
       const { game, scoring } = await res.json();
       setMatches((prev) => prev.map((x) =>
         x.matchId === m.matchId
-          ? { ...x, alreadyLogged: true, pompesCalculees: scoring.pompesFinales }
+          ? { ...x, alreadyLogged: true, pompesCalculees: scoring.pompesFinales, exercice: toExerciceId(game?.exercice) }
           : x
       ));
       // Sync immédiate de la vue Pompes (pas besoin de changer d'onglet).
@@ -210,6 +216,7 @@ export default function HistoryPage() {
         deaths: Number(addForm.deaths),
         assists: Number(addForm.assists),
         gainageSec: Number(addForm.gainageSec) || 60,
+        exercice: exerciceAjout,
       }),
     });
     setPreview(await res.json());
@@ -228,6 +235,7 @@ export default function HistoryPage() {
         deaths: Number(addForm.deaths),
         assists: Number(addForm.assists),
         gainageSec: Number(addForm.gainageSec) || 60,
+        exercice: exerciceAjout,
         source: "manuel",
       }),
     });
@@ -299,6 +307,12 @@ export default function HistoryPage() {
         : b.pompesCalculees - a.pompesCalculees
     );
   const totalPompes = filtered.reduce((s, g) => s + g.pompesCalculees, 0);
+  // Ventilation du total affiché : une entrée par exercice réellement joué.
+  const totauxParExo = filtered.reduce<Record<string, number>>((acc, g) => {
+    const ex = toExerciceId(g.exercice);
+    acc[ex] = (acc[ex] ?? 0) + g.pompesCalculees;
+    return acc;
+  }, {});
 
   const isChampionValid = !addForm.champion || !!findChampion(addForm.champion);
   const isAddReady = addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== "" && isChampionValid;
@@ -457,13 +471,11 @@ export default function HistoryPage() {
                   {tExo.choisirTitre}
                 </label>
                 <ExerciceSelector
-                  selection={exercicesSel}
-                  onChange={(next) => { setExercicesSel(next); setPreview(null); saveExercices(next); }}
+                  selection={[exerciceAjout]}
+                  onChange={(next) => { setExerciceAjout(next[0]); setPreview(null); }}
                   compact
+                  single
                 />
-                {exercicesSel.length > 1 && (
-                  <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
-                )}
               </div>
 
               <button className="lol-btn w-full" onClick={handlePreview} disabled={!isAddReady || previewLoading}>
@@ -495,8 +507,8 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, toExerciceId(preview.exercice ?? exercicesSel[0]))}</div>
-                    <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{t.pompesLabel}</div>
+                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exerciceAjout)}</div>
+                    <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{nomsExo[exerciceAjout].toUpperCase()}</div>
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
                     {addLogging ? t.saving : t.logThisGame}
@@ -555,7 +567,7 @@ export default function HistoryPage() {
                       <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(236,239,244,0.35)" }}>{t.unavailable}</span>
                     ) : m.alreadyLogged ? (
                       <>
-                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, exercicesSel[0])}</span>
+                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice))}</span>
                         <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "rgba(152,162,176,0.5)" }}>
                           {t.loggedBadge}
                         </span>
@@ -607,7 +619,7 @@ export default function HistoryPage() {
                     <option value="pompes">{t.pompes}</option>
                   </select>
                 </div>
-                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndTotal(filtered.length, formaterCompact(totalPompes, exercicesSel[0]))}</span>
+                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndTotal(filtered.length, resumeParExo(totauxParExo))}</span>
               </div>
 
               {filtered.length === 0 ? (
@@ -635,13 +647,15 @@ export default function HistoryPage() {
                     </thead>
                     <tbody>
                       {(() => {
-                        // Calcul des cumuls : on part de la fin (game la plus ancienne)
-                        // vers le début pour que la ligne la plus récente affiche le total.
+                        // Cumul tenu SÉPARÉMENT par exercice : chaque ligne affiche
+                        // le total de son propre exercice à cet instant. Mélanger des
+                        // répétitions et des secondes n'aurait aucun sens.
                         const cumulMap = new Map<string, number>();
-                        let running = 0;
+                        const running: Record<string, number> = {};
                         for (let i = filtered.length - 1; i >= 0; i--) {
-                          running += filtered[i].pompesCalculees;
-                          cumulMap.set(filtered[i].id, running);
+                          const ex = toExerciceId(filtered[i].exercice);
+                          running[ex] = (running[ex] ?? 0) + filtered[i].pompesCalculees;
+                          cumulMap.set(filtered[i].id, running[ex]);
                         }
                         return filtered.map((g) => {
                           const cumul = cumulMap.get(g.id) ?? 0;
@@ -696,7 +710,7 @@ export default function HistoryPage() {
                               <td className="px-3 py-2 text-center loss-text">+{g.malusCalcule}</td>
                               <td className="px-3 py-2 text-center blue-text">+{Math.round(g.surchargeCalculee * 100)}%</td>
                               <td className="px-3 py-2 text-right gold-text font-bold">{formaterCompact(g.pompesCalculees, toExerciceId(g.exercice))}</td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, exercicesSel[0])}</td>
+                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, toExerciceId(g.exercice))}</td>
                               <td className="px-3 py-2 text-center">
                                 <button
                                   onClick={() => handleDelete(g.id)}

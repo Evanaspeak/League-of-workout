@@ -74,9 +74,9 @@ export async function GET() {
 
   const logged = await prisma.game.findMany({
     where: { riotMatchId: { in: ids }, userId: user.id },
-    select: { riotMatchId: true, pompesCalculees: true },
+    select: { riotMatchId: true, pompesCalculees: true, exercice: true },
   });
-  const loggedMap = new Map(logged.map((g) => [g.riotMatchId, g.pompesCalculees]));
+  const loggedMap = new Map(logged.map((g) => [g.riotMatchId, g]));
 
   // Clé de cache propre au joueur : les données mises en cache (champion, KDA…)
   // dépendent du participant, donc du puuid. Sinon deux joueurs d'une même
@@ -131,7 +131,7 @@ export async function GET() {
     const alreadyLogged = loggedMap.has(id);
     if (!c) {
       return { matchId: id, champion: "?", role: "?", kills: 0, deaths: 0, assists: 0,
-        result: "?", date: new Date().toISOString(), alreadyLogged, pompesCalculees: null, indisponible: true };
+        result: "?", date: new Date().toISOString(), alreadyLogged, pompesCalculees: null, exercice: null, indisponible: true };
     }
     return {
       matchId: id,
@@ -143,7 +143,10 @@ export async function GET() {
       result: c.result,
       date: c.date,
       alreadyLogged,
-      pompesCalculees: alreadyLogged ? loggedMap.get(id) : null,
+      pompesCalculees: alreadyLogged ? loggedMap.get(id)?.pompesCalculees ?? null : null,
+      // Exercice réellement enregistré pour cette partie, pour l'afficher dans
+      // sa propre unité plutôt que dans l'exercice courant.
+      exercice: alreadyLogged ? loggedMap.get(id)?.exercice ?? null : null,
       indisponible: false,
     };
   });

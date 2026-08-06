@@ -12,7 +12,8 @@ import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICES, EXERCICE_DEFAUT, formaterAxe, formaterCompact, toExerciceId, toExerciceIds, type ExerciceId,
+  EXERCICES, EXERCICE_DEFAUT, EXERCICE_IDS, formaterAxe, formaterCompact,
+  toExerciceId, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 
@@ -43,6 +44,7 @@ type DashData = {
   leastEfficient: ChampSummary | null;
   objectifTotalPompes: number;
   exercices?: ExerciceId[];
+  filtreExercice?: ExerciceId | null;
   pointsParExercice?: Record<string, number>;
   recordExercice?: ExerciceId | null;
 };
@@ -144,6 +146,7 @@ export default function Dashboard() {
   const [dailyLoading, setDailyLoading] = useState(false);
   const [roleView, setRoleView] = useState<"total" | "avg">("total");
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
+  const [filtreExo, setFiltreExo] = useState<ExerciceId | null>(null);
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
     return "60";
@@ -152,8 +155,8 @@ export default function Dashboard() {
   const { sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec, startSession, stopSession } = useSession();
   const { locale } = useLocale();
 
-  const loadDash = () =>
-    fetch("/api/dashboard").then(async (res) => {
+  const loadDash = (filtre: ExerciceId | null = filtreExo) =>
+    fetch(filtre ? `/api/dashboard?exercice=${filtre}` : "/api/dashboard").then(async (res) => {
       if (!res.ok) {
         // Session invalide (ex. cookie d'une ancienne base) → retour au login.
         if (res.status === 401 && typeof window !== "undefined") {
@@ -166,7 +169,8 @@ export default function Dashboard() {
       setExercicesSel(toExerciceIds(d?.exercices));
     });
 
-  useEffect(() => { loadDash(); }, []);
+  // Charge au montage puis à chaque changement d'exercice consulté.
+  useEffect(() => { loadDash(filtreExo); }, [filtreExo]);
 
   // Rafraîchit les stats globales à chaque nouvelle game loggée en session.
   useEffect(() => {
@@ -205,8 +209,10 @@ export default function Dashboard() {
   // Les données restent en POINTS D'EFFORT : on ne convertit qu'à l'affichage,
   // ce qui laisse les échelles des graphiques inchangées (conversion linéaire).
   const exercicesActifs = toExerciceIds(data.exercices);
-  const multi = exercicesActifs.length > 1;
-  const exercice = exercicesActifs[0];
+  // Exercices réellement présents dans l'historique : ils seuls méritent un filtre.
+  const exercicesJoues = EXERCICE_IDS.filter((id) => (data.pointsParExercice?.[id] ?? 0) > 0);
+  const multi = filtreExo === null && exercicesJoues.length > 1;
+  const exercice = filtreExo ?? (exercicesJoues[0] ?? exercicesActifs[0]);
   const nomsExo: Record<ExerciceId, string> = {
     pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
   };
@@ -262,6 +268,32 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      {/* Filtre par exercice — visible dès qu'au moins deux exercices ont servi */}
+      {exercicesJoues.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{tExo.filtreTitre}</span>
+          {[null, ...exercicesJoues].map((id) => {
+            const actif = filtreExo === id;
+            return (
+              <button
+                key={id ?? "tous"}
+                onClick={() => setFiltreExo(id)}
+                aria-pressed={actif}
+                style={{
+                  padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
+                  background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                  border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                  color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                  transition: "all 0.15s",
+                }}
+              >
+                {id === null ? tExo.filtreTous : nomsExo[id]}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Stats globales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
+import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -41,17 +41,23 @@ export async function POST(req: Request) {
 
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
 
-  // Rotation des exercices : on avance d'un cran par rapport à la partie
-  // précédente, pour que la charge se répartisse entre les exercices cochés.
-  const selection = toExerciceIds(user.exercices);
-  const derniere = selection.length > 1
-    ? await prisma.game.findFirst({
-        where: { userId: user.id },
-        orderBy: { date: "desc" },
-        select: { exercice: true },
-      })
-    : null;
-  const exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
+  // Exercice de la partie : un choix explicite (ajout manuel) est respecté tel
+  // quel ; sinon on avance d'un cran dans la rotation par rapport à la partie
+  // précédente, pour répartir la charge entre les exercices cochés.
+  let exercice;
+  if (isExerciceId(body.exercice)) {
+    exercice = body.exercice;
+  } else {
+    const selection = toExerciceIds(user.exercices);
+    const derniere = selection.length > 1
+      ? await prisma.game.findFirst({
+          where: { userId: user.id },
+          orderBy: { date: "desc" },
+          select: { exercice: true },
+        })
+      : null;
+    exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
+  }
 
   const scoring = calcScore({
     kills: Number(body.kills),
