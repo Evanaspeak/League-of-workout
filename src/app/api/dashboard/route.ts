@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { toExerciceId, RAPPEL_SEUIL_DEFAUT } from "@/lib/exercices";
+import { toExerciceId, toExerciceIds, RAPPEL_SEUIL_DEFAUT } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -17,6 +17,20 @@ export async function GET() {
   const winrate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
   const totalPompes = games.reduce((s, g) => s + g.pompesCalculees, 0);
   const recordPompes = games.length > 0 ? Math.max(...games.map((g) => g.pompesCalculees)) : 0;
+
+  // Ventilation par exercice : des répétitions et des minutes ne s'additionnent
+  // pas, le total doit donc rester détaillé exercice par exercice.
+  const pointsParExercice: Record<string, number> = {};
+  for (const g of games) {
+    const ex = toExerciceId(g.exercice);
+    pointsParExercice[ex] = (pointsParExercice[ex] || 0) + g.pompesCalculees;
+  }
+  // La partie la plus coûteuse, avec l'exercice qui lui correspond.
+  const gameRecord = games.reduce<typeof games[number] | null>(
+    (best, g) => (best === null || g.pompesCalculees > best.pompesCalculees ? g : best),
+    null,
+  );
+  const recordExercice = gameRecord ? toExerciceId(gameRecord.exercice) : null;
 
   const pompesByRole: Record<string, number> = {};
   const gamesByRole: Record<string, number> = {};
@@ -131,8 +145,11 @@ export async function GET() {
     leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,
     niveau: user?.gainageMaxSec ?? 45,
-    // Exercice courant : sert à convertir les points d'effort à l'affichage.
-    exercice: toExerciceId(user?.exercice),
+    // Exercices sélectionnés : servent à convertir les points d'effort à
+    // l'affichage et à ventiler les totaux.
+    exercices: toExerciceIds(user?.exercices),
+    pointsParExercice,
+    recordExercice,
     rappelSeuilPoints: user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT,
   });
 }

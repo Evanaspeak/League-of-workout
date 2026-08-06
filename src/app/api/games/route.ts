@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { toExerciceId } from "@/lib/exercices";
+import { prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -41,6 +41,18 @@ export async function POST(req: Request) {
 
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
 
+  // Rotation des exercices : on avance d'un cran par rapport à la partie
+  // précédente, pour que la charge se répartisse entre les exercices cochés.
+  const selection = toExerciceIds(user.exercices);
+  const derniere = selection.length > 1
+    ? await prisma.game.findFirst({
+        where: { userId: user.id },
+        orderBy: { date: "desc" },
+        select: { exercice: true },
+      })
+    : null;
+  const exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
+
   const scoring = calcScore({
     kills: Number(body.kills),
     deaths: Number(body.deaths),
@@ -69,9 +81,9 @@ export async function POST(req: Request) {
       scoreCalcule: scoring.scoreBase,
       malusCalcule: scoring.malus,
       pompesCalculees: scoring.pompesFinales,
-      // Fige l'exercice actif : l'historique reste fidèle même si l'utilisateur
-      // change d'exercice plus tard.
-      exercice: toExerciceId(user.exercice),
+      // Fige l'exercice retenu : l'historique reste fidèle même si la
+      // sélection change plus tard.
+      exercice,
       source: body.source || "manuel",
       riotMatchId: body.riotMatchId || null,
     },

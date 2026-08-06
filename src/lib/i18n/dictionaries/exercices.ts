@@ -1,8 +1,11 @@
 export const exercices = {
   fr: {
-    sectionTitle: "Ton exercice",
+    sectionTitle: "Tes exercices",
     sectionHint:
-      "Le calcul reste le même : seule la façon de payer ta dette change. Les parties déjà enregistrées gardent l'exercice avec lequel elles ont été jouées.",
+      "Coche un ou plusieurs exercices. Si tu en coches plusieurs, ils tournent à tour de rôle d'une partie à l'autre. Les parties déjà enregistrées gardent l'exercice avec lequel elles ont été jouées.",
+    dernierExercice: "Garde au moins un exercice coché.",
+    choisirTitre: "Comment tu paies",
+    rotationActive: (n: number) => `${n} exercices — ils alternent à chaque partie`,
     pompesNom: "Pompes",
     pompesDesc: "Haut du corps. La référence historique de l'app.",
     squatsNom: "Squats",
@@ -29,9 +32,12 @@ export const exercices = {
     rappelAutorisees: "Notifications activées",
   },
   en: {
-    sectionTitle: "Your exercise",
+    sectionTitle: "Your exercises",
     sectionHint:
-      "The scoring stays the same — only how you pay your debt changes. Games already logged keep the exercise they were played with.",
+      "Tick one or more exercises. With several ticked, they rotate from one game to the next. Games already logged keep the exercise they were played with.",
+    dernierExercice: "Keep at least one exercise ticked.",
+    choisirTitre: "How you pay",
+    rotationActive: (n: number) => `${n} exercises — they rotate each game`,
     pompesNom: "Push-ups",
     pompesDesc: "Upper body. The app's original reference.",
     squatsNom: "Squats",

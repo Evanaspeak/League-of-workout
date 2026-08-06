@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
 export async function POST(req: Request) {
@@ -41,5 +42,17 @@ export async function POST(req: Request) {
     masteryConfig,
   });
 
-  return NextResponse.json({ scoring, partiesAvant, gainageSec });
+  // Même rotation que l'enregistrement réel, pour que l'aperçu annonce le bon
+  // exercice avant de valider.
+  const selection = toExerciceIds(user.exercices);
+  const derniere = selection.length > 1
+    ? await prisma.game.findFirst({
+        where: { userId: user.id },
+        orderBy: { date: "desc" },
+        select: { exercice: true },
+      })
+    : null;
+  const exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
+
+  return NextResponse.json({ scoring, partiesAvant, gainageSec, exercice });
 }

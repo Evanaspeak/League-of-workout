@@ -8,7 +8,8 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   // Le hash du mot de passe ne doit jamais quitter le serveur.
-  const { passwordHash: _passwordHash, ...safeUser } = user;
+  const safeUser: Record<string, unknown> = { ...user };
+  delete safeUser.passwordHash;
   return NextResponse.json(safeUser);
 }
 

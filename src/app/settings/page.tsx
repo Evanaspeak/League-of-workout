@@ -6,9 +6,10 @@ import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICES, EXERCICE_DEFAUT, EXERCICE_IDS, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS,
-  formaterCompact, toExerciceId, type ExerciceId,
+  EXERCICES, EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS,
+  formaterCompact, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
+import { ExerciceSelector } from "@/components/ExerciceSelector";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ export default function SettingsPage() {
   const [savedSettings, setSavedSettings] = useState(false);
 
   // ── Exercice & rappel ──
-  const [exercice, setExercice] = useState<ExerciceId>(EXERCICE_DEFAUT);
+  const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [rappelSeuil, setRappelSeuil] = useState<number>(RAPPEL_SEUIL_DEFAUT);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
@@ -93,13 +94,13 @@ export default function SettingsPage() {
       setRoleWeights(s.roleWeights);
       setLevelConfigs(s.levelConfigs);
       setMasteryConfig(s.masteryConfig);
-      setExercice(toExerciceId(s.user?.exercice));
+      setExercicesSel(toExerciceIds(s.user?.exercices));
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
     });
   }, []);
 
-  const handleSaveExo = async (nextExercice: ExerciceId, nextSeuil: number) => {
-    setExercice(nextExercice);
+  const handleSaveExo = async (nextExercices: ExerciceId[], nextSeuil: number) => {
+    setExercicesSel(nextExercices);
     setRappelSeuil(nextSeuil);
     setSavingExo(true);
     setSavedExo(false);
@@ -107,7 +108,7 @@ export default function SettingsPage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        userPrefs: { exercice: nextExercice, rappelSeuilPoints: nextSeuil },
+        userPrefs: { exercices: nextExercices, rappelSeuilPoints: nextSeuil },
       }),
     });
     setSavingExo(false);
@@ -273,43 +274,11 @@ export default function SettingsPage() {
           {tExo.sectionHint}
         </p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 10 }}>
-          {EXERCICE_IDS.map((id) => {
-            const actif = id === exercice;
-            return (
-              <button
-                key={id}
-                onClick={() => handleSaveExo(id, rappelSeuil)}
-                aria-pressed={actif}
-                style={{
-                  textAlign: "left",
-                  padding: "14px 16px",
-                  borderRadius: 10,
-                  cursor: "pointer",
-                  background: actif ? "rgba(255,180,84,0.07)" : "rgba(236,239,244,0.02)",
-                  border: `1px solid ${actif ? "var(--amber)" : "var(--line)"}`,
-                  transition: "border-color 0.15s, background 0.15s",
-                }}
-              >
-                <div style={{
-                  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-                  fontWeight: 600, fontSize: "1.05rem", textTransform: "uppercase",
-                  letterSpacing: "0.04em",
-                  color: actif ? "var(--amber)" : "var(--bone)",
-                  marginBottom: 4,
-                }}>
-                  {EXO_LABELS[id].nom}
-                </div>
-                <div style={{ fontSize: "0.76rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.5 }}>
-                  {EXO_LABELS[id].desc}
-                </div>
-                <div className="mono-num" style={{ fontSize: "0.78rem", color: "var(--amber)", marginTop: 8 }}>
-                  {quantiteAvecNom(38, id)}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        <ExerciceSelector selection={exercicesSel} onChange={(next) => handleSaveExo(next, rappelSeuil)} />
+
+        {exercicesSel.length > 1 && (
+          <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
+        )}
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)" }}>{tExo.exempleIntro}</p>
 
         {/* Rappel en session */}
@@ -324,7 +293,7 @@ export default function SettingsPage() {
               return (
                 <button
                   key={seuil}
-                  onClick={() => handleSaveExo(exercice, seuil)}
+                  onClick={() => handleSaveExo(exercicesSel, seuil)}
                   aria-pressed={actif}
                   style={{
                     padding: "7px 14px",
@@ -337,7 +306,7 @@ export default function SettingsPage() {
                     transition: "all 0.15s",
                   }}
                 >
-                  {seuil === 0 ? tExo.rappelDesactive : tExo.rappelValeur(quantiteAvecNom(seuil, exercice))}
+                  {seuil === 0 ? tExo.rappelDesactive : tExo.rappelValeur(quantiteAvecNom(seuil, exercicesSel[0]))}
                 </button>
               );
             })}

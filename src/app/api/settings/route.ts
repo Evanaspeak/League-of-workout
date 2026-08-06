@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { isExerciceId } from "@/lib/exercices";
+import { isExerciceId, toExerciceIds } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -28,13 +28,14 @@ export async function PUT(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-    const data: { exercice?: string; rappelSeuilPoints?: number } = {};
+    const data: { exercices?: string[]; rappelSeuilPoints?: number } = {};
 
-    if (body.userPrefs.exercice !== undefined) {
-      if (!isExerciceId(body.userPrefs.exercice)) {
+    if (body.userPrefs.exercices !== undefined) {
+      const bruts = body.userPrefs.exercices;
+      if (!Array.isArray(bruts) || bruts.length === 0 || !bruts.every(isExerciceId)) {
         return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
       }
-      data.exercice = body.userPrefs.exercice;
+      data.exercices = toExerciceIds(bruts);
     }
 
     if (body.userPrefs.rappelSeuilPoints !== undefined) {
