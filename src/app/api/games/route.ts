@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { toExerciceId } from "@/lib/exercices";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -68,6 +69,9 @@ export async function POST(req: Request) {
       scoreCalcule: scoring.scoreBase,
       malusCalcule: scoring.malus,
       pompesCalculees: scoring.pompesFinales,
+      // Fige l'exercice actif : l'historique reste fidèle même si l'utilisateur
+      // change d'exercice plus tard.
+      exercice: toExerciceId(user.exercice),
       source: body.source || "manuel",
       riotMatchId: body.riotMatchId || null,
     },

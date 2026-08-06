@@ -1,0 +1,59 @@
+export const exercices = {
+  fr: {
+    sectionTitle: "Ton exercice",
+    sectionHint:
+      "Le calcul reste le même : seule la façon de payer ta dette change. Les parties déjà enregistrées gardent l'exercice avec lequel elles ont été jouées.",
+    pompesNom: "Pompes",
+    pompesDesc: "Haut du corps. La référence historique de l'app.",
+    squatsNom: "Squats",
+    squatsDesc: "Bas du corps. Compte 1,5 fois plus de répétitions qu'en pompes.",
+    boxeNom: "Boxe",
+    boxeDesc: "Sac ou shadow, au choix. Compté en temps de travail effectif.",
+    // Unités affichées à côté d'un nombre
+    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
+    exempleTitle: "Ce que ça donne",
+    exempleLigne: (ex: string, valeur: string) => `${ex} : ${valeur}`,
+    exempleIntro: "Pour une partie perdue coûtant 38 points d'effort :",
+
+    rappelTitle: "Rappel pendant la session",
+    rappelHint:
+      "Quand ta dette dépasse ce seuil pendant une session, l'app te prévient d'aller la payer. Ça évite les micro-séries inutiles et les grosses sessions de fin de soirée.",
+    rappelDesactive: "Désactivé",
+    rappelValeur: (valeur: string) => `Environ ${valeur}`,
+    rappelNotifTitre: "Debout, tu as une dette",
+    rappelNotifCorps: (quantite: string) => `${quantite} à faire maintenant.`,
+    rappelBandeau: (quantite: string) => `Tu as accumulé ${quantite}. C'est le moment d'y aller.`,
+    rappelFait: "C'est fait",
+    rappelPlusTard: "Plus tard",
+    rappelAutoriser: "Autoriser les notifications",
+    rappelAutorisees: "Notifications activées",
+  },
+  en: {
+    sectionTitle: "Your exercise",
+    sectionHint:
+      "The scoring stays the same — only how you pay your debt changes. Games already logged keep the exercise they were played with.",
+    pompesNom: "Push-ups",
+    pompesDesc: "Upper body. The app's original reference.",
+    squatsNom: "Squats",
+    squatsDesc: "Lower body. Counts 1.5× more reps than push-ups.",
+    boxeNom: "Boxing",
+    boxeDesc: "Heavy bag or shadow boxing. Counted in actual working time.",
+    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
+    exempleTitle: "What it looks like",
+    exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
+    exempleIntro: "For a lost game costing 38 effort points:",
+
+    rappelTitle: "Reminder during a session",
+    rappelHint:
+      "When your debt goes over this threshold during a session, the app tells you to go pay it. Keeps you from doing pointless 30-second sets or one huge session at the end of the night.",
+    rappelDesactive: "Off",
+    rappelValeur: (valeur: string) => `About ${valeur}`,
+    rappelNotifTitre: "Up you get — you owe",
+    rappelNotifCorps: (quantite: string) => `${quantite} to do now.`,
+    rappelBandeau: (quantite: string) => `You've racked up ${quantite}. Time to go.`,
+    rappelFait: "Done",
+    rappelPlusTard: "Later",
+    rappelAutoriser: "Enable notifications",
+    rappelAutorisees: "Notifications enabled",
+  },
+};

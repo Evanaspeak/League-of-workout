@@ -9,7 +9,9 @@ import {
 import { useSession } from "@/lib/SessionContext";
 import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
+import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
+import { EXERCICES, formaterAxe, formaterCompact, toExerciceId, type ExerciceId } from "@/lib/exercices";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -37,6 +39,7 @@ type DashData = {
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
   objectifTotalPompes: number;
+  exercice?: ExerciceId;
 };
 
 function StatCard({ label, value, sub, i = 0 }: { label: string; value: string | number; sub?: string; i?: number }) {
@@ -108,6 +111,7 @@ function getLevelLabel(sec: number, t: ReturnType<typeof useT<typeof dashboard>>
 
 export default function Dashboard() {
   const t = useT(dashboard);
+  const tExo = useT(exercicesDict);
   const dateLocale = useDateLocale();
   const [data, setData] = useState<DashData | null>(null);
   const [showGainageModal, setShowGainageModal] = useState(false);
@@ -167,6 +171,16 @@ export default function Dashboard() {
 
   if (!data) return <div className="text-center py-20 gold-text">{t.loading}</div>;
 
+  // Les données restent en POINTS D'EFFORT : on ne convertit qu'à l'affichage,
+  // ce qui laisse les échelles des graphiques inchangées (conversion linéaire).
+  const exercice = toExerciceId(data.exercice);
+  const fmt = (points: number) => formaterCompact(points, exercice);
+  const fmtAxe = (points: number) => formaterAxe(points, exercice);
+  const uniteLabel =
+    EXERCICES[exercice].unite === "reps"
+      ? { pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom }[exercice].toLowerCase()
+      : "";
+
   const progress = data.objectifTotalPompes > 0
     ? Math.min(100, Math.round((data.totalPompes / data.objectifTotalPompes) * 100))
     : 0;
@@ -213,14 +227,14 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label={t.gamesPlayed} value={data.totalGames} i={0} />
         <StatCard label={t.winrate} value={`${data.winrate}%`} sub={`${data.wins}V / ${data.totalGames - data.wins}D`} i={1} />
-        <StatCard label={t.totalPompes} value={data.totalPompes} i={2} />
-        <StatCard label={t.recordPerGame} value={data.recordPompes} sub={t.pompesUnit} i={3} />
+        <StatCard label={t.totalPompes} value={fmt(data.totalPompes)} i={2} />
+        <StatCard label={t.recordPerGame} value={fmt(data.recordPompes)} sub={uniteLabel} i={3} />
       </div>
 
       {data.objectifTotalPompes > 0 && (
         <div className="lol-panel p-4 space-y-2 rise" style={{ animationDelay: "320ms" }}>
           <div className="flex justify-between text-sm">
-            <span className="gold-text font-semibold">{t.objective(data.objectifTotalPompes)}</span>
+            <span className="gold-text font-semibold">{t.objectiveLibre(fmt(data.objectifTotalPompes))}</span>
             <span className="mono-num" style={{ color: "var(--amber)", fontWeight: 600 }}>{progress}%</span>
           </div>
           <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(152,162,176,0.15)" }}>
@@ -235,9 +249,9 @@ export default function Dashboard() {
             />
           </div>
           <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
-            {t.objectiveProgress(data.totalPompes, data.objectifTotalPompes)}
+            {t.objectiveProgressLibre(fmt(data.totalPompes), fmt(data.objectifTotalPompes))}
             {data.objectifTotalPompes - data.totalPompes > 0
-              ? t.objectiveRemaining(data.objectifTotalPompes - data.totalPompes)
+              ? t.objectiveRemainingLibre(fmt(data.objectifTotalPompes - data.totalPompes))
               : t.objectiveReached}
           </div>
         </div>
@@ -306,8 +320,8 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height={140}>
                   <BarChart data={sessionChartData}>
                     <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                    <Tooltip contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }} />
+                    <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
+                    <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }} />
                     <Bar dataKey="pompes" fill="#9D7CFF" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -382,10 +396,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={roleData}>
                 <XAxis dataKey="role" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
-                <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                 <Tooltip
                   contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
-                  formatter={(v) => [t.tooltipPompesLabel(v as number), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
+                  formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
                 />
                 <Bar dataKey="pompes" fill="#FFB454" radius={[2, 2, 0, 0]} />
               </BarChart>
@@ -408,8 +422,8 @@ export default function Dashboard() {
                 <LineChart data={cumulData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(152,162,176,0.1)" />
                   <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.4)", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }} />
+                  <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                  <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }} />
                   <Line dataKey="cumul" stroke="#FFB454" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -486,10 +500,10 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={dailyHourly}>
                     <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                    <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                    <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                     <Tooltip
                       contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
-                      formatter={(v) => [t.tooltipPompesLabel(v as number), t.tooltipTotal]}
+                      formatter={(v) => [fmt(Number(v)), t.tooltipTotal]}
                     />
                     <Bar dataKey="total" fill="#9D7CFF" radius={[2, 2, 0, 0]} />
                   </BarChart>
@@ -504,10 +518,10 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.statsByPeriod[statsPeriod]}>
                 <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                <YAxis tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                 <Tooltip
                   contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
-                  formatter={(v) => [t.tooltipPompesLabel(v as number), statsMode === "avg" ? t.tooltipAvgPerGameFull : t.tooltipTotal]}
+                  formatter={(v) => [fmt(Number(v)), statsMode === "avg" ? t.tooltipAvgPerGameFull : t.tooltipTotal]}
                 />
                 <Bar dataKey={statsMode} fill="#FFB454" radius={[2, 2, 0, 0]} />
               </BarChart>
