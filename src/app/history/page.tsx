@@ -6,7 +6,11 @@ import { findChampion } from "@/lib/champions";
 import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
-import { formaterCompact, toExerciceId, type ExerciceId } from "@/lib/exercices";
+import {
+  EXERCICE_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, type ExerciceId,
+} from "@/lib/exercices";
+import { ExerciceSelector } from "@/components/ExerciceSelector";
+import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -51,7 +55,7 @@ type Scoring = {
   pompesFinales: number;
 };
 
-type PreviewResult = { scoring: Scoring; partiesAvant: number; gainageSec: number };
+type PreviewResult = { scoring: Scoring; partiesAvant: number; gainageSec: number; exercice?: ExerciceId };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -71,13 +75,14 @@ function getLevelLabel(sec: number, locale: "fr" | "en"): string {
 
 export default function HistoryPage() {
   const t = useT(history);
+  const tExo = useT(exercicesDict);
   const dateLocale = useDateLocale();
   const { locale } = useLocale();
   const [view, setView] = useState<"parties" | "pompes">("parties");
 
   // ── Pompes view ──
   const [games, setGames] = useState<Game[]>([]);
-  const [exerciceCourant, setExerciceCourant] = useState<ExerciceId>("pompes");
+  const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
@@ -124,9 +129,18 @@ export default function HistoryPage() {
   useEffect(() => {
     fetch("/api/user")
       .then((r) => r.json())
-      .then((u) => setExerciceCourant(toExerciceId(u?.exercice)))
+      .then((u) => setExercicesSel(toExerciceIds(u?.exercices)))
       .catch(() => {});
   }, []);
+
+  // Le choix fait ici devient la préférence, comme au lancement d'une session.
+  const saveExercices = (next: ExerciceId[]) => {
+    fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { exercices: next } }),
+    }).catch(() => {});
+  };
 
   useEffect(() => {
     const loadGames = async () => {
@@ -438,6 +452,20 @@ export default function HistoryPage() {
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                  {tExo.choisirTitre}
+                </label>
+                <ExerciceSelector
+                  selection={exercicesSel}
+                  onChange={(next) => { setExercicesSel(next); setPreview(null); saveExercices(next); }}
+                  compact
+                />
+                {exercicesSel.length > 1 && (
+                  <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
+                )}
+              </div>
+
               <button className="lol-btn w-full" onClick={handlePreview} disabled={!isAddReady || previewLoading}>
                 {previewLoading ? t.calculating : t.calculatePompes}
               </button>
@@ -467,7 +495,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exerciceCourant)}</div>
+                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, toExerciceId(preview.exercice ?? exercicesSel[0]))}</div>
                     <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{t.pompesLabel}</div>
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
@@ -527,7 +555,7 @@ export default function HistoryPage() {
                       <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(236,239,244,0.35)" }}>{t.unavailable}</span>
                     ) : m.alreadyLogged ? (
                       <>
-                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, exerciceCourant)}</span>
+                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, exercicesSel[0])}</span>
                         <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "rgba(152,162,176,0.5)" }}>
                           {t.loggedBadge}
                         </span>
@@ -579,7 +607,7 @@ export default function HistoryPage() {
                     <option value="pompes">{t.pompes}</option>
                   </select>
                 </div>
-                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndTotal(filtered.length, formaterCompact(totalPompes, exerciceCourant))}</span>
+                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndTotal(filtered.length, formaterCompact(totalPompes, exercicesSel[0]))}</span>
               </div>
 
               {filtered.length === 0 ? (
@@ -668,7 +696,7 @@ export default function HistoryPage() {
                               <td className="px-3 py-2 text-center loss-text">+{g.malusCalcule}</td>
                               <td className="px-3 py-2 text-center blue-text">+{Math.round(g.surchargeCalculee * 100)}%</td>
                               <td className="px-3 py-2 text-right gold-text font-bold">{formaterCompact(g.pompesCalculees, toExerciceId(g.exercice))}</td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, exerciceCourant)}</td>
+                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, exercicesSel[0])}</td>
                               <td className="px-3 py-2 text-center">
                                 <button
                                   onClick={() => handleDelete(g.id)}

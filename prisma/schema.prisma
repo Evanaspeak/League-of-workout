@@ -34,10 +34,14 @@ model User {
   taille             Int?
   sportsHoursPerWeek Int?
 
-  // Exercice choisi pour payer sa dette : pompes | squats | boxe.
-  exercice           String @default("pompes")
+  // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
+  // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
+  // l'autre. `exercice` (singulier) est l'ancienne version, conservée en base
+  // le temps que tous les déploiements soient à jour — ne plus l'utiliser.
+  exercice           String   @default("pompes")
+  exercices          String[] @default(["pompes"])
   // Seuil de rappel pendant une session, en points d'effort. 0 = désactivé.
-  rappelSeuilPoints  Int    @default(45)
+  rappelSeuilPoints  Int      @default(45)
 
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?

@@ -11,7 +11,10 @@ import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
-import { EXERCICES, formaterAxe, formaterCompact, toExerciceId, type ExerciceId } from "@/lib/exercices";
+import {
+  EXERCICES, EXERCICE_DEFAUT, formaterAxe, formaterCompact, toExerciceId, toExerciceIds, type ExerciceId,
+} from "@/lib/exercices";
+import { ExerciceSelector } from "@/components/ExerciceSelector";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -39,14 +42,32 @@ type DashData = {
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
   objectifTotalPompes: number;
-  exercice?: ExerciceId;
+  exercices?: ExerciceId[];
+  pointsParExercice?: Record<string, number>;
+  recordExercice?: ExerciceId | null;
 };
 
-function StatCard({ label, value, sub, i = 0 }: { label: string; value: string | number; sub?: string; i?: number }) {
+function StatCard({ label, value, sub, lignes, i = 0 }: {
+  label: string; value?: string | number; sub?: string;
+  /** Ventilation par exercice : des répétitions et des minutes ne s'additionnent pas. */
+  lignes?: { nom: string; valeur: string }[];
+  i?: number;
+}) {
   return (
     <div className="stat-card p-4 flex flex-col gap-1 rise" style={{ animationDelay: `${i * 80}ms` }}>
       <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(152,162,176,0.55)" }}>{label}</span>
-      <span className="mono-num" style={{ fontSize: "1.7rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.15 }}>{value}</span>
+      {lignes ? (
+        <span style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
+          {lignes.map((l) => (
+            <span key={l.nom} style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span className="mono-num" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.2 }}>{l.valeur}</span>
+              <span style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)" }}>{l.nom.toLowerCase()}</span>
+            </span>
+          ))}
+        </span>
+      ) : (
+        <span className="mono-num" style={{ fontSize: "1.7rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.15 }}>{value}</span>
+      )}
       {sub && <span style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.45)" }}>{sub}</span>}
     </div>
   );
@@ -122,6 +143,7 @@ export default function Dashboard() {
   const [dailySummary, setDailySummary] = useState<{ total: number; games: number } | null>(null);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [roleView, setRoleView] = useState<"total" | "avg">("total");
+  const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
     return "60";
@@ -139,7 +161,9 @@ export default function Dashboard() {
         }
         return;
       }
-      setData(await res.json());
+      const d = await res.json();
+      setData(d);
+      setExercicesSel(toExerciceIds(d?.exercices));
     });
 
   useEffect(() => { loadDash(); }, []);
@@ -166,6 +190,13 @@ export default function Dashboard() {
     const sec = Math.max(1, Number(gainageInput) || 60);
     localStorage.setItem("lastGainageSec", String(sec));
     setShowGainageModal(false);
+    // Le choix fait ici devient la préférence, pour l'ARAM du chaos comme pour
+    // les prochaines sessions.
+    await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { exercices: exercicesSel } }),
+    }).catch(() => {});
     await startSession(sec);
   };
 
@@ -173,13 +204,22 @@ export default function Dashboard() {
 
   // Les données restent en POINTS D'EFFORT : on ne convertit qu'à l'affichage,
   // ce qui laisse les échelles des graphiques inchangées (conversion linéaire).
-  const exercice = toExerciceId(data.exercice);
+  const exercicesActifs = toExerciceIds(data.exercices);
+  const multi = exercicesActifs.length > 1;
+  const exercice = exercicesActifs[0];
+  const nomsExo: Record<ExerciceId, string> = {
+    pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
+  };
+  // Ventilation du total : une ligne par exercice réellement utilisé.
+  const lignesTotal = Object.entries(data.pointsParExercice ?? {})
+    .filter(([, pts]) => pts > 0)
+    .map(([ex, pts]) => ({
+      nom: nomsExo[toExerciceId(ex)],
+      valeur: formaterCompact(pts, toExerciceId(ex)),
+    }));
+  const exerciceRecord = toExerciceId(data.recordExercice ?? exercice);
   const fmt = (points: number) => formaterCompact(points, exercice);
   const fmtAxe = (points: number) => formaterAxe(points, exercice);
-  const uniteLabel =
-    EXERCICES[exercice].unite === "reps"
-      ? { pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom }[exercice].toLowerCase()
-      : "";
 
   const progress = data.objectifTotalPompes > 0
     ? Math.min(100, Math.round((data.totalPompes / data.objectifTotalPompes) * 100))
@@ -227,8 +267,18 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label={t.gamesPlayed} value={data.totalGames} i={0} />
         <StatCard label={t.winrate} value={`${data.winrate}%`} sub={`${data.wins}V / ${data.totalGames - data.wins}D`} i={1} />
-        <StatCard label={t.totalPompes} value={fmt(data.totalPompes)} i={2} />
-        <StatCard label={t.recordPerGame} value={fmt(data.recordPompes)} sub={uniteLabel} i={3} />
+        <StatCard
+          label={multi ? t.totalPompes : t.totalDe(nomsExo[exercice])}
+          value={fmt(data.totalPompes)}
+          lignes={lignesTotal.length > 1 ? lignesTotal : undefined}
+          i={2}
+        />
+        <StatCard
+          label={t.recordPerGame}
+          value={formaterCompact(data.recordPompes, exerciceRecord)}
+          sub={EXERCICES[exerciceRecord].unite === "reps" ? nomsExo[exerciceRecord].toLowerCase() : undefined}
+          i={3}
+        />
       </div>
 
       {data.objectifTotalPompes > 0 && (
@@ -374,7 +424,7 @@ export default function Dashboard() {
           <div className="lol-panel p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
-                {t.pompesByRole(roleView)}
+                {multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView)}
               </h2>
               <div className="flex gap-1">
                 {(["total", "avg"] as const).map((key) => (
@@ -573,6 +623,16 @@ export default function Dashboard() {
                 <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>{t.forThisSession}</span>
               </div>
             )}
+
+            <div className="space-y-2">
+              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                {tExo.choisirTitre}
+              </label>
+              <ExerciceSelector selection={exercicesSel} onChange={setExercicesSel} compact />
+              {exercicesSel.length > 1 && (
+                <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
+              )}
+            </div>
             <div className="flex gap-3">
               <button
                 className="flex-1 py-2 rounded text-sm"

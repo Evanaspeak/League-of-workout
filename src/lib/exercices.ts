@@ -53,6 +53,33 @@ export function toExerciceId(v: unknown): ExerciceId {
 }
 
 /**
+ * Normalise une sélection d'exercices : filtre les valeurs inconnues, retire
+ * les doublons, conserve l'ordre de la liste de référence et garantit qu'au
+ * moins un exercice reste sélectionné.
+ */
+export function toExerciceIds(v: unknown): ExerciceId[] {
+  const bruts = Array.isArray(v) ? v : [v];
+  const valides = EXERCICE_IDS.filter((id) => bruts.includes(id));
+  return valides.length > 0 ? valides : [EXERCICE_DEFAUT];
+}
+
+/**
+ * Exercice de la prochaine partie : on avance d'un cran dans la sélection par
+ * rapport à la partie précédente, ce qui fait tourner les exercices à tour de
+ * rôle. Si la partie précédente utilisait un exercice qui n'est plus coché, on
+ * repart du début de la liste.
+ */
+export function prochainExercice(
+  selection: ExerciceId[],
+  exercicePrecedent: ExerciceId | null | undefined,
+): ExerciceId {
+  const liste = toExerciceIds(selection);
+  if (liste.length === 1) return liste[0];
+  const i = exercicePrecedent ? liste.indexOf(exercicePrecedent) : -1;
+  return i === -1 ? liste[0] : liste[(i + 1) % liste.length];
+}
+
+/**
  * Convertit des points d'effort en quantité concrète pour l'exercice donné :
  * un nombre de répétitions, ou un nombre de secondes.
  */
