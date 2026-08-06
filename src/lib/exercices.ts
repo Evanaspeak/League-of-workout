@@ -109,6 +109,23 @@ export function formaterCompact(points: number, exercice: ExerciceId): string {
 }
 
 /**
+ * Décompose un total de points par exercice en valeurs affichables. Chaque
+ * exercice garde son unité : additionner des répétitions et des secondes pour
+ * n'afficher qu'un seul nombre donnerait un résultat faux.
+ */
+export function ventiler(
+  parExercice: Record<string, number>,
+): { id: ExerciceId; points: number; valeur: string }[] {
+  return EXERCICE_IDS
+    .filter((id) => (parExercice[id] ?? 0) > 0)
+    .map((id) => ({
+      id,
+      points: parExercice[id],
+      valeur: formaterCompact(parExercice[id], id),
+    }));
+}
+
+/**
  * Format court pour les axes de graphique, où la place est comptée :
  * les durées sont arrondies à la minute au-delà d'une minute.
  */

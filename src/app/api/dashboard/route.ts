@@ -1,16 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { toExerciceId, toExerciceIds, RAPPEL_SEUIL_DEFAUT } from "@/lib/exercices";
+import { isExerciceId, toExerciceId, toExerciceIds, RAPPEL_SEUIL_DEFAUT } from "@/lib/exercices";
 
-export async function GET() {
+export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const [games, goal] = await Promise.all([
+  const [toutesLesGames, goal] = await Promise.all([
     prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
+
+  // Filtre optionnel : consulter les statistiques d'un seul exercice, ce qui
+  // rend les graphiques lisibles dans une unité unique.
+  const filtreBrut = new URL(req.url).searchParams.get("exercice");
+  const filtre = isExerciceId(filtreBrut) ? filtreBrut : null;
+  const games = filtre
+    ? toutesLesGames.filter((g) => toExerciceId(g.exercice) === filtre)
+    : toutesLesGames;
 
   const totalGames = games.length;
   const wins = games.filter((g) => g.result === "V").length;
@@ -21,7 +29,7 @@ export async function GET() {
   // Ventilation par exercice : des répétitions et des minutes ne s'additionnent
   // pas, le total doit donc rester détaillé exercice par exercice.
   const pointsParExercice: Record<string, number> = {};
-  for (const g of games) {
+  for (const g of toutesLesGames) {
     const ex = toExerciceId(g.exercice);
     pointsParExercice[ex] = (pointsParExercice[ex] || 0) + g.pompesCalculees;
   }
@@ -149,6 +157,7 @@ export async function GET() {
     // l'affichage et à ventiler les totaux.
     exercices: toExerciceIds(user?.exercices),
     pointsParExercice,
+    filtreExercice: filtre,
     recordExercice,
     rappelSeuilPoints: user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT,
   });
