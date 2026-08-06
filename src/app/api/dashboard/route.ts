@@ -24,6 +24,13 @@ export async function GET(req: Request) {
   const wins = games.filter((g) => g.result === "V").length;
   const winrate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
   const totalPompes = games.reduce((s, g) => s + g.pompesCalculees, 0);
+
+  // Compteurs d'en-tête : toujours sur l'ensemble des parties, pour qu'ils ne
+  // bougent pas quand on consulte un exercice en particulier.
+  const globalGames = toutesLesGames.length;
+  const globalWins = toutesLesGames.filter((g) => g.result === "V").length;
+  const globalWinrate = globalGames > 0 ? Math.round((globalWins / globalGames) * 100) : 0;
+  const globalTotalPoints = toutesLesGames.reduce((s, g) => s + g.pompesCalculees, 0);
   const recordPompes = games.length > 0 ? Math.max(...games.map((g) => g.pompesCalculees)) : 0;
 
   // Ventilation par exercice : des répétitions et des minutes ne s'additionnent
@@ -156,6 +163,12 @@ export async function GET(req: Request) {
     // Exercices sélectionnés : servent à convertir les points d'effort à
     // l'affichage et à ventiler les totaux.
     exercices: toExerciceIds(user?.exercices),
+    global: {
+      totalGames: globalGames,
+      wins: globalWins,
+      winrate: globalWinrate,
+      totalPoints: globalTotalPoints,
+    },
     pointsParExercice,
     filtreExercice: filtre,
     recordExercice,
