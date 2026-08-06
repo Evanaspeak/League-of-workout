@@ -467,7 +467,7 @@ export default function HistoryPage() {
                     </div>
                   </div>
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                    <div className="text-4xl font-bold gold-text">{preview.scoring.pompesFinales}</div>
+                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exerciceCourant)}</div>
                     <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{t.pompesLabel}</div>
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>

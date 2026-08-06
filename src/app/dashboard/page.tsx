@@ -330,7 +330,7 @@ export default function Dashboard() {
 
             {sessionGames.length > 0 && (
               <div className="space-y-1">
-                <p className="text-xs gold-text font-semibold">{t.detail(totalSessionPompes)}</p>
+                <p className="text-xs gold-text font-semibold">{t.detail(fmt(totalSessionPompes))}</p>
                 {sessionGames.map((g, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-sm"
                     style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.1)" }}>
@@ -489,7 +489,7 @@ export default function Dashboard() {
                 />
                 {dailySummary && !dailyLoading && (
                   <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>
-                    <span className="gold-text font-bold">{dailySummary.total}</span> {t.pompesUnit} ·{" "}
+                    <span className="gold-text font-bold">{fmt(dailySummary.total)}</span> ·{" "}
                     <span style={{ color: "rgba(236,239,244,0.35)" }}>{t.gamesCount(dailySummary.games)}</span>
                   </span>
                 )}
