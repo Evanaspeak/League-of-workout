@@ -45,6 +45,7 @@ type DashData = {
   objectifTotalPompes: number;
   exercices?: ExerciceId[];
   filtreExercice?: ExerciceId | null;
+  global?: { totalGames: number; wins: number; winrate: number; totalPoints: number };
   pointsParExercice?: Record<string, number>;
   recordExercice?: ExerciceId | null;
 };
@@ -224,11 +225,17 @@ export default function Dashboard() {
       valeur: formaterCompact(pts, toExerciceId(ex)),
     }));
   const exerciceRecord = toExerciceId(data.recordExercice ?? exercice);
+  const globalStats = data.global ?? {
+    totalGames: data.totalGames,
+    wins: data.wins,
+    winrate: data.winrate,
+    totalPoints: data.totalPompes,
+  };
   const fmt = (points: number) => formaterCompact(points, exercice);
   const fmtAxe = (points: number) => formaterAxe(points, exercice);
 
   const progress = data.objectifTotalPompes > 0
-    ? Math.min(100, Math.round((data.totalPompes / data.objectifTotalPompes) * 100))
+    ? Math.min(100, Math.round((globalStats.totalPoints / data.objectifTotalPompes) * 100))
     : 0;
   const roleData = Object.entries(data.pompesByRole ?? {}).map(([role, pompes]) => ({
     role,
@@ -269,47 +276,20 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Filtre par exercice — visible dès qu'au moins deux exercices ont servi */}
-      {exercicesJoues.length > 1 && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{tExo.filtreTitre}</span>
-          {[null, ...exercicesJoues].map((id) => {
-            const actif = filtreExo === id;
-            return (
-              <button
-                key={id ?? "tous"}
-                onClick={() => setFiltreExo(id)}
-                aria-pressed={actif}
-                style={{
-                  padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
-                  background: actif ? "rgba(255,180,84,0.1)" : "transparent",
-                  border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-                  color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
-                  transition: "all 0.15s",
-                }}
-              >
-                {id === null ? tExo.filtreTous : nomsExo[id]}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Stats globales */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label={t.gamesPlayed} value={data.totalGames} i={0} />
-        <StatCard label={t.winrate} value={`${data.winrate}%`} sub={`${data.wins}V / ${data.totalGames - data.wins}D`} i={1} />
+      {/* Vue d'ensemble — jamais filtrée : elle décrit toute l'activité */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatCard label={t.gamesPlayed} value={globalStats.totalGames} i={0} />
         <StatCard
-          label={multi ? t.totalPompes : t.totalDe(nomsExo[exercice])}
-          value={fmt(data.totalPompes)}
-          lignes={lignesTotal.length > 1 ? lignesTotal : undefined}
-          i={2}
+          label={t.winrate}
+          value={`${globalStats.winrate}%`}
+          sub={`${globalStats.wins}V / ${globalStats.totalGames - globalStats.wins}D`}
+          i={1}
         />
         <StatCard
-          label={t.recordPerGame}
-          value={formaterCompact(data.recordPompes, exerciceRecord)}
-          sub={EXERCICES[exerciceRecord].unite === "reps" ? nomsExo[exerciceRecord].toLowerCase() : undefined}
-          i={3}
+          label={t.totalPompes}
+          value={lignesTotal.length <= 1 ? fmt(globalStats.totalPoints) : undefined}
+          lignes={lignesTotal.length > 1 ? lignesTotal : undefined}
+          i={2}
         />
       </div>
 
@@ -331,11 +311,58 @@ export default function Dashboard() {
             />
           </div>
           <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
-            {t.objectiveProgressLibre(fmt(data.totalPompes), fmt(data.objectifTotalPompes))}
-            {data.objectifTotalPompes - data.totalPompes > 0
-              ? t.objectiveRemainingLibre(fmt(data.objectifTotalPompes - data.totalPompes))
+            {t.objectiveProgressLibre(fmt(globalStats.totalPoints), fmt(data.objectifTotalPompes))}
+            {data.objectifTotalPompes - globalStats.totalPoints > 0
+              ? t.objectiveRemainingLibre(fmt(data.objectifTotalPompes - globalStats.totalPoints))
               : t.objectiveReached}
           </div>
+        </div>
+      )}
+
+      {/* Contexte : exercice consulté, et son record */}
+      {exercicesJoues.length > 0 && (
+        <div className="flex items-center gap-3 flex-wrap justify-between rise" style={{ animationDelay: "260ms" }}>
+          {exercicesJoues.length > 1 ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{tExo.filtreTitre}</span>
+              {[null, ...exercicesJoues].map((id) => {
+                const actif = filtreExo === id;
+                return (
+                  <button
+                    key={id ?? "tous"}
+                    onClick={() => setFiltreExo(id)}
+                    aria-pressed={actif}
+                    style={{
+                      padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
+                      background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                      border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                      color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {id === null ? tExo.filtreTous : nomsExo[id]}
+                  </button>
+                );
+              })}
+            </div>
+          ) : <span />}
+
+          {data.totalGames > 0 && (
+            <div className="flex items-baseline gap-2" style={{
+              padding: "7px 14px", borderRadius: 10,
+              border: "1px solid var(--line)", background: "var(--carbon)",
+            }}>
+              <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.6)" }}>
+                {t.recordPerGame}
+              </span>
+              <span className="mono-num" style={{ fontSize: "1rem", fontWeight: 600, color: "var(--amber)" }}>
+                {formaterCompact(data.recordPompes, exerciceRecord)}
+              </span>
+              {EXERCICES[exerciceRecord].unite === "reps" && (
+                <span style={{ fontSize: "0.72rem", color: "rgba(236,239,244,0.45)" }}>{nomsExo[exerciceRecord].toLowerCase()}</span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
