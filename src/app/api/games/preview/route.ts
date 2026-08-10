@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore } from "@/lib/scoring";
+import { calcScore, calcScoreTemps } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
+import { normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
 export async function POST(req: Request) {
@@ -11,24 +12,48 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
+  const jeu = normaliserNomJeu(body.jeu);
+  const typeJeu = typeDuJeu(jeu, body.typeJeu);
+
   const [roleWeights, levelConfigs, masteryConfig] = await Promise.all([
     prisma.roleWeight.findUnique({ where: { role: body.role } }),
     prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
     prisma.masteryConfig.findFirst(),
   ]);
 
-  if (!roleWeights || !masteryConfig) {
+  if (typeJeu === "parties" && (!roleWeights || !masteryConfig)) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }
 
   let partiesAvant = 0;
-  if (body.champion && roleWeights.maitriseActive) {
+  if (body.champion && roleWeights?.maitriseActive) {
     partiesAvant = await prisma.game.count({
       where: { userId: user.id, champion: body.champion },
     });
   }
 
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
+
+  // Session au temps : la dette dépend de la durée, pas d'un résultat.
+  if (typeJeu === "temps") {
+    const dureeSec = Math.max(0, Math.round(Number(body.dureeSec) || 0));
+    if (dureeSec <= 0) {
+      return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
+    }
+    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec, levelConfigs });
+    return NextResponse.json({
+      scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
+      partiesAvant: 0,
+      gainageSec,
+      exercice: isExerciceId(body.exercice) ? body.exercice : toExerciceId(user.exercices?.[0]),
+      typeJeu,
+      dureeSec,
+    });
+  }
+
+  if (!roleWeights || !masteryConfig) {
+    return NextResponse.json({ error: "Config manquante" }, { status: 500 });
+  }
 
   const scoring = calcScore({
     kills: Number(body.kills),

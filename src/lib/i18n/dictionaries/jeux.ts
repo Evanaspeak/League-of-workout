@@ -1,0 +1,57 @@
+export const jeux = {
+  fr: {
+    label: "Jeu",
+    autreJeu: "Autre jeu…",
+    autrePlaceholder: "Nom du jeu",
+    typeParties: "Par partie",
+    typePartiesDesc: "Il y a des victoires et des défaites",
+    typeTemps: "Au temps",
+    typeTempsDesc: "Pas de victoire : c'est la durée qui compte",
+
+    dureeLabel: "Temps de jeu",
+    heures: "h",
+    minutes: "min",
+    dureeInvalide: "Indique une durée de jeu.",
+    sessionTitre: "Session de jeu",
+    sessionSousTitre: "Pour les jeux sans victoire ni défaite : la dette vient du temps passé à jouer.",
+    ajouterSession: "Enregistrer la session",
+    apercuSession: "Calculer la dette",
+
+    // Chronomètre
+    chronoTitre: "Chronomètre",
+    chronoDemarrer: "Démarrer le chrono",
+    chronoArreter: "Arrêter et enregistrer",
+    chronoEnCours: "Chrono en cours",
+    chronoAnnuler: "Annuler",
+
+    filtreTousJeux: "Tous les jeux",
+    filtreJeuTitre: "Jeu",
+  },
+  en: {
+    label: "Game",
+    autreJeu: "Other game…",
+    autrePlaceholder: "Game name",
+    typeParties: "Per match",
+    typePartiesDesc: "There are wins and losses",
+    typeTemps: "By time",
+    typeTempsDesc: "No winning: playtime is what counts",
+
+    dureeLabel: "Playtime",
+    heures: "h",
+    minutes: "min",
+    dureeInvalide: "Enter how long you played.",
+    sessionTitre: "Play session",
+    sessionSousTitre: "For games without wins or losses: the debt comes from time spent playing.",
+    ajouterSession: "Log the session",
+    apercuSession: "Calculate what you owe",
+
+    chronoTitre: "Stopwatch",
+    chronoDemarrer: "Start the clock",
+    chronoArreter: "Stop and log",
+    chronoEnCours: "Clock running",
+    chronoAnnuler: "Cancel",
+
+    filtreTousJeux: "All games",
+    filtreJeuTitre: "Game",
+  },
+};

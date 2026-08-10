@@ -46,6 +46,45 @@ export function getLevel(gainageSec: number, levelConfigs: LevelCfg[]): LevelCfg
   return sorted[sorted.length - 1];
 }
 
+/**
+ * Coût d'une heure de jeu, en points d'effort (1 point = 1 pompe), pour un
+ * joueur de niveau 1. Le multiplicateur de niveau s'applique ensuite, comme
+ * pour les parties classées.
+ *
+ * Repère : 1 h de jeu ≈ 20 pompes au niveau 1, ≈ 93 au niveau 5.
+ */
+export const POINTS_PAR_HEURE = 20;
+
+export type ScoringTempsInput = {
+  dureeSec: number;
+  gainageSec: number;
+  levelConfigs: LevelCfg[];
+};
+
+export type ScoringTempsResult = {
+  niveau: number;
+  multiplicateur: number;
+  pointsFinaux: number;
+};
+
+/**
+ * Dette d'une session de jeu sans victoire ni défaite : elle croît
+ * linéairement avec la durée — chaque seconde vaut autant que la précédente.
+ */
+export function calcScoreTemps(input: ScoringTempsInput): ScoringTempsResult {
+  const { dureeSec, gainageSec, levelConfigs } = input;
+
+  const levelCfg = getLevel(gainageSec, levelConfigs);
+  const heures = Math.max(0, dureeSec) / 3600;
+  const pointsFinaux = Math.round(heures * POINTS_PAR_HEURE * levelCfg.multiplicateur);
+
+  return {
+    niveau: levelCfg.niveau,
+    multiplicateur: levelCfg.multiplicateur,
+    pointsFinaux,
+  };
+}
+
 export function calcScore(input: ScoringInput): ScoringResult {
   const { kills, deaths, assists, result, gainageSec, partiesAvant, roleWeights, levelConfigs, masteryConfig } = input;
 
