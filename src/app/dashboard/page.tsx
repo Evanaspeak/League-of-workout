@@ -20,6 +20,7 @@ import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { JEU_DEFAUT, formaterTempsJeu, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
 import { SessionChrono } from "@/components/SessionChrono";
+import { AjoutActivite } from "@/components/AjoutActivite";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -320,11 +321,7 @@ export default function Dashboard() {
             {t.syncBannerTitle}
           </p>
           <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.55)", lineHeight: 1.6 }}>
-            {t.syncBannerBodyStart}{" "}
-            <a href="/history" style={{ color: "#6E9BFF", textDecoration: "underline" }}>
-              {t.syncBannerLink}
-            </a>
-            {" "}{t.syncBannerBodyEnd}
+            {t.syncBannerBody}
           </p>
         </div>
       </div>
@@ -587,6 +584,10 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Saisie d'une activité — au plus près de l'endroit où on arrive
+          en sortant de partie. */}
+      <AjoutActivite onAjout={() => loadDash()} />
 
       {/* Statistiques globales */}
       <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
