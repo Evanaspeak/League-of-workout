@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { parseRepartition, pointsEnTemps } from "@/lib/exercices";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,10 +22,43 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  // On ne supprime que si la game appartient bien à l'utilisateur.
+  // On relit la partie avant de la supprimer : c'est elle qui dit combien de
+  // temps d'effort elle avait ajouté au compteur en attente.
+  const game = await prisma.game.findFirst({
+    where: { id, userId: user.id },
+    select: { exercice: true, repartition: true, pompesCalculees: true },
+  });
+  if (!game) return NextResponse.json({ error: "Game introuvable" }, { status: 404 });
+
   const result = await prisma.game.deleteMany({ where: { id, userId: user.id } });
   if (result.count === 0) {
     return NextResponse.json({ error: "Game introuvable" }, { status: 404 });
   }
-  return NextResponse.json({ ok: true });
+
+  // Une saisie erronée ne doit pas laisser sa dette derrière elle : on retire
+  // du compteur exactement ce que cette partie y avait mis. Seule la part en
+  // temps compte — les pompes n'y étaient jamais entrées.
+  const aRetirer = pointsEnTemps(
+    parseRepartition(game.repartition, game.exercice, game.pompesCalculees),
+  );
+  let dettePointsDus = null;
+  if (aRetirer > 0) {
+    try {
+      // decrement ne connaît pas de plancher : on relit puis on écrit une
+      // valeur bornée, pour ne jamais passer sous zéro.
+      const actuel = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { dettePointsDus: true },
+      });
+      const restant = Math.max(0, (actuel?.dettePointsDus ?? 0) - aRetirer);
+      const maj = await prisma.user.update({
+        where: { id: user.id },
+        data: { dettePointsDus: restant },
+        select: { dettePointsDus: true },
+      });
+      dettePointsDus = maj.dettePointsDus;
+    } catch { /* la partie est supprimée : on ne fait pas échouer pour autant */ }
+  }
+
+  return NextResponse.json({ ok: true, dettePointsDus });
 }

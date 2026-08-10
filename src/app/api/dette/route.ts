@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { dureeEffort, exercicesEnTemps, repartirPoints, toExerciceIds } from "@/lib/exercices";
+import {
+  dureeEffort, exercicesEnTemps, repartirPoints, secondesParPoint, toExerciceIds,
+} from "@/lib/exercices";
 
 /**
  * Dette en attente. Seuls les exercices comptés en temps s'y accumulent :
@@ -59,6 +61,39 @@ export async function PATCH(req: Request) {
   const maj = await prisma.user.update({
     where: { id: user.id },
     data: { dettePointsDus: restant },
+    select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+  });
+  return NextResponse.json(reponse(maj));
+}
+
+/**
+ * Fixe directement la valeur du compteur, en secondes d'effort. Sert à tester
+ * le rappel sans devoir enregistrer des parties jusqu'à franchir le seuil.
+ */
+export async function PUT(req: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const secondes = Number(body?.secondes);
+  // Jusqu'à 2 h : au-delà on ne teste plus rien, on casse juste ses données.
+  if (!Number.isFinite(secondes) || secondes < 0 || secondes > 7200) {
+    return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
+  }
+
+  const exercices = exercicesEnTemps(toExerciceIds(user.exercices));
+  if (exercices.length === 0) {
+    return NextResponse.json({ error: "Aucun exercice au temps sélectionné" }, { status: 400 });
+  }
+
+  // Le compteur vit en points d'effort : on convertit la durée demandée avec
+  // la même cadence que celle qui sert à l'afficher.
+  const parPoint = secondesParPoint(exercices[0]);
+  const points = parPoint > 0 ? Math.round(secondes / parPoint) : 0;
+
+  const maj = await prisma.user.update({
+    where: { id: user.id },
+    data: { dettePointsDus: points },
     select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
   });
   return NextResponse.json(reponse(maj));
