@@ -229,10 +229,14 @@ export default function HistoryPage() {
    * Corps envoyé à l'API, identique pour l'aperçu et l'enregistrement — on
    * n'envoie que ce que le jeu possède réellement.
    */
-  const corpsAjout = (exercice: ExerciceId, dureeSec?: number) => ({
+  const corpsAjout = (exercice: ExerciceId | null, dureeSec?: number) => ({
     jeu,
     typeJeu,
-    exercice,
+    // Un seul exercice coché (ou une part de session déjà attribuée) : on
+    // l'impose. Plusieurs cochés sur une partie : on envoie la sélection et
+    // le serveur avance d'un cran dans la rotation, pour équilibrer.
+    ...(exercice ? { exercice } : {}),
+    exercices: exercicesAjout,
     gainageSec: Number(addForm.gainageSec) || 60,
     ...(typeJeu === "temps"
       ? { dureeSec: dureeSec ?? dureeEnSecondes }
@@ -265,7 +269,7 @@ export default function HistoryPage() {
     const res = await fetch("/api/games/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(corpsAjout(exercicesAjout[0])),
+      body: JSON.stringify(corpsAjout(exercicesAjout.length === 1 ? exercicesAjout[0] : null)),
     });
     setPreview(await res.json());
     setPreviewLoading(false);
@@ -278,9 +282,10 @@ export default function HistoryPage() {
     // Une session au temps payée en plusieurs exercices se découpe en parts
     // égales : 2 h de Minecraft en pompes + boxe donnent 1 h de chacune. Le
     // total de temps joué et la dette totale restent identiques.
-    const parts = typeJeu === "temps" && exercicesAjout.length > 1
-      ? repartir(dureeEnSecondes, exercicesAjout.length).map((duree, i) => ({ exercice: exercicesAjout[i], duree }))
-      : [{ exercice: exercicesAjout[0], duree: undefined as number | undefined }];
+    const parts: { exercice: ExerciceId | null; duree: number | undefined }[] =
+      typeJeu === "temps" && exercicesAjout.length > 1
+        ? repartir(dureeEnSecondes, exercicesAjout.length).map((duree, i) => ({ exercice: exercicesAjout[i], duree }))
+        : [{ exercice: exercicesAjout.length === 1 ? exercicesAjout[0] : null, duree: undefined }];
 
     const ajoutees: Game[] = [];
     let erreur = "";
@@ -607,16 +612,17 @@ export default function HistoryPage() {
                   {tExo.choisirTitre}
                 </label>
                 <ExerciceSelector
-                  // Une partie ne concerne qu'un exercice : on n'en montre
-                  // qu'un coché, même si la préférence en compte plusieurs.
-                  selection={typeJeu === "temps" ? exercicesAjout : [exercicesAjout[0]]}
+                  selection={exercicesAjout}
                   onChange={(next) => { setExercicesAjout(next); setPreview(null); }}
                   compact
-                  single={typeJeu !== "temps"}
                 />
-                {typeJeu === "temps" && exercicesAjout.length > 1 && (
+                {exercicesAjout.length > 1 && (
                   <p className="text-xs" style={{ color: "var(--amber)" }}>
-                    {tJeux.repartitionSession(exercicesAjout.length)}
+                    {/* Une session se coupe en parts ; une partie, non — elle
+                        prend son tour dans la rotation. */}
+                    {typeJeu === "temps"
+                      ? tJeux.repartitionSession(exercicesAjout.length)
+                      : tExo.rotationActive(exercicesAjout.length)}
                   </p>
                 )}
               </div>
@@ -679,8 +685,14 @@ export default function HistoryPage() {
                       </div>
                     ) : (
                       <>
-                        <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exercicesAjout[0])}</div>
-                        <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{nomsExo[exercicesAjout[0]].toUpperCase()}</div>
+                        {/* Avec plusieurs exercices cochés, c'est la rotation
+                            qui tranche : on affiche celui qu'elle a retenu. */}
+                        <div className="text-4xl font-bold gold-text">
+                          {formaterCompact(preview.scoring.pompesFinales, toExerciceId(preview.exercice ?? exercicesAjout[0]))}
+                        </div>
+                        <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>
+                          {nomsExo[toExerciceId(preview.exercice ?? exercicesAjout[0])].toUpperCase()}
+                        </div>
                       </>
                     )}
                   </div>

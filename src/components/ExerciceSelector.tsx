@@ -15,15 +15,12 @@ export function ExerciceSelector({
   onChange,
   exemplePoints = 38,
   compact = false,
-  single = false,
 }: {
   selection: ExerciceId[];
   onChange: (next: ExerciceId[]) => void;
   /** Coût d'exemple affiché sur chaque carte (en points d'effort). */
   exemplePoints?: number;
   compact?: boolean;
-  /** Choix unique : une partie ajoutée à la main ne concerne qu'un exercice. */
-  single?: boolean;
 }) {
   const t = useT(exercicesDict);
   const noms: Record<ExerciceId, string> = {
@@ -38,10 +35,6 @@ export function ExerciceSelector({
   };
 
   const basculer = (id: ExerciceId) => {
-    if (single) {
-      onChange([id]);
-      return;
-    }
     const coche = selection.includes(id);
     // Le dernier exercice coché ne peut pas être retiré.
     if (coche && selection.length === 1) return;
@@ -62,10 +55,10 @@ export function ExerciceSelector({
           <button
             key={id}
             type="button"
-            role={single ? "radio" : "checkbox"}
+            role="checkbox"
             aria-checked={actif}
             onClick={() => basculer(id)}
-            title={!single && seul ? t.dernierExercice : undefined}
+            title={seul ? t.dernierExercice : undefined}
             style={{
               textAlign: "left",
               display: "flex",
@@ -73,7 +66,7 @@ export function ExerciceSelector({
               gap: 10,
               padding: compact ? "10px 12px" : "14px 16px",
               borderRadius: 10,
-              cursor: !single && seul ? "default" : "pointer",
+              cursor: seul ? "default" : "pointer",
               background: actif ? "rgba(255,180,84,0.07)" : "rgba(236,239,244,0.02)",
               border: `1px solid ${actif ? "var(--amber)" : "var(--line)"}`,
               transition: "border-color 0.15s, background 0.15s",
@@ -84,7 +77,7 @@ export function ExerciceSelector({
               aria-hidden
               style={{
                 flexShrink: 0,
-                width: 17, height: 17, borderRadius: single ? "50%" : 4, marginTop: compact ? 0 : 2,
+                width: 17, height: 17, borderRadius: 4, marginTop: compact ? 0 : 2,
                 border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                 background: actif ? "var(--amber)" : "transparent",
                 display: "flex", alignItems: "center", justifyContent: "center",
