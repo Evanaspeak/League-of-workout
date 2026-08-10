@@ -73,15 +73,34 @@ export async function GET(req: Request) {
 
   // Catalogue des jeux réellement joués : sert à peupler le filtre, et à savoir
   // si l'utilisateur a assez de jeux différents pour que le filtre ait un sens.
-  const jeuxAgg = new Map<string, { nom: string; type: TypeJeu; games: number; points: number }>();
+  type AggJeu = {
+    nom: string; type: TypeJeu; games: number; points: number;
+    /** Victoires et parties compétitives : le winrate n'a de sens que là. */
+    wins: number; parties: number;
+    tempsJoueSec: number;
+  };
+  const jeuxAgg = new Map<string, AggJeu>();
   for (const g of toutesLesGames) {
     const nom = g.jeu || "League of Legends";
-    const courant = jeuxAgg.get(nom) ?? { nom, type: toTypeJeu(g.typeJeu), games: 0, points: 0 };
+    const courant = jeuxAgg.get(nom) ?? {
+      nom, type: toTypeJeu(g.typeJeu), games: 0, points: 0, wins: 0, parties: 0, tempsJoueSec: 0,
+    };
     courant.games++;
     courant.points += g.pompesCalculees;
+    courant.tempsJoueSec += g.dureeSec ?? 0;
+    if (toTypeJeu(g.typeJeu) === "parties") {
+      courant.parties++;
+      if (g.result === "V") courant.wins++;
+    }
     jeuxAgg.set(nom, courant);
   }
-  const jeuxJoues = [...jeuxAgg.values()].sort((a, b) => b.games - a.games);
+  const jeuxJoues = [...jeuxAgg.values()]
+    .map((j) => ({
+      ...j,
+      winrate: j.parties > 0 ? Math.round((j.wins / j.parties) * 100) : null,
+      detteMoyenne: j.games > 0 ? Math.round(j.points / j.games) : 0,
+    }))
+    .sort((a, b) => b.games - a.games);
   const typeJeuFiltre: TypeJeu | null = filtreJeu ? (jeuxAgg.get(filtreJeu)?.type ?? null) : null;
 
   // Ventilation par exercice : des répétitions et des minutes ne s'additionnent

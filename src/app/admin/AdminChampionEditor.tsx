@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { CHAMPIONS } from "@/lib/champions";
+import { invaliderChampions } from "@/lib/useChampions";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { adminChampionEditor } from "@/lib/i18n/dictionaries/adminChampionEditor";
@@ -36,6 +37,7 @@ export default function AdminChampionEditor() {
     const data = await res.json();
     setSaving(false);
     if (res.ok) {
+      invaliderChampions();
       setMsg({ type: "ok", text: t.saved(data.count) });
       setIsDefault(false);
     } else {
@@ -47,6 +49,7 @@ export default function AdminChampionEditor() {
     setSaving(true);
     setMsg(null);
     await fetch("/api/admin/config/champions", { method: "DELETE" });
+    invaliderChampions();
     setText(CHAMPIONS.join("\n"));
     setIsDefault(true);
     setSaving(false);

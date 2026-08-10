@@ -59,7 +59,11 @@ type DashData = {
   pointsParExercice?: Record<string, number>;
   recordExercice?: ExerciceId | null;
   // ── Multi-jeu ──
-  jeuxJoues?: { nom: string; type: TypeJeu; games: number; points: number }[];
+  jeuxJoues?: {
+    nom: string; type: TypeJeu; games: number; points: number;
+    wins: number; parties: number; tempsJoueSec: number;
+    winrate: number | null; detteMoyenne: number;
+  }[];
   filtreJeu?: string | null;
   typeJeuFiltre?: TypeJeu | null;
   tempsJoueSec?: number;
@@ -591,11 +595,61 @@ export default function Dashboard() {
           en sortant de partie. */}
       <AjoutActivite onAjout={() => loadDash()} />
 
+      {/* Comparaison entre jeux — uniquement en vue d'ensemble. Sur un jeu
+          filtré, c'est sa synthèse propre qui prend le relais plus bas. */}
+      {filtreJeu === null && jeuxJoues.length > 1 && (
+        <div className="lol-panel p-4 space-y-3">
+          <div>
+            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.comparatifTitre}</h2>
+            <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>{t.comparatifAide}</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: 620 }}>
+              <thead>
+                <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
+                  <th className="text-left px-3 py-1">{t.colJeu}</th>
+                  <th className="text-right px-3 py-1">{t.colActivites}</th>
+                  <th className="text-right px-3 py-1">{t.colWinrate}</th>
+                  <th className="text-right px-3 py-1">{t.colDette}</th>
+                  <th className="text-right px-3 py-1">{t.colDetteMoy}</th>
+                  <th className="text-right px-3 py-1">{t.colTemps}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jeuxJoues.map((j) => (
+                  <tr key={j.nom} style={{ background: "var(--bg-raised)" }}>
+                    <td className="px-3 py-2" style={{ whiteSpace: "nowrap" }}>
+                      <button
+                        onClick={() => setFiltreJeu(j.nom)}
+                        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--signal)" }}
+                      >
+                        {j.nom}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2 text-right mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>{j.games}</td>
+                    {/* Un jeu au temps n'a pas de winrate, un jeu à parties n'a
+                        pas de durée : la case reste vide plutôt que de mentir. */}
+                    <td className="px-3 py-2 text-right mono-num" style={{ color: j.winrate === null ? "rgba(152,162,176,0.35)" : "rgba(236,239,244,0.8)" }}>
+                      {j.winrate === null ? t.sansObjet : `${j.winrate}%`}
+                    </td>
+                    <td className="px-3 py-2 text-right mono-num gold-text font-semibold">{fmt(j.points)}</td>
+                    <td className="px-3 py-2 text-right mono-num" style={{ color: "rgba(236,239,244,0.6)" }}>{fmt(j.detteMoyenne)}</td>
+                    <td className="px-3 py-2 text-right mono-num" style={{ color: j.tempsJoueSec > 0 ? "rgba(236,239,244,0.8)" : "rgba(152,162,176,0.35)" }}>
+                      {j.tempsJoueSec > 0 ? formaterTempsJeu(j.tempsJoueSec) : t.sansObjet}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Statistiques globales */}
       <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
         {t.globalStats}
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className={`grid gap-4 ${afficherParJeu ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
         {afficherParJeu && (
           <div className="lol-panel p-4">
             <div className="flex items-center justify-between mb-3">
@@ -846,11 +900,11 @@ export default function Dashboard() {
       {/* Rôles et champions n'existent que sur League : on les regroupe sous
           leur propre titre plutôt que de les laisser passer pour des stats
           générales. */}
-      {(roleData.length > 0 || data.mostPlayed || data.leastEfficient) && (
+      {filtreJeu !== null && (roleData.length > 0 || data.mostPlayed || data.leastEfficient) && (
         <div className="space-y-3">
           <div>
             <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
-              {t.sectionLeague}
+              {t.syntheseDe(filtreJeu)}
             </h2>
             <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.35)" }}>
               {t.sectionLeagueDesc}

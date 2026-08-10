@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { CHAMPIONS } from "@/lib/champions";
+import { useChampions, championConnu } from "@/lib/useChampions";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { championInput as championInputDict } from "@/lib/i18n/dictionaries/championInput";
 
@@ -12,18 +12,11 @@ interface Props {
 
 export function ChampionInput({ value, onChange, onReset }: Props) {
   const t = useT(championInputDict);
-  const [champList, setChampList] = useState<string[]>(CHAMPIONS);
+  const champList = useChampions();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetch("/api/champions")
-      .then((r) => r.json())
-      .then((list) => { if (Array.isArray(list) && list.length > 0) setChampList(list); })
-      .catch(() => {});
-  }, []);
 
   const suggest = (q: string, limit = 8) => {
     if (!q) return [];
@@ -31,10 +24,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
     return champList.filter((c) => c.toLowerCase().includes(lower)).slice(0, limit);
   };
 
-  const isKnown = (name: string) =>
-    !name || champList.some((c) => c.toLowerCase() === name.trim().toLowerCase());
-
-  const isValid = isKnown(value);
+  const isValid = !value || championConnu(champList, value);
 
   const handleChange = (raw: string) => {
     onChange(raw);
