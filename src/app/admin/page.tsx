@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import AdminChampionEditor from "./AdminChampionEditor";
 import AdminUserList from "./AdminUserList";
 import AdminTools from "./AdminTools";
+import AdminSeuilDette from "./AdminSeuilDette";
 import AdminHeader from "./AdminHeader";
 
 const ADMIN_EMAIL = "evantocquet@gmail.com";
@@ -17,6 +18,7 @@ export default async function AdminPage() {
     <div className="space-y-6">
       <AdminHeader email={user.email} />
       <AdminUserList />
+      <AdminSeuilDette />
       <AdminChampionEditor />
       <AdminTools />
     </div>
