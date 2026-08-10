@@ -36,7 +36,9 @@ export const exercices = {
     exempleLigne: (ex: string, valeur: string) => `${ex} : ${valeur}`,
     exempleIntro: "Pour une partie perdue coûtant 38 points d'effort :",
 
-    rappelTitle: "Rappel pendant la session",
+    rappelTitle: "Rappel du compteur de boxe",
+    rappelSeuilValeur: (t: string) => `À partir de ${t}`,
+    rappelSeuilAide: "La boxe s'accumule au fil des parties. Passé ce temps, la pastille passe en alerte et t'envoie une notification.",
     rappelHint:
       "Quand ta dette dépasse ce seuil pendant une session, l'app te prévient d'aller la payer. Ça évite les micro-séries inutiles et les grosses sessions de fin de soirée.",
     rappelDesactive: "Désactivé",
@@ -84,7 +86,9 @@ export const exercices = {
     exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
     exempleIntro: "For a lost game costing 38 effort points:",
 
-    rappelTitle: "Reminder during a session",
+    rappelTitle: "Boxing counter reminder",
+    rappelSeuilValeur: (t: string) => `From ${t}`,
+    rappelSeuilAide: "Boxing piles up game after game. Past this much, the badge turns red and sends you a notification.",
     rappelHint:
       "When your debt goes over this threshold during a session, the app tells you to go pay it. Keeps you from doing pointless 30-second sets or one huge session at the end of the night.",
     rappelDesactive: "Off",

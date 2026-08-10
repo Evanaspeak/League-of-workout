@@ -108,6 +108,8 @@ export default function HistoryPage() {
     setDeletingId(id);
     await fetch(`/api/games/${id}`, { method: "DELETE" });
     setGames((prev) => prev.filter((g) => g.id !== id));
+    // La suppression rend aussi du temps au compteur : la pastille doit suivre.
+    window.dispatchEvent(new Event("wow-dette-changee"));
     setDeletingId(null);
   };
 

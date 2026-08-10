@@ -6,10 +6,11 @@ import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICES, EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS,
-  formaterCompact, toExerciceIds, type ExerciceId,
+  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT,
+  toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
+import { RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT } from "@/lib/exercices";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -41,12 +42,6 @@ export default function SettingsPage() {
   };
 
   /** « 38 pompes » pour les répétitions, « 4 min 26 » pour le temps. */
-  const quantiteAvecNom = (points: number, id: ExerciceId) => {
-    const valeur = formaterCompact(points, id);
-    return EXERCICES[id].unite === "reps"
-      ? `${valeur} ${EXO_LABELS[id].nom.toLowerCase()}`
-      : valeur;
-  };
   // ── Profile ──
   const [profileForm, setProfileForm] = useState({
     pseudo: "", riotId: "", riotRegion: "EUW1", objectifTotalPompes: 1000,
@@ -75,6 +70,8 @@ export default function SettingsPage() {
   // ── Exercice & rappel ──
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [rappelSeuil, setRappelSeuil] = useState<number>(RAPPEL_SEUIL_DEFAUT);
+  // Seuil du compteur de boxe, en secondes d'effort.
+  const [seuilSec, setSeuilSec] = useState<number>(RAPPEL_SEUIL_SEC_DEFAUT);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
 
@@ -96,6 +93,7 @@ export default function SettingsPage() {
       setMasteryConfig(s.masteryConfig);
       setExercicesSel(toExerciceIds(s.user?.exercices));
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
+      setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
     });
   }, []);
 
@@ -115,6 +113,25 @@ export default function SettingsPage() {
     if (res.ok) {
       setSavedExo(true);
       setTimeout(() => setSavedExo(false), 2000);
+    }
+  };
+
+  /** Enregistre le seuil du compteur de boxe, en secondes d'effort. */
+  const handleSaveSeuilSec = async (nextSeuilSec: number) => {
+    setSeuilSec(nextSeuilSec);
+    setSavingExo(true);
+    setSavedExo(false);
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { rappelSeuilSec: nextSeuilSec } }),
+    });
+    setSavingExo(false);
+    if (res.ok) {
+      setSavedExo(true);
+      setTimeout(() => setSavedExo(false), 2000);
+      // La pastille relit son seuil sans recharger la page.
+      window.dispatchEvent(new Event("wow-dette-changee"));
     }
   };
 
@@ -285,15 +302,15 @@ export default function SettingsPage() {
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
           <h2 style={HEADING}>{tExo.rappelTitle}</h2>
           <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
-            {tExo.rappelHint}
+            {tExo.rappelSeuilAide}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {RAPPEL_SEUILS.map((seuil) => {
-              const actif = seuil === rappelSeuil;
+            {RAPPEL_SEUILS_SEC.map((seuil) => {
+              const actif = seuil === seuilSec;
               return (
                 <button
                   key={seuil}
-                  onClick={() => handleSaveExo(exercicesSel, seuil)}
+                  onClick={() => handleSaveSeuilSec(seuil)}
                   aria-pressed={actif}
                   style={{
                     padding: "7px 14px",
@@ -306,7 +323,9 @@ export default function SettingsPage() {
                     transition: "all 0.15s",
                   }}
                 >
-                  {seuil === 0 ? tExo.rappelDesactive : tExo.rappelValeur(quantiteAvecNom(seuil, exercicesSel[0]))}
+                  {seuil === 0
+                    ? tExo.rappelDesactive
+                    : tExo.rappelSeuilValeur(seuil % 60 === 0 ? `${seuil / 60} min` : `${seuil} s`)}
                 </button>
               );
             })}

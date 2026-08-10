@@ -13,7 +13,10 @@ export async function GET() {
     prisma.masteryConfig.findFirst(),
     prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
-  return NextResponse.json({ roleWeights, levelConfigs, masteryConfig, goal, user });
+  // Le hash du mot de passe n'a rien à faire dans le navigateur.
+  const { passwordHash: _ignore, ...userSansSecret } = user;
+  void _ignore;
+  return NextResponse.json({ roleWeights, levelConfigs, masteryConfig, goal, user: userSansSecret });
 }
 
 export async function PUT(req: Request) {

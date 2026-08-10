@@ -3,13 +3,16 @@ import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { adminSeuil } from "@/lib/i18n/dictionaries/adminSeuil";
 
-/** Bornes du réglage : au-delà d'une heure, le rappel ne servirait plus à rien. */
-const MAX_MIN = 60;
+/** Bornes du réglage : 2 h suffisent largement à tester tous les cas. */
+const MAX_MIN = 120;
 
 /**
- * Réglage du seuil du compteur de boxe. Il vit ici plutôt que dans les
- * réglages parce qu'il sert surtout à calibrer l'app : c'est la valeur qu'on
- * ajuste en testant, pas un choix qu'on fait tous les jours.
+ * Outil de test du compteur de boxe : il force sa valeur pour vérifier
+ * l'alerte, la notification et le chronomètre sans devoir enregistrer des
+ * parties jusqu'à franchir le seuil.
+ *
+ * Le seuil de déclenchement, lui, est un vrai réglage utilisateur et vit
+ * dans Réglages.
  */
 export default function AdminSeuilDette() {
   const t = useT(adminSeuil);
@@ -17,6 +20,8 @@ export default function AdminSeuilDette() {
   const [minutes, setMinutes] = useState("5");
   const [secondes, setSecondes] = useState("0");
   const [actuelSec, setActuelSec] = useState<number | null>(null);
+  const [seuilSec, setSeuilSec] = useState<number | null>(null);
+  const [sansExercice, setSansExercice] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -24,11 +29,14 @@ export default function AdminSeuilDette() {
     fetch("/api/dette")
       .then((r) => r.json())
       .then((d) => {
-        const sec = Number(d?.seuilSec);
-        if (!Number.isFinite(sec)) return;
-        setActuelSec(sec);
-        setMinutes(String(Math.floor(sec / 60)));
-        setSecondes(String(sec % 60));
+        const sec = Number(d?.dureeSec);
+        if (Number.isFinite(sec)) {
+          setActuelSec(sec);
+          setMinutes(String(Math.floor(sec / 60)));
+          setSecondes(String(sec % 60));
+        }
+        if (Number.isFinite(Number(d?.seuilSec))) setSeuilSec(Number(d.seuilSec));
+        setSansExercice(!Array.isArray(d?.exercices) || d.exercices.length === 0);
       })
       .catch(() => {});
   }, []);
@@ -50,13 +58,14 @@ export default function AdminSeuilDette() {
     setSaving(true);
     setMsg("");
     try {
-      const res = await fetch("/api/settings", {
+      const res = await fetch("/api/dette", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userPrefs: { rappelSeuilSec: total } }),
+        body: JSON.stringify({ secondes: total }),
       });
       if (res.ok) {
-        setActuelSec(total);
+        const d = await res.json();
+        setActuelSec(Number(d?.dureeSec) || 0);
         setMsg(t.enregistre);
         // La pastille relit son seuil sans qu'on ait à recharger la page.
         window.dispatchEvent(new Event("wow-dette-changee"));
@@ -116,11 +125,14 @@ export default function AdminSeuilDette() {
         {actuelSec !== null && (
           <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>
             {t.actuel(lisible(actuelSec))}
+            {seuilSec !== null && seuilSec > 0 && ` · ${t.seuilRappel(lisible(seuilSec))}`}
           </span>
         )}
       </div>
 
-      <p className="text-xs mt-3" style={{ color: "rgba(236,239,244,0.35)" }}>{t.desactive}</p>
+      <p className="text-xs mt-3" style={{ color: "rgba(236,239,244,0.35)" }}>
+        {sansExercice ? t.sansExercice : t.desactive}
+      </p>
       {msg && (
         <p className="text-sm mt-2" style={{ color: msg === t.enregistre ? "var(--victory)" : "var(--ember)" }}>
           {msg}
