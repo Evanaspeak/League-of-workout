@@ -28,7 +28,7 @@ export async function PUT(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-    const data: { exercices?: string[]; rappelSeuilPoints?: number } = {};
+    const data: { exercices?: string[]; rappelSeuilPoints?: number; rappelSeuilSec?: number } = {};
 
     if (body.userPrefs.exercices !== undefined) {
       const bruts = body.userPrefs.exercices;
@@ -44,6 +44,16 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Seuil de rappel invalide" }, { status: 400 });
       }
       data.rappelSeuilPoints = Math.round(seuil);
+    }
+
+    // Seuil du compteur de dette en attente, en secondes d'effort. 0 désactive
+    // le rappel ; au-delà d'une heure, il ne préviendrait plus jamais à temps.
+    if (body.userPrefs.rappelSeuilSec !== undefined) {
+      const seuilSec = Number(body.userPrefs.rappelSeuilSec);
+      if (!Number.isFinite(seuilSec) || seuilSec < 0 || seuilSec > 3600) {
+        return NextResponse.json({ error: "Seuil de rappel invalide" }, { status: 400 });
+      }
+      data.rappelSeuilSec = Math.round(seuilSec);
     }
 
     if (Object.keys(data).length > 0) {
