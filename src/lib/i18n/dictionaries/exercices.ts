@@ -9,6 +9,8 @@ export const exercices = {
     filtreTitre: "Voir les stats de",
     rotationActive: (n: number) => `${n} exercices — ils alternent à chaque partie`,
     partageActif: (n: number) => `${n} exercices — la dette se partage entre eux`,
+    apercuLive: "Coût de cette partie",
+    apercuExemple: "Exemple — remplis la partie pour voir le vrai coût",
 
     // ── Compteur de dette en attente ──
     detteTitre: "En attente",
@@ -61,6 +63,8 @@ export const exercices = {
     filtreTitre: "Show stats for",
     rotationActive: (n: number) => `${n} exercises — they rotate each game`,
     partageActif: (n: number) => `${n} exercises — the debt is split between them`,
+    apercuLive: "Cost of this game",
+    apercuExemple: "Example — fill in the game to see the real cost",
 
     detteTitre: "Pending",
     detteVide: "Nothing pending.",

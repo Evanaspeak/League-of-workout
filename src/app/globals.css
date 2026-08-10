@@ -320,23 +320,62 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(236, 239, 244, 0.14); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(236, 239, 244, 0.26); }
 
-/* ── Pastille de dette en attente ───────────────────────────────────────────
-   Toujours visible, sur toutes les pages : la boxe s'accumule et doit rester
-   sous les yeux. Elle se loge dans la marge droite sur grand écran, et
-   redescend en bas à droite dès que la marge disparaît. */
-.pastille-dette {
+/* ── Rail latéral ───────────────────────────────────────────────────────────
+   Colonne fixe dans la marge droite : dette en attente, puis les actions de la
+   page. Elle suit le scroll et reste visible partout dans l'app. Sur grand
+   écran elle se loge dans la marge, et redescend en bas à droite dès que la
+   marge disparaît — la colonne pousse alors vers le haut. */
+.rail-lateral {
   position: fixed;
   z-index: 8000;
   right: clamp(12px, 2vw, 28px);
   bottom: 16px;
   width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Le rail ne couvre que ses pastilles : le reste de la page reste cliquable. */
+  pointer-events: none;
 }
+.rail-lateral > * {
+  pointer-events: auto;
+}
+/* La page laisse la marge au rail au lieu de passer dessous. Uniquement là où
+   il existe : les pages publiques restent pleine largeur. À garder avant le
+   bloc suivant — une règle placée après un sélecteur `::-webkit-scrollbar` est
+   avalée à la compilation. */
 @media (min-width: 1180px) {
-  .pastille-dette {
-    top: 96px;
-    bottom: auto;
+  body[data-rail="1"] main {
+    padding-right: 196px;
   }
 }
+@media (min-width: 1180px) {
+  .rail-lateral {
+    top: 96px;
+    bottom: auto;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    /* La barre de défilement du rail ne doit pas rogner les pastilles. */
+    scrollbar-width: none;
+  }
+  .rail-lateral::-webkit-scrollbar { width: 0; }
+}
+.pastille-dette {
+  width: 100%;
+}
+/* Action du rail : même gabarit que la pastille de dette. */
+.rail-action {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s, background 0.15s;
+}
+.rail-action:hover {
+  border-color: var(--amber);
+}
 @media (prefers-reduced-motion: reduce) {
-  .pastille-dette { transition: none; }
+  .pastille-dette,
+  .rail-action { transition: none; }
 }

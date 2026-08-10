@@ -5,7 +5,7 @@ import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
 import { SessionGuard } from "@/components/SessionGuard";
 import { OnboardingModal } from "@/components/OnboardingModal";
-import { CompteurDette } from "@/components/CompteurDette";
+import { RailLateral } from "@/components/RailLateral";
 import { Footer } from "@/components/Footer";
 import { SessionProvider } from "@/lib/SessionContext";
 import { LocaleProvider } from "@/lib/i18n/LocaleContext";
@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </main>
             <Footer />
-            <CompteurDette />
+            <RailLateral />
           </SessionProvider>
         </LocaleProvider>
       </body>
