@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { ChampionInput } from "@/components/ChampionInput";
-import { findChampion } from "@/lib/champions";
+import { useChampions, championConnu } from "@/lib/useChampions";
 import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -88,6 +88,9 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
 
 
   // ── Add form ──
+  // Même source de vérité que ChampionInput : sinon un champion ajouté par
+  // l'admin s'affiche comme valide dans le champ mais bloque le bouton.
+  const champList = useChampions();
   const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState({
@@ -305,7 +308,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
 
 
   const dureeEnSecondes = (Number(dureeH) || 0) * 3600 + (Number(dureeM) || 0) * 60;
-  const isChampionValid = !addForm.champion || !!findChampion(addForm.champion);
+  const isChampionValid = !addForm.champion || championConnu(champList, addForm.champion);
   const isAddReady = typeJeu === "temps"
     ? jeu.trim().length > 0 && dureeEnSecondes > 0
     : jeu.trim().length > 0
