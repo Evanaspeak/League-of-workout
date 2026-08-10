@@ -67,3 +67,28 @@ desktop/
 - Overlay transparent au-dessus du jeu (prompt de pompes en fin de partie)
 - Démarrage automatique de session (sans passer par le bouton du dashboard)
 - Lancement au démarrage de Windows / réduction en barre des tâches
+
+## Overlay en jeu (test)
+
+L'app affiche une pastille de test par-dessus le jeu. Elle sert à vérifier un
+point précis : **est-ce qu'une fenêtre transparente arrive à se dessiner
+au-dessus de League quand il est en plein écran ?**
+
+- Elle apparaît **au lancement de l'app**, en haut à droite.
+- Elle apparaît aussi **toute seule au début d'une partie**, et disparaît à la fin.
+- **Ctrl + Maj + O** l'affiche ou la masque à tout moment, même en jeu.
+- Elle laisse passer les clics : impossible de gêner une partie.
+
+Le chronomètre qui défile est là pour prouver que l'overlay est *vivant* :
+s'il avance pendant la partie, le rendu passe bien par-dessus le jeu.
+
+Aucune injection n'est faite dans le processus du jeu — c'est une simple
+fenêtre Electron maintenue au premier plan, donc rien qui puisse inquiéter un
+anti-cheat.
+
+### Résultats possibles
+
+| Ce que tu vois | Ce que ça veut dire |
+|---|---|
+| La pastille s'affiche et le chrono avance | Windows compose le plein écran : la voie est libre |
+| Rien en jeu, mais visible sur le bureau | Plein écran exclusif réel : il faudra une autre méthode |
