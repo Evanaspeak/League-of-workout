@@ -9,6 +9,9 @@ import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
 } from "@/lib/exercices";
+import { JEU_DEFAUT, type TypeJeu } from "@/lib/jeux";
+import { JeuSelector } from "@/components/JeuSelector";
+import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 
@@ -77,6 +80,7 @@ function getLevelLabel(sec: number, locale: "fr" | "en"): string {
 export default function HistoryPage() {
   const t = useT(history);
   const tExo = useT(exercicesDict);
+  const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = {
     pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
   };
@@ -110,6 +114,10 @@ export default function HistoryPage() {
   const [addForm, setAddForm] = useState({
     role: "Jungle", champion: "", kills: "", deaths: "", assists: "", result: "D", gainageSec: "60",
   });
+  const [jeu, setJeu] = useState<string>(JEU_DEFAUT);
+  const [typeJeu, setTypeJeu] = useState<TypeJeu>("parties");
+  const [dureeH, setDureeH] = useState("");
+  const [dureeM, setDureeM] = useState("");
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [addLogging, setAddLogging] = useState(false);
@@ -217,6 +225,9 @@ export default function HistoryPage() {
         assists: Number(addForm.assists),
         gainageSec: Number(addForm.gainageSec) || 60,
         exercice: exerciceAjout,
+        jeu,
+        typeJeu,
+        ...(typeJeu === "temps" ? { dureeSec: dureeEnSecondes } : {}),
       }),
     });
     setPreview(await res.json());
@@ -236,6 +247,9 @@ export default function HistoryPage() {
         assists: Number(addForm.assists),
         gainageSec: Number(addForm.gainageSec) || 60,
         exercice: exerciceAjout,
+        jeu,
+        typeJeu,
+        ...(typeJeu === "temps" ? { dureeSec: dureeEnSecondes } : {}),
         source: "manuel",
       }),
     });
@@ -314,8 +328,11 @@ export default function HistoryPage() {
     return acc;
   }, {});
 
+  const dureeEnSecondes = (Number(dureeH) || 0) * 3600 + (Number(dureeM) || 0) * 60;
   const isChampionValid = !addForm.champion || !!findChampion(addForm.champion);
-  const isAddReady = addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== "" && isChampionValid;
+  const isAddReady = typeJeu === "temps"
+    ? jeu.trim().length > 0 && dureeEnSecondes > 0
+    : addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== "" && isChampionValid;
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -386,7 +403,7 @@ export default function HistoryPage() {
           {showAddForm && (
             <div className="lol-panel p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.addGameTitle}</h2>
+                <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{typeJeu === "temps" ? tJeux.sessionTitre : t.addGameTitle}</h2>
                 <button
                   onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
                   style={{ color: "rgba(236,239,244,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
@@ -399,6 +416,27 @@ export default function HistoryPage() {
                 </div>
               )}
 
+              <JeuSelector
+                jeu={jeu}
+                typeJeu={typeJeu}
+                onChange={(j, ty) => { setJeu(j); setTypeJeu(ty); setPreview(null); }}
+              />
+
+              {typeJeu === "temps" ? (
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{tJeux.dureeLabel}</label>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min="0" max="24" className="lol-input text-center" placeholder="2"
+                      value={dureeH} onChange={(e) => { setDureeH(e.target.value); setPreview(null); }} />
+                    <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{tJeux.heures}</span>
+                    <input type="number" min="0" max="59" className="lol-input text-center" placeholder="30"
+                      value={dureeM} onChange={(e) => { setDureeM(e.target.value); setPreview(null); }} />
+                    <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{tJeux.minutes}</span>
+                  </div>
+                  <p className="text-xs mt-2" style={{ color: "rgba(236,239,244,0.4)" }}>{tJeux.sessionSousTitre}</p>
+                </div>
+              ) : (
+              <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.role}</label>
@@ -465,6 +503,8 @@ export default function HistoryPage() {
                   </div>
                 </div>
               </div>
+              </>
+              )}
 
               <div className="space-y-2">
                 <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
@@ -479,11 +519,26 @@ export default function HistoryPage() {
               </div>
 
               <button className="lol-btn w-full" onClick={handlePreview} disabled={!isAddReady || previewLoading}>
-                {previewLoading ? t.calculating : t.calculatePompes}
+                {previewLoading ? t.calculating : (typeJeu === "temps" ? tJeux.apercuSession : t.calculatePompes)}
               </button>
 
               {preview && (
                 <div className="space-y-3">
+                  {typeJeu === "temps" ? (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                        <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.level}</span>
+                        <span className="gold-text font-bold">{preview.scoring.niveau}</span>
+                      </div>
+                      <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                        <span style={{ color: "rgba(236,239,244,0.6)" }}>{tJeux.dureeLabel}</span>
+                        <span className="gold-text font-bold mono-num">
+                          {(Number(dureeH) || 0) > 0 ? `${Number(dureeH)} ${tJeux.heures} ` : ""}
+                          {(Number(dureeM) || 0) > 0 ? `${Number(dureeM)} ${tJeux.minutes}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
                       <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.level}</span>
@@ -506,12 +561,13 @@ export default function HistoryPage() {
                       <span className="blue-text font-bold">+{Math.round(preview.scoring.surcharge * 100)}%</span>
                     </div>
                   </div>
+                  )}
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
                     <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exerciceAjout)}</div>
                     <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{nomsExo[exerciceAjout].toUpperCase()}</div>
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
-                    {addLogging ? t.saving : t.logThisGame}
+                    {addLogging ? t.saving : (typeJeu === "temps" ? tJeux.ajouterSession : t.logThisGame)}
                   </button>
                   {addError && <p className="text-sm loss-text text-center">{addError}</p>}
                 </div>
