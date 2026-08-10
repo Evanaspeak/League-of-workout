@@ -120,8 +120,12 @@ model Game {
   // Coût en POINTS D'EFFORT (1 point = 1 pompe). Le nom est historique :
   // la quantité réellement affichée dépend de `exercice` ci-dessous.
   pompesCalculees     Int
-  // Exercice actif au moment où la partie a été enregistrée.
+  // Exercice actif au moment où la partie a été enregistrée. Quand la dette se
+  // partage entre plusieurs exercices, c'est le premier d'entre eux.
   exercice            String   @default("pompes")
+  // Ventilation de la dette entre exercices, en JSON : {"pompes":23,"boxe":23}.
+  // Null quand un seul exercice est concerné — `exercice` suffit alors.
+  repartition         String?
   // Jeu concerné, et façon dont il génère de la dette :
   //   "parties" → résultat et KDA (League of Legends, Valorant…)
   //   "temps"   → durée jouée, sans victoire ni défaite (Minecraft…)

@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, repartir, toExerciceId, toExerciceIds,
+  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, toExerciceIds,
   type ExerciceId,
 } from "@/lib/exercices";
 import { JEU_DEFAUT, typeDuJeu, type TypeJeu } from "@/lib/jeux";
@@ -216,29 +216,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     setChronoErreur("");
 
-    // Plusieurs exercices cochés : la session se découpe en parts égales, une
-    // par exercice, plutôt que de tout mettre sur le premier.
+    // Une seule ligne : quand plusieurs exercices sont cochés, la dette se
+    // partage entre eux côté serveur.
     const selection = exercicesRef.current.length > 0 ? exercicesRef.current : [exerciceRef.current];
-    const parts = repartir(dureeSec, selection.length)
-      .map((duree, i) => ({ exercice: selection[i], duree }))
-      .filter((part) => part.duree > 0);
 
     try {
-      for (const part of parts) {
-        const res = await fetch("/api/games", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jeu: jeuSessionRef.current,
-            typeJeu: "temps",
-            dureeSec: part.duree,
-            gainageSec: gainageRef.current,
-            exercice: part.exercice,
-            source: "manuel",
-          }),
-        });
-        if (!res.ok) { setChronoErreur("erreur"); return false; }
-      }
+      const res = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jeu: jeuSessionRef.current,
+          typeJeu: "temps",
+          dureeSec,
+          gainageSec: gainageRef.current,
+          exercices: selection,
+          source: "manuel",
+        }),
+      });
+      if (!res.ok) { setChronoErreur("erreur"); return false; }
       stopSession();
       return true;
     } catch {

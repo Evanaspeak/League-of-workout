@@ -63,21 +63,6 @@ export function toExerciceIds(v: unknown): ExerciceId[] {
   return valides.length > 0 ? valides : [EXERCICE_DEFAUT];
 }
 
-/**
- * Exercice de la prochaine partie : on avance d'un cran dans la sélection par
- * rapport à la partie précédente, ce qui fait tourner les exercices à tour de
- * rôle. Si la partie précédente utilisait un exercice qui n'est plus coché, on
- * repart du début de la liste.
- */
-export function prochainExercice(
-  selection: ExerciceId[],
-  exercicePrecedent: ExerciceId | null | undefined,
-): ExerciceId {
-  const liste = toExerciceIds(selection);
-  if (liste.length === 1) return liste[0];
-  const i = exercicePrecedent ? liste.indexOf(exercicePrecedent) : -1;
-  return i === -1 ? liste[0] : liste[(i + 1) % liste.length];
-}
 
 /**
  * Convertit des points d'effort en quantité concrète pour l'exercice donné :
@@ -147,3 +132,50 @@ export function repartir(total: number, n: number): number[] {
   const reste = total - base * n;
   return Array.from({ length: n }, (_, i) => base + (i < reste ? 1 : 0));
 }
+
+/**
+ * Ventilation de la dette d'une activité entre plusieurs exercices.
+ * `{ pompes: 23, boxe: 23 }` : la somme vaut toujours le coût total.
+ */
+export type Repartition = Partial<Record<ExerciceId, number>>;
+
+/**
+ * Découpe un coût entre les exercices retenus, à parts égales. La somme reste
+ * exacte : les premières parts absorbent le reste de la division.
+ */
+export function repartirPoints(total: number, exercices: ExerciceId[]): Repartition {
+  const liste = toExerciceIds(exercices);
+  const parts = repartir(Math.max(0, Math.round(total)), liste.length);
+  const out: Repartition = {};
+  liste.forEach((id, i) => { out[id] = parts[i]; });
+  return out;
+}
+
+/**
+ * Relit la ventilation stockée en base. Les lignes créées avant la
+ * répartition — ou celles qui ne concernent qu'un exercice — n'en ont pas :
+ * tout le coût revient alors à leur exercice unique.
+ */
+export function parseRepartition(
+  brut: unknown,
+  exercice: unknown,
+  total: number,
+): Repartition {
+  if (typeof brut === "string" && brut.length > 0) {
+    try {
+      const objet = JSON.parse(brut) as Record<string, unknown>;
+      const out: Repartition = {};
+      for (const [cle, valeur] of Object.entries(objet)) {
+        if (isExerciceId(cle) && typeof valeur === "number" && valeur >= 0) out[cle] = valeur;
+      }
+      if (Object.keys(out).length > 0) return out;
+    } catch { /* ventilation illisible : on retombe sur l'exercice unique */ }
+  }
+  return { [toExerciceId(exercice)]: Math.max(0, Math.round(total)) };
+}
+
+/** Part revenant à un exercice donné dans une ventilation. */
+export function partPourExercice(repartition: Repartition, exercice: ExerciceId): number {
+  return repartition[exercice] ?? 0;
+}
+
