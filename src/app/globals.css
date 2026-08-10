@@ -319,3 +319,24 @@ body {
 ::-webkit-scrollbar-track { background: var(--ink); }
 ::-webkit-scrollbar-thumb { background: rgba(236, 239, 244, 0.14); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(236, 239, 244, 0.26); }
+
+/* ── Pastille de dette en attente ───────────────────────────────────────────
+   Toujours visible, sur toutes les pages : la boxe s'accumule et doit rester
+   sous les yeux. Elle se loge dans la marge droite sur grand écran, et
+   redescend en bas à droite dès que la marge disparaît. */
+.pastille-dette {
+  position: fixed;
+  z-index: 8000;
+  right: clamp(12px, 2vw, 28px);
+  bottom: 16px;
+  width: 168px;
+}
+@media (min-width: 1180px) {
+  .pastille-dette {
+    top: 96px;
+    bottom: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pastille-dette { transition: none; }
+}

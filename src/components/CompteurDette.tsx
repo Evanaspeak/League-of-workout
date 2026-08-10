@@ -33,10 +33,10 @@ function duree(secondes: number): string {
  * de boxe n'a d'intérêt qu'une fois quelques minutes réunies. Le compteur les
  * cumule donc, et prévient quand il y a de quoi faire une vraie séance.
  *
- * `variant="carte"` affiche le panneau du dashboard ; `variant="rappel"`
- * n'affiche qu'un bandeau flottant, et seulement une fois le seuil franchi.
+ * Affichée en pastille fixe, elle suit sur toutes les pages et reste visible
+ * quand on descend : c'est le point de la chose, ne pas oublier ce qu'on doit.
  */
-export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rappel" }) {
+export function CompteurDette() {
   const t = useT(exercicesDict);
   const nomsExo: Record<ExerciceId, string> = {
     pompes: t.pompesNom, squats: t.squatsNom, boxe: t.boxeNom,
@@ -47,7 +47,6 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
   const [restantSec, setRestantSec] = useState(0);
   const [enPause, setEnPause] = useState(false);
   const [fini, setFini] = useState(false);
-  const [rappelMasque, setRappelMasque] = useState(false);
 
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalRef = useRef(0);
@@ -64,11 +63,17 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
   useEffect(() => { charger(); }, [charger]);
 
   // Une partie enregistrée ailleurs dans l'app fait remonter le compteur sans
-  // recharger la page.
+  // recharger la page. Le retour sur l'onglet le resynchronise aussi, au cas
+  // où la partie aurait été loggée depuis un autre appareil.
   useEffect(() => {
     const surAjout = () => charger();
+    const surRetour = () => { if (!document.hidden) charger(); };
     window.addEventListener("wow-dette-changee", surAjout);
-    return () => window.removeEventListener("wow-dette-changee", surAjout);
+    document.addEventListener("visibilitychange", surRetour);
+    return () => {
+      window.removeEventListener("wow-dette-changee", surAjout);
+      document.removeEventListener("visibilitychange", surRetour);
+    };
   }, [charger]);
 
   const seuilFranchi = !!dette && dette.seuilSec > 0 && dette.dureeSec >= dette.seuilSec;
@@ -78,7 +83,6 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
     if (!seuilFranchi) { notifieRef.current = false; return; }
     if (notifieRef.current) return;
     notifieRef.current = true;
-    setRappelMasque(false);
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
     try {
@@ -143,50 +147,10 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
         .filter((l) => l.pts > 0)
     : [];
 
-  // ── Bandeau flottant : uniquement au-delà du seuil ──
-  if (variant === "rappel") {
-    if (!seuilFranchi || rappelMasque || chronoOuvert) return null;
-    return (
-      <>
-        <div
-          role="alert"
-          style={{
-            position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)",
-            zIndex: 9000, width: "min(560px, calc(100vw - 32px))",
-            background: "var(--carbon)", border: "1px solid rgba(255,77,46,0.45)",
-            borderRadius: 14, padding: "14px 18px",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.55), 0 0 30px rgba(255,77,46,0.12)",
-            display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <div className="gold-text" style={{ fontWeight: 700, fontSize: "0.9rem" }}>
-              {t.detteRappelTitre}
-            </div>
-            <div style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.6)", marginTop: 2 }}>
-              {t.detteRappelCorps(duree(dette.dureeSec))}
-            </div>
-          </div>
-          <button
-            className="py-2 px-3 rounded text-xs"
-            style={{ background: "transparent", color: "rgba(236,239,244,0.5)", border: "1px solid rgba(152,162,176,0.25)" }}
-            onClick={() => setRappelMasque(true)}
-          >
-            {t.detteChronoAbandon}
-          </button>
-          <button className="lol-btn text-sm px-4" onClick={ouvrirChrono}>
-            {t.detteFaireBtn}
-          </button>
-        </div>
-        {chronoOuvert && <ModaleChrono />}
-      </>
-    );
+  // Rien en attente : la pastille ne s'affiche pas.
+  if (!dette || dette.exercices.length === 0 || dette.dureeSec <= 0) {
+    return chronoOuvert ? <ModaleChrono /> : null;
   }
-
-  // ── Panneau du dashboard ──
-  // Sans exercice compté en temps, il n'y a rien à accumuler : tout se fait
-  // dans la foulée de la partie.
-  if (!dette || dette.exercices.length === 0) return null;
 
   const progression = dette.seuilSec > 0
     ? Math.min(100, Math.round((dette.dureeSec / dette.seuilSec) * 100))
@@ -194,61 +158,67 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
 
   return (
     <>
-      <div
-        className="lol-panel p-4 space-y-3"
-        style={seuilFranchi ? { borderColor: "rgba(255,77,46,0.45)" } : undefined}
+      <button
+        type="button"
+        className="pastille-dette lol-panel"
+        onClick={ouvrirChrono}
+        title={t.detteFaireBtn}
+        aria-live="polite"
+        style={{
+          padding: "10px 12px",
+          textAlign: "left",
+          cursor: "pointer",
+          borderColor: seuilFranchi ? "rgba(255,77,46,0.5)" : "var(--line)",
+          boxShadow: seuilFranchi
+            ? "0 12px 34px rgba(0,0,0,0.5), 0 0 24px rgba(255,77,46,0.16)"
+            : "0 10px 28px rgba(0,0,0,0.4)",
+          transition: "border-color 0.3s, box-shadow 0.3s",
+        }}
       >
-        <div className="flex items-baseline justify-between gap-3 flex-wrap">
-          <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.detteTitre}</h2>
-          {dette.seuilSec > 0 && (
-            <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>
-              {t.detteSeuil(duree(dette.seuilSec))}
-            </span>
-          )}
+        <div
+          style={{
+            fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em",
+            color: seuilFranchi ? "var(--ember)" : "rgba(152,162,176,0.6)",
+          }}
+        >
+          {t.detteTitre}
         </div>
 
-        {lignes.length === 0 ? (
-          <p className="text-sm" style={{ color: "rgba(236,239,244,0.45)" }}>{t.detteVide}</p>
-        ) : (
-          <>
-            <div className="flex items-end gap-4 flex-wrap">
-              {lignes.map((ligne) => (
-                <div key={ligne.id}>
-                  <div className="mono-num text-2xl font-bold gold-text">
-                    {formaterCompact(ligne.pts, ligne.id)}
-                  </div>
-                  <div className="text-xs" style={{ color: "rgba(236,239,244,0.45)" }}>
-                    {nomsExo[ligne.id].toLowerCase()}
-                  </div>
-                </div>
-              ))}
-              {/* Avec un seul exercice, le total répéterait la valeur de gauche. */}
-              {lignes.length > 1 && (
-                <div className="ml-auto text-right">
-                  <div className="mono-num text-lg font-semibold" style={{ color: seuilFranchi ? "var(--ember)" : "rgba(236,239,244,0.75)" }}>
-                    {duree(dette.dureeSec)}
-                  </div>
-                </div>
-              )}
-            </div>
+        {lignes.map((ligne) => (
+          <div key={ligne.id} style={{ display: "flex", alignItems: "baseline", gap: 5, marginTop: 3 }}>
+            <span
+              className="mono-num"
+              style={{
+                fontSize: "1.35rem", fontWeight: 700, lineHeight: 1.1,
+                color: seuilFranchi ? "var(--ember)" : "var(--amber)",
+              }}
+            >
+              {formaterCompact(ligne.pts, ligne.id)}
+            </span>
+            <span style={{ fontSize: "0.66rem", color: "rgba(236,239,244,0.4)" }}>
+              {nomsExo[ligne.id].toLowerCase()}
+            </span>
+          </div>
+        ))}
 
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(152,162,176,0.15)" }}>
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${progression}%`,
-                  background: seuilFranchi ? "var(--ember)" : "var(--brand-gradient)",
-                  transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
-                }}
-              />
-            </div>
+        <div
+          className="h-1 rounded-full overflow-hidden"
+          style={{ background: "rgba(152,162,176,0.16)", marginTop: 8 }}
+        >
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${progression}%`,
+              background: seuilFranchi ? "var(--ember)" : "var(--brand-gradient)",
+              transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          />
+        </div>
 
-            <button className="lol-btn w-full text-sm" onClick={ouvrirChrono}>
-              {t.detteFaireBtn}
-            </button>
-          </>
-        )}
-      </div>
+        <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilFranchi ? "var(--ember)" : "rgba(236,239,244,0.4)" }}>
+          {seuilFranchi ? t.detteFaireBtn : t.detteSeuil(duree(dette.seuilSec))}
+        </div>
+      </button>
 
       {chronoOuvert && <ModaleChrono />}
     </>
