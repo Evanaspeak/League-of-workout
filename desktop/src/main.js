@@ -13,6 +13,7 @@ const { app, BrowserWindow, shell, ipcMain, session: electronSession } = require
 const path = require("path");
 const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
+const overlay = require("./overlay");
 
 // Désactive les Client Hints (Sec-CH-UA) qui trahissent Electron auprès de
 // Google OAuth même quand le user-agent est spoofé en Chrome standard.
@@ -27,6 +28,7 @@ const CHROME_UA =
 
 let mainWindow = null;
 let stopWatcher = null;
+let stopOverlay = null;
 
 // ── Page d'attente (affichée dans Electron pendant que Chrome gère l'OAuth) ─
 
@@ -216,6 +218,13 @@ async function createWindow() {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("lol:event", event);
     }
+
+    // L'overlay apparaît de lui-même au début d'une partie et se retire à la
+    // fin : c'est le comportement visé, et c'est aussi ce qu'on veut tester.
+    const enPartie = event.type === "game-started";
+    overlay.envoyerEtat({ enPartie });
+    if (enPartie) overlay.afficher();
+    else overlay.masquer();
   });
 
   mainWindow.on("closed", () => {
@@ -304,7 +313,11 @@ ipcMain.on("open-discord-popup", () => {
 
 app.whenReady().then(() => {
   startAuthSignalServer();
+  // L'overlay est prêt dès le démarrage : Ctrl+Maj+O permet de le vérifier
+  // à tout moment, même sans partie en cours.
+  stopOverlay = overlay.initOverlay();
   createWindow();
+  overlay.afficher();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -327,5 +340,6 @@ app.on("before-quit", async () => {
 
 app.on("window-all-closed", () => {
   if (stopWatcher) stopWatcher();
+  if (stopOverlay) stopOverlay();
   if (process.platform !== "darwin") app.quit();
 });

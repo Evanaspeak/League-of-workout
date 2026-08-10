@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Overlay — Win or Workout</title>
+<style>
+  /* Le fond de la page doit rester réellement transparent : c'est lui qu'on
+     voit « à travers » l'overlay. Seule la pastille est peinte. */
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: "Segoe UI", system-ui, sans-serif;
+  }
+
+  .pastille {
+    margin: 0;
+    padding: 10px 13px;
+    border-radius: 12px;
+    background: rgba(20, 23, 28, 0.92);
+    border: 1px solid rgba(255, 180, 84, 0.45);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), 0 0 22px rgba(255, 138, 61, 0.14);
+    color: #ECEFF4;
+  }
+
+  .titre {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(152, 162, 176, 0.75);
+  }
+
+  .point {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #2FD98A;
+    box-shadow: 0 0 6px #2FD98A;
+    animation: battement 1.4s ease-in-out infinite;
+  }
+  @keyframes battement { 0%, 100% { opacity: 1 } 50% { opacity: 0.25 } }
+
+  /* Le compteur qui défile est la preuve que l'overlay est VIVANT et pas une
+     image figée : s'il avance, le rendu passe bien par-dessus le jeu. */
+  .compteur {
+    margin-top: 5px;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1.05;
+    color: #FFB454;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  .etat {
+    margin-top: 6px;
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: rgba(236, 239, 244, 0.55);
+  }
+
+  .jeu { color: #6E9BFF; }
+  .jeu.actif { color: #2FD98A; }
+
+  .aide {
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(152, 162, 176, 0.16);
+    font-size: 9px;
+    color: rgba(236, 239, 244, 0.32);
+  }
+</style>
+</head>
+<body>
+  <div class="pastille">
+    <div class="titre">
+      <span class="point"></span>
+      <span>Overlay — test</span>
+    </div>
+
+    <div class="compteur" id="compteur">00:00</div>
+
+    <div class="etat">
+      League : <span class="jeu" id="jeu">pas de partie</span>
+    </div>
+
+    <div class="aide">Ctrl + Maj + O pour masquer</div>
+  </div>
+
+<script>
+  // Compteur qui avance chaque seconde depuis l'ouverture de l'overlay.
+  const debut = Date.now();
+  const compteur = document.getElementById("compteur");
+
+  setInterval(() => {
+    const s = Math.floor((Date.now() - debut) / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    compteur.textContent = `${mm}:${ss}`;
+  }, 1000);
+
+  // L'état de partie est poussé par le processus principal, via le même
+  // observateur Live Client que le reste de l'app.
+  if (window.overlayLOW && window.overlayLOW.onEtat) {
+    const jeu = document.getElementById("jeu");
+    window.overlayLOW.onEtat((etat) => {
+      const enPartie = !!(etat && etat.enPartie);
+      jeu.textContent = enPartie ? "partie en cours" : "pas de partie";
+      jeu.className = enPartie ? "jeu actif" : "jeu";
+    });
+  }
+</script>
+</body>
+</html>
