@@ -77,6 +77,16 @@ export const history = {
     detailMalus: "Malus défaite",
     detailMastery: "Maîtrise",
     detailDuree: "Temps de jeu",
+
+    // ── Battle royale ──
+    placementLabel: "Classement",
+    placementSur: "sur",
+    eliminations: "Éliminations",
+    placementInvalide: "Indique ta place finale.",
+    tablePlacement: "Place",
+    victoryRoyale: "Top 1",
+    elimCourt: (n: number) => `${n} élim`,
+    placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   en: {
     pageTitle: "HISTORY",
@@ -155,5 +165,14 @@ export const history = {
     detailMalus: "Loss penalty",
     detailMastery: "Mastery",
     detailDuree: "Playtime",
+
+    placementLabel: "Placement",
+    placementSur: "of",
+    eliminations: "Eliminations",
+    placementInvalide: "Enter your final placement.",
+    tablePlacement: "Place",
+    victoryRoyale: "Top 1",
+    elimCourt: (n: number) => `${n} elims`,
+    placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
 };

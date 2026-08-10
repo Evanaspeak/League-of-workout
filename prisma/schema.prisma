@@ -129,6 +129,10 @@ model Game {
   typeJeu             String   @default("parties")
   // Durée jouée en secondes, renseignée uniquement pour typeJeu = "temps".
   dureeSec            Int?
+  // Battle royale : place finale et taille de la partie. `deaths` et `result`
+  // n'y veulent rien dire — c'est le classement qui fait la performance.
+  placement           Int?
+  joueurs             Int?
   source              String   @default("manuel") // manuel | riot_api
   riotMatchId         String?
 

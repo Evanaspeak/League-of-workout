@@ -37,6 +37,8 @@ type Game = {
   jeu?: string;
   typeJeu?: string;
   dureeSec?: number | null;
+  placement?: number | null;
+  joueurs?: number | null;
 };
 
 type MatchEntry = {
@@ -63,7 +65,10 @@ type Scoring = {
   pompesFinales: number;
 };
 
-type PreviewResult = { scoring: Scoring; partiesAvant: number; gainageSec: number; exercice?: ExerciceId };
+type PreviewResult = {
+  scoring: Scoring; partiesAvant: number; gainageSec: number; exercice?: ExerciceId;
+  placement?: number; joueurs?: number;
+};
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -135,6 +140,10 @@ export default function HistoryPage() {
   const [typeJeu, setTypeJeu] = useState<TypeJeu>("parties");
   const [dureeH, setDureeH] = useState("");
   const [dureeM, setDureeM] = useState("");
+  // Battle royale : place finale et taille de la partie (modifiable pour les
+  // modes en équipe, où le classement porte sur les escouades).
+  const [placement, setPlacement] = useState("");
+  const [joueursPartie, setJoueursPartie] = useState("");
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [addLogging, setAddLogging] = useState(false);
@@ -251,6 +260,13 @@ export default function HistoryPage() {
                 assists: Number(addForm.assists) || 0,
               }
             : {}),
+          ...(capacites.br
+            ? {
+                placement: Number(placement) || 0,
+                joueurs: Number(joueursPartie) || capacites.joueurs,
+                kills: Number(addForm.kills) || 0,
+              }
+            : {}),
         }),
   });
 
@@ -308,6 +324,7 @@ export default function HistoryPage() {
       setGames((prev) => [...ajoutees, ...prev]);
       setPreview(null);
       setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
+      setPlacement("");
     }
     // Un échec partiel doit se voir : les parts déjà écrites sont conservées.
     if (erreur) setAddError(erreur);
@@ -398,13 +415,16 @@ export default function HistoryPage() {
   // colonne ne s'affiche que si au moins une ligne a quelque chose à y mettre.
   const afficherRole = filtered.some((g) => g.role && g.role !== "—");
   const afficherChampion = filtered.some((g) => !!g.champion);
-  const afficherKda = filtered.some((g) => g.kills > 0 || g.deaths > 0 || g.assists > 0);
+  const afficherKda = filtered.some((g) => !g.placement && (g.kills > 0 || g.deaths > 0 || g.assists > 0));
+  // Battle royale : la place finale remplace le KDA comme mesure de la partie.
+  const afficherPlacement = filtered.some((g) => !!g.placement);
 
   const nbColonnes =
     1 // date
     + (afficherColonneJeu ? 1 : 0)
     + (modeColonnes === "parties"
-        ? 1 + (afficherRole ? 1 : 0) + (afficherChampion ? 1 : 0) + (afficherKda ? 1 : 0) // + résultat
+        ? 1 + (afficherRole ? 1 : 0) + (afficherChampion ? 1 : 0) + (afficherKda ? 1 : 0)
+          + (afficherPlacement ? 1 : 0) // + résultat
         : 1) // durée, ou détail
     + 4; // niveau, dette, cumul, actions
   // Ventilation du total affiché : une entrée par exercice réellement joué.
@@ -420,7 +440,8 @@ export default function HistoryPage() {
     ? jeu.trim().length > 0 && dureeEnSecondes > 0
     : jeu.trim().length > 0
       && (!capacites.champions || isChampionValid)
-      && (!capacites.kda || (addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== ""));
+      && (!capacites.kda || (addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== ""))
+      && (!capacites.br || Number(placement) >= 1);
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -558,6 +579,41 @@ export default function HistoryPage() {
               </div>
               )}
 
+              {capacites.br && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                      {t.placementLabel}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number" min="1" className="lol-input text-center" placeholder="12"
+                        value={placement}
+                        onChange={(e) => { setPlacement(e.target.value); setPreview(null); }}
+                      />
+                      <span className="text-sm shrink-0" style={{ color: "rgba(236,239,244,0.5)" }}>{t.placementSur}</span>
+                      {/* Modifiable : en duo ou en escouade, le classement porte
+                          sur les équipes et non sur les joueurs. */}
+                      <input
+                        type="number" min="2" className="lol-input text-center"
+                        placeholder={String(capacites.joueurs)}
+                        value={joueursPartie}
+                        onChange={(e) => { setJoueursPartie(e.target.value); setPreview(null); }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                      {t.eliminations}
+                    </label>
+                    <input
+                      type="number" min="0" className="lol-input text-center" value={addForm.kills}
+                      onChange={(e) => { setAddForm((f) => ({ ...f, kills: e.target.value })); setPreview(null); }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {capacites.kda && (
               <div className="grid grid-cols-3 gap-3">
                 {(["kills", "deaths", "assists"] as const).map((field) => (
@@ -572,7 +628,8 @@ export default function HistoryPage() {
               </div>
               )}
 
-              <div className="grid grid-cols-2 gap-3 items-end">
+              <div className={`grid gap-3 items-end ${capacites.br ? "grid-cols-1" : "grid-cols-2"}`}>
+                {!capacites.br && (
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.result}</label>
                   <div className="flex gap-2">
@@ -589,6 +646,7 @@ export default function HistoryPage() {
                     ))}
                   </div>
                 </div>
+                )}
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                     {t.gainageTime}
@@ -661,14 +719,25 @@ export default function HistoryPage() {
                       <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.baseScore}</span>
                       <span className="gold-text font-bold">{preview.scoring.scoreBase}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.defeatMalus}</span>
-                      <span className={preview.scoring.malus > 0 ? "loss-text font-bold" : "gold-text font-bold"}>+{preview.scoring.malus}</span>
-                    </div>
-                    <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(152,162,176,0.08)" }}>
-                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.mastery(preview.partiesAvant)}</span>
-                      <span className="blue-text font-bold">+{Math.round(preview.scoring.surcharge * 100)}%</span>
-                    </div>
+                    {capacites.br ? (
+                      <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                        <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.placementLabel}</span>
+                        <span className="gold-text font-bold mono-num">
+                          {t.placementAffiche(preview.placement ?? 0, preview.joueurs ?? 0)}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                          <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.defeatMalus}</span>
+                          <span className={preview.scoring.malus > 0 ? "loss-text font-bold" : "gold-text font-bold"}>+{preview.scoring.malus}</span>
+                        </div>
+                        <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(152,162,176,0.08)" }}>
+                          <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.mastery(preview.partiesAvant)}</span>
+                          <span className="blue-text font-bold">+{Math.round(preview.scoring.surcharge * 100)}%</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   )}
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
@@ -861,6 +930,7 @@ export default function HistoryPage() {
                           <>
                             {afficherRole && <th className="text-left px-3 py-1">{t.tableRole}</th>}
                             {afficherChampion && <th className="text-left px-3 py-1">{t.tableChampion}</th>}
+                            {afficherPlacement && <th className="text-center px-3 py-1">{t.tablePlacement}</th>}
                             {afficherKda && <th className="text-center px-3 py-1">{t.tableKda}</th>}
                             <th className="text-center px-3 py-1">{t.tableResult}</th>
                           </>
@@ -933,10 +1003,26 @@ export default function HistoryPage() {
                                   {afficherRole && <td className="px-3 py-2 gold-text font-medium">{g.role}</td>}
                                   {afficherChampion && (
                                   <td className="px-3 py-2">
-                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                      <ChampionIcon name={g.champion} size={26} />
-                                      <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
-                                    </div>
+                                    {g.champion ? (
+                                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                        <ChampionIcon name={g.champion} size={26} />
+                                        <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion}</span>
+                                      </div>
+                                    ) : (
+                                      <span style={{ color: "rgba(152,162,176,0.4)" }}>—</span>
+                                    )}
+                                  </td>
+                                  )}
+                                  {afficherPlacement && (
+                                  <td className="px-3 py-2 text-center mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                    {g.placement ? (
+                                      <>
+                                        {t.placementAffiche(g.placement, g.joueurs ?? 0)}
+                                        {g.kills > 0 && (
+                                          <span style={{ color: "rgba(152,162,176,0.55)" }}> · {t.elimCourt(g.kills)}</span>
+                                        )}
+                                      </>
+                                    ) : "—"}
                                   </td>
                                   )}
                                   {afficherKda && (
@@ -977,7 +1063,12 @@ export default function HistoryPage() {
                                           <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
                                         </>
                                       )}
-                                      {(g.kills > 0 || g.deaths > 0 || g.assists > 0) && (
+                                      {g.placement ? (
+                                        <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
+                                          {t.placementAffiche(g.placement, g.joueurs ?? 0)}
+                                          {g.kills > 0 && ` · ${t.elimCourt(g.kills)}`}
+                                        </span>
+                                      ) : (g.kills > 0 || g.deaths > 0 || g.assists > 0) && (
                                         <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
                                           {g.kills}/{g.deaths}/{g.assists}
                                         </span>

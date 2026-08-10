@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore, calcScoreTemps, profilNeutre } from "@/lib/scoring";
+import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
@@ -125,22 +125,36 @@ export async function POST(req: Request) {
   // valeurs sûres, sinon Prisma reçoit undefined ou NaN sur des colonnes
   // obligatoires.
   const role = capacites.roles && body.role ? String(body.role) : "—";
-  const kills = capacites.kda ? Number(body.kills) || 0 : 0;
+  // Un battle royale compte ses éliminations, mais ni morts ni assists.
+  const kills = capacites.kda || capacites.br ? Number(body.kills) || 0 : 0;
   const deaths = capacites.kda ? Number(body.deaths) || 0 : 0;
   const assists = capacites.kda ? Number(body.assists) || 0 : 0;
   const champion = capacites.champions && body.champion ? String(body.champion) : null;
 
-  const scoring = calcScore({
-    kills,
-    deaths,
-    assists,
-    result: body.result === "V" ? "V" : "D",
-    gainageSec,
-    partiesAvant,
-    roleWeights,
-    levelConfigs,
-    masteryConfig,
-  });
+  // Battle royale : la place finale remplace le compteur de morts, et la
+  // victoire se déduit du classement plutôt que d'un bouton.
+  const placement = capacites.br ? Math.max(1, Math.round(Number(body.placement) || 0)) : null;
+  const joueurs = capacites.br ? Math.max(2, Math.round(Number(body.joueurs) || capacites.joueurs)) : null;
+  if (capacites.br && !Number(body.placement)) {
+    return NextResponse.json({ error: "Classement invalide" }, { status: 400 });
+  }
+  const resultat = capacites.br
+    ? (placement === 1 ? "V" : "D")
+    : (body.result === "V" ? "V" : "D");
+
+  const scoring = capacites.br && placement !== null && joueurs !== null
+    ? calcScoreBattleRoyale({ placement, joueurs, kills, gainageSec, roleWeights, levelConfigs })
+    : calcScore({
+        kills,
+        deaths,
+        assists,
+        result: resultat,
+        gainageSec,
+        partiesAvant,
+        roleWeights,
+        levelConfigs,
+        masteryConfig,
+      });
 
   const game = await prisma.game.create({
     data: {
@@ -150,7 +164,7 @@ export async function POST(req: Request) {
       kills,
       deaths,
       assists,
-      result: body.result === "V" ? "V" : "D",
+      result: resultat,
       gainageSec,
       niveauCalcule: scoring.niveau,
       partiesAvantCalcule: partiesAvant,
@@ -163,6 +177,8 @@ export async function POST(req: Request) {
       exercice,
       jeu,
       typeJeu,
+      placement,
+      joueurs,
       source: body.source || "manuel",
       riotMatchId: body.riotMatchId || null,
     },

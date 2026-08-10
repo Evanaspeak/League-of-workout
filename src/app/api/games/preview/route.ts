@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore, calcScoreTemps, profilNeutre } from "@/lib/scoring";
+import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
@@ -43,41 +43,6 @@ export async function POST(req: Request) {
 
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
 
-  // Session au temps : la dette dépend de la durée, pas d'un résultat.
-  if (typeJeu === "temps") {
-    const dureeSec = Math.max(0, Math.round(Number(body.dureeSec) || 0));
-    if (dureeSec <= 0) {
-      return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
-    }
-    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec, levelConfigs });
-    return NextResponse.json({
-      scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
-      partiesAvant: 0,
-      gainageSec,
-      exercice: isExerciceId(body.exercice) ? body.exercice : toExerciceId(user.exercices?.[0]),
-      typeJeu,
-      dureeSec,
-    });
-  }
-
-  if (!roleWeights || !masteryConfig) {
-    return NextResponse.json({ error: "Config manquante" }, { status: 500 });
-  }
-
-  // Mêmes valeurs de repli que l'enregistrement, pour que l'aperçu annonce
-  // exactement le chiffre qui sera écrit.
-  const scoring = calcScore({
-    kills: capacites.kda ? Number(body.kills) || 0 : 0,
-    deaths: capacites.kda ? Number(body.deaths) || 0 : 0,
-    assists: capacites.kda ? Number(body.assists) || 0 : 0,
-    result: body.result === "V" ? "V" : "D",
-    gainageSec,
-    partiesAvant,
-    roleWeights,
-    levelConfigs,
-    masteryConfig,
-  });
-
   // Même règle que l'enregistrement réel, pour que l'aperçu annonce le bon
   // exercice avant de valider.
   let exercice;
@@ -98,6 +63,61 @@ export async function POST(req: Request) {
       : null;
     exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
   }
+
+
+  // Session au temps : la dette dépend de la durée, pas d'un résultat.
+  if (typeJeu === "temps") {
+    const dureeSec = Math.max(0, Math.round(Number(body.dureeSec) || 0));
+    if (dureeSec <= 0) {
+      return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
+    }
+    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec, levelConfigs });
+    return NextResponse.json({
+      scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
+      partiesAvant: 0,
+      gainageSec,
+      exercice,
+      typeJeu,
+      dureeSec,
+    });
+  }
+
+  if (!roleWeights || !masteryConfig) {
+    return NextResponse.json({ error: "Config manquante" }, { status: 500 });
+  }
+
+  // Mêmes règles que l'enregistrement, pour que l'aperçu annonce exactement le
+  // chiffre qui sera écrit.
+  if (capacites.br) {
+    const placement = Math.max(1, Math.round(Number(body.placement) || 0));
+    const joueurs = Math.max(2, Math.round(Number(body.joueurs) || capacites.joueurs));
+    if (!Number(body.placement)) {
+      return NextResponse.json({ error: "Classement invalide" }, { status: 400 });
+    }
+    const scoringBr = calcScoreBattleRoyale({
+      placement, joueurs, kills: Number(body.kills) || 0, gainageSec, roleWeights, levelConfigs,
+    });
+    return NextResponse.json({
+      scoring: scoringBr,
+      partiesAvant: 0,
+      gainageSec,
+      exercice,
+      placement,
+      joueurs,
+    });
+  }
+
+  const scoring = calcScore({
+    kills: capacites.kda ? Number(body.kills) || 0 : 0,
+    deaths: capacites.kda ? Number(body.deaths) || 0 : 0,
+    assists: capacites.kda ? Number(body.assists) || 0 : 0,
+    result: body.result === "V" ? "V" : "D",
+    gainageSec,
+    partiesAvant,
+    roleWeights,
+    levelConfigs,
+    masteryConfig,
+  });
 
   return NextResponse.json({ scoring, partiesAvant, gainageSec, exercice });
 }

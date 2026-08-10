@@ -106,6 +106,61 @@ export function profilNeutre(ponderations: RoleWeights[]): RoleWeights | null {
   };
 }
 
+/**
+ * Combien de « morts » vaut le pire classement possible. Dans un battle royale
+ * on ne meurt qu'une fois : c'est la place finale qui dit comment s'est passée
+ * la partie, pas le compteur de morts. On la convertit donc en morts
+ * équivalentes pour rester dans la même échelle que les autres jeux — finir
+ * dernier coûte autant que ECHELLE_BR morts, finir premier ne coûte rien.
+ */
+export const ECHELLE_BR = 10;
+
+export type ScoringBrInput = {
+  /** Place finale, 1 = victoire. */
+  placement: number;
+  /** Nombre de joueurs (ou d'équipes) dans la partie. */
+  joueurs: number;
+  kills: number;
+  gainageSec: number;
+  roleWeights: RoleWeights;
+  levelConfigs: LevelCfg[];
+};
+
+/**
+ * Dette d'une partie de battle royale. Le classement remplace le compteur de
+ * morts, et les éliminations viennent l'alléger comme ailleurs.
+ *
+ * Pas de malus de défaite : la place encode déjà la performance de façon
+ * continue, un malus binaire ferait double emploi et punirait autant un top 2
+ * qu'un joueur mort dans les premières secondes.
+ */
+export function calcScoreBattleRoyale(input: ScoringBrInput): ScoringResult {
+  const { placement, joueurs, kills, gainageSec, roleWeights, levelConfigs } = input;
+
+  const levelCfg = getLevel(gainageSec, levelConfigs);
+  const total = Math.max(2, Math.round(joueurs));
+  const place = Math.min(total, Math.max(1, Math.round(placement)));
+
+  // 0 pour la première place, 1 pour la dernière.
+  const position = (place - 1) / (total - 1);
+  const mortsEquivalentes = ECHELLE_BR * position;
+
+  const raw = roleWeights.poidsMort * mortsEquivalentes - roleWeights.poidsKill * Math.max(0, kills);
+  const scoreBase = Math.round(Math.max(0, raw) * levelCfg.multiplicateur);
+
+  // Une victoire reste moitié moins chère, comme dans les autres jeux.
+  const pompesFinales = place === 1 ? Math.round(scoreBase / 2) : scoreBase;
+
+  return {
+    niveau: levelCfg.niveau,
+    multiplicateur: levelCfg.multiplicateur,
+    scoreBase,
+    malus: 0,
+    surcharge: 0,
+    pompesFinales,
+  };
+}
+
 export function calcScore(input: ScoringInput): ScoringResult {
   const { kills, deaths, assists, result, gainageSec, partiesAvant, roleWeights, levelConfigs, masteryConfig } = input;
 
