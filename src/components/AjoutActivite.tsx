@@ -70,7 +70,18 @@ function getLevelLabel(sec: number, locale: "fr" | "en"): string {
  * dashboard, là où on arrive en sortant de partie — l'historique n'a plus qu'à
  * montrer ce qui est déjà enregistré.
  */
-export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistrement réussi. */ onAjout: () => void }) {
+export function AjoutActivite({
+  onAjout,
+  enModale = false,
+}: {
+  /** Appelé après chaque enregistrement réussi. */
+  onAjout: () => void;
+  /**
+   * Rendu dans une fenêtre dédiée : le formulaire est déjà ce qu'on est venu
+   * chercher, il s'ouvre donc d'emblée et la fenêtre porte sa propre fermeture.
+   */
+  enModale?: boolean;
+}) {
   const t = useT(history);
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
@@ -92,7 +103,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
   // l'admin s'affiche comme valide dans le champ mais bloque le bouton.
   const champList = useChampions();
   const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(enModale);
   const [addForm, setAddForm] = useState({
     role: "Jungle", champion: "", kills: "", deaths: "", assists: "", result: "D", gainageSec: "60",
   });
@@ -238,17 +249,6 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
     setShowAddForm(true);
   };
 
-  const handlePreview = async () => {
-    if (!isAddReady) return;
-    setPreviewLoading(true);
-    const res = await fetch("/api/games/preview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(corpsAjout(exercicesAjout.length === 1 ? exercicesAjout[0] : null)),
-    });
-    setPreview(await res.json());
-    setPreviewLoading(false);
-  };
 
   const handleAddLog = async () => {
     setAddLogging(true);
@@ -316,13 +316,55 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
       && (!capacites.kda || (addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== ""))
       && (!capacites.br || Number(placement) >= 1);
 
+  /**
+   * Coût réel de la partie en cours de saisie. Chaque carte d'exercice le
+   * convertit dans son unité, ce qui répond à « et si je payais en squats ? ».
+   * Tant que la partie n'est pas renseignée, le sélecteur garde son exemple.
+   */
+  const coutVivant = isAddReady && preview ? preview.scoring.pompesFinales : undefined;
+
+  // Corps de la requête d'aperçu, sérialisé : c'est lui qui décide quand
+  // recalculer, plutôt que la longue liste des champs qui le composent.
+  const corpsApercu = JSON.stringify(
+    corpsAjout(exercicesAjout.length === 1 ? exercicesAjout[0] : null),
+  );
+
+  /**
+   * Aperçu permanent : la dette se recalcule à mesure qu'on remplit la partie,
+   * il n'y a donc plus rien à déclencher à la main. Le délai laisse finir la
+   * frappe, et la requête précédente est annulée pour qu'une réponse en retard
+   * ne vienne pas écraser un chiffre plus récent.
+   */
+  useEffect(() => {
+    if (!isAddReady) return;
+    const controleur = new AbortController();
+    const attente = setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const res = await fetch("/api/games/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: corpsApercu,
+          signal: controleur.signal,
+        });
+        if (res.ok) setPreview(await res.json());
+      } catch { /* annulée par une saisie plus récente, ou réseau coupé */ }
+      setPreviewLoading(false);
+    }, 350);
+    return () => { clearTimeout(attente); controleur.abort(); };
+  }, [corpsApercu, isAddReady]);
+
   return (
     <div className="space-y-4">
 
-          {/* Ajout manuel : action générique, valable pour n'importe quel jeu. */}
-          <button className="lol-btn w-full text-sm" onClick={() => openAddForm()}>
-            {t.addBtn}
-          </button>
+          {/* Ajout manuel : action générique, valable pour n'importe quel jeu.
+              En fenêtre dédiée, le formulaire est déjà ouvert : ce bouton
+              n'aurait plus rien à déclencher. */}
+          {!enModale && (
+            <button className="lol-btn w-full text-sm" onClick={() => openAddForm()}>
+              {t.addBtn}
+            </button>
+          )}
 
           {/* Tout ce qui suit est propre à League of Legends : le suivi
               automatique passe par l'API Riot, et l'ARAM du chaos est un mode
@@ -358,10 +400,12 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
             <div className="lol-panel p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{typeJeu === "temps" ? tJeux.sessionTitre : t.addGameTitle}</h2>
-                <button
-                  onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
-                  style={{ color: "rgba(236,239,244,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
-                >✕</button>
+                {!enModale && (
+                  <button
+                    onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
+                    style={{ color: "rgba(236,239,244,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
+                  >✕</button>
+                )}
               </div>
 
               {addLogged && (
@@ -373,7 +417,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
               <JeuSelector
                 jeu={jeu}
                 typeJeu={typeJeu}
-                onChange={(j, ty) => { setJeu(j); setTypeJeu(ty); setPreview(null); }}
+                onChange={(j, ty) => { setJeu(j); setTypeJeu(ty); }}
               />
 
               {typeJeu === "temps" ? (
@@ -381,10 +425,10 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{tJeux.dureeLabel}</label>
                   <div className="flex items-center gap-2">
                     <input type="number" min="0" max="24" className="lol-input text-center" placeholder="2"
-                      value={dureeH} onChange={(e) => { setDureeH(e.target.value); setPreview(null); }} />
+                      value={dureeH} onChange={(e) => { setDureeH(e.target.value); }} />
                     <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{tJeux.heures}</span>
                     <input type="number" min="0" max="59" className="lol-input text-center" placeholder="30"
-                      value={dureeM} onChange={(e) => { setDureeM(e.target.value); setPreview(null); }} />
+                      value={dureeM} onChange={(e) => { setDureeM(e.target.value); }} />
                     <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{tJeux.minutes}</span>
                   </div>
                   <p className="text-xs mt-2" style={{ color: "rgba(236,239,244,0.4)" }}>{tJeux.sessionSousTitre}</p>
@@ -400,7 +444,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                     onChange={(e) => {
                       setAddForm((f) => ({ ...f, role: e.target.value }));
                       localStorage.setItem("lastRole", e.target.value);
-                      setPreview(null);
+                     
                     }}>
                     {ROLES_FORM.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
@@ -412,7 +456,6 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                   <ChampionInput
                     value={addForm.champion}
                     onChange={(val) => setAddForm((f) => ({ ...f, champion: val }))}
-                    onReset={() => setPreview(null)}
                   />
                 </div>
                 )}
@@ -435,7 +478,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                           onClick={() => {
                             setTailleEquipe(taille);
                             localStorage.setItem("lastModeBr", String(taille));
-                            setPreview(null);
+                           
                           }}
                           style={{
                             flex: 1, padding: "8px 4px", borderRadius: 8, cursor: "pointer",
@@ -460,14 +503,15 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
               {capacites.br && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor="ajout-placement" className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                       {t.placementLabel}
                     </label>
                     <div className="flex items-center gap-2">
                       <input
+                        id="ajout-placement"
                         type="number" min="1" max={equipesConsultees} className="lol-input text-center" placeholder="12"
                         value={placement}
-                        onChange={(e) => { setPlacement(e.target.value); setPreview(null); }}
+                        onChange={(e) => { setPlacement(e.target.value); }}
                       />
                       <span className="text-sm shrink-0 mono-num" style={{ color: "rgba(236,239,244,0.5)" }}>
                         {t.placementSur} {equipesConsultees}
@@ -475,12 +519,13 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor="ajout-eliminations" className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                       {t.eliminations}
                     </label>
                     <input
+                      id="ajout-eliminations"
                       type="number" min="0" className="lol-input text-center" value={addForm.kills}
-                      onChange={(e) => { setAddForm((f) => ({ ...f, kills: e.target.value })); setPreview(null); }}
+                      onChange={(e) => { setAddForm((f) => ({ ...f, kills: e.target.value })); }}
                     />
                   </div>
                 </div>
@@ -490,11 +535,11 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
               <div className="grid grid-cols-3 gap-3">
                 {(["kills", "deaths", "assists"] as const).map((field) => (
                   <div key={field}>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor={`ajout-${field}`} className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
                       {field === "kills" ? t.kills : field === "deaths" ? t.deaths : t.assists}
                     </label>
-                    <input type="number" min="0" className="lol-input text-center" value={addForm[field]}
-                      onChange={(e) => { setAddForm((f) => ({ ...f, [field]: e.target.value })); setPreview(null); }} />
+                    <input id={`ajout-${field}`} type="number" min="0" className="lol-input text-center" value={addForm[field]}
+                      onChange={(e) => { setAddForm((f) => ({ ...f, [field]: e.target.value })); }} />
                   </div>
                 ))}
               </div>
@@ -512,7 +557,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                           border: `1px solid ${addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(152,162,176,0.2)"}`,
                           color: addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(236,239,244,0.6)",
                         }}
-                        onClick={() => { setAddForm((f) => ({ ...f, result: r })); setPreview(null); }}>
+                        onClick={() => { setAddForm((f) => ({ ...f, result: r })); }}>
                         {r === "V" ? t.victory : t.defeat}
                       </button>
                     ))}
@@ -528,7 +573,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                       onChange={(e) => {
                         setAddForm((f) => ({ ...f, gainageSec: e.target.value }));
                         localStorage.setItem("lastGainageSec", e.target.value);
-                        setPreview(null);
+                       
                       }} />
                     <span className="text-xs gold-text shrink-0">{getLevelLabel(Number(addForm.gainageSec) || 60, locale)}</span>
                   </div>
@@ -538,12 +583,25 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
               )}
 
               <div className="space-y-2">
-                <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
-                  {tExo.choisirTitre}
-                </label>
+                <div className="flex items-baseline justify-between gap-2">
+                  <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    {tExo.choisirTitre}
+                  </label>
+                  <span
+                    className="text-xs"
+                    style={{ color: coutVivant !== undefined ? "var(--amber)" : "rgba(152,162,176,0.45)" }}
+                  >
+                    {previewLoading
+                      ? t.calculating
+                      : coutVivant !== undefined
+                        ? tExo.apercuLive
+                        : tExo.apercuExemple}
+                  </span>
+                </div>
                 <ExerciceSelector
                   selection={exercicesAjout}
-                  onChange={(next) => { setExercicesAjout(next); setPreview(null); }}
+                  onChange={setExercicesAjout}
+                  exemplePoints={coutVivant}
                   compact
                 />
                 {exercicesAjout.length > 1 && (
@@ -553,12 +611,10 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                 )}
               </div>
 
-              <button className="lol-btn w-full" onClick={handlePreview} disabled={!isAddReady || previewLoading}>
-                {previewLoading ? t.calculating : (typeJeu === "temps" ? tJeux.apercuSession : t.calculatePompes)}
-              </button>
-
-              {preview && (
+              {isAddReady && (
                 <div className="space-y-3">
+                  {preview && (
+                  <>
                   {typeJeu === "temps" ? (
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
@@ -638,6 +694,8 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
                       );
                     })()}
                   </div>
+                  </>
+                  )}
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
                     {addLogging ? t.saving : (typeJeu === "temps" ? tJeux.ajouterSession : t.logThisGame)}
                   </button>

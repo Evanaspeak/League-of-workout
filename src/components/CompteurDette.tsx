@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
+import { estPagePublique } from "@/lib/pagesPubliques";
 
 type Dette = {
   points: number;
@@ -37,12 +38,6 @@ function duree(secondes: number): string {
  * Affichée en pastille fixe, elle suit sur toutes les pages et reste visible
  * quand on descend : c'est le point de la chose, ne pas oublier ce qu'on doit.
  */
-/**
- * Pages publiques : la pastille n'y a rien à faire. L'accueil s'adresse à des
- * visiteurs, pas à quelqu'un qui a une dette en cours.
- */
-const PAGES_PUBLIQUES = ["/", "/beta", "/login", "/waitlist", "/cgu", "/confidentialite", "/telechargement", "/recuperation"];
-
 export function CompteurDette() {
   const pathname = usePathname();
   const t = useT(exercicesDict);
@@ -61,7 +56,7 @@ export function CompteurDette() {
   const notifieRef = useRef(false);
 
   const surPagePubliqueRef = useRef(false);
-  surPagePubliqueRef.current = PAGES_PUBLIQUES.includes(pathname ?? "");
+  surPagePubliqueRef.current = estPagePublique(pathname);
 
   const charger = useCallback(async () => {
     try {
@@ -72,7 +67,7 @@ export function CompteurDette() {
   }, []);
 
   useEffect(() => {
-    if (!PAGES_PUBLIQUES.includes(pathname ?? "")) charger();
+    if (!estPagePublique(pathname)) charger();
   }, [charger, pathname]);
 
   // Une partie enregistrée ailleurs dans l'app fait remonter le compteur sans

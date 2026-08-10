@@ -21,6 +21,8 @@ import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, typeDuJeu, type TypeJeu }
 import { JeuSelector } from "@/components/JeuSelector";
 import { SessionChrono } from "@/components/SessionChrono";
 import { AjoutActivite } from "@/components/AjoutActivite";
+import { RailActions } from "@/components/RailLateral";
+import { Modale } from "@/components/Modale";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -162,7 +164,8 @@ export default function Dashboard() {
   const tJeux = useT(jeuxDict);
   const dateLocale = useDateLocale();
   const [data, setData] = useState<DashData | null>(null);
-  const [showGainageModal, setShowGainageModal] = useState(false);
+  /** Modale ouverte depuis le rail latéral. */
+  const [modale, setModale] = useState<"session" | "ajout" | null>(null);
   const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
   const [statsMode, setStatsMode] = useState<"avg" | "total">("avg");
   const [calendarDate, setCalendarDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
@@ -239,7 +242,8 @@ export default function Dashboard() {
     const sec = Math.max(1, Number(gainageInput) || 60);
     localStorage.setItem("lastGainageSec", String(sec));
     localStorage.setItem("lastJeu", jeuChoisi);
-    setShowGainageModal(false);
+    // La fenêtre reste ouverte : elle bascule sur l'état de la session qui vient
+    // de démarrer, ce qui confirme le lancement sans clic supplémentaire.
     // Le choix fait ici devient la préférence, pour l'ARAM du chaos comme pour
     // les prochaines sessions.
     await fetch("/api/settings", {
@@ -503,17 +507,112 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Mode Session */}
-      <div className="lol-panel p-4 space-y-3">
-        <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.sessionModeTitle}</h2>
+      {/* Session et saisie vivent dans le rail latéral : la synthèse reste une
+          synthèse, et les deux actions restent accessibles en permanence. */}
+      <RailActions>
+        <button
+          type="button"
+          className="rail-action lol-panel"
+          onClick={() => setModale("session")}
+          style={{ borderColor: sessionActive ? "rgba(47,217,138,0.5)" : undefined }}
+        >
+          <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: sessionActive ? "var(--victory)" : "rgba(152,162,176,0.6)" }}>
+            {t.sessionModeTitle}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+            {sessionActive && (
+              <span style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, background: "var(--victory)", animation: "pulse 1.5s ease-in-out infinite" }} />
+            )}
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: sessionActive ? "var(--victory)" : "var(--bone)" }}>
+              {sessionActive ? t.sessionActive : t.startSession}
+            </span>
+          </div>
+          {sessionActive && sessionGames.length > 0 && (
+            <div className="mono-num" style={{ fontSize: "0.66rem", marginTop: 3, color: "rgba(236,239,244,0.4)" }}>
+              {t.railSessionGames(sessionGames.length, fmt(totalSessionPompes))}
+            </div>
+          )}
+        </button>
+
+        <button
+          type="button"
+          className="rail-action lol-panel"
+          onClick={() => setModale("ajout")}
+        >
+          <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: "rgba(152,162,176,0.6)" }}>
+            {t.railAjoutSurtitre}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+            <span style={{ fontSize: "1.05rem", lineHeight: 1, color: "var(--amber)", fontWeight: 700 }}>+</span>
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--bone)" }}>
+              {t.railAjoutTitre}
+            </span>
+          </div>
+        </button>
+      </RailActions>
+
+      {modale === "session" && (
+      <Modale titre={t.sessionModeTitle} onFermer={() => setModale(null)}>
+      <div className="space-y-3">
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
           {t.sessionModeDesc}
         </p>
 
         {!sessionActive ? (
-          <button className="lol-btn w-full" onClick={() => setShowGainageModal(true)}>
-            {t.startSession}
-          </button>
+          <div className="space-y-4">
+            {/* Le jeu détermine la nature de la session : suivi de parties via
+                l'API Riot, ou simple chronomètre. */}
+            <div className="space-y-2">
+              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                {tJeux.sessionQuelJeu}
+              </label>
+              <JeuSelector
+                jeu={jeuChoisi}
+                typeJeu={typeJeuChoisi}
+                onChange={(j, ty) => { setJeuChoisi(j); setTypeJeuChoisi(ty); }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                {t.durationSeconds}
+              </label>
+              <p className="text-xs mb-2" style={{ color: "rgba(236,239,244,0.45)" }}>
+                {t.gainageModalDesc}
+              </p>
+              <input
+                type="number" min="1"
+                className="lol-input text-center text-2xl font-bold"
+                value={gainageInput}
+                onChange={(e) => setGainageInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleConfirmGainage()}
+              />
+            </div>
+            {gainageInput && Number(gainageInput) > 0 && (
+              <div className="text-center p-3 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
+                <span className="gold-text font-bold text-xl">{getLevelLabel(Number(gainageInput), t)}</span>
+                <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>{t.forThisSession}</span>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                {tExo.choisirTitre}
+              </label>
+              <ExerciceSelector selection={exercicesSel} onChange={setExercicesSel} compact />
+              {exercicesSel.length > 1 && (
+                <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.partageActif(exercicesSel.length)}</p>
+              )}
+            </div>
+
+            <button
+              className="lol-btn w-full"
+              onClick={handleConfirmGainage}
+              disabled={!gainageInput || Number(gainageInput) < 1 || jeuChoisi.trim().length === 0}
+            >
+              {t.start}
+            </button>
+          </div>
         ) : typeSession === "temps" ? (
           <SessionChrono
             jeu={jeuSession}
@@ -610,10 +709,14 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      </Modale>
+      )}
 
-      {/* Saisie d'une activité — au plus près de l'endroit où on arrive
-          en sortant de partie. */}
-      <AjoutActivite onAjout={() => loadDash()} />
+      {modale === "ajout" && (
+        <Modale titre={t.railAjoutTitre} onFermer={() => setModale(null)} largeur="40rem">
+          <AjoutActivite onAjout={() => loadDash()} enModale />
+        </Modale>
+      )}
 
       {/* Comparaison entre jeux — uniquement en vue d'ensemble. Sur un jeu
           filtré, c'est sa synthèse propre qui prend le relais plus bas. */}
@@ -839,81 +942,6 @@ export default function Dashboard() {
           <p className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>
             {t.goToHistoryStart} <strong>{t.historyLabel}</strong> {t.goToHistoryEnd}
           </p>
-        </div>
-      )}
-
-      {/* Modal test de gainage */}
-      {showGainageModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.7)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowGainageModal(false); }}
-        >
-          <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5">
-            <h2 className="gold-text font-bold text-lg uppercase tracking-widest">{t.gainageModalTitle}</h2>
-
-            {/* Le jeu détermine la nature de la session : suivi de parties via
-                l'API Riot, ou simple chronomètre. */}
-            <div className="space-y-2">
-              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
-                {tJeux.sessionQuelJeu}
-              </label>
-              <JeuSelector
-                jeu={jeuChoisi}
-                typeJeu={typeJeuChoisi}
-                onChange={(j, ty) => { setJeuChoisi(j); setTypeJeuChoisi(ty); }}
-              />
-            </div>
-
-            <p className="text-sm" style={{ color: "rgba(236,239,244,0.7)" }}>
-              {t.gainageModalDesc}
-            </p>
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
-                {t.durationSeconds}
-              </label>
-              <input
-                type="number" min="1"
-                className="lol-input text-center text-2xl font-bold"
-                value={gainageInput}
-                onChange={(e) => setGainageInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleConfirmGainage()}
-                autoFocus
-              />
-            </div>
-            {gainageInput && Number(gainageInput) > 0 && (
-              <div className="text-center p-3 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                <span className="gold-text font-bold text-xl">{getLevelLabel(Number(gainageInput), t)}</span>
-                <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>{t.forThisSession}</span>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
-                {tExo.choisirTitre}
-              </label>
-              <ExerciceSelector selection={exercicesSel} onChange={setExercicesSel} compact />
-              {exercicesSel.length > 1 && (
-                <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
-              )}
-            </div>
-            <div className="flex gap-3">
-              <button
-                className="flex-1 py-2 rounded text-sm"
-                style={{ background: "rgba(152,162,176,0.1)", color: "rgba(236,239,244,0.6)", border: "1px solid rgba(152,162,176,0.2)" }}
-                onClick={() => setShowGainageModal(false)}
-              >
-                {t.cancel}
-              </button>
-              <button
-                className="lol-btn flex-1"
-                onClick={handleConfirmGainage}
-                disabled={!gainageInput || Number(gainageInput) < 1 || jeuChoisi.trim().length === 0}
-              >
-                {t.start}
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
