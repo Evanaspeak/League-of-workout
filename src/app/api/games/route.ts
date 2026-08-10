@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore, calcScoreTemps } from "@/lib/scoring";
+import { calcScore, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
-import { normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
+import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -25,14 +25,20 @@ export async function POST(req: Request) {
   const jeu = normaliserNomJeu(body.jeu);
   const typeJeu = typeDuJeu(jeu, body.typeJeu);
 
-  // Une session au temps n'a pas de rôle : interroger RoleWeight avec un
-  // identifiant indéfini ferait échouer Prisma, et toute la session serait
-  // perdue au moment de l'enregistrer.
-  const [roleWeights, levelConfigs, masteryConfig] = await Promise.all([
-    body.role ? prisma.roleWeight.findUnique({ where: { role: body.role } }) : null,
+  // Ce que le jeu permet de renseigner : un CS n'a ni lane ni champion.
+  const capacites = capacitesDuJeu(jeu, body.typeJeu);
+
+  const [ponderations, levelConfigs, masteryConfig] = await Promise.all([
+    prisma.roleWeight.findMany(),
     prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
     prisma.masteryConfig.findFirst(),
   ]);
+
+  // Avec des lanes, on prend celle de la partie ; sans lanes, un profil neutre
+  // dérivé des réglages du joueur.
+  const roleWeights = capacites.roles
+    ? (ponderations.find((r) => r.role === body.role) ?? null)
+    : profilNeutre(ponderations);
 
   if (typeJeu === "parties" && (!roleWeights || !masteryConfig)) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
@@ -40,7 +46,7 @@ export async function POST(req: Request) {
 
   // Compte les parties avant avec ce champion
   let partiesAvant = 0;
-  if (body.champion && roleWeights?.maitriseActive) {
+  if (capacites.champions && body.champion && roleWeights?.maitriseActive) {
     partiesAvant = await prisma.game.count({
       where: { userId: user.id, champion: body.champion },
     });
@@ -111,11 +117,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }
 
+  // Un jeu sans lane ni KDA n'envoie pas ces champs : on les ramène à des
+  // valeurs sûres, sinon Prisma reçoit undefined ou NaN sur des colonnes
+  // obligatoires.
+  const role = capacites.roles && body.role ? String(body.role) : "—";
+  const kills = capacites.kda ? Number(body.kills) || 0 : 0;
+  const deaths = capacites.kda ? Number(body.deaths) || 0 : 0;
+  const assists = capacites.kda ? Number(body.assists) || 0 : 0;
+  const champion = capacites.champions && body.champion ? String(body.champion) : null;
+
   const scoring = calcScore({
-    kills: Number(body.kills),
-    deaths: Number(body.deaths),
-    assists: Number(body.assists),
-    result: body.result,
+    kills,
+    deaths,
+    assists,
+    result: body.result === "V" ? "V" : "D",
     gainageSec,
     partiesAvant,
     roleWeights,
@@ -126,12 +141,12 @@ export async function POST(req: Request) {
   const game = await prisma.game.create({
     data: {
       userId: user.id,
-      role: body.role,
-      champion: body.champion || null,
-      kills: Number(body.kills),
-      deaths: Number(body.deaths),
-      assists: Number(body.assists),
-      result: body.result,
+      role,
+      champion,
+      kills,
+      deaths,
+      assists,
+      result: body.result === "V" ? "V" : "D",
       gainageSec,
       niveauCalcule: scoring.niveau,
       partiesAvantCalcule: partiesAvant,

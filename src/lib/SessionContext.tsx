@@ -1,7 +1,8 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, type ExerciceId,
+  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, repartir, toExerciceId, toExerciceIds,
+  type ExerciceId,
 } from "@/lib/exercices";
 import { JEU_DEFAUT, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 
@@ -112,6 +113,9 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Palier au-delà duquel le prochain rappel se déclenche.
   const prochainRappelRef = useRef<number>(RAPPEL_SEUIL_DEFAUT);
   const exerciceRef = useRef<ExerciceId>(EXERCICE_DEFAUT);
+  // Sélection complète : une session au temps se répartit entre tous les
+  // exercices cochés, comme un ajout manuel.
+  const exercicesRef = useRef<ExerciceId[]>([EXERCICE_DEFAUT]);
 
   const notifier = useCallback((points: number) => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
@@ -211,20 +215,30 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
 
     setChronoErreur("");
+
+    // Plusieurs exercices cochés : la session se découpe en parts égales, une
+    // par exercice, plutôt que de tout mettre sur le premier.
+    const selection = exercicesRef.current.length > 0 ? exercicesRef.current : [exerciceRef.current];
+    const parts = repartir(dureeSec, selection.length)
+      .map((duree, i) => ({ exercice: selection[i], duree }))
+      .filter((part) => part.duree > 0);
+
     try {
-      const res = await fetch("/api/games", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jeu: jeuSessionRef.current,
-          typeJeu: "temps",
-          dureeSec,
-          gainageSec: gainageRef.current,
-          exercice: exerciceRef.current,
-          source: "manuel",
-        }),
-      });
-      if (!res.ok) { setChronoErreur("erreur"); return false; }
+      for (const part of parts) {
+        const res = await fetch("/api/games", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jeu: jeuSessionRef.current,
+            typeJeu: "temps",
+            dureeSec: part.duree,
+            gainageSec: gainageRef.current,
+            exercice: part.exercice,
+            source: "manuel",
+          }),
+        });
+        if (!res.ok) { setChronoErreur("erreur"); return false; }
+      }
       stopSession();
       return true;
     } catch {
@@ -319,10 +333,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Récupère les préférences de rappel de l'utilisateur.
     try {
       const u = await fetch("/api/user").then((r) => r.json());
-      const ex = toExerciceIds(u?.exercices)[0] ?? toExerciceId(u?.exercice);
+      const selection = toExerciceIds(u?.exercices);
+      const ex = selection[0] ?? toExerciceId(u?.exercice);
       const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
       setExercice(ex);
       exerciceRef.current = ex;
+      exercicesRef.current = selection.length > 0 ? selection : [ex];
       seuilRef.current = seuil;
       prochainRappelRef.current = seuil;
     } catch { /* valeurs par défaut conservées */ }
@@ -425,10 +441,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
       try {
         const u = await fetch("/api/user").then((r) => r.json());
-        const ex = toExerciceIds(u?.exercices)[0] ?? toExerciceId(u?.exercice);
+        const selection = toExerciceIds(u?.exercices);
+        const ex = selection[0] ?? toExerciceId(u?.exercice);
         const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
         setExercice(ex);
         exerciceRef.current = ex;
+        exercicesRef.current = selection.length > 0 ? selection : [ex];
         seuilRef.current = seuil;
         prochainRappelRef.current = seuil;
       } catch { /* valeurs par défaut conservées */ }
