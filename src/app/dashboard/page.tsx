@@ -16,6 +16,10 @@ import {
   toExerciceId, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
+import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
+import { JEU_DEFAUT, formaterTempsJeu, typeDuJeu, type TypeJeu } from "@/lib/jeux";
+import { JeuSelector } from "@/components/JeuSelector";
+import { SessionChrono } from "@/components/SessionChrono";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -45,9 +49,18 @@ type DashData = {
   objectifTotalPompes: number;
   exercices?: ExerciceId[];
   filtreExercice?: ExerciceId | null;
-  global?: { totalGames: number; wins: number; winrate: number; totalPoints: number };
+  global?: {
+    totalGames: number; wins: number; winrate: number; totalPoints: number;
+    tempsJoueSec?: number; totalParties?: number;
+  };
   pointsParExercice?: Record<string, number>;
   recordExercice?: ExerciceId | null;
+  // ── Multi-jeu ──
+  jeuxJoues?: { nom: string; type: TypeJeu; games: number; points: number }[];
+  filtreJeu?: string | null;
+  typeJeuFiltre?: TypeJeu | null;
+  tempsJoueSec?: number;
+  totalParties?: number;
 };
 
 function StatCard({ label, value, sub, lignes, i = 0 }: {
@@ -136,6 +149,7 @@ function getLevelLabel(sec: number, t: ReturnType<typeof useT<typeof dashboard>>
 export default function Dashboard() {
   const t = useT(dashboard);
   const tExo = useT(exercicesDict);
+  const tJeux = useT(jeuxDict);
   const dateLocale = useDateLocale();
   const [data, setData] = useState<DashData | null>(null);
   const [showGainageModal, setShowGainageModal] = useState(false);
@@ -148,16 +162,35 @@ export default function Dashboard() {
   const [roleView, setRoleView] = useState<"total" | "avg">("total");
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [filtreExo, setFiltreExo] = useState<ExerciceId | null>(null);
+  const [filtreJeu, setFiltreJeu] = useState<string | null>(null);
+  // Jeu de la prochaine session, mémorisé d'une fois sur l'autre.
+  const [jeuChoisi, setJeuChoisi] = useState<string>(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("lastJeu") ?? JEU_DEFAUT;
+    return JEU_DEFAUT;
+  });
+  const [typeJeuChoisi, setTypeJeuChoisi] = useState<TypeJeu>(() => {
+    if (typeof window !== "undefined") return typeDuJeu(localStorage.getItem("lastJeu") ?? JEU_DEFAUT);
+    return "parties";
+  });
+  const [arretEnCours, setArretEnCours] = useState(false);
   const [gainageInput, setGainageInput] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
     return "60";
   });
 
-  const { sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec, startSession, stopSession } = useSession();
+  const {
+    sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec,
+    startSession, stopSession,
+    typeSession, jeuSession, chronoSec, chronoErreur, arreterChrono, dettePoints,
+  } = useSession();
   const { locale } = useLocale();
 
-  const loadDash = (filtre: ExerciceId | null = filtreExo) =>
-    fetch(filtre ? `/api/dashboard?exercice=${filtre}` : "/api/dashboard").then(async (res) => {
+  const loadDash = (filtre: ExerciceId | null = filtreExo, jeu: string | null = filtreJeu) => {
+    const qs = new URLSearchParams();
+    if (filtre) qs.set("exercice", filtre);
+    if (jeu) qs.set("jeu", jeu);
+    const url = qs.toString() ? `/api/dashboard?${qs}` : "/api/dashboard";
+    return fetch(url).then(async (res) => {
       if (!res.ok) {
         // Session invalide (ex. cookie d'une ancienne base) → retour au login.
         if (res.status === 401 && typeof window !== "undefined") {
@@ -169,9 +202,10 @@ export default function Dashboard() {
       setData(d);
       setExercicesSel(toExerciceIds(d?.exercices));
     });
+  };
 
-  // Charge au montage puis à chaque changement d'exercice consulté.
-  useEffect(() => { loadDash(filtreExo); }, [filtreExo]);
+  // Charge au montage puis à chaque changement de périmètre consulté.
+  useEffect(() => { loadDash(filtreExo, filtreJeu); }, [filtreExo, filtreJeu]);
 
   // Rafraîchit les stats globales à chaque nouvelle game loggée en session.
   useEffect(() => {
@@ -194,6 +228,7 @@ export default function Dashboard() {
   const handleConfirmGainage = async () => {
     const sec = Math.max(1, Number(gainageInput) || 60);
     localStorage.setItem("lastGainageSec", String(sec));
+    localStorage.setItem("lastJeu", jeuChoisi);
     setShowGainageModal(false);
     // Le choix fait ici devient la préférence, pour l'ARAM du chaos comme pour
     // les prochaines sessions.
@@ -202,7 +237,16 @@ export default function Dashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userPrefs: { exercices: exercicesSel } }),
     }).catch(() => {});
-    await startSession(sec);
+    await startSession(sec, jeuChoisi);
+  };
+
+  // Fin d'une session chronométrée : la durée est écrite, puis les stats
+  // rechargées pour que la nouvelle dette apparaisse tout de suite.
+  const handleArreterChrono = async () => {
+    setArretEnCours(true);
+    const ok = await arreterChrono();
+    setArretEnCours(false);
+    if (ok) loadDash();
   };
 
   if (!data) return <div className="text-center py-20 gold-text">{t.loading}</div>;
@@ -231,6 +275,15 @@ export default function Dashboard() {
     winrate: data.winrate,
     totalPoints: data.totalPompes,
   };
+  // ── Multi-jeu ──
+  // Le filtre par jeu n'a de sens qu'à partir de deux jeux différents.
+  const jeuxJoues = data.jeuxJoues ?? [];
+  const typeConsulte = data.typeJeuFiltre ?? null;
+  // Un jeu au temps n'a ni résultat, ni rôle, ni champion : afficher ces
+  // sections reviendrait à montrer des graphiques vides ou faux.
+  const vueTemps = typeConsulte === "temps";
+  const aDuTemps = (data.global?.tempsJoueSec ?? 0) > 0;
+
   const fmt = (points: number) => formaterCompact(points, exercice);
   const fmtAxe = (points: number) => formaterAxe(points, exercice);
 
@@ -277,12 +330,14 @@ export default function Dashboard() {
       </div>
 
       {/* Vue d'ensemble — jamais filtrée : elle décrit toute l'activité */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className={`grid grid-cols-1 gap-3 ${aDuTemps ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
         <StatCard label={t.gamesPlayed} value={globalStats.totalGames} i={0} />
         <StatCard
           label={t.winrate}
           value={`${globalStats.winrate}%`}
-          sub={`${globalStats.wins}V / ${globalStats.totalGames - globalStats.wins}D`}
+          // Le dénominateur est le nombre de parties compétitives : les
+          // sessions au temps n'ont pas de résultat et n'entrent pas au compte.
+          sub={`${globalStats.wins}V / ${(globalStats.totalParties ?? globalStats.totalGames) - globalStats.wins}D`}
           i={1}
         />
         <StatCard
@@ -291,6 +346,13 @@ export default function Dashboard() {
           lignes={lignesTotal.length > 1 ? lignesTotal : undefined}
           i={2}
         />
+        {aDuTemps && (
+          <StatCard
+            label={tJeux.tempsJoueLabel}
+            value={formaterTempsJeu(data.global?.tempsJoueSec ?? 0)}
+            i={3}
+          />
+        )}
       </div>
 
       {data.objectifTotalPompes > 0 && (
@@ -316,6 +378,32 @@ export default function Dashboard() {
               ? t.objectiveRemainingLibre(fmt(data.objectifTotalPompes - globalStats.totalPoints))
               : t.objectiveReached}
           </div>
+        </div>
+      )}
+
+      {/* Filtre par jeu — n'apparaît qu'à partir de deux jeux différents */}
+      {jeuxJoues.length > 1 && (
+        <div className="flex items-center gap-2 flex-wrap rise" style={{ animationDelay: "220ms" }}>
+          <span className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{tJeux.filtreJeuTitre}</span>
+          {[null, ...jeuxJoues.map((j) => j.nom)].map((nom) => {
+            const actif = filtreJeu === nom;
+            return (
+              <button
+                key={nom ?? "tous"}
+                onClick={() => setFiltreJeu(nom)}
+                aria-pressed={actif}
+                style={{
+                  padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
+                  background: actif ? "rgba(110,155,255,0.1)" : "transparent",
+                  border: `1px solid ${actif ? "var(--signal)" : "var(--line-strong)"}`,
+                  color: actif ? "var(--signal)" : "rgba(236,239,244,0.6)",
+                  transition: "all 0.15s",
+                }}
+              >
+                {nom === null ? tJeux.filtreTousJeux : nom}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -346,6 +434,20 @@ export default function Dashboard() {
               })}
             </div>
           ) : <span />}
+
+          {vueTemps && (data.tempsJoueSec ?? 0) > 0 && (
+            <div className="flex items-baseline gap-2" style={{
+              padding: "7px 14px", borderRadius: 10,
+              border: "1px solid var(--line)", background: "var(--carbon)",
+            }}>
+              <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.6)" }}>
+                {tJeux.tempsJoueLabel}
+              </span>
+              <span className="mono-num" style={{ fontSize: "1rem", fontWeight: 600, color: "var(--signal)" }}>
+                {formaterTempsJeu(data.tempsJoueSec ?? 0)}
+              </span>
+            </div>
+          )}
 
           {data.totalGames > 0 && (
             <div className="flex items-baseline gap-2" style={{
@@ -389,6 +491,18 @@ export default function Dashboard() {
           <button className="lol-btn w-full" onClick={() => setShowGainageModal(true)}>
             {t.startSession}
           </button>
+        ) : typeSession === "temps" ? (
+          <SessionChrono
+            jeu={jeuSession}
+            niveau={sessionLevel}
+            gainageLabel={t.gainageLabel(gainageSec)}
+            chronoSec={chronoSec}
+            dette={fmt(dettePoints)}
+            erreur={chronoErreur}
+            enregistrement={arretEnCours}
+            onArreter={handleArreterChrono}
+            onAnnuler={stopSession}
+          />
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
@@ -660,6 +774,20 @@ export default function Dashboard() {
         >
           <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5">
             <h2 className="gold-text font-bold text-lg uppercase tracking-widest">{t.gainageModalTitle}</h2>
+
+            {/* Le jeu détermine la nature de la session : suivi de parties via
+                l'API Riot, ou simple chronomètre. */}
+            <div className="space-y-2">
+              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                {tJeux.sessionQuelJeu}
+              </label>
+              <JeuSelector
+                jeu={jeuChoisi}
+                typeJeu={typeJeuChoisi}
+                onChange={(j, ty) => { setJeuChoisi(j); setTypeJeuChoisi(ty); }}
+              />
+            </div>
+
             <p className="text-sm" style={{ color: "rgba(236,239,244,0.7)" }}>
               {t.gainageModalDesc}
             </p>
@@ -703,7 +831,7 @@ export default function Dashboard() {
               <button
                 className="lol-btn flex-1"
                 onClick={handleConfirmGainage}
-                disabled={!gainageInput || Number(gainageInput) < 1}
+                disabled={!gainageInput || Number(gainageInput) < 1 || jeuChoisi.trim().length === 0}
               >
                 {t.start}
               </button>
