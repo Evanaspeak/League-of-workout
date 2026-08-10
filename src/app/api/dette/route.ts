@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { dureeEffort, repartirPoints, toExerciceIds } from "@/lib/exercices";
+import { dureeEffort, exercicesEnTemps, repartirPoints, toExerciceIds } from "@/lib/exercices";
 
 /**
- * Dette accumulée et pas encore faite. Elle monte à chaque partie enregistrée,
- * et l'utilisateur la fait retomber en allant s'entraîner.
+ * Dette en attente. Seuls les exercices comptés en temps s'y accumulent :
+ * des pompes se font tout de suite après la partie, tandis qu'un round de
+ * boxe n'a d'intérêt qu'une fois quelques minutes réunies.
  */
 function reponse(user: {
   dettePointsDus: number;
   rappelSeuilSec: number;
   exercices: string[];
 }) {
-  const exercices = toExerciceIds(user.exercices);
-  const points = Math.max(0, user.dettePointsDus);
+  const exercices = exercicesEnTemps(toExerciceIds(user.exercices));
+  // Sans exercice au temps sélectionné, il n'y a rien à cumuler.
+  const points = exercices.length > 0 ? Math.max(0, user.dettePointsDus) : 0;
   return {
     points,
     exercices,
@@ -42,7 +44,7 @@ export async function PATCH(req: Request) {
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const exercices = toExerciceIds(user.exercices);
+  const exercices = exercicesEnTemps(toExerciceIds(user.exercices));
   const dus = Math.max(0, user.dettePointsDus);
 
   let restant = 0;

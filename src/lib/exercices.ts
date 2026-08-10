@@ -207,3 +207,28 @@ export function dureeEffort(points: number, exercices: ExerciceId[]): number {
     0,
   );
 }
+
+/**
+ * Un exercice se compte-t-il en temps ? Cette distinction commande le
+ * compteur d'attente : des pompes se font tout de suite, à la fin de la
+ * partie ; de la boxe ne vaut la peine qu'une fois quelques minutes cumulées.
+ */
+export function estEnTemps(exercice: ExerciceId): boolean {
+  return EXERCICES[exercice].unite === "temps";
+}
+
+/** Ne garde que les exercices comptés en temps. */
+export function exercicesEnTemps(exercices: ExerciceId[]): ExerciceId[] {
+  return toExerciceIds(exercices).filter(estEnTemps);
+}
+
+/**
+ * Part d'une ventilation qui revient à des exercices comptés en temps —
+ * la seule qui s'accumule au lieu d'être faite dans la foulée.
+ */
+export function pointsEnTemps(repartition: Repartition): number {
+  return Object.entries(repartition).reduce(
+    (total, [id, pts]) => total + (estEnTemps(toExerciceId(id)) ? (pts ?? 0) : 0),
+    0,
+  );
+}

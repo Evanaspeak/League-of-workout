@@ -28,9 +28,10 @@ function duree(secondes: number): string {
 }
 
 /**
- * Compteur de dette en attente : il monte à chaque partie enregistrée et
- * retombe quand on va la faire. Au-delà du seuil, il passe en alerte —
- * l'idée reste de fractionner l'effort plutôt que de tout reporter.
+ * Compteur d'effort en attente. Il ne concerne que les exercices comptés en
+ * temps : des pompes se font tout de suite après la partie, alors qu'un round
+ * de boxe n'a d'intérêt qu'une fois quelques minutes réunies. Le compteur les
+ * cumule donc, et prévient quand il y a de quoi faire une vraie séance.
  *
  * `variant="carte"` affiche le panneau du dashboard ; `variant="rappel"`
  * n'affiche qu'un bandeau flottant, et seulement une fois le seuil franchi.
@@ -183,7 +184,11 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
   }
 
   // ── Panneau du dashboard ──
-  const progression = dette && dette.seuilSec > 0
+  // Sans exercice compté en temps, il n'y a rien à accumuler : tout se fait
+  // dans la foulée de la partie.
+  if (!dette || dette.exercices.length === 0) return null;
+
+  const progression = dette.seuilSec > 0
     ? Math.min(100, Math.round((dette.dureeSec / dette.seuilSec) * 100))
     : 0;
 
@@ -195,7 +200,7 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
       >
         <div className="flex items-baseline justify-between gap-3 flex-wrap">
           <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.detteTitre}</h2>
-          {dette && dette.seuilSec > 0 && (
+          {dette.seuilSec > 0 && (
             <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>
               {t.detteSeuil(duree(dette.seuilSec))}
             </span>
@@ -217,11 +222,14 @@ export function CompteurDette({ variant = "carte" }: { variant?: "carte" | "rapp
                   </div>
                 </div>
               ))}
-              <div className="ml-auto text-right">
-                <div className="mono-num text-lg font-semibold" style={{ color: seuilFranchi ? "var(--ember)" : "rgba(236,239,244,0.75)" }}>
-                  {duree(dette?.dureeSec ?? 0)}
+              {/* Avec un seul exercice, le total répéterait la valeur de gauche. */}
+              {lignes.length > 1 && (
+                <div className="ml-auto text-right">
+                  <div className="mono-num text-lg font-semibold" style={{ color: seuilFranchi ? "var(--ember)" : "rgba(236,239,244,0.75)" }}>
+                    {duree(dette.dureeSec)}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(152,162,176,0.15)" }}>
