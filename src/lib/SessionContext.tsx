@@ -1,10 +1,19 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
-  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, type ExerciceId,
+  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
+import { JEU_DEFAUT, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 
 const POLL_MS = 2 * 60 * 1000;
+/** Le chrono d'une session au temps rafraîchit son affichage à la seconde. */
+const CHRONO_TICK_MS = 1000;
+/** Sous ce seuil, une session au temps n'a rien produit qui mérite d'être écrit. */
+const CHRONO_MIN_SEC = 30;
+/** Une session chronométrée survit à un rechargement de page. */
+const CHRONO_STORAGE_KEY = "wow-chrono-session";
+
+type ChronoSauvegarde = { jeu: string; debut: number; gainageSec: number };
 // Délai après la fin d'une partie (détectée nativement par l'app desktop) avant
 // d'interroger l'API Riot — le match met quelques secondes à y apparaître.
 const POST_GAME_DELAY_MS = 20 * 1000;
@@ -27,8 +36,19 @@ type SessionCtx = {
   countdown: number;
   sessionLevel: string;
   gainageSec: number;
-  startSession: (gainageSec: number) => Promise<void>;
+  startSession: (gainageSec: number, jeu?: string) => Promise<void>;
   stopSession: () => void;
+  // ── Session au temps (jeux sans victoire ni défaite) ──
+  /** Nature de la session en cours : parties suivies, ou chrono. */
+  typeSession: TypeJeu;
+  /** Jeu de la session en cours. */
+  jeuSession: string;
+  /** Secondes écoulées depuis le démarrage du chrono. */
+  chronoSec: number;
+  /** Message d'erreur du chrono (échec d'enregistrement). */
+  chronoErreur: string;
+  /** Arrête le chrono et enregistre la session. `false` si rien n'a été écrit. */
+  arreterChrono: () => Promise<boolean>;
   // ── Rappel fractionné ──
   /** Points d'effort accumulés et non encore acquittés. */
   dettePoints: number;
@@ -60,6 +80,22 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [sessionLevel, setSessionLevel] = useState("");
   const [gainageSec, setGainageSec] = useState(60);
 
+  // ── Session au temps ──
+  const [typeSession, setTypeSession] = useState<TypeJeu>("parties");
+  const [jeuSession, setJeuSession] = useState<string>(JEU_DEFAUT);
+  const [chronoSec, setChronoSec] = useState(0);
+  const [chronoErreur, setChronoErreur] = useState("");
+  const typeSessionRef = useRef<TypeJeu>("parties");
+  const jeuSessionRef = useRef<string>(JEU_DEFAUT);
+  const chronoDebutRef = useRef<number | null>(null);
+  const chronoTickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Coût d'une heure de jeu, calculé une fois par le serveur au démarrage :
+  // la logique de scoring reste à un seul endroit.
+  const pointsParHeureRef = useRef(0);
+  // Points déjà acquittés pendant le chrono : la dette affichée est le total
+  // dû depuis le début, moins ce qui a déjà été fait.
+  const chronoPayesRef = useRef(0);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gainageRef = useRef<number>(60);
@@ -90,12 +126,23 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     } catch { /* certains navigateurs refusent hors service worker */ }
   }, []);
 
+  /** Dette totale générée depuis le début du chrono, acquittements compris. */
+  const detteTotaleChrono = useCallback(() => {
+    if (chronoDebutRef.current === null) return 0;
+    const ecoule = (Date.now() - chronoDebutRef.current) / 1000;
+    return Math.round((pointsParHeureRef.current * ecoule) / 3600);
+  }, []);
+
   const acquitterRappel = useCallback(() => {
     setRappelActif(false);
+    // En mode chrono la dette se recalcule à chaque seconde depuis le temps
+    // écoulé : il faut mémoriser ce qui vient d'être payé, sinon le prochain
+    // tick le réclamerait à nouveau.
+    if (typeSessionRef.current === "temps") chronoPayesRef.current = detteTotaleChrono();
     dettePointsRef.current = 0;
     setDettePoints(0);
     prochainRappelRef.current = seuilRef.current;
-  }, []);
+  }, [detteTotaleChrono]);
 
   const reporterRappel = useCallback(() => {
     setRappelActif(false);
@@ -110,7 +157,81 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setRappelActif(false);
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
+    if (chronoTickRef.current) { clearInterval(chronoTickRef.current); chronoTickRef.current = null; }
+    chronoDebutRef.current = null;
+    chronoPayesRef.current = 0;
+    setChronoSec(0);
+    setTypeSession("parties");
+    typeSessionRef.current = "parties";
+    if (typeof window !== "undefined") localStorage.removeItem(CHRONO_STORAGE_KEY);
   }, []);
+
+  /**
+   * Fait vivre le chrono : une fois par seconde, on recalcule la dette à partir
+   * du temps réellement écoulé. Passer par l'horloge plutôt que par un
+   * compteur incrémental garde le compte juste même si l'onglet a été mis en
+   * veille par le navigateur.
+   */
+  const lancerTickChrono = useCallback(() => {
+    if (chronoTickRef.current) clearInterval(chronoTickRef.current);
+    const tick = () => {
+      if (chronoDebutRef.current === null) return;
+      setChronoSec(Math.floor((Date.now() - chronoDebutRef.current) / 1000));
+
+      const restant = Math.max(0, detteTotaleChrono() - chronoPayesRef.current);
+      dettePointsRef.current = restant;
+      setDettePoints(restant);
+
+      if (seuilRef.current > 0 && restant >= prochainRappelRef.current) {
+        setRappelActif(true);
+        notifier(restant);
+        // Le palier avance tout de suite : sans cela, le rappel se déclencherait
+        // à nouveau à chaque seconde tant que la dette reste au-dessus du seuil.
+        prochainRappelRef.current = restant + seuilRef.current;
+      }
+    };
+    tick();
+    chronoTickRef.current = setInterval(tick, CHRONO_TICK_MS);
+  }, [detteTotaleChrono, notifier]);
+
+  /**
+   * Arrête le chrono et écrit la session. Sur échec, la session reste active
+   * pour que le temps joué ne soit pas perdu et qu'on puisse réessayer.
+   * `chronoErreur` porte un code : "court" ou "erreur".
+   */
+  const arreterChrono = useCallback(async (): Promise<boolean> => {
+    const debut = chronoDebutRef.current;
+    if (debut === null) { stopSession(); return false; }
+
+    const dureeSec = Math.round((Date.now() - debut) / 1000);
+    if (dureeSec < CHRONO_MIN_SEC) {
+      setChronoErreur("court");
+      stopSession();
+      return false;
+    }
+
+    setChronoErreur("");
+    try {
+      const res = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jeu: jeuSessionRef.current,
+          typeJeu: "temps",
+          dureeSec,
+          gainageSec: gainageRef.current,
+          exercice: exerciceRef.current,
+          source: "manuel",
+        }),
+      });
+      if (!res.ok) { setChronoErreur("erreur"); return false; }
+      stopSession();
+      return true;
+    } catch {
+      setChronoErreur("erreur");
+      return false;
+    }
+  }, [stopSession]);
 
   const doPoll = useCallback(async () => {
     setPolling(true);
@@ -173,23 +294,32 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setPolling(false);
   }, [stopSession]);
 
-  const startSession = useCallback(async (sec: number) => {
+  const startSession = useCallback(async (sec: number, jeu: string = JEU_DEFAUT) => {
+    const type = typeDuJeu(jeu);
+
     gainageRef.current = sec;
     setGainageSec(sec);
     setSessionLevel(getLevelLabel(sec));
     setSessionActive(true);
     setSessionGames([]);
     setSessionError("");
+    setChronoErreur("");
+    setTypeSession(type);
+    typeSessionRef.current = type;
+    setJeuSession(jeu);
+    jeuSessionRef.current = jeu;
 
     // Repart d'une dette vierge à chaque session.
     dettePointsRef.current = 0;
     setDettePoints(0);
     setRappelActif(false);
+    chronoPayesRef.current = 0;
+    setChronoSec(0);
 
     // Récupère les préférences de rappel de l'utilisateur.
     try {
       const u = await fetch("/api/user").then((r) => r.json());
-      const ex = toExerciceId(u?.exercice);
+      const ex = toExerciceIds(u?.exercices)[0] ?? toExerciceId(u?.exercice);
       const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
       setExercice(ex);
       exerciceRef.current = ex;
@@ -201,6 +331,33 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // navigateurs pour pouvoir demander l'autorisation de notifier.
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
+    }
+
+    // ── Jeu au temps : chrono, pas de suivi de parties ──
+    if (type === "temps") {
+      // Le coût d'une heure est calculé par le serveur, avec la même formule
+      // que l'enregistrement final : l'estimation affichée ne peut pas diverger.
+      pointsParHeureRef.current = 0;
+      try {
+        const res = await fetch("/api/games/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jeu, typeJeu: "temps", dureeSec: 3600, gainageSec: sec }),
+        });
+        if (res.ok) {
+          const { scoring } = await res.json();
+          pointsParHeureRef.current = Number(scoring?.pompesFinales) || 0;
+        }
+      } catch { /* la dette live restera à 0, l'enregistrement final fera foi */ }
+
+      const debut = Date.now();
+      chronoDebutRef.current = debut;
+      if (typeof window !== "undefined") {
+        const sauvegarde: ChronoSauvegarde = { jeu, debut, gainageSec: sec };
+        localStorage.setItem(CHRONO_STORAGE_KEY, JSON.stringify(sauvegarde));
+      }
+      lancerTickChrono();
+      return;
     }
 
     // Capture la dernière game existante comme point de départ.
@@ -217,7 +374,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     intervalRef.current = setInterval(doPoll, POLL_MS);
     setCountdown(POLL_MS / 1000);
     countdownRef.current = setInterval(() => setCountdown((c) => Math.max(0, c - 1)), 1000);
-  }, [doPoll]);
+  }, [doPoll, lancerTickChrono]);
 
   // Garde une référence à jour de l'état de session pour les callbacks natifs.
   useEffect(() => { sessionActiveRef.current = sessionActive; }, [sessionActive]);
@@ -236,10 +393,71 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
   }, [doPoll]);
 
+  // Un chrono en cours survit à un rechargement de page : sans cela, deux
+  // heures de Minecraft disparaîtraient sur un F5 malheureux.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const brut = localStorage.getItem(CHRONO_STORAGE_KEY);
+    if (!brut) return;
+
+    let sauvegarde: ChronoSauvegarde;
+    try { sauvegarde = JSON.parse(brut); } catch { localStorage.removeItem(CHRONO_STORAGE_KEY); return; }
+    const debut = Number(sauvegarde?.debut);
+    // Au-delà de 12 h, c'est un chrono oublié plutôt qu'une session en cours.
+    if (!debut || Date.now() - debut > 12 * 3600 * 1000) {
+      localStorage.removeItem(CHRONO_STORAGE_KEY);
+      return;
+    }
+
+    let annule = false;
+    (async () => {
+      const sec = Number(sauvegarde.gainageSec) || 60;
+      gainageRef.current = sec;
+      setGainageSec(sec);
+      setSessionLevel(getLevelLabel(sec));
+      setTypeSession("temps");
+      typeSessionRef.current = "temps";
+      setJeuSession(sauvegarde.jeu);
+      jeuSessionRef.current = sauvegarde.jeu;
+      chronoDebutRef.current = debut;
+      chronoPayesRef.current = 0;
+      setSessionActive(true);
+
+      try {
+        const u = await fetch("/api/user").then((r) => r.json());
+        const ex = toExerciceIds(u?.exercices)[0] ?? toExerciceId(u?.exercice);
+        const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
+        setExercice(ex);
+        exerciceRef.current = ex;
+        seuilRef.current = seuil;
+        prochainRappelRef.current = seuil;
+      } catch { /* valeurs par défaut conservées */ }
+
+      try {
+        const res = await fetch("/api/games/preview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jeu: sauvegarde.jeu, typeJeu: "temps", dureeSec: 3600, gainageSec: sec }),
+        });
+        if (res.ok) {
+          const { scoring } = await res.json();
+          pointsParHeureRef.current = Number(scoring?.pompesFinales) || 0;
+        }
+      } catch { /* dette live à 0, l'enregistrement final fera foi */ }
+
+      if (!annule) lancerTickChrono();
+    })();
+
+    return () => { annule = true; };
+    // Restauration unique au montage du provider.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Nettoyage uniquement à la fermeture de l'app (le provider vit dans le layout).
   useEffect(() => () => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
+    if (chronoTickRef.current) clearInterval(chronoTickRef.current);
   }, []);
 
   return (
@@ -247,6 +465,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       sessionActive, sessionGames, sessionError,
       polling, countdown, sessionLevel, gainageSec,
       startSession, stopSession,
+      typeSession, jeuSession, chronoSec, chronoErreur, arreterChrono,
       dettePoints, rappelActif, exercice, acquitterRappel, reporterRappel,
     }}>
       {children}

@@ -60,6 +60,21 @@ export function typeDuJeu(nom: string | null | undefined, typeFourni?: unknown):
   return trouverJeu(nom)?.type ?? toTypeJeu(typeFourni);
 }
 
+/**
+ * Temps de jeu lisible. Contrairement au temps d'exercice (qui se compte en
+ * minutes), une durée de jeu se compte vite en heures : « 720 min » ne parle
+ * à personne, « 12 h » si.
+ */
+export function formaterTempsJeu(totalSecondes: number): string {
+  const s = Math.max(0, Math.round(totalSecondes));
+  if (s < 60) return `${s} s`;
+  const minutes = Math.floor(s / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const heures = Math.floor(minutes / 60);
+  const reste = minutes % 60;
+  return reste === 0 ? `${heures} h` : `${heures} h ${String(reste).padStart(2, "0")}`;
+}
+
 /** Nettoie un nom de jeu saisi librement. */
 export function normaliserNomJeu(nom: unknown): string {
   const brut = String(nom ?? "").trim().replace(/\s+/g, " ");

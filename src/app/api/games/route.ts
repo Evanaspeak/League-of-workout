@@ -25,8 +25,11 @@ export async function POST(req: Request) {
   const jeu = normaliserNomJeu(body.jeu);
   const typeJeu = typeDuJeu(jeu, body.typeJeu);
 
+  // Une session au temps n'a pas de rôle : interroger RoleWeight avec un
+  // identifiant indéfini ferait échouer Prisma, et toute la session serait
+  // perdue au moment de l'enregistrer.
   const [roleWeights, levelConfigs, masteryConfig] = await Promise.all([
-    prisma.roleWeight.findUnique({ where: { role: body.role } }),
+    body.role ? prisma.roleWeight.findUnique({ where: { role: body.role } }) : null,
     prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
     prisma.masteryConfig.findFirst(),
   ]);

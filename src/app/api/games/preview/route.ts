@@ -15,8 +15,10 @@ export async function POST(req: Request) {
   const jeu = normaliserNomJeu(body.jeu);
   const typeJeu = typeDuJeu(jeu, body.typeJeu);
 
+  // Sans rôle (session au temps), on n'interroge pas RoleWeight : Prisma
+  // refuse un findUnique dont la clé est indéfinie.
   const [roleWeights, levelConfigs, masteryConfig] = await Promise.all([
-    prisma.roleWeight.findUnique({ where: { role: body.role } }),
+    body.role ? prisma.roleWeight.findUnique({ where: { role: body.role } }) : null,
     prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
     prisma.masteryConfig.findFirst(),
   ]);

@@ -26,6 +26,17 @@ export const jeux = {
 
     filtreTousJeux: "Tous les jeux",
     filtreJeuTitre: "Jeu",
+    tempsJoueLabel: "Temps de jeu",
+
+    // Session chronométrée
+    chronoSousTitre: "Le chrono tourne : ta dette monte avec le temps de jeu.",
+    chronoDette: "Dette en cours",
+    chronoEcoule: "Temps écoulé",
+    chronoEnregistre: "Session enregistrée",
+    chronoEnregistrement: "Enregistrement…",
+    chronoErreur: "Impossible d'enregistrer la session.",
+    chronoTropCourt: "Session trop courte pour être enregistrée.",
+    sessionQuelJeu: "À quoi tu joues ?",
   },
   en: {
     label: "Game",
@@ -53,5 +64,15 @@ export const jeux = {
 
     filtreTousJeux: "All games",
     filtreJeuTitre: "Game",
+    tempsJoueLabel: "Playtime",
+
+    chronoSousTitre: "The clock is running: your debt grows with your playtime.",
+    chronoDette: "Debt so far",
+    chronoEcoule: "Time elapsed",
+    chronoEnregistre: "Session logged",
+    chronoEnregistrement: "Logging…",
+    chronoErreur: "Could not log the session.",
+    chronoTropCourt: "Session too short to log.",
+    sessionQuelJeu: "What are you playing?",
   },
 };
