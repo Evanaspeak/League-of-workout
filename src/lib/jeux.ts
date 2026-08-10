@@ -24,13 +24,24 @@ export type JeuDef = {
   champions?: boolean;
   /** La partie produit un score kills / morts / assists. */
   kda?: boolean;
+  /**
+   * Battle royale : on ne meurt qu'une fois et il n'y a pas de match nul à
+   * comparer. Ce qui distingue une partie d'une autre, c'est le classement
+   * final et le nombre d'éliminations.
+   */
+  br?: boolean;
+  /** Taille de partie habituelle, proposée par défaut au classement. */
+  joueurs?: number;
 };
 
 export const JEUX: JeuDef[] = [
   { nom: "League of Legends", type: "parties", riot: true, roles: true, champions: true, kda: true },
   { nom: "Valorant", type: "parties", kda: true },
   { nom: "Counter-Strike 2", type: "parties", kda: true },
-  { nom: "Fortnite", type: "parties", kda: true },
+  { nom: "Fortnite", type: "parties", br: true, joueurs: 100 },
+  { nom: "Apex Legends", type: "parties", br: true, joueurs: 60 },
+  { nom: "PUBG", type: "parties", br: true, joueurs: 100 },
+  { nom: "Call of Duty: Warzone", type: "parties", br: true, joueurs: 150 },
   { nom: "Call of Duty", type: "parties", kda: true },
   // Ni l'un ni l'autre ne se juge au KDA : buts et placement ne s'y ramènent
   // pas. Seul le résultat compte.
@@ -43,7 +54,17 @@ export const JEUX: JeuDef[] = [
   { nom: "Les Sims", type: "temps" },
 ];
 
-export type CapacitesJeu = { roles: boolean; champions: boolean; kda: boolean };
+export type CapacitesJeu = {
+  roles: boolean;
+  champions: boolean;
+  kda: boolean;
+  br: boolean;
+  /** Taille de partie par défaut pour un battle royale. */
+  joueurs: number;
+};
+
+/** Taille de partie retenue quand le jeu n'en propose pas. */
+export const JOUEURS_DEFAUT = 100;
 
 /**
  * Ce que le jeu permet de renseigner. Un jeu saisi librement est traité comme
@@ -52,9 +73,24 @@ export type CapacitesJeu = { roles: boolean; champions: boolean; kda: boolean };
  */
 export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unknown): CapacitesJeu {
   const def = trouverJeu(nom);
-  if (def) return { roles: !!def.roles, champions: !!def.champions, kda: !!def.kda };
+  if (def) {
+    return {
+      roles: !!def.roles,
+      champions: !!def.champions,
+      // Un battle royale se saisit au classement, pas au KDA.
+      kda: !!def.kda && !def.br,
+      br: !!def.br,
+      joueurs: def.joueurs ?? JOUEURS_DEFAUT,
+    };
+  }
   // Jeu inconnu au catalogue : on suppose un KDA s'il se compte en parties.
-  return { roles: false, champions: false, kda: toTypeJeu(typeFourni) === "parties" };
+  return {
+    roles: false,
+    champions: false,
+    kda: toTypeJeu(typeFourni) === "parties",
+    br: false,
+    joueurs: JOUEURS_DEFAUT,
+  };
 }
 
 export const JEU_DEFAUT = "League of Legends";
