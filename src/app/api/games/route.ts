@@ -61,7 +61,11 @@ export async function POST(req: Request) {
   if (isExerciceId(body.exercice)) {
     exercice = body.exercice;
   } else {
-    const selection = toExerciceIds(user.exercices);
+    // La sélection cochée dans le formulaire prime sur la préférence
+    // enregistrée : on ne fait tourner que les exercices demandés ici.
+    const selection = toExerciceIds(
+      Array.isArray(body.exercices) && body.exercices.length > 0 ? body.exercices : user.exercices,
+    );
     const derniere = selection.length > 1
       ? await prisma.game.findFirst({
           where: { userId: user.id },
