@@ -17,7 +17,7 @@ import {
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
-import { JEU_DEFAUT, formaterTempsJeu, typeDuJeu, type TypeJeu } from "@/lib/jeux";
+import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
 import { SessionChrono } from "@/components/SessionChrono";
 import { AjoutActivite } from "@/components/AjoutActivite";
@@ -42,6 +42,9 @@ type DashData = {
   recordPompes: number;
   pompesByRole: Record<string, number>;
   gamesByRole: Record<string, number>;
+  /** Battle royale : ventilation par mode d'équipe, indexée par taille de groupe. */
+  pompesByMode?: Record<string, number>;
+  gamesByMode?: Record<string, number>;
   pompesByJeu?: Record<string, number>;
   gamesByJeu?: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
@@ -303,6 +306,23 @@ export default function Dashboard() {
       ? Math.round(pompes / (data.gamesByRole?.[role] || 1))
       : pompes,
   }));
+
+  // Sur un battle royale, les rôles n'existent pas : toutes les parties
+  // tombent dans la même case et le graphique ne dit rien. On le remplace par
+  // la ventilation solo / duo / trio / squad, qui elle distingue vraiment.
+  const estBattleRoyale = filtreJeu !== null && capacitesDuJeu(filtreJeu).br;
+  const modeData = Object.entries(data.pompesByMode ?? {})
+    .map(([taille, pompes]) => ({
+      taille: Number(taille),
+      label: t.modeNom(Number(taille)),
+      pompes: roleView === "avg"
+        ? Math.round(pompes / (data.gamesByMode?.[taille] || 1))
+        : pompes,
+    }))
+    .sort((a, b) => a.taille - b.taille);
+  const repartitionData: { label: string; pompes: number }[] = estBattleRoyale
+    ? modeData.map(({ label, pompes }) => ({ label, pompes }))
+    : roleData.map(({ role, pompes }) => ({ label: role, pompes }));
 
   // Répartition par jeu : la lecture d'ensemble d'un joueur multi-jeux. Elle
   // n'a de sens qu'à partir de deux jeux, et pas quand on en filtre un seul.
@@ -900,23 +920,25 @@ export default function Dashboard() {
       {/* Rôles et champions n'existent que sur League : on les regroupe sous
           leur propre titre plutôt que de les laisser passer pour des stats
           générales. */}
-      {filtreJeu !== null && (roleData.length > 0 || data.mostPlayed || data.leastEfficient) && (
+      {filtreJeu !== null && (repartitionData.length > 0 || data.mostPlayed || data.leastEfficient) && (
         <div className="space-y-3">
           <div>
             <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
               {t.syntheseDe(filtreJeu)}
             </h2>
             <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.35)" }}>
-              {t.sectionLeagueDesc}
+              {estBattleRoyale ? t.sectionBrDesc : t.sectionLeagueDesc}
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-        {roleData.length > 0 && (
+        {repartitionData.length > 0 && (
           <div className="lol-panel p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
-                {multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView)}
+                {estBattleRoyale
+                  ? (multi ? t.pompesByMode(roleView) : t.parModeDe(nomsExo[exercice], roleView))
+                  : (multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView))}
               </h2>
               <div className="flex gap-1">
                 {(["total", "avg"] as const).map((key) => (
@@ -936,8 +958,8 @@ export default function Dashboard() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={roleData}>
-                <XAxis dataKey="role" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
+              <BarChart data={repartitionData}>
+                <XAxis dataKey="label" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
                 <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                 <Tooltip
                   contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}

@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   isExerciceId, parseRepartition, partPourExercice, toExerciceIds, RAPPEL_SEUIL_DEFAUT,
 } from "@/lib/exercices";
-import { toTypeJeu, type TypeJeu } from "@/lib/jeux";
+import { capacitesDuJeu, tailleEquipeDepuisEquipes, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();
@@ -156,6 +156,20 @@ export async function GET(req: Request) {
     champAgg[champ].pompes += pts(g);
   }
 
+  // Un battle royale n'a pas de rôles : ce qui structure une partie, c'est le
+  // mode d'équipe. Solo et squad ne coûtent pas la même chose, la ventilation
+  // par mode remplace donc celle par rôle pour ces jeux.
+  const pompesByMode: Record<string, number> = {};
+  const gamesByMode: Record<string, number> = {};
+  for (const g of parties) {
+    if (!capacitesDuJeu(g.jeu, g.typeJeu).br) continue;
+    const taille = tailleEquipeDepuisEquipes(g.jeu, g.joueurs);
+    if (taille === null) continue;
+    const cle = String(taille);
+    pompesByMode[cle] = (pompesByMode[cle] || 0) + pts(g);
+    gamesByMode[cle] = (gamesByMode[cle] || 0) + 1;
+  }
+
   const champList = Object.entries(champAgg).map(([name, s]) => ({
     name,
     games: s.games,
@@ -242,6 +256,8 @@ export async function GET(req: Request) {
     recordPompes,
     pompesByRole,
     gamesByRole,
+    pompesByMode,
+    gamesByMode,
     pompesByJeu,
     gamesByJeu,
     pompesByNiveau,

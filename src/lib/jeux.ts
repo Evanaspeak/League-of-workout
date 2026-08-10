@@ -83,6 +83,24 @@ export function equipesDuMode(joueurs: number, tailleEquipe: number): number {
 }
 
 /**
+ * Opération inverse : retrouve le mode d'équipe d'une partie déjà enregistrée.
+ * C'est le nombre d'équipes qu'on stocke (le classement porte sur elles), pas
+ * la taille du groupe. Le résultat est ramené au mode proposé le plus proche
+ * pour qu'un arrondi ne crée pas une catégorie parasite à côté de « Trio ».
+ */
+export function tailleEquipeDepuisEquipes(
+  jeu: string | null | undefined,
+  equipes: number | null | undefined,
+): number | null {
+  if (!equipes || equipes <= 0) return null;
+  const { joueurs, modes } = capacitesDuJeu(jeu);
+  const brut = joueurs / equipes;
+  return modes.reduce((meilleur, m) =>
+    Math.abs(m - brut) < Math.abs(meilleur - brut) ? m : meilleur,
+  );
+}
+
+/**
  * Ce que le jeu permet de renseigner. Un jeu saisi librement est traité comme
  * un jeu générique : un résultat, et un KDA s'il en a un — mais ni lane ni
  * champion, qui n'ont de sens que dans un MOBA.
