@@ -7,9 +7,9 @@ import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICE_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
+  EXERCICE_DEFAUT, formaterCompact, repartir, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
 } from "@/lib/exercices";
-import { JEU_DEFAUT, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
+import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
@@ -110,7 +110,7 @@ export default function HistoryPage() {
   // ── Pompes view ──
   const [games, setGames] = useState<Game[]>([]);
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
-  const [exerciceAjout, setExerciceAjout] = useState<ExerciceId>(EXERCICE_DEFAUT);
+  const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
@@ -167,7 +167,7 @@ export default function HistoryPage() {
       .then((u) => {
         const prefs = toExerciceIds(u?.exercices);
         setExercicesSel(prefs);
-        setExerciceAjout(prefs[0]);
+        setExercicesAjout(prefs);
       })
       .catch(() => {});
   }, []);
@@ -220,6 +220,36 @@ export default function HistoryPage() {
   };
 
   // ─── Manual add form ─────────────────────────────────────────────────────
+
+  // Ce que le jeu permet de renseigner : Counter-Strike n'a ni lane ni
+  // champion, Rocket League n'a même pas de KDA.
+  const capacites = capacitesDuJeu(jeu, typeJeu);
+
+  /**
+   * Corps envoyé à l'API, identique pour l'aperçu et l'enregistrement — on
+   * n'envoie que ce que le jeu possède réellement.
+   */
+  const corpsAjout = (exercice: ExerciceId, dureeSec?: number) => ({
+    jeu,
+    typeJeu,
+    exercice,
+    gainageSec: Number(addForm.gainageSec) || 60,
+    ...(typeJeu === "temps"
+      ? { dureeSec: dureeSec ?? dureeEnSecondes }
+      : {
+          result: addForm.result,
+          ...(capacites.roles ? { role: addForm.role } : {}),
+          ...(capacites.champions ? { champion: addForm.champion } : {}),
+          ...(capacites.kda
+            ? {
+                kills: Number(addForm.kills) || 0,
+                deaths: Number(addForm.deaths) || 0,
+                assists: Number(addForm.assists) || 0,
+              }
+            : {}),
+        }),
+  });
+
   const openAddForm = (role?: string) => {
     const savedRole = localStorage.getItem("lastRole") ?? "Jungle";
     setAddForm((f) => ({ ...f, role: role ?? savedRole }));
@@ -230,22 +260,12 @@ export default function HistoryPage() {
   };
 
   const handlePreview = async () => {
-    if (!addForm.kills || !addForm.deaths || !addForm.assists) return;
+    if (!isAddReady) return;
     setPreviewLoading(true);
     const res = await fetch("/api/games/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...addForm,
-        kills: Number(addForm.kills),
-        deaths: Number(addForm.deaths),
-        assists: Number(addForm.assists),
-        gainageSec: Number(addForm.gainageSec) || 60,
-        exercice: exerciceAjout,
-        jeu,
-        typeJeu,
-        ...(typeJeu === "temps" ? { dureeSec: dureeEnSecondes } : {}),
-      }),
+      body: JSON.stringify(corpsAjout(exercicesAjout[0])),
     });
     setPreview(await res.json());
     setPreviewLoading(false);
@@ -254,32 +274,39 @@ export default function HistoryPage() {
   const handleAddLog = async () => {
     setAddLogging(true);
     setAddError("");
-    const res = await fetch("/api/games", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...addForm,
-        kills: Number(addForm.kills),
-        deaths: Number(addForm.deaths),
-        assists: Number(addForm.assists),
-        gainageSec: Number(addForm.gainageSec) || 60,
-        exercice: exerciceAjout,
-        jeu,
-        typeJeu,
-        ...(typeJeu === "temps" ? { dureeSec: dureeEnSecondes } : {}),
-        source: "manuel",
-      }),
-    });
-    if (res.ok) {
+
+    // Une session au temps payée en plusieurs exercices se découpe en parts
+    // égales : 2 h de Minecraft en pompes + boxe donnent 1 h de chacune. Le
+    // total de temps joué et la dette totale restent identiques.
+    const parts = typeJeu === "temps" && exercicesAjout.length > 1
+      ? repartir(dureeEnSecondes, exercicesAjout.length).map((duree, i) => ({ exercice: exercicesAjout[i], duree }))
+      : [{ exercice: exercicesAjout[0], duree: undefined as number | undefined }];
+
+    const ajoutees: Game[] = [];
+    let erreur = "";
+    for (const part of parts) {
+      const res = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...corpsAjout(part.exercice, part.duree), source: "manuel" }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        erreur = err.error ? translateApiError(err.error, locale) : t.logError;
+        break;
+      }
       const { game, scoring } = await res.json();
-      setGames((prev) => [{ ...game, pompesCalculees: scoring.pompesFinales }, ...prev]);
-      setAddLogged(true);
+      ajoutees.push({ ...game, pompesCalculees: scoring.pompesFinales });
+    }
+
+    if (ajoutees.length > 0) {
+      setGames((prev) => [...ajoutees, ...prev]);
       setPreview(null);
       setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
-    } else {
-      const err = await res.json();
-      setAddError(err.error ? translateApiError(err.error, locale) : t.logError);
     }
+    // Un échec partiel doit se voir : les parts déjà écrites sont conservées.
+    if (erreur) setAddError(erreur);
+    else setAddLogged(true);
     setAddLogging(false);
   };
 
@@ -361,10 +388,19 @@ export default function HistoryPage() {
   // La colonne « Jeu » ne sert qu'en vue d'ensemble : sur un jeu filtré, elle
   // répéterait la même valeur sur chaque ligne.
   const afficherColonneJeu = filtreJeu === null && jeuxJoues.length > 1;
+
+  // Tous les jeux à parties n'ont pas de lane, de personnage ni de KDA : une
+  // colonne ne s'affiche que si au moins une ligne a quelque chose à y mettre.
+  const afficherRole = filtered.some((g) => g.role && g.role !== "—");
+  const afficherChampion = filtered.some((g) => !!g.champion);
+  const afficherKda = filtered.some((g) => g.kills > 0 || g.deaths > 0 || g.assists > 0);
+
   const nbColonnes =
     1 // date
     + (afficherColonneJeu ? 1 : 0)
-    + (modeColonnes === "parties" ? 4 : 1) // rôle/champion/KDA/résultat, ou durée, ou détail
+    + (modeColonnes === "parties"
+        ? 1 + (afficherRole ? 1 : 0) + (afficherChampion ? 1 : 0) + (afficherKda ? 1 : 0) // + résultat
+        : 1) // durée, ou détail
     + 4; // niveau, dette, cumul, actions
   // Ventilation du total affiché : une entrée par exercice réellement joué.
   const totauxParExo = filtered.reduce<Record<string, number>>((acc, g) => {
@@ -377,7 +413,9 @@ export default function HistoryPage() {
   const isChampionValid = !addForm.champion || !!findChampion(addForm.champion);
   const isAddReady = typeJeu === "temps"
     ? jeu.trim().length > 0 && dureeEnSecondes > 0
-    : addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== "" && isChampionValid;
+    : jeu.trim().length > 0
+      && (!capacites.champions || isChampionValid)
+      && (!capacites.kda || (addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== ""));
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -487,7 +525,9 @@ export default function HistoryPage() {
                 </div>
               ) : (
               <>
-              <div className="grid grid-cols-2 gap-3">
+              {(capacites.roles || capacites.champions) && (
+              <div className={`grid gap-3 ${capacites.roles && capacites.champions ? "grid-cols-2" : "grid-cols-1"}`}>
+                {capacites.roles && (
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.role}</label>
                   <select className="lol-select w-full" value={addForm.role}
@@ -499,6 +539,8 @@ export default function HistoryPage() {
                     {ROLES_FORM.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </div>
+                )}
+                {capacites.champions && (
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.champion}</label>
                   <ChampionInput
@@ -507,8 +549,11 @@ export default function HistoryPage() {
                     onReset={() => setPreview(null)}
                   />
                 </div>
+                )}
               </div>
+              )}
 
+              {capacites.kda && (
               <div className="grid grid-cols-3 gap-3">
                 {(["kills", "deaths", "assists"] as const).map((field) => (
                   <div key={field}>
@@ -520,6 +565,7 @@ export default function HistoryPage() {
                   </div>
                 ))}
               </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3 items-end">
                 <div>
@@ -561,11 +607,18 @@ export default function HistoryPage() {
                   {tExo.choisirTitre}
                 </label>
                 <ExerciceSelector
-                  selection={[exerciceAjout]}
-                  onChange={(next) => { setExerciceAjout(next[0]); setPreview(null); }}
+                  // Une partie ne concerne qu'un exercice : on n'en montre
+                  // qu'un coché, même si la préférence en compte plusieurs.
+                  selection={typeJeu === "temps" ? exercicesAjout : [exercicesAjout[0]]}
+                  onChange={(next) => { setExercicesAjout(next); setPreview(null); }}
                   compact
-                  single
+                  single={typeJeu !== "temps"}
                 />
+                {typeJeu === "temps" && exercicesAjout.length > 1 && (
+                  <p className="text-xs" style={{ color: "var(--amber)" }}>
+                    {tJeux.repartitionSession(exercicesAjout.length)}
+                  </p>
+                )}
               </div>
 
               <button className="lol-btn w-full" onClick={handlePreview} disabled={!isAddReady || previewLoading}>
@@ -613,8 +666,23 @@ export default function HistoryPage() {
                   </div>
                   )}
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                    <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exerciceAjout)}</div>
-                    <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{nomsExo[exerciceAjout].toUpperCase()}</div>
+                    {exercicesAjout.length > 1 && typeJeu === "temps" ? (
+                      <div className="space-y-1">
+                        {repartir(preview.scoring.pompesFinales, exercicesAjout.length).map((pts, i) => (
+                          <div key={exercicesAjout[i]} className="text-2xl font-bold gold-text">
+                            {formaterCompact(pts, exercicesAjout[i])}
+                            <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>
+                              {nomsExo[exercicesAjout[i]].toLowerCase()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="text-4xl font-bold gold-text">{formaterCompact(preview.scoring.pompesFinales, exercicesAjout[0])}</div>
+                        <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>{nomsExo[exercicesAjout[0]].toUpperCase()}</div>
+                      </>
+                    )}
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
                     {addLogging ? t.saving : (typeJeu === "temps" ? tJeux.ajouterSession : t.logThisGame)}
@@ -730,15 +798,19 @@ export default function HistoryPage() {
                 )}
 
                 <div className="flex flex-wrap gap-3 items-center">
-                  {/* Rôle et résultat n'existent que pour les jeux à parties. */}
+                  {/* Chaque filtre n'apparaît que s'il a quelque chose à filtrer :
+                      pas de lane sur Counter-Strike, pas de résultat sur une
+                      session au temps. */}
+                  {afficherRole && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.roleLabel}</span>
+                      <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+                        {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
+                      </select>
+                    </div>
+                  )}
                   {modeColonnes !== "temps" && (
                     <>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.roleLabel}</span>
-                        <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-                          {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
-                        </select>
-                      </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.resultLabel}</span>
                         <select className="lol-select text-sm" value={filterResult} onChange={(e) => setFilterResult(e.target.value)}>
@@ -775,9 +847,9 @@ export default function HistoryPage() {
                         {afficherColonneJeu && <th className="text-left px-3 py-1">{t.tableJeu}</th>}
                         {modeColonnes === "parties" && (
                           <>
-                            <th className="text-left px-3 py-1">{t.tableRole}</th>
-                            <th className="text-left px-3 py-1">{t.tableChampion}</th>
-                            <th className="text-center px-3 py-1">{t.tableKda}</th>
+                            {afficherRole && <th className="text-left px-3 py-1">{t.tableRole}</th>}
+                            {afficherChampion && <th className="text-left px-3 py-1">{t.tableChampion}</th>}
+                            {afficherKda && <th className="text-center px-3 py-1">{t.tableKda}</th>}
                             <th className="text-center px-3 py-1">{t.tableResult}</th>
                           </>
                         )}
@@ -846,16 +918,20 @@ export default function HistoryPage() {
 
                               {modeColonnes === "parties" && (
                                 <>
-                                  <td className="px-3 py-2 gold-text font-medium">{g.role}</td>
+                                  {afficherRole && <td className="px-3 py-2 gold-text font-medium">{g.role}</td>}
+                                  {afficherChampion && (
                                   <td className="px-3 py-2">
                                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                       <ChampionIcon name={g.champion} size={26} />
                                       <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
                                     </div>
                                   </td>
+                                  )}
+                                  {afficherKda && (
                                   <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.8)" }}>
                                     {g.kills}/{g.deaths}/{g.assists}
                                   </td>
+                                  )}
                                   <td className="px-3 py-2 text-center font-bold">
                                     <ResultatCell result={g.result} t={t} />
                                   </td>
@@ -876,14 +952,24 @@ export default function HistoryPage() {
                                     </span>
                                   ) : (
                                     <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-                                      <ChampionIcon name={g.champion} size={22} />
-                                      <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
-                                      <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
-                                      <span className="gold-text">{g.role}</span>
-                                      <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
-                                      <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
-                                        {g.kills}/{g.deaths}/{g.assists}
-                                      </span>
+                                      {g.champion && (
+                                        <>
+                                          <ChampionIcon name={g.champion} size={22} />
+                                          <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion}</span>
+                                          <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
+                                        </>
+                                      )}
+                                      {g.role && g.role !== "—" && (
+                                        <>
+                                          <span className="gold-text">{g.role}</span>
+                                          <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
+                                        </>
+                                      )}
+                                      {(g.kills > 0 || g.deaths > 0 || g.assists > 0) && (
+                                        <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
+                                          {g.kills}/{g.deaths}/{g.assists}
+                                        </span>
+                                      )}
                                       <ResultatCell result={g.result} t={t} />
                                     </div>
                                   )}

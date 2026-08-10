@@ -135,3 +135,15 @@ export function formaterAxe(points: number, exercice: ExerciceId): string {
   if (q < 60) return `${q}s`;
   return `${Math.round(q / 60)} min`;
 }
+
+/**
+ * Répartit une quantité entière en `n` parts dont la somme reste exacte : les
+ * premières parts absorbent le reste de la division. Sert à découper une
+ * session de jeu entre plusieurs exercices sans perdre ni inventer de secondes.
+ */
+export function repartir(total: number, n: number): number[] {
+  if (n <= 0) return [];
+  const base = Math.floor(total / n);
+  const reste = total - base * n;
+  return Array.from({ length: n }, (_, i) => base + (i < reste ? 1 : 0));
+}

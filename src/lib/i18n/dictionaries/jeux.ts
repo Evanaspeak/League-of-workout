@@ -37,6 +37,7 @@ export const jeux = {
     chronoErreur: "Impossible d'enregistrer la session.",
     chronoTropCourt: "Session trop courte pour être enregistrée.",
     sessionQuelJeu: "À quoi tu joues ?",
+    repartitionSession: (n: number) => `Le temps de jeu sera réparti en ${n} parts égales, une par exercice.`,
   },
   en: {
     label: "Game",
@@ -74,5 +75,6 @@ export const jeux = {
     chronoErreur: "Could not log the session.",
     chronoTropCourt: "Session too short to log.",
     sessionQuelJeu: "What are you playing?",
+    repartitionSession: (n: number) => `Playtime will be split into ${n} equal shares, one per exercise.`,
   },
 };

@@ -18,14 +18,22 @@ export type JeuDef = {
   type: TypeJeu;
   /** Le suivi automatique via l'API Riot n'existe que pour ce jeu. */
   riot?: boolean;
+  /** Le jeu a des lanes / postes assignés. Propre aux MOBA. */
+  roles?: boolean;
+  /** On choisit un personnage identifié, dont la maîtrise se cumule. */
+  champions?: boolean;
+  /** La partie produit un score kills / morts / assists. */
+  kda?: boolean;
 };
 
 export const JEUX: JeuDef[] = [
-  { nom: "League of Legends", type: "parties", riot: true },
-  { nom: "Valorant", type: "parties" },
-  { nom: "Counter-Strike 2", type: "parties" },
-  { nom: "Fortnite", type: "parties" },
-  { nom: "Call of Duty", type: "parties" },
+  { nom: "League of Legends", type: "parties", riot: true, roles: true, champions: true, kda: true },
+  { nom: "Valorant", type: "parties", kda: true },
+  { nom: "Counter-Strike 2", type: "parties", kda: true },
+  { nom: "Fortnite", type: "parties", kda: true },
+  { nom: "Call of Duty", type: "parties", kda: true },
+  // Ni l'un ni l'autre ne se juge au KDA : buts et placement ne s'y ramènent
+  // pas. Seul le résultat compte.
   { nom: "Rocket League", type: "parties" },
   { nom: "Teamfight Tactics", type: "parties" },
   { nom: "Minecraft", type: "temps" },
@@ -34,6 +42,20 @@ export const JEUX: JeuDef[] = [
   { nom: "Elden Ring", type: "temps" },
   { nom: "Les Sims", type: "temps" },
 ];
+
+export type CapacitesJeu = { roles: boolean; champions: boolean; kda: boolean };
+
+/**
+ * Ce que le jeu permet de renseigner. Un jeu saisi librement est traité comme
+ * un jeu générique : un résultat, et un KDA s'il en a un — mais ni lane ni
+ * champion, qui n'ont de sens que dans un MOBA.
+ */
+export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unknown): CapacitesJeu {
+  const def = trouverJeu(nom);
+  if (def) return { roles: !!def.roles, champions: !!def.champions, kda: !!def.kda };
+  // Jeu inconnu au catalogue : on suppose un KDA s'il se compte en parties.
+  return { roles: false, champions: false, kda: toTypeJeu(typeFourni) === "parties" };
+}
 
 export const JEU_DEFAUT = "League of Legends";
 

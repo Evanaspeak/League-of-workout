@@ -85,6 +85,27 @@ export function calcScoreTemps(input: ScoringTempsInput): ScoringTempsResult {
   };
 }
 
+/**
+ * Pondérations à appliquer à un jeu qui n'a pas de lanes (Counter-Strike,
+ * Valorant…). Plutôt que d'inventer des constantes qui vivraient dans une
+ * échelle différente de celle du joueur, on prend la moyenne de ses propres
+ * réglages : le coût d'une mort y reste comparable à ce qu'il vaut sur League,
+ * et suivre ses ajustements est automatique.
+ *
+ * La maîtrise est désactivée : sans champion, il n'y a rien à maîtriser.
+ */
+export function profilNeutre(ponderations: RoleWeights[]): RoleWeights | null {
+  if (ponderations.length === 0) return null;
+  const moyenne = (get: (r: RoleWeights) => number) =>
+    ponderations.reduce((s, r) => s + get(r), 0) / ponderations.length;
+  return {
+    poidsMort: moyenne((r) => r.poidsMort),
+    poidsKill: moyenne((r) => r.poidsKill),
+    poidsAssist: moyenne((r) => r.poidsAssist),
+    maitriseActive: false,
+  };
+}
+
 export function calcScore(input: ScoringInput): ScoringResult {
   const { kills, deaths, assists, result, gainageSec, partiesAvant, roleWeights, levelConfigs, masteryConfig } = input;
 
