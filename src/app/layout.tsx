@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </main>
             <Footer />
-            <CompteurDette variant="rappel" />
+            <CompteurDette />
           </SessionProvider>
         </LocaleProvider>
       </body>
