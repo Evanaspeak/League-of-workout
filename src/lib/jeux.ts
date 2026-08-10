@@ -30,18 +30,23 @@ export type JeuDef = {
    * final et le nombre d'éliminations.
    */
   br?: boolean;
-  /** Taille de partie habituelle, proposée par défaut au classement. */
+  /** Nombre de joueurs dans une partie, tous modes confondus. */
   joueurs?: number;
+  /**
+   * Modes d'équipe proposés, en nombre de joueurs par équipe. Le classement
+   * porte sur les équipes : en squad de 4 à 100 joueurs, on finit 7e sur 25.
+   */
+  modes?: number[];
 };
 
 export const JEUX: JeuDef[] = [
   { nom: "League of Legends", type: "parties", riot: true, roles: true, champions: true, kda: true },
   { nom: "Valorant", type: "parties", kda: true },
   { nom: "Counter-Strike 2", type: "parties", kda: true },
-  { nom: "Fortnite", type: "parties", br: true, joueurs: 100 },
-  { nom: "Apex Legends", type: "parties", br: true, joueurs: 60 },
-  { nom: "PUBG", type: "parties", br: true, joueurs: 100 },
-  { nom: "Call of Duty: Warzone", type: "parties", br: true, joueurs: 150 },
+  { nom: "Fortnite", type: "parties", br: true, joueurs: 100, modes: [1, 2, 3, 4] },
+  { nom: "Apex Legends", type: "parties", br: true, joueurs: 60, modes: [1, 2, 3] },
+  { nom: "PUBG", type: "parties", br: true, joueurs: 100, modes: [1, 2, 3, 4] },
+  { nom: "Call of Duty: Warzone", type: "parties", br: true, joueurs: 150, modes: [1, 2, 3, 4] },
   { nom: "Call of Duty", type: "parties", kda: true },
   // Ni l'un ni l'autre ne se juge au KDA : buts et placement ne s'y ramènent
   // pas. Seul le résultat compte.
@@ -59,12 +64,23 @@ export type CapacitesJeu = {
   champions: boolean;
   kda: boolean;
   br: boolean;
-  /** Taille de partie par défaut pour un battle royale. */
+  /** Nombre de joueurs dans une partie de ce jeu. */
   joueurs: number;
+  /** Modes d'équipe proposés, en joueurs par équipe. */
+  modes: number[];
 };
 
-/** Taille de partie retenue quand le jeu n'en propose pas. */
+/** Nombre de joueurs retenu quand le jeu n'en précise pas. */
 export const JOUEURS_DEFAUT = 100;
+export const MODES_DEFAUT = [1, 2, 3, 4];
+
+/**
+ * Combien d'équipes s'affrontent dans ce mode : c'est le dénominateur du
+ * classement. À 100 joueurs, un squad de 4 oppose 25 équipes.
+ */
+export function equipesDuMode(joueurs: number, tailleEquipe: number): number {
+  return Math.max(2, Math.round(joueurs / Math.max(1, tailleEquipe)));
+}
 
 /**
  * Ce que le jeu permet de renseigner. Un jeu saisi librement est traité comme
@@ -81,6 +97,7 @@ export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unkn
       kda: !!def.kda && !def.br,
       br: !!def.br,
       joueurs: def.joueurs ?? JOUEURS_DEFAUT,
+      modes: def.modes ?? MODES_DEFAUT,
     };
   }
   // Jeu inconnu au catalogue : on suppose un KDA s'il se compte en parties.
@@ -90,6 +107,7 @@ export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unkn
     kda: toTypeJeu(typeFourni) === "parties",
     br: false,
     joueurs: JOUEURS_DEFAUT,
+    modes: MODES_DEFAUT,
   };
 }
 

@@ -9,7 +9,7 @@ import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, formaterCompact, repartir, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
 } from "@/lib/exercices";
-import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
+import { JEU_DEFAUT, capacitesDuJeu, equipesDuMode, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
@@ -143,7 +143,9 @@ export default function HistoryPage() {
   // Battle royale : place finale et taille de la partie (modifiable pour les
   // modes en équipe, où le classement porte sur les escouades).
   const [placement, setPlacement] = useState("");
-  const [joueursPartie, setJoueursPartie] = useState("");
+  // Taille d'équipe du mode joué (1 = solo, 4 = squad). Mémorisée d'une partie
+  // sur l'autre : on ne change pas de mode à chaque game.
+  const [tailleEquipe, setTailleEquipe] = useState(1);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [addLogging, setAddLogging] = useState(false);
@@ -162,6 +164,8 @@ export default function HistoryPage() {
   useEffect(() => {
     const savedSec = localStorage.getItem("lastGainageSec");
     const savedRole = localStorage.getItem("lastRole");
+    const savedMode = Number(localStorage.getItem("lastModeBr"));
+    if (savedMode >= 1) setTailleEquipe(savedMode);
     setAddForm((f) => ({
       ...f,
       ...(savedSec ? { gainageSec: savedSec } : {}),
@@ -234,6 +238,12 @@ export default function HistoryPage() {
   // champion, Rocket League n'a même pas de KDA.
   const capacites = capacitesDuJeu(jeu, typeJeu);
 
+  // Le mode donne le dénominateur du classement : en squad de 4 à 100 joueurs,
+  // on ne peut pas finir mieux que 1er sur 25.
+  const modesDisponibles = capacites.modes;
+  const tailleRetenue = modesDisponibles.includes(tailleEquipe) ? tailleEquipe : modesDisponibles[0];
+  const equipesConsultees = equipesDuMode(capacites.joueurs, tailleRetenue);
+
   /**
    * Corps envoyé à l'API, identique pour l'aperçu et l'enregistrement — on
    * n'envoie que ce que le jeu possède réellement.
@@ -263,7 +273,7 @@ export default function HistoryPage() {
           ...(capacites.br
             ? {
                 placement: Number(placement) || 0,
-                joueurs: Number(joueursPartie) || capacites.joueurs,
+                joueurs: equipesConsultees,
                 kills: Number(addForm.kills) || 0,
               }
             : {}),
@@ -580,6 +590,44 @@ export default function HistoryPage() {
               )}
 
               {capacites.br && (
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    {t.modeLabel}
+                  </label>
+                  <div className="flex gap-2">
+                    {modesDisponibles.map((taille) => {
+                      const actif = tailleRetenue === taille;
+                      return (
+                        <button
+                          key={taille}
+                          type="button"
+                          aria-pressed={actif}
+                          onClick={() => {
+                            setTailleEquipe(taille);
+                            localStorage.setItem("lastModeBr", String(taille));
+                            setPreview(null);
+                          }}
+                          style={{
+                            flex: 1, padding: "8px 4px", borderRadius: 8, cursor: "pointer",
+                            fontSize: "0.82rem", fontWeight: 600,
+                            background: actif ? "rgba(255,180,84,0.1)" : "rgba(152,162,176,0.06)",
+                            border: `1px solid ${actif ? "var(--amber)" : "rgba(152,162,176,0.2)"}`,
+                            color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <span style={{ display: "block" }}>{t.modeNom(taille)}</span>
+                          <span className="mono-num" style={{ display: "block", fontSize: "0.68rem", opacity: 0.7, marginTop: 2 }}>
+                            {t.modeDenominateur(equipesDuMode(capacites.joueurs, taille), taille)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {capacites.br && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
@@ -587,19 +635,13 @@ export default function HistoryPage() {
                     </label>
                     <div className="flex items-center gap-2">
                       <input
-                        type="number" min="1" className="lol-input text-center" placeholder="12"
+                        type="number" min="1" max={equipesConsultees} className="lol-input text-center" placeholder="12"
                         value={placement}
                         onChange={(e) => { setPlacement(e.target.value); setPreview(null); }}
                       />
-                      <span className="text-sm shrink-0" style={{ color: "rgba(236,239,244,0.5)" }}>{t.placementSur}</span>
-                      {/* Modifiable : en duo ou en escouade, le classement porte
-                          sur les équipes et non sur les joueurs. */}
-                      <input
-                        type="number" min="2" className="lol-input text-center"
-                        placeholder={String(capacites.joueurs)}
-                        value={joueursPartie}
-                        onChange={(e) => { setJoueursPartie(e.target.value); setPreview(null); }}
-                      />
+                      <span className="text-sm shrink-0 mono-num" style={{ color: "rgba(236,239,244,0.5)" }}>
+                        {t.placementSur} {equipesConsultees}
+                      </span>
                     </div>
                   </div>
                   <div>
