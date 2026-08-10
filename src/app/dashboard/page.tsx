@@ -42,6 +42,8 @@ type DashData = {
   recordPompes: number;
   pompesByRole: Record<string, number>;
   gamesByRole: Record<string, number>;
+  pompesByJeu?: Record<string, number>;
+  gamesByJeu?: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
   dailyPompes: { date: string; total: number }[];
@@ -297,6 +299,18 @@ export default function Dashboard() {
       ? Math.round(pompes / (data.gamesByRole?.[role] || 1))
       : pompes,
   }));
+
+  // Répartition par jeu : la lecture d'ensemble d'un joueur multi-jeux. Elle
+  // n'a de sens qu'à partir de deux jeux, et pas quand on en filtre un seul.
+  const jeuData = Object.entries(data.pompesByJeu ?? {})
+    .map(([jeu, pompes]) => ({
+      jeu,
+      pompes: roleView === "avg"
+        ? Math.round(pompes / (data.gamesByJeu?.[jeu] || 1))
+        : pompes,
+    }))
+    .sort((a, b) => b.pompes - a.pompes);
+  const afficherParJeu = filtreJeu === null && jeuData.length > 1;
   const totalSessionPompes = sessionGames.reduce((s, g) => s + g.pompes, 0);
   const sessionChartData = [...sessionGames].reverse().map((g, i) => ({ label: `G${i + 1}`, pompes: g.pompes }));
 
@@ -465,18 +479,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Champion spotlights */}
-      {(data.mostPlayed || data.leastEfficient) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {data.mostPlayed && (
-            <ChampionCard champ={data.mostPlayed} badge={t.mostPlayedBadge} badgeColor="#FFB454" t={t} />
-          )}
-          {data.leastEfficient && (
-            <ChampionCard champ={data.leastEfficient} badge={t.leastEfficientBadge} badgeColor="#FF5A47" t={t} />
-          )}
-        </div>
-      )}
-
       {/* Mode Session */}
       <div className="lol-panel p-4 space-y-3">
         <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.sessionModeTitle}</h2>
@@ -594,11 +596,11 @@ export default function Dashboard() {
         {t.globalStats}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {roleData.length > 0 && (
+        {afficherParJeu && (
           <div className="lol-panel p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
-                {multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView)}
+                {t.detteParJeu(roleView)}
               </h2>
               <div className="flex gap-1">
                 {(["total", "avg"] as const).map((key) => (
@@ -618,14 +620,14 @@ export default function Dashboard() {
               </div>
             </div>
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={roleData}>
-                <XAxis dataKey="role" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
+              <BarChart data={jeuData}>
+                <XAxis dataKey="jeu" tick={{ fill: "#ECEFF4", fontSize: 10 }} interval={0} />
                 <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
                 <Tooltip
                   contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
-                  formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
+                  formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerActivite : t.tooltipTotal]}
                 />
-                <Bar dataKey="pompes" fill="#FFB454" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="pompes" fill="#6E9BFF" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -840,6 +842,74 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Rôles et champions n'existent que sur League : on les regroupe sous
+          leur propre titre plutôt que de les laisser passer pour des stats
+          générales. */}
+      {(roleData.length > 0 || data.mostPlayed || data.leastEfficient) && (
+        <div className="space-y-3">
+          <div>
+            <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+              {t.sectionLeague}
+            </h2>
+            <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.35)" }}>
+              {t.sectionLeagueDesc}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+        {roleData.length > 0 && (
+          <div className="lol-panel p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+                {multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView)}
+              </h2>
+              <div className="flex gap-1">
+                {(["total", "avg"] as const).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => setRoleView(key)}
+                    className="text-xs px-2 py-1 rounded"
+                    style={{
+                      background: roleView === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
+                      color: roleView === key ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                      border: `1px solid ${roleView === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
+                    }}
+                  >
+                    {key === "total" ? t.total : t.average}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={roleData}>
+                <XAxis dataKey="role" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
+                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                  formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
+                />
+                <Bar dataKey="pompes" fill="#FFB454" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+          </div>
+
+      {/* Champion spotlights */}
+      {(data.mostPlayed || data.leastEfficient) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {data.mostPlayed && (
+            <ChampionCard champ={data.mostPlayed} badge={t.mostPlayedBadge} badgeColor="#FFB454" t={t} />
+          )}
+          {data.leastEfficient && (
+            <ChampionCard champ={data.leastEfficient} badge={t.leastEfficientBadge} badgeColor="#FF5A47" t={t} />
+          )}
+        </div>
+      )}
+        </div>
+      )}
+
     </div>
   );
 }
