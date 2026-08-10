@@ -1,6 +1,6 @@
 {
   "name": "league-of-workouts-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "App desktop + overlay pour League of Workouts",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
