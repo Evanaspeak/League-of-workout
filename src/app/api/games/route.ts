@@ -105,10 +105,12 @@ export async function POST(req: Request) {
       },
     });
 
+    const dus = await accumulerDette(user.id, scoringTemps.pointsFinaux);
     return NextResponse.json({
       game,
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
       repartition: repartirPoints(scoringTemps.pointsFinaux, selection),
+      dettePointsDus: dus,
     });
   }
 
@@ -180,5 +182,29 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ game, scoring, repartition: repartirPoints(scoring.pompesFinales, selection) });
+  const dus = await accumulerDette(user.id, scoring.pompesFinales);
+  return NextResponse.json({
+    game,
+    scoring,
+    repartition: repartirPoints(scoring.pompesFinales, selection),
+    dettePointsDus: dus,
+  });
+}
+
+/**
+ * Ajoute le coût d'une partie à la dette en attente, et renvoie le nouveau
+ * total. Un échec ici ne doit pas faire perdre la partie déjà écrite : le
+ * compteur se rattrapera à la partie suivante.
+ */
+async function accumulerDette(userId: string, points: number): Promise<number | null> {
+  try {
+    const maj = await prisma.user.update({
+      where: { id: userId },
+      data: { dettePointsDus: { increment: Math.max(0, points) } },
+      select: { dettePointsDus: true },
+    });
+    return maj.dettePointsDus;
+  } catch {
+    return null;
+  }
 }

@@ -173,6 +173,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
           : x
       ));
       onAjout();
+      window.dispatchEvent(new Event("wow-dette-changee"));
     }
     setAddingId(null);
   };
@@ -264,6 +265,7 @@ export function AjoutActivite({ onAjout }: { /** Appelé après chaque enregistr
     if (res.ok) {
       const { game, scoring } = await res.json();
       onAjout();
+      window.dispatchEvent(new Event("wow-dette-changee"));
       setPreview(null);
       setAddLogged(true);
       setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));

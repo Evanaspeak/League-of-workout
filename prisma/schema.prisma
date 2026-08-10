@@ -41,7 +41,12 @@ model User {
   exercice           String   @default("pompes")
   exercices          String[] @default(["pompes"])
   // Seuil de rappel pendant une session, en points d'effort. 0 = désactivé.
+  // Remplacé par `rappelSeuilSec` — conservé le temps de la transition.
   rappelSeuilPoints  Int      @default(45)
+  // Dette accumulée et pas encore faite, en points d'effort.
+  dettePointsDus     Int      @default(0)
+  // Seuil de rappel en SECONDES d'effort (300 = 5 min). 0 = désactivé.
+  rappelSeuilSec     Int      @default(300)
 
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?
