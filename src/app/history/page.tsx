@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { ChampionInput } from "@/components/ChampionInput";
 import { findChampion } from "@/lib/champions";
@@ -9,7 +9,7 @@ import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, formaterCompact, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
 } from "@/lib/exercices";
-import { JEU_DEFAUT, type TypeJeu } from "@/lib/jeux";
+import { JEU_DEFAUT, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
@@ -33,6 +33,10 @@ type Game = {
   pompesCalculees: number;
   exercice?: ExerciceId;
   source: string;
+  // ── Multi-jeu ── (absents des lignes créées avant l'arrivée des jeux)
+  jeu?: string;
+  typeJeu?: string;
+  dureeSec?: number | null;
 };
 
 type MatchEntry = {
@@ -75,6 +79,16 @@ function getLevelLabel(sec: number, locale: "fr" | "en"): string {
   return `${prefix} 5`;
 }
 
+/**
+ * Cellule de résultat. Une session au temps n'a ni victoire ni défaite : sans
+ * ce cas neutre, elle s'affichait « Défaite » en rouge, ce qui est faux.
+ */
+function ResultatCell({ result, t }: { result: string; t: { victory: string; defeat: string; sessionLibelle: string } }) {
+  if (result === "V") return <span className="win-text">{t.victory}</span>;
+  if (result === "D") return <span className="loss-text">{t.defeat}</span>;
+  return <span style={{ color: "rgba(152,162,176,0.6)", fontWeight: 500 }}>{t.sessionLibelle}</span>;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
@@ -100,6 +114,9 @@ export default function HistoryPage() {
   const [loadingGames, setLoadingGames] = useState(true);
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
+  const [filtreJeu, setFiltreJeu] = useState<string | null>(null);
+  // Ligne dont on a déplié le détail de calcul.
+  const [ligneDepliee, setLigneDepliee] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"date" | "pompes">("date");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -312,7 +329,15 @@ export default function HistoryPage() {
   };
 
   // ─── Filtered pompe games ─────────────────────────────────────────────────
+  // ── Multi-jeu : périmètre consulté et jeu de colonnes qui en découle ──
+  const nomDuJeu = (g: Game) => g.jeu || JEU_DEFAUT;
+  const typeDeLaLigne = (g: Game): TypeJeu => toTypeJeu(g.typeJeu);
+
+  // Jeux réellement présents dans l'historique : eux seuls méritent un filtre.
+  const jeuxJoues = [...new Set(games.map(nomDuJeu))].sort();
+
   const filtered = games
+    .filter((g) => filtreJeu === null || nomDuJeu(g) === filtreJeu)
     .filter((g) => filterRole === "Tous" || g.role === filterRole)
     .filter((g) => filterResult === "Tous" || g.result === filterResult)
     .sort((a, b) =>
@@ -320,7 +345,27 @@ export default function HistoryPage() {
         ? new Date(b.date).getTime() - new Date(a.date).getTime()
         : b.pompesCalculees - a.pompesCalculees
     );
-  const totalPompes = filtered.reduce((s, g) => s + g.pompesCalculees, 0);
+
+  /**
+   * Les colonnes s'adaptent au périmètre affiché, pour ne jamais montrer une
+   * colonne vide : un jeu au temps n'a ni rôle, ni champion, ni KDA, et une
+   * partie de League n'a pas de durée.
+   *   « parties » → colonnes de jeu compétitif
+   *   « temps »   → colonnes de session
+   *   « mixte »   → colonnes communes, avec une cellule « Détail » qui s'adapte
+   */
+  const typesAffiches = new Set(filtered.map(typeDeLaLigne));
+  const modeColonnes: TypeJeu | "mixte" =
+    typesAffiches.size === 1 ? [...typesAffiches][0] : "mixte";
+
+  // La colonne « Jeu » ne sert qu'en vue d'ensemble : sur un jeu filtré, elle
+  // répéterait la même valeur sur chaque ligne.
+  const afficherColonneJeu = filtreJeu === null && jeuxJoues.length > 1;
+  const nbColonnes =
+    1 // date
+    + (afficherColonneJeu ? 1 : 0)
+    + (modeColonnes === "parties" ? 4 : 1) // rôle/champion/KDA/résultat, ou durée, ou détail
+    + 4; // niveau, dette, cumul, actions
   // Ventilation du total affiché : une entrée par exercice réellement joué.
   const totauxParExo = filtered.reduce<Record<string, number>>((acc, g) => {
     const ex = toExerciceId(g.exercice);
@@ -361,7 +406,7 @@ export default function HistoryPage() {
               transition: "color 0.15s, border-color 0.15s",
             }}
           >
-            {tab === "parties" ? t.tabParties : t.tabPompes}
+            {tab === "parties" ? t.tabAjouter : t.tabPompes}
           </button>
         ))}
       </div>
@@ -370,34 +415,39 @@ export default function HistoryPage() {
       {view === "parties" && (
         <div className="space-y-4">
 
-          {/* ARAM du chaos banner */}
-          <div className="lol-panel p-4 flex items-start gap-3" style={{ borderColor: "rgba(152,162,176,0.25)" }}>
-            <span className="text-lg" style={{ lineHeight: 1.2 }}>⚠️</span>
-            <div className="flex-1 space-y-2">
-              <p className="text-sm" style={{ color: "rgba(236,239,244,0.75)" }}>
-                <span className="gold-text font-semibold">{t.aramTitle}</span>{" "}
-                {t.aramDesc}
-              </p>
-              <button className="lol-btn text-xs px-4 py-1" onClick={() => openAddForm("ARAM")}>
-                {t.aramAddBtn}
-              </button>
-            </div>
-          </div>
+          {/* Ajout manuel : action générique, valable pour n'importe quel jeu. */}
+          <button className="lol-btn w-full text-sm" onClick={() => openAddForm()}>
+            {t.addBtn}
+          </button>
 
-          {/* Riot fetch + add form trigger */}
-          <div className="flex gap-2">
-            <button className="lol-btn lol-btn-blue flex-1 text-sm" onClick={handleRiotFetch} disabled={riotLoading}>
+          {/* Tout ce qui suit est propre à League of Legends : le suivi
+              automatique passe par l'API Riot, et l'ARAM du chaos est un mode
+              de ce jeu. Le cadre l'annonce, pour ne pas laisser croire que ça
+              vaut pour Minecraft ou Valorant. */}
+          <div className="lol-panel p-4 space-y-3" style={{ borderColor: "rgba(152,162,176,0.22)" }}>
+            <div>
+              <h2 className="gold-text text-xs font-semibold uppercase tracking-widest">{t.lolSectionTitle}</h2>
+              <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.45)" }}>{t.lolSectionDesc}</p>
+            </div>
+
+            <button className="lol-btn lol-btn-blue w-full text-sm" onClick={handleRiotFetch} disabled={riotLoading}>
               {riotLoading ? t.fetchingLastGame : t.fetchLastGameBtn}
             </button>
-            <button
-              className="lol-btn text-sm px-4"
-              onClick={() => openAddForm()}
-              style={{ background: "rgba(152,162,176,0.15)" }}
-            >
-              {t.addBtn}
-            </button>
+            {riotError && <p className="text-sm loss-text">{riotError}</p>}
+
+            <div className="flex items-start gap-3 p-3 rounded" style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.16)" }}>
+              <span className="text-lg" style={{ lineHeight: 1.2 }}>⚠️</span>
+              <div className="flex-1 space-y-2">
+                <p className="text-sm" style={{ color: "rgba(236,239,244,0.75)" }}>
+                  <span className="gold-text font-semibold">{t.aramTitle}</span>{" "}
+                  {t.aramDesc}
+                </p>
+                <button className="lol-btn text-xs px-4 py-1" onClick={() => openAddForm("ARAM")}>
+                  {t.aramAddBtn}
+                </button>
+              </div>
+            </div>
           </div>
-          {riotError && <p className="text-sm loss-text">{riotError}</p>}
 
           {/* Manual add form */}
           {showAddForm && (
@@ -652,30 +702,64 @@ export default function HistoryPage() {
             <div className="text-center py-10 gold-text">{t.loading}</div>
           ) : (
             <>
-              {/* Filters */}
-              <div className="lol-panel p-3 flex flex-wrap gap-3 items-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.roleLabel}</span>
-                  <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
-                    {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
-                  </select>
+              {/* Filtres — le filtre par jeu commande le reste */}
+              <div className="lol-panel p-3 space-y-3">
+                {jeuxJoues.length > 1 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{tJeux.filtreJeuTitre}</span>
+                    {[null, ...jeuxJoues].map((nom) => {
+                      const actif = filtreJeu === nom;
+                      return (
+                        <button
+                          key={nom ?? "tous"}
+                          onClick={() => { setFiltreJeu(nom); setLigneDepliee(null); }}
+                          aria-pressed={actif}
+                          style={{
+                            padding: "4px 12px", borderRadius: 999, fontSize: "0.75rem", cursor: "pointer",
+                            background: actif ? "rgba(110,155,255,0.1)" : "transparent",
+                            border: `1px solid ${actif ? "var(--signal)" : "var(--line-strong)"}`,
+                            color: actif ? "var(--signal)" : "rgba(236,239,244,0.6)",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          {nom === null ? tJeux.filtreTousJeux : nom}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3 items-center">
+                  {/* Rôle et résultat n'existent que pour les jeux à parties. */}
+                  {modeColonnes !== "temps" && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.roleLabel}</span>
+                        <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+                          {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.resultLabel}</span>
+                        <select className="lol-select text-sm" value={filterResult} onChange={(e) => setFilterResult(e.target.value)}>
+                          <option value="Tous">{t.all}</option>
+                          <option value="V">{t.victory}</option>
+                          <option value="D">{t.defeat}</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.sortLabel}</span>
+                    <select className="lol-select text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "pompes")}>
+                      <option value="date">{t.date}</option>
+                      <option value="pompes">{t.pompes}</option>
+                    </select>
+                  </div>
+                  <span className="ml-auto text-sm gold-text font-semibold">
+                    {t.activitesAndTotal(filtered.length, resumeParExo(totauxParExo))}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.resultLabel}</span>
-                  <select className="lol-select text-sm" value={filterResult} onChange={(e) => setFilterResult(e.target.value)}>
-                    <option value="Tous">{t.all}</option>
-                    <option value="V">{t.victory}</option>
-                    <option value="D">{t.defeat}</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.sortLabel}</span>
-                  <select className="lol-select text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "pompes")}>
-                    <option value="date">{t.date}</option>
-                    <option value="pompes">{t.pompes}</option>
-                  </select>
-                </div>
-                <span className="ml-auto text-sm gold-text font-semibold">{t.gamesAndTotal(filtered.length, resumeParExo(totauxParExo))}</span>
               </div>
 
               {filtered.length === 0 ? (
@@ -684,18 +768,22 @@ export default function HistoryPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px" }}>
+                  <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: modeColonnes === "parties" ? 760 : 660 }}>
                     <thead>
                       <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left px-3 py-1">{t.tableDate}</th>
-                        <th className="text-left px-3 py-1">{t.tableRole}</th>
-                        <th className="text-left px-3 py-1">{t.tableChampion}</th>
-                        <th className="text-center px-3 py-1">{t.tableKda}</th>
-                        <th className="text-center px-3 py-1">{t.tableResult}</th>
+                        {afficherColonneJeu && <th className="text-left px-3 py-1">{t.tableJeu}</th>}
+                        {modeColonnes === "parties" && (
+                          <>
+                            <th className="text-left px-3 py-1">{t.tableRole}</th>
+                            <th className="text-left px-3 py-1">{t.tableChampion}</th>
+                            <th className="text-center px-3 py-1">{t.tableKda}</th>
+                            <th className="text-center px-3 py-1">{t.tableResult}</th>
+                          </>
+                        )}
+                        {modeColonnes === "temps" && <th className="text-center px-3 py-1">{t.tableDuree}</th>}
+                        {modeColonnes === "mixte" && <th className="text-left px-3 py-1">{t.tableDetail}</th>}
                         <th className="text-center px-3 py-1">{t.tableLevel}</th>
-                        <th className="text-center px-3 py-1">{t.tableScore}</th>
-                        <th className="text-center px-3 py-1">{t.tableMalus}</th>
-                        <th className="text-center px-3 py-1">{t.tableMastery}</th>
                         <th className="text-right px-3 py-1">{t.tablePompes}</th>
                         <th className="text-right px-3 py-1">{t.tableCumul}</th>
                         <th className="px-3 py-1"></th>
@@ -715,9 +803,14 @@ export default function HistoryPage() {
                         }
                         return filtered.map((g) => {
                           const cumul = cumulMap.get(g.id) ?? 0;
+                          const exo = toExerciceId(g.exercice);
+                          const type = typeDeLaLigne(g);
+                          const depliee = ligneDepliee === g.id;
+                          const fond = { background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" };
                           return (
-                            <tr key={g.id} style={{ background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" }}>
-                              <td className="px-3 py-2" style={{ color: "rgba(236,239,244,0.6)" }}>
+                            <Fragment key={g.id}>
+                            <tr style={fond}>
+                              <td className="px-3 py-2" style={{ color: "rgba(236,239,244,0.6)", whiteSpace: "nowrap" }}>
                                 {editingDateId === g.id ? (
                                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                     <input
@@ -746,28 +839,71 @@ export default function HistoryPage() {
                                   </div>
                                 )}
                               </td>
-                              <td className="px-3 py-2 gold-text font-medium">{g.role}</td>
-                              <td className="px-3 py-2">
-                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                  <ChampionIcon name={g.champion} size={26} />
-                                  <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
-                                </div>
-                              </td>
-                              <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.8)" }}>
-                                {g.kills}/{g.deaths}/{g.assists}
-                              </td>
-                              <td className="px-3 py-2 text-center font-bold">
-                                <span className={g.result === "V" ? "win-text" : "loss-text"}>
-                                  {g.result === "V" ? t.victory : t.defeat}
-                                </span>
-                              </td>
+
+                              {afficherColonneJeu && (
+                                <td className="px-3 py-2" style={{ color: "rgba(236,239,244,0.75)", whiteSpace: "nowrap" }}>{nomDuJeu(g)}</td>
+                              )}
+
+                              {modeColonnes === "parties" && (
+                                <>
+                                  <td className="px-3 py-2 gold-text font-medium">{g.role}</td>
+                                  <td className="px-3 py-2">
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                      <ChampionIcon name={g.champion} size={26} />
+                                      <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                    {g.kills}/{g.deaths}/{g.assists}
+                                  </td>
+                                  <td className="px-3 py-2 text-center font-bold">
+                                    <ResultatCell result={g.result} t={t} />
+                                  </td>
+                                </>
+                              )}
+
+                              {modeColonnes === "temps" && (
+                                <td className="px-3 py-2 text-center mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                  {formaterTempsJeu(g.dureeSec ?? 0)}
+                                </td>
+                              )}
+
+                              {modeColonnes === "mixte" && (
+                                <td className="px-3 py-2">
+                                  {type === "temps" ? (
+                                    <span className="mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                      {formaterTempsJeu(g.dureeSec ?? 0)}
+                                    </span>
+                                  ) : (
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                                      <ChampionIcon name={g.champion} size={22} />
+                                      <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion ?? "—"}</span>
+                                      <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
+                                      <span className="gold-text">{g.role}</span>
+                                      <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
+                                      <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
+                                        {g.kills}/{g.deaths}/{g.assists}
+                                      </span>
+                                      <ResultatCell result={g.result} t={t} />
+                                    </div>
+                                  )}
+                                </td>
+                              )}
+
                               <td className="px-3 py-2 text-center gold-text">{g.niveauCalcule}</td>
-                              <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.7)" }}>{g.scoreCalcule}</td>
-                              <td className="px-3 py-2 text-center loss-text">+{g.malusCalcule}</td>
-                              <td className="px-3 py-2 text-center blue-text">+{Math.round(g.surchargeCalculee * 100)}%</td>
-                              <td className="px-3 py-2 text-right gold-text font-bold">{formaterCompact(g.pompesCalculees, toExerciceId(g.exercice))}</td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, toExerciceId(g.exercice))}</td>
-                              <td className="px-3 py-2 text-center">
+                              <td className="px-3 py-2 text-right gold-text font-bold">{formaterCompact(g.pompesCalculees, exo)}</td>
+                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, exo)}</td>
+                              <td className="px-3 py-2 text-center" style={{ whiteSpace: "nowrap" }}>
+                                <button
+                                  onClick={() => setLigneDepliee(depliee ? null : g.id)}
+                                  title={t.detailToggleTitle}
+                                  aria-expanded={depliee}
+                                  style={{
+                                    color: depliee ? "var(--amber)" : "rgba(152,162,176,0.5)",
+                                    background: "none", border: "none", cursor: "pointer",
+                                    fontSize: "0.7rem", padding: "2px 6px", lineHeight: 1,
+                                  }}
+                                >{depliee ? "▲" : "▼"}</button>
                                 <button
                                   onClick={() => handleDelete(g.id)}
                                   disabled={deletingId === g.id}
@@ -780,6 +916,29 @@ export default function HistoryPage() {
                                 </button>
                               </td>
                             </tr>
+
+                            {/* Détail du calcul : replié par défaut, il n'est utile
+                                qu'à qui veut comprendre le chiffre. */}
+                            {depliee && (
+                              <tr style={{ background: "rgba(152,162,176,0.05)" }}>
+                                <td colSpan={nbColonnes} className="px-3 py-2">
+                                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "rgba(236,239,244,0.6)" }}>
+                                    {type === "temps" ? (
+                                      <span>{t.detailDuree} : <span className="mono-num" style={{ color: "rgba(236,239,244,0.85)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
+                                    ) : (
+                                      <>
+                                        <span>{t.detailScore} : <span className="mono-num" style={{ color: "rgba(236,239,244,0.85)" }}>{g.scoreCalcule}</span></span>
+                                        <span>{t.detailMalus} : <span className="mono-num loss-text">+{g.malusCalcule}</span></span>
+                                        <span>{t.detailMastery} : <span className="mono-num blue-text">+{Math.round(g.surchargeCalculee * 100)}%</span></span>
+                                      </>
+                                    )}
+                                    <span>{t.tableLevel} : <span className="mono-num gold-text">{g.niveauCalcule}</span></span>
+                                    {!afficherColonneJeu && <span>{t.tableJeu} : <span style={{ color: "rgba(236,239,244,0.85)" }}>{nomDuJeu(g)}</span></span>}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                            </Fragment>
                           );
                         });
                       })()}
