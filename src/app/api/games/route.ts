@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
+import {
+  isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
+} from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 
 export async function GET() {
@@ -105,7 +107,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const dus = await accumulerDette(user.id, scoringTemps.pointsFinaux);
+    const dus = await accumulerDette(user.id, repartirPoints(scoringTemps.pointsFinaux, selection));
     return NextResponse.json({
       game,
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
@@ -182,7 +184,7 @@ export async function POST(req: Request) {
     },
   });
 
-  const dus = await accumulerDette(user.id, scoring.pompesFinales);
+  const dus = await accumulerDette(user.id, repartirPoints(scoring.pompesFinales, selection));
   return NextResponse.json({
     game,
     scoring,
@@ -192,15 +194,20 @@ export async function POST(req: Request) {
 }
 
 /**
- * Ajoute le coût d'une partie à la dette en attente, et renvoie le nouveau
- * total. Un échec ici ne doit pas faire perdre la partie déjà écrite : le
- * compteur se rattrapera à la partie suivante.
+ * Ajoute à la dette en attente la seule part qui se compte en temps. Les
+ * pompes et les squats se font dans la foulée de la partie ; la boxe, elle,
+ * n'a d'intérêt qu'une fois quelques minutes accumulées.
+ *
+ * Un échec ici ne doit pas faire perdre la partie déjà écrite : le compteur
+ * se rattrapera à la partie suivante.
  */
-async function accumulerDette(userId: string, points: number): Promise<number | null> {
+async function accumulerDette(userId: string, repartition: Repartition): Promise<number | null> {
+  const points = pointsEnTemps(repartition);
+  if (points <= 0) return null;
   try {
     const maj = await prisma.user.update({
       where: { id: userId },
-      data: { dettePointsDus: { increment: Math.max(0, points) } },
+      data: { dettePointsDus: { increment: points } },
       select: { dettePointsDus: true },
     });
     return maj.dettePointsDus;
