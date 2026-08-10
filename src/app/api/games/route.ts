@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
+import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 
 export async function GET() {
@@ -54,27 +54,20 @@ export async function POST(req: Request) {
 
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
 
-  // Exercice de la partie : un choix explicite (ajout manuel) est respecté tel
-  // quel ; sinon on avance d'un cran dans la rotation par rapport à la partie
-  // précédente, pour répartir la charge entre les exercices cochés.
-  let exercice;
-  if (isExerciceId(body.exercice)) {
-    exercice = body.exercice;
-  } else {
-    // La sélection cochée dans le formulaire prime sur la préférence
-    // enregistrée : on ne fait tourner que les exercices demandés ici.
-    const selection = toExerciceIds(
-      Array.isArray(body.exercices) && body.exercices.length > 0 ? body.exercices : user.exercices,
-    );
-    const derniere = selection.length > 1
-      ? await prisma.game.findFirst({
-          where: { userId: user.id },
-          orderBy: { date: "desc" },
-          select: { exercice: true },
-        })
-      : null;
-    exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
-  }
+  // Exercices retenus pour cette activité. Quand il y en a plusieurs, la dette
+  // se partage entre eux : on fait un peu de chaque, plutôt que d'alterner
+  // d'une partie à l'autre.
+  const selection = isExerciceId(body.exercice)
+    ? [body.exercice]
+    : toExerciceIds(
+        Array.isArray(body.exercices) && body.exercices.length > 0 ? body.exercices : user.exercices,
+      );
+  // `exercice` reste le premier : il porte l'unité d'affichage par défaut.
+  const exercice = selection[0];
+
+  /** Ventilation à stocker — nulle quand un seul exercice est concerné. */
+  const ventilation = (total: number) =>
+    selection.length > 1 ? JSON.stringify(repartirPoints(total, selection)) : null;
 
   if (typeJeu === "temps") {
     const dureeSec = Math.max(0, Math.round(Number(body.dureeSec) || 0));
@@ -102,6 +95,7 @@ export async function POST(req: Request) {
         malusCalcule: 0,
         pompesCalculees: scoringTemps.pointsFinaux,
         exercice,
+        repartition: ventilation(scoringTemps.pointsFinaux),
         jeu,
         typeJeu,
         dureeSec,
@@ -114,6 +108,7 @@ export async function POST(req: Request) {
     return NextResponse.json({
       game,
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
+      repartition: repartirPoints(scoringTemps.pointsFinaux, selection),
     });
   }
 
@@ -172,9 +167,10 @@ export async function POST(req: Request) {
       scoreCalcule: scoring.scoreBase,
       malusCalcule: scoring.malus,
       pompesCalculees: scoring.pompesFinales,
-      // Fige l'exercice retenu : l'historique reste fidèle même si la
+      // Fige les exercices retenus : l'historique reste fidèle même si la
       // sélection change plus tard.
       exercice,
+      repartition: ventilation(scoring.pompesFinales),
       jeu,
       typeJeu,
       placement,
@@ -184,5 +180,5 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ game, scoring });
+  return NextResponse.json({ game, scoring, repartition: repartirPoints(scoring.pompesFinales, selection) });
 }

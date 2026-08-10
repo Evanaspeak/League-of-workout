@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { isExerciceId, toExerciceId, toExerciceIds, RAPPEL_SEUIL_DEFAUT } from "@/lib/exercices";
+import {
+  isExerciceId, parseRepartition, partPourExercice, toExerciceIds, RAPPEL_SEUIL_DEFAUT,
+} from "@/lib/exercices";
 import { toTypeJeu, type TypeJeu } from "@/lib/jeux";
 
 export async function GET(req: Request) {
@@ -25,11 +27,24 @@ export async function GET(req: Request) {
   const jeuBrut = params.get("jeu");
   const filtreJeu = jeuBrut && jeuBrut.trim() ? jeuBrut.trim() : null;
 
+  /** Ce que chaque partie doit, exercice par exercice. */
+  const ventilationDe = (g: (typeof toutesLesGames)[number]) =>
+    parseRepartition(g.repartition, g.exercice, g.pompesCalculees);
+
   const games = toutesLesGames.filter(
     (g) =>
-      (filtre === null || toExerciceId(g.exercice) === filtre) &&
+      // Une partie payée en pompes ET en boxe apparaît sous les deux filtres,
+      // pour la seule part qui revient à l'exercice consulté.
+      (filtre === null || partPourExercice(ventilationDe(g), filtre) > 0) &&
       (filtreJeu === null || g.jeu === filtreJeu),
   );
+
+  /**
+   * Coût d'une partie dans le périmètre consulté : sa part quand on regarde un
+   * exercice en particulier, son total sinon.
+   */
+  const pts = (g: (typeof toutesLesGames)[number]) =>
+    filtre === null ? g.pompesCalculees : partPourExercice(ventilationDe(g), filtre);
 
   // Les jeux « au temps » n'ont ni victoire ni défaite : les compter dans le
   // winrate le ferait chuter à chaque soirée de survie. Tout ce qui touche au
@@ -41,7 +56,7 @@ export async function GET(req: Request) {
   const totalGames = games.length;
   const wins = parties.filter((g) => g.result === "V").length;
   const winrate = parties.length > 0 ? Math.round((wins / parties.length) * 100) : 0;
-  const totalPompes = games.reduce((s, g) => s + g.pompesCalculees, 0);
+  const totalPompes = games.reduce((s, g) => s + pts(g), 0);
   // Temps de jeu cumulé sur le périmètre consulté (jeux au temps uniquement).
   const tempsJoueSec = games.reduce((s, g) => s + (g.dureeSec ?? 0), 0);
 
@@ -54,7 +69,7 @@ export async function GET(req: Request) {
     : 0;
   const globalTotalPoints = toutesLesGames.reduce((s, g) => s + g.pompesCalculees, 0);
   const globalTempsJoueSec = toutesLesGames.reduce((s, g) => s + (g.dureeSec ?? 0), 0);
-  const recordPompes = games.length > 0 ? Math.max(...games.map((g) => g.pompesCalculees)) : 0;
+  const recordPompes = games.length > 0 ? Math.max(...games.map(pts)) : 0;
 
   // Catalogue des jeux réellement joués : sert à peupler le filtre, et à savoir
   // si l'utilisateur a assez de jeux différents pour que le filtre ait un sens.
@@ -73,15 +88,20 @@ export async function GET(req: Request) {
   // pas, le total doit donc rester détaillé exercice par exercice.
   const pointsParExercice: Record<string, number> = {};
   for (const g of toutesLesGames) {
-    const ex = toExerciceId(g.exercice);
-    pointsParExercice[ex] = (pointsParExercice[ex] || 0) + g.pompesCalculees;
+    for (const [ex, part] of Object.entries(ventilationDe(g))) {
+      pointsParExercice[ex] = (pointsParExercice[ex] || 0) + (part ?? 0);
+    }
   }
   // La partie la plus coûteuse, avec l'exercice qui lui correspond.
   const gameRecord = games.reduce<typeof games[number] | null>(
-    (best, g) => (best === null || g.pompesCalculees > best.pompesCalculees ? g : best),
+    (best, g) => (best === null || pts(g) > pts(best) ? g : best),
     null,
   );
-  const recordExercice = gameRecord ? toExerciceId(gameRecord.exercice) : null;
+  // Sans filtre, une partie partagée entre exercices n'a pas d'unité unique :
+  // on retient celle de son exercice principal.
+  const recordExercice = gameRecord
+    ? (filtre ?? toExerciceIds([gameRecord.exercice])[0])
+    : null;
 
   const pompesByRole: Record<string, number> = {};
   const gamesByRole: Record<string, number> = {};
@@ -89,13 +109,13 @@ export async function GET(req: Request) {
   const champAgg: Record<string, { games: number; kills: number; deaths: number; assists: number; pompes: number }> = {};
 
   for (const g of games) {
-    pompesByNiveau[g.niveauCalcule] = (pompesByNiveau[g.niveauCalcule] || 0) + g.pompesCalculees;
+    pompesByNiveau[g.niveauCalcule] = (pompesByNiveau[g.niveauCalcule] || 0) + pts(g);
   }
 
   // Rôles et champions n'existent que pour les jeux à parties : une session
   // Minecraft n'a ni l'un ni l'autre et polluerait les graphiques.
   for (const g of parties) {
-    pompesByRole[g.role] = (pompesByRole[g.role] || 0) + g.pompesCalculees;
+    pompesByRole[g.role] = (pompesByRole[g.role] || 0) + pts(g);
     gamesByRole[g.role] = (gamesByRole[g.role] || 0) + 1;
 
     const champ = g.champion ?? "Inconnu";
@@ -104,7 +124,7 @@ export async function GET(req: Request) {
     champAgg[champ].kills += g.kills;
     champAgg[champ].deaths += g.deaths;
     champAgg[champ].assists += g.assists;
-    champAgg[champ].pompes += g.pompesCalculees;
+    champAgg[champ].pompes += pts(g);
   }
 
   const champList = Object.entries(champAgg).map(([name, s]) => ({
@@ -129,7 +149,7 @@ export async function GET(req: Request) {
   const cumulByDate: { date: string; cumul: number }[] = [];
   let cumul = 0;
   for (const g of games) {
-    cumul += g.pompesCalculees;
+    cumul += pts(g);
     cumulByDate.push({ date: g.date.toISOString().slice(0, 10), cumul });
   }
 
@@ -144,13 +164,13 @@ export async function GET(req: Request) {
     const wd = d.getDay();
     const mo = d.getMonth();
     byHour[h] = byHour[h] ?? { total: 0, count: 0 };
-    byHour[h].total += g.pompesCalculees;
+    byHour[h].total += pts(g);
     byHour[h].count++;
     byWeekday[wd] = byWeekday[wd] ?? { total: 0, count: 0 };
-    byWeekday[wd].total += g.pompesCalculees;
+    byWeekday[wd].total += pts(g);
     byWeekday[wd].count++;
     byMonth[mo] = byMonth[mo] ?? { total: 0, count: 0 };
-    byMonth[mo].total += g.pompesCalculees;
+    byMonth[mo].total += pts(g);
     byMonth[mo].count++;
   }
 
@@ -179,7 +199,7 @@ export async function GET(req: Request) {
   const byDayTotal: Record<string, number> = {};
   for (const g of games) {
     const day = g.date.toISOString().slice(0, 10);
-    byDayTotal[day] = (byDayTotal[day] || 0) + g.pompesCalculees;
+    byDayTotal[day] = (byDayTotal[day] || 0) + pts(g);
   }
   const dailyPompes = Object.entries(byDayTotal)
     .sort(([a], [b]) => a.localeCompare(b))

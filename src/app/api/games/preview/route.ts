@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { isExerciceId, prochainExercice, toExerciceId, toExerciceIds } from "@/lib/exercices";
+import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
@@ -43,26 +43,14 @@ export async function POST(req: Request) {
 
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
 
-  // Même règle que l'enregistrement réel, pour que l'aperçu annonce le bon
-  // exercice avant de valider.
-  let exercice;
-  if (isExerciceId(body.exercice)) {
-    exercice = body.exercice;
-  } else {
-    // La sélection cochée dans le formulaire prime sur la préférence
-    // enregistrée : on ne fait tourner que les exercices demandés ici.
-    const selection = toExerciceIds(
-      Array.isArray(body.exercices) && body.exercices.length > 0 ? body.exercices : user.exercices,
-    );
-    const derniere = selection.length > 1
-      ? await prisma.game.findFirst({
-          where: { userId: user.id },
-          orderBy: { date: "desc" },
-          select: { exercice: true },
-        })
-      : null;
-    exercice = prochainExercice(selection, toExerciceId(derniere?.exercice));
-  }
+  // Mêmes exercices que l'enregistrement réel : l'aperçu annonce exactement ce
+  // qu'il y aura à faire.
+  const selection = isExerciceId(body.exercice)
+    ? [body.exercice]
+    : toExerciceIds(
+        Array.isArray(body.exercices) && body.exercices.length > 0 ? body.exercices : user.exercices,
+      );
+  const exercice = selection[0];
 
 
   // Session au temps : la dette dépend de la durée, pas d'un résultat.
@@ -77,6 +65,7 @@ export async function POST(req: Request) {
       partiesAvant: 0,
       gainageSec,
       exercice,
+      repartition: repartirPoints(scoringTemps.pointsFinaux, selection),
       typeJeu,
       dureeSec,
     });
@@ -102,6 +91,7 @@ export async function POST(req: Request) {
       partiesAvant: 0,
       gainageSec,
       exercice,
+      repartition: repartirPoints(scoringBr.pompesFinales, selection),
       placement,
       joueurs,
     });
@@ -119,5 +109,8 @@ export async function POST(req: Request) {
     masteryConfig,
   });
 
-  return NextResponse.json({ scoring, partiesAvant, gainageSec, exercice });
+  return NextResponse.json({
+    scoring, partiesAvant, gainageSec, exercice,
+    repartition: repartirPoints(scoring.pompesFinales, selection),
+  });
 }

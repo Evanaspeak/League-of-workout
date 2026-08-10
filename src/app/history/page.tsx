@@ -7,7 +7,8 @@ import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICE_DEFAUT, formaterCompact, repartir, toExerciceId, toExerciceIds, ventiler, type ExerciceId,
+  EXERCICE_DEFAUT, formaterCompact, parseRepartition, toExerciceId, toExerciceIds,
+  ventiler, type ExerciceId, type Repartition,
 } from "@/lib/exercices";
 import { JEU_DEFAUT, capacitesDuJeu, equipesDuMode, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
@@ -39,6 +40,8 @@ type Game = {
   dureeSec?: number | null;
   placement?: number | null;
   joueurs?: number | null;
+  /** JSON de ventilation entre exercices, absent si un seul est concerné. */
+  repartition?: string | null;
 };
 
 type MatchEntry = {
@@ -68,6 +71,8 @@ type Scoring = {
 type PreviewResult = {
   scoring: Scoring; partiesAvant: number; gainageSec: number; exercice?: ExerciceId;
   placement?: number; joueurs?: number;
+  /** Ce qu'il y aura à faire, exercice par exercice. */
+  repartition?: Repartition;
 };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -114,7 +119,6 @@ export default function HistoryPage() {
 
   // ── Pompes view ──
   const [games, setGames] = useState<Game[]>([]);
-  const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [filterRole, setFilterRole] = useState("Tous");
@@ -179,7 +183,6 @@ export default function HistoryPage() {
       .then((r) => r.json())
       .then((u) => {
         const prefs = toExerciceIds(u?.exercices);
-        setExercicesSel(prefs);
         setExercicesAjout(prefs);
       })
       .catch(() => {});
@@ -305,40 +308,28 @@ export default function HistoryPage() {
     setAddLogging(true);
     setAddError("");
 
-    // Une session au temps payée en plusieurs exercices se découpe en parts
-    // égales : 2 h de Minecraft en pompes + boxe donnent 1 h de chacune. Le
-    // total de temps joué et la dette totale restent identiques.
-    const parts: { exercice: ExerciceId | null; duree: number | undefined }[] =
-      typeJeu === "temps" && exercicesAjout.length > 1
-        ? repartir(dureeEnSecondes, exercicesAjout.length).map((duree, i) => ({ exercice: exercicesAjout[i], duree }))
-        : [{ exercice: exercicesAjout.length === 1 ? exercicesAjout[0] : null, duree: undefined }];
+    // Une seule ligne, quels que soient les exercices : la dette se partage
+    // entre eux, la partie reste une partie.
+    const res = await fetch("/api/games", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...corpsAjout(exercicesAjout.length === 1 ? exercicesAjout[0] : null),
+        source: "manuel",
+      }),
+    });
 
-    const ajoutees: Game[] = [];
-    let erreur = "";
-    for (const part of parts) {
-      const res = await fetch("/api/games", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...corpsAjout(part.exercice, part.duree), source: "manuel" }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        erreur = err.error ? translateApiError(err.error, locale) : t.logError;
-        break;
-      }
+    if (res.ok) {
       const { game, scoring } = await res.json();
-      ajoutees.push({ ...game, pompesCalculees: scoring.pompesFinales });
-    }
-
-    if (ajoutees.length > 0) {
-      setGames((prev) => [...ajoutees, ...prev]);
+      setGames((prev) => [{ ...game, pompesCalculees: scoring.pompesFinales }, ...prev]);
       setPreview(null);
+      setAddLogged(true);
       setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
       setPlacement("");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setAddError(err.error ? translateApiError(err.error, locale) : t.logError);
     }
-    // Un échec partiel doit se voir : les parts déjà écrites sont conservées.
-    if (erreur) setAddError(erreur);
-    else setAddLogged(true);
     setAddLogging(false);
   };
 
@@ -390,6 +381,8 @@ export default function HistoryPage() {
   // ─── Filtered pompe games ─────────────────────────────────────────────────
   // ── Multi-jeu : périmètre consulté et jeu de colonnes qui en découle ──
   const nomDuJeu = (g: Game) => g.jeu || JEU_DEFAUT;
+  /** Ce que cette partie doit, exercice par exercice. */
+  const ventilationDe = (g: Game) => parseRepartition(g.repartition, g.exercice, g.pompesCalculees);
   const typeDeLaLigne = (g: Game): TypeJeu => toTypeJeu(g.typeJeu);
 
   // Jeux réellement présents dans l'historique : eux seuls méritent un filtre.
@@ -439,8 +432,9 @@ export default function HistoryPage() {
     + 4; // niveau, dette, cumul, actions
   // Ventilation du total affiché : une entrée par exercice réellement joué.
   const totauxParExo = filtered.reduce<Record<string, number>>((acc, g) => {
-    const ex = toExerciceId(g.exercice);
-    acc[ex] = (acc[ex] ?? 0) + g.pompesCalculees;
+    for (const [ex, pts] of Object.entries(ventilationDe(g))) {
+      acc[ex] = (acc[ex] ?? 0) + (pts ?? 0);
+    }
     return acc;
   }, {});
 
@@ -718,11 +712,7 @@ export default function HistoryPage() {
                 />
                 {exercicesAjout.length > 1 && (
                   <p className="text-xs" style={{ color: "var(--amber)" }}>
-                    {/* Une session se coupe en parts ; une partie, non — elle
-                        prend son tour dans la rotation. */}
-                    {typeJeu === "temps"
-                      ? tJeux.repartitionSession(exercicesAjout.length)
-                      : tExo.rotationActive(exercicesAjout.length)}
+                    {tExo.partageActif(exercicesAjout.length)}
                   </p>
                 )}
               </div>
@@ -783,29 +773,34 @@ export default function HistoryPage() {
                   </div>
                   )}
                   <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                    {exercicesAjout.length > 1 && typeJeu === "temps" ? (
-                      <div className="space-y-1">
-                        {repartir(preview.scoring.pompesFinales, exercicesAjout.length).map((pts, i) => (
-                          <div key={exercicesAjout[i]} className="text-2xl font-bold gold-text">
-                            {formaterCompact(pts, exercicesAjout[i])}
-                            <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>
-                              {nomsExo[exercicesAjout[i]].toLowerCase()}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <>
-                        {/* Avec plusieurs exercices cochés, c'est la rotation
-                            qui tranche : on affiche celui qu'elle a retenu. */}
-                        <div className="text-4xl font-bold gold-text">
-                          {formaterCompact(preview.scoring.pompesFinales, toExerciceId(preview.exercice ?? exercicesAjout[0]))}
+                    {(() => {
+                      // Tout ce qu'il y a à faire, dans l'unité de chaque exercice.
+                      const parts = Object.entries(preview.repartition ?? {})
+                        .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 }));
+                      if (parts.length <= 1) {
+                        const seul = parts[0] ?? { id: toExerciceId(preview.exercice), pts: preview.scoring.pompesFinales };
+                        return (
+                          <>
+                            <div className="text-4xl font-bold gold-text">{formaterCompact(seul.pts, seul.id)}</div>
+                            <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>
+                              {nomsExo[seul.id].toUpperCase()}
+                            </div>
+                          </>
+                        );
+                      }
+                      return (
+                        <div className="space-y-1">
+                          {parts.map((part) => (
+                            <div key={part.id} className="text-2xl font-bold gold-text">
+                              {formaterCompact(part.pts, part.id)}
+                              <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>
+                                {nomsExo[part.id].toLowerCase()}
+                              </span>
+                            </div>
+                          ))}
                         </div>
-                        <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>
-                          {nomsExo[toExerciceId(preview.exercice ?? exercicesAjout[0])].toUpperCase()}
-                        </div>
-                      </>
-                    )}
+                      );
+                    })()}
                   </div>
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
                     {addLogging ? t.saving : (typeJeu === "temps" ? tJeux.ajouterSession : t.logThisGame)}
@@ -990,16 +985,22 @@ export default function HistoryPage() {
                         // Cumul tenu SÉPARÉMENT par exercice : chaque ligne affiche
                         // le total de son propre exercice à cet instant. Mélanger des
                         // répétitions et des secondes n'aurait aucun sens.
-                        const cumulMap = new Map<string, number>();
+                        const cumulMap = new Map<string, Record<string, number>>();
                         const running: Record<string, number> = {};
                         for (let i = filtered.length - 1; i >= 0; i--) {
-                          const ex = toExerciceId(filtered[i].exercice);
-                          running[ex] = (running[ex] ?? 0) + filtered[i].pompesCalculees;
-                          cumulMap.set(filtered[i].id, running[ex]);
+                          const parts = ventilationDe(filtered[i]);
+                          for (const [ex, pts] of Object.entries(parts)) {
+                            running[ex] = (running[ex] ?? 0) + (pts ?? 0);
+                          }
+                          // On fige l'état des compteurs concernés par cette ligne.
+                          const instantane: Record<string, number> = {};
+                          for (const ex of Object.keys(parts)) instantane[ex] = running[ex];
+                          cumulMap.set(filtered[i].id, instantane);
                         }
                         return filtered.map((g) => {
-                          const cumul = cumulMap.get(g.id) ?? 0;
-                          const exo = toExerciceId(g.exercice);
+                          const cumul = cumulMap.get(g.id) ?? {};
+                          const parts = Object.entries(ventilationDe(g))
+                            .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 }));
                           const type = typeDeLaLigne(g);
                           const depliee = ligneDepliee === g.id;
                           const fond = { background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" };
@@ -1122,8 +1123,16 @@ export default function HistoryPage() {
                               )}
 
                               <td className="px-3 py-2 text-center gold-text">{g.niveauCalcule}</td>
-                              <td className="px-3 py-2 text-right gold-text font-bold">{formaterCompact(g.pompesCalculees, exo)}</td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)" }}>{formaterCompact(cumul, exo)}</td>
+                              <td className="px-3 py-2 text-right gold-text font-bold" style={{ whiteSpace: "nowrap" }}>
+                                {parts.map((part) => (
+                                  <div key={part.id}>{formaterCompact(part.pts, part.id)}</div>
+                                ))}
+                              </td>
+                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)", whiteSpace: "nowrap" }}>
+                                {parts.map((part) => (
+                                  <div key={part.id}>{formaterCompact(cumul[part.id] ?? 0, part.id)}</div>
+                                ))}
+                              </td>
                               <td className="px-3 py-2 text-center" style={{ whiteSpace: "nowrap" }}>
                                 <button
                                   onClick={() => setLigneDepliee(depliee ? null : g.id)}
