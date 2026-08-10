@@ -83,6 +83,11 @@ export const history = {
     placementSur: "sur",
     eliminations: "Éliminations",
     placementInvalide: "Indique ta place finale.",
+    modeLabel: "Mode",
+    modeNom: (taille: number) => (
+      { 1: "Solo", 2: "Duo", 3: "Trio", 4: "Squad" }[taille] ?? `${taille} joueurs`
+    ),
+    modeDenominateur: (n: number, taille: number) => (taille === 1 ? `${n} joueurs` : `${n} équipes`),
     tablePlacement: "Place",
     victoryRoyale: "Top 1",
     elimCourt: (n: number) => `${n} élim`,
@@ -170,6 +175,11 @@ export const history = {
     placementSur: "of",
     eliminations: "Eliminations",
     placementInvalide: "Enter your final placement.",
+    modeLabel: "Mode",
+    modeNom: (taille: number) => (
+      { 1: "Solo", 2: "Duo", 3: "Trio", 4: "Squad" }[taille] ?? `${taille} players`
+    ),
+    modeDenominateur: (n: number, taille: number) => (taille === 1 ? `${n} players` : `${n} teams`),
     tablePlacement: "Place",
     victoryRoyale: "Top 1",
     elimCourt: (n: number) => `${n} elims`,
