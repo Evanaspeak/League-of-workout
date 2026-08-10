@@ -21,6 +21,7 @@ import { JEU_DEFAUT, formaterTempsJeu, typeDuJeu, type TypeJeu } from "@/lib/jeu
 import { JeuSelector } from "@/components/JeuSelector";
 import { SessionChrono } from "@/components/SessionChrono";
 import { AjoutActivite } from "@/components/AjoutActivite";
+import { CompteurDette } from "@/components/CompteurDette";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -325,6 +326,9 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      {/* Ce qu'il reste à faire, avant toute statistique. */}
+      <CompteurDette />
 
       {/* Vue d'ensemble — jamais filtrée : elle décrit toute l'activité */}
       <div className={`grid grid-cols-1 gap-3 ${aDuTemps ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>

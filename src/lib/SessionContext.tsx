@@ -234,6 +234,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         }),
       });
       if (!res.ok) { setChronoErreur("erreur"); return false; }
+      window.dispatchEvent(new Event("wow-dette-changee"));
       stopSession();
       return true;
     } catch {
@@ -276,6 +277,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       });
       if (logRes.ok) {
         const { scoring } = await logRes.json();
+        window.dispatchEvent(new Event("wow-dette-changee"));
         baselineRef.current = riotData.matchId;
         setSessionGames((prev) => [{
           champion: riotData.champion,

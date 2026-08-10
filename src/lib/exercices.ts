@@ -22,13 +22,20 @@ export type ExerciceDef = {
   unite: UniteExercice;
   /** Pas d'arrondi de la quantité affichée (évite « 2 min 51 »). */
   pas: number;
+  /**
+   * Secondes de travail pour une répétition, micro-repos compris. Sert à
+   * exprimer une dette en temps d'effort, seule unité commune à tous les
+   * exercices. Absent pour un exercice déjà compté en temps : son `ratio`
+   * donne directement des secondes.
+   */
+  secondesParRep?: number;
 };
 
 export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   // Référence historique : 1 pompe = 1 point d'effort.
-  pompes: { id: "pompes", ratio: 1, unite: "reps", pas: 1 },
+  pompes: { id: "pompes", ratio: 1, unite: "reps", pas: 1, secondesParRep: 6 },
   // Les jambes encaissent plus de répétitions que le haut du corps.
-  squats: { id: "squats", ratio: 1.5, unite: "reps", pas: 1 },
+  squats: { id: "squats", ratio: 1.5, unite: "reps", pas: 1, secondesParRep: 5 },
   // Sac ou shadow : cardio soutenu, compté en temps de travail effectif.
   boxe: { id: "boxe", ratio: 7, unite: "temps", pas: 5 },
 };
@@ -179,3 +186,24 @@ export function partPourExercice(repartition: Repartition, exercice: ExerciceId)
   return repartition[exercice] ?? 0;
 }
 
+
+/** Secondes de travail que représente un point d'effort, pour cet exercice. */
+export function secondesParPoint(exercice: ExerciceId): number {
+  const def = EXERCICES[exercice];
+  // Un exercice compté en temps donne déjà des secondes par point.
+  if (def.unite === "temps") return def.ratio;
+  return def.ratio * (def.secondesParRep ?? 0);
+}
+
+/**
+ * Durée totale d'effort que représente une dette, une fois partagée entre les
+ * exercices retenus. C'est la seule façon de comparer 20 pompes et 2 min de
+ * boxe : on les ramène au temps qu'il faut pour les faire.
+ */
+export function dureeEffort(points: number, exercices: ExerciceId[]): number {
+  const parts = repartirPoints(points, exercices);
+  return Object.entries(parts).reduce(
+    (total, [id, pts]) => total + (pts ?? 0) * secondesParPoint(toExerciceId(id)),
+    0,
+  );
+}
