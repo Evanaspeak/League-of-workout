@@ -103,6 +103,15 @@ export async function GET(req: Request) {
     ? (filtre ?? toExerciceIds([gameRecord.exercice])[0])
     : null;
 
+  // Dette et volume par jeu : la vue d'ensemble d'un joueur multi-jeux.
+  const pompesByJeu: Record<string, number> = {};
+  const gamesByJeu: Record<string, number> = {};
+  for (const g of games) {
+    const nom = g.jeu || "League of Legends";
+    pompesByJeu[nom] = (pompesByJeu[nom] || 0) + pts(g);
+    gamesByJeu[nom] = (gamesByJeu[nom] || 0) + 1;
+  }
+
   const pompesByRole: Record<string, number> = {};
   const gamesByRole: Record<string, number> = {};
   const pompesByNiveau: Record<number, number> = {};
@@ -118,7 +127,8 @@ export async function GET(req: Request) {
     pompesByRole[g.role] = (pompesByRole[g.role] || 0) + pts(g);
     gamesByRole[g.role] = (gamesByRole[g.role] || 0) + 1;
 
-    const champ = g.champion ?? "Inconnu";
+    const champ = g.champion;
+    if (!champ) continue;
     if (!champAgg[champ]) champAgg[champ] = { games: 0, kills: 0, deaths: 0, assists: 0, pompes: 0 };
     champAgg[champ].games++;
     champAgg[champ].kills += g.kills;
@@ -213,6 +223,8 @@ export async function GET(req: Request) {
     recordPompes,
     pompesByRole,
     gamesByRole,
+    pompesByJeu,
+    gamesByJeu,
     pompesByNiveau,
     cumulByDate,
     statsByPeriod,
