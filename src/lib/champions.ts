@@ -26,9 +26,3 @@ export function findChampion(name: string): string | undefined {
   const normalized = name.trim().toLowerCase();
   return CHAMPIONS.find((c) => c.toLowerCase() === normalized);
 }
-
-export function suggestChampions(query: string, limit = 8): string[] {
-  if (!query) return [];
-  const q = query.toLowerCase();
-  return CHAMPIONS.filter((c) => c.toLowerCase().includes(q)).slice(0, limit);
-}
