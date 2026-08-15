@@ -7,7 +7,7 @@ import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT,
-  PLAFONDS_QUOTIDIENS, toExerciceIds, type ExerciceId,
+  PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 
@@ -381,6 +381,28 @@ export default function SettingsPage() {
               );
             })}
           </div>
+
+          {/* « 300 points » ne dit rien à personne. Ce que ça donne dans les
+              trois exercices, si. */}
+          {plafond > 0 && (
+            <div style={{
+              display: "flex", flexWrap: "wrap", gap: 18,
+              paddingTop: 4,
+            }}>
+              {EXERCICE_IDS.map((id) => (
+                <div key={id}>
+                  <div className="mono-num" style={{
+                    fontSize: "1.05rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.2,
+                  }}>
+                    {formaterCompact(plafond, id)}
+                  </div>
+                  <div style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)" }}>
+                    {EXO_LABELS[id].nom.toLowerCase()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
