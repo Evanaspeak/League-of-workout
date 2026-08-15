@@ -16,6 +16,15 @@ export default function Nav() {
   const path = usePathname();
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
+  // Sous 720 px les liens ne tiennent plus sur une ligne et le dernier était
+  // coupé à mi-mot : ils passent derrière un menu. Le chemin est mémorisé avec
+  // l'état d'ouverture pour refermer le menu au changement de page — c'est le
+  // motif React d'ajustement pendant le rendu, qui évite un effet en cascade.
+  const [menu, setMenu] = useState({ ouvert: false, chemin: path });
+  if (menu.chemin !== path) setMenu({ ouvert: false, chemin: path });
+  const menuOuvert = menu.ouvert;
+  const setMenuOuvert = (f: (o: boolean) => boolean) =>
+    setMenu((m) => ({ ...m, ouvert: f(m.ouvert) }));
   const t = useT(navDict);
 
   const links = [
@@ -57,12 +66,30 @@ export default function Nav() {
           <Wordmark fontSize="1.05rem" />
         </Link>
 
+        {!isPublic && (
+          <button
+            type="button"
+            className="nav-burger"
+            onClick={() => setMenuOuvert((o) => !o)}
+            aria-expanded={menuOuvert}
+            aria-label={menuOuvert ? t.fermerMenu : t.ouvrirMenu}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" aria-hidden>
+              {menuOuvert
+                ? <path d="M18 6 6 18M6 6l12 12" />
+                : <><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>}
+            </svg>
+          </button>
+        )}
+
         {!isPublic && [...links, ...(isAdmin ? [{ href: "/admin", label: t.admin }] : [])].map((l) => {
           const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
           return (
             <Link
               key={l.href}
               href={l.href}
+              className="nav-lien"
               style={{
                 position: "relative",
                 padding: "4px 10px",
@@ -144,6 +171,38 @@ export default function Nav() {
           <LanguageSwitcher />
         </div>
       </div>
+
+      {/* Panneau déroulant du menu : uniquement sur petit écran, où les liens
+          de la barre sont masqués. */}
+      {!isPublic && menuOuvert && (
+        <div className="nav-panneau">
+          {[...links, ...(isAdmin ? [{ href: "/admin", label: t.admin }] : [])].map((l) => {
+            const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                aria-current={active ? "page" : undefined}
+                style={{
+                  display: "block",
+                  padding: "13px 20px",
+                  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                  fontSize: "1rem",
+                  fontWeight: active ? 600 : 500,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: active ? "var(--bone)" : "var(--faint)",
+                  textDecoration: "none",
+                  borderLeft: `2px solid ${active ? "var(--ember)" : "transparent"}`,
+                  borderBottom: "1px solid var(--line)",
+                }}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }

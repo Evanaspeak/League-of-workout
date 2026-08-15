@@ -38,7 +38,15 @@ function duree(secondes: number): string {
  * Affichée en pastille fixe, elle suit sur toutes les pages et reste visible
  * quand on descend : c'est le point de la chose, ne pas oublier ce qu'on doit.
  */
-export function CompteurDette() {
+export function CompteurDette({
+  onEtat,
+}: {
+  /**
+   * Remonte l'état au rail, qui doit pouvoir signaler une dette en attente
+   * même replié : sur petit écran, la pastille elle-même est masquée.
+   */
+  onEtat?: (e: { enAttente: boolean; alerte: boolean }) => void;
+} = {}) {
   const pathname = usePathname();
   const t = useT(exercicesDict);
   const nomsExo: Record<ExerciceId, string> = {
@@ -85,6 +93,11 @@ export function CompteurDette() {
   }, [charger]);
 
   const seuilFranchi = !!dette && dette.seuilSec > 0 && dette.dureeSec >= dette.seuilSec;
+  const enAttente = !!dette && dette.exercices.length > 0 && dette.dureeSec > 0;
+
+  useEffect(() => {
+    onEtat?.({ enAttente, alerte: enAttente && seuilFranchi });
+  }, [enAttente, seuilFranchi, onEtat]);
 
   // Notification système au franchissement du seuil, une seule fois par palier.
   useEffect(() => {
