@@ -1,5 +1,11 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
+/** Ce qui peut recevoir le focus au clavier à l'intérieur de la fenêtre. */
+const FOCUSABLES = [
+  "a[href]", "button:not([disabled])", "input:not([disabled])",
+  "select:not([disabled])", "textarea:not([disabled])", "[tabindex]:not([tabindex='-1'])",
+].join(",");
 
 /**
  * Fenêtre modale de l'app. Elle se ferme au clic sur le fond, à la croix et à
@@ -19,14 +25,40 @@ export function Modale({
   largeur?: string;
   children: React.ReactNode;
 }) {
+  const panneauRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const surTouche = (e: KeyboardEvent) => { if (e.key === "Escape") onFermer(); };
+    // Le focus entre dans la fenêtre et n'en sort plus tant qu'elle est
+    // ouverte : sans ça, la tabulation continue dans la page derrière et la
+    // fenêtre n'existe pas pour qui navigue au clavier ou au lecteur d'écran.
+    const rendreA = document.activeElement as HTMLElement | null;
+    const premier = panneauRef.current?.querySelector<HTMLElement>(FOCUSABLES);
+    (premier ?? panneauRef.current)?.focus();
+
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { onFermer(); return; }
+      if (e.key !== "Tab") return;
+      const cibles = Array.from(
+        panneauRef.current?.querySelectorAll<HTMLElement>(FOCUSABLES) ?? [],
+      ).filter((el) => el.offsetParent !== null);
+      if (cibles.length === 0) return;
+      const debut = cibles[0];
+      const fin = cibles[cibles.length - 1];
+      if (e.shiftKey && document.activeElement === debut) {
+        e.preventDefault(); fin.focus();
+      } else if (!e.shiftKey && document.activeElement === fin) {
+        e.preventDefault(); debut.focus();
+      }
+    };
+
     document.addEventListener("keydown", surTouche);
     const overflowInitial = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", surTouche);
       document.body.style.overflow = overflowInitial;
+      // Le focus revient d'où il venait : on ne perd pas sa place dans la page.
+      rendreA?.focus?.();
     };
   }, [onFermer]);
 
@@ -47,6 +79,8 @@ export function Modale({
       }}
     >
       <div
+        ref={panneauRef}
+        tabIndex={-1}
         className="lol-panel w-full"
         style={{ maxWidth: largeur, padding: "20px", position: "relative" }}
       >
