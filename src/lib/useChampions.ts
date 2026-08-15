@@ -52,3 +52,48 @@ export function championConnu(liste: string[], nom: string): boolean {
   const normalise = nom.trim().toLowerCase();
   return liste.some((c) => c.toLowerCase() === normalise);
 }
+
+/** Ramène « Cho'Gath » à « chogath » : on tape rarement les apostrophes. */
+function aplatir(nom: string): string {
+  return nom
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/['’.\s&-]/g, "");
+}
+
+/** Les morceaux d'un nom composé : « Aurelion Sol » → aurelion, sol. */
+function mots(nom: string): string[] {
+  return nom
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .split(/['’.\s&-]+/)
+    .filter(Boolean);
+}
+
+/**
+ * Propositions classées par pertinence. Taper « r » doit d'abord donner Rakan
+ * et Renekton, pas Aatrox : un champion qui contient la lettre quelque part au
+ * milieu n'est presque jamais celui qu'on cherche. L'ordre est donc :
+ * début du nom, puis début d'un mot du nom, puis simple présence — et
+ * alphabétique à pertinence égale.
+ */
+export function suggererChampions(liste: string[], requete: string, limite = 8): string[] {
+  const q = aplatir(requete);
+  if (!q) return [];
+
+  const rang = (nom: string): number => {
+    if (aplatir(nom).startsWith(q)) return 0;
+    if (mots(nom).some((m) => m.startsWith(q))) return 1;
+    if (aplatir(nom).includes(q)) return 2;
+    return 3;
+  };
+
+  return liste
+    .map((nom) => ({ nom, r: rang(nom) }))
+    .filter((x) => x.r < 3)
+    .sort((a, b) => a.r - b.r || a.nom.localeCompare(b.nom, "en"))
+    .slice(0, limite)
+    .map((x) => x.nom);
+}

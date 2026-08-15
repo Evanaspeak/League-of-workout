@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useChampions, championConnu } from "@/lib/useChampions";
+import { useChampions, championConnu, suggererChampions } from "@/lib/useChampions";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { championInput as championInputDict } from "@/lib/i18n/dictionaries/championInput";
 
@@ -18,11 +18,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const suggest = (q: string, limit = 8) => {
-    if (!q) return [];
-    const lower = q.toLowerCase();
-    return champList.filter((c) => c.toLowerCase().includes(lower)).slice(0, limit);
-  };
+  const suggest = (q: string, limit = 8) => suggererChampions(champList, q, limit);
 
   const isValid = !value || championConnu(champList, value);
 
@@ -74,6 +70,12 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
         className="lol-input"
         placeholder={t.placeholder}
         value={value}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls="champion-suggestions"
+        aria-autocomplete="list"
+        aria-activedescendant={activeIndex >= 0 ? `champion-option-${activeIndex}` : undefined}
+        aria-invalid={!!value && !isValid}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onFocus={() => {
@@ -86,18 +88,25 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
         autoComplete="off"
       />
       {value && !isValid && (
-        <div style={{ fontSize: "0.7rem", color: "#e05555", marginTop: 2 }}>{t.championNonReconnu}</div>
+        <div role="alert" style={{ fontSize: "0.7rem", color: "#e05555", marginTop: 2 }}>{t.championNonReconnu}</div>
       )}
       {open && (
-        <div style={{
-          position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100,
-          background: "#0d1117", border: "1px solid rgba(152,162,176,0.35)",
-          borderRadius: 6, marginTop: 2, overflow: "hidden",
-        }}>
+        <div
+          id="champion-suggestions"
+          role="listbox"
+          style={{
+            position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100,
+            background: "#0d1117", border: "1px solid rgba(152,162,176,0.35)",
+            borderRadius: 6, marginTop: 2, overflow: "hidden",
+          }}
+        >
           {suggestions.map((s, i) => (
             <button
               key={s}
               type="button"
+              id={`champion-option-${i}`}
+              role="option"
+              aria-selected={i === activeIndex}
               onMouseDown={() => select(s)}
               onMouseEnter={() => setActiveIndex(i)}
               style={{
