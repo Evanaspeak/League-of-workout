@@ -104,12 +104,16 @@ function Slash({ height = 12 }: { height?: number }) {
 }
 
 /* ── Le feed de dette : la soirée facturée, game par game ────────────────── */
-type FeedEntry = { r: string; mode: string; kda: string; reps: number };
+/** `r` vaut V/W, D/L, ou N pour une session au temps, qui ne se gagne ni ne se perd. */
+type FeedEntry = { r: string; jeu: string; detail: string; pts: number };
 
 function DebtFeed({
-  title, count, totalLabel, unit, entries,
+  title, count, totalLabel, unit, conversion, entries,
 }: {
-  title: string; count: string; totalLabel: string; unit: string; entries: FeedEntry[];
+  title: string; count: string; totalLabel: string; unit: string;
+  /** Ce que le total donne dans chaque exercice : le modèle en une ligne. */
+  conversion: string;
+  entries: FeedEntry[];
 }) {
   const HOLD_STEPS = 3; // temps de pause une fois la soirée complète
   const [step, setStep] = useState(0);
@@ -127,7 +131,8 @@ function DebtFeed({
   }, [entries.length]);
 
   const visible = Math.min(step, entries.length);
-  const total = entries.slice(0, visible).reduce((s, e) => s + e.reps, 0);
+  const total = entries.slice(0, visible).reduce((s, e) => s + e.pts, 0);
+  const complet = visible === entries.length;
 
   return (
     <div style={{
@@ -151,6 +156,15 @@ function DebtFeed({
       <div>
         {entries.map((e, i) => {
           const isWin = e.r === "V" || e.r === "W";
+          // Une session au temps n'a ni victoire ni défaite : elle reste neutre.
+          const isNeutre = e.r === "N";
+          const teinte = isNeutre ? "var(--steel)" : isWin ? "var(--victory)" : "var(--loss)";
+          const fond = isNeutre
+            ? "rgba(152,162,176,0.1)"
+            : isWin ? "var(--victory-soft)" : "rgba(255,90,71,0.1)";
+          const bord = isNeutre
+            ? "rgba(152,162,176,0.3)"
+            : isWin ? "rgba(47,217,138,0.3)" : "rgba(255,90,71,0.3)";
           const shown = i < visible;
           return (
             <div
@@ -170,38 +184,47 @@ function DebtFeed({
                   width: 26, height: 26, borderRadius: 6, flexShrink: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "0.75rem", fontWeight: 600,
-                  color: isWin ? "var(--victory)" : "var(--loss)",
-                  background: isWin ? "var(--victory-soft)" : "rgba(255,90,71,0.1)",
-                  border: `1px solid ${isWin ? "rgba(47,217,138,0.3)" : "rgba(255,90,71,0.3)"}`,
+                  color: teinte,
+                  background: fond,
+                  border: `1px solid ${bord}`,
                 }}
               >
-                {e.r}
+                {isNeutre ? "·" : e.r}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: "0.85rem", color: "var(--bone)", fontWeight: 500 }}>{e.mode}</span>
-                <span className="mono-num" style={{ display: "block", fontSize: "0.68rem", color: "var(--faint)" }}>{e.kda}</span>
+                <span style={{ display: "block", fontSize: "0.85rem", color: "var(--bone)", fontWeight: 500 }}>{e.jeu}</span>
+                <span className="mono-num" style={{ display: "block", fontSize: "0.68rem", color: "var(--faint)" }}>{e.detail}</span>
               </span>
               <span className="mono-num" style={{
                 fontSize: "0.95rem", fontWeight: 600,
                 color: isWin ? "var(--victory)" : "var(--ember)",
               }}>
-                +{e.reps}
+                +{e.pts}
               </span>
             </div>
           );
         })}
       </div>
 
-      {/* Total */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "baseline",
-        padding: "16px 20px",
-        background: "rgba(255,77,46,0.05)",
-      }}>
-        <span className="eyebrow">{totalLabel}</span>
-        <span className="mono-num" style={{ fontSize: "1.5rem", fontWeight: 600, color: "var(--ember)", lineHeight: 1 }}>
-          {total} <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "rgba(255,77,46,0.7)" }}>{unit}</span>
-        </span>
+      {/* Total, puis ce qu'il donne dans chaque exercice : la conversion est le
+          produit, autant la montrer dès l'accueil. */}
+      <div style={{ padding: "16px 20px", background: "rgba(255,77,46,0.05)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <span className="eyebrow">{totalLabel}</span>
+          <span className="mono-num" style={{ fontSize: "1.5rem", fontWeight: 600, color: "var(--ember)", lineHeight: 1 }}>
+            {total} <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "rgba(255,77,46,0.7)" }}>{unit}</span>
+          </span>
+        </div>
+        <div
+          className="mono-num"
+          style={{
+            fontSize: "0.7rem", color: "var(--faint)", textAlign: "right", marginTop: 6,
+            opacity: complet ? 1 : 0,
+            transition: "opacity 0.4s ease",
+          }}
+        >
+          {conversion}
+        </div>
       </div>
     </div>
   );
@@ -355,7 +378,8 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
               title={t.feedTitle}
               count={t.feedCount}
               totalLabel={t.feedTotalLabel}
-              unit={t.feedUnit}
+              unit={t.feedPointsUnit}
+              conversion={t.feedConversion}
               entries={t.feedEntries}
             />
           </div>
@@ -431,107 +455,71 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </section>
 
-      {/* POURQUOI LES POMPES */}
+      {/* COMMENT TU PAIES — le cœur du modèle : une dette, plusieurs monnaies */}
       <section style={{
         borderTop: "1px solid var(--line)",
         padding: "96px 24px",
       }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="eyebrow" style={{ marginBottom: 18 }}>{t.whyPushupsEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 14 }}>{t.whyPushupsTitle}</h2>
-          <p style={{ fontSize: "0.97rem", color: "var(--muted)", maxWidth: 620, lineHeight: 1.7, marginBottom: 48 }}>
-            {t.whyPushupsSubtitle}
+          <p className="eyebrow" style={{ marginBottom: 18 }}>{t.payEyebrow}</p>
+          <h2 style={{ ...h2, marginBottom: 14 }}>{t.payTitle}</h2>
+          <p style={{ fontSize: "0.97rem", color: "var(--muted)", maxWidth: 660, lineHeight: 1.7, marginBottom: 34 }}>
+            {t.paySubtitle}
           </p>
 
-          <div className="wow-grid-2" style={{
-            display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 72,
+          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.payUnitLabel}</p>
+
+          {/* auto-fit : trois colonnes au large, une seule sur mobile, sans
+              media query dédiée. */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20,
           }}>
-            {t.pushupReasons.map((r, i) => (
-              <div key={r.title} className="reveal" style={{
+            {t.payModes.map((m, i) => (
+              <div key={m.name} className="reveal" style={{
                 background: "var(--carbon)",
                 border: "1px solid var(--line)",
-                borderRadius: 16, padding: "30px 28px",
+                borderRadius: 16, padding: "28px 26px",
                 transitionDelay: `${i * 100}ms`,
               }}>
-                <div style={{ marginBottom: 18 }}>
-                  <Icon name={r.icon} size={24} color={ICON_COLORS[r.icon] ?? "var(--steel)"} />
+                <div style={{ marginBottom: 16 }}>
+                  <Icon name={m.icon} size={24} color={ICON_COLORS[m.icon] ?? "var(--steel)"} />
                 </div>
                 <h3 style={{
                   fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                   fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em",
-                  fontSize: "1.25rem", color: "var(--bone)", marginBottom: 10,
+                  fontSize: "1.2rem", color: "var(--bone)", marginBottom: 6,
                 }}>
-                  {r.title}
+                  {m.name}
                 </h3>
-                <p style={{ fontSize: "0.9rem", lineHeight: 1.7, color: "var(--muted)" }}>
-                  {r.desc}
+                <p className="mono-num" style={{
+                  fontSize: "1.45rem", fontWeight: 600, color: "var(--ember)",
+                  lineHeight: 1.1, marginBottom: 14,
+                }}>
+                  {m.valeur}
+                </p>
+                <p style={{ fontSize: "0.88rem", lineHeight: 1.7, color: "var(--muted)" }}>
+                  {m.desc}
                 </p>
               </div>
             ))}
           </div>
 
-          {/* Muscles travaillés */}
-          <h3 style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-            fontWeight: 600, textTransform: "uppercase",
-            fontSize: "clamp(1.3rem, 2.2vw, 1.6rem)", color: "var(--bone)", marginBottom: 8,
+          <p style={{
+            fontSize: "0.88rem", color: "var(--muted)", lineHeight: 1.7,
+            marginTop: 22, paddingLeft: 14, borderLeft: "2px solid var(--ember)",
           }}>
-            {t.musclesTitle}
-          </h3>
-          <p style={{ fontSize: "0.9rem", color: "var(--faint)", maxWidth: 540, lineHeight: 1.65, marginBottom: 22 }}>
-            {t.musclesSubtitle}
+            {t.payShareNote}
           </p>
 
-          {/* Légende des rôles */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 18, marginBottom: 28 }}>
-            {Object.entries(t.muscleRoles).map(([role, { color, label }]) => (
-              <div key={role} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 9, height: 9, borderRadius: 2, background: color }} />
-                <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
-                  <strong style={{ color, fontWeight: 600 }}>{role}</strong> · {label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 14,
-          }}>
-            {t.pushupMuscles.map((m, i) => {
-              const c = t.muscleRoles[m.role as keyof typeof t.muscleRoles].color;
-              return (
-                <div key={m.name} className="reveal" style={{
-                  background: "var(--carbon)",
-                  border: "1px solid var(--line)",
-                  borderLeft: `3px solid ${c}`,
-                  borderRadius: 12, padding: "18px 20px",
-                  transitionDelay: `${(i % 4) * 60}ms`,
-                }}>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 4 }}>
-                    <span style={{
-                      fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-                      fontWeight: 600, fontSize: "1.02rem", color: "var(--bone)",
-                      textTransform: "uppercase", letterSpacing: "0.03em",
-                    }}>
-                      {m.name}
-                    </span>
-                  </div>
-                  <div className="mono-num" style={{ fontSize: "0.65rem", color: "var(--faint)", marginBottom: 8, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                    {m.region}
-                  </div>
-                  <p style={{ fontSize: "0.82rem", lineHeight: 1.6, color: "var(--muted)" }}>
-                    {m.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Sources */}
-          <div style={{ marginTop: 44 }}>
-            <p className="eyebrow" style={{ marginBottom: 12 }}>{t.sourcesTitle}</p>
+          {/* Sources : gardées, mais reléguées en note — elles justifient le
+              poids du corps, elles ne sont plus l'argument principal. */}
+          <div style={{ marginTop: 48 }}>
+            <p className="eyebrow" style={{ marginBottom: 6 }}>{t.sourcesTitle}</p>
+            <p style={{ fontSize: "0.8rem", color: "var(--faint)", marginBottom: 12, lineHeight: 1.6 }}>
+              {t.payFootnote}
+            </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8, maxWidth: 760 }}>
-              {t.pushupSources.map((s) => (
+              {t.paySources.map((s) => (
                 <li key={s.href} style={{ fontSize: "0.76rem", lineHeight: 1.6, color: "var(--faint)" }}>
                   <a href={s.href} target="_blank" rel="noopener noreferrer"
                     style={{ color: "var(--signal)", textDecoration: "none" }}>
@@ -543,6 +531,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </div>
       </section>
+
 
       {/* COMMENT ÇA MARCHE */}
       <section style={{
