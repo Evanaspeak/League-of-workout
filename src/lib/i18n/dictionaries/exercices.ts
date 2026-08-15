@@ -38,6 +38,10 @@ export const exercices = {
     exempleLigne: (ex: string, valeur: string) => `${ex} : ${valeur}`,
     exempleIntro: "Pour une partie perdue coûtant 38 points d'effort :",
 
+    plafondTitre: "Volume quotidien",
+    plafondAide: "Au-delà de ce volume dans la journée, l'app te prévient que tu as dépassé ce que tu t'étais fixé. Elle ne bloque rien : tu restes libre de continuer ou de t'arrêter là.",
+    plafondDesactive: "Aucun",
+    plafondValeur: (n: number) => `${n} points`,
     rappelTitle: "Rappel du compteur de boxe",
     rappelSeuilValeur: (t: string) => `À partir de ${t}`,
     rappelSeuilAide: "La boxe s'accumule au fil des parties. Passé ce temps, la pastille passe en alerte et t'envoie une notification.",
@@ -90,6 +94,10 @@ export const exercices = {
     exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
     exempleIntro: "For a lost game costing 38 effort points:",
 
+    plafondTitre: "Daily volume",
+    plafondAide: "Past this much in a single day, the app tells you you've gone beyond what you set for yourself. It blocks nothing: carrying on or stopping stays your call.",
+    plafondDesactive: "None",
+    plafondValeur: (n: number) => `${n} points`,
     rappelTitle: "Boxing counter reminder",
     rappelSeuilValeur: (t: string) => `From ${t}`,
     rappelSeuilAide: "Boxing piles up game after game. Past this much, the badge turns red and sends you a notification.",

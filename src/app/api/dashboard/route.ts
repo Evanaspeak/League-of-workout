@@ -248,6 +248,24 @@ export async function GET(req: Request) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, total]) => ({ date, total }));
 
+  /**
+   * Volume d'effort accumulé aujourd'hui, toutes activités et tous exercices
+   * confondus. Il se compare au plafond que l'utilisateur s'est fixé — un
+   * avertissement, pas une limite : la dette continue d'être calculée.
+   * Le total est délibérément indépendant des filtres, parce que ce qu'encaisse
+   * le corps ne dépend ni du jeu consulté ni de l'exercice consulté.
+   */
+  const aujourdhui = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  const pointsAujourdhui = toutesLesGames
+    .filter((g) => {
+      const d = new Date(g.date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` === aujourdhui;
+    })
+    .reduce((s, g) => s + g.pompesCalculees, 0);
+
   return NextResponse.json({
     totalGames,
     wins,
@@ -264,6 +282,8 @@ export async function GET(req: Request) {
     cumulByDate,
     statsByPeriod,
     dailyPompes,
+    pointsAujourdhui,
+    plafondQuotidien: Math.max(0, user.plafondQuotidien ?? 0),
     mostPlayed,
     leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,

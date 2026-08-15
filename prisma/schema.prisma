@@ -47,6 +47,11 @@ model User {
   dettePointsDus     Int      @default(0)
   // Seuil de rappel en SECONDES d'effort (300 = 5 min). 0 = désactivé.
   rappelSeuilSec     Int      @default(300)
+  // Volume d'effort quotidien au-delà duquel l'application prévient, en points.
+  // Ce n'est pas un plafond dur : la dette continue de se calculer, on signale
+  // seulement qu'on a dépassé ce qu'on s'était fixé pour la journée.
+  // 0 = pas d'avertissement.
+  plafondQuotidien   Int      @default(0)
 
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?

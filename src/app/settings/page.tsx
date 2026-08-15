@@ -6,11 +6,10 @@ import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
-  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT,
-  toExerciceIds, type ExerciceId,
+  EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT,
+  PLAFONDS_QUOTIDIENS, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
-import { RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT } from "@/lib/exercices";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -72,6 +71,8 @@ export default function SettingsPage() {
   const [rappelSeuil, setRappelSeuil] = useState<number>(RAPPEL_SEUIL_DEFAUT);
   // Seuil du compteur de boxe, en secondes d'effort.
   const [seuilSec, setSeuilSec] = useState<number>(RAPPEL_SEUIL_SEC_DEFAUT);
+  // Avertissement de volume quotidien, en points d'effort. 0 = désactivé.
+  const [plafond, setPlafond] = useState<number>(0);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
 
@@ -94,6 +95,7 @@ export default function SettingsPage() {
       setExercicesSel(toExerciceIds(s.user?.exercices));
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
+      setPlafond(s.user?.plafondQuotidien ?? 0);
     });
   }, []);
 
@@ -108,6 +110,23 @@ export default function SettingsPage() {
       body: JSON.stringify({
         userPrefs: { exercices: nextExercices, rappelSeuilPoints: nextSeuil },
       }),
+    });
+    setSavingExo(false);
+    if (res.ok) {
+      setSavedExo(true);
+      setTimeout(() => setSavedExo(false), 2000);
+    }
+  };
+
+  /** Enregistre l'avertissement de volume quotidien, en points d'effort. */
+  const handleSavePlafond = async (nextPlafond: number) => {
+    setPlafond(nextPlafond);
+    setSavingExo(true);
+    setSavedExo(false);
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { plafondQuotidien: nextPlafond } }),
     });
     setSavingExo(false);
     if (res.ok) {
@@ -326,6 +345,38 @@ export default function SettingsPage() {
                   {seuil === 0
                     ? tExo.rappelDesactive
                     : tExo.rappelSeuilValeur(seuil % 60 === 0 ? `${seuil / 60} min` : `${seuil} s`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Avertissement de volume quotidien */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 style={HEADING}>{tExo.plafondTitre}</h2>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+            {tExo.plafondAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {PLAFONDS_QUOTIDIENS.map((valeur) => {
+              const actif = valeur === plafond;
+              return (
+                <button
+                  key={valeur}
+                  onClick={() => handleSavePlafond(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {valeur === 0 ? tExo.plafondDesactive : tExo.plafondValeur(valeur)}
                 </button>
               );
             })}

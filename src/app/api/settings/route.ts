@@ -31,7 +31,10 @@ export async function PUT(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-    const data: { exercices?: string[]; rappelSeuilPoints?: number; rappelSeuilSec?: number } = {};
+    const data: {
+      exercices?: string[]; rappelSeuilPoints?: number;
+      rappelSeuilSec?: number; plafondQuotidien?: number;
+    } = {};
 
     if (body.userPrefs.exercices !== undefined) {
       const bruts = body.userPrefs.exercices;
@@ -57,6 +60,16 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Seuil de rappel invalide" }, { status: 400 });
       }
       data.rappelSeuilSec = Math.round(seuilSec);
+    }
+
+    // Avertissement de volume quotidien, en points d'effort. 0 le désactive.
+    // La borne haute évite un réglage qui ne préviendrait jamais.
+    if (body.userPrefs.plafondQuotidien !== undefined) {
+      const plafond = Number(body.userPrefs.plafondQuotidien);
+      if (!Number.isFinite(plafond) || plafond < 0 || plafond > 5000) {
+        return NextResponse.json({ error: "Plafond quotidien invalide" }, { status: 400 });
+      }
+      data.plafondQuotidien = Math.round(plafond);
     }
 
     if (Object.keys(data).length > 0) {
