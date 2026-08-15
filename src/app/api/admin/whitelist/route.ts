@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
+import { estAdmin } from "@/lib/admin";
 
-const ADMIN_EMAIL = "evantocquet@gmail.com";
 const CONFIG_KEY = "betaWhitelistEmails";
 
 async function getList(): Promise<string[]> {
@@ -12,13 +12,13 @@ async function getList(): Promise<string[]> {
 
 export async function GET() {
   const me = await getCurrentUser();
-  if (!me || me.email !== ADMIN_EMAIL) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  if (!me || !estAdmin(me.email)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   return NextResponse.json({ emails: await getList() });
 }
 
 export async function POST(req: Request) {
   const me = await getCurrentUser();
-  if (!me || me.email !== ADMIN_EMAIL) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  if (!me || !estAdmin(me.email)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const { email } = await req.json();
   const clean = String(email ?? "").trim().toLowerCase();
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   const me = await getCurrentUser();
-  if (!me || me.email !== ADMIN_EMAIL) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  if (!me || !estAdmin(me.email)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
   const { email } = await req.json();
   const clean = String(email ?? "").trim().toLowerCase();

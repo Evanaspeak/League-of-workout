@@ -368,8 +368,9 @@ export function AjoutActivite({
 
           {/* Tout ce qui suit est propre à League of Legends : le suivi
               automatique passe par l'API Riot, et l'ARAM du chaos est un mode
-              de ce jeu. Le cadre l'annonce, pour ne pas laisser croire que ça
-              vaut pour Minecraft ou Valorant. */}
+              de ce jeu. Sur n'importe quel autre jeu, ce bloc n'a rien à
+              proposer — il ne s'affiche donc pas. */}
+          {jeu === JEU_DEFAUT && (
           <div className="lol-panel p-4 space-y-3" style={{ borderColor: "rgba(152,162,176,0.22)" }}>
             <div>
               <h2 className="gold-text text-xs font-semibold uppercase tracking-widest">{t.lolSectionTitle}</h2>
@@ -394,6 +395,7 @@ export function AjoutActivite({
               </div>
             </div>
           </div>
+          )}
 
           {/* Manual add form */}
           {showAddForm && (

@@ -3,8 +3,8 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
+import { estAdmin } from "@/lib/admin";
 
-const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 function generatePassword(length = 12): string {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -14,7 +14,7 @@ function generatePassword(length = 12): string {
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const me = await getCurrentUser();
-  if (!me || me.email !== ADMIN_EMAIL) {
+  if (!me || !estAdmin(me.email)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

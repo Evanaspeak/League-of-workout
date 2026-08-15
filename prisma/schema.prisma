@@ -146,6 +146,11 @@ model Game {
   riotMatchId         String?
 
   @@index([userId])
+  // Une partie Riot ne peut être enregistrée qu'une fois par joueur : deux
+  // onglets ouverts ou un renvoi réseau ne doivent pas la facturer deux fois.
+  // Les parties manuelles ont riotMatchId à null, que Postgres ne contraint
+  // pas — elles restent donc librement dupliquables, ce qui est voulu.
+  @@unique([userId, riotMatchId])
 }
 
 model Goal {

@@ -8,8 +8,6 @@ import { nav as navDict } from "@/lib/i18n/dictionaries/nav";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Wordmark } from "./Wordmark";
 
-const ADMIN_EMAIL = "evantocquet@gmail.com";
-
 const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
 // Ces pages gèrent leur propre chrome (nav intégrée) : pas de double barre.
 const SELF_CHROMED = ["/", "/beta", "/recuperation"];
@@ -27,9 +25,11 @@ export default function Nav() {
   ];
 
   useEffect(() => {
-    fetch("/api/auth/session")
-      .then((r) => r.json())
-      .then((s) => { if (s?.user?.email === ADMIN_EMAIL) setIsAdmin(true); })
+    // C'est le serveur qui décide qui est administrateur : le navigateur ne
+    // connaît pas la liste des adresses.
+    fetch("/api/user")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((u) => { if (u?.estAdmin) setIsAdmin(true); })
       .catch(() => {});
   }, []);
 

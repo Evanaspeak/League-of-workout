@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { CHAMPIONS } from "@/lib/champions";
+import { estAdmin } from "@/lib/admin";
 
-const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user || user.email !== ADMIN_EMAIL) return null;
+  if (!user || !estAdmin(user.email)) return null;
   return user;
 }
 
