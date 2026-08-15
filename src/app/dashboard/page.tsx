@@ -52,6 +52,9 @@ type DashData = {
   cumulByDate: { date: string; cumul: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
   dailyPompes: { date: string; total: number }[];
+  /** Effort accumulé aujourd'hui, et seuil au-delà duquel on prévient. */
+  pointsAujourdhui?: number;
+  plafondQuotidien?: number;
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
   objectifTotalPompes: number;
@@ -320,6 +323,12 @@ export default function Dashboard() {
    */
   const jeuUnique = filtreJeu ?? (jeuxJoues.length === 1 ? jeuxJoues[0].nom : null);
 
+  // Le plafond est un avertissement, pas une limite : il se déclenche une fois
+  // franchi et n'empêche jamais d'enregistrer une partie de plus.
+  const plafondDepasse =
+    (data.plafondQuotidien ?? 0) > 0
+    && (data.pointsAujourdhui ?? 0) > (data.plafondQuotidien ?? 0);
+
   // Sur un battle royale, les rôles n'existent pas : toutes les parties
   // tombent dans la même case et le graphique ne dit rien. On le remplace par
   // la ventilation solo / duo / trio / squad, qui elle distingue vraiment.
@@ -376,6 +385,34 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      {/* Avertissement de volume quotidien. Ce n'est pas un blocage : la dette
+          reste due, on signale seulement qu'on a dépassé ce qu'on s'était fixé
+          pour la journée, et on rappelle qu'on a le droit de s'arrêter là. */}
+      {plafondDepasse && (
+        <div style={{
+          padding: "12px 16px",
+          borderRadius: 8,
+          background: "rgba(255,180,84,0.07)",
+          border: "1px solid rgba(255,180,84,0.3)",
+          display: "flex",
+          gap: 12,
+          alignItems: "flex-start",
+        }}>
+          <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: 1 }} aria-hidden>⚠️</span>
+          <div>
+            <p style={{ fontSize: "0.82rem", color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
+              {t.plafondTitre}
+            </p>
+            <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.6 }}>
+              {t.plafondCorps(
+                fmt(data.pointsAujourdhui ?? 0),
+                fmt(data.plafondQuotidien ?? 0),
+              )}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Vue d'ensemble — jamais filtrée : elle décrit toute l'activité */}
       <div className={`grid grid-cols-1 gap-3 ${aDuTemps ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>

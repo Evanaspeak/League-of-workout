@@ -58,6 +58,13 @@ export const RAPPEL_SEUILS = [0, 45, 90, 135] as const;
 export const RAPPEL_SEUILS_SEC = [0, 120, 300, 600, 900] as const;
 export const RAPPEL_SEUIL_SEC_DEFAUT = 300;
 
+/**
+ * Paliers proposés pour l'avertissement de volume quotidien, en points
+ * d'effort. 0 le désactive. Ce n'est jamais une limite dure : la dette reste
+ * due, on signale seulement qu'on a dépassé ce qu'on s'était fixé.
+ */
+export const PLAFONDS_QUOTIDIENS = [0, 100, 200, 300, 500] as const;
+
 export function isExerciceId(v: unknown): v is ExerciceId {
   return typeof v === "string" && v in EXERCICES;
 }

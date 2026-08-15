@@ -24,6 +24,9 @@ export const dashboard = {
     colTemps: "Temps de jeu",
     sansObjet: "—",
     syntheseDe: (jeu: string) => `Synthèse — ${jeu}`,
+    plafondTitre: "Tu as dépassé ton volume du jour",
+    plafondCorps: (fait: string, seuil: string) =>
+      `${fait} accumulés aujourd'hui, pour un objectif de ${seuil}. Rien ne t'oblige à continuer : tu peux t'arrêter là et reprendre demain, ou poursuivre si tu te sens bien.`,
     railAjoutSurtitre: "Tu viens de jouer ?",
     railAjoutTitre: "Ajouter une partie",
     railSessionGames: (n: number, dette: string) => `${n} ${n > 1 ? "parties" : "partie"} · ${dette}`,
@@ -114,6 +117,9 @@ export const dashboard = {
     colTemps: "Playtime",
     sansObjet: "—",
     syntheseDe: (jeu: string) => `Summary — ${jeu}`,
+    plafondTitre: "You're past your daily volume",
+    plafondCorps: (fait: string, seuil: string) =>
+      `${fait} racked up today, against a target of ${seuil}. Nothing says you have to keep going: you can stop here and pick it up tomorrow, or carry on if you feel good.`,
     railAjoutSurtitre: "Just played?",
     railAjoutTitre: "Add a game",
     railSessionGames: (n: number, dette: string) => `${n} ${n > 1 ? "games" : "game"} · ${dette}`,
