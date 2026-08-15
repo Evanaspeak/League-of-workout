@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
+import { calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
@@ -94,6 +94,24 @@ export async function POST(req: Request) {
       repartition: repartirPoints(scoringBr.pompesFinales, selection),
       placement,
       joueurs,
+    });
+  }
+
+  // Rocket League : trois statistiques positives, aucune qui pénalise.
+  if (capacites.rl) {
+    const scoringRl = calcScoreRocketLeague({
+      buts: Number(body.kills) || 0,
+      arrets: Number(body.arrets) || 0,
+      passes: Number(body.assists) || 0,
+      result: body.result === "V" ? "V" : "D",
+      gainageSec, roleWeights, levelConfigs,
+    });
+    return NextResponse.json({
+      scoring: scoringRl,
+      partiesAvant: 0,
+      gainageSec,
+      exercice,
+      repartition: repartirPoints(scoringRl.pompesFinales, selection),
     });
   }
 

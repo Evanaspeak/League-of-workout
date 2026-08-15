@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore, calcScoreBattleRoyale, calcScoreTemps, profilNeutre } from "@/lib/scoring";
+import { calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
@@ -125,9 +125,12 @@ export async function POST(req: Request) {
   // obligatoires.
   const role = capacites.roles && body.role ? String(body.role) : "—";
   // Un battle royale compte ses éliminations, mais ni morts ni assists.
-  const kills = capacites.kda || capacites.br ? Number(body.kills) || 0 : 0;
+  // Sur Rocket League, `kills` porte les buts et `assists` les passes : les
+  // trois statistiques sont positives, aucune ne creuse la dette.
+  const kills = capacites.kda || capacites.br || capacites.rl ? Number(body.kills) || 0 : 0;
   const deaths = capacites.kda ? Number(body.deaths) || 0 : 0;
-  const assists = capacites.kda ? Number(body.assists) || 0 : 0;
+  const assists = capacites.kda || capacites.rl ? Number(body.assists) || 0 : 0;
+  const arrets = capacites.rl ? Math.max(0, Number(body.arrets) || 0) : null;
   const champion = capacites.champions && body.champion ? String(body.champion) : null;
 
   // Battle royale : la place finale remplace le compteur de morts, et la
@@ -143,6 +146,11 @@ export async function POST(req: Request) {
 
   const scoring = capacites.br && placement !== null && joueurs !== null
     ? calcScoreBattleRoyale({ placement, joueurs, kills, gainageSec, roleWeights, levelConfigs })
+    : capacites.rl
+    ? calcScoreRocketLeague({
+        buts: kills, arrets: arrets ?? 0, passes: assists,
+        result: resultat, gainageSec, roleWeights, levelConfigs,
+      })
     : calcScore({
         kills,
         deaths,
@@ -179,6 +187,7 @@ export async function POST(req: Request) {
       typeJeu,
       placement,
       joueurs,
+      arrets,
       source: body.source || "manuel",
       riotMatchId: body.riotMatchId || null,
     },

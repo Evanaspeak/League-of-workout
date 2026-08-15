@@ -147,6 +147,9 @@ model Game {
   // n'y veulent rien dire — c'est le classement qui fait la performance.
   placement           Int?
   joueurs             Int?
+  // Rocket League : arrêts. Les buts vont dans `kills` et les passes dans
+  // `assists`, qui jouent le même rôle ; il manquait une troisième case.
+  arrets              Int?
   source              String   @default("manuel") // manuel | riot_api
   riotMatchId         String?
 
