@@ -311,10 +311,19 @@ export default function Dashboard() {
       : pompes,
   }));
 
+  /**
+   * Le jeu que la page décrit réellement. Les statistiques par rôle et par
+   * champion n'ont de sens que sur un seul jeu — mais ne pas filtrer ne veut
+   * pas dire « plusieurs jeux » : quand on n'en a joué qu'un, « tous les jeux »
+   * désigne celui-là. Sans cette nuance, quelqu'un qui ne joue qu'à League ne
+   * voyait jamais ses champions, faute de filtre à cliquer.
+   */
+  const jeuUnique = filtreJeu ?? (jeuxJoues.length === 1 ? jeuxJoues[0].nom : null);
+
   // Sur un battle royale, les rôles n'existent pas : toutes les parties
   // tombent dans la même case et le graphique ne dit rien. On le remplace par
   // la ventilation solo / duo / trio / squad, qui elle distingue vraiment.
-  const estBattleRoyale = filtreJeu !== null && capacitesDuJeu(filtreJeu).br;
+  const estBattleRoyale = jeuUnique !== null && capacitesDuJeu(jeuUnique).br;
   const modeData = Object.entries(data.pompesByMode ?? {})
     .map(([taille, pompes]) => ({
       taille: Number(taille),
@@ -945,14 +954,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Rôles et champions n'existent que sur League : on les regroupe sous
-          leur propre titre plutôt que de les laisser passer pour des stats
-          générales. */}
-      {filtreJeu !== null && (repartitionData.length > 0 || data.mostPlayed || data.leastEfficient) && (
+      {/* Rôles et champions ne veulent dire quelque chose que rapportés à un
+          seul jeu : on les regroupe sous son nom plutôt que de les laisser
+          passer pour des statistiques générales. */}
+      {jeuUnique !== null && (repartitionData.length > 0 || data.mostPlayed || data.leastEfficient) && (
         <div className="space-y-3">
           <div>
             <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
-              {t.syntheseDe(filtreJeu)}
+              {t.syntheseDe(jeuUnique)}
             </h2>
             <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.35)" }}>
               {estBattleRoyale ? t.sectionBrDesc : t.sectionLeagueDesc}
