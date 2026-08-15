@@ -114,7 +114,7 @@ export const landing = {
 
     benefitsEyebrow: "Pourquoi s'y mettre",
     benefitsTitle: "L'exercice améliore ton jeu",
-    benefitsSubtitle: "Ce n'est pas juste de la santé. C'est un avantage compétitif.",
+    benefitsSubtitle: "Accessoirement, ça te fait jouer mieux.",
     benefits: [
       {
         icon: "zap",
@@ -273,7 +273,7 @@ export const landing = {
 
     benefitsEyebrow: "Why bother",
     benefitsTitle: "Exercise makes you play better",
-    benefitsSubtitle: "This isn't just about health. It's a competitive edge.",
+    benefitsSubtitle: "It also happens to make you play better.",
     benefits: [
       {
         icon: "zap",

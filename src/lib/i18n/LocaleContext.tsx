@@ -11,9 +11,17 @@ const LocaleContext = createContext<Ctx | null>(null);
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("fr");
 
+  // Un choix explicite prime toujours. À défaut, on suit la langue du
+  // navigateur : le français par défaut envoyait tout le monde sur la version
+  // française, y compris des anglophones qui n'avaient rien demandé.
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "fr" || stored === "en") setLocaleState(stored);
+    if (stored === "fr" || stored === "en") {
+      setLocaleState(stored);
+      return;
+    }
+    const navigateur = (navigator.language || "").toLowerCase();
+    setLocaleState(navigateur.startsWith("fr") ? "fr" : "en");
   }, []);
 
   useEffect(() => {
