@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { estAdmin } from "@/lib/admin";
 
 export async function GET() {
   await seedDefaults();
@@ -10,6 +11,9 @@ export async function GET() {
   // Le hash du mot de passe ne doit jamais quitter le serveur.
   const safeUser: Record<string, unknown> = { ...user };
   delete safeUser.passwordHash;
+  // Le navigateur ne connaît pas la liste des administrateurs : c'est le
+  // serveur qui tranche, et le client se contente d'afficher ou non le lien.
+  safeUser.estAdmin = estAdmin(user.email);
   return NextResponse.json(safeUser);
 }
 

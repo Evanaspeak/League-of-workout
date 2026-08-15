@@ -5,14 +5,14 @@ import AdminUserList from "./AdminUserList";
 import AdminTools from "./AdminTools";
 import AdminSeuilDette from "./AdminSeuilDette";
 import AdminHeader from "./AdminHeader";
+import { estAdmin } from "@/lib/admin";
 
-const ADMIN_EMAIL = "evantocquet@gmail.com";
 
 export const metadata = { title: "Admin — Win or Workout" };
 
 export default async function AdminPage() {
   const user = await getCurrentUser();
-  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  if (!user || !estAdmin(user.email)) redirect("/");
 
   return (
     <div className="space-y-6">
