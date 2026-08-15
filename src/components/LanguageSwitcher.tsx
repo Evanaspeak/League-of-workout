@@ -3,12 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 
 /**
- * Le code de langue, pas un drapeau : l'anglais n'est pas que britannique et
- * le français pas que français. Un drapeau désigne un pays, jamais une langue.
+ * Drapeau et code de langue côte à côte. Le code prime : c'est lui qui nomme
+ * la langue (EN, pas GB — l'anglais n'est pas un pays). Le drapeau ne sert
+ * qu'à repérer l'option d'un coup d'œil.
  */
-const OPTIONS: { code: "fr" | "en"; label: string }[] = [
-  { code: "fr", label: "Français" },
-  { code: "en", label: "English" },
+const OPTIONS: { code: "fr" | "en"; flag: string; label: string }[] = [
+  { code: "fr", flag: "🇫🇷", label: "Français" },
+  { code: "en", flag: "🇺🇸", label: "English" },
 ];
 
 export function LanguageSwitcher() {
@@ -42,6 +43,7 @@ export function LanguageSwitcher() {
           fontSize: "0.85rem",
         }}
       >
+        <span style={{ lineHeight: 1 }}>{current.flag}</span>
         <span style={{
           lineHeight: 1,
           fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -88,6 +90,7 @@ export function LanguageSwitcher() {
                 textAlign: "left",
               }}
             >
+              <span>{o.flag}</span>
               <span style={{
                 fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                 fontWeight: 600,
