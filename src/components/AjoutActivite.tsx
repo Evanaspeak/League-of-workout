@@ -114,6 +114,8 @@ export function AjoutActivite({
   // Battle royale : place finale et taille de la partie (modifiable pour les
   // modes en équipe, où le classement porte sur les escouades).
   const [placement, setPlacement] = useState("");
+  // Rocket League : arrêts, à côté des buts et des passes décisives.
+  const [arrets, setArrets] = useState("");
   // Taille d'équipe du mode joué (1 = solo, 4 = squad). Mémorisée d'une partie
   // sur l'autre : on ne change pas de mode à chaque game.
   const [tailleEquipe, setTailleEquipe] = useState(1);
@@ -230,6 +232,13 @@ export function AjoutActivite({
                 assists: Number(addForm.assists) || 0,
               }
             : {}),
+          ...(capacites.rl
+            ? {
+                kills: Number(addForm.kills) || 0,
+                arrets: Number(arrets) || 0,
+                assists: Number(addForm.assists) || 0,
+              }
+            : {}),
           ...(capacites.br
             ? {
                 placement: Number(placement) || 0,
@@ -273,6 +282,7 @@ export function AjoutActivite({
       setAddLogged(true);
       setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
       setPlacement("");
+      setArrets("");
     } else {
       const err = await res.json().catch(() => ({}));
       setAddError(err.error ? translateApiError(err.error, locale) : t.logError);
@@ -531,6 +541,31 @@ export function AjoutActivite({
                     />
                   </div>
                 </div>
+              )}
+
+              {capacites.rl && (
+              <div className="grid grid-cols-3 gap-3">
+                {([
+                  ["kills", t.buts],
+                  ["arrets", t.arrets],
+                  ["assists", t.passes],
+                ] as const).map(([champ, libelle]) => (
+                  <div key={champ}>
+                    <label htmlFor={`ajout-rl-${champ}`} className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                      {libelle}
+                    </label>
+                    <input
+                      id={`ajout-rl-${champ}`}
+                      type="number" min="0" className="lol-input text-center"
+                      value={champ === "arrets" ? arrets : addForm[champ]}
+                      onChange={(e) => {
+                        if (champ === "arrets") setArrets(e.target.value);
+                        else setAddForm((f) => ({ ...f, [champ]: e.target.value }));
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
               )}
 
               {capacites.kda && (

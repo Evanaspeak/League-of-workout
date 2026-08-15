@@ -30,6 +30,12 @@ export type JeuDef = {
    * final et le nombre d'éliminations.
    */
   br?: boolean;
+  /**
+   * Rocket League : la partie se juge aux buts, arrêts et passes décisives.
+   * Aucune de ces trois statistiques ne pénalise — seule la défaite coûte,
+   * et ce qu'on a produit la rachète.
+   */
+  rl?: boolean;
   /** Nombre de joueurs dans une partie, tous modes confondus. */
   joueurs?: number;
   /**
@@ -50,8 +56,12 @@ export const JEUX: JeuDef[] = [
   { nom: "Call of Duty", type: "parties", kda: true },
   // Ni l'un ni l'autre ne se juge au KDA : buts et placement ne s'y ramènent
   // pas. Seul le résultat compte.
-  { nom: "Rocket League", type: "parties" },
-  { nom: "Teamfight Tactics", type: "parties" },
+  // Rocket League n'a ni mort ni classement : buts, arrêts et passes rachètent
+  // une défaite, rien ne la creuse.
+  { nom: "Rocket League", type: "parties", rl: true },
+  // TFT se joue à huit et se termine par une place de 1 à 8 : c'est un
+  // battle royale, avec une seule équipe par joueur.
+  { nom: "Teamfight Tactics", type: "parties", br: true, joueurs: 8, modes: [1] },
   { nom: "Minecraft", type: "temps" },
   { nom: "World of Warcraft", type: "temps" },
   { nom: "Grand Theft Auto V", type: "temps" },
@@ -64,6 +74,8 @@ export type CapacitesJeu = {
   champions: boolean;
   kda: boolean;
   br: boolean;
+  /** Buts, arrêts et passes décisives à la place du KDA. */
+  rl: boolean;
   /** Nombre de joueurs dans une partie de ce jeu. */
   joueurs: number;
   /** Modes d'équipe proposés, en joueurs par équipe. */
@@ -112,8 +124,9 @@ export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unkn
       roles: !!def.roles,
       champions: !!def.champions,
       // Un battle royale se saisit au classement, pas au KDA.
-      kda: !!def.kda && !def.br,
+      kda: !!def.kda && !def.br && !def.rl,
       br: !!def.br,
+      rl: !!def.rl,
       joueurs: def.joueurs ?? JOUEURS_DEFAUT,
       modes: def.modes ?? MODES_DEFAUT,
     };
@@ -124,6 +137,7 @@ export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unkn
     champions: false,
     kda: toTypeJeu(typeFourni) === "parties",
     br: false,
+    rl: false,
     joueurs: JOUEURS_DEFAUT,
     modes: MODES_DEFAUT,
   };

@@ -134,6 +134,53 @@ export type ScoringBrInput = {
  * continue, un malus binaire ferait double emploi et punirait autant un top 2
  * qu'un joueur mort dans les premières secondes.
  */
+/**
+ * Rocket League n'a aucune statistique qui pénalise : pas de morts, pas de
+ * classement. Ce qui coûte, c'est la défaite ; ce qui rachète, c'est ce qu'on
+ * a produit — buts, arrêts, passes décisives.
+ *
+ * L'échelle est exprimée en « morts équivalentes » comme pour les battle
+ * royale, afin qu'une défaite y coûte le même ordre de grandeur qu'ailleurs.
+ * Les trois coefficients ci-dessous sont un point de départ à valider sur le
+ * terrain : un but pèse plus qu'un arrêt, qui pèse plus qu'une passe.
+ */
+export const ECHELLE_RL = 5;
+export const RL_POIDS = { but: 1.5, arret: 1.0, passe: 0.75 } as const;
+
+export type ScoringRocketInput = {
+  buts: number;
+  arrets: number;
+  passes: number;
+  result: "V" | "D";
+  gainageSec: number;
+  roleWeights: RoleWeights;
+  levelConfigs: LevelCfg[];
+};
+
+export function calcScoreRocketLeague(input: ScoringRocketInput): ScoringResult {
+  const { buts, arrets, passes, result, gainageSec, roleWeights, levelConfigs } = input;
+  const levelCfg = getLevel(gainageSec, levelConfigs);
+
+  // Une victoire ne coûte rien d'office : seule la défaite ouvre une dette.
+  const base = result === "D" ? ECHELLE_RL * roleWeights.poidsMort : 0;
+
+  const produit =
+    Math.max(0, buts) * RL_POIDS.but * roleWeights.poidsKill
+    + Math.max(0, arrets) * RL_POIDS.arret * roleWeights.poidsKill
+    + Math.max(0, passes) * RL_POIDS.passe * roleWeights.poidsAssist;
+
+  const scoreBase = Math.round(Math.max(0, base - produit) * levelCfg.multiplicateur);
+
+  return {
+    niveau: levelCfg.niveau,
+    multiplicateur: levelCfg.multiplicateur,
+    scoreBase,
+    malus: 0,
+    surcharge: 0,
+    pompesFinales: scoreBase,
+  };
+}
+
 export function calcScoreBattleRoyale(input: ScoringBrInput): ScoringResult {
   const { placement, joueurs, kills, gainageSec, roleWeights, levelConfigs } = input;
 

@@ -81,6 +81,9 @@ export const history = {
     // ── Battle royale ──
     placementLabel: "Classement",
     placementSur: "sur",
+    buts: "Buts",
+    arrets: "Arrêts",
+    passes: "Passes décisives",
     eliminations: "Éliminations",
     placementInvalide: "Indique ta place finale.",
     modeLabel: "Mode",
@@ -173,6 +176,9 @@ export const history = {
 
     placementLabel: "Placement",
     placementSur: "of",
+    buts: "Goals",
+    arrets: "Saves",
+    passes: "Assists",
     eliminations: "Eliminations",
     placementInvalide: "Enter your final placement.",
     modeLabel: "Mode",
