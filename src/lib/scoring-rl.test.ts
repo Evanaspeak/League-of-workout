@@ -13,10 +13,11 @@ const NIVEAUX = [
   { niveau: 5, seuilGainageSec: 9999, multiplicateur: 4.67, malusDefaite: 20 },
 ];
 
+// profilNeutre ne moyenne que les poids : le nom du rôle ne lui sert à rien.
 const NEUTRE = profilNeutre([
-  { role: "Top", poidsMort: 3.0, poidsKill: 1.2, poidsAssist: 0.8, maitriseActive: true },
-  { role: "Jungle", poidsMort: 3.0, poidsKill: 1.0, poidsAssist: 1.0, maitriseActive: true },
-  { role: "Support", poidsMort: 2.2, poidsKill: 0.6, poidsAssist: 1.6, maitriseActive: true },
+  { poidsMort: 3.0, poidsKill: 1.2, poidsAssist: 0.8, maitriseActive: true },
+  { poidsMort: 3.0, poidsKill: 1.0, poidsAssist: 1.0, maitriseActive: true },
+  { poidsMort: 2.2, poidsKill: 0.6, poidsAssist: 1.6, maitriseActive: true },
 ])!;
 
 const cout = (

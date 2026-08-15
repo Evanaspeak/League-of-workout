@@ -2,9 +2,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 
-const OPTIONS: { code: "fr" | "en"; flag: string; label: string }[] = [
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-  { code: "en", flag: "🇬🇧", label: "English" },
+/**
+ * Le code de langue, pas un drapeau : l'anglais n'est pas que britannique et
+ * le français pas que français. Un drapeau désigne un pays, jamais une langue.
+ */
+const OPTIONS: { code: "fr" | "en"; label: string }[] = [
+  { code: "fr", label: "Français" },
+  { code: "en", label: "English" },
 ];
 
 export function LanguageSwitcher() {
@@ -38,7 +42,16 @@ export function LanguageSwitcher() {
           fontSize: "0.85rem",
         }}
       >
-        <span style={{ lineHeight: 1 }}>{current.flag}</span>
+        <span style={{
+          lineHeight: 1,
+          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+          fontWeight: 600,
+          fontSize: "0.78rem",
+          letterSpacing: "0.1em",
+          color: "var(--bone)",
+        }}>
+          {current.code.toUpperCase()}
+        </span>
         <span style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>▾</span>
       </button>
 
@@ -75,7 +88,16 @@ export function LanguageSwitcher() {
                 textAlign: "left",
               }}
             >
-              <span>{o.flag}</span>
+              <span style={{
+                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontWeight: 600,
+                fontSize: "0.72rem",
+                letterSpacing: "0.1em",
+                width: 22,
+                color: o.code === locale ? "var(--amber)" : "rgba(236,239,244,0.45)",
+              }}>
+                {o.code.toUpperCase()}
+              </span>
               <span>{o.label}</span>
             </button>
           ))}
