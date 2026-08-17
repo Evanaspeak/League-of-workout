@@ -43,7 +43,7 @@ type Scoring = {
 };
 
 type PreviewResult = {
-  scoring: Scoring; partiesAvant: number; gainageSec: number; exercice?: ExerciceId;
+  scoring: Scoring; partiesAvant: number; exercice?: ExerciceId;
   placement?: number; joueurs?: number;
   /** Ce qu'il y aura à faire, exercice par exercice. */
   repartition?: Repartition;

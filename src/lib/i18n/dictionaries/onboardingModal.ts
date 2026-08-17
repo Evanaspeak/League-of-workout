@@ -13,8 +13,8 @@ export const onboardingModal = {
       },
       {
         icon: "layers",
-        title: "Le test de gainage",
-        body: "Avant de jouer, tu tiens la planche le plus longtemps possible. Ce chrono fixe ton niveau, et ton niveau multiplie l'addition.\n\nOui, ça veut dire que plus tu es en forme, plus tu paies cher. C'est fait exprès.",
+        title: "Le test de force",
+        body: "Une fois, tu fais autant de pompes que tu peux d'affilée. Ce chiffre fixe ton niveau, et ton niveau multiplie l'addition. À refaire une fois par mois, pas à chaque partie.\n\nOui, ça veut dire que plus tu es en forme, plus tu paies cher. C'est fait exprès.",
       },
       {
         icon: "heart",
@@ -45,8 +45,8 @@ export const onboardingModal = {
       },
       {
         icon: "layers",
-        title: "The plank test",
-        body: "Before you play, you hold a plank for as long as you can. That time sets your level, and your level multiplies the bill.\n\nYes, the fitter you are, the more you pay. That's on purpose.",
+        title: "The strength test",
+        body: "Once, you do as many push-ups as you can in a row. That number sets your level, and your level multiplies the bill. Retake it once a month, not before every match.\n\nYes, the fitter you are, the more you pay. That's on purpose.",
       },
       {
         icon: "heart",

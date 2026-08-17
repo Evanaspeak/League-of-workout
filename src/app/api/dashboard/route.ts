@@ -318,7 +318,6 @@ export async function GET(req: Request) {
     mostPlayed,
     leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,
-    niveau: user?.gainageMaxSec ?? 45,
     // Exercices sélectionnés : servent à convertir les points d'effort à
     // l'affichage et à ventiler les totaux.
     exercices: toExerciceIds(user?.exercices),

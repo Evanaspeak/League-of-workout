@@ -10,7 +10,7 @@ type UserStat = {
   betaRank: number | null;
   riotId: string | null;
   riotRegion: string;
-  gainageMaxSec: number;
+  pompesMax: number;
   createdAt: string;
   genre: string | null;
   age: number | null;
@@ -31,7 +31,7 @@ type UserStat = {
 };
 
 type RoleWeight = { role: string; poidsMort: number; poidsKill: number; poidsAssist: number; maitriseActive: boolean };
-type LevelConfig = { niveau: number; seuilGainageSec: number; multiplicateur: number; malusDefaite: number };
+type LevelConfig = { niveau: number; seuilPompes: number; multiplicateur: number; malusDefaite: number };
 type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 
 type ScoringConfig = {
@@ -203,11 +203,11 @@ export default function AdminUserList() {
                   )}
                 </div>
 
-                {/* Gainage & niveau */}
+                {/* Test de force & niveau */}
                 <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.plankSettings}</SectionTitle>
                   <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-                    <Stat label={t.plankMax} value={`${u.gainageMaxSec}s`} />
+                    <Stat label={t.plankMax} value={String(u.pompesMax)} />
                     <Stat label={t.currentLevel} value={u.niveauActuel != null ? t.levelAbrev(u.niveauActuel) : "—"} />
                     <Stat label={t.multiplier} value={u.multiplicateur != null ? `×${u.multiplicateur}` : "—"} />
                     <Stat label={t.lossPenalty} value={u.malusDefaite != null ? `${u.malusDefaite} ${t.pompesUnit}` : "—"} />
@@ -239,7 +239,7 @@ export default function AdminUserList() {
                                   {t.levelAbrev(l.niveau)}{l.niveau === u.niveauActuel ? " ◀" : ""}
                                 </span>
                               </td>
-                              <td style={tdStyle}>{l.seuilGainageSec === 9999 ? "∞" : `${l.seuilGainageSec}s`}</td>
+                              <td style={tdStyle}>{l.niveau === 5 ? "∞" : l.seuilPompes}</td>
                               <td style={tdStyle}>×{l.multiplicateur}</td>
                               <td style={tdStyle}>{l.malusDefaite} {t.pompesUnit}</td>
                             </tr>

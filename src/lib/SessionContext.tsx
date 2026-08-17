@@ -14,7 +14,7 @@ const CHRONO_MIN_SEC = 30;
 /** Une session chronométrée survit à un rechargement de page. */
 const CHRONO_STORAGE_KEY = "wow-chrono-session";
 
-type ChronoSauvegarde = { jeu: string; debut: number; gainageSec: number };
+type ChronoSauvegarde = { jeu: string; debut: number; niveau: number };
 // Délai après la fin d'une partie (détectée nativement par l'app desktop) avant
 // d'interroger l'API Riot — le match met quelques secondes à y apparaître.
 const POST_GAME_DELAY_MS = 20 * 1000;
@@ -35,9 +35,9 @@ type SessionCtx = {
   sessionError: string;
   polling: boolean;
   countdown: number;
-  sessionLevel: string;
-  gainageSec: number;
-  startSession: (gainageSec: number, jeu?: string) => Promise<void>;
+  /** Niveau du joueur (1-5), issu de son test de force. 0 = pas encore connu. */
+  sessionNiveau: number;
+  startSession: (niveau: number, jeu?: string) => Promise<void>;
   stopSession: () => void;
   // ── Session au temps (jeux sans victoire ni défaite) ──
   /** Nature de la session en cours : parties suivies, ou chrono. */
@@ -64,22 +64,13 @@ type SessionCtx = {
 
 const SessionContext = createContext<SessionCtx | null>(null);
 
-function getLevelLabel(sec: number): string {
-  if (sec <= 45) return "Niveau 1";
-  if (sec <= 90) return "Niveau 2";
-  if (sec <= 150) return "Niveau 3";
-  if (sec <= 240) return "Niveau 4";
-  return "Niveau 5";
-}
-
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionGames, setSessionGames] = useState<SessionGame[]>([]);
   const [sessionError, setSessionError] = useState("");
   const [polling, setPolling] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [sessionLevel, setSessionLevel] = useState("");
-  const [gainageSec, setGainageSec] = useState(60);
+  const [sessionNiveau, setSessionNiveau] = useState(0);
 
   // ── Session au temps ──
   const [typeSession, setTypeSession] = useState<TypeJeu>("parties");
@@ -99,7 +90,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const gainageRef = useRef<number>(60);
   const baselineRef = useRef<string | null>(null);
   const sessionActiveRef = useRef(false);
 
@@ -228,7 +218,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           jeu: jeuSessionRef.current,
           typeJeu: "temps",
           dureeSec,
-          gainageSec: gainageRef.current,
           exercices: selection,
           source: "manuel",
         }),
@@ -272,7 +261,6 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           result: riotData.result,
           source: "riot_api",
           riotMatchId: riotData.matchId,
-          gainageSec: gainageRef.current,
         }),
       });
       if (logRes.ok) {
@@ -305,12 +293,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setPolling(false);
   }, [stopSession]);
 
-  const startSession = useCallback(async (sec: number, jeu: string = JEU_DEFAUT) => {
+  const startSession = useCallback(async (niveau: number, jeu: string = JEU_DEFAUT) => {
     const type = typeDuJeu(jeu);
 
-    gainageRef.current = sec;
-    setGainageSec(sec);
-    setSessionLevel(getLevelLabel(sec));
+    setSessionNiveau(niveau);
     setSessionActive(true);
     setSessionGames([]);
     setSessionError("");
@@ -355,7 +341,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch("/api/games/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jeu, typeJeu: "temps", dureeSec: 3600, gainageSec: sec }),
+          body: JSON.stringify({ jeu, typeJeu: "temps", dureeSec: 3600 }),
         });
         if (res.ok) {
           const { scoring } = await res.json();
@@ -366,7 +352,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const debut = Date.now();
       chronoDebutRef.current = debut;
       if (typeof window !== "undefined") {
-        const sauvegarde: ChronoSauvegarde = { jeu, debut, gainageSec: sec };
+        const sauvegarde: ChronoSauvegarde = { jeu, debut, niveau };
         localStorage.setItem(CHRONO_STORAGE_KEY, JSON.stringify(sauvegarde));
       }
       lancerTickChrono();
@@ -424,10 +410,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     let annule = false;
     (async () => {
-      const sec = Number(sauvegarde.gainageSec) || 60;
-      gainageRef.current = sec;
-      setGainageSec(sec);
-      setSessionLevel(getLevelLabel(sec));
+      setSessionNiveau(Number(sauvegarde.niveau) || 0);
       setTypeSession("temps");
       typeSessionRef.current = "temps";
       setJeuSession(sauvegarde.jeu);
@@ -452,7 +435,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch("/api/games/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jeu: sauvegarde.jeu, typeJeu: "temps", dureeSec: 3600, gainageSec: sec }),
+          body: JSON.stringify({ jeu: sauvegarde.jeu, typeJeu: "temps", dureeSec: 3600 }),
         });
         if (res.ok) {
           const { scoring } = await res.json();
@@ -478,7 +461,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   return (
     <SessionContext.Provider value={{
       sessionActive, sessionGames, sessionError,
-      polling, countdown, sessionLevel, gainageSec,
+      polling, countdown, sessionNiveau,
       startSession, stopSession,
       typeSession, jeuSession, chronoSec, chronoErreur, arreterChrono,
       dettePoints, rappelActif, exercice, acquitterRappel, reporterRappel,
