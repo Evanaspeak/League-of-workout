@@ -1,7 +1,7 @@
 {
-  "name": "league-of-workouts-desktop",
-  "version": "0.2.0",
-  "description": "App desktop + overlay pour League of Workouts",
+  "name": "win-or-workout-desktop",
+  "version": "0.3.0",
+  "description": "App desktop + overlay pour Win or Workout",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
   "license": "UNLICENSED",
@@ -14,17 +14,24 @@
     "electron-builder": "^25.0.0"
   },
   "build": {
-    "appId": "com.leagueofworkouts.desktop",
-    "productName": "League of Workouts",
+    "appId": "com.winorworkout.desktop",
+    "productName": "Win or Workout",
     "files": [
       "src/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Win or Workout",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "directories": {
+      "buildResources": "build"
     }
   }
 }

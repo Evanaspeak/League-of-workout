@@ -11,12 +11,15 @@ export function LoginClient({
   betaPending,
   betaRejected,
   transferred,
+  transfertEchec,
   deleted,
 }: {
   betaFull: boolean;
   betaPending: boolean;
   betaRejected: boolean;
   transferred?: string;
+  /** Le transfert de session vers l'app desktop a échoué : "token" | "reseau". */
+  transfertEchec?: string;
   deleted?: string;
 }) {
   const t = useT(loginDict);
@@ -39,6 +42,33 @@ export function LoginClient({
       background: "linear-gradient(90deg, transparent 15%, var(--ember) 50%, transparent 85%)",
     }} />
   );
+
+  // L'app desktop n'a pas reçu la session : le dire, plutôt que de laisser
+  // croire à une réussite pendant que l'application reste déconnectée.
+  if (transfertEchec) {
+    return (
+      <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ ...card, maxWidth: 360 }}>
+          {topSlash}
+          <div style={{ fontSize: "2rem", color: "var(--loss)", marginBottom: "1rem" }}>✕</div>
+          <p style={{
+            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontWeight: 600,
+            fontSize: "1.15rem",
+            color: "var(--bone)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            marginBottom: "0.75rem",
+          }}>
+            {t.transfertEchecTitle}
+          </p>
+          <p style={{ fontSize: "0.84rem", color: "var(--muted)", lineHeight: 1.65 }}>
+            {t.transfertEchecBody}<br />{t.transfertEchecAide}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (transferred === "1") {
     return (

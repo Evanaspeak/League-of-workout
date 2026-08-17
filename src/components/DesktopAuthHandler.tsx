@@ -12,10 +12,18 @@ export function DesktopAuthHandler() {
     // Ne s'exécute que si Electron a ouvert Chrome avec ?_desktop=1.
     if (!localStorage.getItem("low_desktop_handoff")) return;
 
+    // Un échec ici laissait l'utilisateur sur un dashboard d'apparence normale
+    // pendant que l'application restait déconnectée, sans rien pour le dire.
+    // On le nomme, sinon la panne est indiscernable d'une réussite.
+    const echouer = (raison: string) => {
+      localStorage.removeItem("low_desktop_handoff");
+      window.location.assign(`/login?transfer_error=${raison}`);
+    };
+
     fetch("/api/auth/desktop-token", { method: "POST" })
-      .then((r) => (r.ok ? r.json() : null))
+      .then(async (r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (!data?.jwt) return;
+        if (!data?.jwt) return echouer("token");
         // Nettoie le flag avant de naviguer pour éviter toute boucle.
         localStorage.removeItem("low_desktop_handoff");
         // Navigate instead of fetch — bypasses Chrome CORS/Private Network Access
@@ -24,7 +32,7 @@ export function DesktopAuthHandler() {
           `http://localhost:3099/set-session?t=${encodeURIComponent(data.jwt)}`
         );
       })
-      .catch(() => {});
+      .catch(() => echouer("reseau"));
   }, []);
 
   return null;

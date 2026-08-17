@@ -39,7 +39,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('desktop-v{0}', inputs.version) || github.ref_name }}
-          name: ${{ github.event_name == 'workflow_dispatch' && format('League of Workouts v{0}', inputs.version) || format('League of Workouts {0}', github.ref_name) }}
+          name: ${{ github.event_name == 'workflow_dispatch' && format('Win or Workout v{0}', inputs.version) || format('Win or Workout {0}', github.ref_name) }}
           files: desktop/dist/*.exe
           generate_release_notes: false
           body: |
@@ -49,6 +49,6 @@ jobs:
 
             1. Téléchargez le fichier `.exe` ci-dessous
             2. Lancez l'installeur et suivez les étapes
-            3. Connectez-vous avec votre compte League of Workouts
+            3. Connectez-vous avec votre compte Win or Workout
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
