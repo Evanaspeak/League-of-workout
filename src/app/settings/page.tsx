@@ -10,6 +10,7 @@ import {
   PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
+import { ReglageNotifications } from "@/components/ReglageNotifications";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -404,6 +405,8 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        <ReglageNotifications />
       </div>
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}

@@ -59,6 +59,7 @@ model User {
 
   games    Game[]
   Goal     Goal?
+  pushSubs PushSubscription[]
   accounts Account[]
   sessions Session[]
 }
@@ -159,6 +160,23 @@ model Game {
   // Les parties manuelles ont riotMatchId à null, que Postgres ne contraint
   // pas — elles restent donc librement dupliquables, ce qui est voulu.
   @@unique([userId, riotMatchId])
+}
+
+/**
+ * Abonnement aux notifications web d'un navigateur. Un même compte peut en
+ * avoir plusieurs : le téléphone et le PC sont deux abonnements distincts.
+ */
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Point de terminaison fourni par le navigateur : il identifie l'abonnement.
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Goal {
