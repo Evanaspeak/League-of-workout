@@ -8,6 +8,8 @@ export type RoleWeights = {
 export type LevelCfg = {
   niveau: number;
   seuilGainageSec: number;
+  /** Nombre de pompes d'affilée jusqu'auquel ce niveau s'applique. */
+  seuilPompes?: number;
   multiplicateur: number;
   malusDefaite: number;
 };
@@ -44,6 +46,37 @@ export function getLevel(gainageSec: number, levelConfigs: LevelCfg[]): LevelCfg
     if (gainageSec <= cfg.seuilGainageSec) return cfg;
   }
   return sorted[sorted.length - 1];
+}
+
+/** Seuils retenus quand la configuration en base n'en fournit pas encore. */
+const SEUILS_POMPES_DEFAUT: Record<number, number> = { 1: 10, 2: 20, 3: 35, 4: 50, 5: 999 };
+
+/**
+ * Niveau déduit du test de pompes maximales.
+ *
+ * C'est la mesure qui compte désormais : la monnaie de l'application est la
+ * pompe, et tenir la planche quatre minutes ne dit pas qu'on sait en faire dix.
+ * Un compte jamais testé reste au niveau le plus bas plutôt que d'hériter d'un
+ * multiplicateur qu'il n'a pas mérité.
+ */
+export function getLevelParPompes(pompesMax: number, levelConfigs: LevelCfg[]): LevelCfg {
+  const seuil = (c: LevelCfg) => c.seuilPompes ?? SEUILS_POMPES_DEFAUT[c.niveau] ?? 999;
+  const sorted = [...levelConfigs].sort((a, b) => seuil(a) - seuil(b));
+  const n = Math.max(0, Math.round(pompesMax));
+  for (const cfg of sorted) {
+    if (n <= seuil(cfg)) return cfg;
+  }
+  return sorted[sorted.length - 1];
+}
+
+/** Depuis combien de jours un test de pompes reste-t-il valable. */
+export const VALIDITE_TEST_JOURS = 30;
+
+/** Vrai si le test n'a jamais été fait, ou date de plus d'un mois. */
+export function testAFaire(pompesMax: number, fait: Date | string | null | undefined): boolean {
+  if (!pompesMax || pompesMax <= 0 || !fait) return true;
+  const jours = (Date.now() - new Date(fait).getTime()) / 86_400_000;
+  return jours > VALIDITE_TEST_JOURS;
 }
 
 /**

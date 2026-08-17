@@ -30,12 +30,11 @@ const VALEUR_STYLE: React.CSSProperties = {
  * la dette. On montre donc le temps qui court et la dette qui monte avec.
  */
 export function SessionChrono({
-  jeu, niveau, gainageLabel, chronoSec, dette, erreur,
+  jeu, niveau, chronoSec, dette, erreur,
   enregistrement, onArreter, onAnnuler,
 }: {
   jeu: string;
   niveau: string;
-  gainageLabel: string;
   chronoSec: number;
   /** Dette en cours, déjà convertie dans l'unité de l'exercice. */
   dette: string;
@@ -60,7 +59,7 @@ export function SessionChrono({
         <span className="text-sm font-semibold" style={{ color: "var(--signal)" }}>{t.chronoEnCours}</span>
         <span className="text-xs gold-text">{jeu}</span>
         <span className="ml-auto text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
-          {niveau} · {gainageLabel}
+          {niveau}
         </span>
       </div>
 

@@ -19,6 +19,9 @@ export const history = {
     victory: "Victoire",
     defeat: "Défaite",
     gainageTime: "Temps de gainage (sec)",
+    niveauTitre: "Niveau",
+    niveauDepuisTest: (niveau: number, mult: number) =>
+      `Niveau ${niveau} — dette ×${mult}, d'après ton test de force`,
     calculating: "Calcul...",
     calculatePompes: "Calculer la dette",
     level: "Niveau",
@@ -116,6 +119,9 @@ export const history = {
     victory: "Victory",
     defeat: "Defeat",
     gainageTime: "Plank time (sec)",
+    niveauTitre: "Level",
+    niveauDepuisTest: (niveau: number, mult: number) =>
+      `Level ${niveau} — debt ×${mult}, from your strength test`,
     calculating: "Calculating...",
     calculatePompes: "Calculate what you owe",
     level: "Level",

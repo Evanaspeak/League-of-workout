@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notifier } from "@/lib/push";
-import { calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps, profilNeutre } from "@/lib/scoring";
+import {
+  calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps,
+  getLevel, getLevelParPompes, profilNeutre,
+} from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
@@ -55,7 +58,18 @@ export async function POST(req: Request) {
     });
   }
 
+  /**
+   * Le niveau vient désormais du test de pompes enregistré sur le compte.
+   * `gainageSec` n'est conservé que comme repli pour les comptes qui n'ont pas
+   * encore fait le test, et pour rester lisible dans l'historique.
+   */
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
+  const niveauCfg = user.pompesMax > 0
+    ? getLevelParPompes(user.pompesMax, levelConfigs)
+    : getLevel(gainageSec, levelConfigs);
+  // Les fonctions de scoring choisissent le niveau à partir des secondes : on
+  // leur passe le seuil du niveau retenu, pour qu'elles retombent dessus.
+  const gainageEquivalent = niveauCfg.seuilGainageSec;
 
   // Exercices retenus pour cette activité. Quand il y en a plusieurs, la dette
   // se partage entre eux : on fait un peu de chaque, plutôt que d'alterner
@@ -77,7 +91,7 @@ export async function POST(req: Request) {
     if (dureeSec <= 0) {
       return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
     }
-    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec, levelConfigs });
+    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec: gainageEquivalent, levelConfigs });
 
     const game = await prisma.game.create({
       data: {
@@ -146,18 +160,18 @@ export async function POST(req: Request) {
     : (body.result === "V" ? "V" : "D");
 
   const scoring = capacites.br && placement !== null && joueurs !== null
-    ? calcScoreBattleRoyale({ placement, joueurs, kills, gainageSec, roleWeights, levelConfigs })
+    ? calcScoreBattleRoyale({ placement, joueurs, kills, gainageSec: gainageEquivalent, roleWeights, levelConfigs })
     : capacites.rl
     ? calcScoreRocketLeague({
         buts: kills, arrets: arrets ?? 0, passes: assists,
-        result: resultat, gainageSec, roleWeights, levelConfigs,
+        result: resultat, gainageSec: gainageEquivalent, roleWeights, levelConfigs,
       })
     : calcScore({
         kills,
         deaths,
         assists,
         result: resultat,
-        gainageSec,
+        gainageSec: gainageEquivalent,
         partiesAvant,
         roleWeights,
         levelConfigs,

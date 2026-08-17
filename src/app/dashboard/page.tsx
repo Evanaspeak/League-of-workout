@@ -23,6 +23,8 @@ import { SessionChrono } from "@/components/SessionChrono";
 import { AjoutActivite } from "@/components/AjoutActivite";
 import { RailActions } from "@/components/RailLateral";
 import { Modale } from "@/components/Modale";
+import { TestPompes } from "@/components/TestPompes";
+import { getLevelParPompes, type LevelCfg } from "@/lib/scoring";
 
 type PeriodStat = { label: string; avg: number; total: number };
 
@@ -155,14 +157,6 @@ function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSummary; ba
   );
 }
 
-function getLevelLabel(sec: number, t: ReturnType<typeof useT<typeof dashboard>>): string {
-  if (sec <= 45) return t.levelLabel(1);
-  if (sec <= 90) return t.levelLabel(2);
-  if (sec <= 150) return t.levelLabel(3);
-  if (sec <= 240) return t.levelLabel(4);
-  return t.levelLabel(5);
-}
-
 export default function Dashboard() {
   const t = useT(dashboard);
   const tExo = useT(exercicesDict);
@@ -191,13 +185,14 @@ export default function Dashboard() {
     return "parties";
   });
   const [arretEnCours, setArretEnCours] = useState(false);
-  const [gainageInput, setGainageInput] = useState(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("lastGainageSec") ?? "60";
-    return "60";
-  });
+  // Test de force : le niveau n'est plus redemandé à chaque session, il vit sur
+  // le compte. Chargé à l'ouverture de la modale, pas au chargement du tableau.
+  const [pompesMax, setPompesMax] = useState(0);
+  const [pompesMaxLe, setPompesMaxLe] = useState<string | null>(null);
+  const [niveaux, setNiveaux] = useState<LevelCfg[]>([]);
 
   const {
-    sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel, gainageSec,
+    sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel,
     startSession, stopSession,
     typeSession, jeuSession, chronoSec, chronoErreur, arreterChrono, dettePoints,
   } = useSession();
@@ -243,9 +238,44 @@ export default function Dashboard() {
       .catch(() => setDailyLoading(false));
   }, [statsPeriod, calendarDate]);
 
-  const handleConfirmGainage = async () => {
-    const sec = Math.max(1, Number(gainageInput) || 60);
-    localStorage.setItem("lastGainageSec", String(sec));
+  // Le niveau vient du test de force enregistré sur le compte ; on le charge à
+  // l'ouverture de la modale pour ne pas peser sur le chargement du tableau.
+  useEffect(() => {
+    if (modale !== "session") return;
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((s) => {
+        setNiveaux(s.levelConfigs ?? []);
+        setPompesMax(s.user?.pompesMax ?? 0);
+        setPompesMaxLe(s.user?.pompesMaxLe ?? null);
+      })
+      .catch(() => {});
+  }, [modale]);
+
+  const handleSavePompesMax = async (valeur: number) => {
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
+    });
+    if (res.ok) {
+      setPompesMax(valeur);
+      setPompesMaxLe(new Date().toISOString());
+    }
+  };
+
+  /**
+   * Le contexte de session raisonne encore en secondes de gainage pour afficher
+   * son libellé de niveau. On lui donne l'équivalent du niveau issu du test,
+   * pour que l'affichage colle à ce que le serveur calcule réellement.
+   */
+  const gainageEquivalent =
+    pompesMax > 0 && niveaux.length > 0
+      ? getLevelParPompes(pompesMax, niveaux).seuilGainageSec
+      : 60;
+
+  const handleDemarrerSession = async () => {
+    const sec = Math.max(1, gainageEquivalent);
     localStorage.setItem("lastJeu", jeuChoisi);
     // La fenêtre reste ouverte : elle bascule sur l'état de la session qui vient
     // de démarrer, ce qui confirme le lancement sans clic supplémentaire.
@@ -621,27 +651,14 @@ export default function Dashboard() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
-                {t.durationSeconds}
-              </label>
-              <p className="text-xs mb-2" style={{ color: "rgba(236,239,244,0.45)" }}>
-                {t.gainageModalDesc}
-              </p>
-              <input
-                type="number" min="1"
-                className="lol-input text-center text-2xl font-bold"
-                value={gainageInput}
-                onChange={(e) => setGainageInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleConfirmGainage()}
-              />
-            </div>
-            {gainageInput && Number(gainageInput) > 0 && (
-              <div className="text-center p-3 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
-                <span className="gold-text font-bold text-xl">{getLevelLabel(Number(gainageInput), t)}</span>
-                <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>{t.forThisSession}</span>
-              </div>
-            )}
+            {/* Le niveau ne se ressaisit plus à chaque session : il découle du
+                test de force, qu'on peut refaire ici sans quitter la modale. */}
+            <TestPompes
+              pompesMax={pompesMax}
+              faitLe={pompesMaxLe}
+              niveaux={niveaux}
+              onEnregistre={handleSavePompesMax}
+            />
 
             <div className="space-y-2">
               <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
@@ -655,8 +672,8 @@ export default function Dashboard() {
 
             <button
               className="lol-btn w-full"
-              onClick={handleConfirmGainage}
-              disabled={!gainageInput || Number(gainageInput) < 1 || jeuChoisi.trim().length === 0}
+              onClick={handleDemarrerSession}
+              disabled={jeuChoisi.trim().length === 0}
             >
               {t.start}
             </button>
@@ -665,7 +682,6 @@ export default function Dashboard() {
           <SessionChrono
             jeu={jeuSession}
             niveau={sessionLevel}
-            gainageLabel={t.gainageLabel(gainageSec)}
             chronoSec={chronoSec}
             dette={fmt(dettePoints)}
             erreur={chronoErreur}
@@ -678,7 +694,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
               <div className="w-2 h-2 rounded-full" style={{ background: "#2FD98A", boxShadow: "0 0 6px #2FD98A", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">{t.sessionActive}</span>
-              <span className="text-xs gold-text">{sessionLevel} · {t.gainageLabel(gainageSec)}</span>
+              <span className="text-xs gold-text">{sessionLevel}</span>
               <span className="ml-auto text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
                 {polling ? t.checking : t.nextCheck(countdown)}
               </span>

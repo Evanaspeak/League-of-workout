@@ -52,6 +52,12 @@ model User {
   // seulement qu'on a dépassé ce qu'on s'était fixé pour la journée.
   // 0 = pas d'avertissement.
   plafondQuotidien   Int      @default(0)
+  // Nombre maximum de pompes d'affilée, et date du test. C'est lui qui fixe le
+  // niveau, donc le multiplicateur de la dette. 0 = jamais testé.
+  // Mesurer en pompes plutôt qu'en gainage : la monnaie de l'app est la pompe,
+  // et tenir la planche quatre minutes ne dit pas qu'on sait en faire dix.
+  pompesMax          Int      @default(0)
+  pompesMaxLe        DateTime?
 
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?
@@ -198,7 +204,10 @@ model RoleWeight {
 
 model LevelConfig {
   niveau          Int   @id // 1-5
+  // Ancien critère, conservé pour les parties déjà enregistrées.
   seuilGainageSec Int // seuil max en secondes
+  // Nombre maximum de pompes d'affilée jusqu'auquel ce niveau s'applique.
+  seuilPompes     Int   @default(999)
   multiplicateur  Float
   malusDefaite    Int
 }

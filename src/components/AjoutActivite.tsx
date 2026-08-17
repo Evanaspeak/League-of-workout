@@ -54,15 +54,6 @@ type PreviewResult = {
 const ROLES_FILTER = ["Tous", "Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"];
 const ROLES_FORM = ["Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"];
 
-function getLevelLabel(sec: number, locale: "fr" | "en"): string {
-  const prefix = locale === "fr" ? "Niv." : "Lvl.";
-  if (sec <= 45) return `${prefix} 1`;
-  if (sec <= 90) return `${prefix} 2`;
-  if (sec <= 150) return `${prefix} 3`;
-  if (sec <= 240) return `${prefix} 4`;
-  return `${prefix} 5`;
-}
-
 // ─── Composant ───────────────────────────────────────────────────────────────
 
 /**
@@ -105,7 +96,7 @@ export function AjoutActivite({
   const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [showAddForm, setShowAddForm] = useState(enModale);
   const [addForm, setAddForm] = useState({
-    role: "Jungle", champion: "", kills: "", deaths: "", assists: "", result: "D", gainageSec: "60",
+    role: "Jungle", champion: "", kills: "", deaths: "", assists: "", result: "D",
   });
   const [jeu, setJeu] = useState<string>(JEU_DEFAUT);
   const [typeJeu, setTypeJeu] = useState<TypeJeu>("parties");
@@ -133,15 +124,10 @@ export function AjoutActivite({
 
   // ─── Load localStorage on mount ──────────────────────────────────────────
   useEffect(() => {
-    const savedSec = localStorage.getItem("lastGainageSec");
     const savedRole = localStorage.getItem("lastRole");
     const savedMode = Number(localStorage.getItem("lastModeBr"));
     if (savedMode >= 1) setTailleEquipe(savedMode);
-    setAddForm((f) => ({
-      ...f,
-      ...(savedSec ? { gainageSec: savedSec } : {}),
-      ...(savedRole ? { role: savedRole } : {}),
-    }));
+    if (savedRole) setAddForm((f) => ({ ...f, role: savedRole }));
   }, []);
 
   // ─── Préférences d'exercices ─────────────────────────────────────────────
@@ -218,7 +204,6 @@ export function AjoutActivite({
     // le serveur avance d'un cran dans la rotation, pour équilibrer.
     ...(exercice ? { exercice } : {}),
     exercices: exercicesAjout,
-    gainageSec: Number(addForm.gainageSec) || 60,
     ...(typeJeu === "temps"
       ? { dureeSec: dureeSec ?? dureeEnSecondes }
       : {
@@ -601,20 +586,19 @@ export function AjoutActivite({
                   </div>
                 </div>
                 )}
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
-                    {t.gainageTime}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input type="number" min="1" className="lol-input text-center" value={addForm.gainageSec}
-                      onChange={(e) => {
-                        setAddForm((f) => ({ ...f, gainageSec: e.target.value }));
-                        localStorage.setItem("lastGainageSec", e.target.value);
-                       
-                      }} />
-                    <span className="text-xs gold-text shrink-0">{getLevelLabel(Number(addForm.gainageSec) || 60, locale)}</span>
+                {/* Le niveau ne se ressaisit plus ici : il vient du test de
+                    force enregistré sur le compte. On l'affiche pour que le
+                    multiplicateur appliqué reste lisible. */}
+                {preview && (
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                      {t.niveauTitre}
+                    </label>
+                    <div className="text-sm gold-text">
+                      {t.niveauDepuisTest(preview.scoring.niveau, preview.scoring.multiplicateur)}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               </>
               )}
