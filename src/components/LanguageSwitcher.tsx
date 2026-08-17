@@ -1,15 +1,17 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { Drapeau } from "./Drapeau";
 
 /**
  * Drapeau et code de langue côte à côte. Le code prime : c'est lui qui nomme
  * la langue (EN, pas GB — l'anglais n'est pas un pays). Le drapeau ne sert
- * qu'à repérer l'option d'un coup d'œil.
+ * qu'à repérer l'option d'un coup d'œil, et il est dessiné plutôt qu'emoji :
+ * Windows ne sait pas rendre les emoji de drapeaux.
  */
-const OPTIONS: { code: "fr" | "en"; flag: string; label: string }[] = [
-  { code: "fr", flag: "🇫🇷", label: "Français" },
-  { code: "en", flag: "🇺🇸", label: "English" },
+const OPTIONS: { code: "fr" | "en"; pays: "fr" | "us"; label: string }[] = [
+  { code: "fr", pays: "fr", label: "Français" },
+  { code: "en", pays: "us", label: "English" },
 ];
 
 export function LanguageSwitcher() {
@@ -43,7 +45,7 @@ export function LanguageSwitcher() {
           fontSize: "0.85rem",
         }}
       >
-        <span style={{ lineHeight: 1 }}>{current.flag}</span>
+        <Drapeau pays={current.pays} taille={17} />
         <span style={{
           lineHeight: 1,
           fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -90,7 +92,7 @@ export function LanguageSwitcher() {
                 textAlign: "left",
               }}
             >
-              <span>{o.flag}</span>
+              <Drapeau pays={o.pays} taille={17} />
               <span style={{
                 fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                 fontWeight: 600,
