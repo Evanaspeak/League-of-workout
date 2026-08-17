@@ -14,6 +14,7 @@ const path = require("path");
 const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
+const { autoUpdater } = require("electron-updater");
 
 // Désactive les Client Hints (Sec-CH-UA) qui trahissent Electron auprès de
 // Google OAuth même quand le user-agent est spoofé en Chrome standard.
@@ -316,6 +317,35 @@ ipcMain.on("open-discord-popup", () => {
   openAuthPopup();
 });
 
+// ── Mise à jour automatique ─────────────────────────────────────────────────
+// L'app compare sa version à la dernière release GitHub et télécharge le
+// nouvel installeur en arrière-plan. Il s'applique à la fermeture : on ne
+// coupe jamais quelqu'un en pleine partie pour installer une mise à jour.
+function initMiseAJour() {
+  // Rien à vérifier tant qu'on tourne depuis les sources : la version y est
+  // celle du dépôt, et il n'y a pas d'installeur à remplacer.
+  if (!app.isPackaged) return;
+
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on("update-downloaded", (info) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("maj:prete", { version: info?.version ?? null });
+    }
+  });
+
+  // Une mise à jour indisponible ne doit jamais empêcher d'utiliser l'app.
+  autoUpdater.on("error", (err) => {
+    console.warn("[WOW] Mise à jour indisponible :", err?.message ?? err);
+  });
+
+  autoUpdater.checkForUpdates().catch(() => {});
+  // Une vérification toutes les six heures suffit pour une app qu'on laisse
+  // ouverte pendant une soirée de jeu.
+  setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
+}
+
 app.whenReady().then(() => {
   startAuthSignalServer();
   // L'overlay est prêt dès le démarrage : Ctrl+Maj+O permet de le vérifier
@@ -323,6 +353,7 @@ app.whenReady().then(() => {
   stopOverlay = overlay.initOverlay();
   createWindow();
   overlay.afficher();
+  initMiseAJour();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

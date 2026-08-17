@@ -1,6 +1,6 @@
 {
   "name": "win-or-workout-desktop",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "App desktop + overlay pour Win or Workout",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
@@ -17,7 +17,9 @@
     "appId": "com.winorworkout.desktop",
     "productName": "Win or Workout",
     "files": [
-      "src/**/*"
+      "src/**/*",
+      "build/icon.png",
+      "package.json"
     ],
     "win": {
       "target": "nsis",
@@ -32,6 +34,16 @@
     },
     "directories": {
       "buildResources": "build"
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Evanaspeak",
+        "repo": "League-of-workout"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

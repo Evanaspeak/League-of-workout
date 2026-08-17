@@ -40,7 +40,9 @@ jobs:
         with:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('desktop-v{0}', inputs.version) || github.ref_name }}
           name: ${{ github.event_name == 'workflow_dispatch' && format('Win or Workout v{0}', inputs.version) || format('Win or Workout {0}', github.ref_name) }}
-          files: desktop/dist/*.exe
+          files: |
+            desktop/dist/*.exe
+            desktop/dist/latest.yml
           generate_release_notes: false
           body: |
             ## Téléchargement
