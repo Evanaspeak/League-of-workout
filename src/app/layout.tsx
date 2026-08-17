@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Barlow, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
@@ -34,8 +34,16 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://winorworkout.com"),
   title: { default: "Win or Workout", template: "%s — Win or Workout" },
-  description: "Tu gagnes ta game, ou tu paies en pompes. L'app qui convertit tes parties en entraînement.",
+  description: "Tu gagnes ta game, ou tu paies en sueur. L'app qui convertit tes parties en entraînement.",
   applicationName: "Win or Workout",
+  manifest: "/manifest.webmanifest",
+  // Ajouté à l'écran d'accueil, le site s'ouvre sans barre de navigateur —
+  // et c'est la seule façon de recevoir des notifications sur iPhone.
+  appleWebApp: {
+    capable: true,
+    title: "Win//Workout",
+    statusBarStyle: "black-translucent",
+  },
   openGraph: {
     type: "website",
     siteName: "Win or Workout",
@@ -45,6 +53,12 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0C0E11",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
