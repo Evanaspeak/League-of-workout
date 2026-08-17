@@ -14,11 +14,16 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      // va.vercel-scripts.com : mesure d'audience. Sans cette autorisation le
+      // script est bloqué en silence et aucune visite n'est comptée — on
+      // croirait mesurer alors qu'on ne mesure rien.
+      "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://ddragon.leagueoflegends.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://ddragon.leagueoflegends.com",
+      "connect-src 'self' https://ddragon.leagueoflegends.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+      // Le service worker des notifications doit pouvoir s'enregistrer.
+      "worker-src 'self'",
       "frame-ancestors 'none'",
     ].join("; "),
   },

@@ -50,6 +50,8 @@ type DashData = {
   pompesByJeu?: Record<string, number>;
   gamesByJeu?: Record<string, number>;
   cumulByDate: { date: string; cumul: number }[];
+  /** Coût moyen d'une activité, semaine par semaine : le seul indicateur qui peut descendre. */
+  moyenneParSemaine?: { semaine: string; moyenne: number; parties: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
   dailyPompes: { date: string; total: number }[];
   /** Effort accumulé aujourd'hui, et seuil au-delà duquel on prévient. */
@@ -879,6 +881,42 @@ export default function Dashboard() {
             </div>
           );
         })()}
+
+        {/* Coût moyen par activité, semaine après semaine. C'est le seul
+            graphique qui peut descendre : le cumul ne fait que monter et le
+            total par jour suit surtout le temps qu'on a joué. */}
+        {(data.moyenneParSemaine ?? []).length > 1 && (
+          <div className="lol-panel p-4">
+            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+              {t.progressionTitre}
+            </h2>
+            <p className="text-xs mt-1 mb-3" style={{ color: "rgba(236,239,244,0.4)" }}>
+              {t.progressionAide}
+            </p>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart
+                data={(data.moyenneParSemaine ?? []).map((s) => ({
+                  ...s,
+                  label: new Date(s.semaine + "T12:00:00").toLocaleDateString(dateLocale, {
+                    day: "numeric", month: "short",
+                  }),
+                }))}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(152,162,176,0.1)" />
+                <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.4)", fontSize: 10 }} />
+                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                  formatter={(v, _n, p) => [
+                    `${fmt(Number(v))} · ${t.surNParties(Number(p?.payload?.parties ?? 0))}`,
+                    t.progressionSerie,
+                  ]}
+                />
+                <Line dataKey="moyenne" stroke="#2FD98A" strokeWidth={2} dot={{ r: 3, fill: "#2FD98A" }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Analytiques par période */}

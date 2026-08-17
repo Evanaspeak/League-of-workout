@@ -38,6 +38,12 @@ export const exercices = {
     exempleLigne: (ex: string, valeur: string) => `${ex} : ${valeur}`,
     exempleIntro: "Pour une partie perdue coûtant 38 points d'effort :",
 
+    formeTitre: "Comment le faire",
+    forme: {
+      pompes: "Mains sous les épaules, corps aligné de la tête aux talons. Descends jusqu'à frôler le sol, remonte sans bloquer les coudes. Si le bas du dos creuse, passe sur les genoux.",
+      squats: "Pieds écartés largeur de bassin, poids sur les talons. Descends comme pour t'asseoir, genoux dans l'axe des pieds. Pas plus bas que ce que tes genoux acceptent.",
+      boxe: "Garde haute, coudes rentrés, menton baissé. Frappe depuis les hanches plutôt qu'avec les bras seuls. Sur sac, poignets alignés avec l'avant-bras.",
+    },
     plafondTitre: "Volume quotidien",
     plafondAide: "Au-delà de ce volume dans la journée, l'app te prévient que tu as dépassé ce que tu t'étais fixé. Elle ne bloque rien : tu restes libre de continuer ou de t'arrêter là.",
     plafondDesactive: "Aucun",
@@ -94,6 +100,12 @@ export const exercices = {
     exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
     exempleIntro: "For a lost game costing 38 effort points:",
 
+    formeTitre: "How to do it",
+    forme: {
+      pompes: "Hands under your shoulders, body in a line from head to heels. Go down until you almost touch the floor, come back up without locking your elbows. If your lower back sags, drop to your knees.",
+      squats: "Feet hip-width apart, weight on your heels. Go down like you're sitting back, knees tracking over your feet. No lower than your knees are happy with.",
+      boxe: "Guard up, elbows in, chin down. Punch from the hips rather than with your arms alone. On a bag, keep your wrist in line with your forearm.",
+    },
     plafondTitre: "Daily volume",
     plafondAide: "Past this much in a single day, the app tells you you've gone beyond what you set for yourself. It blocks nothing: carrying on or stopping stays your call.",
     plafondDesactive: "None",

@@ -7,6 +7,7 @@ import { SessionGuard } from "@/components/SessionGuard";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
 import { Footer } from "@/components/Footer";
+import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
 import { LocaleProvider } from "@/lib/i18n/LocaleContext";
 
@@ -78,6 +79,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RailLateral />
           </SessionProvider>
         </LocaleProvider>
+        {/* Mesure d'audience sans cookie ni identifiant persistant : elle ne
+            permet pas de suivre quelqu'un d'une visite à l'autre, ce qui évite
+            la bannière de consentement. Elle sert à savoir combien de monde
+            arrive, sur quel système, et où les gens décrochent. */}
+        <Analytics />
       </body>
     </html>
   );

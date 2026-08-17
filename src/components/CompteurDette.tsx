@@ -274,6 +274,33 @@ export function CompteurDette({
             ))}
           </div>
 
+          {/* Consignes d'exécution, au moment exact où quelqu'un s'apprête à
+              faire le mouvement — pas dans une page d'aide qu'on ne lit pas. */}
+          {lignes.length > 0 && (
+            <div style={{
+              textAlign: "left",
+              padding: "10px 12px",
+              borderRadius: 8,
+              background: "rgba(152,162,176,0.06)",
+              border: "1px solid var(--line)",
+            }}>
+              <div style={{
+                fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em",
+                color: "rgba(152,162,176,0.6)", marginBottom: 5,
+              }}>
+                {t.formeTitre}
+              </div>
+              {lignes.map((ligne) => (
+                <p key={ligne.id} style={{
+                  fontSize: "0.76rem", lineHeight: 1.55,
+                  color: "rgba(236,239,244,0.6)", margin: 0,
+                }}>
+                  {t.forme[ligne.id]}
+                </p>
+              ))}
+            </div>
+          )}
+
           <div>
             <div
               className="mono-num font-bold"
