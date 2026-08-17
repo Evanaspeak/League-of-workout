@@ -28,6 +28,8 @@ const CHROME_UA =
   "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 let mainWindow = null;
+/** Vrai quand c'est bien nous qui écoutons le port de connexion. */
+let canalPret = false;
 let stopWatcher = null;
 let stopOverlay = null;
 
@@ -53,6 +55,29 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
   <p style="font-size:12px;margin-top:8px;color:rgba(240,230,211,.3)">
     Cette fenêtre se met à jour automatiquement une fois connecté.
   </p>
+</body></html>`)}`;
+
+// Le canal de connexion est un port unique sur la machine : si une autre
+// instance — ou l'ancienne application — le détient déjà, c'est elle qui reçoit
+// la session. La fenêtre attendait alors indéfiniment une connexion partie
+// ailleurs, sans rien afficher. Le dire est le minimum.
+const ERREUR_PORT_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0C0E11; color: #ECEFF4; font-family: 'Segoe UI', sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100vh; gap: 14px; text-align: center; padding: 32px; }
+  h2 { font-size: 19px; letter-spacing: .06em; color: #FF5A47; }
+  p  { color: rgba(236,239,244,.55); font-size: 14px; max-width: 460px; line-height: 1.65; }
+</style></head>
+<body>
+  <h2>CONNEXION IMPOSSIBLE</h2>
+  <p>Une autre application Win or Workout est déjà ouverte sur cet ordinateur —
+     probablement une ancienne version.</p>
+  <p style="color:rgba(236,239,244,.35);font-size:13px">
+     Fermez-la complètement, puis relancez celle-ci. Sans cela, c'est elle qui
+     reçoit la connexion.</p>
 </body></html>`)}`;
 
 // ── Serveur local d'auth (port 3099) ────────────────────────────────────────
@@ -152,11 +177,12 @@ function startAuthSignalServer() {
 
   server.on("error", (err) => {
     if (err.code === "EADDRINUSE") {
-      console.warn(`[LOW] Port ${AUTH_PORT} déjà utilisé — serveur auth ignoré.`);
+      canalPret = false;
+      console.warn(`[WOW] Port ${AUTH_PORT} déjà utilisé — une autre instance détient le canal.`);
     }
   });
 
-  server.listen(AUTH_PORT, "127.0.0.1");
+  server.listen(AUTH_PORT, "127.0.0.1", () => { canalPret = true; });
 }
 
 // ── Fenêtre principale ───────────────────────────────────────────────────────
@@ -189,6 +215,10 @@ async function createWindow() {
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (isOAuthUrl(url)) {
       event.preventDefault();
+      if (!canalPret) {
+        mainWindow.loadURL(ERREUR_PORT_HTML);
+        return;
+      }
       shell.openExternal(url);
       mainWindow.loadURL(WAITING_HTML);
     }
@@ -307,6 +337,11 @@ function openAuthPopup() {
 
 // Google bloque l'OAuth dans Electron → on ouvre Chrome, flux port 3099 comme avant.
 ipcMain.on("open-google-login", () => {
+  // Inutile d'envoyer quelqu'un s'authentifier si le retour est capté ailleurs.
+  if (!canalPret) {
+    if (mainWindow) mainWindow.loadURL(ERREUR_PORT_HTML);
+    return;
+  }
   // ?_desktop=1 est détecté par DesktopModeDetector → localStorage flag → DesktopAuthHandler actif
   shell.openExternal(`${BACKEND_URL}/login?_desktop=1`);
   if (mainWindow) mainWindow.loadURL(WAITING_HTML);
@@ -344,6 +379,20 @@ function initMiseAJour() {
   // Une vérification toutes les six heures suffit pour une app qu'on laisse
   // ouverte pendant une soirée de jeu.
   setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
+}
+
+// Deux fenêtres de la même application se disputeraient le port de connexion,
+// exactement comme le faisaient l'ancienne et la nouvelle. Un second lancement
+// ramène donc la fenêtre existante au premier plan plutôt que d'en ouvrir une.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
 }
 
 app.whenReady().then(() => {
