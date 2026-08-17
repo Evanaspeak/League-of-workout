@@ -6,7 +6,9 @@ import { landing } from "@/lib/i18n/dictionaries/landing";
 import { Wordmark } from "@/components/Wordmark";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-const DOWNLOAD_URL = process.env.NEXT_PUBLIC_DOWNLOAD_URL;
+// La page /telechargement résout elle-même la dernière version publiée : y
+// envoyer évite de figer une URL d'installeur qui périme à chaque release.
+const DOWNLOAD_URL = "/telechargement";
 
 /* Chaque icône a sa couleur — la palette vit dans le contenu */
 const ICON_COLORS: Record<string, string> = {
