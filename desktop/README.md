@@ -1,6 +1,6 @@
-# League of Workouts — App Desktop
+# Win or Workout — App Desktop
 
-App Electron qui transforme League of Workouts en application native, avec
+App Electron qui transforme Win or Workout en application native, avec
 **détection automatique des parties en temps réel** via l'API locale de League
 of Legends (`127.0.0.1:2999`).
 
@@ -26,7 +26,7 @@ npm install
 npm start
 ```
 
-Une fenêtre « League of Workouts » s'ouvre. Connecte-toi, lance une session
+Une fenêtre « Win or Workout » s'ouvre. Connecte-toi, lance une session
 depuis le dashboard, puis joue une partie de League : à la fin de la partie elle
 sera détectée et loggée automatiquement.
 

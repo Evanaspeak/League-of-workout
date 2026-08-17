@@ -5,6 +5,11 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const redirectUrl = new URL("/login?transferred=1", request.url);
   const response = NextResponse.redirect(redirectUrl);
-  response.cookies.delete("authjs.session-token");
+  // En production le cookie porte le préfixe `__Secure-` : ne supprimer que le
+  // nom en clair laissait la session ouverte dans le navigateur, alors que la
+  // page annonce le contraire.
+  for (const nom of ["authjs.session-token", "__Secure-authjs.session-token"]) {
+    response.cookies.delete(nom);
+  }
   return response;
 }

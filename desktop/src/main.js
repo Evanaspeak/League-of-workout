@@ -1,4 +1,4 @@
-// Processus principal de l'app desktop League of Workouts.
+// Processus principal de l'app desktop Win or Workout.
 //
 // Flux d'authentification :
 //   1. Electron charge la page de login.
@@ -33,7 +33,7 @@ let stopOverlay = null;
 // ── Page d'attente (affichée dans Electron pendant que Chrome gère l'OAuth) ─
 
 const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><title>League of Workouts</title>
+<html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0a1428; color: #c8aa6e; font-family: 'Segoe UI', sans-serif;
@@ -95,7 +95,7 @@ function startAuthSignalServer() {
           });
 
           if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.loadURL(BACKEND_URL);
+            mainWindow.loadURL(`${BACKEND_URL}/dashboard`);
           }
 
           // Redirect Chrome to desktop-complete which clears Chrome's session and
@@ -132,7 +132,7 @@ function startAuthSignalServer() {
           });
 
           if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.loadURL(BACKEND_URL);
+            mainWindow.loadURL(`${BACKEND_URL}/dashboard`);
           }
 
           res.writeHead(200, { "Content-Type": "application/json" });
@@ -164,7 +164,8 @@ async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1100,
     height: 800,
-    title: "League of Workouts",
+    title: "Win or Workout",
+    icon: path.join(__dirname, "..", "build", "icon.png"),
     backgroundColor: "#0a1428",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -202,15 +203,19 @@ async function createWindow() {
   });
 
   // Démarrage : si un cookie de session persiste (Rester connecté), on ouvre
-  // directement le dashboard. Sinon la page de login. Le middleware sert de
-  // filet de sécurité : un cookie expiré/invalide sur "/" redirige vers /login.
+  // directement le tableau de bord, que le middleware protège — un cookie
+  // expiré ou invalide y renvoie vers /login, et la connexion se rejoue.
+  //
+  // Viser la page d'accueil ne marche pas : elle est publique et ne redirige
+  // plus depuis juin. Un jeton périmé y affichait la page marketing avec un
+  // bouton « Se connecter », sans jamais dire que la session était morte.
   let startUrl = `${BACKEND_URL}/login`;
   try {
     const cookies = await mainWindow.webContents.session.cookies.get({
       url: BACKEND_URL,
       name: "__Secure-authjs.session-token",
     });
-    if (cookies.length > 0) startUrl = BACKEND_URL;
+    if (cookies.length > 0) startUrl = `${BACKEND_URL}/dashboard`;
   } catch {}
   mainWindow.loadURL(startUrl);
 
@@ -245,7 +250,7 @@ function openAuthPopup() {
   authPopup = new BrowserWindow({
     width: 520,
     height: 720,
-    title: "Connexion – League of Workouts",
+    title: "Connexion – Win or Workout",
     backgroundColor: "#0a1428",
     parent: mainWindow ?? undefined,
     webPreferences: {
@@ -286,7 +291,7 @@ function openAuthPopup() {
           });
         }
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.loadURL(BACKEND_URL);
+          mainWindow.loadURL(`${BACKEND_URL}/dashboard`);
         }
       } catch (err) {
         console.error("[LOW] Erreur transfert session popup:", err);
