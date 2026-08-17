@@ -249,6 +249,36 @@ export async function GET(req: Request) {
     .map(([date, total]) => ({ date, total }));
 
   /**
+   * Coût moyen d'une activité, semaine par semaine.
+   *
+   * C'est le seul indicateur qui dit si on progresse : le total cumulé ne fait
+   * que monter, et le total par jour suit surtout le temps qu'on a joué. La
+   * moyenne, elle, descend quand on joue mieux, quel que soit le volume.
+   *
+   * Les semaines sans activité sont omises plutôt que ramenées à zéro : une
+   * semaine sans jouer n'est pas une semaine où l'on aurait bien joué.
+   */
+  const parSemaine = new Map<string, { total: number; parties: number; debut: string }>();
+  for (const g of games) {
+    const d = new Date(g.date);
+    // Lundi de la semaine de la partie, en UTC pour éviter les décalages.
+    const lundi = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    lundi.setUTCDate(lundi.getUTCDate() - ((lundi.getUTCDay() + 6) % 7));
+    const cle = lundi.toISOString().slice(0, 10);
+    const courant = parSemaine.get(cle) ?? { total: 0, parties: 0, debut: cle };
+    courant.total += pts(g);
+    courant.parties++;
+    parSemaine.set(cle, courant);
+  }
+  const moyenneParSemaine = [...parSemaine.values()]
+    .sort((a, b) => a.debut.localeCompare(b.debut))
+    .map((s) => ({
+      semaine: s.debut,
+      moyenne: Math.round(s.total / s.parties),
+      parties: s.parties,
+    }));
+
+  /**
    * Volume d'effort accumulé aujourd'hui, toutes activités et tous exercices
    * confondus. Il se compare au plafond que l'utilisateur s'est fixé — un
    * avertissement, pas une limite : la dette continue d'être calculée.
@@ -282,6 +312,7 @@ export async function GET(req: Request) {
     cumulByDate,
     statsByPeriod,
     dailyPompes,
+    moyenneParSemaine,
     pointsAujourdhui,
     plafondQuotidien: Math.max(0, user.plafondQuotidien ?? 0),
     mostPlayed,

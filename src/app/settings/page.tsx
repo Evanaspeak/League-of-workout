@@ -615,6 +615,22 @@ export default function SettingsPage() {
       </form>
 
       {/* ── Zone de danger : suppression de compte ──────────────────────── */}
+      {/* Portabilité des données : un droit, et deux lignes de code. */}
+      <div className="lol-panel p-5 space-y-3">
+        <h2 style={HEADING}>{t.exportTitre}</h2>
+        <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
+          {t.exportAide}
+        </p>
+        <a
+          href="/api/user/export"
+          download
+          className="lol-btn text-sm"
+          style={{ display: "inline-block", textDecoration: "none" }}
+        >
+          {t.exportBouton}
+        </a>
+      </div>
+
       <div style={{
         marginTop: "1.5rem",
         padding: "1.25rem",
