@@ -55,7 +55,12 @@ export default auth((req) => {
 });
 
 export const config = {
+  // Tout ce qui est listé ici échappe à l'authentification. Le manifeste, le
+  // service worker et les icônes d'installation doivent rester accessibles
+  // sans session : le navigateur et le système les réclament parfois sans
+  // envoyer les cookies, et un service worker redirigé vers /login ne
+  // s'enregistre jamais.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|opengraph-image|icon$|apple-icon$|.*\\.png$|.*\\.svg$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|api/pwa-icon|opengraph-image|icon$|apple-icon$|.*\\.png$|.*\\.svg$).*)",
   ],
 };
