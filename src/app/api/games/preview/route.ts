@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps, profilNeutre } from "@/lib/scoring";
+import {
+  calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps,
+  getLevel, getLevelParPompes, profilNeutre,
+} from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
@@ -41,7 +44,18 @@ export async function POST(req: Request) {
     });
   }
 
+  /**
+   * Le niveau vient désormais du test de pompes enregistré sur le compte.
+   * `gainageSec` n'est conservé que comme repli pour les comptes qui n'ont pas
+   * encore fait le test, et pour rester lisible dans l'historique.
+   */
   const gainageSec = body.gainageSec != null ? Number(body.gainageSec) : user.gainageMaxSec;
+  const niveauCfg = user.pompesMax > 0
+    ? getLevelParPompes(user.pompesMax, levelConfigs)
+    : getLevel(gainageSec, levelConfigs);
+  // Les fonctions de scoring choisissent le niveau à partir des secondes : on
+  // leur passe le seuil du niveau retenu, pour qu'elles retombent dessus.
+  const gainageEquivalent = niveauCfg.seuilGainageSec;
 
   // Mêmes exercices que l'enregistrement réel : l'aperçu annonce exactement ce
   // qu'il y aura à faire.
@@ -59,7 +73,7 @@ export async function POST(req: Request) {
     if (dureeSec <= 0) {
       return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
     }
-    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec, levelConfigs });
+    const scoringTemps = calcScoreTemps({ dureeSec, gainageSec: gainageEquivalent, levelConfigs });
     return NextResponse.json({
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
       partiesAvant: 0,
@@ -84,7 +98,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Classement invalide" }, { status: 400 });
     }
     const scoringBr = calcScoreBattleRoyale({
-      placement, joueurs, kills: Number(body.kills) || 0, gainageSec, roleWeights, levelConfigs,
+      placement, joueurs, kills: Number(body.kills) || 0, gainageSec: gainageEquivalent, roleWeights, levelConfigs,
     });
     return NextResponse.json({
       scoring: scoringBr,
@@ -104,7 +118,7 @@ export async function POST(req: Request) {
       arrets: Number(body.arrets) || 0,
       passes: Number(body.assists) || 0,
       result: body.result === "V" ? "V" : "D",
-      gainageSec, roleWeights, levelConfigs,
+      gainageSec: gainageEquivalent, roleWeights, levelConfigs,
     });
     return NextResponse.json({
       scoring: scoringRl,

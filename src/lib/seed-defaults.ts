@@ -44,11 +44,14 @@ async function semer() {
   if (levelCount === 0) {
     await prisma.levelConfig.createMany({
       data: [
-        { niveau: 1, seuilGainageSec: 45,   multiplicateur: 1.0,  malusDefaite: 5  },
-        { niveau: 2, seuilGainageSec: 90,   multiplicateur: 1.67, malusDefaite: 8  },
-        { niveau: 3, seuilGainageSec: 150,  multiplicateur: 2.33, malusDefaite: 12 },
-        { niveau: 4, seuilGainageSec: 240,  multiplicateur: 3.33, malusDefaite: 15 },
-        { niveau: 5, seuilGainageSec: 9999, multiplicateur: 4.67, malusDefaite: 20 },
+        // `seuilPompes` est le critère actuel : le nombre de pompes d'affilée
+        // jusqu'auquel le niveau s'applique. `seuilGainageSec` reste renseigné
+        // pour les parties enregistrées avant le passage au test de pompes.
+        { niveau: 1, seuilGainageSec: 45,   seuilPompes: 10,  multiplicateur: 1.0,  malusDefaite: 5  },
+        { niveau: 2, seuilGainageSec: 90,   seuilPompes: 20,  multiplicateur: 1.67, malusDefaite: 8  },
+        { niveau: 3, seuilGainageSec: 150,  seuilPompes: 35,  multiplicateur: 2.33, malusDefaite: 12 },
+        { niveau: 4, seuilGainageSec: 240,  seuilPompes: 50,  multiplicateur: 3.33, malusDefaite: 15 },
+        { niveau: 5, seuilGainageSec: 9999, seuilPompes: 999, multiplicateur: 4.67, malusDefaite: 20 },
       ],
     });
   }

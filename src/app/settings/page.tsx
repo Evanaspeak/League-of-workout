@@ -11,11 +11,15 @@ import {
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
+import { TestPompes } from "@/components/TestPompes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type RoleWeight = { role: string; poidsMort: number; poidsKill: number; poidsAssist: number; maitriseActive: boolean };
-type LevelConfig = { niveau: number; seuilGainageSec: number; multiplicateur: number; malusDefaite: number };
+type LevelConfig = {
+  niveau: number; seuilGainageSec: number; seuilPompes?: number;
+  multiplicateur: number; malusDefaite: number;
+};
 type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 
 const REGIONS = ["EUW1", "EUN1", "NA1", "KR", "BR1", "JP1", "TR1", "RU", "OC1"];
@@ -77,6 +81,10 @@ export default function SettingsPage() {
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
 
+  // ── Test de pompes maximales (fixe le niveau) ──
+  const [pompesMax, setPompesMax] = useState(0);
+  const [pompesMaxLe, setPompesMaxLe] = useState<string | null>(null);
+
   useEffect(() => {
     Promise.all([
       fetch("/api/user").then((r) => r.json()),
@@ -97,8 +105,26 @@ export default function SettingsPage() {
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
       setPlafond(s.user?.plafondQuotidien ?? 0);
+      setPompesMax(s.user?.pompesMax ?? 0);
+      setPompesMaxLe(s.user?.pompesMaxLe ?? null);
     });
   }, []);
+
+  /**
+   * Enregistre le résultat du test de force. La date de passage est posée par
+   * le serveur, pas ici — sinon un test périmé pourrait passer pour récent.
+   */
+  const handleSavePompesMax = async (valeur: number) => {
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
+    });
+    if (res.ok) {
+      setPompesMax(valeur);
+      setPompesMaxLe(new Date().toISOString());
+    }
+  };
 
   const handleSaveExo = async (nextExercices: ExerciceId[], nextSeuil: number) => {
     setExercicesSel(nextExercices);
@@ -406,6 +432,15 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* Test de force : c'est lui qui fixe le multiplicateur appliqué à
+            toute la dette, donc il vit avec les réglages d'effort. */}
+        <TestPompes
+          pompesMax={pompesMax}
+          faitLe={pompesMaxLe}
+          niveaux={levelConfigs}
+          onEnregistre={handleSavePompesMax}
+        />
+
         <ReglageNotifications />
       </div>
 
@@ -501,7 +536,7 @@ export default function SettingsPage() {
                     <thead>
                       <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left py-2 pr-3">{t.niveau}</th>
-                        <th className="text-center py-2 px-2">{t.seuilGainageSec}</th>
+                        <th className="text-center py-2 px-2">{t.seuilPompes}</th>
                         <th className="text-center py-2 px-2">{t.multiplicateur}</th>
                         <th className="text-center py-2 px-2">{t.malusDefaite}</th>
                       </tr>
@@ -514,10 +549,10 @@ export default function SettingsPage() {
                             <input
                               type="number" min="1"
                               className="lol-input text-center w-24"
-                              value={lc.seuilGainageSec === 9999 ? "∞" : lc.seuilGainageSec}
+                              value={lc.niveau === 5 ? "∞" : lc.seuilPompes ?? ""}
                               readOnly={lc.niveau === 5}
                               style={lc.niveau === 5 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-                              onChange={(e) => lc.niveau !== 5 && updateLevel(lc.niveau, "seuilGainageSec", e.target.value)}
+                              onChange={(e) => lc.niveau !== 5 && updateLevel(lc.niveau, "seuilPompes", e.target.value)}
                             />
                           </td>
                           <td className="py-2 px-2 text-center">

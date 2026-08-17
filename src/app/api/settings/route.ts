@@ -34,6 +34,7 @@ export async function PUT(req: Request) {
     const data: {
       exercices?: string[]; rappelSeuilPoints?: number;
       rappelSeuilSec?: number; plafondQuotidien?: number;
+      pompesMax?: number; pompesMaxLe?: Date;
     } = {};
 
     if (body.userPrefs.exercices !== undefined) {
@@ -72,6 +73,18 @@ export async function PUT(req: Request) {
       data.plafondQuotidien = Math.round(plafond);
     }
 
+    // Test de pompes maximales : c'est lui qui fixe le niveau, donc le
+    // multiplicateur. La date est posée par le serveur — une date fournie par
+    // le client permettrait de faire passer un test périmé pour récent.
+    if (body.userPrefs.pompesMax !== undefined) {
+      const max = Number(body.userPrefs.pompesMax);
+      if (!Number.isFinite(max) || max < 0 || max > 500) {
+        return NextResponse.json({ error: "Test de pompes invalide" }, { status: 400 });
+      }
+      data.pompesMax = Math.round(max);
+      data.pompesMaxLe = new Date();
+    }
+
     if (Object.keys(data).length > 0) {
       updates.push(prisma.user.update({ where: { id: user.id }, data }));
     }
@@ -100,6 +113,8 @@ export async function PUT(req: Request) {
           where: { niveau: Number(lc.niveau) },
           data: {
             seuilGainageSec: Number(lc.seuilGainageSec),
+            // Critère actuel du niveau : le nombre de pompes d'affilée.
+            ...(lc.seuilPompes != null ? { seuilPompes: Number(lc.seuilPompes) } : {}),
             multiplicateur: Number(lc.multiplicateur),
             malusDefaite: Number(lc.malusDefaite),
           },
