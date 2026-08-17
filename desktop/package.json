@@ -1,6 +1,6 @@
 {
   "name": "win-or-workout-desktop",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "App desktop + overlay pour Win or Workout",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
@@ -30,7 +30,8 @@
       "allowToChangeInstallationDirectory": true,
       "shortcutName": "Win or Workout",
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "include": "build/installer.nsh"
     },
     "directories": {
       "buildResources": "build"
