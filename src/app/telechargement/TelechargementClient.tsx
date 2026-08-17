@@ -3,7 +3,14 @@ import Link from "next/link";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { telechargement as telechargementDict } from "@/lib/i18n/dictionaries/telechargement";
 
-export function TelechargementClient({ downloadUrl }: { downloadUrl: string | null }) {
+export function TelechargementClient({
+  downloadUrl,
+  version,
+}: {
+  downloadUrl: string | null;
+  /** Version proposée au téléchargement, quand elle a pu être lue. */
+  version?: string | null;
+}) {
   const t = useT(telechargementDict);
   return (
     <div
@@ -67,7 +74,16 @@ export function TelechargementClient({ downloadUrl }: { downloadUrl: string | nu
           >
             {t.telecharger}
           </a>
-        ) : (
+        ) : null}
+
+        {/* Savoir ce qu'on installe, et pouvoir le comparer à ce qu'on a déjà. */}
+        {downloadUrl && version && (
+          <p style={{ marginTop: "0.7rem", fontSize: "0.75rem", color: "rgba(236,239,244,0.35)" }}>
+            {t.versionLabel(version)}
+          </p>
+        )}
+
+        {!downloadUrl && (
           <div
             style={{
               padding: "1rem 1.25rem",
