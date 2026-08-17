@@ -192,7 +192,7 @@ export default function Dashboard() {
   const [niveaux, setNiveaux] = useState<LevelCfg[]>([]);
 
   const {
-    sessionActive, sessionGames, sessionError, polling, countdown, sessionLevel,
+    sessionActive, sessionGames, sessionError, polling, countdown, sessionNiveau,
     startSession, stopSession,
     typeSession, jeuSession, chronoSec, chronoErreur, arreterChrono, dettePoints,
   } = useSession();
@@ -264,18 +264,12 @@ export default function Dashboard() {
     }
   };
 
-  /**
-   * Le contexte de session raisonne encore en secondes de gainage pour afficher
-   * son libellé de niveau. On lui donne l'équivalent du niveau issu du test,
-   * pour que l'affichage colle à ce que le serveur calcule réellement.
-   */
-  const gainageEquivalent =
-    pompesMax > 0 && niveaux.length > 0
-      ? getLevelParPompes(pompesMax, niveaux).seuilGainageSec
-      : 60;
+  // Niveau affiché pendant la session : celui que le serveur appliquera, déduit
+  // du test de force. Tant que le test n'est pas fait, le compte reste au plus bas.
+  const niveauActuel =
+    pompesMax > 0 && niveaux.length > 0 ? getLevelParPompes(pompesMax, niveaux).niveau : 1;
 
   const handleDemarrerSession = async () => {
-    const sec = Math.max(1, gainageEquivalent);
     localStorage.setItem("lastJeu", jeuChoisi);
     // La fenêtre reste ouverte : elle bascule sur l'état de la session qui vient
     // de démarrer, ce qui confirme le lancement sans clic supplémentaire.
@@ -286,7 +280,7 @@ export default function Dashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userPrefs: { exercices: exercicesSel } }),
     }).catch(() => {});
-    await startSession(sec, jeuChoisi);
+    await startSession(niveauActuel, jeuChoisi);
   };
 
   // Fin d'une session chronométrée : la durée est écrite, puis les stats
@@ -681,7 +675,7 @@ export default function Dashboard() {
         ) : typeSession === "temps" ? (
           <SessionChrono
             jeu={jeuSession}
-            niveau={sessionLevel}
+            niveau={t.levelLabel(sessionNiveau)}
             chronoSec={chronoSec}
             dette={fmt(dettePoints)}
             erreur={chronoErreur}
@@ -694,7 +688,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
               <div className="w-2 h-2 rounded-full" style={{ background: "#2FD98A", boxShadow: "0 0 6px #2FD98A", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">{t.sessionActive}</span>
-              <span className="text-xs gold-text">{sessionLevel}</span>
+              <span className="text-xs gold-text">{t.levelLabel(sessionNiveau)}</span>
               <span className="ml-auto text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
                 {polling ? t.checking : t.nextCheck(countdown)}
               </span>

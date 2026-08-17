@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
-import { getLevel } from "@/lib/scoring";
+import { getLevelParPompes } from "@/lib/scoring";
 import { estAdmin } from "@/lib/admin";
 
 
@@ -11,7 +11,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const levelConfigs = await prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } });
+  const levelConfigs = await prisma.levelConfig.findMany({ orderBy: { seuilPompes: "asc" } });
 
   const users = await prisma.user.findMany({
     select: {
@@ -21,7 +21,8 @@ export async function GET() {
       betaRank: true,
       riotId: true,
       riotRegion: true,
-      gainageMaxSec: true,
+      pompesMax: true,
+      pompesMaxLe: true,
       createdAt: true,
       genre: true,
       age: true,
@@ -59,7 +60,7 @@ export async function GET() {
     const avgPompes = totalGames > 0 ? Math.round(totalPompes / totalGames) : 0;
     const lastLevel = games[0]?.niveauCalcule ?? null;
 
-    const lvl = levelConfigs.length > 0 ? getLevel(u.gainageMaxSec, levelConfigs) : null;
+    const lvl = levelConfigs.length > 0 ? getLevelParPompes(u.pompesMax, levelConfigs) : null;
 
     return {
       id: u.id,
@@ -68,7 +69,8 @@ export async function GET() {
       betaRank: u.betaRank,
       riotId: u.riotId,
       riotRegion: u.riotRegion,
-      gainageMaxSec: u.gainageMaxSec,
+      pompesMax: u.pompesMax,
+      pompesMaxLe: u.pompesMaxLe,
       createdAt: u.createdAt,
       genre: u.genre,
       age: u.age,

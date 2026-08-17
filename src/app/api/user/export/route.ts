@@ -40,7 +40,8 @@ export async function GET() {
     },
     preferences: {
       exercices: user.exercices,
-      gainageMaxSec: user.gainageMaxSec,
+      pompesMax: user.pompesMax,
+      pompesMaxLe: user.pompesMaxLe,
       seuilRappelBoxeSec: user.rappelSeuilSec,
       plafondQuotidienPoints: user.plafondQuotidien,
       objectifTotalPoints: goal?.objectifTotalPompes ?? null,
