@@ -15,6 +15,7 @@ const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
 const { autoUpdater } = require("electron-updater");
+const fs = require("fs");
 
 // Désactive les Client Hints (Sec-CH-UA) qui trahissent Electron auprès de
 // Google OAuth même quand le user-agent est spoofé en Chrome standard.
@@ -185,6 +186,44 @@ function startAuthSignalServer() {
   server.listen(AUTH_PORT, "127.0.0.1", () => { canalPret = true; });
 }
 
+// ── Réglages propres à la machine ───────────────────────────────────────────
+// L'overlay dépend du mode d'affichage du jeu et de la carte graphique, pas du
+// joueur : le réglage vit donc sur le poste, pas dans le compte.
+
+function cheminReglages() {
+  return path.join(app.getPath("userData"), "reglages.json");
+}
+
+function lireReglages() {
+  try {
+    return JSON.parse(fs.readFileSync(cheminReglages(), "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function ecrireReglage(cle, valeur) {
+  const reglages = lireReglages();
+  reglages[cle] = valeur;
+  try {
+    fs.writeFileSync(cheminReglages(), JSON.stringify(reglages, null, 2));
+  } catch (err) {
+    console.warn("[WOW] Réglage non enregistré :", err?.message ?? err);
+  }
+}
+
+/** Activé par défaut : il fonctionne en sans bordure, le mode le plus courant. */
+function overlayAutorise() {
+  return lireReglages().overlay !== false;
+}
+
+ipcMain.handle("overlay:lire", () => overlayAutorise());
+ipcMain.handle("overlay:ecrire", (_e, actif) => {
+  ecrireReglage("overlay", Boolean(actif));
+  if (!actif) overlay.masquer();
+  return overlayAutorise();
+});
+
 // ── Fenêtre principale ───────────────────────────────────────────────────────
 
 async function createWindow() {
@@ -259,7 +298,7 @@ async function createWindow() {
     // fin : c'est le comportement visé, et c'est aussi ce qu'on veut tester.
     const enPartie = event.type === "game-started";
     overlay.envoyerEtat({ enPartie });
-    if (enPartie) overlay.afficher();
+    if (enPartie && overlayAutorise()) overlay.afficher();
     else overlay.masquer();
   });
 
@@ -401,7 +440,6 @@ app.whenReady().then(() => {
   // à tout moment, même sans partie en cours.
   stopOverlay = overlay.initOverlay();
   createWindow();
-  overlay.afficher();
   initMiseAJour();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

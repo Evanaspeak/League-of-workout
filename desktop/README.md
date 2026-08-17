@@ -92,14 +92,13 @@ anti-cheat.
 |---|---|
 | La pastille s'affiche et le chrono avance | Windows compose le plein écran : la voie est libre |
 | Rien en jeu, mais visible sur le bureau | Plein écran exclusif réel : il faudra une autre méthode |
-| Elle apparaît puis disparaît en boucle | Plein écran exclusif : l'overlay et le jeu se disputent l'écran |
 
 ### Résultat mesuré (17 août 2026, League of Legends, Windows 11)
 
 - **Sans bordure** : l'overlay s'affiche correctement.
-- **Plein écran** : il clignote. Le jeu détient l'écran en exclusif ; l'afficher
-  oblige le compositeur à l'en sortir, le jeu le réclame, et l'alternance se
-  voit.
+- **Plein écran** : il disparaît et ne revient pas. Les « optimisations de
+  plein écran » de Windows étaient pourtant actives : le jeu obtient bien un
+  plein écran exclusif, où rien d'autre n'est composé.
 
 Conclusion : un overlay est viable en sans bordure, pas en plein écran
 exclusif. Le contourner demanderait de s'accrocher au rendu du jeu, ce que
