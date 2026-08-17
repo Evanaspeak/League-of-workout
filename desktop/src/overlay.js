@@ -24,6 +24,15 @@ const LARGEUR = 230;
 const HAUTEUR = 132;
 
 let fenetre = null;
+/**
+ * Ce qu'on veut afficher, indépendamment de ce que Windows accepte de dessiner.
+ *
+ * Se fier à `isVisible()` désynchronise la bascule : en plein écran exclusif la
+ * fenêtre peut être « visible » sans être composée, et le raccourci la cachait
+ * alors pour de bon au lieu de la montrer.
+ */
+let voulu = false;
+let surveillance = null;
 
 /**
  * Crée la fenêtre d'overlay. Elle démarre cachée : c'est `afficher()` ou le
@@ -78,6 +87,7 @@ function creerOverlay() {
 }
 
 function afficher() {
+  voulu = true;
   if (!fenetre || fenetre.isDestroyed()) creerOverlay();
   // showInactive plutôt que show : la fenêtre apparaît sans prendre le focus,
   // donc sans faire perdre le contrôle du jeu.
@@ -86,12 +96,33 @@ function afficher() {
 }
 
 function masquer() {
+  voulu = false;
   if (fenetre && !fenetre.isDestroyed()) fenetre.hide();
 }
 
 function basculer() {
-  if (fenetre && !fenetre.isDestroyed() && fenetre.isVisible()) masquer();
+  if (voulu) masquer();
   else afficher();
+}
+
+/**
+ * Un jeu en plein écran exclusif peut faire disparaître l'overlay. On le
+ * remontre dès que Windows le laisse à nouveau exister — au retour sur le
+ * bureau, ou en passant le jeu en sans bordure — sans rien demander au joueur.
+ *
+ * La remise au premier plan n'a lieu que si la fenêtre a réellement été
+ * masquée : la réaffirmer en boucle pendant que le jeu tient l'écran ne ferait
+ * que provoquer une alternance visible.
+ */
+function surveiller() {
+  if (surveillance) return;
+  surveillance = setInterval(() => {
+    if (!voulu || !fenetre || fenetre.isDestroyed()) return;
+    if (!fenetre.isVisible()) {
+      fenetre.showInactive();
+      fenetre.setAlwaysOnTop(true, "screen-saver");
+    }
+  }, 2000);
 }
 
 /** Pousse un état vers la fenêtre d'overlay (partie en cours, dette, etc.). */
@@ -108,14 +139,16 @@ function envoyerEtat(etat) {
  */
 function initOverlay({ raccourci = "Control+Shift+O" } = {}) {
   creerOverlay();
+  surveiller();
 
   const enregistre = globalShortcut.register(raccourci, basculer);
   if (!enregistre) {
-    console.warn(`[LOW] Raccourci ${raccourci} indisponible (déjà pris ?)`);
+    console.warn(`[WOW] Raccourci ${raccourci} indisponible (déjà pris ?)`);
   }
 
   return () => {
     globalShortcut.unregister(raccourci);
+    if (surveillance) { clearInterval(surveillance); surveillance = null; }
     if (fenetre && !fenetre.isDestroyed()) fenetre.destroy();
   };
 }

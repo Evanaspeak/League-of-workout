@@ -16,4 +16,8 @@ contextBridge.exposeInMainWorld("electronLOL", {
   openDiscordLogin: () => ipcRenderer.send("open-discord-popup"),
   onGameEnded: (callback) => subscribe("game-ended", callback),
   onGameStarted: (callback) => subscribe("game-started", callback),
+  // Overlay en jeu : le réglage vit côté application, pas dans le compte —
+  // il dépend de la machine et du mode d'affichage, pas du joueur.
+  overlayActif: () => ipcRenderer.invoke("overlay:lire"),
+  setOverlayActif: (actif) => ipcRenderer.invoke("overlay:ecrire", actif),
 });
