@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifier } from "@/lib/push";
 import { calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps, profilNeutre } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
+  dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 
@@ -214,11 +215,35 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
   const points = pointsEnTemps(repartition);
   if (points <= 0) return null;
   try {
+    const avant = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+    });
     const maj = await prisma.user.update({
       where: { id: userId },
       data: { dettePointsDus: { increment: points } },
       select: { dettePointsDus: true },
     });
+
+    // La notification part au franchissement du seuil, jamais à chaque partie :
+    // prévenir dix fois dans la soirée ferait couper les notifications.
+    if (avant) {
+      const exercices = exercicesEnTemps(toExerciceIds(avant.exercices));
+      const seuil = Math.max(0, avant.rappelSeuilSec);
+      if (exercices.length > 0 && seuil > 0) {
+        const avantSec = dureeEffort(Math.max(0, avant.dettePointsDus), exercices);
+        const apresSec = dureeEffort(Math.max(0, maj.dettePointsDus), exercices);
+        if (avantSec < seuil && apresSec >= seuil) {
+          // Sans await : une notification lente ne doit pas retarder la réponse.
+          notifier(userId, {
+            titre: "Tu as de quoi faire",
+            corps: `${formaterDuree(apresSec)} en attente. C'est le moment, entre deux parties.`,
+            tag: "wow-dette",
+          }).catch(() => {});
+        }
+      }
+    }
+
     return maj.dettePointsDus;
   } catch {
     return null;
