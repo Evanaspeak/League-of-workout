@@ -392,8 +392,7 @@ async function createWindow() {
     const enPartie = event.type === "game-started";
     // L'état d'abord : c'est lui qui permet à l'overlay de se retirer seul si
     // une fin de partie était manquée.
-    overlay.definirEnPartie(enPartie);
-    overlay.envoyerEtat({ enPartie });
+    overlay.definirEnPartie(enPartie, "League of Legends");
     if (enPartie && overlayAutorise()) overlay.afficher();
     else overlay.masquer();
   });
@@ -651,7 +650,7 @@ app.whenReady().then(() => {
   stopJeux = surveillerJeux(jeuxSurveilles, ({ type, jeu }) => {
     const actions = actionsDetection();
     if (type === "jeu-demarre") {
-      overlay.definirEnPartie(true);
+      overlay.definirEnPartie(true, jeu);
       if (actions.overlay && overlayAutorise()) overlay.afficher();
       if (actions.fenetre) ouvrirFenetre();
     } else if (type === "jeu-arrete") {
