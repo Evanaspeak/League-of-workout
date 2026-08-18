@@ -451,3 +451,44 @@ body {
   .pastille-dette,
   .rail-action { transition: none; }
 }
+
+/* ── Bande de constats ──────────────────────────────────────────────────────
+   Le premier chiffre porte le propos, les trois autres l'étayent. Une grille
+   de quatre cellules égales se lit comme une liste : rien n'y ressort, et la
+   page prend l'air d'avoir été posée par une machine. */
+
+.bande-stats {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.35fr);
+  gap: clamp(28px, 5vw, 64px);
+  align-items: start;
+}
+
+.bande-stats-appui {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: clamp(20px, 3vw, 34px);
+  /* Un filet sépare le constat majeur de ses appuis, plutôt qu'un blanc muet. */
+  padding-left: clamp(20px, 3vw, 40px);
+  border-left: 1px solid var(--line);
+}
+
+/* Le chiffre qui tient la section : assez gros pour être lu avant le texte. */
+.chiffre-phare {
+  font-size: clamp(3rem, 7.5vw, 4.6rem);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  color: var(--ember);
+  margin-bottom: 14px;
+}
+
+@media (max-width: 780px) {
+  .bande-stats { grid-template-columns: 1fr; }
+  .bande-stats-appui {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+  }
+}

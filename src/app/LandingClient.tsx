@@ -397,23 +397,35 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         padding: "44px 24px",
       }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="eyebrow" style={{ marginBottom: 36 }}>{t.statsLabel}</p>
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 32,
-          }}>
-            {t.stats.map((s, i) => (
-              <div key={s.value} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
-                <div className="mono-num" style={{
-                  fontSize: "clamp(1.7rem, 3vw, 2.3rem)", fontWeight: 600,
-                  color: "var(--amber)", lineHeight: 1, marginBottom: 10,
-                }}>
-                  {s.value}
-                </div>
-                <div style={{ fontSize: "0.82rem", color: "var(--faint)", lineHeight: 1.55 }}>
-                  {s.label}
-                </div>
+          <p className="eyebrow" style={{ marginBottom: 28 }}>{t.statsLabel}</p>
+          {/* Quatre chiffres de même taille se lisent comme une liste : aucun ne
+              ressort, et rien ne dit lequel compte. Le premier constat porte le
+              propos — il domine, les trois autres l'étayent. */}
+          <div className="bande-stats">
+            <div className="reveal" style={{ transitionDelay: "0ms" }}>
+              <div className="mono-num chiffre-phare">{t.stats[0].value}</div>
+              <div style={{
+                fontSize: "0.92rem", color: "var(--muted)", lineHeight: 1.5, maxWidth: "26ch",
+              }}>
+                {t.stats[0].label}
               </div>
-            ))}
+            </div>
+
+            <div className="bande-stats-appui">
+              {t.stats.slice(1).map((s, i) => (
+                <div key={s.value} className="reveal" style={{ transitionDelay: `${(i + 1) * 80}ms` }}>
+                  <div className="mono-num" style={{
+                    fontSize: "clamp(1.35rem, 2.2vw, 1.75rem)", fontWeight: 600,
+                    color: "var(--amber)", lineHeight: 1, marginBottom: 8,
+                  }}>
+                    {s.value}
+                  </div>
+                  <div style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.5 }}>
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
