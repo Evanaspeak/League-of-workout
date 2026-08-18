@@ -1,0 +1,96 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { maj as dict } from "@/lib/i18n/dictionaries/maj";
+import type { EtatMaj } from "@/types/electron";
+
+/**
+ * Version installée et état des mises à jour, dans l'application desktop.
+ *
+ * Le numéro de version n'apparaissait nulle part : impossible de dire si une
+ * mise à jour s'était appliquée, ni de distinguer « rien à installer » de
+ * « le mécanisme est cassé ». Le bouton de vérification donne en plus une
+ * réponse immédiate, sans attendre le prochain contrôle automatique.
+ */
+export function ReglageApplication() {
+  const t = useT(dict);
+  const [infos, setInfos] = useState<{ version: string; etat: EtatMaj } | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  useEffect(() => {
+    const pont = window.electronLOL;
+    if (!pont?.version || !pont.majEtat) return;
+    Promise.all([pont.version(), pont.majEtat()])
+      .then(([version, etat]) => setInfos({ version, etat }))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const pont = window.electronLOL;
+    if (!pont?.onMajEtat) return;
+    return pont.onMajEtat((etat) => setInfos((prec) => (prec ? { ...prec, etat } : prec)));
+  }, []);
+
+  if (!infos) return null;
+
+  const verifier = async () => {
+    setEnCours(true);
+    try {
+      const etat = await window.electronLOL!.majVerifier!();
+      setInfos((prec) => (prec ? { ...prec, etat } : prec));
+    } catch {
+      /* l'état reste celui d'avant */
+    }
+    setEnCours(false);
+  };
+
+  const { statut, version: versionDispo } = infos.etat;
+  const message =
+    statut === "prete"
+      ? `${versionDispo ? t.preteVersion(versionDispo) : t.prete} ${t.installeAuRedemarrage}`
+      : statut === "telechargement" && versionDispo
+        ? t.telechargement(versionDispo)
+        : statut === "a-jour"
+          ? t.aJour
+          : statut === "erreur"
+            ? t.erreur
+            : statut === "sources"
+              ? t.depuisSources
+              : null;
+
+  return (
+    <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+      <h2 style={{
+        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+        fontSize: "0.72rem", color: "#ECEFF4",
+        letterSpacing: "0.16em", textTransform: "uppercase",
+      }}>
+        {t.titre}
+      </h2>
+
+      <p className="mono-num text-sm" style={{ color: "var(--amber)" }}>
+        {t.versionInstallee(infos.version)}
+      </p>
+
+      {message && (
+        <p className="text-xs" style={{ color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
+          {message}
+        </p>
+      )}
+
+      <div className="flex gap-2 flex-wrap">
+        <button className="lol-btn text-sm" onClick={verifier} disabled={enCours || statut === "sources"}>
+          {enCours || statut === "verification" ? t.verification : t.verifier}
+        </button>
+        {statut === "prete" && (
+          <button
+            className="lol-btn text-sm"
+            onClick={() => window.electronLOL?.majInstaller?.()}
+          >
+            {t.redemarrer}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

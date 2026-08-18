@@ -20,4 +20,17 @@ contextBridge.exposeInMainWorld("electronLOL", {
   // il dépend de la machine et du mode d'affichage, pas du joueur.
   overlayActif: () => ipcRenderer.invoke("overlay:lire"),
   setOverlayActif: (actif) => ipcRenderer.invoke("overlay:ecrire", actif),
+
+  // Mise à jour. `majEtat()` interroge l'état courant, `onMajEtat()` suit ses
+  // changements : le téléchargement peut se terminer avant qu'une page soit
+  // là pour l'entendre, l'un sans l'autre laisserait passer l'information.
+  version: () => ipcRenderer.invoke("app:version"),
+  majEtat: () => ipcRenderer.invoke("maj:etat"),
+  majVerifier: () => ipcRenderer.invoke("maj:verifier"),
+  majInstaller: () => ipcRenderer.invoke("maj:installer"),
+  onMajEtat: (callback) => {
+    const handler = (_event, etat) => callback(etat);
+    ipcRenderer.on("maj:etat", handler);
+    return () => ipcRenderer.removeListener("maj:etat", handler);
+  },
 });

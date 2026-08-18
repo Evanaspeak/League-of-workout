@@ -1,5 +1,12 @@
 export {};
 
+/** État de la mise à jour de l'application desktop. */
+export type EtatMaj = {
+  statut: "inconnu" | "sources" | "verification" | "telechargement" | "a-jour" | "prete" | "erreur";
+  version: string | null;
+  erreur: string | null;
+};
+
 declare global {
   interface Window {
     electronLOL?: {
@@ -12,6 +19,12 @@ declare global {
       // d'où l'optionnalité — le réglage ne s'affiche que s'ils existent.
       overlayActif?: () => Promise<boolean>;
       setOverlayActif?: (actif: boolean) => Promise<boolean>;
+      // Mise à jour (0.4.1+).
+      version?: () => Promise<string>;
+      majEtat?: () => Promise<EtatMaj>;
+      majVerifier?: () => Promise<EtatMaj>;
+      majInstaller?: () => Promise<boolean>;
+      onMajEtat?: (callback: (etat: EtatMaj) => void) => () => void;
     };
   }
 }
