@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (ex: 0.1.0)'
-        required: true
-        default: '0.1.0'
+        description: "Version à publier. Vide = celle de desktop/package.json."
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -30,6 +30,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # La version vient du fichier qui la porte déjà. Une valeur saisie à la
+      # main pouvait ne pas correspondre à ce qui venait d'être compilé : un
+      # lancement sans saisie retombait sur « 0.1.0 » et publiait l'installeur
+      # neuf dans la toute première release, où plus personne ne regarde.
+      - name: Version à publier
+        id: version
+        shell: bash
+        run: |
+          saisie="${{ inputs.version }}"
+          fichier="$(node -p "require('./package.json').version")"
+          echo "valeur=${saisie:-$fichier}" >> "$GITHUB_OUTPUT"
+
       - name: Build NSIS installer
         run: npx electron-builder --win --publish never
         env:
@@ -38,8 +50,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('desktop-v{0}', inputs.version) || github.ref_name }}
-          name: ${{ github.event_name == 'workflow_dispatch' && format('Win or Workout v{0}', inputs.version) || format('Win or Workout {0}', github.ref_name) }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('desktop-v{0}', steps.version.outputs.valeur) || github.ref_name }}
+          name: ${{ github.event_name == 'workflow_dispatch' && format('Win or Workout v{0}', steps.version.outputs.valeur) || format('Win or Workout {0}', github.ref_name) }}
           files: |
             desktop/dist/*.exe
             desktop/dist/latest.yml
