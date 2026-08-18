@@ -12,6 +12,10 @@ export const notifications = {
     testEnvoye: "Envoyé. Ça devrait arriver dans la seconde.",
     testEchoue: "Rien n'est parti. Réactive les notifications sur cet appareil.",
     erreur: "Ça n'a pas marché. Réessaie.",
+    // L'application desktop n'a rien à activer : elle tourne sur la machine et
+    // affiche les rappels elle-même, sans passer par un service d'envoi.
+    desktopActives: "Actives dans l'application : les rappels s'affichent pendant que tu joues, sans rien à activer.",
+    desktopTestEnvoye: "Envoyé. Regarde en bas à droite de l'écran.",
   },
   en: {
     titre: "Notifications",
@@ -26,5 +30,7 @@ export const notifications = {
     testEnvoye: "Sent. It should land within a second.",
     testEchoue: "Nothing went out. Turn notifications back on for this device.",
     erreur: "That didn't work. Try again.",
+    desktopActives: "On in the app: reminders show while you play, nothing to turn on.",
+    desktopTestEnvoye: "Sent. Look at the bottom right of your screen.",
   },
 };

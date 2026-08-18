@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { overlay as dict } from "@/lib/i18n/dictionaries/overlay";
 import type { EtatOverlay } from "@/types/electron";
@@ -27,6 +27,14 @@ export function ReglageOverlay() {
     if (!pont?.overlayActif) return;
     pont.overlayActif().then((actif) => setEtat({ actif })).catch(() => {});
     pont.overlayCoinLire?.().then(setPlace).catch(() => {});
+  }, []);
+
+  // Quitter la page en plein placement laisserait la pastille attrapable, sans
+  // plus rien pour en sortir : on referme le mode avec la page.
+  const placementRef = useRef(false);
+  useEffect(() => { placementRef.current = Boolean(place?.placement); }, [place]);
+  useEffect(() => () => {
+    if (placementRef.current) window.electronLOL?.overlayPlacement?.(false).catch(() => {});
   }, []);
 
   if (!etat) return null;
@@ -86,7 +94,10 @@ export function ReglageOverlay() {
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {place.coins.map((coin) => {
-              const choisi = coin === place.coin;
+              // Un coin cesse d'être « le » choix dès qu'on a posé la pastille
+              // à la main : afficher les deux comme actifs mentirait sur ce qui
+              // décide réellement de sa position.
+              const choisi = !place.libre && coin === place.coin;
               return (
                 <button
                   key={coin}
@@ -106,6 +117,42 @@ export function ReglageOverlay() {
               );
             })}
           </div>
+          {/* Les quatre coins ne suffisent pas : selon la résolution et
+              l'interface du jeu, la zone libre n'est jamais au même endroit.
+              Le placement à la main est plus direct qu'un aller-retour par
+              capture d'écran, et donne le résultat au pixel près. */}
+          {window.electronLOL?.overlayPlacement && (
+            <div className="space-y-2">
+              <button
+                onClick={async () => {
+                  try {
+                    setPlace(await window.electronLOL!.overlayPlacement!(!place.placement));
+                  } catch { /* inchangé */ }
+                }}
+                aria-pressed={place.placement}
+                className="text-sm"
+                style={{
+                  padding: "6px 14px", borderRadius: 999, cursor: "pointer",
+                  background: place.placement ? "rgba(47,217,138,0.12)" : "transparent",
+                  border: `1px solid ${place.placement ? "var(--victory)" : "var(--line-strong)"}`,
+                  color: place.placement ? "var(--victory)" : "rgba(236,239,244,0.6)",
+                }}
+              >
+                {place.placement ? t.placerTerminer : t.placerBtn}
+              </button>
+              {place.placement && (
+                <p className="text-xs" style={{ color: "var(--victory)", lineHeight: 1.6 }}>
+                  {t.placerEnCours}
+                </p>
+              )}
+              {!place.placement && place.libre && (
+                <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+                  {t.placerLibre}
+                </p>
+              )}
+            </div>
+          )}
+
           <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)", lineHeight: 1.6 }}>
             {place.raccourcis.bascule ? t.raccourciActif(place.raccourcis.bascule) : t.raccourciAucun}
             {place.raccourcis.coin && <><br />{t.raccourciCoin(place.raccourcis.coin)}</>}

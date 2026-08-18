@@ -47,6 +47,23 @@ contextBridge.exposeInMainWorld("electronLOL", {
   overlayActif: () => ipcRenderer.invoke("overlay:lire"),
   setOverlayActif: (actif) => ipcRenderer.invoke("overlay:ecrire", actif),
 
+  /**
+   * Rappel affiché par Windows lui-même.
+   *
+   * Le site passe par le push web : un abonnement auprès du service de
+   * notification du navigateur. Electron n'embarque pas les identifiants de ce
+   * service, l'abonnement échoue, et le bouton « Activer » ne pouvait donc rien
+   * donner. Ici la notification est locale — pas de serveur, pas d'abonnement,
+   * et de toute façon l'application tourne déjà sur la machine.
+   */
+  notifier: (titre, corps) => ipcRenderer.send("notif:afficher", { titre, corps }),
+  /** Ouvre la fenêtre : c'est ce que fait un clic sur la notification. */
+  ouvrirFenetre: () => ipcRenderer.send("fenetre:ouvrir"),
+
+  // Placement libre de l'overlay : le mode saisie rend la pastille attrapable
+  // à la souris, le temps de la poser où elle ne gêne pas.
+  overlayPlacement: (actif) => ipcRenderer.invoke("overlay:placement", actif),
+
   // Mise à jour. `majEtat()` interroge l'état courant, `onMajEtat()` suit ses
   // changements : le téléchargement peut se terminer avant qu'une page soit
   // là pour l'entendre, l'un sans l'autre laisserait passer l'information.

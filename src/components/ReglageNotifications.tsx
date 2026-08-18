@@ -16,7 +16,7 @@ function versTampon(base64: string): ArrayBuffer {
   return tampon;
 }
 
-type Etat = "chargement" | "indisponible" | "refuse" | "inactif" | "actif";
+type Etat = "chargement" | "indisponible" | "refuse" | "inactif" | "actif" | "desktop";
 
 /**
  * Autorisation des notifications. Elles visent le moment décrit par les
@@ -31,6 +31,16 @@ export function ReglageNotifications() {
   const [message, setMessage] = useState("");
 
   const relire = useCallback(async () => {
+    // Dans l'application desktop, le push web ne peut pas fonctionner : il
+    // faudrait un abonnement auprès du service de notification du navigateur,
+    // dont Electron n'a pas les identifiants. L'abonnement échouait sans rien
+    // dire, et le bouton « Activer » ne pouvait mener nulle part. L'application
+    // affiche les rappels elle-même : il n'y a plus rien à activer.
+    if (typeof window !== "undefined" && window.electronLOL?.notifier) {
+      setEtat("desktop");
+      return;
+    }
+
     // L'appel réseau vient en premier : rien ne doit s'exécuter de façon
     // synchrone ici, sinon l'appel depuis l'effet déclenche un rendu en
     // cascade — et le serveur seul sait si les notifications sont configurées.
@@ -131,6 +141,12 @@ export function ReglageNotifications() {
     setOccupe(false);
   };
 
+  /** Test local : l'application affiche la notification, rien ne transite. */
+  const testerDesktop = () => {
+    window.electronLOL?.notifier?.("Win or Workout", "Voilà à quoi ressemble un rappel.");
+    setMessage(t.desktopTestEnvoye);
+  };
+
   if (etat === "chargement") return null;
 
   return (
@@ -145,6 +161,19 @@ export function ReglageNotifications() {
       <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
         {t.aide}
       </p>
+
+      {etat === "desktop" && (
+        <div className="space-y-2">
+          <p className="text-xs" style={{ color: "var(--victory)" }}>{t.desktopActives}</p>
+          <button
+            className="text-xs px-3 py-1.5 rounded"
+            style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+            onClick={testerDesktop}
+          >
+            {t.tester}
+          </button>
+        </div>
+      )}
 
       {etat === "indisponible" && (
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.indisponible}</p>

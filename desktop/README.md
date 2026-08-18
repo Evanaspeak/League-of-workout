@@ -77,6 +77,20 @@ personne ne garde une fenêtre ouverte toute une soirée.
 - Si l'icône ne peut pas être créée, fermer la fenêtre arrête l'application :
   mieux vaut s'arrêter franchement que survivre sans moyen de revenir.
 
+### Pourquoi les rappels ne passent pas par le push web
+
+Le site envoie ses rappels par notification push : la page s'abonne auprès du
+service de notification du navigateur, et le serveur y dépose les messages.
+Electron n'embarque pas les identifiants de ce service. L'abonnement échouait
+donc toujours, et le bouton « Activer les notifications » des réglages ne
+pouvait mener nulle part — c'est ce que décrivait le rapport « je ne peux pas
+activer les notifications depuis l'application ».
+
+L'application n'en a de toute façon pas besoin : elle tourne sur la machine et
+affiche la notification elle-même (`ipcMain.on("notif:afficher")`). Les réglages
+le disent, et proposent un test plutôt qu'une activation. Un clic sur le rappel
+ramène la fenêtre, où le décompte attend.
+
 ## Détection des jeux
 
 L'application repère le lancement d'un jeu en lisant la liste des processus,
@@ -113,6 +127,17 @@ au-dessus de League quand il est en plein écran ?**
 - Elle apparaît aussi **toute seule au début d'une partie**, et disparaît à la fin.
 - **Ctrl + Maj + O** l'affiche ou la masque à tout moment, même en jeu.
 - Elle laisse passer les clics : impossible de gêner une partie.
+- **Réglages → Placer à la main** la rend attrapable, le temps de la poser où
+  elle ne recouvre rien. La position est retenue pour ce poste, et prime sur
+  les quatre coins — selon la résolution et l'interface du jeu, la zone libre
+  n'est jamais au même endroit.
+
+Elle annonce ce que la partie en cours coûtera, en deux nombres : le prix d'une
+victoire et celui d'une défaite. À mi-partie l'issue n'est pas connue, et une
+victoire ne coûte pas la même chose — un seul chiffre reviendrait à parier à la
+place du joueur. Le calcul passe par l'aperçu de scoring du site, celui-là même
+qui sert avant d'enregistrer une partie : l'estimation lue en jeu ne peut pas
+diverger du chiffre écrit à la fin.
 
 Le chronomètre qui défile est là pour prouver que l'overlay est *vivant* :
 s'il avance pendant la partie, le rendu passe bien par-dessus le jeu.
