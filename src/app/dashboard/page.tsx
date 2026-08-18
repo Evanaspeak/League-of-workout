@@ -170,7 +170,9 @@ export default function Dashboard() {
   const [calendarDate, setCalendarDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [dailyHourly, setDailyHourly] = useState<{ label: string; total: number }[] | null>(null);
   const [dailySummary, setDailySummary] = useState<{ total: number; games: number } | null>(null);
-  const [dailyLoading, setDailyLoading] = useState(false);
+  // Jour dont le détail est effectivement affiché. Le chargement s'en déduit :
+  // tant qu'il ne correspond pas à la date demandée, la réponse est en route.
+  const [dailyCharge, setDailyCharge] = useState<string | null>(null);
   const [roleView, setRoleView] = useState<"total" | "avg">("total");
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [filtreExo, setFiltreExo] = useState<ExerciceId | null>(null);
@@ -227,16 +229,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (statsPeriod !== "daily") return;
-    setDailyLoading(true);
+    // En changeant de date rapidement, une réponse tardive écrasait la plus
+    // récente : on ignore celles dont on n'attend plus rien.
+    let obsolete = false;
     fetch(`/api/dashboard/daily?date=${calendarDate}`)
       .then((r) => r.json())
       .then((d) => {
+        if (obsolete) return;
         setDailyHourly(d.hourly ?? []);
         setDailySummary({ total: d.total ?? 0, games: d.games ?? 0 });
-        setDailyLoading(false);
+        setDailyCharge(calendarDate);
       })
-      .catch(() => setDailyLoading(false));
+      .catch(() => { if (!obsolete) setDailyCharge(calendarDate); });
+    return () => { obsolete = true; };
   }, [statsPeriod, calendarDate]);
+
+  const dailyLoading = statsPeriod === "daily" && dailyCharge !== calendarDate;
 
   // Le niveau vient du test de force enregistré sur le compte ; on le charge à
   // l'ouverture de la modale pour ne pas peser sur le chargement du tableau.

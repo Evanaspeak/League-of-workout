@@ -51,11 +51,14 @@ interface Props {
 
 export function ChampionIcon({ name, size = 38 }: Props) {
   const [src, setSrc] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
+  // On retient le champion dont l'image a échoué, plutôt qu'un simple drapeau
+  // à remettre à zéro : changer de champion suffit alors à repartir de zéro,
+  // sans écrire dans un effet.
+  const [echouePour, setEchouePour] = useState<string | null>(null);
+  const failed = echouePour === name;
 
   useEffect(() => {
     if (!name) return;
-    setFailed(false);
     getVersion().then((v) => {
       setSrc(`https://ddragon.leagueoflegends.com/cdn/${v}/img/champion/${toKey(name)}.png`);
     });
@@ -84,7 +87,7 @@ export function ChampionIcon({ name, size = 38 }: Props) {
       alt={name}
       width={size}
       height={size}
-      onError={() => setFailed(true)}
+      onError={() => setEchouePour(name)}
       style={{
         borderRadius: r,
         border: "1px solid rgba(152,162,176,0.25)",

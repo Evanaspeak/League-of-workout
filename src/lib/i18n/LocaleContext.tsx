@@ -1,40 +1,56 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
+import { useValeurClient } from "@/lib/valeurClient";
 
 export type Locale = "fr" | "en";
 
 const STORAGE_KEY = "low_locale";
 
+/**
+ * La langue vit hors de React : elle est lue dans le stockage du navigateur,
+ * que le rendu serveur ne connaît pas. La poser dans un effet imposait un
+ * second rendu de toute l'application à chaque chargement — et le temps de
+ * celui-ci, un anglophone voyait la page en français.
+ */
+const abonnes = new Set<() => void>();
+
+function abonner(onChange: () => void) {
+  abonnes.add(onChange);
+  return () => { abonnes.delete(onChange); };
+}
+
+/**
+ * Un choix explicite prime toujours. À défaut, on suit la langue du
+ * navigateur : le français par défaut envoyait tout le monde sur la version
+ * française, y compris des anglophones qui n'avaient rien demandé.
+ */
+function lireLangue(): Locale {
+  const stocke = localStorage.getItem(STORAGE_KEY);
+  if (stocke === "fr" || stocke === "en") return stocke;
+  return (navigator.language || "").toLowerCase().startsWith("fr") ? "fr" : "en";
+}
+
 type Ctx = { locale: Locale; setLocale: (l: Locale) => void };
 const LocaleContext = createContext<Ctx | null>(null);
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("fr");
-
-  // Un choix explicite prime toujours. À défaut, on suit la langue du
-  // navigateur : le français par défaut envoyait tout le monde sur la version
-  // française, y compris des anglophones qui n'avaient rien demandé.
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === "fr" || stored === "en") {
-      setLocaleState(stored);
-      return;
-    }
-    const navigateur = (navigator.language || "").toLowerCase();
-    setLocaleState(navigateur.startsWith("fr") ? "fr" : "en");
-  }, []);
+  // Le serveur rend en français : c'est la langue du contenu écrit d'abord.
+  const locale = useValeurClient(lireLangue, "fr", abonner);
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  function setLocale(l: Locale) {
-    setLocaleState(l);
-    localStorage.setItem(STORAGE_KEY, l);
-  }
+  const valeur = useMemo<Ctx>(() => ({
+    locale,
+    setLocale: (l: Locale) => {
+      localStorage.setItem(STORAGE_KEY, l);
+      for (const prevenir of abonnes) prevenir();
+    },
+  }), [locale]);
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale }}>
+    <LocaleContext.Provider value={valeur}>
       {children}
     </LocaleContext.Provider>
   );
