@@ -1,9 +1,21 @@
 "use client";
 import { useEffect } from "react";
+import { ventiler, type ExerciceId } from "@/lib/exercices";
+import { notifierSysteme } from "@/lib/notifier";
 import type { ScoreDirect } from "@/types/electron";
 
 /** Rôle retenu quand le jeu ne le dit pas : celui de la dernière saisie. */
-const ROLE_DEFAUT = "Jungle";
+export const ROLE_DEFAUT = "Jungle";
+
+/**
+ * Noms tels qu'ils se lisent dans une phrase, pas dans un tableau : la boxe se
+ * compte en temps, d'où « 4 min de boxe » là où les autres donnent « 12 pompes ».
+ * Le français est celui des autres notifications, qui ne passent pas non plus
+ * par les dictionnaires.
+ */
+const NOMS: Record<ExerciceId, string> = {
+  pompes: "pompes", squats: "squats", boxe: "de boxe",
+};
 
 /**
  * Enregistre une partie de League à partir de ce que l'application desktop a vu,
@@ -57,9 +69,18 @@ export function PartieDetectee() {
             source: "live_client",
           }),
         });
+        if (!res.ok) return;
         // La pastille de dette et le tableau de bord écoutent cet événement :
         // la partie apparaît sans qu'on ait à recharger quoi que ce soit.
-        if (res.ok) window.dispatchEvent(new Event("wow-dette-changee"));
+        window.dispatchEvent(new Event("wow-dette-changee"));
+
+        // Le moment que décrivaient les testeurs : on sort de partie, on
+        // apprend ce qu'on doit, on le fait dans la file d'attente suivante.
+        // Encore fallait-il le dire — jusqu'ici il fallait rouvrir la fenêtre
+        // pour le savoir.
+        const { repartition } = await res.json();
+        const quantite = ventiler(repartition ?? {}).map((v) => `${v.valeur} ${NOMS[v.id]}`).join(" · ");
+        if (quantite) notifierSysteme("Partie terminée", `${quantite} à faire.`, "wow-partie");
       } catch {
         /* Le suivi de session reste le filet de sécurité. */
       }

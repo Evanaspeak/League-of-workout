@@ -13,6 +13,10 @@ export const overlay = {
     raccourciAucun:
       "Aucun raccourci n'a pu être pris : toutes les combinaisons sont déjà utilisées par une autre application. Passe par l'icône près de l'horloge, elle répond toujours.",
     raccourciCoin: (combinaison: string) => `${combinaison} la déplace d'un coin à l'autre.`,
+    placerBtn: "Placer à la main",
+    placerTerminer: "Terminer le placement",
+    placerEnCours: "La pastille est attrapable : traîne-la où tu veux, y compris par-dessus le jeu en « Sans bordure ». Clique sur « Terminer » quand elle est bien.",
+    placerLibre: "Posée à la main. Choisir un coin annule ce placement.",
   },
   en: {
     titre: "In-game overlay",
@@ -28,5 +32,9 @@ export const overlay = {
     raccourciAucun:
       "No shortcut could be registered: every combination is already taken by another app. Use the icon near the clock — it always responds.",
     raccourciCoin: (combinaison: string) => `${combinaison} moves it from corner to corner.`,
+    placerBtn: "Place it by hand",
+    placerTerminer: "Done placing",
+    placerEnCours: "The panel can be grabbed: drag it wherever you like, including over the game in « Borderless ». Click « Done » once it sits right.",
+    placerLibre: "Placed by hand. Picking a corner clears it.",
   },
 };

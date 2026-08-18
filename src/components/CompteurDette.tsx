@@ -5,6 +5,7 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { notifierSysteme } from "@/lib/notifier";
 
 type Dette = {
   points: number;
@@ -104,15 +105,7 @@ export function CompteurDette({
     if (!seuilFranchi) { notifieRef.current = false; return; }
     if (notifieRef.current) return;
     notifieRef.current = true;
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-    try {
-      new Notification("Win or Workout", {
-        body: t.detteRappelCorps(duree(dette!.dureeSec)),
-        icon: "/icon",
-        tag: "wow-dette",
-      });
-    } catch { /* certains navigateurs refusent hors service worker */ }
+    notifierSysteme("Win or Workout", t.detteRappelCorps(duree(dette!.dureeSec)), "wow-dette");
   }, [seuilFranchi, dette, t]);
 
   const arreterTick = () => {

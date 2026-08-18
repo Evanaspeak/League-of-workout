@@ -27,9 +27,19 @@ const MARGE = 24;
  */
 const COINS = ["haut-droite", "haut-gauche", "bas-droite", "bas-gauche"];
 const LARGEUR = 230;
-const HAUTEUR = 196;
+// Assez haut pour les quatre lignes du bas ET la consigne du mode placement :
+// la page est en `overflow: hidden`, ce qui dépasse est coupé sans un mot.
+const HAUTEUR = 228;
 
 let fenetre = null;
+/**
+ * Position posée à la main, en pixels d'écran. Elle l'emporte sur le coin :
+ * quatre coins ne suffisent pas, l'interface d'un jeu n'occupe jamais les mêmes
+ * zones d'une résolution à l'autre.
+ */
+let positionLibre = null;
+/** Vrai pendant qu'on déplace la pastille : elle accepte alors la souris. */
+let enPlacement = false;
 /**
  * Ce qu'on veut afficher, indépendamment de ce que Windows accepte de dessiner.
  *
@@ -101,8 +111,26 @@ function positionDuCoin(coin) {
   };
 }
 
+/**
+ * Ramène une position dans l'écran. Une résolution qui change, un second écran
+ * débranché, et la pastille se retrouverait posée hors de tout affichage —
+ * invisible, sans moyen de la récupérer autrement qu'en éditant un fichier.
+ */
+function dansLEcran({ x, y }) {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  return {
+    x: Math.max(0, Math.min(Math.round(x), width - LARGEUR)),
+    y: Math.max(0, Math.min(Math.round(y), height - HAUTEUR)),
+  };
+}
+
+/** Où la pastille doit se poser : la main du joueur d'abord, le coin ensuite. */
+function positionVoulue() {
+  return positionLibre ? dansLEcran(positionLibre) : positionDuCoin(coinActuel);
+}
+
 function creerOverlay() {
-  const { x, y } = positionDuCoin(coinActuel);
+  const { x, y } = positionVoulue();
 
   fenetre = new BrowserWindow({
     width: LARGEUR,
@@ -122,7 +150,10 @@ function creerOverlay() {
     skipTaskbar: true,
     focusable: false,
     resizable: false,
-    movable: false,
+    // Déplaçable, mais hors de portée : la fenêtre ignore la souris tant qu'on
+    // n'est pas en mode placement. Sans `movable`, la zone de saisie de la page
+    // resterait inerte et il n'y aurait aucune façon de poser la pastille.
+    movable: true,
     minimizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -150,7 +181,16 @@ function creerOverlay() {
   fenetre.webContents.on("did-finish-load", () => {
     if (fenetre && !fenetre.isDestroyed()) {
       fenetre.webContents.send("overlay:etat", dernierEtat);
+      fenetre.webContents.send("overlay:placement", enPlacement);
     }
+  });
+
+  // La pastille traînée à la souris : on retient où elle atterrit, sans
+  // attendre la sortie du mode — un plantage ne doit pas perdre le geste.
+  fenetre.on("moved", () => {
+    if (!enPlacement || !fenetre || fenetre.isDestroyed()) return;
+    const { x, y } = fenetre.getBounds();
+    positionLibre = { x, y };
   });
 
   fenetre.on("closed", () => { fenetre = null; });
@@ -218,11 +258,53 @@ function definirReleve({ dureeSec, score }) {
  */
 function definirCoin(coin) {
   coinActuel = COINS.includes(coin) ? coin : COINS[0];
+  // Un coin choisi annule le placement à la main : garder les deux reviendrait
+  // à ignorer le clic qu'on vient de recevoir.
+  positionLibre = null;
   if (fenetre && !fenetre.isDestroyed()) {
     const { x, y } = positionDuCoin(coinActuel);
     fenetre.setBounds({ x, y, width: LARGEUR, height: HAUTEUR });
   }
   return coinActuel;
+}
+
+/**
+ * Entre ou sort du mode placement.
+ *
+ * En mode placement la pastille cesse de laisser passer les clics et accepte le
+ * focus : c'est la seule façon de l'attraper. Elle s'affiche aussi, même hors
+ * partie — on ne va pas demander de lancer une partie pour la déplacer — et la
+ * surveillance ne la retire pas tant qu'on y est.
+ */
+function definirPlacement(actif) {
+  enPlacement = Boolean(actif);
+  if (!fenetre || fenetre.isDestroyed()) creerOverlay();
+
+  fenetre.setIgnoreMouseEvents(!enPlacement, { forward: true });
+  fenetre.setFocusable(enPlacement);
+  fenetre.webContents.send("overlay:placement", enPlacement);
+
+  if (enPlacement) {
+    afficher({ parLUtilisateur: true });
+  } else {
+    const { x, y } = fenetre.getBounds();
+    positionLibre = { x, y };
+    // Hors partie, la pastille n'a plus de raison de rester à l'écran une fois
+    // posée : c'est en jeu qu'elle sert.
+    if (!enPartie) masquer();
+  }
+
+  return lirePlacement();
+}
+
+/** État du placement, tel que les réglages doivent l'afficher. */
+function lirePlacement() {
+  return {
+    placement: enPlacement,
+    position: positionLibre,
+    /** Vrai quand la pastille a été posée à la main : le coin ne décide plus. */
+    libre: positionLibre !== null,
+  };
 }
 
 /** Passe au coin suivant : c'est ce que déclenche le raccourci clavier. */
@@ -253,7 +335,7 @@ function surveiller() {
   surveillance = setInterval(() => {
     if (!fenetre || fenetre.isDestroyed()) return;
 
-    if (voulu && !manuel && !enPartie) {
+    if (voulu && !manuel && !enPartie && !enPlacement) {
       // Affiché alors que plus rien ne tourne : on n'attend pas un événement
       // qui ne viendra peut-être jamais.
       masquer();
@@ -303,8 +385,11 @@ function enregistrerPremierLibre(candidats, action) {
   return null;
 }
 
-function initOverlay({ coin } = {}) {
+function initOverlay({ coin, position } = {}) {
   if (coin) coinActuel = COINS.includes(coin) ? coin : COINS[0];
+  if (position && typeof position.x === "number" && typeof position.y === "number") {
+    positionLibre = { x: position.x, y: position.y };
+  }
   creerOverlay();
   surveiller();
 
@@ -336,4 +421,5 @@ module.exports = {
   initOverlay, afficher, masquer, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
+  definirPlacement, lirePlacement,
 };

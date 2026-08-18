@@ -17,7 +17,23 @@ export type EtatOverlay = {
   coins: string[];
   /** `null` quand aucune combinaison n'a pu être prise par le système. */
   raccourcis: { bascule: string | null; coin: string | null };
+  /** Mode placement en cours : la pastille se laisse attraper à la souris. */
+  placement: boolean;
+  /** Position posée à la main, ou `null` si c'est encore le coin qui décide. */
+  position: { x: number; y: number } | null;
+  libre: boolean;
 };
+
+/**
+ * Ce que la partie en cours coûtera, déjà formaté dans l'unité de l'exercice
+ * choisi. `null` hors partie.
+ */
+export type ProjectionDette = {
+  victoire: string;
+  defaite: string;
+  /** Effort déjà dû, hors partie en cours. Chaîne vide s'il n'y en a pas. */
+  enAttente: string;
+} | null;
 
 /** Score du joueur relevé en direct sur l'API locale de League. */
 export type ScoreDirect = {
@@ -53,11 +69,20 @@ declare global {
       onGameStarted: (callback: () => void) => () => void;
       // Ajoutés en 0.3.3 : absents des versions installées plus anciennes,
       // d'où l'optionnalité — le réglage ne s'affiche que s'ils existent.
-      /** Publie la dette en cours vers l'overlay (0.5.6+). */
-      publierDette?: (dette: number) => void;
+      /**
+       * Publie vers l'overlay ce que la partie en cours coûtera (0.6.2+).
+       * Portait un simple nombre en 0.5.6 : la dette de session, restée à zéro
+       * faute de suivi Riot.
+       */
+      publierDette?: (dette: ProjectionDette) => void;
       /** Coin où se pose l'overlay, et coins possibles (0.5.7+). */
       overlayCoinLire?: () => Promise<EtatOverlay>;
       overlayCoinEcrire?: (coin: string) => Promise<EtatOverlay>;
+      /** Mode placement : la pastille devient attrapable à la souris (0.6.2+). */
+      overlayPlacement?: (actif: boolean) => Promise<EtatOverlay>;
+      /** Rappel affiché par le système, sans passer par le push web (0.6.2+). */
+      notifier?: (titre: string, corps: string) => void;
+      ouvrirFenetre?: () => void;
       /** Partie terminée : dernier relevé connu, pour l'enregistrer (0.6.0+). */
       onPartieTerminee?: (
         callback: (p: {

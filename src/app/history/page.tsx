@@ -419,9 +419,21 @@ export default function HistoryPage() {
                               )}
 
                               <td className="px-3 py-2 text-center gold-text">{g.niveauCalcule}</td>
+                              {/* L'exercice se lit sur la ligne repliée : un
+                                  nombre seul ne dit pas si ce sont des pompes,
+                                  des squats ou des secondes de boxe, et il
+                                  fallait déplier chaque ligne pour le savoir. */}
                               <td className="px-3 py-2 text-right gold-text font-bold" style={{ whiteSpace: "nowrap" }}>
                                 {parts.map((part) => (
-                                  <div key={part.id}>{formaterCompact(part.pts, part.id)}</div>
+                                  <div key={part.id}>
+                                    {formaterCompact(part.pts, part.id)}
+                                    <span style={{
+                                      marginLeft: 5, fontWeight: 400, fontSize: "0.72rem",
+                                      color: "rgba(152,162,176,0.65)",
+                                    }}>
+                                      {nomsExo[part.id].toLowerCase()}
+                                    </span>
+                                  </div>
                                 ))}
                               </td>
                               <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)", whiteSpace: "nowrap" }}>

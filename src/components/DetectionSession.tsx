@@ -12,14 +12,7 @@ import { getLevelParPompes } from "@/lib/scoring";
  * dire qu'un jeu vient de démarrer.
  */
 export function DetectionSession() {
-  const { sessionActive, startSession, dettePoints } = useSession();
-
-  // L'overlay affiche la dette, mais c'est la page qui la calcule : elle seule
-  // connaît le compte, le niveau et les exercices. On la lui pousse à chaque
-  // changement plutôt que de dupliquer le calcul côté application.
-  useEffect(() => {
-    window.electronLOL?.publierDette?.(dettePoints);
-  }, [dettePoints]);
+  const { sessionActive, startSession } = useSession();
 
   // Lus au moment de l'événement plutôt que capturés à l'abonnement : sans ça,
   // on se réabonnerait à chaque changement d'état de session.

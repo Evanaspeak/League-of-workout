@@ -9,7 +9,9 @@
 //      sur le port 3099 via un fetch CORS.
 //   6. Electron reçoit le JWT, le pose comme cookie, charge le dashboard.
 
-const { app, BrowserWindow, shell, ipcMain, session: electronSession } = require("electron");
+const {
+  app, BrowserWindow, Notification, shell, ipcMain, session: electronSession,
+} = require("electron");
 const path = require("path");
 const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
@@ -329,15 +331,33 @@ function coinOverlay() {
   return overlay.COINS.includes(c) ? c : overlay.COINS[0];
 }
 
-ipcMain.handle("overlay:coin-lire", () => ({
-  coin: coinOverlay(),
-  coins: overlay.COINS,
-  raccourcis: overlay.lireRaccourcis(),
-}));
+/**
+ * Position libre retenue, si la pastille a déjà été posée à la main. `null`
+ * tant qu'elle ne l'a pas été : c'est alors le coin qui décide.
+ */
+function positionOverlay() {
+  const p = lireReglages().overlayPosition;
+  return p && typeof p.x === "number" && typeof p.y === "number" ? p : null;
+}
+
+/** Tout ce que les réglages affichent de l'overlay, en une seule réponse. */
+function etatOverlay() {
+  return {
+    coin: coinOverlay(),
+    coins: overlay.COINS,
+    raccourcis: overlay.lireRaccourcis(),
+    ...overlay.lirePlacement(),
+  };
+}
+
+ipcMain.handle("overlay:coin-lire", () => etatOverlay());
 ipcMain.handle("overlay:coin-ecrire", (_e, coin) => {
   const pose = overlay.definirCoin(coin);
   ecrireReglage("overlayCoin", pose);
-  return { coin: pose, coins: overlay.COINS, raccourcis: overlay.lireRaccourcis() };
+  // Choisir un coin efface la position libre : les deux se contrediraient, et
+  // c'est le dernier geste qui fait foi.
+  ecrireReglage("overlayPosition", null);
+  return etatOverlay();
 });
 
 ipcMain.handle("overlay:lire", () => overlayAutorise());
@@ -346,6 +366,38 @@ ipcMain.handle("overlay:ecrire", (_e, actif) => {
   if (!actif) overlay.masquer();
   return overlayAutorise();
 });
+
+// Placement libre : la pastille devient attrapable à la souris, et la position
+// obtenue est retenue pour le poste. Quatre coins ne suffisent pas — selon la
+// résolution et l'interface du jeu, la place libre n'est jamais au même endroit.
+ipcMain.handle("overlay:placement", (_e, actif) => {
+  const { placement, position } = overlay.definirPlacement(Boolean(actif));
+  // On n'écrit qu'à la sortie du mode : pendant le déplacement, la position
+  // change à chaque pixel.
+  if (!placement) ecrireReglage("overlayPosition", position);
+  return etatOverlay();
+});
+
+/**
+ * Rappel affiché par le système. Le site s'appuie sur le push web, qui exige un
+ * abonnement auprès du service de notification du navigateur ; Electron n'en a
+ * pas, et l'abonnement échouait sans que rien ne le dise. Ici la notification
+ * part directement de l'application, qui tourne déjà sur la machine.
+ */
+ipcMain.on("notif:afficher", (_e, { titre, corps } = {}) => {
+  if (!Notification.isSupported()) return;
+  const notification = new Notification({
+    title: String(titre || "Win or Workout"),
+    body: String(corps || ""),
+    icon: path.join(__dirname, "..", "build", "icon.png"),
+  });
+  // Un rappel sans porte de sortie est une nuisance : le clic ramène la
+  // fenêtre, où le décompte attend.
+  notification.on("click", () => ouvrirFenetre());
+  notification.show();
+});
+
+ipcMain.on("fenetre:ouvrir", () => ouvrirFenetre());
 
 // ── Fenêtre principale ───────────────────────────────────────────────────────
 
@@ -675,10 +727,26 @@ app.whenReady().then(() => {
   // notifications ; sans lui, l'avertissement de mise en veille n'apparaîtrait
   // pas — et c'est justement lui qui évite de croire qu'on a quitté.
   app.setAppUserModelId("com.winorworkout.desktop");
+
+  // Sans ce filtre, une page peut demander n'importe quel accès — micro,
+  // caméra, position — et Electron le lui accorde. On n'ouvre que ce dont
+  // l'application se sert, et seulement à nos propres pages : une redirection
+  // vers un site tiers n'hérite de rien.
+  const PERMISSIONS_OUVERTES = new Set(["notifications", "fullscreen"]);
+  electronSession.defaultSession.setPermissionRequestHandler(
+    (contenu, permission, accorder) => {
+      const origine = contenu?.getURL?.() ?? "";
+      accorder(PERMISSIONS_OUVERTES.has(permission) && origine.startsWith(BACKEND_URL));
+    },
+  );
+
   startAuthSignalServer();
   // L'overlay est prêt dès le démarrage : Ctrl+Maj+O permet de le vérifier
   // à tout moment, même sans partie en cours.
-  stopOverlay = overlay.initOverlay({ coin: coinOverlay() });
+  stopOverlay = overlay.initOverlay({
+    coin: coinOverlay(),
+    position: positionOverlay(),
+  });
   createWindow();
   try {
     stopTray = initTray({

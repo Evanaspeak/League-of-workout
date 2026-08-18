@@ -5,6 +5,7 @@ import {
   type ExerciceId,
 } from "@/lib/exercices";
 import { JEU_DEFAUT, typeDuJeu, type TypeJeu } from "@/lib/jeux";
+import { notifierSysteme } from "@/lib/notifier";
 
 const POLL_MS = 2 * 60 * 1000;
 /** Le chrono d'une session au temps rafraîchit son affichage à la seconde. */
@@ -108,16 +109,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const exercicesRef = useRef<ExerciceId[]>([EXERCICE_DEFAUT]);
 
   const notifier = useCallback((points: number) => {
-    if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
     const quantite = formaterCompact(points, exerciceRef.current);
-    try {
-      new Notification("Win or Workout", {
-        body: `${quantite} à faire maintenant.`,
-        icon: "/icon",
-        tag: "wow-rappel",
-      });
-    } catch { /* certains navigateurs refusent hors service worker */ }
+    notifierSysteme("Win or Workout", `${quantite} à faire maintenant.`, "wow-rappel");
   }, []);
 
   /** Dette totale générée depuis le début du chrono, acquittements compris. */

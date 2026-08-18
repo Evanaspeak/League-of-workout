@@ -9,4 +9,10 @@ contextBridge.exposeInMainWorld("overlayLOW", {
     ipcRenderer.on("overlay:etat", handler);
     return () => ipcRenderer.removeListener("overlay:etat", handler);
   },
+  /** Mode placement : la pastille se laisse attraper à la souris. */
+  onPlacement: (callback) => {
+    const handler = (_event, actif) => callback(Boolean(actif));
+    ipcRenderer.on("overlay:placement", handler);
+    return () => ipcRenderer.removeListener("overlay:placement", handler);
+  },
 });
