@@ -33,6 +33,24 @@ let fenetre = null;
  */
 let voulu = false;
 let surveillance = null;
+/**
+ * Une partie est-elle réellement en cours ?
+ *
+ * L'affichage reposait uniquement sur des événements de début et de fin. Il
+ * suffit qu'une fin soit manquée — application lancée en cours de partie,
+ * hoquet de l'API locale, jeu fermé brutalement — pour que l'overlay reste au
+ * premier plan indéfiniment, y compris dans les menus. On garde donc l'état,
+ * et la surveillance s'en sert pour rattraper ce qui a été raté.
+ */
+let enPartie = false;
+/**
+ * Affichage demandé à la main, par le raccourci clavier.
+ *
+ * Le retrait automatique hors partie ne doit pas contredire un geste explicite :
+ * quelqu'un qui appelle l'overlay depuis le bureau veut le voir, même sans jeu
+ * lancé. Seul l'affichage automatique est repris.
+ */
+let manuel = false;
 
 /**
  * Crée la fenêtre d'overlay. Elle démarre cachée : c'est `afficher()` ou le
@@ -86,8 +104,9 @@ function creerOverlay() {
   return fenetre;
 }
 
-function afficher() {
+function afficher({ parLUtilisateur = false } = {}) {
   voulu = true;
+  manuel = parLUtilisateur;
   if (!fenetre || fenetre.isDestroyed()) creerOverlay();
   // showInactive plutôt que show : la fenêtre apparaît sans prendre le focus,
   // donc sans faire perdre le contrôle du jeu.
@@ -97,27 +116,52 @@ function afficher() {
 
 function masquer() {
   voulu = false;
+  manuel = false;
   if (fenetre && !fenetre.isDestroyed()) fenetre.hide();
 }
 
 function basculer() {
   if (voulu) masquer();
-  else afficher();
+  else afficher({ parLUtilisateur: true });
 }
 
 /**
- * Un jeu en plein écran exclusif peut faire disparaître l'overlay. On le
- * remontre dès que Windows le laisse à nouveau exister — au retour sur le
- * bureau, ou en passant le jeu en sans bordure — sans rien demander au joueur.
+ * Déclare si une partie tourne. C'est le filet de sécurité de l'affichage :
+ * l'overlay n'a rien à faire à l'écran en dehors d'une partie, même si la fin
+ * de la précédente n'a jamais été signalée.
+ */
+function definirEnPartie(valeur) {
+  enPartie = Boolean(valeur);
+  // Une partie qui commence rend la main à l'affichage automatique : le
+  // raccourci reste maître jusque-là, pas au-delà.
+  if (enPartie) manuel = false;
+}
+
+/**
+ * Deux corrections, à intervalle régulier.
  *
- * La remise au premier plan n'a lieu que si la fenêtre a réellement été
- * masquée : la réaffirmer en boucle pendant que le jeu tient l'écran ne ferait
- * que provoquer une alternance visible.
+ * Un jeu en plein écran exclusif peut faire disparaître l'overlay : on le
+ * remontre dès que Windows le laisse à nouveau exister — au retour sur le
+ * bureau, ou en passant le jeu en sans bordure. La remise au premier plan n'a
+ * lieu que si la fenêtre a réellement été masquée : la réaffirmer pendant que
+ * le jeu tient l'écran ne ferait que provoquer une alternance visible.
+ *
+ * À l'inverse, un overlay resté affiché sans partie est retiré. C'est ce qui
+ * manquait : un seul événement de fin manqué le laissait au premier plan pour
+ * le reste de la soirée.
  */
 function surveiller() {
   if (surveillance) return;
   surveillance = setInterval(() => {
-    if (!voulu || !fenetre || fenetre.isDestroyed()) return;
+    if (!fenetre || fenetre.isDestroyed()) return;
+
+    if (voulu && !manuel && !enPartie) {
+      // Affiché alors que plus rien ne tourne : on n'attend pas un événement
+      // qui ne viendra peut-être jamais.
+      masquer();
+      return;
+    }
+    if (!voulu) return;
     if (!fenetre.isVisible()) {
       fenetre.showInactive();
       fenetre.setAlwaysOnTop(true, "screen-saver");
@@ -153,4 +197,4 @@ function initOverlay({ raccourci = "Control+Shift+O" } = {}) {
   };
 }
 
-module.exports = { initOverlay, afficher, masquer, basculer, envoyerEtat };
+module.exports = { initOverlay, afficher, masquer, basculer, envoyerEtat, definirEnPartie };
