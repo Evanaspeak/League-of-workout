@@ -44,7 +44,7 @@ export function ReglageApplication() {
     setEnCours(false);
   };
 
-  const { statut, version: versionDispo } = infos.etat;
+  const { statut, version: versionDispo, erreur } = infos.etat;
   const message =
     statut === "prete"
       ? `${versionDispo ? t.preteVersion(versionDispo) : t.prete} ${t.installeAuRedemarrage}`
@@ -75,6 +75,18 @@ export function ReglageApplication() {
       {message && (
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
           {message}
+        </p>
+      )}
+
+      {/* Le détail technique, plutôt qu'un message générique : c'est lui qui
+          permet de dire ce qui a réellement échoué. Sans lui, une erreur de
+          téléchargement se confond avec une erreur de vérification. */}
+      {statut === "erreur" && erreur && (
+        <p className="mono-num" style={{
+          fontSize: "0.68rem", color: "rgba(236,239,244,0.3)",
+          lineHeight: 1.5, wordBreak: "break-word",
+        }}>
+          {erreur.slice(0, 300)}
         </p>
       )}
 

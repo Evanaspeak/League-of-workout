@@ -1,6 +1,6 @@
 {
   "name": "win-or-workout-desktop",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "App desktop + overlay pour Win or Workout",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
@@ -43,7 +43,8 @@
         "owner": "Evanaspeak",
         "repo": "League-of-workout"
       }
-    ]
+    ],
+    "artifactName": "Win-or-Workout-Setup-${version}.${ext}"
   },
   "dependencies": {
     "electron-updater": "^6.8.9"
