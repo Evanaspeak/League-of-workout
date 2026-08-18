@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld("electronLOL", {
   onGameStarted: (callback) => subscribe("game-started", callback),
   // Overlay en jeu : le réglage vit côté application, pas dans le compte —
   // il dépend de la machine et du mode d'affichage, pas du joueur.
+  // La dette est calculée par la page ; l'overlay ne fait que l'afficher.
+  publierDette: (dette) => ipcRenderer.send("overlay:dette", dette),
   overlayActif: () => ipcRenderer.invoke("overlay:lire"),
   setOverlayActif: (actif) => ipcRenderer.invoke("overlay:ecrire", actif),
 

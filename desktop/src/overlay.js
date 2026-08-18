@@ -21,7 +21,7 @@ const path = require("path");
 /** Marge depuis le bord de l'écran, en pixels. */
 const MARGE = 24;
 const LARGEUR = 230;
-const HAUTEUR = 132;
+const HAUTEUR = 196;
 
 let fenetre = null;
 /**
@@ -56,7 +56,27 @@ let manuel = false;
  * fermeture, ou chargée alors qu'une partie tourne déjà : sans mémoire, elle
  * repartirait de « pas de partie » et son chrono de zéro.
  */
-let dernierEtat = { enPartie: false, debut: null, jeu: null };
+let dernierEtat = {
+  enPartie: false,
+  /** Temps joué depuis le début de la soirée, hors menus, en secondes. */
+  sessionSec: 0,
+  /** Temps de la partie en cours, donné par l'horloge du jeu. */
+  partieSec: 0,
+  score: null,
+  dette: null,
+  jeu: null,
+};
+
+/**
+ * Temps joué cumulé sur les parties terminées.
+ *
+ * Compter le temps écoulé depuis le lancement reviendrait à facturer les
+ * menus, les pauses et les allers-retours aux toilettes. Seule l'horloge
+ * interne du jeu compte, et elle s'arrête d'elle-même entre deux parties.
+ */
+let cumulSec = 0;
+/** Dernière durée relevée sur la partie en cours, à verser au cumul à la fin. */
+let partieEnCoursSec = 0;
 
 /**
  * Crée la fenêtre d'overlay. Elle démarre cachée : c'est `afficher()` ou le
@@ -150,11 +170,32 @@ function definirEnPartie(valeur, jeu = null) {
   // Une partie qui commence rend la main à l'affichage automatique : le
   // raccourci reste maître jusque-là, pas au-delà.
   if (enPartie) manuel = false;
-  // L'instant de départ est daté au passage, pas à l'ouverture de la fenêtre :
-  // c'est ce qui manquait au chrono, qui comptait depuis le lancement de
-  // l'application et affichait deux heures sur une partie qui commençait.
-  if (enPartie && !avant) envoyerEtat({ enPartie: true, debut: Date.now(), jeu });
-  else if (!enPartie && avant) envoyerEtat({ enPartie: false, debut: null, jeu: null });
+
+  if (enPartie && !avant) {
+    partieEnCoursSec = 0;
+    envoyerEtat({ enPartie: true, partieSec: 0, score: null, jeu });
+  } else if (!enPartie && avant) {
+    // La partie qui s'achève rejoint le cumul : c'est du temps réellement
+    // joué. Ce qui suit — menus, file d'attente, pause — n'y entrera pas.
+    cumulSec += partieEnCoursSec;
+    partieEnCoursSec = 0;
+    envoyerEtat({ enPartie: false, partieSec: 0, sessionSec: cumulSec, score: null, jeu: null });
+  }
+}
+
+/** Relevé d'une partie en cours : horloge du jeu et score du joueur. */
+function definirReleve({ dureeSec, score }) {
+  if (typeof dureeSec === "number") partieEnCoursSec = dureeSec;
+  envoyerEtat({
+    partieSec: partieEnCoursSec,
+    sessionSec: cumulSec + partieEnCoursSec,
+    ...(score ? { score } : {}),
+  });
+}
+
+/** Dette en cours, poussée par la page qui la calcule. */
+function definirDette(dette) {
+  envoyerEtat({ dette });
 }
 
 /**
@@ -218,4 +259,7 @@ function initOverlay({ raccourci = "Control+Shift+O" } = {}) {
   };
 }
 
-module.exports = { initOverlay, afficher, masquer, basculer, envoyerEtat, definirEnPartie };
+module.exports = {
+  initOverlay, afficher, masquer, basculer,
+  envoyerEtat, definirEnPartie, definirReleve, definirDette,
+};

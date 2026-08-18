@@ -307,6 +307,8 @@ ipcMain.handle("demarrage:ecrire", (_e, actif) => ({
   disponible: app.isPackaged,
 }));
 
+ipcMain.on("overlay:dette", (_e, dette) => overlay.definirDette(dette));
+
 ipcMain.handle("overlay:lire", () => overlayAutorise());
 ipcMain.handle("overlay:ecrire", (_e, actif) => {
   ecrireReglage("overlay", Boolean(actif));
@@ -383,6 +385,13 @@ async function createWindow() {
   mainWindow.loadURL(startUrl);
 
   stopWatcher = startLiveClientWatcher((event) => {
+    // Les relevés ne concernent que l'overlay : les inonder vers la page
+    // déclencherait ses traitements de fin de partie toutes les cinq secondes.
+    if (event.type === "game-data") {
+      overlay.definirReleve(event);
+      return;
+    }
+
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("lol:event", event);
     }
