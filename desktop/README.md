@@ -91,6 +91,26 @@ affiche la notification elle-même (`ipcMain.on("notif:afficher")`). Les réglag
 le disent, et proposent un test plutôt qu'une activation. Un clic sur le rappel
 ramène la fenêtre, où le décompte attend.
 
+## Barre de titre
+
+La fenêtre ne porte plus celle de Windows : une bande claire, avec le nom du
+programme et un menu « File / Edit / View » dont aucune entrée ne servait ici.
+Restent les vrais boutons système — réduire, agrandir, fermer — posés par l'OS
+en haut à droite par-dessus la page (`titleBarStyle: "hidden"` +
+`titleBarOverlay`), avec leur comportement et leurs zones de clic exactes.
+
+En contrepartie, plus rien ne permet de déplacer la fenêtre à la souris tant
+qu'aucune zone n'est désignée. C'est la barre de navigation du site qui joue ce
+rôle : elle fait exactement la hauteur réservée (56 px), et chaque page en a
+une. La règle vit dans `globals.css`, sous la classe `cadre-desktop` que
+`CadreDesktop` pose sur la balise racine quand on tourne dans l'application.
+Les pages servies par l'application elle-même (attente d'authentification,
+erreur de port) portent leur propre bande.
+
+Attention en modifiant une barre de navigation : une zone de déplacement avale
+les clics. Tout ce qui doit rester cliquable dedans a besoin de
+`-webkit-app-region: no-drag`.
+
 ## Détection des jeux
 
 L'application repère le lancement d'un jeu en lisant la liste des processus,

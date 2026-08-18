@@ -10,7 +10,7 @@
 //   6. Electron reçoit le JWT, le pose comme cookie, charge le dashboard.
 
 const {
-  app, BrowserWindow, Notification, shell, ipcMain, session: electronSession,
+  app, BrowserWindow, Menu, Notification, shell, ipcMain, session: electronSession,
 } = require("electron");
 const path = require("path");
 const http = require("http");
@@ -32,6 +32,37 @@ const AUTH_PORT = 3099;
 const CHROME_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+/**
+ * Barre de titre peinte par l'application.
+ *
+ * Windows dessinait la sienne : une bande claire, avec le nom du programme et
+ * un menu « File / Edit / View » dont rien ne sert ici. Elle jurait avec le
+ * reste, qui est sombre. `titleBarOverlay` garde les vrais boutons système —
+ * réduire, agrandir, fermer, avec leur comportement et leurs zones de clic
+ * exactes — et nous laisse la couleur. La hauteur est celle de la barre de
+ * navigation du site (h-14, soit 56 px), pour que les deux se superposent
+ * pile.
+ *
+ * Réservé à Windows : ailleurs, l'option est ignorée ou refusée.
+ */
+const BARRE_DE_TITRE = process.platform === "win32"
+  ? {
+    titleBarStyle: "hidden",
+    titleBarOverlay: { color: "#0C0E11", symbolColor: "#ECEFF4", height: 56 },
+  }
+  : {};
+
+/**
+ * Bande à saisir pour déplacer la fenêtre.
+ *
+ * Sans barre de titre native, plus rien ne permet de bouger la fenêtre à la
+ * souris : c'est à la page de désigner la zone. Les pages du site le font par
+ * leur barre de navigation ; celles servies d'ici ont besoin de cette bande.
+ */
+const BANDE_DEPLACEMENT =
+  '<div style="position:fixed;top:0;left:0;right:0;height:56px;'
+  + '-webkit-app-region:drag"></div>';
 
 let mainWindow = null;
 /** Vrai quand c'est bien nous qui écoutons le port de connexion. */
@@ -60,17 +91,18 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
 <html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0a1428; color: #c8aa6e; font-family: 'Segoe UI', sans-serif;
+  body { background: #0C0E11; color: #FFB454; font-family: 'Segoe UI', sans-serif;
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; height: 100vh; gap: 16px; }
   h2 { font-size: 20px; letter-spacing: .06em; }
-  p  { color: rgba(240,230,211,.5); font-size: 14px; }
+  p  { color: rgba(236,239,244,.5); font-size: 14px; }
   .dots span { animation: blink 1.4s infinite; }
   .dots span:nth-child(2) { animation-delay: .2s; }
   .dots span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
 </style></head>
 <body>
+  ${BANDE_DEPLACEMENT}
   <h2>
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
@@ -79,7 +111,7 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
       <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"></path>
     </svg>Authentification en cours <span class="dots"><span>.</span><span>.</span><span>.</span></span></h2>
   <p>Terminez la connexion dans votre navigateur web.</p>
-  <p style="font-size:12px;margin-top:8px;color:rgba(240,230,211,.3)">
+  <p style="font-size:12px;margin-top:8px;color:rgba(236,239,244,.3)">
     Cette fenêtre se met à jour automatiquement une fois connecté.
   </p>
 </body></html>`)}`;
@@ -99,6 +131,7 @@ const ERREUR_PORT_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!D
   p  { color: rgba(236,239,244,.55); font-size: 14px; max-width: 460px; line-height: 1.65; }
 </style></head>
 <body>
+  ${BANDE_DEPLACEMENT}
   <h2>CONNEXION IMPOSSIBLE</h2>
   <p>Une autre application Win or Workout est déjà ouverte sur cet ordinateur —
      probablement une ancienne version.</p>
@@ -500,7 +533,10 @@ async function createWindow() {
     // Lancée par Windows à l'ouverture de session : on se contente de l'icône
     // près de l'horloge. La fenêtre existe et charge, elle ne s'impose pas.
     show: !lanceAuDemarrage,
-    backgroundColor: "#0a1428",
+    // Couleur du fond avant que la page ne s'affiche. Elle traînait au bleu de
+    // l'ancienne identité, ce qui faisait un éclair bleu à chaque ouverture.
+    backgroundColor: "#0C0E11",
+    ...BARRE_DE_TITRE,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -660,7 +696,7 @@ function openAuthPopup() {
     width: 520,
     height: 720,
     title: "Connexion – Win or Workout",
-    backgroundColor: "#0a1428",
+    backgroundColor: "#0C0E11",
     parent: mainWindow ?? undefined,
     webPreferences: {
       nodeIntegration: false,
@@ -823,6 +859,12 @@ app.whenReady().then(() => {
   // notifications ; sans lui, l'avertissement de mise en veille n'apparaîtrait
   // pas — et c'est justement lui qui évite de croire qu'on a quitté.
   app.setAppUserModelId("com.winorworkout.desktop");
+
+  // « File / Edit / View / Window / Help » : un menu que Windows affiche par
+  // défaut, dont aucune entrée ne sert ici, et qui ajoutait une seconde bande
+  // claire sous la barre de titre. Les raccourcis d'édition restent gérés par
+  // le moteur de rendu, ils ne dépendent pas de ce menu.
+  Menu.setApplicationMenu(null);
 
   // Sans ce filtre, une page peut demander n'importe quel accès — micro,
   // caméra, position — et Electron le lui accorde. On n'ouvre que ce dont

@@ -10,6 +10,7 @@ import { MajDesktop } from "@/components/MajDesktop";
 import { DetectionSession } from "@/components/DetectionSession";
 import { PartieDetectee } from "@/components/PartieDetectee";
 import { DetteDirecte } from "@/components/DetteDirecte";
+import { CadreDesktop } from "@/components/CadreDesktop";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
@@ -72,6 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         <LocaleProvider>
           <SessionProvider>
+            {/* Marque la racine quand on tourne dans l'application desktop :
+                c'est ce repère qui fait de la barre de navigation la barre de
+                titre de la fenêtre. */}
+            <CadreDesktop />
             <SplashScreen />
             <SessionGuard />
             <OnboardingModal />
