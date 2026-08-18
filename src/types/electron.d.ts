@@ -27,6 +27,8 @@ declare global {
       onGameStarted: (callback: () => void) => () => void;
       // Ajoutés en 0.3.3 : absents des versions installées plus anciennes,
       // d'où l'optionnalité — le réglage ne s'affiche que s'ils existent.
+      /** Publie la dette en cours vers l'overlay (0.5.6+). */
+      publierDette?: (dette: number) => void;
       overlayActif?: () => Promise<boolean>;
       setOverlayActif?: (actif: boolean) => Promise<boolean>;
       // Mise à jour (0.4.1+).

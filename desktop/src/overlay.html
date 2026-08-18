@@ -65,6 +65,42 @@
     color: rgba(236, 239, 244, 0.55);
   }
 
+  /* Deux temps, deux rôles : la partie en cours en grand, la soirée en appui.
+     Aucun des deux ne compte les menus. */
+  .sous-compteur {
+    margin-top: 2px;
+    font-size: 10px;
+    color: rgba(236, 239, 244, 0.4);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lignes {
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(152, 162, 176, 0.16);
+    display: grid;
+    gap: 3px;
+  }
+
+  .ligne {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 10.5px;
+    color: rgba(236, 239, 244, 0.5);
+  }
+
+  .ligne b {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 12px;
+    color: #ECEFF4;
+  }
+
+  .ligne b.dette { color: #FF8A3D; }
+
   .jeu { color: #6E9BFF; }
   .jeu.actif { color: #2FD98A; }
 
@@ -85,9 +121,15 @@
     </div>
 
     <div class="compteur" id="compteur">--:--</div>
+    <div class="sous-compteur" id="session">soirée : 00:00</div>
 
     <div class="etat">
       <span class="jeu" id="jeu">pas de partie</span>
+    </div>
+
+    <div class="lignes">
+      <div class="ligne"><span>KDA</span><b id="kda">–</b></div>
+      <div class="ligne"><span>À payer</span><b class="dette" id="dette">–</b></div>
     </div>
 
     <div class="aide">Ctrl + Maj + O pour masquer</div>
@@ -101,35 +143,37 @@
   // s'affichait par-dessus le jeu. Cette question est tranchée, et le chrono
   // affichait alors deux heures pour une partie qui venait de commencer.
   const compteur = document.getElementById("compteur");
+  const session = document.getElementById("session");
   const jeu = document.getElementById("jeu");
+  const kda = document.getElementById("kda");
+  const dette = document.getElementById("dette");
 
-  /** Instant du début de la partie en cours, ou null hors partie. */
-  let debut = null;
+  const mmss = (s) => {
+    const n = Math.max(0, Math.floor(s || 0));
+    const h = Math.floor(n / 3600);
+    const m = Math.floor((n % 3600) / 60);
+    const sec = n % 60;
+    return h > 0
+      ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+      : `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  };
 
-  function rafraichir() {
-    if (debut === null) {
-      compteur.textContent = "--:--";
-      return;
-    }
-    const s = Math.max(0, Math.floor((Date.now() - debut) / 1000));
-    const mm = String(Math.floor(s / 60)).padStart(2, "0");
-    const ss = String(s % 60).padStart(2, "0");
-    compteur.textContent = `${mm}:${ss}`;
-  }
-
-  setInterval(rafraichir, 1000);
-
-  // L'état de partie est poussé par le processus principal, via le même
-  // observateur Live Client que le reste de l'app.
+  // Tout vient du processus principal, y compris les durées : elles sont
+  // relevées sur l'horloge du jeu, qui ne tourne pas dans les menus. Aucun
+  // compteur local ne tourne ici — c'était précisément l'erreur d'avant, où le
+  // temps passé à ne pas jouer finissait par s'afficher comme du temps de jeu.
   if (window.overlayLOW && window.overlayLOW.onEtat) {
     window.overlayLOW.onEtat((etat) => {
       const enPartie = !!(etat && etat.enPartie);
-      // Le début vient du processus principal : l'overlay peut être créé ou
-      // réaffiché en cours de partie, auquel cas repartir de zéro mentirait.
-      debut = enPartie ? (etat.debut || Date.now()) : null;
+
+      compteur.textContent = enPartie ? mmss(etat.partieSec) : "--:--";
+      session.textContent = `soirée : ${mmss(etat.sessionSec)}`;
       jeu.textContent = enPartie ? (etat.jeu || "partie en cours") : "pas de partie";
       jeu.className = enPartie ? "jeu actif" : "jeu";
-      rafraichir();
+
+      const s = etat.score;
+      kda.textContent = s ? `${s.kills} / ${s.deaths} / ${s.assists}` : "–";
+      dette.textContent = etat.dette == null ? "–" : String(etat.dette);
     });
   }
 </script>

@@ -46,8 +46,34 @@ function fetchGameData() {
   });
 }
 
+/**
+ * Score du joueur devant l'écran, extrait de la liste des dix participants.
+ *
+ * Riot a changé d'identifiant en cours de route : `riotIdGameName` sur les
+ * versions récentes, `summonerName` avant. On accepte les deux, sinon le KDA
+ * disparaît au prochain patch.
+ */
+function scoreDuJoueur(data) {
+  const moi = data?.activePlayer;
+  const nom = moi?.riotIdGameName ?? moi?.summonerName ?? null;
+  const liste = Array.isArray(data?.allPlayers) ? data.allPlayers : [];
+  const joueur = liste.find((p) => {
+    const n = p?.riotIdGameName ?? p?.summonerName ?? null;
+    return n && nom && n === nom;
+  });
+  const s = joueur?.scores;
+  if (!s) return null;
+  return {
+    kills: Number(s.kills) || 0,
+    deaths: Number(s.deaths) || 0,
+    assists: Number(s.assists) || 0,
+    cs: Number(s.creepScore) || 0,
+  };
+}
+
 // Démarre la boucle de surveillance. `emit(event)` est appelé à chaque
-// changement d'état avec { type: "game-started" | "game-ended", at: number }.
+// changement d'état avec { type: "game-started" | "game-ended", at: number },
+// et à chaque relevé avec { type: "game-data", ... } pendant la partie.
 function startLiveClientWatcher(emit) {
   let inGame = false;
 
@@ -62,6 +88,16 @@ function startLiveClientWatcher(emit) {
       inGame = false;
       emit({ type: "game-ended", at: Date.now() });
     }
+
+    if (!available) return;
+    // L'horloge de la partie vient du jeu lui-même : c'est du temps joué, pas
+    // du temps écoulé. Elle s'arrête donc d'elle-même dans les menus, sans
+    // qu'on ait à deviner quoi que ce soit.
+    emit({
+      type: "game-data",
+      dureeSec: Math.max(0, Math.round(Number(data?.gameData?.gameTime) || 0)),
+      score: scoreDuJoueur(data),
+    });
   };
 
   const timer = setInterval(tick, POLL_INTERVAL_MS);
