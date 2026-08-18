@@ -302,9 +302,46 @@ async function createWindow() {
     else overlay.masquer();
   });
 
+  // La fenêtre d'overlay, même cachée, reste une fenêtre : `window-all-closed`
+  // ne se déclenchait donc jamais en fermant celle-ci. L'application survivait
+  // sans interface, invisible ailleurs que dans le gestionnaire des tâches, et
+  // le verrou d'instance unique empêchait ensuite de la relancer.
+  let fermetureLancee = false;
+  mainWindow.on("close", (event) => {
+    if (fermetureLancee) return;
+    fermetureLancee = true;
+    // La session à oublier se lit dans la page : il faut le faire avant que la
+    // fenêtre ne disparaisse, pas dans `before-quit` où elle n'existe plus.
+    event.preventDefault();
+    oublierSessionSiDemande().finally(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy();
+      if (process.platform !== "darwin") app.quit();
+    });
+  });
+
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+}
+
+/**
+ * Efface le cookie de session quand « Rester connecté » n'était pas coché.
+ * Doit être appelé tant que la fenêtre existe : la préférence vit dans son
+ * localStorage, et sa session porte le cookie.
+ */
+async function oublierSessionSiDemande() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    const rm = await mainWindow.webContents.executeJavaScript(
+      "localStorage.getItem('low_rm')"
+    );
+    if (rm === "false") {
+      await mainWindow.webContents.session.cookies.remove(
+        BACKEND_URL,
+        "__Secure-authjs.session-token"
+      );
+    }
+  } catch {}
 }
 
 // ── Popup d'authentification OAuth (reste dans Electron, pas de Chrome) ────
@@ -427,10 +464,15 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
+    // Sans fenêtre à ramener, il faut en recréer une : rendre le focus à une
+    // fenêtre détruite ne produisait rien, et l'application semblait refuser
+    // de se lancer.
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      createWindow();
+      return;
     }
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
   });
 }
 
@@ -446,23 +488,11 @@ app.whenReady().then(() => {
   });
 });
 
-app.on("before-quit", async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  try {
-    const rm = await mainWindow.webContents.executeJavaScript(
-      "localStorage.getItem('low_rm')"
-    );
-    if (rm === "false") {
-      await mainWindow.webContents.session.cookies.remove(
-        BACKEND_URL,
-        "__Secure-authjs.session-token"
-      );
-    }
-  } catch {}
+app.on("before-quit", () => {
+  if (stopWatcher) stopWatcher();
+  if (stopOverlay) stopOverlay();
 });
 
 app.on("window-all-closed", () => {
-  if (stopWatcher) stopWatcher();
-  if (stopOverlay) stopOverlay();
   if (process.platform !== "darwin") app.quit();
 });
