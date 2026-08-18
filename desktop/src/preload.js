@@ -25,10 +25,18 @@ contextBridge.exposeInMainWorld("electronLOL", {
   /** Partie terminée, avec le dernier relevé : de quoi l'enregistrer. */
   onPartieTerminee: (callback) => {
     const handler = (_event, payload) => {
-      if (payload && payload.type === "game-ended") callback(payload.partie ?? {});
+      if (payload && payload.type === "game-ended") {
+        callback({ ...(payload.partie ?? {}), contexte: payload.contexte ?? null });
+      }
     };
     ipcRenderer.on("lol:event", handler);
     return () => ipcRenderer.removeListener("lol:event", handler);
+  },
+  /** Phase du lanceur : Lobby, Matchmaking, ChampSelect, InProgress… */
+  onPhase: (callback) => {
+    const handler = (_event, p) => callback(p);
+    ipcRenderer.on("lol:phase", handler);
+    return () => ipcRenderer.removeListener("lol:phase", handler);
   },
   /** Relevé de la partie en cours, cinq secondes d'intervalle. */
   onReleve: (callback) => {

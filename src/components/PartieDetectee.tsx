@@ -22,12 +22,17 @@ export function PartieDetectee() {
     const pont = window.electronLOL;
     if (!pont?.onPartieTerminee) return;
 
-    return pont.onPartieTerminee(async ({ score, resultat, dureeSec }) => {
+    return pont.onPartieTerminee(async ({ score, resultat, dureeSec, contexte }) => {
       // Sans score, il n'y a rien à enregistrer : mieux vaut ne rien écrire
       // qu'inventer une partie à zéro partout.
       if (!score) return;
 
-      const role = (typeof localStorage !== "undefined" && localStorage.getItem("lastRole")) || ROLE_DEFAUT;
+      // Le rôle vient du lanceur quand il a pu être lu — c'est la seule source
+      // exacte. Sinon la dernière saisie manuelle, puis une valeur de repli.
+      const role =
+        contexte?.role
+        || (typeof localStorage !== "undefined" && localStorage.getItem("lastRole"))
+        || ROLE_DEFAUT;
       try {
         const res = await fetch("/api/games", {
           method: "POST",
@@ -45,6 +50,10 @@ export function PartieDetectee() {
             // laisser croire à une victoire.
             result: resultat ?? "D",
             dureeSec,
+            // Type de file, quand le lanceur a pu le dire : « Classée Solo/Duo »,
+            // « ARAM »… Il distingue des parties que le KDA seul confond.
+            fileNom: contexte?.file?.nom ?? undefined,
+            fileClassee: contexte?.file?.classee ?? undefined,
             source: "live_client",
           }),
         });
