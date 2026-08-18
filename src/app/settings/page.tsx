@@ -11,11 +11,12 @@ import {
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
-import { ReglageOverlay } from "@/components/ReglageOverlay";
+import { ReglageJeux } from "@/components/ReglageJeux";
 import { Icone } from "@/components/Icone";
 import { ReglageApplication } from "@/components/ReglageApplication";
 import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
+import { useValeurClient } from "@/lib/valeurClient";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,8 +26,6 @@ type LevelConfig = {
   multiplicateur: number; malusDefaite: number;
 };
 type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
-
-const REGIONS = ["EUW1", "EUN1", "NA1", "KR", "BR1", "JP1", "TR1", "RU", "OC1"];
 
 const HEADING: React.CSSProperties = {
   fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -42,6 +41,9 @@ export default function SettingsPage() {
   const t = useT(settingsDict);
   const tExo = useT(exercicesDict);
   const { locale } = useLocale();
+  // Lu sans effet : le rendu serveur dit « non », le navigateur tranche, et
+  // aucun second rendu n'est imposé au montage.
+  const surDesktop = useValeurClient(() => Boolean(window.electronLOL), false);
 
   const EXO_LABELS: Record<ExerciceId, { nom: string; desc: string }> = {
     pompes: { nom: tExo.pompesNom, desc: tExo.pompesDesc },
@@ -51,18 +53,13 @@ export default function SettingsPage() {
 
   /** « 38 pompes » pour les répétitions, « 4 min 26 » pour le temps. */
   // ── Profile ──
-  const [profileForm, setProfileForm] = useState({
-    pseudo: "", riotId: "", riotRegion: "EUW1", objectifTotalPompes: 1000,
-  });
+  // Le compte Riot n'est plus ici : il vit dans le bloc « League of Legends »
+  // des jeux, avec sa propre sauvegarde.
+  const [profileForm, setProfileForm] = useState({ pseudo: "", objectifTotalPompes: 1000 });
   const [betaRank, setBetaRank] = useState<number | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
-  const [puuidLoading, setPuuidLoading] = useState(false);
-  // Le message et son issue, plutôt qu'un glyphe en tête de chaîne dont la
-  // couleur se déduisait : un « ✓ » collé au texte n'est pas un état.
-  const [puuidMsg, setPuuidMsg] = useState<{ texte: string; ok: boolean } | null>(null);
-  const [riotPuuid, setRiotPuuid] = useState("");
 
   // ── Suppression de compte ──
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -98,12 +95,9 @@ export default function SettingsPage() {
     ]).then(([u, s]) => {
       setProfileForm({
         pseudo: u.pseudo ?? "",
-        riotId: u.riotId ?? "",
-        riotRegion: u.riotRegion ?? "EUW1",
         objectifTotalPompes: s.goal?.objectifTotalPompes ?? 1000,
       });
       setBetaRank(u.betaRank ?? null);
-      setRiotPuuid(u.riotPuuid ?? "");
       setRoleWeights(s.roleWeights);
       setLevelConfigs(s.levelConfigs);
       setMasteryConfig(s.masteryConfig);
@@ -206,25 +200,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleResolvePuuid = async () => {
-    if (!profileForm.riotId.includes("#")) { setPuuidMsg({ texte: t.formatInvalide, ok: false }); return; }
-    setPuuidLoading(true);
-    setPuuidMsg(null);
-    const res = await fetch("/api/riot/resolve-puuid", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ riotId: profileForm.riotId, region: profileForm.riotRegion }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setPuuidMsg({ texte: t.compteVerifie(data.gameName, data.tagLine), ok: true });
-      setRiotPuuid(data.puuid ?? "");
-    } else {
-      setPuuidMsg({ texte: translateApiError(data.error, locale), ok: false });
-    }
-    setPuuidLoading(false);
-  };
-
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     await fetch("/api/settings", {
@@ -249,7 +224,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.title}</h1>
 
-      {/* ── Profil ──────────────────────────────────────────────────────── */}
+      {/* ── Profil : qui tu es, et ce que tu vises ──────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <h2 style={HEADING}>{t.profil}</h2>
@@ -286,45 +261,8 @@ export default function SettingsPage() {
           />
         </div>
 
-        <div className="space-y-3">
-          <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(152,162,176,0.6)" }}>{t.compteRiot}</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.riotIdLabel}</label>
-              <input
-                className="lol-input" placeholder="Faker#KR1"
-                value={profileForm.riotId}
-                onChange={(e) => setProfileForm((f) => ({ ...f, riotId: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.region}</label>
-              <select
-                className="lol-select w-full"
-                value={profileForm.riotRegion}
-                onChange={(e) => setProfileForm((f) => ({ ...f, riotRegion: e.target.value }))}
-              >
-                {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-          </div>
-          <button
-            className="lol-btn lol-btn-blue w-full"
-            onClick={handleResolvePuuid}
-            disabled={puuidLoading || !profileForm.riotId}
-          >
-            {puuidLoading ? t.verificationEnCours : t.verifierCompteRiot}
-          </button>
-          {puuidMsg && (
-            <p className={`text-sm flex items-center gap-2 ${puuidMsg.ok ? "blue-text" : "loss-text"}`}>
-              <Icone nom={puuidMsg.ok ? "coche" : "croix"} taille={15} />
-              {puuidMsg.texte}
-            </p>
-          )}
-          {riotPuuid && (
-            <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.puuidLabel(riotPuuid.slice(0, 20))}</p>
-          )}
-        </div>
+        {/* Le compte Riot a rejoint le bloc « League of Legends » : c'est une
+            information sur un jeu, pas sur la personne. */}
 
         {profileError && <p className="text-sm loss-text">{profileError}</p>}
         <button className="lol-btn w-full" onClick={handleSaveProfile} disabled={savingProfile}>
@@ -332,10 +270,10 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* ── Exercice & rappel ───────────────────────────────────────────── */}
+      {/* ── Ton effort : force, exercices, rappels ──────────────────────── */}
       <div className="lol-panel p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 style={HEADING}>{tExo.sectionTitle}</h2>
+          <h2 style={HEADING}>{t.sectionEffort}</h2>
           {savingExo ? (
             <span className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>…</span>
           ) : savedExo ? (
@@ -343,15 +281,31 @@ export default function SettingsPage() {
           ) : null}
         </div>
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
-          {tExo.sectionHint}
+          {t.sectionEffortAide}
         </p>
 
-        <ExerciceSelector selection={exercicesSel} onChange={(next) => handleSaveExo(next, rappelSeuil)} />
+        {/* Le test de force vient en premier : c'est lui qui fixe le
+            multiplicateur appliqué à toute la dette. Tout le reste en découle,
+            et il était enterré sous quatre réglages. */}
+        <TestPompes
+          pompesMax={pompesMax}
+          faitLe={pompesMaxLe}
+          niveaux={levelConfigs}
+          onEnregistre={handleSavePompesMax}
+        />
 
-        {exercicesSel.length > 1 && (
-          <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
-        )}
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)" }}>{tExo.exempleIntro}</p>
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 style={HEADING}>{tExo.sectionTitle}</h2>
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+            {tExo.sectionHint}
+          </p>
+          <ExerciceSelector selection={exercicesSel} onChange={(next) => handleSaveExo(next, rappelSeuil)} />
+
+          {exercicesSel.length > 1 && (
+            <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
+          )}
+          <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)" }}>{tExo.exempleIntro}</p>
+        </div>
 
         {/* Rappel en session */}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
@@ -441,22 +395,28 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Test de force : c'est lui qui fixe le multiplicateur appliqué à
-            toute la dette, donc il vit avec les réglages d'effort. */}
-        <TestPompes
-          pompesMax={pompesMax}
-          faitLe={pompesMaxLe}
-          niveaux={levelConfigs}
-          onEnregistre={handleSavePompesMax}
-        />
-
         <ReglageNotifications />
-
-        {/* Ne s'affichent que dans l'application desktop. */}
-        <ReglageOverlay />
-        <ReglageDetection />
-        <ReglageApplication />
       </div>
+
+      {/* ── Tes jeux : un bloc dépliable par jeu ────────────────────────── */}
+      <div className="lol-panel p-5 space-y-4">
+        <h2 style={HEADING}>{t.sectionJeux}</h2>
+        <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          {t.sectionJeuxAide}
+        </p>
+        <ReglageJeux />
+      </div>
+
+      {/* ── Application desktop ─────────────────────────────────────────── */}
+      {/* Le panneau entier disparaît sur le web : ses deux composants s'y
+          taisent, et il ne resterait qu'un titre au-dessus du vide. */}
+      {surDesktop && (
+        <div className="lol-panel p-5 space-y-4">
+          <h2 style={HEADING}>{t.sectionApplication}</h2>
+          <ReglageDetection />
+          <ReglageApplication />
+        </div>
+      )}
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}
       {betaRank !== null && masteryConfig && (
@@ -658,15 +618,10 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Déconnexion */}
-      <form action={logout} className="pt-2">
-        <button type="submit" className="lol-btn lol-btn-danger w-full">
-          {t.seDeconnecter}
-        </button>
-      </form>
-
-      {/* ── Zone de danger : suppression de compte ──────────────────────── */}
-      {/* Portabilité des données : un droit, et deux lignes de code. */}
+      {/* ── Compte et données ──────────────────────────────────────────── */}
+      {/* Portabilité des données : un droit, et deux lignes de code. La
+          déconnexion les rejoint : elle concerne le compte, pas un réglage, et
+          traînait au milieu de la page. */}
       <div className="lol-panel p-5 space-y-3">
         <h2 style={HEADING}>{t.exportTitre}</h2>
         <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
@@ -680,6 +635,12 @@ export default function SettingsPage() {
         >
           {t.exportBouton}
         </a>
+
+        <form action={logout} style={{ borderTop: "1px solid var(--line)", paddingTop: 14, marginTop: 14 }}>
+          <button type="submit" className="lol-btn lol-btn-danger w-full">
+            {t.seDeconnecter}
+          </button>
+        </form>
       </div>
 
       <div style={{

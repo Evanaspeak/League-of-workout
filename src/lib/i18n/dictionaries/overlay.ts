@@ -22,6 +22,13 @@ export const overlay = {
     placerTerminer: "Terminer le placement",
     placerEnCours: "La pastille est attrapable : traîne-la où tu veux, y compris par-dessus le jeu en « Sans bordure ». Clique sur « Terminer » quand elle est bien.",
     placerLibre: "Posée à la main. Choisir un coin annule ce placement.",
+    // ── Réglage par jeu ──
+    jeuxTitre: "Overlay, jeu par jeu",
+    jeuxAide: "Chaque jeu occupe l'écran à sa façon : le coin libre sur League recouvre autre chose ailleurs. Le réglage suit donc le jeu, pas la machine.",
+    jeuxAucun: "Aucun jeu détectable sur cet ordinateur — il n'y a rien à régler pour l'instant.",
+    jeuAffiche: "Pastille affichée",
+    jeuMasque: "Pastille masquée",
+    versionAncienne: "Mets l'application à jour pour régler l'overlay jeu par jeu. En attendant, le réglage ci-dessous vaut pour tous les jeux.",
   },
   en: {
     titre: "In-game overlay",
@@ -43,5 +50,11 @@ export const overlay = {
     placerTerminer: "Done placing",
     placerEnCours: "The panel can be grabbed: drag it wherever you like, including over the game in « Borderless ». Click « Done » once it sits right.",
     placerLibre: "Placed by hand. Picking a corner clears it.",
+    jeuxTitre: "Overlay, game by game",
+    jeuxAide: "Every game fills the screen differently: the corner that's free in League covers something else elsewhere. So the setting follows the game, not the machine.",
+    jeuxAucun: "No detectable game on this computer — nothing to set up yet.",
+    jeuAffiche: "Panel shown",
+    jeuMasque: "Panel hidden",
+    versionAncienne: "Update the app to set the overlay per game. Until then, the setting below applies to every game.",
   },
 };

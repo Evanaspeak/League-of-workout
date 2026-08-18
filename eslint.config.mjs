@@ -14,8 +14,12 @@ import nextTs from "eslint-config-next/typescript";
  * Le jeu d'icônes de `src/components/Icone.tsx` couvre ces besoins. Une icône
  * qui manque s'y ajoute ; elle ne se tape pas dans une chaîne.
  */
+// ⌀-⏿ couvre les « Miscellaneous Technical » : c'est là que vivent
+// ⏳, ⌛ et ⏰, qui passaient au travers alors qu'ils rendent exactement le même
+// service qu'un émoji — un pictogramme tapé au clavier plutôt que dessiné.
 const GLYPHES_INTERDITS =
-  "[\\u{1F000}-\\u{1FAFF}\\u{2190}-\\u{21FF}\\u{2600}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{FE0F}]";
+  "[\\u{1F000}-\\u{1FAFF}\\u{2190}-\\u{21FF}\\u{2300}-\\u{23FF}"
+  + "\\u{2600}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{FE0F}]";
 
 const eslintConfig = defineConfig([
   ...nextVitals,

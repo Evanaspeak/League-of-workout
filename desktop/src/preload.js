@@ -22,6 +22,13 @@ contextBridge.exposeInMainWorld("electronLOL", {
   publierDette: (dette) => ipcRenderer.send("overlay:dette", dette),
   overlayCoinLire: () => ipcRenderer.invoke("overlay:coin-lire"),
   overlayCoinEcrire: (coin) => ipcRenderer.invoke("overlay:coin-ecrire", coin),
+  /**
+   * Réglages d'overlay jeu par jeu. La place libre à l'écran dépend de
+   * l'interface du jeu : un réglage unique obligeait à le refaire à chaque
+   * changement.
+   */
+  overlayJeuxLire: () => ipcRenderer.invoke("overlay:jeux-lire"),
+  overlayJeuEcrire: (jeu, patch) => ipcRenderer.invoke("overlay:jeu-ecrire", { jeu, ...patch }),
   /** Partie terminée, avec le dernier relevé : de quoi l'enregistrer. */
   onPartieTerminee: (callback) => {
     const handler = (_event, payload) => {
@@ -62,7 +69,7 @@ contextBridge.exposeInMainWorld("electronLOL", {
 
   // Placement libre de l'overlay : le mode saisie rend la pastille attrapable
   // à la souris, le temps de la poser où elle ne gêne pas.
-  overlayPlacement: (actif) => ipcRenderer.invoke("overlay:placement", actif),
+  overlayPlacement: (actif, jeu) => ipcRenderer.invoke("overlay:placement", { actif, jeu }),
 
   // Mise à jour. `majEtat()` interroge l'état courant, `onMajEtat()` suit ses
   // changements : le téléchargement peut se terminer avant qu'une page soit

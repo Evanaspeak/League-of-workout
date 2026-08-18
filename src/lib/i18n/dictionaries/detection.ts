@@ -3,6 +3,10 @@ export const detection = {
     titre: "Détection des jeux",
     aide: "L'application repère quand un jeu se lance en lisant la liste des processus, comme le gestionnaire des tâches. Rien n'est injecté dans le jeu.",
     jeuxTitre: "Jeux à surveiller",
+    // Formulé du point de vue du jeu : le réglage vit maintenant dans le bloc
+    // de ce jeu, où « Jeux à surveiller » au pluriel n'aurait plus de sens.
+    jeuSurveille: "Lancement surveillé",
+    jeuIgnore: "Lancement ignoré",
     actionsTitre: "Au lancement d'un jeu surveillé",
     actionSession: "Démarrer une session",
     actionSessionAide: "Le suivi commence tout seul : plus besoin de cliquer avant de jouer.",
@@ -21,6 +25,8 @@ export const detection = {
     titre: "Game detection",
     aide: "The app spots a game starting by reading the process list, like Task Manager does. Nothing is injected into the game.",
     jeuxTitre: "Games to watch",
+    jeuSurveille: "Launch watched",
+    jeuIgnore: "Launch ignored",
     actionsTitre: "When a watched game starts",
     actionSession: "Start a session",
     actionSessionAide: "Tracking begins on its own — no need to click before playing.",

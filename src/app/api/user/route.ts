@@ -24,10 +24,13 @@ export async function PUT(req: Request) {
 
   const updated = await prisma.user.update({
     where: { id: user.id },
+    // Champ par champ : le profil et le compte Riot vivent désormais dans deux
+    // panneaux séparés des réglages. Écrire les trois d'un bloc effaçait le
+    // pseudo dès qu'on n'enregistrait que le compte de jeu.
     data: {
-      pseudo: body.pseudo,
-      riotId: body.riotId,
-      riotRegion: body.riotRegion,
+      ...(typeof body.pseudo === "string" ? { pseudo: body.pseudo } : {}),
+      ...(typeof body.riotId === "string" ? { riotId: body.riotId } : {}),
+      ...(typeof body.riotRegion === "string" ? { riotRegion: body.riotRegion } : {}),
       ...(body.riotPuuid ? { riotPuuid: body.riotPuuid } : {}),
     },
   });
