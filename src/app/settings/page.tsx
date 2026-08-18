@@ -17,6 +17,11 @@ import { ReglageApplication } from "@/components/ReglageApplication";
 import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
 import { useValeurClient } from "@/lib/valeurClient";
+import { getLevelParPompes } from "@/lib/scoring";
+import {
+  EnteteRubrique, LigneRubrique, ouvrirRubrique, useRubrique,
+} from "@/components/ListeReglages";
+import type { NomIcone } from "@/components/Icone";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -26,6 +31,13 @@ type LevelConfig = {
   multiplicateur: number; malusDefaite: number;
 };
 type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
+
+/**
+ * Rubriques des réglages, dans l'ordre de la liste. L'identifiant est aussi le
+ * fragment d'adresse : `/settings#jeux` ouvre les jeux.
+ */
+const RUBRIQUES = ["profil", "effort", "jeux", "application", "donnees", "avance"] as const;
+type Rubrique = (typeof RUBRIQUES)[number];
 
 const HEADING: React.CSSProperties = {
   fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
@@ -44,6 +56,12 @@ export default function SettingsPage() {
   // Lu sans effet : le rendu serveur dit « non », le navigateur tranche, et
   // aucun second rendu n'est imposé au montage.
   const surDesktop = useValeurClient(() => Boolean(window.electronLOL), false);
+  // Rubrique ouverte, lue dans l'adresse : le bouton « précédent » ramène à la
+  // liste, et un lien peut viser une rubrique directement.
+  const rubrique = useRubrique(RUBRIQUES) as Rubrique | null;
+  // Résumés affichés à droite des lignes, pour éviter d'ouvrir juste pour voir.
+  const [nbJeux, setNbJeux] = useState(0);
+  const [version, setVersion] = useState<string | null>(null);
 
   const EXO_LABELS: Record<ExerciceId, { nom: string; desc: string }> = {
     pompes: { nom: tExo.pompesNom, desc: tExo.pompesDesc },
@@ -67,7 +85,6 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false);
 
   // ── Beta panel ──
-  const [showBeta, setShowBeta] = useState(false);
   const [roleWeights, setRoleWeights] = useState<RoleWeight[]>([]);
   const [levelConfigs, setLevelConfigs] = useState<LevelConfig[]>([]);
   const [masteryConfig, setMasteryConfig] = useState<MasteryConfig | null>(null);
@@ -108,6 +125,16 @@ export default function SettingsPage() {
       setPompesMax(s.user?.pompesMax ?? 0);
       setPompesMaxLe(s.user?.pompesMaxLe ?? null);
     });
+  }, []);
+
+  // Résumés affichés à droite des lignes de la liste. Lus ici et non dans les
+  // rubriques : il faut les connaître AVANT d'ouvrir, sans quoi la liste
+  // n'annoncerait rien tant qu'on n'a pas déjà été voir.
+  useEffect(() => {
+    const pont = typeof window !== "undefined" ? window.electronLOL : undefined;
+    if (!pont) return;
+    pont.overlayJeuxLire?.().then((e) => setNbJeux(e.jeux.length)).catch(() => {});
+    pont.version?.().then(setVersion).catch(() => {});
   }, []);
 
   /**
@@ -220,29 +247,74 @@ export default function SettingsPage() {
     setLevelConfigs((prev) => prev.map((l) => l.niveau === niveau ? { ...l, [field]: Number(value) } : l));
   };
 
-  return (
-    <div className="space-y-6">
-      <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.title}</h1>
+  // Niveau tiré du test de force : sert de résumé sur la ligne « Ton effort »,
+  // pour ne pas avoir à ouvrir la rubrique juste pour le lire.
+  const niveauActuel = pompesMax > 0 && levelConfigs.length > 0
+    ? getLevelParPompes(pompesMax, levelConfigs).niveau
+    : null;
 
-      {/* ── Profil : qui tu es, et ce que tu vises ──────────────────────── */}
-      <div className="lol-panel p-5 space-y-4">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <h2 style={HEADING}>{t.profil}</h2>
+  const rubriques: {
+    id: Rubrique; icone: NomIcone; titre: string; aide: string; valeur?: string;
+  }[] = [
+    { id: "profil", icone: "personne", titre: t.profil, aide: t.rubriqueProfilAide, valeur: profileForm.pseudo || undefined },
+    {
+      id: "effort", icone: "muscle", titre: t.sectionEffort, aide: t.rubriqueEffortAide,
+      valeur: niveauActuel ? t.valeurNiveau(niveauActuel) : t.valeurTestAFaire,
+    },
+    { id: "jeux", icone: "manette", titre: t.sectionJeux, aide: t.rubriqueJeuxAide, valeur: nbJeux ? t.valeurJeux(nbJeux) : undefined },
+    ...(surDesktop
+      ? [{ id: "application" as Rubrique, icone: "moniteur" as NomIcone, titre: t.sectionApplication, aide: t.rubriqueApplicationAide, valeur: version ?? undefined }]
+      : []),
+    { id: "donnees", icone: "telecharger", titre: t.exportTitre, aide: t.rubriqueDonneesAide },
+    ...(betaRank !== null
+      ? [{ id: "avance" as Rubrique, icone: "cerveau" as NomIcone, titre: t.parametresAvancesBeta, aide: t.rubriqueAvanceAide }]
+      : []),
+  ];
+
+  // ── La liste des rubriques ────────────────────────────────────────────────
+  if (rubrique === null) {
+    return (
+      <div className="space-y-6">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.title}</h1>
           {betaRank !== null && (
             <span style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.1em",
-              color: "rgba(152,162,176,0.5)",
-              background: "rgba(152,162,176,0.07)",
-              border: "1px solid rgba(152,162,176,0.15)",
-              borderRadius: 3,
-              padding: "2px 8px",
+              fontSize: "0.65rem", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)",
+              background: "rgba(152,162,176,0.07)", border: "1px solid rgba(152,162,176,0.15)",
+              borderRadius: 3, padding: "2px 8px",
             }}>
               {t.betaRank(betaRank)}
             </span>
           )}
         </div>
 
+        <div className="lol-panel" style={{ padding: 0, overflow: "hidden" }}>
+          {rubriques.map((r, i) => (
+            <LigneRubrique
+              key={r.id}
+              icone={r.icone}
+              titre={r.titre}
+              aide={r.aide}
+              valeur={r.valeur}
+              premiere={i === 0}
+              derniere={i === rubriques.length - 1}
+              onOuvrir={() => ouvrirRubrique(r.id)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const titreRubrique = rubriques.find((r) => r.id === rubrique)?.titre ?? t.title;
+
+  return (
+    <div className="space-y-6">
+      <EnteteRubrique titre={titreRubrique} retour={t.retourListe} />
+
+      {/* ── Profil : qui tu es, et ce que tu vises ──────────────────────── */}
+      {rubrique === "profil" && (
+      <div className="lol-panel p-5 space-y-4">
         <div>
           <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.pseudoAffiche}</label>
           <input
@@ -269,11 +341,12 @@ export default function SettingsPage() {
           {savingProfile ? t.enregistrementEnCours : savedProfile ? t.profilEnregistre : t.enregistrerProfil}
         </button>
       </div>
+      )}
 
       {/* ── Ton effort : force, exercices, rappels ──────────────────────── */}
+      {rubrique === "effort" && (
       <div className="lol-panel p-5 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 style={HEADING}>{t.sectionEffort}</h2>
+        <div className="flex items-center justify-end gap-3">
           {savingExo ? (
             <span className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>…</span>
           ) : savedExo ? (
@@ -397,62 +470,30 @@ export default function SettingsPage() {
 
         <ReglageNotifications />
       </div>
+      )}
 
       {/* ── Tes jeux : un bloc dépliable par jeu ────────────────────────── */}
+      {rubrique === "jeux" && (
       <div className="lol-panel p-5 space-y-4">
-        <h2 style={HEADING}>{t.sectionJeux}</h2>
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
           {t.sectionJeuxAide}
         </p>
         <ReglageJeux />
       </div>
+      )}
 
       {/* ── Application desktop ─────────────────────────────────────────── */}
-      {/* Le panneau entier disparaît sur le web : ses deux composants s'y
-          taisent, et il ne resterait qu'un titre au-dessus du vide. */}
-      {surDesktop && (
+      {rubrique === "application" && (
         <div className="lol-panel p-5 space-y-4">
-          <h2 style={HEADING}>{t.sectionApplication}</h2>
           <ReglageDetection />
           <ReglageApplication />
         </div>
       )}
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}
-      {betaRank !== null && masteryConfig && (
+      {rubrique === "avance" && betaRank !== null && masteryConfig && (
         <div>
-          <button
-            onClick={() => setShowBeta((v) => !v)}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0.75rem 1.1rem",
-              background: "rgba(152,162,176,0.04)",
-              border: "1px solid rgba(152,162,176,0.14)",
-              borderRadius: showBeta ? "6px 6px 0 0" : 6,
-              cursor: "pointer",
-              color: "rgba(152,162,176,0.6)",
-              fontSize: "0.72rem",
-              letterSpacing: "0.14em",
-              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-            }}
-          >
-            <span>{t.parametresAvancesBeta}</span>
-            <span style={{ transition: "transform 0.2s", display: "inline-flex", transform: showBeta ? "rotate(180deg)" : "rotate(0deg)" }}>
-              <Icone nom="chevron" taille={16} />
-            </span>
-          </button>
-
-          {showBeta && (
-            <div style={{
-              border: "1px solid rgba(152,162,176,0.14)",
-              borderTop: "none",
-              borderRadius: "0 0 6px 6px",
-              padding: "1.25rem",
-              background: "rgba(152,162,176,0.02)",
-            }} className="space-y-6">
+            <div className="lol-panel p-5 space-y-6">
 
               <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.4)", lineHeight: 1.6 }}>
                 {t.betaExplication}
@@ -614,7 +655,6 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
-          )}
         </div>
       )}
 
@@ -622,8 +662,8 @@ export default function SettingsPage() {
       {/* Portabilité des données : un droit, et deux lignes de code. La
           déconnexion les rejoint : elle concerne le compte, pas un réglage, et
           traînait au milieu de la page. */}
+      {rubrique === "donnees" && (<>
       <div className="lol-panel p-5 space-y-3">
-        <h2 style={HEADING}>{t.exportTitre}</h2>
         <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
           {t.exportAide}
         </p>
@@ -672,6 +712,7 @@ export default function SettingsPage() {
           {t.supprimerMonCompte}
         </button>
       </div>
+      </>)}
 
       {/* Modal de confirmation */}
       {showDeleteModal && (
