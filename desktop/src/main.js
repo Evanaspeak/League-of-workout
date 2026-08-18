@@ -390,6 +390,9 @@ async function createWindow() {
     // L'overlay apparaît de lui-même au début d'une partie et se retire à la
     // fin : c'est le comportement visé, et c'est aussi ce qu'on veut tester.
     const enPartie = event.type === "game-started";
+    // L'état d'abord : c'est lui qui permet à l'overlay de se retirer seul si
+    // une fin de partie était manquée.
+    overlay.definirEnPartie(enPartie);
     overlay.envoyerEtat({ enPartie });
     if (enPartie && overlayAutorise()) overlay.afficher();
     else overlay.masquer();
@@ -648,9 +651,11 @@ app.whenReady().then(() => {
   stopJeux = surveillerJeux(jeuxSurveilles, ({ type, jeu }) => {
     const actions = actionsDetection();
     if (type === "jeu-demarre") {
+      overlay.definirEnPartie(true);
       if (actions.overlay && overlayAutorise()) overlay.afficher();
       if (actions.fenetre) ouvrirFenetre();
     } else if (type === "jeu-arrete") {
+      overlay.definirEnPartie(false);
       overlay.masquer();
     }
     // Le démarrage de session vit dans la page : c'est elle qui connaît le
