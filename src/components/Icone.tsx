@@ -20,7 +20,9 @@ export type NomIcone =
   // Sens et état
   | "flamme" | "crane" | "muscle" | "cadenas" | "alerte"
   // Ambiance (page d'accueil)
-  | "maison" | "couches" | "eclair" | "cible" | "cerveau" | "coeur";
+  | "maison" | "couches" | "eclair" | "cible" | "cerveau" | "coeur"
+  // Rubriques des réglages
+  | "personne" | "manette" | "moniteur";
 
 const TRACES: Record<NomIcone, React.ReactNode> = {
   // ── Navigation et actions ────────────────────────────────────────────────
@@ -157,6 +159,30 @@ const TRACES: Record<NomIcone, React.ReactNode> = {
     </>
   ),
   coeur: <path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3Z" />,
+
+  // ── Rubriques des réglages ───────────────────────────────────────────────
+  personne: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+    </>
+  ),
+  manette: (
+    <>
+      <path d="M8.5 7.5h7a5.5 5.5 0 0 1 5.4 6.5l-.5 2.7a2.6 2.6 0 0 1-4.7 1l-1.2-1.8H9.5l-1.2 1.8a2.6 2.6 0 0 1-4.7-1l-.5-2.7a5.5 5.5 0 0 1 5.4-6.5Z" />
+      <path d="M7 11v3" />
+      <path d="M5.5 12.5h3" />
+      <path d="M16 11.5h.01" />
+      <path d="M18 13.5h.01" />
+    </>
+  ),
+  moniteur: (
+    <>
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M9 20h6" />
+      <path d="M12 16v4" />
+    </>
+  ),
 };
 
 export function Icone({
