@@ -492,3 +492,56 @@ body {
     border-top: 1px solid var(--line);
   }
 }
+
+/* ── Bande tarifaire ────────────────────────────────────────────────────────
+   Trois monnaies pour un même effort. En cartes, le montant se retrouvait plus
+   petit que le nom de l'exercice, alors que c'est lui qu'on vient lire. */
+
+.bande-tarifs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  background: var(--carbon);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.tarif {
+  padding: clamp(24px, 3vw, 32px);
+  /* Un filet plutôt qu'un intervalle : les trois montants appartiennent à la
+     même grille tarifaire, ils ne flottent pas chacun de leur côté. */
+  border-left: 1px solid var(--line);
+}
+.tarif:first-child { border-left: none; }
+
+.tarif-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.tarif-valeur {
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ember);
+  margin-bottom: 14px;
+}
+
+.tarif-desc {
+  font-size: 0.86rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+@media (max-width: 720px) {
+  .tarif { border-left: none; border-top: 1px solid var(--line); }
+  .tarif:first-child { border-top: none; }
+}
