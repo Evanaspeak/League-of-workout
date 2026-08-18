@@ -77,10 +77,31 @@ personne ne garde une fenêtre ouverte toute une soirée.
 - Si l'icône ne peut pas être créée, fermer la fenêtre arrête l'application :
   mieux vaut s'arrêter franchement que survivre sans moyen de revenir.
 
+## Détection des jeux
+
+L'application repère le lancement d'un jeu en lisant la liste des processus,
+comme le fait le gestionnaire des tâches. Rien n'est injecté, aucun processus
+n'est ouvert ni modifié, et aucun droit d'administration n'est nécessaire.
+
+Dans les réglages : les jeux à surveiller, et ce que leur lancement déclenche
+— démarrer une session, afficher l'overlay, ouvrir la fenêtre.
+
+**Pourquoi une entrée au démarrage de Windows.** Pour remarquer qu'un jeu se
+lance, il faut déjà tourner. Windows n'offre à un programme ordinaire aucun
+crochet du type « réveille-moi quand tel exécutable démarre » : les mécanismes
+qui existent (consommateurs d'événements WMI permanents, tâches déclenchées par
+le journal d'audit) exigent des droits d'administration et sont ceux qu'emploient
+les logiciels de persistance malveillants. L'application se lance donc avec
+Windows, mais sans fenêtre : seule l'icône près de l'horloge est là.
+
+Trois jeux ne peuvent pas être distingués de leur voisin, faute de signal
+propre : Teamfight Tactics partage son exécutable avec League of Legends,
+Warzone avec Call of Duty, et Minecraft Java s'exécute dans `javaw.exe` que
+partagent tous les programmes Java — seule l'édition Windows est surveillée.
+
 ## Prochaines étapes
 
-- Démarrage automatique de session (sans passer par le bouton du dashboard)
-- Lancement au démarrage de Windows
+- Rien de prévu : dis ce qui manque.
 
 ## Overlay en jeu (test)
 
