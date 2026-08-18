@@ -25,7 +25,7 @@ import { AjoutActivite } from "@/components/AjoutActivite";
 import { RailActions } from "@/components/RailLateral";
 import { Modale } from "@/components/Modale";
 import { TestPompes } from "@/components/TestPompes";
-import { getLevelParPompes, type LevelCfg } from "@/lib/scoring";
+import { getLevelParPompes, testAFaire, type LevelCfg } from "@/lib/scoring";
 import { StatCard, ChampionCard, type ChampSummary } from "@/components/dashboard/Cartes";
 import {
   AXE_TICK, AXE_TICK_DENSE, AXE_TICK_FORT, AXE_TICK_FORT_DENSE, INFOBULLE,
@@ -167,10 +167,11 @@ export default function Dashboard() {
 
   const dailyLoading = statsPeriod === "daily" && dailyCharge !== calendarDate;
 
-  // Le niveau vient du test de force enregistré sur le compte ; on le charge à
-  // l'ouverture de la modale pour ne pas peser sur le chargement du tableau.
+  // Le niveau vient du test de force enregistré sur le compte. Il se chargeait
+  // à l'ouverture de la modale de session, pour épargner le tableau ; mais le
+  // rappel du test s'affiche désormais sur la page elle-même, et il ne peut pas
+  // décider s'il doit paraître sans connaître la date du dernier test.
   useEffect(() => {
-    if (modale !== "session") return;
     fetch("/api/settings")
       .then((r) => r.json())
       .then((s) => {
@@ -179,7 +180,7 @@ export default function Dashboard() {
         setPompesMaxLe(s.user?.pompesMaxLe ?? null);
       })
       .catch(() => {});
-  }, [modale]);
+  }, []);
 
   const handleSavePompesMax = async (valeur: number) => {
     const res = await fetch("/api/settings", {
@@ -330,7 +331,7 @@ export default function Dashboard() {
         gap: 12,
         alignItems: "flex-start",
       }}>
-        <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: 1 }}>⏳</span>
+        <Icone nom="recharger" taille={17} couleur="#6E9BFF" style={{ marginTop: 1 }} />
         <div>
           <p style={{ fontSize: "0.82rem", color: "#6E9BFF", fontWeight: 600, marginBottom: 4 }}>
             {t.syncBannerTitle}
@@ -340,6 +341,24 @@ export default function Dashboard() {
           </p>
         </div>
       </div>
+
+      {/* Test de force, tant qu'il est à faire.
+          Il ne vivait que dans les réglages et dans la modale de démarrage de
+          session : deux endroits où l'on ne va pas de soi-même. Or c'est lui
+          qui fixe le multiplicateur appliqué à TOUTE la dette — sans lui, tout
+          le monde reste au niveau 1 sans savoir pourquoi. Il s'affiche donc
+          ici, et disparaît dès qu'il est passé. */}
+      {testAFaire(pompesMax, pompesMaxLe) && niveaux.length > 0 && (
+        <div className="lol-panel p-5">
+          <TestPompes
+            autonome
+            pompesMax={pompesMax}
+            faitLe={pompesMaxLe}
+            niveaux={niveaux}
+            onEnregistre={handleSavePompesMax}
+          />
+        </div>
+      )}
 
       {/* Avertissement de volume quotidien. Ce n'est pas un blocage : la dette
           reste due, on signale seulement qu'on a dépassé ce qu'on s'était fixé

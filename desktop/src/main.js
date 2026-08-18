@@ -238,9 +238,75 @@ function ecrireReglage(cle, valeur) {
   }
 }
 
+// ── Overlay : un réglage par jeu ────────────────────────────────────────────
+//
+// La place libre à l'écran dépend de l'interface du jeu. Le coin qui convient à
+// League recouvre la minimap ailleurs, et quelqu'un peut vouloir la pastille sur
+// un jeu et pas sur un autre. Un réglage unique obligeait à tout refaire à
+// chaque changement de jeu.
+//
+// L'entrée « defaut » sert de repli : c'est elle qui reçoit l'ancien réglage
+// global, et elle s'applique à tout jeu qu'on n'a jamais réglé.
+
+const JEU_DEFAUT = "defaut";
+
+/** Réglage d'overlay tel qu'il vaut avant toute intervention. */
+function overlayNeutre() {
+  return { actif: true, coin: overlay.COINS[0], position: null };
+}
+
+/**
+ * Table des réglages, reprise de l'ancien format si besoin.
+ *
+ * Les versions précédentes stockaient `overlay`, `overlayCoin` et
+ * `overlayPosition` à plat. Les ignorer aurait remis tout le monde au coin par
+ * défaut sans prévenir : ils deviennent donc le défaut de tous les jeux.
+ */
+function overlayTable() {
+  const reglages = lireReglages();
+  const table = reglages.overlayJeux && typeof reglages.overlayJeux === "object"
+    ? { ...reglages.overlayJeux }
+    : {};
+  if (!table[JEU_DEFAUT]) {
+    table[JEU_DEFAUT] = {
+      actif: reglages.overlay !== false,
+      coin: overlay.COINS.includes(reglages.overlayCoin) ? reglages.overlayCoin : overlay.COINS[0],
+      position: reglages.overlayPosition ?? null,
+    };
+  }
+  return table;
+}
+
+/** Réglage d'un jeu, complété par le défaut pour ce qu'il ne dit pas. */
+function overlayDuJeu(jeu) {
+  const table = overlayTable();
+  const defaut = { ...overlayNeutre(), ...table[JEU_DEFAUT] };
+  const propre = jeu && table[jeu] ? table[jeu] : {};
+  return { ...defaut, ...propre };
+}
+
+function ecrireOverlayJeu(jeu, patch) {
+  const table = overlayTable();
+  const cle = jeu || JEU_DEFAUT;
+  table[cle] = { ...overlayDuJeu(cle), ...patch };
+  ecrireReglage("overlayJeux", table);
+  return table[cle];
+}
+
+/**
+ * Jeux qu'on peut régler : ceux dont on sait détecter le lancement. Proposer
+ * un réglage pour un jeu qu'on ne verra jamais démarrer serait un bouton mort.
+ */
+function jeuxReglables() {
+  return jeuxDetectables();
+}
+
+/** Le jeu dont la pastille suit les réglages en ce moment. */
+let jeuCourant = null;
+
 /** Activé par défaut : il fonctionne en sans bordure, le mode le plus courant. */
-function overlayAutorise() {
-  return lireReglages().overlay !== false;
+function overlayAutorise(jeu = jeuCourant) {
+  return overlayDuJeu(jeu).actif !== false;
 }
 
 /**
@@ -325,57 +391,81 @@ ipcMain.handle("demarrage:ecrire", (_e, actif) => ({
 
 ipcMain.on("overlay:dette", (_e, dette) => overlay.definirDette(dette));
 
-/** Coin où se pose la pastille. Dépend du jeu et de l'écran, donc du poste. */
-function coinOverlay() {
-  const c = lireReglages().overlayCoin;
-  return overlay.COINS.includes(c) ? c : overlay.COINS[0];
-}
-
-/**
- * Position libre retenue, si la pastille a déjà été posée à la main. `null`
- * tant qu'elle ne l'a pas été : c'est alors le coin qui décide.
- */
-function positionOverlay() {
-  const p = lireReglages().overlayPosition;
-  return p && typeof p.x === "number" && typeof p.y === "number" ? p : null;
-}
-
 /** Tout ce que les réglages affichent de l'overlay, en une seule réponse. */
-function etatOverlay() {
+function etatOverlay(jeu = jeuCourant) {
+  const config = overlayDuJeu(jeu);
   return {
-    coin: coinOverlay(),
+    jeu: jeu ?? null,
+    actif: config.actif,
+    coin: config.coin,
     coins: overlay.COINS,
+    position: config.position,
+    libre: config.position !== null,
     raccourcis: overlay.lireRaccourcis(),
-    ...overlay.lirePlacement(),
+    placement: overlay.lirePlacement().placement,
   };
 }
 
+/** Réglages de tous les jeux d'un coup : c'est ce que la page affiche. */
+ipcMain.handle("overlay:jeux-lire", () => ({
+  jeux: jeuxReglables(),
+  coins: overlay.COINS,
+  raccourcis: overlay.lireRaccourcis(),
+  placement: overlay.lirePlacement().placement,
+  config: Object.fromEntries(jeuxReglables().map((j) => [j, overlayDuJeu(j)])),
+}));
+
+ipcMain.handle("overlay:jeu-ecrire", (_e, { jeu, ...patch } = {}) => {
+  const config = ecrireOverlayJeu(jeu, patch);
+  // Le jeu en cours voit le changement tout de suite : c'est souvent en jouant
+  // qu'on s'aperçoit que la pastille tombe au mauvais endroit.
+  if (jeu === jeuCourant) {
+    overlay.appliquerConfig(config);
+    if (!config.actif) overlay.masquer();
+  }
+  return {
+    jeux: jeuxReglables(),
+    coins: overlay.COINS,
+    raccourcis: overlay.lireRaccourcis(),
+    placement: overlay.lirePlacement().placement,
+    config: Object.fromEntries(jeuxReglables().map((j) => [j, overlayDuJeu(j)])),
+  };
+});
+
+// ── Anciens canaux, gardés pour les pages servies à une app plus ancienne ──
 ipcMain.handle("overlay:coin-lire", () => etatOverlay());
 ipcMain.handle("overlay:coin-ecrire", (_e, coin) => {
   const pose = overlay.definirCoin(coin);
-  ecrireReglage("overlayCoin", pose);
   // Choisir un coin efface la position libre : les deux se contrediraient, et
   // c'est le dernier geste qui fait foi.
-  ecrireReglage("overlayPosition", null);
+  ecrireOverlayJeu(jeuCourant, { coin: pose, position: null });
   return etatOverlay();
 });
 
 ipcMain.handle("overlay:lire", () => overlayAutorise());
 ipcMain.handle("overlay:ecrire", (_e, actif) => {
-  ecrireReglage("overlay", Boolean(actif));
+  ecrireOverlayJeu(jeuCourant, { actif: Boolean(actif) });
   if (!actif) overlay.masquer();
   return overlayAutorise();
 });
 
 // Placement libre : la pastille devient attrapable à la souris, et la position
-// obtenue est retenue pour le poste. Quatre coins ne suffisent pas — selon la
-// résolution et l'interface du jeu, la place libre n'est jamais au même endroit.
-ipcMain.handle("overlay:placement", (_e, actif) => {
-  const { placement, position } = overlay.definirPlacement(Boolean(actif));
+// obtenue est retenue pour le jeu qu'on règle. Quatre coins ne suffisent pas —
+// selon la résolution et l'interface du jeu, la place libre change.
+ipcMain.handle("overlay:placement", (_e, arg) => {
+  // L'argument était un simple booléen avant le réglage par jeu : une page
+  // servie à une application plus ancienne, ou l'inverse, ne doit pas casser.
+  const actif = typeof arg === "object" && arg !== null ? Boolean(arg.actif) : Boolean(arg);
+  const jeu = typeof arg === "object" && arg !== null ? arg.jeu ?? jeuCourant : jeuCourant;
+
+  // Pendant le placement, la pastille montre la position du jeu qu'on règle,
+  // pas celle du jeu en cours : sinon on déplacerait la mauvaise.
+  if (actif) overlay.appliquerConfig(overlayDuJeu(jeu));
+  const { placement, position } = overlay.definirPlacement(actif);
   // On n'écrit qu'à la sortie du mode : pendant le déplacement, la position
   // change à chaque pixel.
-  if (!placement) ecrireReglage("overlayPosition", position);
-  return etatOverlay();
+  if (!placement) ecrireOverlayJeu(jeu, { position });
+  return etatOverlay(jeu);
 });
 
 /**
@@ -492,6 +582,12 @@ async function createWindow() {
     // L'état d'abord : c'est lui qui permet à l'overlay de se retirer seul si
     // une fin de partie était manquée.
     overlay.definirEnPartie(enPartie, "League of Legends");
+    if (enPartie) {
+      jeuCourant = "League of Legends";
+      // Chaque jeu a sa place libre à l'écran : la pastille se repositionne
+      // selon celui qui démarre, pas selon le dernier réglé.
+      overlay.appliquerConfig(overlayDuJeu(jeuCourant));
+    }
     if (enPartie && overlayAutorise()) overlay.afficher();
     else overlay.masquer();
   });
@@ -743,10 +839,9 @@ app.whenReady().then(() => {
   startAuthSignalServer();
   // L'overlay est prêt dès le démarrage : Ctrl+Maj+O permet de le vérifier
   // à tout moment, même sans partie en cours.
-  stopOverlay = overlay.initOverlay({
-    coin: coinOverlay(),
-    position: positionOverlay(),
-  });
+  // Aucun jeu ne tourne encore : la pastille prend les réglages par défaut,
+  // et se replacera au premier jeu détecté.
+  stopOverlay = overlay.initOverlay(overlayDuJeu(null));
   createWindow();
   try {
     stopTray = initTray({
@@ -754,9 +849,10 @@ app.whenReady().then(() => {
       quitter: () => app.quit(),
       basculerOverlay: overlay.basculer,
       raccourci: overlay.lireRaccourcis().bascule,
-      overlayActif: overlayAutorise,
+      overlayActif: () => overlayAutorise(),
       setOverlayActif: (actif) => {
-        ecrireReglage("overlay", actif);
+        // Depuis l'icône, on parle du jeu en cours — ou du défaut hors partie.
+        ecrireOverlayJeu(jeuCourant, { actif });
         if (!actif) overlay.masquer();
       },
     });
@@ -779,10 +875,15 @@ app.whenReady().then(() => {
   stopJeux = surveillerJeux(jeuxSurveilles, ({ type, jeu }) => {
     const actions = actionsDetection();
     if (type === "jeu-demarre") {
+      jeuCourant = jeu;
       overlay.definirEnPartie(true, jeu);
-      if (actions.overlay && overlayAutorise()) overlay.afficher();
+      // La pastille prend la place réglée pour CE jeu : l'interface de chacun
+      // laisse libre un endroit différent.
+      overlay.appliquerConfig(overlayDuJeu(jeu));
+      if (actions.overlay && overlayAutorise(jeu)) overlay.afficher();
       if (actions.fenetre) ouvrirFenetre();
     } else if (type === "jeu-arrete") {
+      jeuCourant = null;
       overlay.definirEnPartie(false);
       overlay.masquer();
     }

@@ -129,9 +129,13 @@ au-dessus de League quand il est en plein écran ?**
   voir plus bas.
 - Elle laisse passer les clics : impossible de gêner une partie.
 - **Réglages → Placer à la main** la rend attrapable, le temps de la poser où
-  elle ne recouvre rien. La position est retenue pour ce poste, et prime sur
-  les quatre coins — selon la résolution et l'interface du jeu, la zone libre
-  n'est jamais au même endroit.
+  elle ne recouvre rien. La position prime sur les quatre coins — selon la
+  résolution et l'interface du jeu, la zone libre n'est jamais au même endroit.
+- **Tout se règle jeu par jeu** : affichée ou non, coin, position posée à la
+  main. La pastille se replace au lancement de chaque jeu. Les réglages vivent
+  dans `reglages.json`, clé `overlayJeux`, avec une entrée `defaut` qui
+  s'applique à ce qu'on n'a jamais réglé — et qui a repris l'ancien réglage
+  unique lors de la migration.
 
 ### Pourquoi le raccourci ne répond pas en jeu
 

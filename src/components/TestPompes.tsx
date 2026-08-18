@@ -18,11 +18,18 @@ export function TestPompes({
   faitLe,
   niveaux,
   onEnregistre,
+  autonome = false,
 }: {
   pompesMax: number;
   faitLe: string | null;
   niveaux: LevelCfg[];
   onEnregistre: (valeur: number) => Promise<void>;
+  /**
+   * Le test est présenté seul, dans son propre encadré — sur le tableau de
+   * bord. Il n'a alors pas de section au-dessus dont il faudrait se séparer
+   * par un trait.
+   */
+  autonome?: boolean;
 }) {
   const t = useT(dict);
   const [saisie, setSaisie] = useState("");
@@ -46,7 +53,10 @@ export function TestPompes({
   const apercu = valide && niveaux.length > 0 ? getLevelParPompes(valeur, niveaux) : null;
 
   return (
-    <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+    <div
+      style={autonome ? undefined : { borderTop: "1px solid var(--line)", paddingTop: 16 }}
+      className="space-y-3"
+    >
       <h2 style={{
         fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
         fontSize: "0.72rem", color: "#ECEFF4",

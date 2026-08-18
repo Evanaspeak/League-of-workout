@@ -6,7 +6,7 @@ export const maj = {
     plusTard: "Plus tard",
 
     // Section « Application » des réglages
-    titre: "Application",
+    titre: "Version et mises à jour",
     versionInstallee: (v: string) => `Version ${v}`,
     verifier: "Vérifier les mises à jour",
     verification: "Vérification…",
@@ -23,7 +23,7 @@ export const maj = {
     redemarrer: "Restart now",
     plusTard: "Later",
 
-    titre: "Application",
+    titre: "Version and updates",
     versionInstallee: (v: string) => `Version ${v}`,
     verifier: "Check for updates",
     verification: "Checking…",

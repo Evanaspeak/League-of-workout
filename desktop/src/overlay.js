@@ -129,6 +129,29 @@ function positionVoulue() {
   return positionLibre ? dansLEcran(positionLibre) : positionDuCoin(coinActuel);
 }
 
+/** Remet la fenêtre là où les réglages courants la veulent. */
+function replacer() {
+  if (!fenetre || fenetre.isDestroyed()) return;
+  const { x, y } = positionVoulue();
+  fenetre.setBounds({ x, y, width: LARGEUR, height: HAUTEUR });
+}
+
+/**
+ * Applique les réglages d'un jeu donné.
+ *
+ * La place libre à l'écran dépend de l'interface du jeu : le coin qui convient
+ * à League recouvre la minimap d'un autre. Un réglage unique obligeait à le
+ * refaire à chaque changement de jeu — c'est donc au jeu qui démarre de dire
+ * où la pastille se pose.
+ */
+function appliquerConfig({ coin, position } = {}) {
+  coinActuel = COINS.includes(coin) ? coin : COINS[0];
+  positionLibre = position && typeof position.x === "number" && typeof position.y === "number"
+    ? { x: position.x, y: position.y }
+    : null;
+  replacer();
+}
+
 function creerOverlay() {
   const { x, y } = positionVoulue();
 
@@ -261,10 +284,7 @@ function definirCoin(coin) {
   // Un coin choisi annule le placement à la main : garder les deux reviendrait
   // à ignorer le clic qu'on vient de recevoir.
   positionLibre = null;
-  if (fenetre && !fenetre.isDestroyed()) {
-    const { x, y } = positionDuCoin(coinActuel);
-    fenetre.setBounds({ x, y, width: LARGEUR, height: HAUTEUR });
-  }
+  replacer();
   return coinActuel;
 }
 
@@ -421,5 +441,5 @@ module.exports = {
   initOverlay, afficher, masquer, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
-  definirPlacement, lirePlacement,
+  definirPlacement, lirePlacement, appliquerConfig,
 };

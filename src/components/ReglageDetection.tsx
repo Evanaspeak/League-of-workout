@@ -47,13 +47,6 @@ export function ReglageDetection() {
     }
   };
 
-  const basculerJeu = (jeu: string) => {
-    const surveilles = config.surveilles.includes(jeu)
-      ? config.surveilles.filter((j) => j !== jeu)
-      : [...config.surveilles, jeu];
-    enregistrer({ surveilles, actions: config.actions });
-  };
-
   const basculerAction = (cle: keyof ConfigDetection["actions"]) => {
     enregistrer({
       surveilles: config.surveilles,
@@ -86,23 +79,9 @@ export function ReglageDetection() {
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.indisponible}</p>
       ) : (
         <>
-          <div className="space-y-2">
-            <p className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{t.jeuxTitre}</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {config.disponible.map((jeu) => {
-                const actif = config.surveilles.includes(jeu);
-                return (
-                  <button key={jeu} onClick={() => basculerJeu(jeu)} aria-pressed={actif} style={PASTILLE(actif)}>
-                    {jeu}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-xs" style={{ color: "rgba(236,239,244,0.3)", lineHeight: 1.6 }}>
-              {t.ambigus}
-            </p>
-          </div>
-
+          {/* Le choix des jeux surveillés a rejoint le bloc de chaque jeu :
+              c'est là qu'on s'en occupe, avec l'overlay et le compte. Ne reste
+              ici que ce qui vaut pour tous. */}
           <div className="space-y-2">
             <p className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{t.actionsTitre}</p>
             <div className="space-y-2">

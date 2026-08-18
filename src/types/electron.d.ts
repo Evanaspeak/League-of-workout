@@ -24,6 +24,23 @@ export type EtatOverlay = {
   libre: boolean;
 };
 
+/** Réglage d'overlay pour un jeu donné. */
+export type OverlayJeu = {
+  actif: boolean;
+  coin: string;
+  position: { x: number; y: number } | null;
+};
+
+/** Tous les réglages d'overlay, jeu par jeu (0.6.4+). */
+export type EtatOverlayJeux = {
+  /** Jeux dont on sait détecter le lancement : eux seuls sont réglables. */
+  jeux: string[];
+  coins: string[];
+  raccourcis: { bascule: string | null; coin: string | null };
+  placement: boolean;
+  config: Record<string, OverlayJeu>;
+};
+
 /**
  * Ce que la partie en cours coûtera, déjà formaté dans l'unité de l'exercice
  * choisi. `null` hors partie.
@@ -78,8 +95,15 @@ declare global {
       /** Coin où se pose l'overlay, et coins possibles (0.5.7+). */
       overlayCoinLire?: () => Promise<EtatOverlay>;
       overlayCoinEcrire?: (coin: string) => Promise<EtatOverlay>;
-      /** Mode placement : la pastille devient attrapable à la souris (0.6.2+). */
-      overlayPlacement?: (actif: boolean) => Promise<EtatOverlay>;
+      /** Réglages d'overlay jeu par jeu (0.6.4+). */
+      overlayJeuxLire?: () => Promise<EtatOverlayJeux>;
+      overlayJeuEcrire?: (jeu: string, patch: Partial<OverlayJeu>) => Promise<EtatOverlayJeux>;
+      /**
+       * Mode placement : la pastille devient attrapable à la souris (0.6.2+).
+       * `jeu` désigne le réglage à modifier ; absent, c'est celui du jeu en
+       * cours.
+       */
+      overlayPlacement?: (actif: boolean, jeu?: string) => Promise<EtatOverlay>;
       /** Rappel affiché par le système, sans passer par le push web (0.6.2+). */
       notifier?: (titre: string, corps: string) => void;
       ouvrirFenetre?: () => void;
