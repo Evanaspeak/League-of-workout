@@ -28,6 +28,21 @@ contextBridge.exposeInMainWorld("electronLOL", {
   majEtat: () => ipcRenderer.invoke("maj:etat"),
   majVerifier: () => ipcRenderer.invoke("maj:verifier"),
   majInstaller: () => ipcRenderer.invoke("maj:installer"),
+  // Détection des jeux : quels jeux surveiller, et ce que leur lancement
+  // déclenche. Le démarrage de session revient à la page, seule à connaître le
+  // compte et le niveau.
+  detectionLire: () => ipcRenderer.invoke("detection:lire"),
+  detectionEcrire: (config) => ipcRenderer.invoke("detection:ecrire", config),
+  onJeuDetecte: (callback) => {
+    const handler = (_event, payload) => callback(payload);
+    ipcRenderer.on("jeu:detecte", handler);
+    return () => ipcRenderer.removeListener("jeu:detecte", handler);
+  },
+
+  // Lancement à l'ouverture de session Windows, sans fenêtre.
+  demarrageLire: () => ipcRenderer.invoke("demarrage:lire"),
+  demarrageEcrire: (actif) => ipcRenderer.invoke("demarrage:ecrire", actif),
+
   onMajEtat: (callback) => {
     const handler = (_event, etat) => callback(etat);
     ipcRenderer.on("maj:etat", handler);

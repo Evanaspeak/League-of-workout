@@ -13,6 +13,7 @@ import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageOverlay } from "@/components/ReglageOverlay";
 import { ReglageApplication } from "@/components/ReglageApplication";
+import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -447,6 +448,7 @@ export default function SettingsPage() {
 
         {/* Ne s'affichent que dans l'application desktop. */}
         <ReglageOverlay />
+        <ReglageDetection />
         <ReglageApplication />
       </div>
 

@@ -15,6 +15,7 @@ const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
 const { initTray, signalerVeille } = require("./tray");
+const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 
@@ -35,6 +36,7 @@ let canalPret = false;
 let stopWatcher = null;
 let stopOverlay = null;
 let stopTray = null;
+let stopJeux = null;
 /** Vrai seulement si l'icône existe réellement pour rouvrir la fenêtre. */
 let trayPret = false;
 /** Vrai à partir du moment où l'on quitte pour de bon. */
@@ -225,6 +227,86 @@ function overlayAutorise() {
   return lireReglages().overlay !== false;
 }
 
+/**
+ * Argument passé à l'application quand Windows la lance à l'ouverture de
+ * session. Il sert à démarrer repliée : voir sa fenêtre surgir à chaque
+ * allumage serait insupportable, alors qu'on veut juste que la détection des
+ * parties soit déjà en place le moment venu.
+ */
+const ARG_DEMARRAGE = "--au-demarrage";
+const lanceAuDemarrage = process.argv.includes(ARG_DEMARRAGE);
+
+/** Windows fait foi : la valeur vit dans son registre, pas chez nous. */
+function demarrageAutoActif() {
+  if (!app.isPackaged) return false;
+  return app.getLoginItemSettings().openAtLogin;
+}
+
+function setDemarrageAuto(actif) {
+  if (!app.isPackaged) return false;
+  app.setLoginItemSettings({
+    openAtLogin: Boolean(actif),
+    path: process.execPath,
+    args: [ARG_DEMARRAGE],
+  });
+  return demarrageAutoActif();
+}
+
+/** Jeux dont on surveille le lancement. Vide = surveillance au repos. */
+function jeuxSurveilles() {
+  const liste = lireReglages().jeuxSurveilles;
+  return Array.isArray(liste) ? liste : [];
+}
+
+/**
+ * Ce que le lancement d'un jeu surveillé déclenche. Tout est facultatif :
+ * quelqu'un peut vouloir l'overlay sans que la fenêtre lui saute au visage.
+ */
+function actionsDetection() {
+  const a = lireReglages().actionsDetection ?? {};
+  return {
+    session: a.session !== false,
+    overlay: a.overlay !== false,
+    fenetre: Boolean(a.fenetre),
+  };
+}
+
+ipcMain.handle("detection:lire", () => ({
+  disponible: jeuxDetectables(),
+  surveilles: jeuxSurveilles(),
+  actions: actionsDetection(),
+}));
+
+ipcMain.handle("detection:ecrire", (_e, config) => {
+  if (Array.isArray(config?.surveilles)) {
+    // On ne garde que des jeux réellement détectables : une valeur inventée
+    // resterait cochée sans jamais rien déclencher.
+    const connus = new Set(jeuxDetectables());
+    ecrireReglage("jeuxSurveilles", config.surveilles.filter((j) => connus.has(j)));
+  }
+  if (config?.actions) {
+    ecrireReglage("actionsDetection", {
+      session: Boolean(config.actions.session),
+      overlay: Boolean(config.actions.overlay),
+      fenetre: Boolean(config.actions.fenetre),
+    });
+  }
+  return {
+    disponible: jeuxDetectables(),
+    surveilles: jeuxSurveilles(),
+    actions: actionsDetection(),
+  };
+});
+
+ipcMain.handle("demarrage:lire", () => ({
+  actif: demarrageAutoActif(),
+  disponible: app.isPackaged,
+}));
+ipcMain.handle("demarrage:ecrire", (_e, actif) => ({
+  actif: setDemarrageAuto(actif),
+  disponible: app.isPackaged,
+}));
+
 ipcMain.handle("overlay:lire", () => overlayAutorise());
 ipcMain.handle("overlay:ecrire", (_e, actif) => {
   ecrireReglage("overlay", Boolean(actif));
@@ -240,6 +322,9 @@ async function createWindow() {
     height: 800,
     title: "Win or Workout",
     icon: path.join(__dirname, "..", "build", "icon.png"),
+    // Lancée par Windows à l'ouverture de session : on se contente de l'icône
+    // près de l'horloge. La fenêtre existe et charge, elle ne s'impose pas.
+    show: !lanceAuDemarrage,
     backgroundColor: "#0a1428",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -555,6 +640,21 @@ app.whenReady().then(() => {
   } catch (err) {
     console.warn("[WOW] Icône de notification indisponible :", err?.message ?? err);
   }
+  stopJeux = surveillerJeux(jeuxSurveilles, ({ type, jeu }) => {
+    const actions = actionsDetection();
+    if (type === "jeu-demarre") {
+      if (actions.overlay && overlayAutorise()) overlay.afficher();
+      if (actions.fenetre) ouvrirFenetre();
+    } else if (type === "jeu-arrete") {
+      overlay.masquer();
+    }
+    // Le démarrage de session vit dans la page : c'est elle qui connaît le
+    // compte, le niveau et les exercices choisis.
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("jeu:detecte", { type, jeu, session: actions.session });
+    }
+  });
+
   initMiseAJour();
   app.on("activate", ouvrirFenetre);
 });
@@ -570,6 +670,7 @@ app.on("before-quit", (event) => {
   oublierSessionSiDemande().finally(() => {
     if (stopWatcher) stopWatcher();
     if (stopOverlay) stopOverlay();
+    if (stopJeux) stopJeux();
     if (stopTray) stopTray();
     app.quit();
   });
