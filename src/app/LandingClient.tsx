@@ -484,37 +484,18 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
 
           <p className="eyebrow" style={{ marginBottom: 16 }}>{t.payUnitLabel}</p>
 
-          {/* auto-fit : trois colonnes au large, une seule sur mobile, sans
-              media query dédiée. */}
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20,
-          }}>
+          {/* Ce sont trois prix pour le même effort, pas trois sujets : une
+              bande tarifaire le dit mieux que trois cartes côte à côte, où le
+              montant se retrouvait plus petit que le nom de l'exercice. */}
+          <div className="bande-tarifs">
             {t.payModes.map((m, i) => (
-              <div key={m.name} className="reveal" style={{
-                background: "var(--carbon)",
-                border: "1px solid var(--line)",
-                borderRadius: 16, padding: "28px 26px",
-                transitionDelay: `${i * 100}ms`,
-              }}>
-                <div style={{ marginBottom: 16 }}>
-                  <Icon name={m.icon} size={24} color={ICON_COLORS[m.icon] ?? "var(--steel)"} />
+              <div key={m.name} className="reveal tarif" style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="tarif-entete">
+                  <Icon name={m.icon} size={18} color={ICON_COLORS[m.icon] ?? "var(--steel)"} />
+                  <span>{m.name}</span>
                 </div>
-                <h3 style={{
-                  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-                  fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em",
-                  fontSize: "1.2rem", color: "var(--bone)", marginBottom: 6,
-                }}>
-                  {m.name}
-                </h3>
-                <p className="mono-num" style={{
-                  fontSize: "1.45rem", fontWeight: 600, color: "var(--ember)",
-                  lineHeight: 1.1, marginBottom: 14,
-                }}>
-                  {m.valeur}
-                </p>
-                <p style={{ fontSize: "0.88rem", lineHeight: 1.7, color: "var(--muted)" }}>
-                  {m.desc}
-                </p>
+                <p className="mono-num tarif-valeur">{m.valeur}</p>
+                <p className="tarif-desc">{m.desc}</p>
               </div>
             ))}
           </div>
