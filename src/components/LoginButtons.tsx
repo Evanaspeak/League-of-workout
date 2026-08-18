@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useValeurClient } from "@/lib/valeurClient";
 import { signIn } from "next-auth/react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
 import Link from "next/link";
@@ -43,8 +44,14 @@ export function LoginButtons() {
   const { locale } = useLocale();
   const [tab, setTab] = useState<Tab>("code");
   const [mode, setMode] = useState<Mode>("login");
-  const [isDesktop, setIsDesktop] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  // Deux valeurs que seul le navigateur connaît : le pont de l'application
+  // desktop, et le dernier choix de « rester connecté ».
+  const isDesktop = useValeurClient(() => !!window.electronLOL?.isDesktop, false);
+  const memoriseStocke = useValeurClient(() => localStorage.getItem("low_rm") !== "false", true);
+  // Tant que rien n'a été coché ici, c'est le choix précédent qui vaut.
+  const [memoriseChoisi, setMemoriseChoisi] = useState<boolean | null>(null);
+  const rememberMe = memoriseChoisi ?? memoriseStocke;
+  const setRememberMe = setMemoriseChoisi;
 
   // Email form state
   const [email, setEmail] = useState("");
@@ -69,7 +76,7 @@ export function LoginButtons() {
       if (result?.error) {
         setError(t.erreurPseudoCode);
       } else {
-        window.location.href = "/dashboard?li=1";
+        window.location.assign("/dashboard?li=1");
       }
     } catch {
       setError(t.erreurConnexion);
@@ -77,12 +84,6 @@ export function LoginButtons() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    setIsDesktop(!!window.electronLOL?.isDesktop);
-    const saved = localStorage.getItem("low_rm");
-    if (saved === "false") setRememberMe(false);
-  }, []);
 
   const saveRm = () => {
     localStorage.setItem("low_rm", rememberMe ? "true" : "false");
@@ -101,7 +102,7 @@ export function LoginButtons() {
       if (result?.error) {
         setError(t.erreurEmailMotDePasse);
       } else {
-        window.location.href = "/dashboard?li=1";
+        window.location.assign("/dashboard?li=1");
       }
     } catch {
       setError(t.erreurConnexion);
@@ -131,7 +132,7 @@ export function LoginButtons() {
         setSuccess(t.compteCreeConnexion);
         setMode("login");
       } else {
-        window.location.href = "/dashboard?li=1";
+        window.location.assign("/dashboard?li=1");
       }
     } catch {
       setError(t.erreurServeur);

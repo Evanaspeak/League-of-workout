@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { landing } from "@/lib/i18n/dictionaries/landing";
 import { Wordmark } from "@/components/Wordmark";
+import { useMouvementReduit } from "@/lib/valeurClient";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 // La page /telechargement résout elle-même la dernière version publiée : y
@@ -119,20 +120,20 @@ function DebtFeed({
 }) {
   const HOLD_STEPS = 3; // temps de pause une fois la soirée complète
   const [step, setStep] = useState(0);
+  const mouvementReduit = useMouvementReduit();
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setStep(entries.length);
-      return;
-    }
+    // Animation refusée par le système : le compteur ne sert plus à rien, la
+    // soirée s'affiche entière et l'intervalle n'est jamais lancé.
+    if (mouvementReduit) return;
     const id = setInterval(() => {
       // Après la pause, on repart directement sur la première game (pas de trou vide)
       setStep((prev) => (prev >= entries.length + HOLD_STEPS ? 1 : prev + 1));
     }, 950);
     return () => clearInterval(id);
-  }, [entries.length]);
+  }, [entries.length, mouvementReduit]);
 
-  const visible = Math.min(step, entries.length);
+  const visible = mouvementReduit ? entries.length : Math.min(step, entries.length);
   const total = entries.slice(0, visible).reduce((s, e) => s + e.pts, 0);
   const complet = visible === entries.length;
 

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useValeurClient } from "@/lib/valeurClient";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { ChampionInput } from "@/components/ChampionInput";
 import { useChampions, championConnu } from "@/lib/useChampions";
@@ -95,9 +96,13 @@ export function AjoutActivite({
   const champList = useChampions();
   const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [showAddForm, setShowAddForm] = useState(enModale);
+  const roleMemorise = useValeurClient(() => localStorage.getItem("lastRole") ?? "Jungle", "Jungle");
   const [addForm, setAddForm] = useState({
-    role: "Jungle", champion: "", kills: "", deaths: "", assists: "", result: "D",
+    role: "", champion: "", kills: "", deaths: "", assists: "", result: "D",
   });
+  // Le rôle vide signifie « pas encore touché » : on affiche alors le dernier
+  // rôle joué, sans avoir à l'écrire dans l'état au montage.
+  const roleActif = addForm.role || roleMemorise;
   const [jeu, setJeu] = useState<string>(JEU_DEFAUT);
   const [typeJeu, setTypeJeu] = useState<TypeJeu>("parties");
   const [dureeH, setDureeH] = useState("");
@@ -108,8 +113,12 @@ export function AjoutActivite({
   // Rocket League : arrêts, à côté des buts et des passes décisives.
   const [arrets, setArrets] = useState("");
   // Taille d'équipe du mode joué (1 = solo, 4 = squad). Mémorisée d'une partie
-  // sur l'autre : on ne change pas de mode à chaque game.
-  const [tailleEquipe, setTailleEquipe] = useState(1);
+  // sur l'autre : on ne change pas de mode à chaque game. Relue du navigateur
+  // plutôt que posée dans un effet, qui imposait un second rendu du formulaire.
+  const modeMemorise = useValeurClient(() => Number(localStorage.getItem("lastModeBr")) || 1, 1);
+  const [modeChoisi, setModeChoisi] = useState<number | null>(null);
+  const tailleEquipe = modeChoisi ?? modeMemorise;
+  const setTailleEquipe = setModeChoisi;
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [addLogging, setAddLogging] = useState(false);
@@ -121,14 +130,6 @@ export function AjoutActivite({
   const [riotLoading, setRiotLoading] = useState(false);
   const [riotError, setRiotError] = useState("");
 
-
-  // ─── Load localStorage on mount ──────────────────────────────────────────
-  useEffect(() => {
-    const savedRole = localStorage.getItem("lastRole");
-    const savedMode = Number(localStorage.getItem("lastModeBr"));
-    if (savedMode >= 1) setTailleEquipe(savedMode);
-    if (savedRole) setAddForm((f) => ({ ...f, role: savedRole }));
-  }, []);
 
   // ─── Préférences d'exercices ─────────────────────────────────────────────
   useEffect(() => {
@@ -208,7 +209,7 @@ export function AjoutActivite({
       ? { dureeSec: dureeSec ?? dureeEnSecondes }
       : {
           result: addForm.result,
-          ...(capacites.roles ? { role: addForm.role } : {}),
+          ...(capacites.roles ? { role: roleActif } : {}),
           ...(capacites.champions ? { champion: addForm.champion } : {}),
           ...(capacites.kda
             ? {
@@ -437,7 +438,7 @@ export function AjoutActivite({
                 {capacites.roles && (
                 <div>
                   <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.role}</label>
-                  <select className="lol-select w-full" value={addForm.role}
+                  <select className="lol-select w-full" value={roleActif}
                     onChange={(e) => {
                       setAddForm((f) => ({ ...f, role: e.target.value }));
                       localStorage.setItem("lastRole", e.target.value);
