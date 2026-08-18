@@ -315,6 +315,23 @@ ipcMain.handle("demarrage:ecrire", (_e, actif) => ({
 
 ipcMain.on("overlay:dette", (_e, dette) => overlay.definirDette(dette));
 
+/** Coin où se pose la pastille. Dépend du jeu et de l'écran, donc du poste. */
+function coinOverlay() {
+  const c = lireReglages().overlayCoin;
+  return overlay.COINS.includes(c) ? c : overlay.COINS[0];
+}
+
+ipcMain.handle("overlay:coin-lire", () => ({
+  coin: coinOverlay(),
+  coins: overlay.COINS,
+  raccourcis: overlay.lireRaccourcis(),
+}));
+ipcMain.handle("overlay:coin-ecrire", (_e, coin) => {
+  const pose = overlay.definirCoin(coin);
+  ecrireReglage("overlayCoin", pose);
+  return { coin: pose, coins: overlay.COINS, raccourcis: overlay.lireRaccourcis() };
+});
+
 ipcMain.handle("overlay:lire", () => overlayAutorise());
 ipcMain.handle("overlay:ecrire", (_e, actif) => {
   ecrireReglage("overlay", Boolean(actif));
@@ -395,6 +412,12 @@ async function createWindow() {
     // déclencherait ses traitements de fin de partie toutes les cinq secondes.
     if (event.type === "game-data") {
       overlay.definirReleve(event);
+      // La page recalcule la dette projetée : elle seule connaît le niveau, les
+      // pondérations de rôle et les exercices choisis. Canal séparé de
+      // « lol:event », qui déclenche les traitements de fin de partie.
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("jeu:releve", event);
+      }
       return;
     }
 
@@ -646,7 +669,7 @@ app.whenReady().then(() => {
   startAuthSignalServer();
   // L'overlay est prêt dès le démarrage : Ctrl+Maj+O permet de le vérifier
   // à tout moment, même sans partie en cours.
-  stopOverlay = overlay.initOverlay();
+  stopOverlay = overlay.initOverlay({ coin: coinOverlay() });
   createWindow();
   try {
     stopTray = initTray({

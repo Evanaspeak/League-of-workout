@@ -20,6 +20,12 @@ const path = require("path");
 
 /** Marge depuis le bord de l'écran, en pixels. */
 const MARGE = 24;
+
+/**
+ * Coins possibles. En haut à droite, l'overlay recouvre le score et le CS de
+ * League : il faut donc pouvoir le déplacer, sans quoi il gêne au lieu d'aider.
+ */
+const COINS = ["haut-droite", "haut-gauche", "bas-droite", "bas-gauche"];
 const LARGEUR = 230;
 const HAUTEUR = 196;
 
@@ -33,6 +39,8 @@ let fenetre = null;
  */
 let voulu = false;
 let surveillance = null;
+/** Coin où se pose la pastille. Fourni au démarrage par les réglages. */
+let coinActuel = COINS[0];
 /**
  * Une partie est-elle réellement en cours ?
  *
@@ -82,14 +90,25 @@ let partieEnCoursSec = 0;
  * Crée la fenêtre d'overlay. Elle démarre cachée : c'est `afficher()` ou le
  * raccourci clavier qui la montre.
  */
+/** Position en pixels du coin demandé, sur l'écran principal. */
+function positionDuCoin(coin) {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const aDroite = !coin || coin.endsWith("droite");
+  const enBas = coin && coin.startsWith("bas");
+  return {
+    x: aDroite ? width - LARGEUR - MARGE : MARGE,
+    y: enBas ? height - HAUTEUR - MARGE : MARGE,
+  };
+}
+
 function creerOverlay() {
-  const zone = screen.getPrimaryDisplay().workAreaSize;
+  const { x, y } = positionDuCoin(coinActuel);
 
   fenetre = new BrowserWindow({
     width: LARGEUR,
     height: HAUTEUR,
-    x: zone.width - LARGEUR - MARGE,
-    y: MARGE,
+    x,
+    y,
 
     // Apparence : pas de cadre, fond transparent, pas d'ombre portée.
     frame: false,
@@ -193,6 +212,24 @@ function definirReleve({ dureeSec, score }) {
   });
 }
 
+/**
+ * Déplace la pastille dans un autre coin. Le choix est celui du joueur : selon
+ * le jeu et la résolution, ce n'est pas toujours le même coin qui est libre.
+ */
+function definirCoin(coin) {
+  coinActuel = COINS.includes(coin) ? coin : COINS[0];
+  if (fenetre && !fenetre.isDestroyed()) {
+    const { x, y } = positionDuCoin(coinActuel);
+    fenetre.setBounds({ x, y, width: LARGEUR, height: HAUTEUR });
+  }
+  return coinActuel;
+}
+
+/** Passe au coin suivant : c'est ce que déclenche le raccourci clavier. */
+function coinSuivant() {
+  return definirCoin(COINS[(COINS.indexOf(coinActuel) + 1) % COINS.length]);
+}
+
 /** Dette en cours, poussée par la page qui la calcule. */
 function definirDette(dette) {
   envoyerEtat({ dette });
@@ -243,23 +280,60 @@ function envoyerEtat(etat) {
  * global : il fonctionne même quand le jeu a le focus, ce qui est indispensable
  * pour tester en pleine partie.
  */
-function initOverlay({ raccourci = "Control+Shift+O" } = {}) {
+/**
+ * Raccourcis retenus, dans l'ordre de préférence.
+ *
+ * Un raccourci global échoue silencieusement quand une autre application le
+ * détient déjà — c'est fréquent avec les superpositions de Discord, GeForce ou
+ * Steam. On essaie donc plusieurs combinaisons, et on retient celle qui a
+ * réellement été acceptée pour pouvoir l'afficher au joueur.
+ */
+const CANDIDATS_BASCULE = ["Control+Shift+O", "Alt+Shift+O", "Control+Alt+O", "Alt+O"];
+const CANDIDATS_COIN = ["Control+Shift+P", "Alt+Shift+P", "Control+Alt+P", "Alt+P"];
+
+/** Raccourcis effectivement enregistrés, ou null si aucun n'a pu l'être. */
+let raccourcisActifs = { bascule: null, coin: null };
+
+function enregistrerPremierLibre(candidats, action) {
+  for (const combinaison of candidats) {
+    // isRegistered ne voit que nos propres enregistrements : seul le retour de
+    // register() dit si le système a accepté.
+    if (globalShortcut.register(combinaison, action)) return combinaison;
+  }
+  return null;
+}
+
+function initOverlay({ coin } = {}) {
+  if (coin) coinActuel = COINS.includes(coin) ? coin : COINS[0];
   creerOverlay();
   surveiller();
 
-  const enregistre = globalShortcut.register(raccourci, basculer);
-  if (!enregistre) {
-    console.warn(`[WOW] Raccourci ${raccourci} indisponible (déjà pris ?)`);
+  raccourcisActifs = {
+    bascule: enregistrerPremierLibre(CANDIDATS_BASCULE, basculer),
+    // Déplacer la pastille sans quitter la partie : c'est en jeu qu'on
+    // s'aperçoit qu'elle tombe sur le score.
+    coin: enregistrerPremierLibre(CANDIDATS_COIN, coinSuivant),
+  };
+
+  if (!raccourcisActifs.bascule) {
+    console.warn("[WOW] Aucun raccourci d'affichage disponible — tous déjà pris.");
   }
 
   return () => {
-    globalShortcut.unregister(raccourci);
+    globalShortcut.unregisterAll();
+    raccourcisActifs = { bascule: null, coin: null };
     if (surveillance) { clearInterval(surveillance); surveillance = null; }
     if (fenetre && !fenetre.isDestroyed()) fenetre.destroy();
   };
 }
 
+/** Ce que le joueur doit taper — ou l'aveu qu'aucune combinaison n'est libre. */
+function lireRaccourcis() {
+  return raccourcisActifs;
+}
+
 module.exports = {
   initOverlay, afficher, masquer, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette,
+  definirCoin, coinSuivant, COINS, lireRaccourcis,
 };

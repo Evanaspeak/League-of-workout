@@ -8,6 +8,7 @@ import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
 import { MajDesktop } from "@/components/MajDesktop";
 import { DetectionSession } from "@/components/DetectionSession";
+import { PartieDetectee } from "@/components/PartieDetectee";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
@@ -83,6 +84,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <MajDesktop />
             {/* Écoute les jeux détectés par l'application desktop. */}
             <DetectionSession />
+            {/* Enregistre les parties vues par l'application desktop. */}
+            <PartieDetectee />
           </SessionProvider>
         </LocaleProvider>
         {/* Mesure d'audience sans cookie ni identifiant persistant : elle ne

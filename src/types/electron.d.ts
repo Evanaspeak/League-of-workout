@@ -1,5 +1,12 @@
 export {};
 
+/** Score du joueur relevé en direct sur l'API locale de League. */
+export type ScoreDirect = {
+  kills: number; deaths: number; assists: number; cs: number;
+  /** Champion joué, tel que le nomme le client du jeu. */
+  champion: string | null;
+};
+
 /** Détection des jeux en cours d'exécution (application desktop). */
 export type ConfigDetection = {
   /** Jeux dont le lancement peut être détecté sur cette machine. */
@@ -29,6 +36,17 @@ declare global {
       // d'où l'optionnalité — le réglage ne s'affiche que s'ils existent.
       /** Publie la dette en cours vers l'overlay (0.5.6+). */
       publierDette?: (dette: number) => void;
+      /** Coin où se pose l'overlay, et coins possibles (0.5.7+). */
+      overlayCoinLire?: () => Promise<{ coin: string; coins: string[] }>;
+      overlayCoinEcrire?: (coin: string) => Promise<{ coin: string; coins: string[] }>;
+      /** Partie terminée : dernier relevé connu, pour l'enregistrer (0.6.0+). */
+      onPartieTerminee?: (
+        callback: (p: { score?: ScoreDirect | null; resultat?: "V" | "D" | null; dureeSec?: number }) => void
+      ) => () => void;
+      /** Relevé de la partie en cours : horloge du jeu et score. */
+      onReleve?: (
+        callback: (r: { dureeSec: number; score: ScoreDirect | null }) => void
+      ) => () => void;
       overlayActif?: () => Promise<boolean>;
       setOverlayActif?: (actif: boolean) => Promise<boolean>;
       // Mise à jour (0.4.1+).
