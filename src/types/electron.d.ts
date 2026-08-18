@@ -13,6 +13,8 @@ export type EtatMaj = {
   statut: "inconnu" | "sources" | "verification" | "telechargement" | "a-jour" | "prete" | "erreur";
   version: string | null;
   erreur: string | null;
+  /** Avancement du téléchargement, en pourcentage. */
+  progression: number;
 };
 
 declare global {

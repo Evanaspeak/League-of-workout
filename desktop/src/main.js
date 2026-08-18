@@ -545,7 +545,7 @@ ipcMain.on("open-discord-popup", () => {
  * seul message envoyé sur le moment, c'est le perdre : la page qui arrive
  * ensuite doit pouvoir demander où en sont les choses.
  */
-let etatMaj = { statut: "inconnu", version: null, erreur: null };
+let etatMaj = { statut: "inconnu", version: null, erreur: null, progression: 0 };
 
 function majEtat(suivant) {
   etatMaj = { ...etatMaj, ...suivant };
@@ -558,7 +558,7 @@ function initMiseAJour() {
   // Rien à vérifier tant qu'on tourne depuis les sources : la version y est
   // celle du dépôt, et il n'y a pas d'installeur à remplacer.
   if (!app.isPackaged) {
-    etatMaj = { statut: "sources", version: null, erreur: null };
+    etatMaj = { statut: "sources", version: null, erreur: null, progression: 0 };
     return;
   }
 
@@ -566,9 +566,14 @@ function initMiseAJour() {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on("checking-for-update", () => majEtat({ statut: "verification", erreur: null }));
-  autoUpdater.on("update-available", (info) => majEtat({ statut: "telechargement", version: info?.version ?? null }));
+  autoUpdater.on("update-available", (info) => majEtat({ statut: "telechargement", version: info?.version ?? null, progression: 0 }));
+  // Un installeur pèse plus de 70 Mo : sans jauge, la fenêtre semble figée.
+  autoUpdater.on("download-progress", (p) => majEtat({
+    statut: "telechargement",
+    progression: Math.min(100, Math.max(0, Math.round(p?.percent ?? 0))),
+  }));
   autoUpdater.on("update-not-available", () => majEtat({ statut: "a-jour", version: null }));
-  autoUpdater.on("update-downloaded", (info) => majEtat({ statut: "prete", version: info?.version ?? null }));
+  autoUpdater.on("update-downloaded", (info) => majEtat({ statut: "prete", version: info?.version ?? null, progression: 100 }));
 
   // Une mise à jour indisponible ne doit jamais empêcher d'utiliser l'app.
   autoUpdater.on("error", (err) => {
