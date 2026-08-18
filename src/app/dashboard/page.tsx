@@ -25,18 +25,13 @@ import { RailActions } from "@/components/RailLateral";
 import { Modale } from "@/components/Modale";
 import { TestPompes } from "@/components/TestPompes";
 import { getLevelParPompes, type LevelCfg } from "@/lib/scoring";
+import { StatCard, ChampionCard, type ChampSummary } from "@/components/dashboard/Cartes";
+import {
+  AXE_TICK, AXE_TICK_DENSE, AXE_TICK_FORT, AXE_TICK_FORT_DENSE, INFOBULLE,
+  RAYON_BARRE, GRILLE_TRAIT, TEINTES,
+} from "@/lib/graphiques";
 
 type PeriodStat = { label: string; avg: number; total: number };
-
-type ChampSummary = {
-  name: string;
-  games: number;
-  avgKills: number;
-  avgDeaths: number;
-  avgAssists: number;
-  kda: number | null;
-  avgPompes: number;
-};
 
 type DashData = {
   totalGames: number;
@@ -81,81 +76,6 @@ type DashData = {
   tempsJoueSec?: number;
   totalParties?: number;
 };
-
-function StatCard({ label, value, sub, lignes, i = 0 }: {
-  label: string; value?: string | number; sub?: string;
-  /** Ventilation par exercice : des répétitions et des minutes ne s'additionnent pas. */
-  lignes?: { nom: string; valeur: string }[];
-  i?: number;
-}) {
-  return (
-    <div className="stat-card p-4 flex flex-col gap-1 rise" style={{ animationDelay: `${i * 80}ms` }}>
-      <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(152,162,176,0.55)" }}>{label}</span>
-      {lignes ? (
-        <span style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>
-          {lignes.map((l) => (
-            <span key={l.nom} style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span className="mono-num" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.2 }}>{l.valeur}</span>
-              <span style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)" }}>{l.nom.toLowerCase()}</span>
-            </span>
-          ))}
-        </span>
-      ) : (
-        <span className="mono-num" style={{ fontSize: "1.7rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.15 }}>{value}</span>
-      )}
-      {sub && <span style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.45)" }}>{sub}</span>}
-    </div>
-  );
-}
-
-function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSummary; badge: string; badgeColor: string; t: ReturnType<typeof useT<typeof dashboard>> }) {
-  const kdaLabel = champ.kda === null ? "Perfect" : champ.kda.toFixed(2);
-  return (
-    <div className="lol-panel p-4 fade-in" style={{ position: "relative" }}>
-      <span style={{
-        position: "absolute", top: 10, right: 12,
-        fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
-        color: badgeColor, textTransform: "uppercase",
-        border: `1px solid ${badgeColor}55`, borderRadius: 4,
-        padding: "2px 7px", background: `${badgeColor}14`,
-      }}>{badge}</span>
-
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <ChampionIcon name={champ.name} size={64} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-            fontSize: "1.05rem", color: "#ECEFF4", lineHeight: 1.1,
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-          }}>{champ.name}</div>
-          <div style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)", marginTop: 2 }}>
-            {t.gamesCount(champ.games)}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.kda}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "#ECEFF4" }}>{kdaLabel}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>
-            {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
-          </div>
-        </div>
-        <div style={{ textAlign: "center", borderLeft: "1px solid rgba(152,162,176,0.12)", borderRight: "1px solid rgba(152,162,176,0.12)" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.avgPompes}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>{t.perGame}</div>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.games}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "rgba(236,239,244,0.8)" }}>{champ.games}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>{t.played}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const t = useT(dashboard);
@@ -730,10 +650,10 @@ export default function Dashboard() {
                 </h3>
                 <ResponsiveContainer width="100%" height={140}>
                   <BarChart data={sessionChartData}>
-                    <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                    <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                    <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }} />
-                    <Bar dataKey="pompes" fill="#9D7CFF" radius={[2, 2, 0, 0]} />
+                    <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
+                    <YAxis tickFormatter={fmtAxe} tick={AXE_TICK_DENSE} />
+                    <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={INFOBULLE} />
+                    <Bar dataKey="pompes" fill={TEINTES.periode} radius={RAYON_BARRE} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -864,13 +784,13 @@ export default function Dashboard() {
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={jeuData}>
-                <XAxis dataKey="jeu" tick={{ fill: "#ECEFF4", fontSize: 10 }} interval={0} />
-                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <XAxis dataKey="jeu" tick={AXE_TICK_FORT_DENSE} interval={0} />
+                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip
-                  contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                  contentStyle={INFOBULLE}
                   formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerActivite : t.tooltipTotal]}
                 />
-                <Bar dataKey="pompes" fill="#6E9BFF" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="pompes" fill={TEINTES.jeux} radius={RAYON_BARRE} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -889,11 +809,11 @@ export default function Dashboard() {
               <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">{t.cumulativeProgress}</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={cumulData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(152,162,176,0.1)" />
-                  <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.4)", fontSize: 10 }} />
-                  <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
-                  <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }} />
-                  <Line dataKey="cumul" stroke="#FFB454" strokeWidth={2} dot={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={GRILLE_TRAIT} />
+                  <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
+                  <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
+                  <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={INFOBULLE} />
+                  <Line dataKey="cumul" stroke={TEINTES.dette} strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -920,17 +840,17 @@ export default function Dashboard() {
                   }),
                 }))}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(152,162,176,0.1)" />
-                <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.4)", fontSize: 10 }} />
-                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRILLE_TRAIT} />
+                <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
+                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip
-                  contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                  contentStyle={INFOBULLE}
                   formatter={(v, _n, p) => [
                     `${fmt(Number(v))} · ${t.surNParties(Number(p?.payload?.parties ?? 0))}`,
                     t.progressionSerie,
                   ]}
                 />
-                <Line dataKey="moyenne" stroke="#2FD98A" strokeWidth={2} dot={{ r: 3, fill: "#2FD98A" }} />
+                <Line dataKey="moyenne" stroke={TEINTES.moyenne} strokeWidth={2} dot={{ r: 3, fill: TEINTES.moyenne }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -1004,13 +924,13 @@ export default function Dashboard() {
               ) : dailyHourly && dailyHourly.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={dailyHourly}>
-                    <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                    <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                    <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
+                    <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                     <Tooltip
-                      contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                      contentStyle={INFOBULLE}
                       formatter={(v) => [fmt(Number(v)), t.tooltipTotal]}
                     />
-                    <Bar dataKey="total" fill="#9D7CFF" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="total" fill={TEINTES.periode} radius={RAYON_BARRE} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -1022,13 +942,13 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.statsByPeriod[statsPeriod]}>
-                <XAxis dataKey="label" tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 10 }} />
-                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
+                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip
-                  contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                  contentStyle={INFOBULLE}
                   formatter={(v) => [fmt(Number(v)), statsMode === "avg" ? t.tooltipAvgPerGameFull : t.tooltipTotal]}
                 />
-                <Bar dataKey={statsMode} fill="#FFB454" radius={[2, 2, 0, 0]} />
+                <Bar dataKey={statsMode} fill={TEINTES.dette} radius={RAYON_BARRE} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -1089,13 +1009,13 @@ export default function Dashboard() {
             </div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={repartitionData}>
-                <XAxis dataKey="label" tick={{ fill: "#ECEFF4", fontSize: 11 }} />
-                <YAxis tickFormatter={fmtAxe} tick={{ fill: "rgba(236,239,244,0.5)", fontSize: 11 }} />
+                <XAxis dataKey="label" tick={AXE_TICK_FORT} />
+                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip
-                  contentStyle={{ background: "#191D23", border: "1px solid rgba(236,239,244,0.15)", color: "#ECEFF4" }}
+                  contentStyle={INFOBULLE}
                   formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
                 />
-                <Bar dataKey="pompes" fill="#FFB454" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="pompes" fill={TEINTES.dette} radius={RAYON_BARRE} />
               </BarChart>
             </ResponsiveContainer>
           </div>
