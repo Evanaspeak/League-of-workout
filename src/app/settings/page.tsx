@@ -12,6 +12,7 @@ import {
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageOverlay } from "@/components/ReglageOverlay";
+import { ReglageApplication } from "@/components/ReglageApplication";
 import { TestPompes } from "@/components/TestPompes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -444,8 +445,9 @@ export default function SettingsPage() {
 
         <ReglageNotifications />
 
-        {/* Ne s'affiche que dans l'application desktop. */}
+        {/* Ne s'affichent que dans l'application desktop. */}
         <ReglageOverlay />
+        <ReglageApplication />
       </div>
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}

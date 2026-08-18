@@ -6,6 +6,7 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { SessionGuard } from "@/components/SessionGuard";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
+import { MajDesktop } from "@/components/MajDesktop";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
@@ -77,6 +78,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
             <Footer />
             <RailLateral />
+            {/* Ne s'affiche que dans l'application desktop, mise à jour prête. */}
+            <MajDesktop />
           </SessionProvider>
         </LocaleProvider>
         {/* Mesure d'audience sans cookie ni identifiant persistant : elle ne

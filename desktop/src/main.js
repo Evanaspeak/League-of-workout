@@ -452,23 +452,44 @@ ipcMain.on("open-discord-popup", () => {
 // L'app compare sa version à la dernière release GitHub et télécharge le
 // nouvel installeur en arrière-plan. Il s'applique à la fermeture : on ne
 // coupe jamais quelqu'un en pleine partie pour installer une mise à jour.
+/**
+ * État de la mise à jour, conservé côté application.
+ *
+ * L'événement de fin de téléchargement peut survenir avant qu'une page soit
+ * affichée, ou pendant qu'on est ailleurs dans l'application. S'en remettre au
+ * seul message envoyé sur le moment, c'est le perdre : la page qui arrive
+ * ensuite doit pouvoir demander où en sont les choses.
+ */
+let etatMaj = { statut: "inconnu", version: null, erreur: null };
+
+function majEtat(suivant) {
+  etatMaj = { ...etatMaj, ...suivant };
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("maj:etat", etatMaj);
+  }
+}
+
 function initMiseAJour() {
   // Rien à vérifier tant qu'on tourne depuis les sources : la version y est
   // celle du dépôt, et il n'y a pas d'installeur à remplacer.
-  if (!app.isPackaged) return;
+  if (!app.isPackaged) {
+    etatMaj = { statut: "sources", version: null, erreur: null };
+    return;
+  }
 
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  autoUpdater.on("update-downloaded", (info) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("maj:prete", { version: info?.version ?? null });
-    }
-  });
+  autoUpdater.on("checking-for-update", () => majEtat({ statut: "verification", erreur: null }));
+  autoUpdater.on("update-available", (info) => majEtat({ statut: "telechargement", version: info?.version ?? null }));
+  autoUpdater.on("update-not-available", () => majEtat({ statut: "a-jour", version: null }));
+  autoUpdater.on("update-downloaded", (info) => majEtat({ statut: "prete", version: info?.version ?? null }));
 
   // Une mise à jour indisponible ne doit jamais empêcher d'utiliser l'app.
   autoUpdater.on("error", (err) => {
-    console.warn("[WOW] Mise à jour indisponible :", err?.message ?? err);
+    const message = err?.message ?? String(err);
+    console.warn("[WOW] Mise à jour indisponible :", message);
+    majEtat({ statut: "erreur", erreur: message });
   });
 
   autoUpdater.checkForUpdates().catch(() => {});
@@ -476,6 +497,25 @@ function initMiseAJour() {
   // ouverte pendant une soirée de jeu.
   setInterval(() => autoUpdater.checkForUpdates().catch(() => {}), 6 * 60 * 60 * 1000);
 }
+
+ipcMain.handle("app:version", () => app.getVersion());
+ipcMain.handle("maj:etat", () => etatMaj);
+ipcMain.handle("maj:verifier", async () => {
+  if (!app.isPackaged) return etatMaj;
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (err) {
+    majEtat({ statut: "erreur", erreur: err?.message ?? String(err) });
+  }
+  return etatMaj;
+});
+ipcMain.handle("maj:installer", () => {
+  if (etatMaj.statut !== "prete") return false;
+  // Le nettoyage de fin passe par `before-quit`, que quitAndInstall déclenche.
+  onQuitte = true;
+  setImmediate(() => autoUpdater.quitAndInstall());
+  return true;
+});
 
 // Deux fenêtres de la même application se disputeraient le port de connexion,
 // exactement comme le faisaient l'ancienne et la nouvelle. Un second lancement
