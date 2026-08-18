@@ -12,6 +12,7 @@ import {
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageOverlay } from "@/components/ReglageOverlay";
+import { Icone } from "@/components/Icone";
 import { ReglageApplication } from "@/components/ReglageApplication";
 import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
@@ -58,7 +59,9 @@ export default function SettingsPage() {
   const [savedProfile, setSavedProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
   const [puuidLoading, setPuuidLoading] = useState(false);
-  const [puuidMsg, setPuuidMsg] = useState("");
+  // Le message et son issue, plutôt qu'un glyphe en tête de chaîne dont la
+  // couleur se déduisait : un « ✓ » collé au texte n'est pas un état.
+  const [puuidMsg, setPuuidMsg] = useState<{ texte: string; ok: boolean } | null>(null);
   const [riotPuuid, setRiotPuuid] = useState("");
 
   // ── Suppression de compte ──
@@ -204,9 +207,9 @@ export default function SettingsPage() {
   };
 
   const handleResolvePuuid = async () => {
-    if (!profileForm.riotId.includes("#")) { setPuuidMsg(t.formatInvalide); return; }
+    if (!profileForm.riotId.includes("#")) { setPuuidMsg({ texte: t.formatInvalide, ok: false }); return; }
     setPuuidLoading(true);
-    setPuuidMsg("");
+    setPuuidMsg(null);
     const res = await fetch("/api/riot/resolve-puuid", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -214,10 +217,10 @@ export default function SettingsPage() {
     });
     const data = await res.json();
     if (res.ok) {
-      setPuuidMsg(t.compteVerifie(data.gameName, data.tagLine));
+      setPuuidMsg({ texte: t.compteVerifie(data.gameName, data.tagLine), ok: true });
       setRiotPuuid(data.puuid ?? "");
     } else {
-      setPuuidMsg(`✗ ${translateApiError(data.error, locale)}`);
+      setPuuidMsg({ texte: translateApiError(data.error, locale), ok: false });
     }
     setPuuidLoading(false);
   };
@@ -313,7 +316,10 @@ export default function SettingsPage() {
             {puuidLoading ? t.verificationEnCours : t.verifierCompteRiot}
           </button>
           {puuidMsg && (
-            <p className={`text-sm ${puuidMsg.startsWith("✓") ? "blue-text" : "loss-text"}`}>{puuidMsg}</p>
+            <p className={`text-sm flex items-center gap-2 ${puuidMsg.ok ? "blue-text" : "loss-text"}`}>
+              <Icone nom={puuidMsg.ok ? "coche" : "croix"} taille={15} />
+              {puuidMsg.texte}
+            </p>
           )}
           {riotPuuid && (
             <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.puuidLabel(riotPuuid.slice(0, 20))}</p>
@@ -333,7 +339,7 @@ export default function SettingsPage() {
           {savingExo ? (
             <span className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>…</span>
           ) : savedExo ? (
-            <span className="text-xs win-text">✓</span>
+            <span className="win-text"><Icone nom="coche" taille={14} titre={t.enregistre} /></span>
           ) : null}
         </div>
         <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
@@ -474,7 +480,9 @@ export default function SettingsPage() {
             }}
           >
             <span>{t.parametresAvancesBeta}</span>
-            <span style={{ transition: "transform 0.2s", display: "inline-block", transform: showBeta ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+            <span style={{ transition: "transform 0.2s", display: "inline-flex", transform: showBeta ? "rotate(180deg)" : "rotate(0deg)" }}>
+              <Icone nom="chevron" taille={16} />
+            </span>
           </button>
 
           {showBeta && (

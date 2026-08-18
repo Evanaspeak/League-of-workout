@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { detection as dict } from "@/lib/i18n/dictionaries/detection";
 import type { ConfigDetection } from "@/types/electron";
+import { Icone } from "@/components/Icone";
 
 const PASTILLE = (actif: boolean): React.CSSProperties => ({
   padding: "6px 13px",
@@ -112,7 +113,10 @@ export function ReglageDetection() {
                     aria-pressed={config.actions[cle]}
                     style={{ ...PASTILLE(config.actions[cle]), minWidth: 190, textAlign: "left" }}
                   >
-                    {config.actions[cle] ? "✓ " : ""}{nom}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                      {config.actions[cle] && <Icone nom="coche" taille={14} />}
+                      {nom}
+                    </span>
                   </button>
                   <span className="text-xs" style={{ color: "rgba(236,239,244,0.35)", flex: 1, minWidth: 200 }}>
                     {aide}

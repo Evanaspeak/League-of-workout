@@ -62,7 +62,7 @@ export const cgu = {
       title: "9. Contact",
       contactPrefix: "Pour toute question relative aux présentes CGU :",
     },
-    footerLink: "→ Politique de confidentialité",
+    footerLink: "Politique de confidentialité",
   },
   en: {
     pageTitle: "TERMS OF SERVICE",
@@ -127,6 +127,6 @@ export const cgu = {
       title: "9. Contact",
       contactPrefix: "For any question regarding these Terms of Service:",
     },
-    footerLink: "→ Privacy Policy",
+    footerLink: "Privacy Policy",
   },
 };

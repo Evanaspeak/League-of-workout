@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import { useEffect, useState } from "react";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -10,7 +11,7 @@ export default function AdminTools() {
   const [emails, setEmails] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg] = useState<{ texte: string; ok: boolean } | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/whitelist")
@@ -21,17 +22,17 @@ export default function AdminTools() {
   async function add() {
     if (!input.trim()) return;
     setSaving(true);
-    setMsg("");
+    setMsg(null);
     const res = await fetch("/api/admin/whitelist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: input.trim() }),
     });
     const d = await res.json();
-    if (d.emails) { setEmails(d.emails); setInput(""); setMsg(t.added); }
-    else setMsg(translateApiError(d.error, locale) || t.error);
+    if (d.emails) { setEmails(d.emails); setInput(""); setMsg({ texte: t.added, ok: true }); }
+    else setMsg({ texte: translateApiError(d.error, locale) || t.error, ok: false });
     setSaving(false);
-    setTimeout(() => setMsg(""), 3000);
+    setTimeout(() => setMsg(null), 3000);
   }
 
   async function remove(email: string) {
@@ -87,7 +88,15 @@ export default function AdminTools() {
             {saving ? "..." : t.authorize}
           </button>
         </div>
-        {msg && <p style={{ fontSize: "0.78rem", color: msg.startsWith("✓") ? "#2FD98A" : "#FF5A47", marginBottom: 8 }}>{msg}</p>}
+        {msg && (
+          <p style={{
+            fontSize: "0.78rem", marginBottom: 8, display: "flex", alignItems: "center", gap: 6,
+            color: msg.ok ? "#2FD98A" : "#FF5A47",
+          }}>
+            <Icone nom={msg.ok ? "coche" : "croix"} taille={13} />
+            {msg.texte}
+          </p>
+        )}
         {emails.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {emails.map(e => (
@@ -97,7 +106,7 @@ export default function AdminTools() {
                   onClick={() => remove(e)}
                   style={{ background: "none", border: "none", color: "#FF5A47", cursor: "pointer", fontSize: "0.85rem", padding: "0 4px" }}
                 >
-                  ✕
+                  <Icone nom="croix" taille={15} />
                 </button>
               </div>
             ))}

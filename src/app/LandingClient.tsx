@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { landing } from "@/lib/i18n/dictionaries/landing";
 import { Wordmark } from "@/components/Wordmark";
+import { Icone } from "@/components/Icone";
 import { useMouvementReduit } from "@/lib/valeurClient";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -370,7 +371,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                 paddingBottom: 2,
                 animationDelay: "0.44s",
               }}>
-                {t.heroDownload} ↓
+                {t.heroDownload}<Icone nom="fleche-bas" taille={14} style={{ marginLeft: 6 }} />
               </a>
             )}
           </div>
@@ -519,7 +520,8 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <li key={s.href} style={{ fontSize: "0.76rem", lineHeight: 1.6, color: "var(--faint)" }}>
                   <a href={s.href} target="_blank" rel="noopener noreferrer"
                     style={{ color: "var(--signal)", textDecoration: "none" }}>
-                    {s.label} ↗
+                    {s.label}
+                    <Icone nom="lien-externe" taille={11} style={{ marginLeft: 5 }} />
                   </a>
                 </li>
               ))}

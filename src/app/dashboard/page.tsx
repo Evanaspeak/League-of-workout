@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
+import { Icone } from "@/components/Icone";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, CartesianGrid,
@@ -353,7 +354,7 @@ export default function Dashboard() {
           gap: 12,
           alignItems: "flex-start",
         }}>
-          <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: 1 }} aria-hidden>⚠️</span>
+          <Icone nom="alerte" taille={17} couleur="var(--amber)" style={{ marginTop: 1 }} />
           <div>
             <p style={{ fontSize: "0.82rem", color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
               {t.plafondTitre}
@@ -672,7 +673,7 @@ export default function Dashboard() {
                     <span className="gold-text font-medium">{g.champion}</span>
                     <span className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>{g.role}</span>
                     <span className="text-xs" style={{ color: "rgba(236,239,244,0.6)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
-                    <span className="ml-auto gold-text font-bold">{g.pompes} 💪</span>
+                    <span className="ml-auto gold-text font-bold">{g.pompes}</span>
                   </div>
                 ))}
               </div>

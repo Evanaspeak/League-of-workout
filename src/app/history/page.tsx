@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
@@ -312,8 +313,8 @@ export default function HistoryPage() {
                                       value={editDateVal}
                                       onChange={(e) => setEditDateVal(e.target.value)}
                                     />
-                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "#2FD98A", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✓</button>
-                                    <button onClick={() => setEditingDateId(null)} style={{ color: "#e05555", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}>✕</button>
+                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "#2FD98A", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}><Icone nom="coche" taille={15} /></button>
+                                    <button onClick={() => setEditingDateId(null)} style={{ color: "#e05555", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}><Icone nom="croix" taille={15} /></button>
                                   </div>
                                 ) : (
                                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -327,7 +328,7 @@ export default function HistoryPage() {
                                       }}
                                       title={t.editDateTitle}
                                       style={{ color: "rgba(152,162,176,0.35)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
-                                    >✎</button>
+                                    ><Icone nom="crayon" taille={14} /></button>
                                   </div>
                                 )}
                               </td>
@@ -447,7 +448,7 @@ export default function HistoryPage() {
                                   onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(220,80,80,1)")}
                                   onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(220,80,80,0.7)")}
                                 >
-                                  {deletingId === g.id ? "…" : "✕"}
+                                  {deletingId === g.id ? "…" : <Icone nom="croix" taille={14} />}
                                 </button>
                               </td>
                             </tr>
