@@ -9,10 +9,15 @@ export const overlay = {
     positionTitre: "Position à l'écran",
     positionAide: "En haut à droite, la pastille recouvre le score et le CS. Choisis un coin libre.",
     coins: { "haut-gauche": "Haut gauche", "haut-droite": "Haut droite", "bas-gauche": "Bas gauche", "bas-droite": "Bas droite" } as Record<string, string>,
-    raccourciActif: (combinaison: string) => `${combinaison} l'affiche ou le masque, même en jeu.`,
+    raccourciActif: (combinaison: string) => `${combinaison} l'affiche ou le masque depuis le bureau.`,
     raccourciAucun:
-      "Aucun raccourci n'a pu être pris : toutes les combinaisons sont déjà utilisées par une autre application. Passe par l'icône près de l'horloge, elle répond toujours.",
+      "Aucun raccourci n'a pu être pris : toutes les combinaisons sont déjà utilisées par une autre application.",
     raccourciCoin: (combinaison: string) => `${combinaison} la déplace d'un coin à l'autre.`,
+    // Promettre « même en jeu » était faux : League tourne avec des privilèges
+    // que l'application n'a pas, et Windows ne lui livre alors pas la
+    // combinaison. Mieux vaut dire ce qui marche que répéter ce qui échoue.
+    raccourciEnJeu:
+      "En jeu, League tourne avec des privilèges plus élevés que l'application (Vanguard) et Windows ne nous livre plus la combinaison — le raccourci reste sans effet tant que le jeu a le focus. Pour la masquer pendant une partie, passe par l'icône près de l'horloge : clic droit, « Afficher / masquer l'overlay ». Elle répond toujours.",
     placerBtn: "Placer à la main",
     placerTerminer: "Terminer le placement",
     placerEnCours: "La pastille est attrapable : traîne-la où tu veux, y compris par-dessus le jeu en « Sans bordure ». Clique sur « Terminer » quand elle est bien.",
@@ -28,10 +33,12 @@ export const overlay = {
     positionTitre: "On-screen position",
     positionAide: "Top right covers the score and CS. Pick a free corner.",
     coins: { "haut-gauche": "Top left", "haut-droite": "Top right", "bas-gauche": "Bottom left", "bas-droite": "Bottom right" } as Record<string, string>,
-    raccourciActif: (combinaison: string) => `${combinaison} shows or hides it, even mid-game.`,
+    raccourciActif: (combinaison: string) => `${combinaison} shows or hides it from the desktop.`,
     raccourciAucun:
-      "No shortcut could be registered: every combination is already taken by another app. Use the icon near the clock — it always responds.",
+      "No shortcut could be registered: every combination is already taken by another app.",
     raccourciCoin: (combinaison: string) => `${combinaison} moves it from corner to corner.`,
+    raccourciEnJeu:
+      "In game, League runs with higher privileges than the app (Vanguard) and Windows stops delivering the combination — the shortcut does nothing while the game has focus. To hide the panel mid-match, use the icon near the clock: right-click, « Show / hide overlay ». That always responds.",
     placerBtn: "Place it by hand",
     placerTerminer: "Done placing",
     placerEnCours: "The panel can be grabbed: drag it wherever you like, including over the game in « Borderless ». Click « Done » once it sits right.",

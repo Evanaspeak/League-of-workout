@@ -156,6 +156,7 @@ export function ReglageOverlay() {
           <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)", lineHeight: 1.6 }}>
             {place.raccourcis.bascule ? t.raccourciActif(place.raccourcis.bascule) : t.raccourciAucun}
             {place.raccourcis.coin && <><br />{t.raccourciCoin(place.raccourcis.coin)}</>}
+            <br />{t.raccourciEnJeu}
           </p>
         </div>
       )}

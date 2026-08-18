@@ -126,15 +126,6 @@
     color: #2FD98A;
   }
   body.placement .consigne { display: block; }
-  body.placement .aide { display: none; }
-
-  .aide {
-    margin-top: 7px;
-    padding-top: 6px;
-    border-top: 1px solid rgba(152, 162, 176, 0.16);
-    font-size: 9px;
-    color: rgba(236, 239, 244, 0.32);
-  }
 </style>
 </head>
 <body>
@@ -144,8 +135,11 @@
       <span>Win // Workout</span>
     </div>
 
+    <!-- Le temps de la partie en cours a disparu : le jeu l'affiche déjà, et
+         le répéter ne fait qu'occuper la place. Reste le seul chiffre que le
+         jeu ne donne pas — le temps joué sur la soirée, menus exclus. -->
     <div class="compteur" id="compteur">--:--</div>
-    <div class="sous-compteur" id="session">soirée : 00:00</div>
+    <div class="sous-compteur">joué ce soir, hors menus</div>
 
     <div class="etat">
       <span class="jeu" id="jeu">pas de partie</span>
@@ -161,20 +155,20 @@
       <div class="ligne" id="ligne-attente" style="display:none"><span>En attente</span><b class="dette" id="dette-due">–</b></div>
     </div>
 
-    <div class="aide">Ctrl + Maj + O pour masquer</div>
-    <div class="consigne">Attrape la pastille et pose-la où tu veux, puis
-      « Terminer » dans les réglages.</div>
+    <div class="consigne">Traîne-moi où tu veux, puis « Terminer ».</div>
   </div>
 
 <script>
-  // Le compteur mesure la partie en cours, et rien d'autre.
+  // Le compteur porte le temps joué sur la soirée, et lui seul.
   //
-  // Il comptait auparavant depuis l'ouverture de la fenêtre : c'était la preuve
-  // que l'overlay était vivant, à l'époque où il fallait vérifier qu'il
-  // s'affichait par-dessus le jeu. Cette question est tranchée, et le chrono
-  // affichait alors deux heures pour une partie qui venait de commencer.
+  // Il a d'abord compté depuis l'ouverture de la fenêtre — la preuve que
+  // l'overlay était vivant, à l'époque où il fallait vérifier qu'il se
+  // dessinait par-dessus le jeu. Puis le temps de la partie en cours, une fois
+  // cette question tranchée. Mais le jeu affiche déjà son propre chrono de
+  // partie : le répéter n'apprenait rien. Le cumul de la soirée, lui, n'existe
+  // nulle part ailleurs — et il ne compte que le temps réellement joué, jamais
+  // les menus ni les files d'attente.
   const compteur = document.getElementById("compteur");
-  const session = document.getElementById("session");
   const jeu = document.getElementById("jeu");
   const kda = document.getElementById("kda");
   const detteV = document.getElementById("dette-v");
@@ -196,21 +190,20 @@
    * L'horloge du jeu n'est relevée que toutes les cinq secondes. S'en contenter
    * donnait un chronomètre qui sautait de cinq en cinq, ce qu'on voit tout de
    * suite. On avance donc d'une seconde localement entre deux relevés, et
-   * chaque relevé remet les compteurs à l'heure : la référence reste l'horloge
-   * du jeu, l'interpolation ne fait que combler l'intervalle.
+   * chaque relevé remet le compteur à l'heure : la référence reste l'horloge du
+   * jeu, l'interpolation ne fait que combler l'intervalle.
    */
   let enPartie = false;
-  let partieSec = 0;
   let sessionSec = 0;
 
   function afficherTemps() {
-    compteur.textContent = enPartie ? mmss(partieSec) : "--:--";
-    session.textContent = `soirée : ${mmss(sessionSec)}`;
+    // Hors partie le total tient : c'est ce qui a été joué, pas un chrono en
+    // cours. Il ne repart que sur une partie suivante.
+    compteur.textContent = sessionSec > 0 ? mmss(sessionSec) : "--:--";
   }
 
   setInterval(() => {
     if (!enPartie) return;
-    partieSec += 1;
     sessionSec += 1;
     afficherTemps();
   }, 1000);
@@ -218,7 +211,6 @@
   if (window.overlayLOW && window.overlayLOW.onEtat) {
     window.overlayLOW.onEtat((etat) => {
       enPartie = !!(etat && etat.enPartie);
-      if (typeof etat.partieSec === "number") partieSec = etat.partieSec;
       if (typeof etat.sessionSec === "number") sessionSec = etat.sessionSec;
       afficherTemps();
 
