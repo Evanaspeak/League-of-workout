@@ -27,6 +27,13 @@ export function Modale({
 }) {
   const panneauRef = useRef<HTMLDivElement>(null);
 
+  // `onFermer` est presque toujours écrit en ligne par l'appelant, donc recréé
+  // à chaque rendu. En faire une dépendance de l'effet le rejouait à chaque
+  // frappe et à chaque seconde de compte à rebours — et chaque relance rendait
+  // le focus à la croix, en plein milieu de la saisie. On le lit par référence.
+  const fermerRef = useRef(onFermer);
+  useEffect(() => { fermerRef.current = onFermer; }, [onFermer]);
+
   useEffect(() => {
     // Le focus entre dans la fenêtre et n'en sort plus tant qu'elle est
     // ouverte : sans ça, la tabulation continue dans la page derrière et la
@@ -36,7 +43,7 @@ export function Modale({
     (premier ?? panneauRef.current)?.focus();
 
     const surTouche = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { onFermer(); return; }
+      if (e.key === "Escape") { fermerRef.current(); return; }
       if (e.key !== "Tab") return;
       const cibles = Array.from(
         panneauRef.current?.querySelectorAll<HTMLElement>(FOCUSABLES) ?? [],
@@ -60,7 +67,9 @@ export function Modale({
       // Le focus revient d'où il venait : on ne perd pas sa place dans la page.
       rendreA?.focus?.();
     };
-  }, [onFermer]);
+    // Monté une seule fois : le piège se pose à l'ouverture et se lève à la
+    // fermeture, jamais entre les deux.
+  }, []);
 
   return (
     <div

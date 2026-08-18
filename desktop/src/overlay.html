@@ -158,16 +158,36 @@
       : `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
 
-  // Tout vient du processus principal, y compris les durées : elles sont
-  // relevées sur l'horloge du jeu, qui ne tourne pas dans les menus. Aucun
-  // compteur local ne tourne ici — c'était précisément l'erreur d'avant, où le
-  // temps passé à ne pas jouer finissait par s'afficher comme du temps de jeu.
+  /**
+   * L'horloge du jeu n'est relevée que toutes les cinq secondes. S'en contenter
+   * donnait un chronomètre qui sautait de cinq en cinq, ce qu'on voit tout de
+   * suite. On avance donc d'une seconde localement entre deux relevés, et
+   * chaque relevé remet les compteurs à l'heure : la référence reste l'horloge
+   * du jeu, l'interpolation ne fait que combler l'intervalle.
+   */
+  let enPartie = false;
+  let partieSec = 0;
+  let sessionSec = 0;
+
+  function afficherTemps() {
+    compteur.textContent = enPartie ? mmss(partieSec) : "--:--";
+    session.textContent = `soirée : ${mmss(sessionSec)}`;
+  }
+
+  setInterval(() => {
+    if (!enPartie) return;
+    partieSec += 1;
+    sessionSec += 1;
+    afficherTemps();
+  }, 1000);
+
   if (window.overlayLOW && window.overlayLOW.onEtat) {
     window.overlayLOW.onEtat((etat) => {
-      const enPartie = !!(etat && etat.enPartie);
+      enPartie = !!(etat && etat.enPartie);
+      if (typeof etat.partieSec === "number") partieSec = etat.partieSec;
+      if (typeof etat.sessionSec === "number") sessionSec = etat.sessionSec;
+      afficherTemps();
 
-      compteur.textContent = enPartie ? mmss(etat.partieSec) : "--:--";
-      session.textContent = `soirée : ${mmss(etat.sessionSec)}`;
       jeu.textContent = enPartie ? (etat.jeu || "partie en cours") : "pas de partie";
       jeu.className = enPartie ? "jeu actif" : "jeu";
 

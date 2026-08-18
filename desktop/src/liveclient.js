@@ -53,6 +53,20 @@ function fetchGameData() {
  * versions récentes, `summonerName` avant. On accepte les deux, sinon le KDA
  * disparaît au prochain patch.
  */
+/**
+ * Issue de la partie, lue dans le journal d'événements du jeu.
+ *
+ * L'API locale publie un événement « GameEnd » portant le résultat. C'est la
+ * seule source disponible sans clé développeur Riot — et elle suffit.
+ */
+function issueDeLaPartie(data) {
+  const evenements = data?.events?.Events;
+  if (!Array.isArray(evenements)) return null;
+  const fin = evenements.find((e) => e?.EventName === "GameEnd");
+  if (!fin?.Result) return null;
+  return String(fin.Result).toLowerCase().startsWith("win") ? "V" : "D";
+}
+
 function scoreDuJoueur(data) {
   const moi = data?.activePlayer;
   const nom = moi?.riotIdGameName ?? moi?.summonerName ?? null;
@@ -68,6 +82,7 @@ function scoreDuJoueur(data) {
     deaths: Number(s.deaths) || 0,
     assists: Number(s.assists) || 0,
     cs: Number(s.creepScore) || 0,
+    champion: joueur?.championName ?? null,
   };
 }
 
@@ -76,6 +91,13 @@ function scoreDuJoueur(data) {
 // et à chaque relevé avec { type: "game-data", ... } pendant la partie.
 function startLiveClientWatcher(emit) {
   let inGame = false;
+  /**
+   * Dernier relevé de la partie en cours.
+   *
+   * À la fin, l'API ne répond plus : il n'y a donc plus rien à interroger. Ce
+   * qu'on a vu juste avant est tout ce qui restera pour enregistrer la partie.
+   */
+  let dernier = null;
 
   const tick = async () => {
     const data = await fetchGameData();
@@ -83,21 +105,27 @@ function startLiveClientWatcher(emit) {
 
     if (available && !inGame) {
       inGame = true;
+      dernier = null;
       emit({ type: "game-started", at: Date.now() });
     } else if (!available && inGame) {
       inGame = false;
-      emit({ type: "game-ended", at: Date.now() });
+      emit({ type: "game-ended", at: Date.now(), partie: dernier });
+      dernier = null;
     }
 
     if (!available) return;
     // L'horloge de la partie vient du jeu lui-même : c'est du temps joué, pas
     // du temps écoulé. Elle s'arrête donc d'elle-même dans les menus, sans
     // qu'on ait à deviner quoi que ce soit.
-    emit({
-      type: "game-data",
+    const releve = {
       dureeSec: Math.max(0, Math.round(Number(data?.gameData?.gameTime) || 0)),
       score: scoreDuJoueur(data),
-    });
+      resultat: issueDeLaPartie(data),
+    };
+    // Conservé pour la fin de partie : l'issue n'apparaît que sur les derniers
+    // relevés, et l'API se tait dès l'écran de fin.
+    if (releve.score) dernier = releve;
+    emit({ type: "game-data", ...releve });
   };
 
   const timer = setInterval(tick, POLL_INTERVAL_MS);

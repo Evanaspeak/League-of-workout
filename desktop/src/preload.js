@@ -20,6 +20,22 @@ contextBridge.exposeInMainWorld("electronLOL", {
   // il dépend de la machine et du mode d'affichage, pas du joueur.
   // La dette est calculée par la page ; l'overlay ne fait que l'afficher.
   publierDette: (dette) => ipcRenderer.send("overlay:dette", dette),
+  overlayCoinLire: () => ipcRenderer.invoke("overlay:coin-lire"),
+  overlayCoinEcrire: (coin) => ipcRenderer.invoke("overlay:coin-ecrire", coin),
+  /** Partie terminée, avec le dernier relevé : de quoi l'enregistrer. */
+  onPartieTerminee: (callback) => {
+    const handler = (_event, payload) => {
+      if (payload && payload.type === "game-ended") callback(payload.partie ?? {});
+    };
+    ipcRenderer.on("lol:event", handler);
+    return () => ipcRenderer.removeListener("lol:event", handler);
+  },
+  /** Relevé de la partie en cours, cinq secondes d'intervalle. */
+  onReleve: (callback) => {
+    const handler = (_event, releve) => callback(releve);
+    ipcRenderer.on("jeu:releve", handler);
+    return () => ipcRenderer.removeListener("jeu:releve", handler);
+  },
   overlayActif: () => ipcRenderer.invoke("overlay:lire"),
   setOverlayActif: (actif) => ipcRenderer.invoke("overlay:ecrire", actif),
 
