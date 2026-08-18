@@ -62,11 +62,25 @@ desktop/
     liveclient.js   Lecture de l'API Live Client de League (127.0.0.1:2999)
 ```
 
+## Zone de notification
+
+Fermer la fenêtre ne quitte pas l'application : elle se replie près de
+l'horloge et continue de détecter les parties. C'est la raison d'être de
+l'icône — la détection suppose que l'app tourne pendant qu'on joue, et
+personne ne garde une fenêtre ouverte toute une soirée.
+
+- **Double-clic** sur l'icône : rouvrir la fenêtre.
+- **Clic droit** : ouvrir, activer ou couper l'overlay, quitter.
+- Le premier repli affiche une notification, pour qu'on ne croie pas avoir
+  quitté. Une application vivante sans rien à l'écran est un piège ; l'icône
+  est ce qui rend cet état visible.
+- Si l'icône ne peut pas être créée, fermer la fenêtre arrête l'application :
+  mieux vaut s'arrêter franchement que survivre sans moyen de revenir.
+
 ## Prochaines étapes
 
-- Overlay transparent au-dessus du jeu (prompt de pompes en fin de partie)
 - Démarrage automatique de session (sans passer par le bouton du dashboard)
-- Lancement au démarrage de Windows / réduction en barre des tâches
+- Lancement au démarrage de Windows
 
 ## Overlay en jeu (test)
 

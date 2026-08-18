@@ -14,6 +14,7 @@ const path = require("path");
 const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
+const { initTray, signalerVeille } = require("./tray");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 
@@ -33,6 +34,13 @@ let mainWindow = null;
 let canalPret = false;
 let stopWatcher = null;
 let stopOverlay = null;
+let stopTray = null;
+/** Vrai seulement si l'icône existe réellement pour rouvrir la fenêtre. */
+let trayPret = false;
+/** Vrai à partir du moment où l'on quitte pour de bon. */
+let onQuitte = false;
+/** Garde-fou : le nettoyage de fin ne doit s'exécuter qu'une fois. */
+let nettoyageLance = false;
 
 // ── Page d'attente (affichée dans Electron pendant que Chrome gère l'OAuth) ─
 
@@ -302,26 +310,38 @@ async function createWindow() {
     else overlay.masquer();
   });
 
-  // La fenêtre d'overlay, même cachée, reste une fenêtre : `window-all-closed`
-  // ne se déclenchait donc jamais en fermant celle-ci. L'application survivait
-  // sans interface, invisible ailleurs que dans le gestionnaire des tâches, et
-  // le verrou d'instance unique empêchait ensuite de la relancer.
-  let fermetureLancee = false;
+  // La croix met l'application en veille au lieu de l'arrêter : la détection
+  // des parties suppose qu'elle tourne pendant qu'on joue, et personne ne garde
+  // une fenêtre ouverte toute une soirée. L'icône près de l'horloge rend cet
+  // état visible — c'est elle qui distingue une veille d'un processus fantôme.
   mainWindow.on("close", (event) => {
-    if (fermetureLancee) return;
-    fermetureLancee = true;
-    // La session à oublier se lit dans la page : il faut le faire avant que la
-    // fenêtre ne disparaisse, pas dans `before-quit` où elle n'existe plus.
+    if (onQuitte) return;
+    // Sans icône, masquer la fenêtre rendrait l'application injoignable : on
+    // préfère alors s'arrêter franchement plutôt que de survivre sans issue.
+    if (!trayPret) {
+      onQuitte = true;
+      app.quit();
+      return;
+    }
     event.preventDefault();
-    oublierSessionSiDemande().finally(() => {
-      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy();
-      if (process.platform !== "darwin") app.quit();
-    });
+    mainWindow.hide();
+    signalerVeille();
   });
 
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+}
+
+/** Ramène la fenêtre, en la recréant si elle a été détruite. */
+function ouvrirFenetre() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    createWindow();
+    return;
+  }
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
 }
 
 /**
@@ -467,32 +487,54 @@ if (!app.requestSingleInstanceLock()) {
     // Sans fenêtre à ramener, il faut en recréer une : rendre le focus à une
     // fenêtre détruite ne produisait rien, et l'application semblait refuser
     // de se lancer.
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      createWindow();
-      return;
-    }
-    if (mainWindow.isMinimized()) mainWindow.restore();
-    mainWindow.focus();
+    ouvrirFenetre();
   });
 }
 
 app.whenReady().then(() => {
+  // Windows exige un identifiant d'application pour afficher les
+  // notifications ; sans lui, l'avertissement de mise en veille n'apparaîtrait
+  // pas — et c'est justement lui qui évite de croire qu'on a quitté.
+  app.setAppUserModelId("com.winorworkout.desktop");
   startAuthSignalServer();
   // L'overlay est prêt dès le démarrage : Ctrl+Maj+O permet de le vérifier
   // à tout moment, même sans partie en cours.
   stopOverlay = overlay.initOverlay();
   createWindow();
+  try {
+    stopTray = initTray({
+      ouvrir: ouvrirFenetre,
+      quitter: () => app.quit(),
+      overlayActif: overlayAutorise,
+      setOverlayActif: (actif) => {
+        ecrireReglage("overlay", actif);
+        if (!actif) overlay.masquer();
+      },
+    });
+    trayPret = true;
+  } catch (err) {
+    console.warn("[WOW] Icône de notification indisponible :", err?.message ?? err);
+  }
   initMiseAJour();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  app.on("activate", ouvrirFenetre);
+});
+
+// Tous les chemins d'arrêt passent ici : menu de l'icône, mise à jour à
+// installer, fermeture de session Windows. Le nettoyage a besoin de la page
+// encore vivante — d'où le report du départ le temps de le faire.
+app.on("before-quit", (event) => {
+  onQuitte = true;
+  if (nettoyageLance) return;
+  nettoyageLance = true;
+  event.preventDefault();
+  oublierSessionSiDemande().finally(() => {
+    if (stopWatcher) stopWatcher();
+    if (stopOverlay) stopOverlay();
+    if (stopTray) stopTray();
+    app.quit();
   });
 });
 
-app.on("before-quit", () => {
-  if (stopWatcher) stopWatcher();
-  if (stopOverlay) stopOverlay();
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+// La fenêtre est masquée, pas fermée : cet événement ne se produit qu'en
+// dernier recours. On ne quitte pas de nous-mêmes, l'icône reste le seul juge.
+app.on("window-all-closed", () => {});
