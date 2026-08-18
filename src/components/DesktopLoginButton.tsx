@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import { useEffect, useState } from "react";
 
 // Affiché sur la page de login uniquement quand on tourne dans l'app desktop.
@@ -22,7 +23,8 @@ export function DesktopLoginButton() {
         style={{ background: "linear-gradient(to bottom, #1a3a5c, #0f2540)" }}
         onClick={() => window.electronLOL?.openGoogleLogin()}
       >
-        🌐 Se connecter via votre navigateur
+        <Icone nom="globe" taille={17} />
+        Se connecter via votre navigateur
       </button>
     </div>
   );

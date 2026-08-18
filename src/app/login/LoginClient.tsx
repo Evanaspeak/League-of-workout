@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import Link from "next/link";
 import { LoginButtons } from "@/components/LoginButtons";
 import { DesktopModeDetector } from "@/components/DesktopModeDetector";
@@ -50,7 +51,7 @@ export function LoginClient({
       <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ ...card, maxWidth: 360 }}>
           {topSlash}
-          <div style={{ fontSize: "2rem", color: "var(--loss)", marginBottom: "1rem" }}>✕</div>
+          <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}><Icone nom="croix" taille={30} couleur="var(--loss)" /></div>
           <p style={{
             fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
             fontWeight: 600,
@@ -75,7 +76,7 @@ export function LoginClient({
       <div style={{ minHeight: "76vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ ...card, maxWidth: 360 }}>
           {topSlash}
-          <div style={{ fontSize: "2rem", color: "var(--victory)", marginBottom: "1rem" }}>✓</div>
+          <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}><Icone nom="coche" taille={30} couleur="var(--victory)" /></div>
           <p style={{
             fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
             fontWeight: 600,

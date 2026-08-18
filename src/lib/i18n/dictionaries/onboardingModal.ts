@@ -27,8 +27,9 @@ export const onboardingModal = {
         body: "Tu te fixes un total à atteindre, le dashboard te dit où tu en es.\n\nÀ ce stade, tu auras compris que le seul moyen de payer moins, c'est de mieux jouer.",
       },
     ],
-    suivant: "SUIVANT →",
-    cestParti: "C'EST PARTI !",
+    suivant: "Suivant",
+    precedent: "Précédent",
+    cestParti: "C'est parti",
     passerIntroduction: "Passer l'introduction",
   },
   en: {
@@ -59,8 +60,9 @@ export const onboardingModal = {
         body: "You set yourself a total to hit, the dashboard tells you where you're at.\n\nBy now you'll have worked out that the only way to pay less is to play better.",
       },
     ],
-    suivant: "NEXT →",
-    cestParti: "LET'S GO!",
+    suivant: "Next",
+    precedent: "Back",
+    cestParti: "Let's go",
     passerIntroduction: "Skip introduction",
   },
 };

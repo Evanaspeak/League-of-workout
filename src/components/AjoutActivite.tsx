@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useValeurClient } from "@/lib/valeurClient";
 import { ChampionIcon } from "@/components/ChampionIcon";
+import { Icone } from "@/components/Icone";
 import { ChampionInput } from "@/components/ChampionInput";
 import { useChampions, championConnu } from "@/lib/useChampions";
 import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
@@ -379,7 +380,7 @@ export function AjoutActivite({
             {riotError && <p className="text-sm loss-text">{riotError}</p>}
 
             <div className="flex items-start gap-3 p-3 rounded" style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.16)" }}>
-              <span className="text-lg" style={{ lineHeight: 1.2 }}>⚠️</span>
+              <Icone nom="alerte" taille={18} couleur="var(--amber)" />
               <div className="flex-1 space-y-2">
                 <p className="text-sm" style={{ color: "rgba(236,239,244,0.75)" }}>
                   <span className="gold-text font-semibold">{t.aramTitle}</span>{" "}
@@ -402,7 +403,7 @@ export function AjoutActivite({
                   <button
                     onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
                     style={{ color: "rgba(236,239,244,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
-                  >✕</button>
+                  ><Icone nom="croix" taille={15} /></button>
                 )}
               </div>
 

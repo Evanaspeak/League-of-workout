@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import { useState, useRef, useEffect } from "react";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import { Drapeau } from "./Drapeau";
@@ -56,7 +57,7 @@ export function LanguageSwitcher() {
         }}>
           {current.code.toUpperCase()}
         </span>
-        <span style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>▾</span>
+        <Icone nom="chevron" taille={13} couleur="rgba(236,239,244,0.4)" />
       </button>
 
       {open && (

@@ -81,7 +81,7 @@ export const confidentialite = {
         "Cette politique peut être mise à jour. La date de dernière modification est indiquée en haut de cette page. Les changements significatifs seront signalés lors de votre prochaine connexion.",
       ],
     },
-    footerLink: "→ Conditions Générales d'Utilisation",
+    footerLink: "Conditions Générales d'Utilisation",
   },
   en: {
     pageTitle: "PRIVACY POLICY",
@@ -165,6 +165,6 @@ export const confidentialite = {
         "This policy may be updated. The date of the last modification is shown at the top of this page. Significant changes will be flagged the next time you log in.",
       ],
     },
-    footerLink: "→ Terms of Service",
+    footerLink: "Terms of Service",
   },
 };

@@ -2,7 +2,7 @@ export const testPompes = {
   fr: {
     titre: "Test de force",
     aide: "Un seul chiffre fixe ton niveau : le nombre de pompes que tu enchaînes d'affilée, sans t'arrêter. Plus tu en fais, plus l'app te demande — c'est ce qui garde l'effort à ta mesure. À refaire une fois par mois : la force ne change pas d'un soir à l'autre.",
-    resume: (niveau: number, mult: number) => `pompes d'affilée → niveau ${niveau}, dette ×${mult}`,
+    resume: (niveau: number, mult: number) => `pompes d'affilée, soit le niveau ${niveau}, dette ×${mult}`,
     perime: "Ton test date de plus d'un mois. Refais-le pour que la dette colle à ton niveau réel.",
     jamaisFait: "Tu n'as pas encore fait le test. Tant qu'il manque, tu restes au niveau 1.",
     faire: "Faire le test",
@@ -16,7 +16,7 @@ export const testPompes = {
   en: {
     titre: "Strength test",
     aide: "One number sets your level: how many push-ups you do in a row, without stopping. The more you manage, the more the app asks of you — that's what keeps the effort matched to you. Redo it once a month: strength doesn't change overnight.",
-    resume: (niveau: number, mult: number) => `push-ups in a row → level ${niveau}, debt ×${mult}`,
+    resume: (niveau: number, mult: number) => `push-ups in a row, so level ${niveau}, debt ×${mult}`,
     perime: "Your test is over a month old. Redo it so the debt matches where you actually are.",
     jamaisFait: "You haven't taken the test yet. Until you do, you stay at level 1.",
     faire: "Take the test",

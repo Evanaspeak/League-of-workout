@@ -61,7 +61,13 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
   @keyframes blink { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
 </style></head>
 <body>
-  <h2>🔐 Authentification en cours <span class="dots"><span>.</span><span>.</span><span>.</span></span></h2>
+  <h2>
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+         style="vertical-align:-3px;margin-right:8px">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect>
+      <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"></path>
+    </svg>Authentification en cours <span class="dots"><span>.</span><span>.</span><span>.</span></span></h2>
   <p>Terminez la connexion dans votre navigateur web.</p>
   <p style="font-size:12px;margin-top:8px;color:rgba(240,230,211,.3)">
     Cette fenêtre se met à jour automatiquement une fois connecté.

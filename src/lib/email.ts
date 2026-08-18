@@ -31,7 +31,7 @@ export async function sendCodeReset(to: string, pseudo: string, newCode: string)
         </div>
         <a href="https://winorworkout.com/login"
            style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#FF4D2E,#FF8A3D);color:#fff;font-weight:700;text-decoration:none;border-radius:8px;margin-bottom:20px;">
-          Se connecter →
+          Se connecter
         </a>
         <p style="line-height:1.7;color:rgba(236,239,244,0.5);font-size:0.9rem;">
           Connecte-toi avec ton pseudo (<strong>${pseudo}</strong>) et ce code.

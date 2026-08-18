@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n/LocaleContext";
@@ -163,7 +164,7 @@ export function OnboardingModal() {
           {step > 0 && (
             <button
               onClick={() => setStep((s) => s - 1)}
-              aria-label="←"
+              aria-label={t.precedent}
               style={{
                 flex: "0 0 auto",
                 padding: "0.6rem 1rem",
@@ -175,7 +176,7 @@ export function OnboardingModal() {
                 fontSize: "0.82rem",
               }}
             >
-              ←
+              <Icone nom="fleche" taille={16} style={{ transform: "rotate(180deg)" }} />
             </button>
           )}
           <button

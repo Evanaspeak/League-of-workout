@@ -1,4 +1,5 @@
 "use client";
+import { Icone } from "@/components/Icone";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -142,7 +143,7 @@ export default function Nav() {
               <span style={{ fontSize: "0.7rem", color: "var(--victory)", fontWeight: 700, letterSpacing: "0.06em" }}>{t.live}</span>
               <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--bone)" }}>{sessionGames.length}G</span>
               <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--faint)" }}>
-                {polling ? "⟳" : `${countdown}s`}
+                {polling ? <Icone nom="recharger" taille={13} /> : `${countdown}s`}
               </span>
             </div>
             <button
