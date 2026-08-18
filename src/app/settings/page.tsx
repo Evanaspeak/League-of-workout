@@ -115,9 +115,12 @@ export default function SettingsPage() {
         objectifTotalPompes: s.goal?.objectifTotalPompes ?? 1000,
       });
       setBetaRank(u.betaRank ?? null);
-      setRoleWeights(s.roleWeights);
-      setLevelConfigs(s.levelConfigs);
-      setMasteryConfig(s.masteryConfig);
+      // Repli explicite : une réponse incomplète posait `undefined` dans ces
+      // états, et la liste des rubriques — qui lit `levelConfigs.length` pour
+      // afficher le niveau — emportait alors toute la page.
+      setRoleWeights(Array.isArray(s.roleWeights) ? s.roleWeights : []);
+      setLevelConfigs(Array.isArray(s.levelConfigs) ? s.levelConfigs : []);
+      setMasteryConfig(s.masteryConfig ?? null);
       setExercicesSel(toExerciceIds(s.user?.exercices));
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
