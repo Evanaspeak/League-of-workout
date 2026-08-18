@@ -51,6 +51,12 @@ let enPartie = false;
  * lancé. Seul l'affichage automatique est repris.
  */
 let manuel = false;
+/**
+ * Dernier état poussé. La fenêtre d'overlay peut être recréée après une
+ * fermeture, ou chargée alors qu'une partie tourne déjà : sans mémoire, elle
+ * repartirait de « pas de partie » et son chrono de zéro.
+ */
+let dernierEtat = { enPartie: false, debut: null, jeu: null };
 
 /**
  * Crée la fenêtre d'overlay. Elle démarre cachée : c'est `afficher()` ou le
@@ -99,6 +105,14 @@ function creerOverlay() {
   fenetre.setIgnoreMouseEvents(true, { forward: true });
 
   fenetre.loadFile(path.join(__dirname, "overlay.html"));
+  // Le contenu se charge de façon asynchrone : l'état doit lui être renvoyé
+  // une fois prêt, sinon une fenêtre recréée en pleine partie afficherait
+  // « pas de partie » jusqu'au prochain événement.
+  fenetre.webContents.on("did-finish-load", () => {
+    if (fenetre && !fenetre.isDestroyed()) {
+      fenetre.webContents.send("overlay:etat", dernierEtat);
+    }
+  });
 
   fenetre.on("closed", () => { fenetre = null; });
   return fenetre;
@@ -130,11 +144,17 @@ function basculer() {
  * l'overlay n'a rien à faire à l'écran en dehors d'une partie, même si la fin
  * de la précédente n'a jamais été signalée.
  */
-function definirEnPartie(valeur) {
+function definirEnPartie(valeur, jeu = null) {
+  const avant = enPartie;
   enPartie = Boolean(valeur);
   // Une partie qui commence rend la main à l'affichage automatique : le
   // raccourci reste maître jusque-là, pas au-delà.
   if (enPartie) manuel = false;
+  // L'instant de départ est daté au passage, pas à l'ouverture de la fenêtre :
+  // c'est ce qui manquait au chrono, qui comptait depuis le lancement de
+  // l'application et affichait deux heures sur une partie qui commençait.
+  if (enPartie && !avant) envoyerEtat({ enPartie: true, debut: Date.now(), jeu });
+  else if (!enPartie && avant) envoyerEtat({ enPartie: false, debut: null, jeu: null });
 }
 
 /**
@@ -169,10 +189,11 @@ function surveiller() {
   }, 2000);
 }
 
-/** Pousse un état vers la fenêtre d'overlay (partie en cours, dette, etc.). */
+/** Pousse un état vers la fenêtre d'overlay (partie en cours, chrono, jeu). */
 function envoyerEtat(etat) {
+  dernierEtat = { ...dernierEtat, ...etat };
   if (fenetre && !fenetre.isDestroyed()) {
-    fenetre.webContents.send("overlay:etat", etat);
+    fenetre.webContents.send("overlay:etat", dernierEtat);
   }
 }
 

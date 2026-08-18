@@ -81,38 +81,55 @@
   <div class="pastille">
     <div class="titre">
       <span class="point"></span>
-      <span>Overlay — test</span>
+      <span>Win // Workout</span>
     </div>
 
-    <div class="compteur" id="compteur">00:00</div>
+    <div class="compteur" id="compteur">--:--</div>
 
     <div class="etat">
-      League : <span class="jeu" id="jeu">pas de partie</span>
+      <span class="jeu" id="jeu">pas de partie</span>
     </div>
 
     <div class="aide">Ctrl + Maj + O pour masquer</div>
   </div>
 
 <script>
-  // Compteur qui avance chaque seconde depuis l'ouverture de l'overlay.
-  const debut = Date.now();
+  // Le compteur mesure la partie en cours, et rien d'autre.
+  //
+  // Il comptait auparavant depuis l'ouverture de la fenêtre : c'était la preuve
+  // que l'overlay était vivant, à l'époque où il fallait vérifier qu'il
+  // s'affichait par-dessus le jeu. Cette question est tranchée, et le chrono
+  // affichait alors deux heures pour une partie qui venait de commencer.
   const compteur = document.getElementById("compteur");
+  const jeu = document.getElementById("jeu");
 
-  setInterval(() => {
-    const s = Math.floor((Date.now() - debut) / 1000);
+  /** Instant du début de la partie en cours, ou null hors partie. */
+  let debut = null;
+
+  function rafraichir() {
+    if (debut === null) {
+      compteur.textContent = "--:--";
+      return;
+    }
+    const s = Math.max(0, Math.floor((Date.now() - debut) / 1000));
     const mm = String(Math.floor(s / 60)).padStart(2, "0");
     const ss = String(s % 60).padStart(2, "0");
     compteur.textContent = `${mm}:${ss}`;
-  }, 1000);
+  }
+
+  setInterval(rafraichir, 1000);
 
   // L'état de partie est poussé par le processus principal, via le même
   // observateur Live Client que le reste de l'app.
   if (window.overlayLOW && window.overlayLOW.onEtat) {
-    const jeu = document.getElementById("jeu");
     window.overlayLOW.onEtat((etat) => {
       const enPartie = !!(etat && etat.enPartie);
-      jeu.textContent = enPartie ? "partie en cours" : "pas de partie";
+      // Le début vient du processus principal : l'overlay peut être créé ou
+      // réaffiché en cours de partie, auquel cas repartir de zéro mentirait.
+      debut = enPartie ? (etat.debut || Date.now()) : null;
+      jeu.textContent = enPartie ? (etat.jeu || "partie en cours") : "pas de partie";
       jeu.className = enPartie ? "jeu actif" : "jeu";
+      rafraichir();
     });
   }
 </script>
