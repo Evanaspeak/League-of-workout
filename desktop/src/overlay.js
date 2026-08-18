@@ -29,7 +29,7 @@ const COINS = ["haut-droite", "haut-gauche", "bas-droite", "bas-gauche"];
 const LARGEUR = 230;
 // Assez haut pour les quatre lignes du bas ET la consigne du mode placement :
 // la page est en `overflow: hidden`, ce qui dépasse est coupé sans un mot.
-const HAUTEUR = 228;
+const HAUTEUR = 210;
 
 let fenetre = null;
 /**

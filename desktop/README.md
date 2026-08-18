@@ -125,12 +125,32 @@ au-dessus de League quand il est en plein écran ?**
 
 - Elle apparaît **au lancement de l'app**, en haut à droite.
 - Elle apparaît aussi **toute seule au début d'une partie**, et disparaît à la fin.
-- **Ctrl + Maj + O** l'affiche ou la masque à tout moment, même en jeu.
+- **Ctrl + Maj + O** l'affiche ou la masque **depuis le bureau**. Pas en jeu :
+  voir plus bas.
 - Elle laisse passer les clics : impossible de gêner une partie.
 - **Réglages → Placer à la main** la rend attrapable, le temps de la poser où
   elle ne recouvre rien. La position est retenue pour ce poste, et prime sur
   les quatre coins — selon la résolution et l'interface du jeu, la zone libre
   n'est jamais au même endroit.
+
+### Pourquoi le raccourci ne répond pas en jeu
+
+Signalé plusieurs fois : Ctrl + Maj + O ne fait rien pendant une partie. Le
+raccourci est pourtant bien enregistré — `globalShortcut.register` renvoie
+`true`, et il fonctionne depuis le bureau.
+
+L'explication est du côté de Windows. League tourne avec Vanguard, donc avec des
+privilèges plus élevés que l'application. Quand une fenêtre de plus haute
+intégrité a le focus, le système cesse de livrer les combinaisons enregistrées
+par les processus en dessous. Y remédier voudrait dire lancer l'application en
+administrateur : un prix sans rapport avec le service rendu, pour une pastille.
+
+C'est donc une limite assumée, dite comme telle dans les réglages. Le chemin
+qui marche pendant une partie est l'icône près de l'horloge — clic droit,
+« Afficher / masquer l'overlay ». La pastille ne prétend plus le contraire :
+la ligne « Ctrl + Maj + O pour masquer » qu'elle affichait a été retirée.
+
+### Ce que la pastille montre
 
 Elle annonce ce que la partie en cours coûtera, en deux nombres : le prix d'une
 victoire et celui d'une défaite. À mi-partie l'issue n'est pas connue, et une
@@ -139,8 +159,9 @@ place du joueur. Le calcul passe par l'aperçu de scoring du site, celui-là mê
 qui sert avant d'enregistrer une partie : l'estimation lue en jeu ne peut pas
 diverger du chiffre écrit à la fin.
 
-Le chronomètre qui défile est là pour prouver que l'overlay est *vivant* :
-s'il avance pendant la partie, le rendu passe bien par-dessus le jeu.
+Le grand chiffre est le temps **joué sur la soirée**, menus et files d'attente
+exclus. Il a d'abord porté le chrono de la partie en cours — inutile, le jeu
+l'affiche déjà à côté. Le cumul de la soirée, lui, n'existe nulle part ailleurs.
 
 Aucune injection n'est faite dans le processus du jeu — c'est une simple
 fenêtre Electron maintenue au premier plan, donc rien qui puisse inquiéter un
