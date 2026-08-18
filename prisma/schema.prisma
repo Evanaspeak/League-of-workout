@@ -157,7 +157,11 @@ model Game {
   // Rocket League : arrêts. Les buts vont dans `kills` et les passes dans
   // `assists`, qui jouent le même rôle ; il manquait une troisième case.
   arrets              Int?
-  source              String   @default("manuel") // manuel | riot_api
+  // Type de file, lu sur le lanceur League : « Classée Solo/Duo », « ARAM »…
+  // Le KDA seul ne distingue pas une classée d'une partie normale.
+  file                String?
+  fileClassee         Boolean?
+  source              String   @default("manuel") // manuel | riot_api | live_client
   riotMatchId         String?
 
   @@index([userId])

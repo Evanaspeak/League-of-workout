@@ -25,7 +25,7 @@ let previenuUneFois = false;
  * @param {() => boolean} actions.overlayActif Lit le réglage de l'overlay.
  * @param {(actif: boolean) => void} actions.setOverlayActif
  */
-function initTray({ ouvrir, quitter, overlayActif, setOverlayActif }) {
+function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOverlay, raccourci }) {
   const image = nativeImage.createFromPath(path.join(__dirname, "..", "build", "tray.png"));
   tray = new Tray(image);
   tray.setToolTip("Win or Workout");
@@ -33,6 +33,15 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif }) {
   const construireMenu = () => Menu.buildFromTemplate([
     { label: "Ouvrir Win or Workout", click: ouvrir },
     { type: "separator" },
+    {
+      // Un raccourci global peut être capté par une autre application, ou
+      // simplement jamais livré si le jeu tourne avec des privilèges plus
+      // élevés que les nôtres. Ce menu, lui, répond toujours.
+      label: raccourci
+        ? `Afficher / masquer l'overlay\t${raccourci}`
+        : "Afficher / masquer l'overlay",
+      click: basculerOverlay,
+    },
     {
       label: "Overlay en jeu",
       type: "checkbox",

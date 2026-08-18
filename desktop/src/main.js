@@ -16,6 +16,7 @@ const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
 const { initTray, signalerVeille } = require("./tray");
 const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
+const { surveillerClient } = require("./lcu");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 
@@ -37,6 +38,13 @@ let stopWatcher = null;
 let stopOverlay = null;
 let stopTray = null;
 let stopJeux = null;
+let stopClient = null;
+/**
+ * Ce que le lanceur League nous a appris de la partie à venir : type de file et
+ * rôle attribué. L'API de partie ne les donne pas, et ils manquaient donc à
+ * l'enregistrement — le rôle était deviné, la file ignorée.
+ */
+let contextePartie = { file: null, role: null };
 /** Vrai seulement si l'icône existe réellement pour rouvrir la fenêtre. */
 let trayPret = false;
 /** Vrai à partir du moment où l'on quitte pour de bon. */
@@ -422,7 +430,8 @@ async function createWindow() {
     }
 
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("lol:event", event);
+      mainWindow.webContents.send("lol:event",
+        event.type === "game-ended" ? { ...event, contexte: contextePartie } : event);
     }
 
     // L'overlay apparaît de lui-même au début d'une partie et se retire à la
@@ -675,6 +684,8 @@ app.whenReady().then(() => {
     stopTray = initTray({
       ouvrir: ouvrirFenetre,
       quitter: () => app.quit(),
+      basculerOverlay: overlay.basculer,
+      raccourci: overlay.lireRaccourcis().bascule,
       overlayActif: overlayAutorise,
       setOverlayActif: (actif) => {
         ecrireReglage("overlay", actif);
@@ -685,6 +696,18 @@ app.whenReady().then(() => {
   } catch (err) {
     console.warn("[WOW] Icône de notification indisponible :", err?.message ?? err);
   }
+  stopClient = surveillerClient((e) => {
+    if (e.type === "contexte") {
+      contextePartie = { file: e.file, role: e.role };
+      return;
+    }
+    // La recherche de partie qui démarre est le premier moment où l'on sait
+    // qu'une partie se prépare — bien avant que le jeu ne se lance.
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("lol:phase", { phase: e.phase, ...contextePartie });
+    }
+  });
+
   stopJeux = surveillerJeux(jeuxSurveilles, ({ type, jeu }) => {
     const actions = actionsDetection();
     if (type === "jeu-demarre") {
@@ -718,6 +741,7 @@ app.on("before-quit", (event) => {
     if (stopWatcher) stopWatcher();
     if (stopOverlay) stopOverlay();
     if (stopJeux) stopJeux();
+    if (stopClient) stopClient();
     if (stopTray) stopTray();
     app.quit();
   });

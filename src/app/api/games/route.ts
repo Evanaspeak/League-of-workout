@@ -203,6 +203,10 @@ export async function POST(req: Request) {
       placement,
       joueurs,
       arrets,
+      // Type de file, quand le lanceur League a pu le dire. Facultatif : une
+      // saisie manuelle ou un autre jeu n'en ont pas.
+      file: typeof body.fileNom === "string" ? body.fileNom.slice(0, 80) : null,
+      fileClassee: typeof body.fileClassee === "boolean" ? body.fileClassee : null,
       source: body.source || "manuel",
       riotMatchId: body.riotMatchId || null,
     },
