@@ -62,8 +62,14 @@ export function OnboardingModal() {
     // désormais celle du COMPTE, pas celle du navigateur.
     if (uid === undefined) return;
     if (localStorage.getItem(cleOnboarding(uid))) return;
-    // Attend que le splash soit terminé avant d'afficher
-    const timer = setTimeout(() => setVisible(true), 2800);
+    // On attendait 2 800 ms dans tous les cas, pour laisser passer l'écran
+    // d'ouverture. Or celui-ci ne joue qu'une fois par onglet : le reste du
+    // temps on faisait patienter devant un tableau de bord déjà là, et
+    // d'autant plus longtemps que la page était lourde à peindre — le délai
+    // court à partir du montage. Quand il n'y a rien à laisser passer, on
+    // n'attend que le temps de l'apparition.
+    const splashJoue = sessionStorage.getItem("splash") === null;
+    const timer = setTimeout(() => setVisible(true), splashJoue ? 2800 : 400);
     return () => clearTimeout(timer);
   }, [path, uid]);
 
