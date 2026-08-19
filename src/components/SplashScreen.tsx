@@ -28,7 +28,7 @@ export function SplashScreen() {
   if (dejaVu || parti) return null;
 
   const word: React.CSSProperties = {
-    fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+    fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
     fontWeight: 700,
     fontSize: "clamp(2.2rem, 7vw, 3.4rem)",
     letterSpacing: "0.08em",

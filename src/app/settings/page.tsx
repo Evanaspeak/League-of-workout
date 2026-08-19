@@ -731,7 +731,7 @@ export default function SettingsPage() {
             style={{ maxWidth: 420, width: "100%", padding: "1.75rem" }}
           >
             <h3 style={{
-              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+              fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
               fontSize: "1.05rem", color: "#FF5A47", letterSpacing: "0.1em", marginBottom: "0.75rem",
             }}>
               {t.supprimerLeCompte}

@@ -94,7 +94,7 @@ export function ExerciceSelector({
             <span style={{ minWidth: 0, flex: 1 }}>
               <span style={{
                 display: "block",
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontWeight: 600, fontSize: compact ? "0.95rem" : "1.05rem",
                 textTransform: "uppercase", letterSpacing: "0.04em",
                 color: actif ? "var(--amber)" : "var(--bone)",

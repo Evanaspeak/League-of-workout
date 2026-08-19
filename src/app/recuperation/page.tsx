@@ -111,7 +111,7 @@ export default function RecuperationPage() {
             <div style={{ marginBottom: 32 }}>
               <div className="eyebrow" style={{ marginBottom: 20 }}>{t.badge}</div>
               <h1 style={{
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontWeight: 700, textTransform: "uppercase",
                 fontSize: "clamp(1.9rem, 4vw, 2.4rem)", lineHeight: 1.05, marginBottom: 14,
               }}>

@@ -53,7 +53,7 @@ export function LoginClient({
           {topSlash}
           <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}><Icone nom="croix" taille={30} couleur="var(--loss)" /></div>
           <p style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
             fontWeight: 600,
             fontSize: "1.15rem",
             color: "var(--bone)",
@@ -78,7 +78,7 @@ export function LoginClient({
           {topSlash}
           <div style={{ marginBottom: "1rem", display: "flex", justifyContent: "center" }}><Icone nom="coche" taille={30} couleur="var(--victory)" /></div>
           <p style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
             fontWeight: 600,
             fontSize: "1.15rem",
             color: "var(--bone)",

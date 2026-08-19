@@ -127,7 +127,7 @@ export function ReglageJeux() {
                 gap: 10, padding: "11px 14px", cursor: "pointer",
                 background: deplie ? "rgba(152,162,176,0.06)" : "transparent",
                 border: "none", color: "#ECEFF4", textAlign: "left",
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontSize: "0.85rem", letterSpacing: "0.08em",
               }}
             >

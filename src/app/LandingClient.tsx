@@ -242,7 +242,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   useRevealOnScroll();
 
   const h2: React.CSSProperties = {
-    fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+    fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
     fontWeight: 700,
     textTransform: "uppercase",
     letterSpacing: "0.015em",
@@ -266,17 +266,17 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         WebkitBackdropFilter: "blur(14px)",
         borderBottom: "1px solid var(--line)",
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        {/* Les tailles passent par une variable plutôt que par des valeurs
+            posées ici : un style en ligne ne peut pas être repris par une
+            requête de média, et c'est bien elle qui doit décider sur un
+            écran étroit. */}
+        <div className="wow-nav" style={{ maxWidth: 1200, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/" style={{ textDecoration: "none", display: "inline-flex" }}>
-            <Wordmark fontSize="1.1rem" />
+            <Wordmark fontSize="var(--marque-nav)" />
           </Link>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <LanguageSwitcher />
-            <Link
-              href={isLoggedIn ? "/dashboard" : "/login"}
-              className="wow-ghost"
-              style={{ padding: "7px 18px", fontSize: "0.82rem" }}
-            >
+            <Link href={isLoggedIn ? "/dashboard" : "/login"} className="wow-ghost wow-ghost-nav">
               {isLoggedIn ? t.navLoggedIn : t.navLoggedOut}
             </Link>
           </div>
@@ -322,7 +322,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             </Link>
 
             <h1 className="hero-rise" style={{
-              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+              fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
               fontWeight: 700,
               textTransform: "uppercase",
               fontSize: "clamp(3rem, 7.2vw, 5.4rem)",
@@ -597,7 +597,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                   <span style={{ width: 28, height: 1, background: "rgba(255,77,46,0.35)" }} />
                 </div>
                 <h3 style={{
-                  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                  fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                   fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em",
                   fontSize: "1.3rem", color: "var(--bone)", marginBottom: 10,
                 }}>
@@ -633,7 +633,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <Icon name={b.icon} size={22} color={ICON_COLORS[b.icon] ?? "var(--steel)"} />
               </div>
               <h3 style={{
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em",
                 fontSize: "1.15rem", color: "var(--bone)", marginBottom: 8,
               }}>
@@ -691,7 +691,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
       }}>
         <div className="reveal" style={{ maxWidth: 720, margin: "0 auto" }}>
           <h2 style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
             fontWeight: 700, textTransform: "uppercase",
             fontSize: "clamp(2.2rem, 4.6vw, 3.4rem)",
             lineHeight: 1.02, marginBottom: 18,
@@ -723,7 +723,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           border-radius: 8px;
           background: linear-gradient(135deg, #FF4D2E 0%, #FF7A35 100%);
           color: #fff;
-          font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+          font-family: var(--font-heading, 'Chakra Petch', sans-serif);
           font-weight: 600;
           font-size: 0.95rem;
           letter-spacing: 0.09em;
@@ -753,7 +753,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           border-radius: 8px;
           border: 1px solid var(--line-strong);
           color: var(--bone);
-          font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+          font-family: var(--font-heading, 'Chakra Petch', sans-serif);
           font-weight: 600;
           font-size: 0.95rem;
           letter-spacing: 0.09em;
@@ -764,6 +764,29 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         .wow-ghost:hover {
           border-color: rgba(236, 239, 244, 0.35);
           background: rgba(236, 239, 244, 0.05);
+        }
+        /* Bandeau du haut : marque, sélecteur de langue et bouton sur une
+           seule ligne. Avec un titrage moins étroit, les trois ne tenaient
+           plus dans 360 px en français — « Se connecter » est deux fois plus
+           long que « Log in » — et la page se mettait à défiler de travers.
+           Les trois se resserrent ensemble plutôt que d'en sacrifier un. */
+        .wow-nav { --marque-nav: 1.1rem; padding: 0 24px; gap: 12px; }
+        /* Sur deux lignes, il double la hauteur du bandeau : il se resserre,
+           il ne se replie pas. */
+        .wow-ghost-nav { padding: 7px 18px; font-size: 0.82rem; white-space: nowrap; }
+
+        @media (max-width: 520px) {
+          .wow-nav { --marque-nav: 0.92rem; padding: 0 14px; gap: 10px; }
+          .wow-ghost-nav {
+            padding: 7px 12px;
+            font-size: 0.76rem;
+            letter-spacing: 0.04em;
+          }
+        }
+        /* Les petits Android et les iPhone SE font encore 320 px de large. */
+        @media (max-width: 390px) {
+          .wow-nav { --marque-nav: 0.82rem; padding: 0 10px; gap: 8px; }
+          .wow-ghost-nav { padding: 6px 10px; font-size: 0.7rem; }
         }
         @media (max-width: 960px) {
           .wow-hero {

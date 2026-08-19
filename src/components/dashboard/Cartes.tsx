@@ -56,7 +56,7 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
         <ChampionIcon name={champ.name} size={64} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
             fontSize: "1.05rem", color: "#ECEFF4", lineHeight: 1.1,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>{champ.name}</div>
@@ -69,19 +69,19 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 3 }}>{t.kda}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "#ECEFF4" }}>{kdaLabel}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)", fontSize: "0.95rem", color: "#ECEFF4" }}>{kdaLabel}</div>
           <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>
             {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
           </div>
         </div>
         <div style={{ textAlign: "center", borderLeft: "1px solid rgba(152,162,176,0.12)", borderRight: "1px solid rgba(152,162,176,0.12)" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 3 }}>{t.avgPompes}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
           <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>{t.perGame}</div>
         </div>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 3 }}>{t.games}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "var(--bone)" }}>{champ.games}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)", fontSize: "0.95rem", color: "var(--bone)" }}>{champ.games}</div>
           <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>{t.played}</div>
         </div>
       </div>
