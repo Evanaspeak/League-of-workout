@@ -249,7 +249,12 @@ export default function HistoryPage() {
               </div>
 
               {filtered.length === 0 ? (
-                <div className="lol-panel p-8 text-center">
+                // L'ancre de la visite guidée vit aussi ici : un compte neuf
+                // n'a aucune ligne, et l'étape qui montre « où retrouver tes
+                // activités » restait alors sans cible — écran figé le temps du
+                // délai, puis étape sautée. Montrer l'emplacement vide répond
+                // exactement à la question posée.
+                <div className="lol-panel p-8 text-center" data-visite="historique-table">
                   <p style={{ color: "var(--faint)" }}>{t.noGameToDisplay}</p>
                 </div>
               ) : (

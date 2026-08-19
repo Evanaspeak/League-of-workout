@@ -35,6 +35,14 @@ model User {
   // puisqu'il relit déjà la ligne.
   sessionEpoch  Int     @default(0)
 
+  // Génération de l'intro (accueil + visite guidée). Les marques de « déjà vu »
+  // vivent dans le navigateur, ce qui suffit au quotidien mais ne se commande
+  // pas de l'extérieur : un administrateur ne peut pas vider le stockage local
+  // de quelqu'un d'autre. Ce compteur fait partie de la clé sous laquelle elles
+  // sont écrites — l'incrémenter les rend caduques d'un coup, sur tous les
+  // appareils du compte, sans rien avoir à effacer.
+  introGeneration Int   @default(0)
+
   // Infos physiques optionnelles (remplies à l'inscription si l'utilisateur veut).
   genre              String?
   age                Int?

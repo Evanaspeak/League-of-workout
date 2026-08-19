@@ -71,6 +71,11 @@ export function OnboardingModal() {
     setClosing(true);
     setTimeout(() => {
       localStorage.setItem(cleOnboarding(uid), "1");
+      // La visite guidée prend le relais. Sans ce signal, elle ne réexaminait
+      // la situation qu'au prochain changement de page ou de compte : on
+      // restait donc plusieurs secondes devant un tableau de bord muet, la
+      // visite n'ayant appris qu'entre-temps que l'accueil était terminé.
+      window.dispatchEvent(new CustomEvent("low:accueil-termine"));
       setVisible(false);
       setClosing(false);
     }, 350);

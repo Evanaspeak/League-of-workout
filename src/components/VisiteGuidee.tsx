@@ -38,7 +38,12 @@ import { useIdCompte } from "@/lib/useIdCompte";
 /** Marge autour de l'élément éclairé, en pixels. */
 const MARGE = 8;
 /** Au-delà, on considère que l'ancre ne viendra pas. */
-const ATTENTE_MAX_MS = 5000;
+// Une ancre présente est désormais vue dès qu'elle paraît, par l'observateur :
+// ce délai ne sert plus qu'aux ancres qui ne viendront jamais. Cinq secondes
+// d'écran figé pour rien, c'était trop long pour l'œil.
+const ATTENTE_MAX_MS = 3000;
+/** Pour une ancre qui a le droit de ne pas exister : on n'insiste pas. */
+const ATTENTE_FACULTATIVE_MS = 700;
 /** Durée pendant laquelle on suit l'élément, le temps que le défilement finisse. */
 const SUIVI_MS = 700;
 
@@ -54,18 +59,33 @@ type Etape = {
    * bouton et où ses actions n'ont aucune surface à l'écran.
    */
   cleEtroite?: string;
+  /**
+   * Ancre qui peut légitimement ne pas exister — une dette qu'on n'a pas
+   * encore, un graphique qui demande plusieurs semaines de données. On ne
+   * l'attend donc pas aussi longtemps : c'est justement pour un compte neuf,
+   * seul public de cette visite, qu'elle a le plus de chances d'être absente,
+   * et chaque attente inutile fige l'écran.
+   */
+  facultative?: boolean;
 };
 
 type Cadre = { i: number; left: number; top: number; width: number; height: number };
 
+/**
+ * Surface de l'élément, ou `null` s'il n'en occupe aucune.
+ *
+ * Un test « est-il dans l'écran ? » vivait ici, et c'est lui qui faisait sauter
+ * des étapes. Le chercheur s'en servait pour décider si l'ancre EXISTE : tout
+ * ce qui se trouvait sous la ligne de flottaison lui était donc invisible —
+ * alors que c'est précisément ce qu'on allait amener à l'écran juste après.
+ * L'étape attendait cinq secondes une ancre pourtant présente, puis se sautait
+ * elle-même. Reste le seul critère qui compte : occuper des pixels. Un rail
+ * replié ou une section non dépliée n'en occupe aucun, et l'éclairer
+ * désignerait le vide.
+ */
 function mesurer(el: Element): Omit<Cadre, "i"> | null {
   const r = el.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return null;
-  // Un élément replié hors du cadre a bien une taille, mais aucune surface
-  // utile : l'éclairer désignerait le vide.
-  const dansLEcran = r.right > 0 && r.left < window.innerWidth
-    && r.bottom > -r.height && r.top < window.innerHeight + r.height;
-  if (!dansLEcran) return null;
   return { left: r.left, top: r.top, width: r.width, height: r.height };
 }
 
@@ -78,9 +98,9 @@ export function VisiteGuidee() {
     { cle: "rail", cleEtroite: "rail-bascule", chemin: "/dashboard", titre: t.railTitre, texte: t.railTexte },
     { cle: "rail-session", cleEtroite: "rail-bascule", titre: t.sessionTitre, texte: t.sessionTexte },
     { cle: "rail-ajout", cleEtroite: "rail-bascule", titre: t.ajoutTitre, texte: t.ajoutTexte },
-    { cle: "dette", cleEtroite: "rail-bascule", titre: t.detteTitre, texte: t.detteTexte },
+    { cle: "dette", cleEtroite: "rail-bascule", titre: t.detteTitre, texte: t.detteTexte, facultative: true },
     { cle: "stats", titre: t.statsTitre, texte: t.statsTexte },
-    { cle: "graphique", titre: t.graphiqueTitre, texte: t.graphiqueTexte },
+    { cle: "graphique", titre: t.graphiqueTitre, texte: t.graphiqueTexte, facultative: true },
     { cle: "nav-history", titre: t.navHistoriqueTitre, texte: t.navHistoriqueTexte },
     { cle: "historique-table", chemin: "/history", titre: t.historiqueTitre, texte: t.historiqueTexte },
     { cle: "nav-settings", titre: t.navReglagesTitre, texte: t.navReglagesTexte },
@@ -99,6 +119,14 @@ export function VisiteGuidee() {
   const cibleRef = useRef(0);
 
   const uid = useIdCompte();
+  /** Incrémenté quand l'accueil se ferme : c'est ce qui relance l'examen. */
+  const [relance, setRelance] = useState(0);
+
+  useEffect(() => {
+    const surFin = () => setRelance((n) => n + 1);
+    window.addEventListener("low:accueil-termine", surFin);
+    return () => window.removeEventListener("low:accueil-termine", surFin);
+  }, []);
 
   useEffect(() => {
     if (estPagePublique(chemin)) return;
@@ -107,9 +135,10 @@ export function VisiteGuidee() {
     // La visite prend la suite de l'accueil : tant qu'il n'a pas été vu, il n'y
     // a rien à guider.
     if (!localStorage.getItem(cleOnboarding(uid))) return;
-    const minuteur = setTimeout(() => setActive(true), 400);
+    // Assez pour laisser la modale finir de s'effacer, pas plus.
+    const minuteur = setTimeout(() => setActive(true), 250);
     return () => clearTimeout(minuteur);
-  }, [chemin, uid]);
+  }, [chemin, uid, relance]);
 
   const cloturer = useCallback(() => {
     localStorage.setItem(cleVisite(uid), "1");
@@ -155,33 +184,60 @@ export function VisiteGuidee() {
       if (Date.now() < jusqua) image = requestAnimationFrame(() => suivre(el, jusqua));
     };
 
-    const chercher = () => {
-      if (annule || cibleRef.current !== i) return;
+    let fini = false;
+    let observateur: MutationObserver | null = null;
+    const arreter = () => {
+      fini = true;
+      observateur?.disconnect();
+      clearTimeout(minuteur);
+    };
+
+    /** Renvoie vrai quand il n'y a plus rien à attendre pour cette étape. */
+    const tenter = () => {
+      if (fini || annule || cibleRef.current !== i) return true;
       const trouve = trouver();
       if (trouve) {
+        arreter();
         trouve.el.scrollIntoView({ block: "center", behavior: "smooth" });
         suivre(trouve.el, Date.now() + SUIVI_MS);
-        return;
+        return true;
       }
-      if (Date.now() - debut > ATTENTE_MAX_MS) {
+      const limite = etape.facultative ? ATTENTE_FACULTATIVE_MS : ATTENTE_MAX_MS;
+      if (Date.now() - debut > limite) {
         // Ancre introuvable : l'étape n'a rien à montrer, on passe — et si
         // c'était la dernière, la visite s'achève.
+        arreter();
         if (i + 1 >= ETAPES.length) cloturer();
         else setCible((n) => (n === i ? i + 1 : n));
-        return;
+        return true;
       }
-      minuteur = setTimeout(chercher, 100);
+      return false;
     };
 
     // Le changement de page part d'ici : l'ancre n'existera qu'après.
     if (etape.chemin && chemin !== etape.chemin) routeur.push(etape.chemin);
+
+    // L'ancre arrive quand la page a fini de se peindre — après une navigation,
+    // après un chargement de données. On réagit à sa VENUE plutôt que de la
+    // découvrir au battement suivant : c'est ce qui faisait qu'une étape
+    // pouvait se faire attendre des secondes alors que sa cible était là.
+    observateur = new MutationObserver(() => { tenter(); });
+    observateur.observe(document.body, { childList: true, subtree: true });
+
+    // Le battement reste, en second rideau : une ancre peut apparaître sans
+    // mutation du DOM (dépliage par style, image qui se charge et donne enfin
+    // une hauteur à son conteneur).
+    const boucle = () => {
+      if (tenter()) return;
+      minuteur = setTimeout(boucle, 120);
+    };
     // Tout passe par un minuteur, y compris la première recherche : rien ne
     // doit poser d'état dans la foulée du rendu.
-    minuteur = setTimeout(chercher, 0);
+    minuteur = setTimeout(boucle, 0);
 
     return () => {
       annule = true;
-      clearTimeout(minuteur);
+      arreter();
       cancelAnimationFrame(image);
     };
     // Les étapes sont reconstruites à chaque rendu (les libellés viennent des
