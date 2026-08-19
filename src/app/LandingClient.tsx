@@ -543,8 +543,23 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                 <li key={s.href} style={{ fontSize: "0.76rem", lineHeight: 1.6, color: "var(--faint)" }}>
                   <a href={s.href} target="_blank" rel="noopener noreferrer"
                     style={{ color: "var(--signal)", textDecoration: "none" }}>
-                    {s.label}
-                    <Icone nom="lien-externe" taille={11} style={{ marginLeft: 5 }} />
+                    {/* Le navigateur autorise une coupure entre un texte et une
+                        icône : sur ces libellés longs, elle tombait seule au
+                        début de la ligne suivante. L'icône voyage donc avec le
+                        dernier mot, comme on évite une veuve. */}
+                    {(() => {
+                      const mots = s.label.split(" ");
+                      const dernier = mots.pop() ?? "";
+                      return (
+                        <>
+                          {mots.length > 0 && `${mots.join(" ")} `}
+                          <span style={{ whiteSpace: "nowrap" }}>
+                            {dernier}
+                            <Icone nom="lien-externe" taille={11} style={{ marginLeft: 5 }} />
+                          </span>
+                        </>
+                      );
+                    })()}
                   </a>
                 </li>
               ))}

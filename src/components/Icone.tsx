@@ -216,7 +216,15 @@ export function Icone({
       aria-label={titre}
       aria-hidden={titre ? undefined : true}
       // Une icône posée à côté d'un mot doit s'asseoir sur sa ligne, pas flotter.
-      style={{ flexShrink: 0, verticalAlign: "middle", ...style }}
+      //
+      // `display` est explicite parce que la remise à zéro des styles met les
+      // SVG en bloc : dans un lien, l'icône passait seule à la ligne suivante,
+      // et aucun `white-space` ne pouvait l'en empêcher — un bloc casse la
+      // ligne par définition. En flex, la valeur est de toute façon
+      // transformée en bloc, donc rien ne change là où l'icône est déjà un
+      // élément flexible. `vertical-align` neutralise le décrochage de la
+      // ligne de base que l'affichage en ligne réintroduit.
+      style={{ display: "inline-block", flexShrink: 0, verticalAlign: "middle", ...style }}
     >
       {titre ? <title>{titre}</title> : null}
       {TRACES[nom]}
