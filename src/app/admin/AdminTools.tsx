@@ -5,10 +5,14 @@ import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { adminTools } from "@/lib/i18n/dictionaries/adminTools";
 import { oublierPremiereVisite } from "@/lib/premiereVisite";
+import { useIdCompte } from "@/lib/useIdCompte";
 
 export default function AdminTools() {
   const t = useT(adminTools);
   const { locale } = useLocale();
+  // Les marques de première visite appartiennent au compte : c'est celle de
+  // l'administrateur connecté que ce bouton efface, pas celle du navigateur.
+  const uid = useIdCompte();
   const [emails, setEmails] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -125,7 +129,7 @@ export default function AdminTools() {
         </p>
         <button
           onClick={() => {
-            oublierPremiereVisite();
+            oublierPremiereVisite(uid);
             window.location.href = "/dashboard";
           }}
           style={{

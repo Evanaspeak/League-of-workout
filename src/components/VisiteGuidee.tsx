@@ -5,6 +5,8 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { visite as dict } from "@/lib/i18n/dictionaries/visite";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { Icone } from "@/components/Icone";
+import { cleOnboarding, cleVisite } from "@/lib/premiereVisite";
+import { useIdCompte } from "@/lib/useIdCompte";
 
 /**
  * Visite guidée de la première connexion.
@@ -29,7 +31,9 @@ import { Icone } from "@/components/Icone";
  * changent donc ensemble, d'un seul mouvement.
  */
 
-const CLE_VUE = "low_visite";
+// Les marques de première visite portent le compte : voir l'article de
+// `premiereVisite.ts`. Un navigateur déjà servi ne doit pas priver un compte
+// neuf de sa visite.
 
 /** Marge autour de l'élément éclairé, en pixels. */
 const MARGE = 8;
@@ -94,19 +98,24 @@ export function VisiteGuidee() {
   const [cadre, setCadre] = useState<Cadre | null>(null);
   const cibleRef = useRef(0);
 
+  const uid = useIdCompte();
+
   useEffect(() => {
     if (estPagePublique(chemin)) return;
-    if (localStorage.getItem(CLE_VUE)) return;
-    if (!localStorage.getItem("low_onboarded")) return;
+    if (uid === undefined) return;
+    if (localStorage.getItem(cleVisite(uid))) return;
+    // La visite prend la suite de l'accueil : tant qu'il n'a pas été vu, il n'y
+    // a rien à guider.
+    if (!localStorage.getItem(cleOnboarding(uid))) return;
     const minuteur = setTimeout(() => setActive(true), 400);
     return () => clearTimeout(minuteur);
-  }, [chemin]);
+  }, [chemin, uid]);
 
   const cloturer = useCallback(() => {
-    localStorage.setItem(CLE_VUE, "1");
+    localStorage.setItem(cleVisite(uid), "1");
     setActive(false);
     setCadre(null);
-  }, []);
+  }, [uid]);
 
   /**
    * Vise l'ancre de l'étape courante : va sur sa page s'il le faut, attend
