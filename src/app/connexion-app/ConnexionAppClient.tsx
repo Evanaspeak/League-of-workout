@@ -32,13 +32,23 @@ export function ConnexionAppClient({
     if (!nonce) return;
     localStorage.setItem("low_desktop_handoff", "1");
     localStorage.setItem("low_desktop_nonce", nonce);
-    // L'instant de la demande : le transfert refusera une session ouverte avant.
-    localStorage.setItem("low_desktop_arme", String(Date.now()));
-    // Un cran après la peinture, pour que les marques soient bien écrites avant
-    // de quitter la page.
-    const depart = setTimeout(() => formulaire.current?.requestSubmit(), 60);
+    localStorage.removeItem("low_desktop_arme");
+
+    let vivant = true;
+    // On ouvre le tour AVANT de partir, et dans sa propre requête. C'est lui
+    // qui ferme la session déjà présente — laisser ce soin à l'action serveur
+    // revenait à effacer et à reposer des cookies dans une seule réponse, au
+    // milieu du départ chez le fournisseur — et qui date la demande avec
+    // l'horloge qui la relira.
+    //
+    // Une seconde et demie au maximum : le tour est une précaution, pas une
+    // condition. Un réseau qui traîne ne doit pas laisser l'écran figé.
+    const limite = new Promise((r) => setTimeout(r, 1500));
+    Promise.race([fetch("/api/auth/desktop-round", { method: "POST" }).catch(() => {}), limite])
+      .then(() => { if (vivant) formulaire.current?.requestSubmit(); });
+
     const secours = setTimeout(() => setManuel(true), 3000);
-    return () => { clearTimeout(depart); clearTimeout(secours); };
+    return () => { vivant = false; clearTimeout(secours); };
   }, [nonce]);
 
   const action = fournisseur === "discord" ? signInWithDiscord : signInWithGoogle;

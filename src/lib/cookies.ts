@@ -36,6 +36,18 @@ export const COOKIES_SESSION = [
   "__Secure-authjs.session-token",
 ];
 
+/**
+ * Le tour de connexion ouvert par l'application desktop.
+ *
+ * Il ne contient qu'un horodatage, mais posé par le SERVEUR. C'est ce qui
+ * permet ensuite de comparer l'instant de la demande et l'instant de la
+ * connexion sur la même horloge : la borne vivait auparavant dans le
+ * `localStorage` du navigateur, si bien qu'un poste en avance de quelques
+ * secondes sur le serveur faisait refuser une connexion parfaitement valide —
+ * et l'utilisateur repartait pour un second tour chez Google.
+ */
+export const COOKIE_TOUR_DESKTOP = "low_tour_desktop";
+
 /** Idem pour le jeton anti-CSRF, dont le préfixe diffère selon les versions. */
 export const COOKIES_CSRF = [
   "authjs.csrf-token",
