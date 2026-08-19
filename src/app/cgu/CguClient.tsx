@@ -34,7 +34,7 @@ export default function CguClient() {
 
       <Section title={t.article4.title}>
         <p>{t.article4.intro}</p>
-        <ul>
+        <ul className="liste-puces">
           {t.article4.items.map((item, i) => <li key={i}>{item}</li>)}
         </ul>
       </Section>
@@ -74,12 +74,7 @@ export default function CguClient() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.8rem", color: "#ECEFF4", letterSpacing: "0.12em",
-      }}>
-        {title}
-      </h2>
+      <h2 className="titre-section">{title}</h2>
       <div style={{
         fontSize: "0.875rem",
         color: "var(--muted)",

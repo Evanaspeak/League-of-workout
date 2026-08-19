@@ -56,7 +56,7 @@ export default function ConfidentialiteClient() {
 
       <Section title={t.article5.title}>
         <p>{t.article5.intro}</p>
-        <ul>
+        <ul className="liste-puces">
           {t.article5.items.map((item, i) => (
             <li key={i}><strong>{item.label}</strong> {item.text}</li>
           ))}
@@ -65,7 +65,7 @@ export default function ConfidentialiteClient() {
 
       <Section title={t.article6.title}>
         <p>{t.article6.intro}</p>
-        <ul>
+        <ul className="liste-puces">
           <li>{t.article6.items[0]}</li>
           <li>{t.article6.localStoragePrefix} <code>localStorage</code>{t.article6.localStorageSuffix ? ` ${t.article6.localStorageSuffix}` : ""} {t.article6.items[1]}</li>
         </ul>
@@ -74,7 +74,7 @@ export default function ConfidentialiteClient() {
 
       <Section title={t.article7.title}>
         <p>{t.article7.intro}</p>
-        <ul>
+        <ul className="liste-puces">
           {t.article7.items.map((item, i) => (
             <li key={i}><strong>{item.label}</strong> {item.text}</li>
           ))}
@@ -110,12 +110,7 @@ export default function ConfidentialiteClient() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.8rem", color: "#ECEFF4", letterSpacing: "0.12em",
-      }}>
-        {title}
-      </h2>
+      <h2 className="titre-section">{title}</h2>
       <div style={{
         fontSize: "0.875rem",
         color: "var(--muted)",

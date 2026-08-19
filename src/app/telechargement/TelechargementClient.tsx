@@ -164,7 +164,7 @@ export function TelechargementClient({
           <p style={{ fontWeight: 600, color: "var(--faint)", marginBottom: "0.5rem" }}>
             {t.commentCaFonctionne}
           </p>
-          <ul style={{ paddingLeft: "1.2rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+          <ul className="liste-puces">
             <li>{t.etape1}</li>
             <li>{t.etape2}</li>
             <li>{t.etape3}</li>

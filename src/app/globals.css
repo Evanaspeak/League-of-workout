@@ -341,6 +341,17 @@ body {
   border-top: 1px solid var(--line);
 }
 
+/* La remise à zéro des styles enlève puces et retrait aux listes. Sur les
+   pages légales, chaque point est une obligation distincte : sans marqueur,
+   les lignes se collent et se lisent comme un paragraphe coupé. */
+.liste-puces {
+  padding-left: 1.25rem;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
 .mono-num {
   font-family: var(--font-mono, 'IBM Plex Mono', monospace);
   font-variant-numeric: tabular-nums;
