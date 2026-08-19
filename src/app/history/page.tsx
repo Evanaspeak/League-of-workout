@@ -253,7 +253,7 @@ export default function HistoryPage() {
                   <p style={{ color: "rgba(236,239,244,0.5)" }}>{t.noGameToDisplay}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-visite="historique-table">
                   <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: modeColonnes === "parties" ? 760 : 660 }}>
                     <thead>
                       <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">

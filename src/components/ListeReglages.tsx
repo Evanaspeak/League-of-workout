@@ -48,8 +48,10 @@ export function fermerRubrique() {
 
 /** Une entrée de la liste : icône, titre, ce qu'elle vaut, chevron. */
 export function LigneRubrique({
-  icone, titre, aide, valeur, onOuvrir, premiere, derniere,
+  id, icone, titre, aide, valeur, onOuvrir, premiere, derniere,
 }: {
+  /** Sert d'ancre à la visite guidée, qui désigne les rubriques une par une. */
+  id: string;
   icone: NomIcone;
   titre: string;
   aide: string;
@@ -62,6 +64,7 @@ export function LigneRubrique({
   return (
     <button
       onClick={onOuvrir}
+      data-visite={`rubrique-${id}`}
       style={{
         width: "100%", display: "flex", alignItems: "center", gap: 14,
         padding: "14px 16px", cursor: "pointer", textAlign: "left",

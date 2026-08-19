@@ -295,6 +295,7 @@ export default function SettingsPage() {
           {rubriques.map((r, i) => (
             <LigneRubrique
               key={r.id}
+              id={r.id}
               icone={r.icone}
               titre={r.titre}
               aide={r.aide}

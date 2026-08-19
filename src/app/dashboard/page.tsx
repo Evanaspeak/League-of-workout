@@ -846,7 +846,7 @@ export default function Dashboard() {
             graphique qui peut descendre : le cumul ne fait que monter et le
             total par jour suit surtout le temps qu'on a joué. */}
         {(data.moyenneParSemaine ?? []).length > 1 && (
-          <div className="lol-panel p-4">
+          <div className="lol-panel p-4" data-visite="graphique">
             <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
               {t.progressionTitre}
             </h2>
