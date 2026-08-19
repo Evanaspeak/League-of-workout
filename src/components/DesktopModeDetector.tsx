@@ -21,12 +21,14 @@ export function DesktopModeDetector() {
     if (!nonce) return;
     localStorage.setItem("low_desktop_handoff", "1");
     localStorage.setItem("low_desktop_nonce", nonce);
-    // L'instant de la demande. Le transfert ne portera que sur une session
-    // ouverte APRÈS lui : sans cette borne, arriver ici en étant déjà connecté
-    // suffisait à expédier cette session-là vers l'application, sans que
-    // personne ne se soit authentifié — on repartait donc systématiquement
-    // avec le compte déjà ouvert dans le navigateur.
-    localStorage.setItem("low_desktop_arme", String(Date.now()));
+    // Le tour est ouvert côté serveur : il ferme la session en cours et date la
+    // demande. Le transfert ne portera que sur une session ouverte APRÈS lui —
+    // sans cette borne, arriver ici en étant déjà connecté suffisait à expédier
+    // cette session-là vers l'application, sans que personne ne se soit
+    // authentifié. L'horodatage vivait ici, dans le navigateur ; il vit
+    // désormais là où on le relira, ce qui évite de comparer deux horloges.
+    localStorage.removeItem("low_desktop_arme");
+    fetch("/api/auth/desktop-round", { method: "POST" }).catch(() => {});
   }, []);
   return null;
 }

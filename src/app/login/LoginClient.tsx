@@ -15,6 +15,7 @@ export function LoginClient({
   transfertEchec,
   deleted,
   reconnexion,
+  code,
 }: {
   betaFull: boolean;
   betaPending: boolean;
@@ -29,6 +30,12 @@ export function LoginClient({
    * et on invite à désigner explicitement le compte.
    */
   reconnexion?: boolean;
+  /**
+   * Le code du refus, tel que le serveur l'a nommé. Deux pannes très
+   * différentes menaient ici avec exactement le même écran : impossible, en
+   * lisant un signalement, de savoir laquelle on regardait.
+   */
+  code?: string;
 }) {
   const t = useT(loginDict);
 
@@ -135,6 +142,11 @@ export function LoginClient({
             lineHeight: 1.6,
           }}>
             {t.reconnexionDesktop}
+            {code && (
+              <span style={{ display: "block", marginTop: "0.45rem", opacity: 0.7, fontSize: "0.72rem", letterSpacing: "0.04em" }}>
+                code : {code}
+              </span>
+            )}
           </div>
         )}
 
