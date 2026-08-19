@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Barlow_Condensed, Barlow, IBM_Plex_Mono } from "next/font/google";
+import { Chakra_Petch, Barlow, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -17,7 +17,17 @@ import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
 import { LocaleProvider } from "@/lib/i18n/LocaleContext";
 
-const barlowCondensed = Barlow_Condensed({
+/**
+ * Titrage de la marque.
+ *
+ * Barlow Condensed tenait la place et faisait le travail, mais c'est l'un des
+ * choix les plus repris du catalogue Google : elle ne disait rien du produit.
+ * Chakra Petch a des angles coupés et des terminaisons biseautées — le même
+ * geste que la barre oblique de la marque — et elle n'est pas condensée : les
+ * titres tiennent plus de largeur, ce dont l'échelle typographique tient
+ * compte.
+ */
+const titrage = Chakra_Petch({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-heading",
@@ -70,7 +80,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`h-full ${barlowCondensed.variable} ${barlow.variable} ${plexMono.variable}`}>
+    <html lang="fr" className={`h-full ${titrage.variable} ${barlow.variable} ${plexMono.variable}`}>
       <body className="min-h-full flex flex-col">
         <LocaleProvider>
           <SessionProvider>

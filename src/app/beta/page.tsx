@@ -135,7 +135,7 @@ export default function BetaPage() {
               {t.successBadge}
             </div>
             <h1 style={{
-              fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+              fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
               fontWeight: 700, textTransform: "uppercase",
               fontSize: "1.6rem", marginBottom: 8,
             }}>
@@ -191,7 +191,7 @@ export default function BetaPage() {
                 <span className="eyebrow">{t.badge}</span>
               </div>
               <h1 style={{
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontWeight: 700, textTransform: "uppercase",
                 fontSize: "clamp(2rem, 4.5vw, 2.7rem)", lineHeight: 1.05, marginBottom: 14,
               }}>

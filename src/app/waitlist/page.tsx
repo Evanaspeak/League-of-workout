@@ -27,7 +27,7 @@ export default function WaitlistPage() {
           </svg>
         </div>
         <h1 style={{
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+          fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
           fontWeight: 700,
           fontSize: "1.3rem",
           color: "var(--bone)",

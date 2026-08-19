@@ -18,7 +18,7 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
   fontWeight: 600,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+  fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
   background: "transparent",
   border: "none",
   borderBottom: active ? "2px solid var(--ember)" : "2px solid transparent",
@@ -269,7 +269,7 @@ export function LoginButtons() {
                 cursor: "pointer",
                 background: mode === "login" ? "rgba(152,162,176,0.15)" : "transparent",
                 color: mode === "login" ? "#ECEFF4" : "var(--faint)",
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >
@@ -282,7 +282,7 @@ export function LoginButtons() {
                 cursor: "pointer",
                 background: mode === "register" ? "rgba(152,162,176,0.15)" : "transparent",
                 color: mode === "register" ? "#ECEFF4" : "var(--faint)",
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
             >

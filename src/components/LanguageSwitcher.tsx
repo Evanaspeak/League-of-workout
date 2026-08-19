@@ -49,7 +49,7 @@ export function LanguageSwitcher() {
         <Drapeau pays={current.pays} taille={17} />
         <span style={{
           lineHeight: 1,
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+          fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
           fontWeight: 600,
           fontSize: "0.78rem",
           letterSpacing: "0.1em",
@@ -95,7 +95,7 @@ export function LanguageSwitcher() {
             >
               <Drapeau pays={o.pays} taille={17} />
               <span style={{
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontWeight: 600,
                 fontSize: "0.72rem",
                 letterSpacing: "0.1em",

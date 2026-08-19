@@ -96,7 +96,7 @@ export default function Nav() {
                 position: "relative",
                 padding: "4px 10px",
                 paddingBottom: 6,
-                fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontSize: "0.92rem",
                 fontWeight: active ? 600 : 500,
                 letterSpacing: "0.08em",
@@ -188,7 +188,7 @@ export default function Nav() {
                 style={{
                   display: "block",
                   padding: "13px 20px",
-                  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+                  fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                   fontSize: "1rem",
                   fontWeight: active ? 600 : 500,
                   letterSpacing: "0.08em",

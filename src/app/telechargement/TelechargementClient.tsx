@@ -43,7 +43,7 @@ export function TelechargementClient({
 
         <h1
           style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
             fontWeight: 700,
             fontSize: "1.4rem",
             color: "var(--bone)",

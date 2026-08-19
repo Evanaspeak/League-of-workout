@@ -304,7 +304,7 @@ export function VisiteGuidee() {
             {t.etape(affiche + 1, ETAPES.length)}
           </span>
           <h2 style={{
-            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
             fontSize: "1.05rem", color: "var(--bone)",
             letterSpacing: "0.06em", textTransform: "uppercase", margin: "3px 0 6px",
           }}>

@@ -79,7 +79,7 @@ export function LigneRubrique({
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{
           display: "block",
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+          fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
           fontSize: "0.9rem", letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
           {titre}

@@ -26,7 +26,7 @@ export function Wordmark({
         display: "inline-flex",
         alignItems: "center",
         gap: "0.3em",
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+        fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
         fontWeight: 700,
         fontSize,
         letterSpacing: "0.07em",
