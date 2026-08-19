@@ -86,20 +86,20 @@ export function LigneRubrique({
         </span>
         <span style={{
           display: "block", fontSize: "0.76rem", lineHeight: 1.5,
-          color: "rgba(236,239,244,0.42)", marginTop: 2,
+          color: "var(--faint)", marginTop: 2,
         }}>
           {aide}
         </span>
       </span>
       {valeur && (
         <span className="mono-num" style={{
-          fontSize: "0.78rem", color: "rgba(236,239,244,0.55)",
+          fontSize: "0.78rem", color: "var(--muted)",
           whiteSpace: "nowrap", textAlign: "right",
         }}>
           {valeur}
         </span>
       )}
-      <span style={{ display: "inline-flex", color: "rgba(152,162,176,0.5)", flexShrink: 0 }}>
+      <span style={{ display: "inline-flex", color: "var(--faint)", flexShrink: 0 }}>
         <Icone nom="chevron" taille={16} style={{ transform: "rotate(-90deg)" }} />
       </span>
     </button>
@@ -116,19 +116,13 @@ export function EnteteRubrique({ titre, retour }: { titre: string; retour: strin
           display: "inline-flex", alignItems: "center", gap: 6,
           padding: "6px 12px 6px 8px", borderRadius: 999, cursor: "pointer",
           background: "transparent", border: "1px solid var(--line-strong)",
-          color: "rgba(236,239,244,0.65)", fontSize: "0.78rem",
+          color: "var(--muted)", fontSize: "0.78rem",
         }}
       >
         <Icone nom="chevron" taille={15} style={{ transform: "rotate(90deg)" }} />
         {retour}
       </button>
-      <h1 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "1.35rem", color: "#ECEFF4", letterSpacing: "0.16em",
-        textTransform: "uppercase",
-      }}>
-        {titre}
-      </h1>
+      <h1 className="titre-page">{titre}</h1>
     </div>
   );
 }

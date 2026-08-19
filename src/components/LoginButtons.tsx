@@ -152,7 +152,7 @@ export function LoginButtons() {
         onChange={(e) => setRememberMe(e.target.checked)}
         style={{ accentColor: "var(--ember)", width: 14, height: 14, cursor: "pointer" }}
       />
-      <span style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.55)" }}>{t.resterConnecte}</span>
+      <span style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{t.resterConnecte}</span>
     </label>
   );
 
@@ -192,12 +192,12 @@ export function LoginButtons() {
             </button>
           </form>
           {checkbox}
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center", marginTop: "0.5rem" }}>
+          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center", marginTop: "0.5rem" }}>
             {t.noCodeYet}{" "}
             <Link href="/beta" style={{ color: "var(--ember)", textDecoration: "none", fontWeight: 600 }}>{t.getAccess}</Link>
           </p>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center", marginTop: "0.25rem" }}>
-            <Link href="/recuperation" style={{ color: "rgba(236,239,244,0.5)", textDecoration: "underline" }}>{t.forgotCode}</Link>
+          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center", marginTop: "0.25rem" }}>
+            <Link href="/recuperation" style={{ color: "var(--faint)", textDecoration: "underline" }}>{t.forgotCode}</Link>
           </p>
         </div>
       )}
@@ -220,7 +220,7 @@ export function LoginButtons() {
             </form>
           )}
           {checkbox}
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center" }}>
+          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center" }}>
             {t.seulement100}
           </p>
         </div>
@@ -249,7 +249,7 @@ export function LoginButtons() {
             </form>
           )}
           {checkbox}
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center" }}>
+          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center" }}>
             {t.seulement100}
           </p>
         </div>
@@ -268,7 +268,7 @@ export function LoginButtons() {
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
                 background: mode === "login" ? "rgba(152,162,176,0.15)" : "transparent",
-                color: mode === "login" ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                color: mode === "login" ? "#ECEFF4" : "var(--faint)",
                 fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
@@ -281,7 +281,7 @@ export function LoginButtons() {
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
                 background: mode === "register" ? "rgba(152,162,176,0.15)" : "transparent",
-                color: mode === "register" ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                color: mode === "register" ? "#ECEFF4" : "var(--faint)",
                 fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
@@ -338,7 +338,7 @@ export function LoginButtons() {
           )}
 
           <div style={{ marginTop: "0.75rem" }}>{checkbox}</div>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)", textAlign: "center", marginTop: "0.75rem" }}>
+          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center", marginTop: "0.75rem" }}>
             {t.seulement100}
           </p>
         </div>

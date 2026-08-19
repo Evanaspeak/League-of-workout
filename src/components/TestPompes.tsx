@@ -57,14 +57,10 @@ export function TestPompes({
       style={autonome ? undefined : { borderTop: "1px solid var(--line)", paddingTop: 16 }}
       className="space-y-3"
     >
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.72rem", color: "#ECEFF4",
-        letterSpacing: "0.16em", textTransform: "uppercase",
-      }}>
+      <h2 className="titre-section">
         {t.titre}
       </h2>
-      <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+      <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
         {t.aide}
       </p>
 
@@ -73,7 +69,7 @@ export function TestPompes({
           <span className="mono-num" style={{ fontSize: "1.6rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.1 }}>
             {pompesMax}
           </span>
-          <span className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
+          <span className="text-xs" style={{ color: "var(--faint)" }}>
             {t.resume(niveau.niveau, niveau.multiplicateur)}
           </span>
         </div>
@@ -98,11 +94,11 @@ export function TestPompes({
           background: "rgba(152,162,176,0.05)",
           border: "1px solid var(--line)",
         }}>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.6)", lineHeight: 1.6 }}>
+          <p className="text-xs" style={{ color: "var(--muted)", lineHeight: 1.6 }}>
             {t.consigne}
           </p>
           <div>
-            <label htmlFor="test-pompes" className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+            <label htmlFor="test-pompes" className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
               {t.champ}
             </label>
             <input
@@ -127,7 +123,7 @@ export function TestPompes({
           <div className="flex gap-2">
             <button
               className="text-xs px-3 py-2 rounded flex-1"
-              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
               onClick={() => { setOuvert(false); setSaisie(""); }}
             >
               {t.annuler}

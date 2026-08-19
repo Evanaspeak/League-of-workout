@@ -59,10 +59,10 @@ export default function AdminTools() {
 
       {/* Liste blanche d'emails */}
       <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.45)", marginBottom: 8 }}>
+        <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 8 }}>
           {t.whitelistTitle}
         </p>
-        <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.4)", lineHeight: 1.6, marginBottom: 10 }}>
+        <p style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.6, marginBottom: 10 }}>
           {t.whitelistExplanation}
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -102,7 +102,7 @@ export default function AdminTools() {
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {emails.map(e => (
               <div key={e} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", borderRadius: 4, background: "rgba(47,217,138,0.06)", border: "1px solid rgba(47,217,138,0.15)" }}>
-                <span style={{ fontSize: "0.82rem", color: "rgba(236,239,244,0.7)" }}>{e}</span>
+                <span style={{ fontSize: "0.82rem", color: "var(--bone)" }}>{e}</span>
                 <button
                   onClick={() => remove(e)}
                   style={{ background: "none", border: "none", color: "#FF5A47", cursor: "pointer", fontSize: "0.85rem", padding: "0 4px" }}
@@ -114,13 +114,13 @@ export default function AdminTools() {
           </div>
         )}
         {emails.length === 0 && (
-          <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.25)" }}>{t.noEmails}</p>
+          <p style={{ fontSize: "0.78rem", color: "var(--faint)" }}>{t.noEmails}</p>
         )}
       </div>
 
       {/* Rejouer intro */}
       <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: 14 }}>
-        <p style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+        <p style={{ fontSize: "0.7rem", color: "var(--faint)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
           {t.testSection}
         </p>
         <button
@@ -134,7 +134,7 @@ export default function AdminTools() {
             background: "transparent",
             border: "1px dashed rgba(152,162,176,0.2)",
             borderRadius: 4,
-            color: "rgba(152,162,176,0.45)",
+            color: "var(--faint)",
             fontSize: "0.78rem",
             cursor: "pointer",
             letterSpacing: "0.06em",

@@ -38,7 +38,7 @@ export function Footer() {
         </div>
         <div style={{
           maxWidth: 640, margin: "0 auto", lineHeight: 1.6,
-          fontSize: "0.68rem", color: "rgba(236,239,244,0.28)",
+          fontSize: "0.68rem", color: "var(--faint)",
         }}>
           {t.disclaimer}
         </div>

@@ -35,7 +35,7 @@ export function JeuSelector({
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{t.label}</label>
+      <label className="block text-xs" style={{ color: "var(--steel)" }}>{t.label}</label>
 
       <select
         className="lol-select w-full"
@@ -76,7 +76,7 @@ export function JeuSelector({
                     fontSize: "0.8rem", textAlign: "left",
                     background: actif ? "rgba(255,180,84,0.08)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-                    color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                    color: actif ? "var(--amber)" : "var(--muted)",
                   }}
                 >
                   <span style={{ display: "block", fontWeight: 600 }}>

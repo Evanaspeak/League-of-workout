@@ -57,7 +57,7 @@ export function LanguageSwitcher() {
         }}>
           {current.code.toUpperCase()}
         </span>
-        <Icone nom="chevron" taille={13} couleur="rgba(236,239,244,0.4)" />
+        <Icone nom="chevron" taille={13} couleur="var(--faint)" />
       </button>
 
       {open && (
@@ -89,7 +89,7 @@ export function LanguageSwitcher() {
                 border: "none",
                 cursor: "pointer",
                 fontSize: "0.8rem",
-                color: o.code === locale ? "#ECEFF4" : "rgba(236,239,244,0.65)",
+                color: o.code === locale ? "#ECEFF4" : "var(--muted)",
                 textAlign: "left",
               }}
             >
@@ -100,7 +100,7 @@ export function LanguageSwitcher() {
                 fontSize: "0.72rem",
                 letterSpacing: "0.1em",
                 width: 22,
-                color: o.code === locale ? "var(--amber)" : "rgba(236,239,244,0.45)",
+                color: o.code === locale ? "var(--amber)" : "var(--faint)",
               }}>
                 {o.code.toUpperCase()}
               </span>

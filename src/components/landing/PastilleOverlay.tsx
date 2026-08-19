@@ -19,7 +19,7 @@ export function PastilleOverlay({
 }) {
   const ligne: React.CSSProperties = {
     display: "flex", alignItems: "baseline", justifyContent: "space-between",
-    gap: 10, fontSize: "0.66rem", color: "rgba(236,239,244,0.5)",
+    gap: 10, fontSize: "0.66rem", color: "var(--faint)",
   };
   const valeur: React.CSSProperties = {
     fontWeight: 700, fontSize: "0.78rem", fontVariantNumeric: "tabular-nums",
@@ -40,7 +40,7 @@ export function PastilleOverlay({
       <div style={{
         display: "flex", alignItems: "center", gap: 6,
         fontSize: "0.58rem", letterSpacing: "0.14em", textTransform: "uppercase",
-        color: "rgba(152,162,176,0.75)",
+        color: "var(--steel)",
       }}>
         <span style={{
           width: 6, height: 6, borderRadius: "50%",
@@ -55,7 +55,7 @@ export function PastilleOverlay({
       }}>
         {temps}
       </div>
-      <div style={{ marginTop: 2, fontSize: "0.62rem", color: "rgba(236,239,244,0.4)" }}>
+      <div style={{ marginTop: 2, fontSize: "0.62rem", color: "var(--faint)" }}>
         {soiree}
       </div>
 

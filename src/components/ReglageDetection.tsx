@@ -12,7 +12,7 @@ const PASTILLE = (actif: boolean): React.CSSProperties => ({
   fontSize: "0.78rem",
   background: actif ? "rgba(255,180,84,0.1)" : "transparent",
   border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-  color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+  color: actif ? "var(--amber)" : "var(--muted)",
   transition: "all 0.15s",
 });
 
@@ -63,27 +63,23 @@ export function ReglageDetection() {
   return (
     <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-4">
       <div className="space-y-2">
-        <h2 style={{
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-          fontSize: "0.72rem", color: "#ECEFF4",
-          letterSpacing: "0.16em", textTransform: "uppercase",
-        }}>
+        <h2 className="titre-section">
           {t.titre}
         </h2>
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
           {t.aide}
         </p>
       </div>
 
       {config.disponible.length === 0 ? (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.indisponible}</p>
+        <p className="text-xs" style={{ color: "var(--faint)" }}>{t.indisponible}</p>
       ) : (
         <>
           {/* Le choix des jeux surveillés a rejoint le bloc de chaque jeu :
               c'est là qu'on s'en occupe, avec l'overlay et le compte. Ne reste
               ici que ce qui vaut pour tous. */}
           <div className="space-y-2">
-            <p className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{t.actionsTitre}</p>
+            <p className="text-xs" style={{ color: "var(--steel)" }}>{t.actionsTitre}</p>
             <div className="space-y-2">
               {actions.map(({ cle, nom, aide }) => (
                 <div key={cle} style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
@@ -97,7 +93,7 @@ export function ReglageDetection() {
                       {nom}
                     </span>
                   </button>
-                  <span className="text-xs" style={{ color: "rgba(236,239,244,0.35)", flex: 1, minWidth: 200 }}>
+                  <span className="text-xs" style={{ color: "var(--faint)", flex: 1, minWidth: 200 }}>
                     {aide}
                   </span>
                 </div>
@@ -109,8 +105,8 @@ export function ReglageDetection() {
 
       {demarrage?.disponible && (
         <div className="space-y-2">
-          <p className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{t.demarrageTitre}</p>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          <p className="text-xs" style={{ color: "var(--steel)" }}>{t.demarrageTitre}</p>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {t.demarrageAide}
           </p>
           <button

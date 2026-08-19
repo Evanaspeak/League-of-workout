@@ -12,13 +12,10 @@ export default function CguClient() {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }} className="space-y-8 py-4">
       <div>
-        <h1 style={{
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-          fontSize: "1.4rem", color: "#ECEFF4", letterSpacing: "0.16em",
-        }}>
+        <h1 className="titre-page">
           {t.pageTitle}
         </h1>
-        <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.35)", marginTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
           {t.versionLabel(DATE)}
         </p>
       </div>
@@ -37,7 +34,7 @@ export default function CguClient() {
 
       <Section title={t.article4.title}>
         <p>{t.article4.intro}</p>
-        <ul>
+        <ul className="liste-puces">
           {t.article4.items.map((item, i) => <li key={i}>{item}</li>)}
         </ul>
       </Section>
@@ -66,7 +63,7 @@ export default function CguClient() {
       </Section>
 
       <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(152,162,176,0.1)" }}>
-        <Link href="/confidentialite" style={{ color: "rgba(152,162,176,0.6)", fontSize: "0.82rem" }}>
+        <Link href="/confidentialite" style={{ color: "var(--steel)", fontSize: "0.82rem" }}>
           {t.footerLink}
         </Link>
       </div>
@@ -77,15 +74,10 @@ export default function CguClient() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.8rem", color: "#ECEFF4", letterSpacing: "0.12em",
-      }}>
-        {title}
-      </h2>
+      <h2 className="titre-section">{title}</h2>
       <div style={{
         fontSize: "0.875rem",
-        color: "rgba(236,239,244,0.6)",
+        color: "var(--muted)",
         lineHeight: 1.8,
       }} className="space-y-2">
         {children}

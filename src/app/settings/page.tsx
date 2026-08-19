@@ -40,14 +40,6 @@ type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 const RUBRIQUES = ["profil", "effort", "jeux", "application", "donnees", "avance"] as const;
 type Rubrique = (typeof RUBRIQUES)[number];
 
-const HEADING: React.CSSProperties = {
-  fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-  fontSize: "0.72rem",
-  color: "#ECEFF4",
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-};
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -279,11 +271,13 @@ export default function SettingsPage() {
   if (rubrique === null) {
     return (
       <div className="space-y-6">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.title}</h1>
+        {/* Alignement sur la ligne de base : le titre porte un filet sous le
+            mot, et centrer sur toute sa hauteur ferait descendre le badge. */}
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+          <h1 className="titre-page">{t.title}</h1>
           {betaRank !== null && (
             <span style={{
-              fontSize: "0.65rem", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)",
+              fontSize: "0.65rem", letterSpacing: "0.1em", color: "var(--faint)",
               background: "rgba(152,162,176,0.07)", border: "1px solid rgba(152,162,176,0.15)",
               borderRadius: 3, padding: "2px 8px",
             }}>
@@ -321,7 +315,7 @@ export default function SettingsPage() {
       {rubrique === "profil" && (
       <div className="lol-panel p-5 space-y-4">
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.pseudoAffiche}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.pseudoAffiche}</label>
           <input
             className="lol-input"
             value={profileForm.pseudo}
@@ -330,7 +324,7 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.objectifTotalPompes}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.objectifTotalPompes}</label>
           <input
             type="number" min="0" className="lol-input"
             value={profileForm.objectifTotalPompes}
@@ -353,12 +347,12 @@ export default function SettingsPage() {
       <div className="lol-panel p-5 space-y-4">
         <div className="flex items-center justify-end gap-3">
           {savingExo ? (
-            <span className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>…</span>
+            <span className="text-xs" style={{ color: "var(--faint)" }}>…</span>
           ) : savedExo ? (
             <span className="win-text"><Icone nom="coche" taille={14} titre={t.enregistre} /></span>
           ) : null}
         </div>
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
           {t.sectionEffortAide}
         </p>
 
@@ -373,22 +367,25 @@ export default function SettingsPage() {
         />
 
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
-          <h2 style={HEADING}>{tExo.sectionTitle}</h2>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          <h2 className="titre-section">{tExo.sectionTitle}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {tExo.sectionHint}
           </p>
+          {/* Cette phrase se termine par deux-points : elle annonce les chiffres
+              portés par les cartes. Placée après elles, elle n'introduisait
+              plus rien et restait suspendue en fin de section. */}
+          <p className="text-xs" style={{ color: "var(--faint)" }}>{tExo.exempleIntro}</p>
           <ExerciceSelector selection={exercicesSel} onChange={(next) => handleSaveExo(next, rappelSeuil)} />
 
           {exercicesSel.length > 1 && (
             <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
           )}
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)" }}>{tExo.exempleIntro}</p>
         </div>
 
         {/* Rappel en session */}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
-          <h2 style={HEADING}>{tExo.rappelTitle}</h2>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          <h2 className="titre-section">{tExo.rappelTitle}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {tExo.rappelSeuilAide}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -406,7 +403,7 @@ export default function SettingsPage() {
                     fontSize: "0.8rem",
                     background: actif ? "rgba(255,180,84,0.1)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-                    color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                    color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
                   }}
                 >
@@ -421,8 +418,8 @@ export default function SettingsPage() {
 
         {/* Avertissement de volume quotidien */}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
-          <h2 style={HEADING}>{tExo.plafondTitre}</h2>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          <h2 className="titre-section">{tExo.plafondTitre}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {tExo.plafondAide}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -440,7 +437,7 @@ export default function SettingsPage() {
                     fontSize: "0.8rem",
                     background: actif ? "rgba(255,180,84,0.1)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-                    color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                    color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
                   }}
                 >
@@ -464,7 +461,7 @@ export default function SettingsPage() {
                   }}>
                     {formaterCompact(plafond, id)}
                   </div>
-                  <div style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--faint)" }}>
                     {EXO_LABELS[id].nom.toLowerCase()}
                   </div>
                 </div>
@@ -480,7 +477,7 @@ export default function SettingsPage() {
       {/* ── Tes jeux : un bloc dépliable par jeu ────────────────────────── */}
       {rubrique === "jeux" && (
       <div className="lol-panel p-5 space-y-4">
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
           {t.sectionJeuxAide}
         </p>
         <ReglageJeux />
@@ -500,17 +497,17 @@ export default function SettingsPage() {
         <div>
             <div className="lol-panel p-5 space-y-6">
 
-              <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.4)", lineHeight: 1.6 }}>
+              <p style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.6 }}>
                 {t.betaExplication}
               </p>
 
               {/* Poids par rôle */}
               <div className="space-y-3">
-                <h2 style={HEADING}>{t.poidsParRole}</h2>
+                <h2 className="titre-section">{t.poidsParRole}</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
+                      <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left py-2 pr-3">{t.role}</th>
                         <th className="text-center py-2 px-2">{t.poidsMorts}</th>
                         <th className="text-center py-2 px-2">{t.poidsKills}</th>
@@ -549,14 +546,14 @@ export default function SettingsPage() {
 
               {/* Niveaux */}
               <div className="space-y-3">
-                <h2 style={HEADING}>{t.niveauxGainage}</h2>
-                <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
+                <h2 className="titre-section">{t.niveauxGainage}</h2>
+                <p className="text-xs" style={{ color: "var(--faint)" }}>
                   {t.niveauxExplication}
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
+                      <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left py-2 pr-3">{t.niveau}</th>
                         <th className="text-center py-2 px-2">{t.seuilPompes}</th>
                         <th className="text-center py-2 px-2">{t.multiplicateur}</th>
@@ -602,10 +599,10 @@ export default function SettingsPage() {
 
               {/* Maîtrise */}
               <div className="space-y-4">
-                <h2 style={HEADING}>{t.parametresMaitrise}</h2>
+                <h2 className="titre-section">{t.parametresMaitrise}</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {t.surchargeMax(Math.round(masteryConfig.surchargeMax * 100))}
                     </label>
                     <input
@@ -614,17 +611,17 @@ export default function SettingsPage() {
                       value={masteryConfig.surchargeMax}
                       onChange={(e) => setMasteryConfig((m) => m ? { ...m, surchargeMax: Number(e.target.value) } : m)}
                     />
-                    <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>{t.surchargeMaxDetail}</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.surchargeMaxDetail}</p>
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.partiesPourMax}</label>
+                    <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.partiesPourMax}</label>
                     <input
                       type="number" min="1"
                       className="lol-input"
                       value={masteryConfig.partiesPourMax}
                       onChange={(e) => setMasteryConfig((m) => m ? { ...m, partiesPourMax: Number(e.target.value) } : m)}
                     />
-                    <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>{t.partiesPourMaxDetail}</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.partiesPourMaxDetail}</p>
                   </div>
                 </div>
               </div>
@@ -635,7 +632,7 @@ export default function SettingsPage() {
 
               {/* Outils de test bêta */}
               <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: "1rem" }}>
-                <p style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+                <p style={{ fontSize: "0.7rem", color: "var(--faint)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
                   {t.outilsDeTest}
                 </p>
                 <button
@@ -649,7 +646,7 @@ export default function SettingsPage() {
                     background: "transparent",
                     border: "1px dashed rgba(152,162,176,0.2)",
                     borderRadius: 4,
-                    color: "rgba(152,162,176,0.45)",
+                    color: "var(--faint)",
                     fontSize: "0.78rem",
                     cursor: "pointer",
                     letterSpacing: "0.06em",
@@ -668,7 +665,7 @@ export default function SettingsPage() {
           traînait au milieu de la page. */}
       {rubrique === "donnees" && (<>
       <div className="lol-panel p-5 space-y-3">
-        <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
+        <p style={{ fontSize: "0.8rem", color: "var(--faint)", lineHeight: 1.6 }}>
           {t.exportAide}
         </p>
         <a
@@ -694,8 +691,8 @@ export default function SettingsPage() {
         border: "1px solid rgba(255,90,71,0.3)",
         background: "rgba(255,90,71,0.04)",
       }}>
-        <h2 style={{ ...HEADING, color: "#FF5A47" }}>{t.zoneDeDanger}</h2>
-        <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
+        <h2 className="titre-section" style={{ color: "#FF5A47" }}>{t.zoneDeDanger}</h2>
+        <p style={{ fontSize: "0.8rem", color: "var(--faint)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
           {t.suppressionExplication}
         </p>
         <button
@@ -739,7 +736,7 @@ export default function SettingsPage() {
             }}>
               {t.supprimerLeCompte}
             </h3>
-            <p style={{ fontSize: "0.85rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.6, marginBottom: "1rem" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "1rem" }}>
               {locale === "fr" ? (
                 <>Cette action est irréversible. Pour confirmer, tapez{" "}
                   <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong> ci-dessous.</>
@@ -764,7 +761,7 @@ export default function SettingsPage() {
                   flex: 1, padding: "0.55rem",
                   background: "transparent",
                   border: "1px solid rgba(152,162,176,0.3)",
-                  borderRadius: 4, color: "rgba(236,239,244,0.7)",
+                  borderRadius: 4, color: "var(--bone)",
                   fontSize: "0.85rem", cursor: "pointer",
                 }}
               >

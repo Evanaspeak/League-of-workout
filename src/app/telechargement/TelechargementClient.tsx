@@ -58,7 +58,7 @@ export function TelechargementClient({
         <p
           style={{
             fontSize: "0.82rem",
-            color: "rgba(236,239,244,0.45)",
+            color: "var(--faint)",
             marginBottom: "2rem",
             lineHeight: 1.7,
           }}
@@ -79,7 +79,7 @@ export function TelechargementClient({
 
         {/* Savoir ce qu'on installe, et pouvoir le comparer à ce qu'on a déjà. */}
         {downloadUrl && version && (
-          <p style={{ marginTop: "0.7rem", fontSize: "0.75rem", color: "rgba(236,239,244,0.35)" }}>
+          <p style={{ marginTop: "0.7rem", fontSize: "0.75rem", color: "var(--faint)" }}>
             {t.versionLabel(version)}
           </p>
         )}
@@ -104,14 +104,14 @@ export function TelechargementClient({
               <Icone nom="alerte" taille={16} />
               {t.smartScreenTitre}
             </p>
-            <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.7 }}>
+            <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.7 }}>
               {t.smartScreenIntro}
             </p>
             {/* Les numéros sont rétablis explicitement : la remise à zéro des
                 styles les enlève, or ici l'ordre des deux clics compte. */}
             <ol style={{
               margin: "0.6rem 0 0", paddingLeft: "1.4rem", listStyle: "decimal",
-              fontSize: "0.78rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.9,
+              fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.9,
             }}>
               <li>{t.smartScreenEtape1}</li>
               <li>{t.smartScreenEtape2}</li>
@@ -120,13 +120,13 @@ export function TelechargementClient({
             <details style={{ marginTop: "0.85rem" }}>
               <summary style={{
                 cursor: "pointer", fontSize: "0.75rem",
-                color: "rgba(236,239,244,0.45)", listStyle: "none",
+                color: "var(--faint)", listStyle: "none",
               }}>
                 {t.smartScreenPourquoi}
               </summary>
               <p style={{
                 marginTop: "0.5rem", fontSize: "0.75rem",
-                color: "rgba(236,239,244,0.45)", lineHeight: 1.75,
+                color: "var(--faint)", lineHeight: 1.75,
               }}>
                 {t.smartScreenExplication}
               </p>
@@ -142,7 +142,7 @@ export function TelechargementClient({
               background: "rgba(152,162,176,0.05)",
               border: "1px solid rgba(152,162,176,0.15)",
               fontSize: "0.85rem",
-              color: "rgba(236,239,244,0.5)",
+              color: "var(--faint)",
               lineHeight: 1.7,
             }}
           >
@@ -156,15 +156,15 @@ export function TelechargementClient({
             paddingTop: "1.5rem",
             borderTop: "1px solid rgba(152,162,176,0.08)",
             fontSize: "0.75rem",
-            color: "rgba(236,239,244,0.3)",
+            color: "var(--faint)",
             lineHeight: 1.8,
             textAlign: "left",
           }}
         >
-          <p style={{ fontWeight: 600, color: "rgba(236,239,244,0.45)", marginBottom: "0.5rem" }}>
+          <p style={{ fontWeight: 600, color: "var(--faint)", marginBottom: "0.5rem" }}>
             {t.commentCaFonctionne}
           </p>
-          <ul style={{ paddingLeft: "1.2rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+          <ul className="liste-puces">
             <li>{t.etape1}</li>
             <li>{t.etape2}</li>
             <li>{t.etape3}</li>
@@ -175,7 +175,7 @@ export function TelechargementClient({
         <div style={{ marginTop: "1.5rem" }}>
           <Link
             href="/dashboard"
-            style={{ fontSize: "0.78rem", color: "rgba(152,162,176,0.45)", textDecoration: "none" }}
+            style={{ fontSize: "0.78rem", color: "var(--faint)", textDecoration: "none" }}
           >
             {t.retourDashboard}
           </Link>

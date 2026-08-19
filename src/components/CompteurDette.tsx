@@ -194,7 +194,7 @@ export function CompteurDette({
         <div
           style={{
             fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em",
-            color: seuilFranchi ? "var(--ember)" : "rgba(152,162,176,0.6)",
+            color: seuilFranchi ? "var(--ember)" : "var(--steel)",
           }}
         >
           {t.detteTitre}
@@ -211,7 +211,7 @@ export function CompteurDette({
             >
               {formaterCompact(ligne.pts, ligne.id)}
             </span>
-            <span style={{ fontSize: "0.66rem", color: "rgba(236,239,244,0.4)" }}>
+            <span style={{ fontSize: "0.66rem", color: "var(--faint)" }}>
               {nomsExo[ligne.id].toLowerCase()}
             </span>
           </div>
@@ -231,7 +231,7 @@ export function CompteurDette({
           />
         </div>
 
-        <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilFranchi ? "var(--ember)" : "rgba(236,239,244,0.4)" }}>
+        <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilFranchi ? "var(--ember)" : "var(--faint)" }}>
           {seuilFranchi ? t.detteFaireBtn : t.detteSeuil(duree(dette.seuilSec))}
         </div>
       </button>
@@ -251,7 +251,7 @@ export function CompteurDette({
         }}
       >
         <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5 text-center">
-          <h2 className="gold-text font-bold text-lg uppercase tracking-widest">
+          <h2 className="titre-section" style={{ justifyContent: "center" }}>
             {fini ? t.detteChronoFini : t.detteChronoTitre}
           </h2>
 
@@ -261,7 +261,7 @@ export function CompteurDette({
                 <div className="mono-num text-xl font-bold gold-text">
                   {formaterCompact(ligne.pts, ligne.id)}
                 </div>
-                <div className="text-xs" style={{ color: "rgba(236,239,244,0.45)" }}>
+                <div className="text-xs" style={{ color: "var(--faint)" }}>
                   {nomsExo[ligne.id].toLowerCase()}
                 </div>
               </div>
@@ -280,14 +280,14 @@ export function CompteurDette({
             }}>
               <div style={{
                 fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em",
-                color: "rgba(152,162,176,0.6)", marginBottom: 5,
+                color: "var(--steel)", marginBottom: 5,
               }}>
                 {t.formeTitre}
               </div>
               {lignes.map((ligne) => (
                 <p key={ligne.id} style={{
                   fontSize: "0.76rem", lineHeight: 1.55,
-                  color: "rgba(236,239,244,0.6)", margin: 0,
+                  color: "var(--muted)", margin: 0,
                 }}>
                   {t.forme[ligne.id]}
                 </p>
@@ -306,7 +306,7 @@ export function CompteurDette({
             >
               {horloge(restantSec)}
             </div>
-            <div className="text-xs mt-2" style={{ color: "rgba(236,239,244,0.45)" }}>
+            <div className="text-xs mt-2" style={{ color: "var(--faint)" }}>
               {t.detteChronoRestant}
             </div>
           </div>
@@ -315,7 +315,7 @@ export function CompteurDette({
             {!fini && (
               <button
                 className="py-2 px-4 rounded text-sm flex-1"
-                style={{ background: "rgba(152,162,176,0.1)", color: "rgba(236,239,244,0.6)", border: "1px solid rgba(152,162,176,0.2)" }}
+                style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
                 onClick={() => setEnPause((p) => !p)}
               >
                 {enPause ? t.detteChronoReprendre : t.detteChronoPause}

@@ -52,14 +52,10 @@ export function ReglageOverlay() {
 
   return (
     <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.72rem", color: "#ECEFF4",
-        letterSpacing: "0.16em", textTransform: "uppercase",
-      }}>
+      <h2 className="titre-section">
         {t.titre}
       </h2>
-      <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+      <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
         {t.aide}
       </p>
 
@@ -73,7 +69,7 @@ export function ReglageOverlay() {
           cursor: "pointer",
           background: actif ? "rgba(255,180,84,0.1)" : "transparent",
           border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-          color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+          color: actif ? "var(--amber)" : "var(--muted)",
           transition: "all 0.15s",
         }}
       >
@@ -81,15 +77,15 @@ export function ReglageOverlay() {
       </button>
 
       {actif && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)", lineHeight: 1.6 }}>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
           {t.limitePleinEcran}
         </p>
       )}
 
       {actif && place && (
         <div className="space-y-2">
-          <p className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{t.positionTitre}</p>
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+          <p className="text-xs" style={{ color: "var(--steel)" }}>{t.positionTitre}</p>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {t.positionAide}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -109,7 +105,7 @@ export function ReglageOverlay() {
                     padding: "6px 13px", borderRadius: 999, cursor: "pointer", fontSize: "0.78rem",
                     background: choisi ? "rgba(255,180,84,0.1)" : "transparent",
                     border: `1px solid ${choisi ? "var(--amber)" : "var(--line-strong)"}`,
-                    color: choisi ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                    color: choisi ? "var(--amber)" : "var(--muted)",
                   }}
                 >
                   {t.coins[coin] ?? coin}
@@ -135,7 +131,7 @@ export function ReglageOverlay() {
                   padding: "6px 14px", borderRadius: 999, cursor: "pointer",
                   background: place.placement ? "rgba(47,217,138,0.12)" : "transparent",
                   border: `1px solid ${place.placement ? "var(--victory)" : "var(--line-strong)"}`,
-                  color: place.placement ? "var(--victory)" : "rgba(236,239,244,0.6)",
+                  color: place.placement ? "var(--victory)" : "var(--muted)",
                 }}
               >
                 {place.placement ? t.placerTerminer : t.placerBtn}
@@ -146,14 +142,14 @@ export function ReglageOverlay() {
                 </p>
               )}
               {!place.placement && place.libre && (
-                <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+                <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
                   {t.placerLibre}
                 </p>
               )}
             </div>
           )}
 
-          <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)", lineHeight: 1.6 }}>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {place.raccourcis.bascule ? t.raccourciActif(place.raccourcis.bascule) : t.raccourciAucun}
             {place.raccourcis.coin && <><br />{t.raccourciCoin(place.raccourcis.coin)}</>}
             <br />{t.raccourciEnJeu}

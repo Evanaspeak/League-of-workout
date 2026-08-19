@@ -151,14 +151,10 @@ export function ReglageNotifications() {
 
   return (
     <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.72rem", color: "#ECEFF4",
-        letterSpacing: "0.16em", textTransform: "uppercase",
-      }}>
+      <h2 className="titre-section">
         {t.titre}
       </h2>
-      <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+      <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
         {t.aide}
       </p>
 
@@ -167,7 +163,7 @@ export function ReglageNotifications() {
           <p className="text-xs" style={{ color: "var(--victory)" }}>{t.desktopActives}</p>
           <button
             className="text-xs px-3 py-1.5 rounded"
-            style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+            style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
             onClick={testerDesktop}
           >
             {t.tester}
@@ -176,7 +172,7 @@ export function ReglageNotifications() {
       )}
 
       {etat === "indisponible" && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.indisponible}</p>
+        <p className="text-xs" style={{ color: "var(--faint)" }}>{t.indisponible}</p>
       )}
 
       {etat === "refuse" && (
@@ -197,7 +193,7 @@ export function ReglageNotifications() {
           <div className="flex flex-wrap gap-2">
             <button
               className="text-xs px-3 py-1.5 rounded"
-              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
               onClick={tester}
               disabled={occupe}
             >
@@ -216,7 +212,7 @@ export function ReglageNotifications() {
       )}
 
       {message && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.6)" }}>{message}</p>
+        <p className="text-xs" style={{ color: "var(--muted)" }}>{message}</p>
       )}
     </div>
   );
