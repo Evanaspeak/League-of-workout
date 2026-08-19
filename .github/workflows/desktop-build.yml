@@ -25,7 +25,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Node 20 n'est plus maintenu. electron-builder 26 et Electron 43
+          # sont testés sur 22 : c'est la version qui compile ici comme chez
+          # nous, plutôt qu'une qui diverge en silence.
+          node-version: '22'
 
       - name: Install dependencies
         run: npm ci

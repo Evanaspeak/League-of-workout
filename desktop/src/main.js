@@ -197,12 +197,17 @@ function startAuthSignalServer() {
       (async () => {
         try {
           const urlObj = new URL(req.url, `http://127.0.0.1:${AUTH_PORT}`);
-          const jwt = urlObj.searchParams.get("t");
-          if (!jwt) throw new Error("missing token");
-          // Le jeton doit répondre d'une connexion que NOUS avons ouverte.
+          // L'aléa d'abord, le jeton ensuite : un appelant qui n'a pas ouvert la
+          // connexion n'apprend rien de la forme attendue de la requête.
           if (!nonceValide(urlObj.searchParams.get("n"))) {
             res.writeHead(403, { "Content-Type": "text/plain" });
             res.end("nonce invalide");
+            return;
+          }
+          const jwt = urlObj.searchParams.get("t");
+          if (!jwt) {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("jeton manquant");
             return;
           }
           attenteAuth = null; // usage unique
@@ -232,8 +237,11 @@ function startAuthSignalServer() {
           res.writeHead(302, { Location: `${BACKEND_URL}/api/auth/desktop-complete` });
           res.end();
         } catch (err) {
+          // Le message d'erreur reste au journal : le renvoyer décrivait le
+          // fonctionnement interne du canal à qui frappait à la porte.
+          console.error("canal auth (GET)", err);
           res.writeHead(500, { "Content-Type": "text/plain" });
-          res.end(String(err));
+          res.end("erreur interne");
         }
       })();
       return;
@@ -244,10 +252,24 @@ function startAuthSignalServer() {
       req.on("data", (c) => (body += c));
       req.on("end", async () => {
         try {
-          const { jwt, nonce } = JSON.parse(body);
+          let recu;
+          try {
+            recu = JSON.parse(body);
+          } catch {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("corps illisible");
+            return;
+          }
+          const { jwt, nonce } = recu ?? {};
           if (!nonceValide(nonce)) {
             res.writeHead(403);
             res.end("nonce invalide");
+            return;
+          }
+          // `cookies.set` rejette une valeur absente, ce qui finissait en 500.
+          if (typeof jwt !== "string" || jwt === "") {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("jeton manquant");
             return;
           }
           attenteAuth = null; // usage unique
@@ -273,8 +295,9 @@ function startAuthSignalServer() {
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ ok: true }));
         } catch (err) {
-          res.writeHead(500);
-          res.end(String(err));
+          console.error("canal auth (POST)", err);
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end("erreur interne");
         }
       });
       return;
