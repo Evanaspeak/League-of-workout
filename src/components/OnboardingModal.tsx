@@ -6,8 +6,7 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/onboardingModal";
 import { cleOnboarding } from "@/lib/premiereVisite";
 import { useIdCompte } from "@/lib/useIdCompte";
-
-const PUBLIC = ["/login", "/waitlist", "/beta", "/recuperation"];
+import { estPagePublique } from "@/lib/pagesPubliques";
 
 /* Icônes stroke SVG des étapes d'onboarding */
 function StepIcon({ name }: { name: string }) {
@@ -57,7 +56,10 @@ export function OnboardingModal() {
 
   useEffect(() => {
     // Pages publiques (landing incluse) : l'onboarding n'a de sens qu'en app.
-    if (path === "/" || PUBLIC.some((p) => path.startsWith(p))) return;
+    // La liste vit dans `pagesPubliques` avec celle du rail et de la visite —
+    // celle qui était recopiée ici oubliait les pages légales, si bien qu'un
+    // visiteur venu lire les CGU se voyait souhaiter la bienvenue.
+    if (estPagePublique(path)) return;
     // Tant qu'on ignore à qui l'on s'adresse, on ne décide pas : la marque est
     // désormais celle du COMPTE, pas celle du navigateur.
     if (uid === undefined) return;
