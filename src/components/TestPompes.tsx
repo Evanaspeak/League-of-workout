@@ -123,7 +123,7 @@ export function TestPompes({
           <div className="flex gap-2">
             <button
               className="text-xs px-3 py-2 rounded flex-1"
-              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
               onClick={() => { setOuvert(false); setSaisie(""); }}
             >
               {t.annuler}

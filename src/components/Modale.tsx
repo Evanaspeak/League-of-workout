@@ -94,7 +94,7 @@ export function Modale({
         style={{ maxWidth: largeur, padding: "20px", position: "relative" }}
       >
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{titre}</h2>
+          <h2 className="titre-section">{titre}</h2>
           <button
             type="button"
             onClick={onFermer}

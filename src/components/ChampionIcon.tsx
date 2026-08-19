@@ -73,7 +73,7 @@ export function ChampionIcon({ name, size = 38 }: Props) {
         background: "rgba(152,162,176,0.1)",
         border: "1px solid rgba(152,162,176,0.2)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: size * 0.42, fontWeight: 600, color: "rgba(152,162,176,0.5)",
+        fontSize: size * 0.42, fontWeight: 600, color: "var(--faint)",
         fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
       }}>
         {name ? name.charAt(0).toUpperCase() : "?"}

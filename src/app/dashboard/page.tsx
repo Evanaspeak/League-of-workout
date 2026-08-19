@@ -319,7 +319,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <DesktopAuthHandler />
-      <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.pageTitle}</h1>
+      <h1 className="titre-page">{t.pageTitle}</h1>
 
       {/* Bannière bêta — synchronisation en attente */}
       <div style={{
@@ -667,7 +667,7 @@ export default function Dashboard() {
 
             {sessionGames.length > 0 && (
               <div className="lol-panel p-3" style={{ background: "rgba(152,162,176,0.04)" }}>
-                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "var(--steel)" }}>
+                <h3 className="titre-bloc mb-2">
                   {t.pompesPerGameSession}
                 </h3>
                 <ResponsiveContainer width="100%" height={140}>
@@ -757,7 +757,7 @@ export default function Dashboard() {
                         {j.nom}
                       </button>
                     </td>
-                    <td className="px-3 py-2 text-right mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>{j.games}</td>
+                    <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--bone)" }}>{j.games}</td>
                     {/* Un jeu au temps n'a pas de winrate, un jeu à parties n'a
                         pas de durée : la case reste vide plutôt que de mentir. */}
                     <td className="px-3 py-2 text-right mono-num" style={{ color: j.winrate === null ? "rgba(152,162,176,0.35)" : "rgba(236,239,244,0.8)" }}>
@@ -777,12 +777,12 @@ export default function Dashboard() {
       )}
 
       {/* Statistiques globales */}
-      <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+      <h2 className="titre-groupe">
         {t.globalStats}
       </h2>
       <div className={`grid gap-4 ${afficherParJeu ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
         {afficherParJeu && (
-          <div className="lol-panel p-4">
+          <div className="bloc-graphique">
             <div className="flex items-center justify-between mb-3">
               <h2 className="titre-section">
                 {t.detteParJeu(roleView)}
@@ -827,8 +827,8 @@ export default function Dashboard() {
             return { ...d, label };
           });
           return (
-            <div className="lol-panel p-4">
-              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest mb-3">{t.cumulativeProgress}</h2>
+            <div className="bloc-graphique">
+              <h2 className="titre-section mb-3">{t.cumulativeProgress}</h2>
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={cumulData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={GRILLE_TRAIT} />
@@ -846,7 +846,7 @@ export default function Dashboard() {
             graphique qui peut descendre : le cumul ne fait que monter et le
             total par jour suit surtout le temps qu'on a joué. */}
         {(data.moyenneParSemaine ?? []).length > 1 && (
-          <div className="lol-panel p-4" data-visite="graphique">
+          <div className="bloc-graphique md:col-span-2" data-visite="graphique">
             <h2 className="titre-section">
               {t.progressionTitre}
             </h2>
@@ -881,7 +881,7 @@ export default function Dashboard() {
 
       {/* Analytiques par période */}
       {data.statsByPeriod && data.totalGames > 0 && (
-        <div className="lol-panel p-4">
+        <div className="bloc-graphique">
           <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
             <h2 className="titre-section">
               {statsPeriod === "daily" ? t.dailyDetail : statsMode === "avg" ? t.avgPompesPerGame : t.totalPompesLabel}
@@ -995,7 +995,7 @@ export default function Dashboard() {
       {jeuUnique !== null && (repartitionData.length > 0 || data.mostPlayed || data.leastEfficient) && (
         <div className="space-y-3">
           <div>
-            <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+            <h2 className="titre-groupe">
               {t.syntheseDe(jeuUnique)}
             </h2>
             <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>
@@ -1005,7 +1005,7 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 gap-4">
         {repartitionData.length > 0 && (
-          <div className="lol-panel p-4">
+          <div className="bloc-graphique">
             <div className="flex items-center justify-between mb-3">
               <h2 className="titre-section">
                 {estBattleRoyale

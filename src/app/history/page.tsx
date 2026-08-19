@@ -177,7 +177,7 @@ export default function HistoryPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
-      <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.pageTitle}</h1>
+      <h1 className="titre-page">{t.pageTitle}</h1>
 
       <div className="space-y-4">
           {loadingGames ? (
@@ -327,14 +327,14 @@ export default function HistoryPage() {
                                         setEditingDateId(g.id);
                                       }}
                                       title={t.editDateTitle}
-                                      style={{ color: "rgba(152,162,176,0.35)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
+                                      style={{ color: "var(--faint)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
                                     ><Icone nom="crayon" taille={14} /></button>
                                   </div>
                                 )}
                               </td>
 
                               {afficherColonneJeu && (
-                                <td className="px-3 py-2" style={{ color: "rgba(236,239,244,0.75)", whiteSpace: "nowrap" }}>{nomDuJeu(g)}</td>
+                                <td className="px-3 py-2" style={{ color: "var(--bone)", whiteSpace: "nowrap" }}>{nomDuJeu(g)}</td>
                               )}
 
                               {modeColonnes === "parties" && (
@@ -345,27 +345,27 @@ export default function HistoryPage() {
                                     {g.champion ? (
                                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                         <ChampionIcon name={g.champion} size={26} />
-                                        <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion}</span>
+                                        <span style={{ color: "var(--bone)" }}>{g.champion}</span>
                                       </div>
                                     ) : (
-                                      <span style={{ color: "rgba(152,162,176,0.4)" }}>—</span>
+                                      <span style={{ color: "var(--faint)" }}>—</span>
                                     )}
                                   </td>
                                   )}
                                   {afficherPlacement && (
-                                  <td className="px-3 py-2 text-center mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                  <td className="px-3 py-2 text-center mono-num" style={{ color: "var(--bone)" }}>
                                     {g.placement ? (
                                       <>
                                         {t.placementAffiche(g.placement, g.joueurs ?? 0)}
                                         {g.kills > 0 && (
-                                          <span style={{ color: "rgba(152,162,176,0.55)" }}> · {t.elimCourt(g.kills)}</span>
+                                          <span style={{ color: "var(--faint)" }}> · {t.elimCourt(g.kills)}</span>
                                         )}
                                       </>
                                     ) : "—"}
                                   </td>
                                   )}
                                   {afficherKda && (
-                                  <td className="px-3 py-2 text-center" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                  <td className="px-3 py-2 text-center" style={{ color: "var(--bone)" }}>
                                     {g.kills}/{g.deaths}/{g.assists}
                                   </td>
                                   )}
@@ -376,7 +376,7 @@ export default function HistoryPage() {
                               )}
 
                               {modeColonnes === "temps" && (
-                                <td className="px-3 py-2 text-center mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                <td className="px-3 py-2 text-center mono-num" style={{ color: "var(--bone)" }}>
                                   {formaterTempsJeu(g.dureeSec ?? 0)}
                                 </td>
                               )}
@@ -384,7 +384,7 @@ export default function HistoryPage() {
                               {modeColonnes === "mixte" && (
                                 <td className="px-3 py-2">
                                   {type === "temps" ? (
-                                    <span className="mono-num" style={{ color: "rgba(236,239,244,0.8)" }}>
+                                    <span className="mono-num" style={{ color: "var(--bone)" }}>
                                       {formaterTempsJeu(g.dureeSec ?? 0)}
                                     </span>
                                   ) : (
@@ -392,23 +392,23 @@ export default function HistoryPage() {
                                       {g.champion && (
                                         <>
                                           <ChampionIcon name={g.champion} size={22} />
-                                          <span style={{ color: "rgba(236,239,244,0.8)" }}>{g.champion}</span>
-                                          <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
+                                          <span style={{ color: "var(--bone)" }}>{g.champion}</span>
+                                          <span style={{ color: "var(--faint)" }}>·</span>
                                         </>
                                       )}
                                       {g.role && g.role !== "—" && (
                                         <>
                                           <span className="gold-text">{g.role}</span>
-                                          <span style={{ color: "rgba(152,162,176,0.5)" }}>·</span>
+                                          <span style={{ color: "var(--faint)" }}>·</span>
                                         </>
                                       )}
                                       {g.placement ? (
-                                        <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
+                                        <span className="mono-num" style={{ color: "var(--bone)" }}>
                                           {t.placementAffiche(g.placement, g.joueurs ?? 0)}
                                           {g.kills > 0 && ` · ${t.elimCourt(g.kills)}`}
                                         </span>
                                       ) : (g.kills > 0 || g.deaths > 0 || g.assists > 0) && (
-                                        <span className="mono-num" style={{ color: "rgba(236,239,244,0.7)" }}>
+                                        <span className="mono-num" style={{ color: "var(--bone)" }}>
                                           {g.kills}/{g.deaths}/{g.assists}
                                         </span>
                                       )}
@@ -429,7 +429,7 @@ export default function HistoryPage() {
                                     {formaterCompact(part.pts, part.id)}
                                     <span style={{
                                       marginLeft: 5, fontWeight: 400, fontSize: "0.72rem",
-                                      color: "rgba(152,162,176,0.65)",
+                                      color: "var(--steel)",
                                     }}>
                                       {nomsExo[part.id].toLowerCase()}
                                     </span>
@@ -472,16 +472,16 @@ export default function HistoryPage() {
                                 <td colSpan={nbColonnes} className="px-3 py-2">
                                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "var(--muted)" }}>
                                     {type === "temps" ? (
-                                      <span>{t.detailDuree} : <span className="mono-num" style={{ color: "rgba(236,239,244,0.85)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
+                                      <span>{t.detailDuree} : <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
                                     ) : (
                                       <>
-                                        <span>{t.detailScore} : <span className="mono-num" style={{ color: "rgba(236,239,244,0.85)" }}>{g.scoreCalcule}</span></span>
+                                        <span>{t.detailScore} : <span className="mono-num" style={{ color: "var(--bone)" }}>{g.scoreCalcule}</span></span>
                                         <span>{t.detailMalus} : <span className="mono-num loss-text">+{g.malusCalcule}</span></span>
                                         <span>{t.detailMastery} : <span className="mono-num blue-text">+{Math.round(g.surchargeCalculee * 100)}%</span></span>
                                       </>
                                     )}
                                     <span>{t.tableLevel} : <span className="mono-num gold-text">{g.niveauCalcule}</span></span>
-                                    {!afficherColonneJeu && <span>{t.tableJeu} : <span style={{ color: "rgba(236,239,244,0.85)" }}>{nomDuJeu(g)}</span></span>}
+                                    {!afficherColonneJeu && <span>{t.tableJeu} : <span style={{ color: "var(--bone)" }}>{nomDuJeu(g)}</span></span>}
                                   </div>
                                 </td>
                               </tr>

@@ -291,7 +291,7 @@ export function VisiteGuidee() {
           <button
             onClick={cloturer}
             aria-label={t.passer}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(152,162,176,0.5)", lineHeight: 1, flexShrink: 0 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--faint)", lineHeight: 1, flexShrink: 0 }}
           >
             <Icone nom="croix" taille={15} />
           </button>
@@ -300,7 +300,7 @@ export function VisiteGuidee() {
         {/* La clé fait remonter un remplacement de nœud à chaque étape : le
             texte apparaît en fondu au lieu de se substituer d'un coup. */}
         <div key={affiche} style={{ animation: "visiteEntree 0.32s ease both" }}>
-          <span className="mono-num" style={{ fontSize: "0.62rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.1em" }}>
+          <span className="mono-num" style={{ fontSize: "0.62rem", color: "var(--faint)", letterSpacing: "0.1em" }}>
             {t.etape(affiche + 1, ETAPES.length)}
           </span>
           <h2 style={{
@@ -342,7 +342,7 @@ export function VisiteGuidee() {
             onClick={cloturer}
             style={{
               display: "block", margin: "10px auto 0", background: "none", border: "none",
-              cursor: "pointer", fontSize: "0.72rem", color: "rgba(152,162,176,0.45)",
+              cursor: "pointer", fontSize: "0.72rem", color: "var(--faint)",
             }}
           >
             {t.passer}

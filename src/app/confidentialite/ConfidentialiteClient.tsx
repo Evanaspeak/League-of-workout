@@ -12,10 +12,7 @@ export default function ConfidentialiteClient() {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }} className="space-y-8 py-4">
       <div>
-        <h1 style={{
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-          fontSize: "1.4rem", color: "#ECEFF4", letterSpacing: "0.16em",
-        }}>
+        <h1 className="titre-page">
           {t.pageTitle}
         </h1>
         <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>

@@ -163,7 +163,7 @@ export function ReglageNotifications() {
           <p className="text-xs" style={{ color: "var(--victory)" }}>{t.desktopActives}</p>
           <button
             className="text-xs px-3 py-1.5 rounded"
-            style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+            style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
             onClick={testerDesktop}
           >
             {t.tester}
@@ -193,7 +193,7 @@ export function ReglageNotifications() {
           <div className="flex flex-wrap gap-2">
             <button
               className="text-xs px-3 py-1.5 rounded"
-              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "rgba(236,239,244,0.7)", cursor: "pointer" }}
+              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
               onClick={tester}
               disabled={occupe}
             >

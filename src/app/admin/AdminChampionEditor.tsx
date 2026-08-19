@@ -62,7 +62,7 @@ export default function AdminChampionEditor() {
     <div className="lol-panel p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.title}</h2>
+          <h2 className="titre-section">{t.title}</h2>
           <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>
             {t.subtitle}
           </p>

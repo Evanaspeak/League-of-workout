@@ -196,7 +196,7 @@ export function OnboardingModal() {
               marginTop: "1rem",
               background: "none",
               border: "none",
-              color: "rgba(236,239,244,0.25)",
+              color: "var(--faint)",
               fontSize: "0.75rem",
               cursor: "pointer",
               letterSpacing: "0.05em",

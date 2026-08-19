@@ -251,7 +251,7 @@ export function CompteurDette({
         }}
       >
         <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5 text-center">
-          <h2 className="gold-text font-bold text-lg uppercase tracking-widest">
+          <h2 className="titre-section" style={{ justifyContent: "center" }}>
             {fini ? t.detteChronoFini : t.detteChronoTitre}
           </h2>
 

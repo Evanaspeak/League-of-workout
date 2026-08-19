@@ -271,11 +271,13 @@ export default function SettingsPage() {
   if (rubrique === null) {
     return (
       <div className="space-y-6">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <h1 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "1.5rem", color: "#ECEFF4", letterSpacing: "0.18em" }}>{t.title}</h1>
+        {/* Alignement sur la ligne de base : le titre porte un filet sous le
+            mot, et centrer sur toute sa hauteur ferait descendre le badge. */}
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+          <h1 className="titre-page">{t.title}</h1>
           {betaRank !== null && (
             <span style={{
-              fontSize: "0.65rem", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)",
+              fontSize: "0.65rem", letterSpacing: "0.1em", color: "var(--faint)",
               background: "rgba(152,162,176,0.07)", border: "1px solid rgba(152,162,176,0.15)",
               borderRadius: 3, padding: "2px 8px",
             }}>
@@ -369,12 +371,15 @@ export default function SettingsPage() {
           <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
             {tExo.sectionHint}
           </p>
+          {/* Cette phrase se termine par deux-points : elle annonce les chiffres
+              portés par les cartes. Placée après elles, elle n'introduisait
+              plus rien et restait suspendue en fin de section. */}
+          <p className="text-xs" style={{ color: "var(--faint)" }}>{tExo.exempleIntro}</p>
           <ExerciceSelector selection={exercicesSel} onChange={(next) => handleSaveExo(next, rappelSeuil)} />
 
           {exercicesSel.length > 1 && (
             <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
           )}
-          <p className="text-xs" style={{ color: "var(--faint)" }}>{tExo.exempleIntro}</p>
         </div>
 
         {/* Rappel en session */}
@@ -641,7 +646,7 @@ export default function SettingsPage() {
                     background: "transparent",
                     border: "1px dashed rgba(152,162,176,0.2)",
                     borderRadius: 4,
-                    color: "rgba(152,162,176,0.45)",
+                    color: "var(--faint)",
                     fontSize: "0.78rem",
                     cursor: "pointer",
                     letterSpacing: "0.06em",
@@ -756,7 +761,7 @@ export default function SettingsPage() {
                   flex: 1, padding: "0.55rem",
                   background: "transparent",
                   border: "1px solid rgba(152,162,176,0.3)",
-                  borderRadius: 4, color: "rgba(236,239,244,0.7)",
+                  borderRadius: 4, color: "var(--bone)",
                   fontSize: "0.85rem", cursor: "pointer",
                 }}
               >

@@ -175,7 +175,7 @@ export function TelechargementClient({
         <div style={{ marginTop: "1.5rem" }}>
           <Link
             href="/dashboard"
-            style={{ fontSize: "0.78rem", color: "rgba(152,162,176,0.45)", textDecoration: "none" }}
+            style={{ fontSize: "0.78rem", color: "var(--faint)", textDecoration: "none" }}
           >
             {t.retourDashboard}
           </Link>

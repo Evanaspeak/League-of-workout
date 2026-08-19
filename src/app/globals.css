@@ -229,6 +229,33 @@ body {
   color: var(--steel);
 }
 
+/* ── Titre de page ──────────────────────────────────────────────────────────
+   Il faisait 1,5 rem à 0,18 em d'interlettrage. À cette taille, l'espacement
+   extrême dilue le mot au lieu de l'imposer : « D A S H B O A R D » se lit
+   lettre à lettre, et l'en-tête de page pèse à peine plus qu'un titre de
+   section. Le titre grandit et se resserre ; c'est un filet court aux
+   couleurs de la marque, sous le mot, qui marque le début de page. */
+.titre-page {
+  display: inline-block;
+  font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+  font-weight: 700;
+  font-size: clamp(1.7rem, 4vw, 2.15rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+.titre-page::after {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 3px;
+  margin-top: 10px;
+  background: var(--brand-gradient);
+  transform: skewX(-18deg);
+}
+
 /* ── Titres de section ──────────────────────────────────────────────────────
    Tous les titres de l'application faisaient 0,72 rem en capitales à 0,16 em
    d'interlettrage — la même micro-étiquette du haut en bas des pages. Aucune
@@ -272,6 +299,46 @@ body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--steel);
+}
+
+/* Niveau au-dessus : il chapeaute plusieurs panneaux à la fois. Il se lisait
+   jusqu'ici plus faiblement que les titres qu'il regroupe — hiérarchie à
+   l'envers. Le filet qui part du libellé et traverse la largeur restante lui
+   donne la portée qui lui manquait, sans le mettre en concurrence avec les
+   titres de section : il reste gris, c'est le trait qui porte. */
+.titre-groupe {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+
+.titre-groupe::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--line-strong), transparent 85%);
+}
+
+/* ── Blocs de graphique ─────────────────────────────────────────────────────
+   Toutes les zones du tableau de bord étaient le même objet : fond carbone,
+   filet à 8 %, rayon 12, rembourrage 16. Une douzaine de cartes identiques
+   empilées, et plus rien qui distingue un chiffre-clé d'un graphique ou d'un
+   tableau — c'est cette uniformité, autant que les couleurs, qui fait « sorti
+   d'un gabarit ».
+
+   Un graphique n'est pas un objet posé sur la page : c'est la page qui montre
+   ses chiffres. Il perd donc son cadre, un filet et son titre suffisent à le
+   délimiter — et les vrais cadres qui restent (le bandeau de chiffres, le
+   tableau des jeux) redeviennent lisibles comme tels. */
+.bloc-graphique {
+  padding: 18px 2px 4px;
+  border-top: 1px solid var(--line);
 }
 
 .mono-num {

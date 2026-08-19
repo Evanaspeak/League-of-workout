@@ -338,20 +338,20 @@ export default function AdminUserList() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.4)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: "0.88rem", color: "rgba(236,239,244,0.8)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value}</div>
+      <div style={{ fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: "0.88rem", color: "var(--bone)", overflowWrap: "anywhere", wordBreak: "break-word" }}>{value}</div>
     </div>
   );
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.4)", marginBottom: 8 }}>
+    <p style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 8 }}>
       {children}
     </p>
   );
 }
 
-const thRowStyle: React.CSSProperties = { color: "rgba(152,162,176,0.45)", fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.08em" };
+const thRowStyle: React.CSSProperties = { color: "var(--faint)", fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.08em" };
 const thStyle: React.CSSProperties = { textAlign: "left", padding: "4px 8px 8px 0", fontWeight: 500 };
 const tdStyle: React.CSSProperties = { padding: "6px 8px 6px 0", color: "var(--muted)" };

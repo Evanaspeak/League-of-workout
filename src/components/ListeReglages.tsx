@@ -99,7 +99,7 @@ export function LigneRubrique({
           {valeur}
         </span>
       )}
-      <span style={{ display: "inline-flex", color: "rgba(152,162,176,0.5)", flexShrink: 0 }}>
+      <span style={{ display: "inline-flex", color: "var(--faint)", flexShrink: 0 }}>
         <Icone nom="chevron" taille={16} style={{ transform: "rotate(-90deg)" }} />
       </span>
     </button>
@@ -122,13 +122,7 @@ export function EnteteRubrique({ titre, retour }: { titre: string; retour: strin
         <Icone nom="chevron" taille={15} style={{ transform: "rotate(90deg)" }} />
         {retour}
       </button>
-      <h1 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "1.35rem", color: "#ECEFF4", letterSpacing: "0.16em",
-        textTransform: "uppercase",
-      }}>
-        {titre}
-      </h1>
+      <h1 className="titre-page">{titre}</h1>
     </div>
   );
 }

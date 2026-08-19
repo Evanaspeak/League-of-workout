@@ -370,7 +370,7 @@ export function AjoutActivite({
           {jeu === JEU_DEFAUT && (
           <div className="lol-panel p-4 space-y-3" style={{ borderColor: "rgba(152,162,176,0.22)" }}>
             <div>
-              <h2 className="gold-text text-xs font-semibold uppercase tracking-widest">{t.lolSectionTitle}</h2>
+              <h2 className="titre-bloc">{t.lolSectionTitle}</h2>
               <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.lolSectionDesc}</p>
             </div>
 
@@ -382,7 +382,7 @@ export function AjoutActivite({
             <div className="flex items-start gap-3 p-3 rounded" style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.16)" }}>
               <Icone nom="alerte" taille={18} couleur="var(--amber)" />
               <div className="flex-1 space-y-2">
-                <p className="text-sm" style={{ color: "rgba(236,239,244,0.75)" }}>
+                <p className="text-sm" style={{ color: "var(--bone)" }}>
                   <span className="gold-text font-semibold">{t.aramTitle}</span>{" "}
                   {t.aramDesc}
                 </p>
@@ -398,7 +398,7 @@ export function AjoutActivite({
           {showAddForm && (
             <div className="lol-panel p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{typeJeu === "temps" ? tJeux.sessionTitre : t.addGameTitle}</h2>
+                <h2 className="titre-section">{typeJeu === "temps" ? tJeux.sessionTitre : t.addGameTitle}</h2>
                 {!enModale && (
                   <button
                     onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
@@ -748,7 +748,7 @@ export function AjoutActivite({
                   className="lol-panel px-4 py-3 flex items-center gap-3"
                   style={{ background: "var(--bg-raised)" }}
                 >
-                  <span className="text-xs w-5 text-center shrink-0" style={{ color: "rgba(152,162,176,0.4)" }}>{i + 1}</span>
+                  <span className="text-xs w-5 text-center shrink-0" style={{ color: "var(--faint)" }}>{i + 1}</span>
 
                   <ChampionIcon name={m.champion} size={38} />
 
@@ -763,8 +763,8 @@ export function AjoutActivite({
                   </span>
 
                   <span className="gold-text font-semibold text-sm w-14 shrink-0">{m.role}</span>
-                  <span className="text-sm w-24 shrink-0" style={{ color: "rgba(236,239,244,0.85)" }}>{m.champion}</span>
-                  <span className="text-sm font-mono shrink-0" style={{ color: "rgba(236,239,244,0.7)" }}>
+                  <span className="text-sm w-24 shrink-0" style={{ color: "var(--bone)" }}>{m.champion}</span>
+                  <span className="text-sm font-mono shrink-0" style={{ color: "var(--bone)" }}>
                     {m.kills} / <span style={{ color: "#e05555" }}>{m.deaths}</span> / {m.assists}
                   </span>
                   <span className="text-xs shrink-0" style={{ color: "var(--faint)" }}>
@@ -777,7 +777,7 @@ export function AjoutActivite({
                     ) : m.alreadyLogged ? (
                       <>
                         <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice))}</span>
-                        <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "rgba(152,162,176,0.5)" }}>
+                        <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "var(--faint)" }}>
                           {t.loggedBadge}
                         </span>
                       </>

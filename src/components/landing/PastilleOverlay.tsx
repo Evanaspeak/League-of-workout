@@ -40,7 +40,7 @@ export function PastilleOverlay({
       <div style={{
         display: "flex", alignItems: "center", gap: 6,
         fontSize: "0.58rem", letterSpacing: "0.14em", textTransform: "uppercase",
-        color: "rgba(152,162,176,0.75)",
+        color: "var(--steel)",
       }}>
         <span style={{
           width: 6, height: 6, borderRadius: "50%",
