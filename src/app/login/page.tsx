@@ -10,9 +10,12 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{
     error?: string; transferred?: string; deleted?: string; transfer_error?: string;
+    reconnexion?: string;
   }>;
 }) {
-  const { error, transferred, deleted, transfer_error: transfertEchec } = await searchParams;
+  const {
+    error, transferred, deleted, transfer_error: transfertEchec, reconnexion,
+  } = await searchParams;
   const betaFull = error === "AccessDenied";
   const betaPending = error === "BetaPending";
   const betaRejected = error === "BetaRejected";
@@ -24,6 +27,7 @@ export default async function LoginPage({
       betaRejected={betaRejected}
       transferred={transferred}
       transfertEchec={transfertEchec}
+      reconnexion={reconnexion === "1"}
       deleted={deleted}
     />
   );

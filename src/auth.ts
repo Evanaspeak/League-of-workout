@@ -171,6 +171,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user?.id) {
         token.uid = user.id;
+        // Uniquement ici, donc à la connexion : les rafraîchissements suivants
+        // passent sans `user` et laissent l'horodatage intact.
+        token.connexion = Date.now();
         // Une lecture par connexion, pas par requête : on grave la génération
         // en cours dans le jeton, et c'est `getCurrentUser()` qui la comparera
         // ensuite — il relit déjà la ligne, donc ça ne coûte rien de plus.
@@ -191,6 +194,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.uid) {
         session.user.id = token.uid as string;
         session.user.epoch = typeof token.epoch === "number" ? token.epoch : 0;
+        if (typeof token.connexion === "number") session.user.connexion = token.connexion;
       }
       return session;
     },

@@ -14,6 +14,7 @@ export function LoginClient({
   transferred,
   transfertEchec,
   deleted,
+  reconnexion,
 }: {
   betaFull: boolean;
   betaPending: boolean;
@@ -22,6 +23,12 @@ export function LoginClient({
   /** Le transfert de session vers l'app desktop a échoué : "token" | "reseau". */
   transfertEchec?: string;
   deleted?: string;
+  /**
+   * L'application a demandé une connexion alors qu'une session était déjà
+   * ouverte ici. On ne la lui envoie pas — elle n'a été choisie par personne —
+   * et on invite à désigner explicitement le compte.
+   */
+  reconnexion?: boolean;
 }) {
   const t = useT(loginDict);
 
@@ -113,6 +120,21 @@ export function LoginClient({
             color: "var(--victory)",
           }}>
             {t.compteSupprime}
+          </div>
+        )}
+
+        {reconnexion && (
+          <div style={{
+            padding: "0.7rem 0.9rem",
+            marginBottom: "1.5rem",
+            background: "rgba(255,180,84,0.08)",
+            border: "1px solid rgba(255,180,84,0.3)",
+            borderRadius: 8,
+            fontSize: "0.82rem",
+            color: "var(--amber)",
+            lineHeight: 1.6,
+          }}>
+            {t.reconnexionDesktop}
           </div>
         )}
 
