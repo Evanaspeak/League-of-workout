@@ -14,14 +14,16 @@ export type ChampSummary = {
   avgPompes: number;
 };
 
-export function StatCard({ label, value, sub, lignes, i = 0 }: {
+export function StatCard({ label, value, sub, lignes, i = 0, ancre }: {
   label: string; value?: string | number; sub?: string;
   /** Ventilation par exercice : des répétitions et des minutes ne s'additionnent pas. */
   lignes?: { nom: string; valeur: string }[];
   i?: number;
+  /** Ancre de la visite guidée, quand cette carte sert de repli à une étape. */
+  ancre?: string;
 }) {
   return (
-    <div className="stat-card p-4 flex flex-col gap-1 rise" style={{ animationDelay: `${i * 80}ms` }}>
+    <div className="stat-card p-4 flex flex-col gap-1 rise" data-visite={ancre} style={{ animationDelay: `${i * 80}ms` }}>
       <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--faint)" }}>{label}</span>
       {lignes ? (
         <span style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 2 }}>

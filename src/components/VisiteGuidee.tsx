@@ -42,8 +42,6 @@ const MARGE = 8;
 // ce délai ne sert plus qu'aux ancres qui ne viendront jamais. Cinq secondes
 // d'écran figé pour rien, c'était trop long pour l'œil.
 const ATTENTE_MAX_MS = 3000;
-/** Pour une ancre qui a le droit de ne pas exister : on n'insiste pas. */
-const ATTENTE_FACULTATIVE_MS = 700;
 /** Durée pendant laquelle on suit l'élément, le temps que le défilement finisse. */
 const SUIVI_MS = 700;
 
@@ -60,13 +58,12 @@ type Etape = {
    */
   cleEtroite?: string;
   /**
-   * Ancre qui peut légitimement ne pas exister — une dette qu'on n'a pas
-   * encore, un graphique qui demande plusieurs semaines de données. On ne
-   * l'attend donc pas aussi longtemps : c'est justement pour un compte neuf,
-   * seul public de cette visite, qu'elle a le plus de chances d'être absente,
-   * et chaque attente inutile fige l'écran.
+   * Ancre de repli quand la principale n'existe pas encore : la pastille de
+   * dette n'apparaît qu'une fois qu'on doit quelque chose, et les graphiques
+   * qu'après quelques parties. Sans elle, ces étapes se sautaient — pour un
+   * compte neuf, c'est-à-dire pour le seul public de cette visite.
    */
-  facultative?: boolean;
+  cleSecours?: string;
 };
 
 type Cadre = { i: number; left: number; top: number; width: number; height: number };
@@ -98,9 +95,9 @@ export function VisiteGuidee() {
     { cle: "rail", cleEtroite: "rail-bascule", chemin: "/dashboard", titre: t.railTitre, texte: t.railTexte },
     { cle: "rail-session", cleEtroite: "rail-bascule", titre: t.sessionTitre, texte: t.sessionTexte },
     { cle: "rail-ajout", cleEtroite: "rail-bascule", titre: t.ajoutTitre, texte: t.ajoutTexte },
-    { cle: "dette", cleEtroite: "rail-bascule", titre: t.detteTitre, texte: t.detteTexte, facultative: true },
+    { cle: "dette", cleEtroite: "rail-bascule", cleSecours: "dette-carte", titre: t.detteTitre, texte: t.detteTexte },
     { cle: "stats", titre: t.statsTitre, texte: t.statsTexte },
-    { cle: "graphique", titre: t.graphiqueTitre, texte: t.graphiqueTexte, facultative: true },
+    { cle: "graphique", cleSecours: "stats-globales", titre: t.graphiqueTitre, texte: t.graphiqueTexte },
     { cle: "nav-history", titre: t.navHistoriqueTitre, texte: t.navHistoriqueTexte },
     { cle: "historique-table", chemin: "/history", titre: t.historiqueTitre, texte: t.historiqueTexte },
     { cle: "nav-settings", titre: t.navReglagesTitre, texte: t.navReglagesTexte },
@@ -159,7 +156,11 @@ export function VisiteGuidee() {
     cibleRef.current = i;
 
     const etroit = window.innerWidth < 900;
-    const cles = etroit && etape.cleEtroite ? [etape.cleEtroite, etape.cle] : [etape.cle];
+    const cles = [
+      ...(etroit && etape.cleEtroite ? [etape.cleEtroite] : []),
+      etape.cle,
+      ...(etape.cleSecours ? [etape.cleSecours] : []),
+    ];
     const debut = Date.now();
     let annule = false;
     let minuteur: ReturnType<typeof setTimeout>;
@@ -202,8 +203,7 @@ export function VisiteGuidee() {
         suivre(trouve.el, Date.now() + SUIVI_MS);
         return true;
       }
-      const limite = etape.facultative ? ATTENTE_FACULTATIVE_MS : ATTENTE_MAX_MS;
-      if (Date.now() - debut > limite) {
+      if (Date.now() - debut > ATTENTE_MAX_MS) {
         // Ancre introuvable : l'étape n'a rien à montrer, on passe — et si
         // c'était la dernière, la visite s'achève.
         arreter();
@@ -253,7 +253,11 @@ export function VisiteGuidee() {
       const etape = ETAPES[i];
       if (!etape) return;
       const etroit = window.innerWidth < 900;
-      const cles = etroit && etape.cleEtroite ? [etape.cleEtroite, etape.cle] : [etape.cle];
+      const cles = [
+        ...(etroit && etape.cleEtroite ? [etape.cleEtroite] : []),
+        etape.cle,
+        ...(etape.cleSecours ? [etape.cleSecours] : []),
+      ];
       for (const cle of cles) {
         const el = document.querySelector(`[data-visite="${cle}"]`);
         const m = el && mesurer(el);
