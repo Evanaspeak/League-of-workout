@@ -310,7 +310,7 @@ export function VisiteGuidee() {
           }}>
             {etape.titre}
           </h2>
-          <p style={{ fontSize: "0.82rem", lineHeight: 1.65, color: "rgba(236,239,244,0.62)" }}>
+          <p style={{ fontSize: "0.82rem", lineHeight: 1.65, color: "var(--muted)" }}>
             {etape.texte}
           </p>
         </div>
@@ -322,7 +322,7 @@ export function VisiteGuidee() {
               style={{
                 padding: "7px 13px", borderRadius: 999, cursor: "pointer", fontSize: "0.78rem",
                 background: "transparent", border: "1px solid var(--line-strong)",
-                color: "rgba(236,239,244,0.6)",
+                color: "var(--muted)",
               }}
             >
               {t.precedent}

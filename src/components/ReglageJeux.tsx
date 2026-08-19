@@ -19,7 +19,7 @@ const PASTILLE = (actif: boolean): React.CSSProperties => ({
   fontSize: "0.78rem",
   background: actif ? "rgba(255,180,84,0.1)" : "transparent",
   border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-  color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+  color: actif ? "var(--amber)" : "var(--muted)",
   transition: "all 0.15s",
 });
 
@@ -110,7 +110,7 @@ export function ReglageJeux() {
       )}
 
       {jeux && jeux.jeux.length === 0 && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.jeuxAucun}</p>
+        <p className="text-xs" style={{ color: "var(--faint)" }}>{t.jeuxAucun}</p>
       )}
 
       {ordonnes.map((jeu) => {
@@ -144,7 +144,7 @@ export function ReglageJeux() {
                 <span style={{
                   display: "inline-flex", transition: "transform 0.2s",
                   transform: deplie ? "rotate(180deg)" : "rotate(0deg)",
-                  color: "rgba(152,162,176,0.6)",
+                  color: "var(--steel)",
                 }}>
                   <Icone nom="chevron" taille={16} />
                 </span>
@@ -159,7 +159,7 @@ export function ReglageJeux() {
                   <div className="space-y-3" style={
                     jeu === JEU_RIOT ? { borderTop: "1px solid var(--line)", paddingTop: 14 } : undefined
                   }>
-                    <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(152,162,176,0.6)" }}>
+                    <h3 className="titre-bloc">
                       {t.titre}
                     </h3>
 
@@ -173,7 +173,7 @@ export function ReglageJeux() {
 
                     {config.actif && (
                       <>
-                        <p className="text-xs" style={{ color: "rgba(236,239,244,0.35)", lineHeight: 1.6 }}>
+                        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
                           {t.positionAide}
                         </p>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -200,7 +200,7 @@ export function ReglageJeux() {
                             padding: "6px 14px", borderRadius: 999, cursor: "pointer",
                             background: jeux!.placement ? "rgba(47,217,138,0.12)" : "transparent",
                             border: `1px solid ${jeux!.placement ? "var(--victory)" : "var(--line-strong)"}`,
-                            color: jeux!.placement ? "var(--victory)" : "rgba(236,239,244,0.6)",
+                            color: jeux!.placement ? "var(--victory)" : "var(--muted)",
                           }}
                         >
                           {jeux!.placement ? t.placerTerminer : t.placerBtn}
@@ -211,7 +211,7 @@ export function ReglageJeux() {
                           </p>
                         )}
                         {!jeux!.placement && config.position && (
-                          <p className="text-xs" style={{ color: "rgba(236,239,244,0.45)", lineHeight: 1.6 }}>
+                          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
                             {t.placerLibre}
                           </p>
                         )}
@@ -222,7 +222,7 @@ export function ReglageJeux() {
 
                 {detection && (
                   <div className="space-y-2" style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
-                    <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(152,162,176,0.6)" }}>
+                    <h3 className="titre-bloc">
                       {tDet.titre}
                     </h3>
                     <button
@@ -248,7 +248,7 @@ export function ReglageJeux() {
       {tropAncienne && <ReglageOverlay />}
 
       {jeux && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.3)", lineHeight: 1.6, paddingTop: 4 }}>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6, paddingTop: 4 }}>
           {tDet.ambigus}
         </p>
       )}

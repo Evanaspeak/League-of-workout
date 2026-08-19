@@ -28,14 +28,14 @@ export function StatCard({ label, value, sub, lignes, i = 0 }: {
           {lignes.map((l) => (
             <span key={l.nom} style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
               <span className="mono-num" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.2 }}>{l.valeur}</span>
-              <span style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)" }}>{l.nom.toLowerCase()}</span>
+              <span style={{ fontSize: "0.7rem", color: "var(--faint)" }}>{l.nom.toLowerCase()}</span>
             </span>
           ))}
         </span>
       ) : (
         <span className="mono-num" style={{ fontSize: "1.7rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.15 }}>{value}</span>
       )}
-      {sub && <span style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.45)" }}>{sub}</span>}
+      {sub && <span style={{ fontSize: "0.75rem", color: "var(--faint)" }}>{sub}</span>}
     </div>
   );
 }
@@ -60,7 +60,7 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
             fontSize: "1.05rem", color: "#ECEFF4", lineHeight: 1.1,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>{champ.name}</div>
-          <div style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.45)", marginTop: 2 }}>
+          <div style={{ fontSize: "0.7rem", color: "var(--faint)", marginTop: 2 }}>
             {t.gamesCount(champ.games)}
           </div>
         </div>
@@ -70,19 +70,19 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.kda}</div>
           <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "#ECEFF4" }}>{kdaLabel}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>
+          <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>
             {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
           </div>
         </div>
         <div style={{ textAlign: "center", borderLeft: "1px solid rgba(152,162,176,0.12)", borderRight: "1px solid rgba(152,162,176,0.12)" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.avgPompes}</div>
           <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>{t.perGame}</div>
+          <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>{t.perGame}</div>
         </div>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.5)", marginBottom: 3 }}>{t.games}</div>
           <div style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.95rem", color: "rgba(236,239,244,0.8)" }}>{champ.games}</div>
-          <div style={{ fontSize: "0.65rem", color: "rgba(236,239,244,0.4)" }}>{t.played}</div>
+          <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>{t.played}</div>
         </div>
       </div>
     </div>

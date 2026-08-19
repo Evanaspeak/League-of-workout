@@ -18,7 +18,7 @@ export default function ConfidentialiteClient() {
         }}>
           {t.pageTitle}
         </h1>
-        <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.35)", marginTop: "0.5rem" }}>
+        <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
           {t.versionLabel(DATE)}
         </p>
       </div>
@@ -89,7 +89,7 @@ export default function ConfidentialiteClient() {
         <p>
           {t.article7.cnilPrefix}{" "}
           <strong>{t.article7.cnilName}</strong> {t.article7.cnilFull}{" "}
-          <span style={{ color: "rgba(152,162,176,0.7)" }}>www.cnil.fr</span>.
+          <span style={{ color: "var(--steel)" }}>www.cnil.fr</span>.
         </p>
       </Section>
 
@@ -102,7 +102,7 @@ export default function ConfidentialiteClient() {
       </Section>
 
       <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(152,162,176,0.1)" }}>
-        <Link href="/cgu" style={{ color: "rgba(152,162,176,0.6)", fontSize: "0.82rem" }}>
+        <Link href="/cgu" style={{ color: "var(--steel)", fontSize: "0.82rem" }}>
           {t.footerLink}
         </Link>
       </div>
@@ -121,7 +121,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       </h2>
       <div style={{
         fontSize: "0.875rem",
-        color: "rgba(236,239,244,0.6)",
+        color: "var(--muted)",
         lineHeight: 1.8,
       }} className="space-y-2">
         {children}

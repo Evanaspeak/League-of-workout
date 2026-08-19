@@ -336,7 +336,7 @@ export default function Dashboard() {
           <p style={{ fontSize: "0.82rem", color: "#6E9BFF", fontWeight: 600, marginBottom: 4 }}>
             {t.syncBannerTitle}
           </p>
-          <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.55)", lineHeight: 1.6 }}>
+          <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.6 }}>
             {t.syncBannerBody}
           </p>
         </div>
@@ -378,7 +378,7 @@ export default function Dashboard() {
             <p style={{ fontSize: "0.82rem", color: "var(--amber)", fontWeight: 600, marginBottom: 4 }}>
               {t.plafondTitre}
             </p>
-            <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.6 }}>
+            <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.6 }}>
               {t.plafondCorps(
                 fmt(data.pointsAujourdhui ?? 0),
                 fmt(data.plafondQuotidien ?? 0),
@@ -431,7 +431,7 @@ export default function Dashboard() {
               }}
             />
           </div>
-          <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
+          <div className="text-xs" style={{ color: "var(--faint)" }}>
             {t.objectiveProgressLibre(fmt(globalStats.totalPoints), fmt(data.objectifTotalPompes))}
             {data.objectifTotalPompes - globalStats.totalPoints > 0
               ? t.objectiveRemainingLibre(fmt(data.objectifTotalPompes - globalStats.totalPoints))
@@ -443,7 +443,7 @@ export default function Dashboard() {
       {/* Filtre par jeu — n'apparaît qu'à partir de deux jeux différents */}
       {jeuxJoues.length > 1 && (
         <div className="flex items-center gap-2 flex-wrap rise" style={{ animationDelay: "220ms" }}>
-          <span className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{tJeux.filtreJeuTitre}</span>
+          <span className="text-xs" style={{ color: "var(--steel)" }}>{tJeux.filtreJeuTitre}</span>
           {[null, ...jeuxJoues.map((j) => j.nom)].map((nom) => {
             const actif = filtreJeu === nom;
             return (
@@ -455,7 +455,7 @@ export default function Dashboard() {
                   padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
                   background: actif ? "rgba(110,155,255,0.1)" : "transparent",
                   border: `1px solid ${actif ? "var(--signal)" : "var(--line-strong)"}`,
-                  color: actif ? "var(--signal)" : "rgba(236,239,244,0.6)",
+                  color: actif ? "var(--signal)" : "var(--muted)",
                   transition: "all 0.15s",
                 }}
               >
@@ -471,7 +471,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3 flex-wrap justify-between rise" style={{ animationDelay: "260ms" }}>
           {exercicesJoues.length > 1 ? (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>{tExo.filtreTitre}</span>
+              <span className="text-xs" style={{ color: "var(--steel)" }}>{tExo.filtreTitre}</span>
               {[null, ...exercicesJoues].map((id) => {
                 const actif = filtreExo === id;
                 return (
@@ -483,7 +483,7 @@ export default function Dashboard() {
                       padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
                       background: actif ? "rgba(255,180,84,0.1)" : "transparent",
                       border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
-                      color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                      color: actif ? "var(--amber)" : "var(--muted)",
                       transition: "all 0.15s",
                     }}
                   >
@@ -499,7 +499,7 @@ export default function Dashboard() {
               padding: "7px 14px", borderRadius: 10,
               border: "1px solid var(--line)", background: "var(--carbon)",
             }}>
-              <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.6)" }}>
+              <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--steel)" }}>
                 {tJeux.tempsJoueLabel}
               </span>
               <span className="mono-num" style={{ fontSize: "1rem", fontWeight: 600, color: "var(--signal)" }}>
@@ -513,14 +513,14 @@ export default function Dashboard() {
               padding: "7px 14px", borderRadius: 10,
               border: "1px solid var(--line)", background: "var(--carbon)",
             }}>
-              <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.6)" }}>
+              <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--steel)" }}>
                 {t.recordPerGame}
               </span>
               <span className="mono-num" style={{ fontSize: "1rem", fontWeight: 600, color: "var(--amber)" }}>
                 {formaterCompact(data.recordPompes, exerciceRecord)}
               </span>
               {EXERCICES[exerciceRecord].unite === "reps" && (
-                <span style={{ fontSize: "0.72rem", color: "rgba(236,239,244,0.45)" }}>{nomsExo[exerciceRecord].toLowerCase()}</span>
+                <span style={{ fontSize: "0.72rem", color: "var(--faint)" }}>{nomsExo[exerciceRecord].toLowerCase()}</span>
               )}
             </div>
           )}
@@ -537,7 +537,7 @@ export default function Dashboard() {
           onClick={() => setModale("session")}
           style={{ borderColor: sessionActive ? "rgba(47,217,138,0.5)" : undefined }}
         >
-          <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: sessionActive ? "var(--victory)" : "rgba(152,162,176,0.6)" }}>
+          <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: sessionActive ? "var(--victory)" : "var(--steel)" }}>
             {t.sessionModeTitle}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
@@ -549,7 +549,7 @@ export default function Dashboard() {
             </span>
           </div>
           {sessionActive && sessionGames.length > 0 && (
-            <div className="mono-num" style={{ fontSize: "0.66rem", marginTop: 3, color: "rgba(236,239,244,0.4)" }}>
+            <div className="mono-num" style={{ fontSize: "0.66rem", marginTop: 3, color: "var(--faint)" }}>
               {t.railSessionGames(sessionGames.length, fmt(totalSessionPompes))}
             </div>
           )}
@@ -561,7 +561,7 @@ export default function Dashboard() {
           data-visite="rail-ajout"
           onClick={() => setModale("ajout")}
         >
-          <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: "rgba(152,162,176,0.6)" }}>
+          <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: "var(--steel)" }}>
             {t.railAjoutSurtitre}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
@@ -576,7 +576,7 @@ export default function Dashboard() {
       {modale === "session" && (
       <Modale titre={t.sessionModeTitle} onFermer={() => setModale(null)}>
       <div className="space-y-3">
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>
+        <p className="text-xs" style={{ color: "var(--faint)" }}>
           {t.sessionModeDesc}
         </p>
 
@@ -585,7 +585,7 @@ export default function Dashboard() {
             {/* Le jeu détermine la nature de la session : suivi de parties via
                 l'API Riot, ou simple chronomètre. */}
             <div className="space-y-2">
-              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+              <label className="block text-xs" style={{ color: "var(--steel)" }}>
                 {tJeux.sessionQuelJeu}
               </label>
               <JeuSelector
@@ -605,7 +605,7 @@ export default function Dashboard() {
             />
 
             <div className="space-y-2">
-              <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+              <label className="block text-xs" style={{ color: "var(--steel)" }}>
                 {tExo.choisirTitre}
               </label>
               <ExerciceSelector selection={exercicesSel} onChange={setExercicesSel} compact />
@@ -639,7 +639,7 @@ export default function Dashboard() {
               <div className="w-2 h-2 rounded-full" style={{ background: "#2FD98A", boxShadow: "0 0 6px #2FD98A", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">{t.sessionActive}</span>
               <span className="text-xs gold-text">{t.levelLabel(sessionNiveau)}</span>
-              <span className="ml-auto text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
+              <span className="ml-auto text-xs" style={{ color: "var(--faint)" }}>
                 {polling ? t.checking : t.nextCheck(countdown)}
               </span>
             </div>
@@ -648,11 +648,11 @@ export default function Dashboard() {
               <div className="grid grid-cols-3 gap-2">
                 <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
                   <div className="text-2xl font-bold gold-text">{sessionGames.length}</div>
-                  <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>games</div>
+                  <div className="text-xs" style={{ color: "var(--faint)" }}>games</div>
                 </div>
                 <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
                   <div className="text-2xl font-bold gold-text">{totalSessionPompes}</div>
-                  <div className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>pompes</div>
+                  <div className="text-xs" style={{ color: "var(--faint)" }}>pompes</div>
                 </div>
                 <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
                   <div className="text-2xl font-bold win-text">
@@ -667,7 +667,7 @@ export default function Dashboard() {
 
             {sessionGames.length > 0 && (
               <div className="lol-panel p-3" style={{ background: "rgba(152,162,176,0.04)" }}>
-                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "rgba(152,162,176,0.6)" }}>
+                <h3 className="text-xs uppercase tracking-widest mb-2" style={{ color: "var(--steel)" }}>
                   {t.pompesPerGameSession}
                 </h3>
                 <ResponsiveContainer width="100%" height={140}>
@@ -692,8 +692,8 @@ export default function Dashboard() {
                     </span>
                     <ChampionIcon name={g.champion} size={30} />
                     <span className="gold-text font-medium">{g.champion}</span>
-                    <span className="text-xs" style={{ color: "rgba(236,239,244,0.5)" }}>{g.role}</span>
-                    <span className="text-xs" style={{ color: "rgba(236,239,244,0.6)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
+                    <span className="text-xs" style={{ color: "var(--faint)" }}>{g.role}</span>
+                    <span className="text-xs" style={{ color: "var(--muted)" }}>{g.kills}/{g.deaths}/{g.assists}</span>
                     <span className="ml-auto gold-text font-bold">{g.pompes}</span>
                   </div>
                 ))}
@@ -701,7 +701,7 @@ export default function Dashboard() {
             )}
 
             {sessionGames.length === 0 && !polling && (
-              <p className="text-xs text-center" style={{ color: "rgba(236,239,244,0.4)" }}>
+              <p className="text-xs text-center" style={{ color: "var(--faint)" }}>
                 {t.waitingNextGame}
               </p>
             )}
@@ -731,13 +731,13 @@ export default function Dashboard() {
       {filtreJeu === null && jeuxJoues.length > 1 && (
         <div className="lol-panel p-4 space-y-3">
           <div>
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.comparatifTitre}</h2>
-            <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>{t.comparatifAide}</p>
+            <h2 className="titre-section">{t.comparatifTitre}</h2>
+            <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.comparatifAide}</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: 620 }}>
               <thead>
-                <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
+                <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                   <th className="text-left px-3 py-1">{t.colJeu}</th>
                   <th className="text-right px-3 py-1">{t.colActivites}</th>
                   <th className="text-right px-3 py-1">{t.colWinrate}</th>
@@ -764,7 +764,7 @@ export default function Dashboard() {
                       {j.winrate === null ? t.sansObjet : `${j.winrate}%`}
                     </td>
                     <td className="px-3 py-2 text-right mono-num gold-text font-semibold">{fmt(j.points)}</td>
-                    <td className="px-3 py-2 text-right mono-num" style={{ color: "rgba(236,239,244,0.6)" }}>{fmt(j.detteMoyenne)}</td>
+                    <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--muted)" }}>{fmt(j.detteMoyenne)}</td>
                     <td className="px-3 py-2 text-right mono-num" style={{ color: j.tempsJoueSec > 0 ? "rgba(236,239,244,0.8)" : "rgba(152,162,176,0.35)" }}>
                       {j.tempsJoueSec > 0 ? formaterTempsJeu(j.tempsJoueSec) : t.sansObjet}
                     </td>
@@ -784,7 +784,7 @@ export default function Dashboard() {
         {afficherParJeu && (
           <div className="lol-panel p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+              <h2 className="titre-section">
                 {t.detteParJeu(roleView)}
               </h2>
               <div className="flex gap-1">
@@ -795,7 +795,7 @@ export default function Dashboard() {
                     className="text-xs px-2 py-1 rounded"
                     style={{
                       background: roleView === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                      color: roleView === key ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                      color: roleView === key ? "#ECEFF4" : "var(--faint)",
                       border: `1px solid ${roleView === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                     }}
                   >
@@ -847,10 +847,10 @@ export default function Dashboard() {
             total par jour suit surtout le temps qu'on a joué. */}
         {(data.moyenneParSemaine ?? []).length > 1 && (
           <div className="lol-panel p-4" data-visite="graphique">
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+            <h2 className="titre-section">
               {t.progressionTitre}
             </h2>
-            <p className="text-xs mt-1 mb-3" style={{ color: "rgba(236,239,244,0.4)" }}>
+            <p className="text-xs mt-1 mb-3" style={{ color: "var(--faint)" }}>
               {t.progressionAide}
             </p>
             <ResponsiveContainer width="100%" height={200}>
@@ -883,7 +883,7 @@ export default function Dashboard() {
       {data.statsByPeriod && data.totalGames > 0 && (
         <div className="lol-panel p-4">
           <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+            <h2 className="titre-section">
               {statsPeriod === "daily" ? t.dailyDetail : statsMode === "avg" ? t.avgPompesPerGame : t.totalPompesLabel}
             </h2>
             <div className="flex gap-1 flex-wrap">
@@ -896,7 +896,7 @@ export default function Dashboard() {
                       className="text-xs px-2 py-1 rounded"
                       style={{
                         background: statsMode === m ? "rgba(110,155,255,0.2)" : "rgba(152,162,176,0.06)",
-                        color: statsMode === m ? "#6E9BFF" : "rgba(236,239,244,0.35)",
+                        color: statsMode === m ? "#6E9BFF" : "var(--faint)",
                         border: `1px solid ${statsMode === m ? "rgba(110,155,255,0.4)" : "rgba(152,162,176,0.12)"}`,
                       }}
                     >
@@ -913,7 +913,7 @@ export default function Dashboard() {
                   className="text-xs px-2 py-1 rounded"
                   style={{
                     background: statsPeriod === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                    color: statsPeriod === key ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                    color: statsPeriod === key ? "#ECEFF4" : "var(--faint)",
                     border: `1px solid ${statsPeriod === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                   }}
                 >
@@ -935,9 +935,9 @@ export default function Dashboard() {
                   max={new Date().toISOString().slice(0, 10)}
                 />
                 {dailySummary && !dailyLoading && (
-                  <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>
+                  <span className="text-sm" style={{ color: "var(--faint)" }}>
                     <span className="gold-text font-bold">{fmt(dailySummary.total)}</span> ·{" "}
-                    <span style={{ color: "rgba(236,239,244,0.35)" }}>{t.gamesCount(dailySummary.games)}</span>
+                    <span style={{ color: "var(--faint)" }}>{t.gamesCount(dailySummary.games)}</span>
                   </span>
                 )}
               </div>
@@ -956,7 +956,7 @@ export default function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="text-center py-8" style={{ color: "rgba(236,239,244,0.3)", fontSize: "0.85rem" }}>
+                <div className="text-center py-8" style={{ color: "var(--faint)", fontSize: "0.85rem" }}>
                   {t.noGameThisDay}
                 </div>
               )}
@@ -983,7 +983,7 @@ export default function Dashboard() {
             <span aria-hidden style={{ width: 10, height: 34, background: "var(--ember)", transform: "skewX(-18deg)", borderRadius: 2, display: "inline-block" }} />
           </div>
           <p className="gold-text font-semibold">{t.noGameLogged}</p>
-          <p className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>
+          <p className="text-sm" style={{ color: "var(--faint)" }}>
             {t.goToHistoryStart} <strong>{t.historyLabel}</strong> {t.goToHistoryEnd}
           </p>
         </div>
@@ -998,7 +998,7 @@ export default function Dashboard() {
             <h2 style={{ fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)", fontSize: "0.72rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.16em", textTransform: "uppercase" }}>
               {t.syntheseDe(jeuUnique)}
             </h2>
-            <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.35)" }}>
+            <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>
               {estBattleRoyale ? t.sectionBrDesc : t.sectionLeagueDesc}
             </p>
           </div>
@@ -1007,7 +1007,7 @@ export default function Dashboard() {
         {repartitionData.length > 0 && (
           <div className="lol-panel p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">
+              <h2 className="titre-section">
                 {estBattleRoyale
                   ? (multi ? t.pompesByMode(roleView) : t.parModeDe(nomsExo[exercice], roleView))
                   : (multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView))}
@@ -1020,7 +1020,7 @@ export default function Dashboard() {
                     className="text-xs px-2 py-1 rounded"
                     style={{
                       background: roleView === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                      color: roleView === key ? "#ECEFF4" : "rgba(236,239,244,0.4)",
+                      color: roleView === key ? "#ECEFF4" : "var(--faint)",
                       border: `1px solid ${roleView === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                     }}
                   >

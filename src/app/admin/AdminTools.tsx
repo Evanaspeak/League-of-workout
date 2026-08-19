@@ -62,7 +62,7 @@ export default function AdminTools() {
         <p style={{ fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "rgba(152,162,176,0.45)", marginBottom: 8 }}>
           {t.whitelistTitle}
         </p>
-        <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.4)", lineHeight: 1.6, marginBottom: 10 }}>
+        <p style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.6, marginBottom: 10 }}>
           {t.whitelistExplanation}
         </p>
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -120,7 +120,7 @@ export default function AdminTools() {
 
       {/* Rejouer intro */}
       <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: 14 }}>
-        <p style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
+        <p style={{ fontSize: "0.7rem", color: "var(--faint)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
           {t.testSection}
         </p>
         <button

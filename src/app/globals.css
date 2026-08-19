@@ -218,11 +218,58 @@ body {
 .win-text   { color: var(--win); }
 .loss-text  { color: var(--loss); }
 
-/* Eyebrow HUD : petit label mono espacé, façon scoreboard */
+/* Eyebrow HUD : petit label mono espacé, façon scoreboard.
+   Réservé aux SUR-TITRES — la ligne au-dessus d'un titre, ou l'étiquette d'une
+   valeur. Ce n'est pas un titre de section : voir `.titre-section`. */
 .eyebrow {
   font-family: var(--font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.7rem;
   letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+
+/* ── Titres de section ──────────────────────────────────────────────────────
+   Tous les titres de l'application faisaient 0,72 rem en capitales à 0,16 em
+   d'interlettrage — la même micro-étiquette du haut en bas des pages. Aucune
+   hiérarchie : l'œil ne trouve pas où commencer, et c'est précisément ce qui
+   fait qu'une interface se lit comme sortie d'un gabarit.
+
+   Un titre de section a maintenant du corps : plus du double de la taille, un
+   interlettrage rendu à la normale — l'espacement extrême à petite taille est
+   la marque même du procédé — et la barre oblique de la marque en amorce, qui
+   rattache chaque section à l'identité plutôt qu'à un style générique. */
+.titre-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+  font-weight: 700;
+  font-size: 1.12rem;
+  line-height: 1.15;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+.titre-section::before {
+  content: "";
+  flex-shrink: 0;
+  width: 3px;
+  height: 0.92em;
+  background: var(--ember);
+  transform: skewX(-18deg);
+  border-radius: 1px;
+}
+
+/* Deuxième niveau, à l'intérieur d'une section. Il descend en taille sans
+   revenir à la micro-étiquette, et se distingue par la couleur. */
+.titre-bloc {
+  font-family: var(--font-heading, 'Barlow Condensed', sans-serif);
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--steel);
 }

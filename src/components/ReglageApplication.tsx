@@ -60,11 +60,7 @@ export function ReglageApplication() {
 
   return (
     <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
-      <h2 style={{
-        fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-        fontSize: "0.72rem", color: "#ECEFF4",
-        letterSpacing: "0.16em", textTransform: "uppercase",
-      }}>
+      <h2 className="titre-section">
         {t.titre}
       </h2>
 
@@ -73,7 +69,7 @@ export function ReglageApplication() {
       </p>
 
       {message && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.5)", lineHeight: 1.6 }}>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
           {message}
         </p>
       )}
@@ -83,7 +79,7 @@ export function ReglageApplication() {
           téléchargement se confond avec une erreur de vérification. */}
       {statut === "erreur" && erreur && (
         <p className="mono-num" style={{
-          fontSize: "0.68rem", color: "rgba(236,239,244,0.3)",
+          fontSize: "0.68rem", color: "var(--faint)",
           lineHeight: 1.5, wordBreak: "break-word",
         }}>
           {erreur.slice(0, 300)}

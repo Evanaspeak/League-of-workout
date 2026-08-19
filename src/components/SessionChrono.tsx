@@ -58,7 +58,7 @@ export function SessionChrono({
         />
         <span className="text-sm font-semibold" style={{ color: "var(--signal)" }}>{t.chronoEnCours}</span>
         <span className="text-xs gold-text">{jeu}</span>
-        <span className="ml-auto text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
+        <span className="ml-auto text-xs" style={{ color: "var(--faint)" }}>
           {niveau}
         </span>
       </div>
@@ -68,15 +68,15 @@ export function SessionChrono({
           <div className="mono-num font-bold" style={VALEUR_STYLE}>
             {formaterChrono(chronoSec)}
           </div>
-          <div className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.5)" }}>{t.chronoEcoule}</div>
+          <div className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.chronoEcoule}</div>
         </div>
         <div className="lol-panel p-4 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
           <div className="mono-num font-bold gold-text" style={{ ...VALEUR_STYLE, color: undefined }}>{dette}</div>
-          <div className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.5)" }}>{t.chronoDette}</div>
+          <div className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.chronoDette}</div>
         </div>
       </div>
 
-      <p className="text-xs text-center" style={{ color: "rgba(236,239,244,0.4)" }}>
+      <p className="text-xs text-center" style={{ color: "var(--faint)" }}>
         {t.chronoSousTitre}
       </p>
 
@@ -91,7 +91,7 @@ export function SessionChrono({
           className="py-2 px-4 rounded text-sm"
           style={{
             background: "rgba(152,162,176,0.1)",
-            color: "rgba(236,239,244,0.6)",
+            color: "var(--muted)",
             border: "1px solid rgba(152,162,176,0.2)",
           }}
           onClick={onAnnuler}

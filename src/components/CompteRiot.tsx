@@ -91,7 +91,7 @@ export function CompteRiot() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs uppercase tracking-widest" style={{ color: "rgba(152,162,176,0.6)" }}>
+        <h3 className="titre-bloc">
           {t.compteRiot}
         </h3>
         {enregistre && <span className="win-text"><Icone nom="coche" taille={13} titre={t.enregistre} /></span>}
@@ -99,7 +99,7 @@ export function CompteRiot() {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.riotIdLabel}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.riotIdLabel}</label>
           <input
             className="lol-input" placeholder="Faker#KR1"
             value={riotId}
@@ -107,7 +107,7 @@ export function CompteRiot() {
           />
         </div>
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.region}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.region}</label>
           <select className="lol-select w-full" value={region} onChange={(e) => setRegion(e.target.value)}>
             {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
@@ -129,7 +129,7 @@ export function CompteRiot() {
         </p>
       )}
       {puuid && (
-        <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>{t.puuidLabel(puuid.slice(0, 20))}</p>
+        <p className="text-xs" style={{ color: "var(--faint)" }}>{t.puuidLabel(puuid.slice(0, 20))}</p>
       )}
     </div>
   );

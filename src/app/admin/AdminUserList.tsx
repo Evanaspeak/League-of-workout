@@ -103,7 +103,7 @@ export default function AdminUserList() {
     setConfirmDelete(null);
   }
 
-  if (loading) return <div style={{ color: "rgba(236,239,244,0.4)", padding: 16 }}>{t.loading}</div>;
+  if (loading) return <div style={{ color: "var(--faint)", padding: 16 }}>{t.loading}</div>;
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
@@ -125,7 +125,7 @@ export default function AdminUserList() {
       />
 
       {filtered.length === 0 && (
-        <p style={{ color: "rgba(236,239,244,0.3)", fontSize: "0.85rem", padding: "12px 0" }}>{t.noResults}</p>
+        <p style={{ color: "var(--faint)", fontSize: "0.85rem", padding: "12px 0" }}>{t.noResults}</p>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -143,14 +143,14 @@ export default function AdminUserList() {
               <ActivityDot value={u.gamesThisWeek} max={maxWeekly} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "0.88rem", color: "#ECEFF4", fontWeight: 600 }}>{u.pseudo}</div>
-                <div style={{ fontSize: "0.72rem", color: "rgba(236,239,244,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: "0.72rem", color: "var(--faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {u.email}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, alignItems: "center", flexShrink: 0, fontSize: "0.78rem" }}>
                 <span style={{ color: "#6E9BFF" }}>{u.totalGames} {t.gamesSuffix}</span>
                 <span style={{ color: "#ECEFF4" }}>{u.totalPompes} {t.pompesSuffix}</span>
-                <span style={{ color: "rgba(236,239,244,0.3)" }}>
+                <span style={{ color: "var(--faint)" }}>
                   {u.gamesThisWeek > 0 ? t.perWeek(u.gamesThisWeek) : t.inactive}
                 </span>
               </div>
@@ -188,15 +188,15 @@ export default function AdminUserList() {
                   </div>
                   {newPasswords[u.id] ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(47,217,138,0.08)", border: "1px solid rgba(47,217,138,0.3)" }}>
-                      <span style={{ fontSize: "0.75rem", color: "rgba(236,239,244,0.5)" }}>{t.newPassword}</span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--faint)" }}>{t.newPassword}</span>
                       <code style={{ fontSize: "0.88rem", color: "#2FD98A", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
-                      <span style={{ fontSize: "0.7rem", color: "rgba(236,239,244,0.3)", marginLeft: 4 }}>{t.visibleOnce}</span>
+                      <span style={{ fontSize: "0.7rem", color: "var(--faint)", marginLeft: 4 }}>{t.visibleOnce}</span>
                     </div>
                   ) : (
                     <button
                       onClick={e => { e.stopPropagation(); resetPassword(u.id); }}
                       disabled={resettingPwd === u.id}
-                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(152,162,176,0.35)", color: "rgba(152,162,176,0.7)" }}
+                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(152,162,176,0.35)", color: "var(--steel)" }}
                     >
                       {resettingPwd === u.id ? "..." : t.resetPassword}
                     </button>
@@ -235,7 +235,7 @@ export default function AdminUserList() {
                               background: l.niveau === u.niveauActuel ? "rgba(152,162,176,0.07)" : "transparent",
                             }}>
                               <td style={tdStyle}>
-                                <span style={{ color: l.niveau === u.niveauActuel ? "#ECEFF4" : "rgba(236,239,244,0.6)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
+                                <span style={{ color: l.niveau === u.niveauActuel ? "#ECEFF4" : "var(--muted)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
                                   {t.levelAbrev(l.niveau)}{l.niveau === u.niveauActuel ? " ◀" : ""}
                                 </span>
                               </td>
@@ -312,7 +312,7 @@ export default function AdminUserList() {
                       </button>
                       <button
                         onClick={() => setConfirmDelete(null)}
-                        style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(236,239,244,0.15)", color: "rgba(236,239,244,0.5)" }}
+                        style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(236,239,244,0.15)", color: "var(--faint)" }}
                       >
                         {t.cancel}
                       </button>
@@ -354,4 +354,4 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 const thRowStyle: React.CSSProperties = { color: "rgba(152,162,176,0.45)", fontSize: "0.67rem", textTransform: "uppercase", letterSpacing: "0.08em" };
 const thStyle: React.CSSProperties = { textAlign: "left", padding: "4px 8px 8px 0", fontWeight: 500 };
-const tdStyle: React.CSSProperties = { padding: "6px 8px 6px 0", color: "rgba(236,239,244,0.65)" };
+const tdStyle: React.CSSProperties = { padding: "6px 8px 6px 0", color: "var(--muted)" };

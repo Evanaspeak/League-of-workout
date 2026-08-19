@@ -49,7 +49,7 @@ const ROLES_FILTER = ["Tous", "Top", "Jungle", "Mid", "ADC", "Support", "ARAM", 
 function ResultatCell({ result, t }: { result: string; t: { victory: string; defeat: string; sessionLibelle: string } }) {
   if (result === "V") return <span className="win-text">{t.victory}</span>;
   if (result === "D") return <span className="loss-text">{t.defeat}</span>;
-  return <span style={{ color: "rgba(152,162,176,0.6)", fontWeight: 500 }}>{t.sessionLibelle}</span>;
+  return <span style={{ color: "var(--steel)", fontWeight: 500 }}>{t.sessionLibelle}</span>;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ export default function HistoryPage() {
               <div className="lol-panel p-3 space-y-3">
                 {jeuxJoues.length > 1 && (
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{tJeux.filtreJeuTitre}</span>
+                    <span className="text-xs" style={{ color: "var(--steel)" }}>{tJeux.filtreJeuTitre}</span>
                     {[null, ...jeuxJoues].map((nom) => {
                       const actif = filtreJeu === nom;
                       return (
@@ -200,7 +200,7 @@ export default function HistoryPage() {
                             padding: "4px 12px", borderRadius: 999, fontSize: "0.75rem", cursor: "pointer",
                             background: actif ? "rgba(110,155,255,0.1)" : "transparent",
                             border: `1px solid ${actif ? "var(--signal)" : "var(--line-strong)"}`,
-                            color: actif ? "var(--signal)" : "rgba(236,239,244,0.6)",
+                            color: actif ? "var(--signal)" : "var(--muted)",
                             transition: "all 0.15s",
                           }}
                         >
@@ -217,7 +217,7 @@ export default function HistoryPage() {
                       session au temps. */}
                   {afficherRole && (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.roleLabel}</span>
+                      <span className="text-xs" style={{ color: "var(--steel)" }}>{t.roleLabel}</span>
                       <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
                         {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
                       </select>
@@ -226,7 +226,7 @@ export default function HistoryPage() {
                   {modeColonnes !== "temps" && (
                     <>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.resultLabel}</span>
+                        <span className="text-xs" style={{ color: "var(--steel)" }}>{t.resultLabel}</span>
                         <select className="lol-select text-sm" value={filterResult} onChange={(e) => setFilterResult(e.target.value)}>
                           <option value="Tous">{t.all}</option>
                           <option value="V">{t.victory}</option>
@@ -236,7 +236,7 @@ export default function HistoryPage() {
                     </>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>{t.sortLabel}</span>
+                    <span className="text-xs" style={{ color: "var(--steel)" }}>{t.sortLabel}</span>
                     <select className="lol-select text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "pompes")}>
                       <option value="date">{t.date}</option>
                       <option value="pompes">{t.pompes}</option>
@@ -250,13 +250,13 @@ export default function HistoryPage() {
 
               {filtered.length === 0 ? (
                 <div className="lol-panel p-8 text-center">
-                  <p style={{ color: "rgba(236,239,244,0.5)" }}>{t.noGameToDisplay}</p>
+                  <p style={{ color: "var(--faint)" }}>{t.noGameToDisplay}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto" data-visite="historique-table">
                   <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: modeColonnes === "parties" ? 760 : 660 }}>
                     <thead>
-                      <tr style={{ color: "rgba(152,162,176,0.6)" }} className="text-xs uppercase tracking-wider">
+                      <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left px-3 py-1">{t.tableDate}</th>
                         {afficherColonneJeu && <th className="text-left px-3 py-1">{t.tableJeu}</th>}
                         {modeColonnes === "parties" && (
@@ -303,7 +303,7 @@ export default function HistoryPage() {
                           return (
                             <Fragment key={g.id}>
                             <tr style={fond}>
-                              <td className="px-3 py-2" style={{ color: "rgba(236,239,244,0.6)", whiteSpace: "nowrap" }}>
+                              <td className="px-3 py-2" style={{ color: "var(--muted)", whiteSpace: "nowrap" }}>
                                 {editingDateId === g.id ? (
                                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                     <input
@@ -436,7 +436,7 @@ export default function HistoryPage() {
                                   </div>
                                 ))}
                               </td>
-                              <td className="px-3 py-2 text-right" style={{ color: "rgba(152,162,176,0.6)", whiteSpace: "nowrap" }}>
+                              <td className="px-3 py-2 text-right" style={{ color: "var(--steel)", whiteSpace: "nowrap" }}>
                                 {parts.map((part) => (
                                   <div key={part.id}>{formaterCompact(cumul[part.id] ?? 0, part.id)}</div>
                                 ))}
@@ -470,7 +470,7 @@ export default function HistoryPage() {
                             {depliee && (
                               <tr style={{ background: "rgba(152,162,176,0.05)" }}>
                                 <td colSpan={nbColonnes} className="px-3 py-2">
-                                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "rgba(236,239,244,0.6)" }}>
+                                  <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "var(--muted)" }}>
                                     {type === "temps" ? (
                                       <span>{t.detailDuree} : <span className="mono-num" style={{ color: "rgba(236,239,244,0.85)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
                                     ) : (

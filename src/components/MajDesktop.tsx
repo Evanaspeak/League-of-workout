@@ -63,7 +63,7 @@ export function MajDesktop() {
               onClick={() => setMasque(true)}
               style={{
                 background: "transparent", border: "none", cursor: "pointer",
-                fontSize: "0.78rem", color: "rgba(236,239,244,0.45)",
+                fontSize: "0.78rem", color: "var(--faint)",
               }}
             >
               {t.plusTard}

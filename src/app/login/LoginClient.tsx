@@ -177,7 +177,7 @@ export function LoginClient({
         <p style={{
           marginTop: "1.5rem",
           fontSize: "0.7rem",
-          color: "rgba(236,239,244,0.3)",
+          color: "var(--faint)",
           lineHeight: 1.7,
         }}>
           {t.mentionsAcceptation}{" "}

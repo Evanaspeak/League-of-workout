@@ -63,18 +63,18 @@ export default function AdminChampionEditor() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="gold-text text-sm font-semibold uppercase tracking-widest">{t.title}</h2>
-          <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.4)" }}>
+          <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>
             {t.subtitle}
           </p>
         </div>
         <span className="text-xs px-3 py-1 rounded" style={{
           background: "rgba(152,162,176,0.1)",
           border: "1px solid rgba(152,162,176,0.2)",
-          color: "rgba(152,162,176,0.7)",
+          color: "var(--steel)",
         }}>
           {loading ? t.loadingShort : t.championsCount(count)}
           {isDefault && !loading && (
-            <span style={{ color: "rgba(236,239,244,0.35)", marginLeft: 6 }}>{t.defaultTag}</span>
+            <span style={{ color: "var(--faint)", marginLeft: 6 }}>{t.defaultTag}</span>
           )}
         </span>
       </div>
@@ -117,7 +117,7 @@ export default function AdminChampionEditor() {
           style={{
             background: "rgba(152,162,176,0.08)",
             border: "1px solid rgba(152,162,176,0.2)",
-            color: isDefault ? "rgba(236,239,244,0.2)" : "rgba(152,162,176,0.6)",
+            color: isDefault ? "rgba(236,239,244,0.2)" : "var(--steel)",
             cursor: isDefault ? "default" : "pointer",
           }}
         >

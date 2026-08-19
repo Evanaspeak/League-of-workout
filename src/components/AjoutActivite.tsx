@@ -371,7 +371,7 @@ export function AjoutActivite({
           <div className="lol-panel p-4 space-y-3" style={{ borderColor: "rgba(152,162,176,0.22)" }}>
             <div>
               <h2 className="gold-text text-xs font-semibold uppercase tracking-widest">{t.lolSectionTitle}</h2>
-              <p className="text-xs mt-1" style={{ color: "rgba(236,239,244,0.45)" }}>{t.lolSectionDesc}</p>
+              <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.lolSectionDesc}</p>
             </div>
 
             <button className="lol-btn lol-btn-blue w-full text-sm" onClick={handleRiotFetch} disabled={riotLoading}>
@@ -402,7 +402,7 @@ export function AjoutActivite({
                 {!enModale && (
                   <button
                     onClick={() => { setShowAddForm(false); setPreview(null); setAddLogged(false); }}
-                    style={{ color: "rgba(236,239,244,0.4)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
+                    style={{ color: "var(--faint)", background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem" }}
                   ><Icone nom="croix" taille={15} /></button>
                 )}
               </div>
@@ -421,16 +421,16 @@ export function AjoutActivite({
 
               {typeJeu === "temps" ? (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{tJeux.dureeLabel}</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{tJeux.dureeLabel}</label>
                   <div className="flex items-center gap-2">
                     <input type="number" min="0" max="24" className="lol-input text-center" placeholder="2"
                       value={dureeH} onChange={(e) => { setDureeH(e.target.value); }} />
-                    <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{tJeux.heures}</span>
+                    <span className="text-sm" style={{ color: "var(--faint)" }}>{tJeux.heures}</span>
                     <input type="number" min="0" max="59" className="lol-input text-center" placeholder="30"
                       value={dureeM} onChange={(e) => { setDureeM(e.target.value); }} />
-                    <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{tJeux.minutes}</span>
+                    <span className="text-sm" style={{ color: "var(--faint)" }}>{tJeux.minutes}</span>
                   </div>
-                  <p className="text-xs mt-2" style={{ color: "rgba(236,239,244,0.4)" }}>{tJeux.sessionSousTitre}</p>
+                  <p className="text-xs mt-2" style={{ color: "var(--faint)" }}>{tJeux.sessionSousTitre}</p>
                 </div>
               ) : (
               <>
@@ -438,7 +438,7 @@ export function AjoutActivite({
               <div className={`grid gap-3 ${capacites.roles && capacites.champions ? "grid-cols-2" : "grid-cols-1"}`}>
                 {capacites.roles && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.role}</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.role}</label>
                   <select className="lol-select w-full" value={roleActif}
                     onChange={(e) => {
                       setAddForm((f) => ({ ...f, role: e.target.value }));
@@ -451,7 +451,7 @@ export function AjoutActivite({
                 )}
                 {capacites.champions && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.champion}</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.champion}</label>
                   <ChampionInput
                     value={addForm.champion}
                     onChange={(val) => setAddForm((f) => ({ ...f, champion: val }))}
@@ -463,7 +463,7 @@ export function AjoutActivite({
 
               {capacites.br && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                     {t.modeLabel}
                   </label>
                   <div className="flex gap-2">
@@ -484,7 +484,7 @@ export function AjoutActivite({
                             fontSize: "0.82rem", fontWeight: 600,
                             background: actif ? "rgba(255,180,84,0.1)" : "rgba(152,162,176,0.06)",
                             border: `1px solid ${actif ? "var(--amber)" : "rgba(152,162,176,0.2)"}`,
-                            color: actif ? "var(--amber)" : "rgba(236,239,244,0.6)",
+                            color: actif ? "var(--amber)" : "var(--muted)",
                             transition: "all 0.15s",
                           }}
                         >
@@ -502,7 +502,7 @@ export function AjoutActivite({
               {capacites.br && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="ajout-placement" className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor="ajout-placement" className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {t.placementLabel}
                     </label>
                     <div className="flex items-center gap-2">
@@ -512,13 +512,13 @@ export function AjoutActivite({
                         value={placement}
                         onChange={(e) => { setPlacement(e.target.value); }}
                       />
-                      <span className="text-sm shrink-0 mono-num" style={{ color: "rgba(236,239,244,0.5)" }}>
+                      <span className="text-sm shrink-0 mono-num" style={{ color: "var(--faint)" }}>
                         {t.placementSur} {equipesConsultees}
                       </span>
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="ajout-eliminations" className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor="ajout-eliminations" className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {t.eliminations}
                     </label>
                     <input
@@ -538,7 +538,7 @@ export function AjoutActivite({
                   ["assists", t.passes],
                 ] as const).map(([champ, libelle]) => (
                   <div key={champ}>
-                    <label htmlFor={`ajout-rl-${champ}`} className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor={`ajout-rl-${champ}`} className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {libelle}
                     </label>
                     <input
@@ -559,7 +559,7 @@ export function AjoutActivite({
               <div className="grid grid-cols-3 gap-3">
                 {(["kills", "deaths", "assists"] as const).map((field) => (
                   <div key={field}>
-                    <label htmlFor={`ajout-${field}`} className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label htmlFor={`ajout-${field}`} className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {field === "kills" ? t.kills : field === "deaths" ? t.deaths : t.assists}
                     </label>
                     <input id={`ajout-${field}`} type="number" min="0" className="lol-input text-center" value={addForm[field]}
@@ -572,14 +572,14 @@ export function AjoutActivite({
               <div className={`grid gap-3 items-end ${capacites.br ? "grid-cols-1" : "grid-cols-2"}`}>
                 {!capacites.br && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>{t.result}</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.result}</label>
                   <div className="flex gap-2">
                     {(["V", "D"] as const).map((r) => (
                       <button key={r} className="flex-1 py-2 rounded text-sm font-bold"
                         style={{
                           background: addForm.result === r ? (r === "V" ? "rgba(47,217,138,0.25)" : "rgba(255,90,71,0.25)") : "rgba(152,162,176,0.08)",
                           border: `1px solid ${addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(152,162,176,0.2)"}`,
-                          color: addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(236,239,244,0.6)",
+                          color: addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "var(--muted)",
                         }}
                         onClick={() => { setAddForm((f) => ({ ...f, result: r })); }}>
                         {r === "V" ? t.victory : t.defeat}
@@ -593,7 +593,7 @@ export function AjoutActivite({
                     multiplicateur appliqué reste lisible. */}
                 {preview && (
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+                    <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {t.niveauTitre}
                     </label>
                     <div className="text-sm gold-text">
@@ -607,7 +607,7 @@ export function AjoutActivite({
 
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
-                  <label className="block text-xs" style={{ color: "rgba(152,162,176,0.7)" }}>
+                  <label className="block text-xs" style={{ color: "var(--steel)" }}>
                     {tExo.choisirTitre}
                   </label>
                   <span
@@ -641,11 +641,11 @@ export function AjoutActivite({
                   {typeJeu === "temps" ? (
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                        <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.level}</span>
+                        <span style={{ color: "var(--muted)" }}>{t.level}</span>
                         <span className="gold-text font-bold">{preview.scoring.niveau}</span>
                       </div>
                       <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                        <span style={{ color: "rgba(236,239,244,0.6)" }}>{tJeux.dureeLabel}</span>
+                        <span style={{ color: "var(--muted)" }}>{tJeux.dureeLabel}</span>
                         <span className="gold-text font-bold mono-num">
                           {(Number(dureeH) || 0) > 0 ? `${Number(dureeH)} ${tJeux.heures} ` : ""}
                           {(Number(dureeM) || 0) > 0 ? `${Number(dureeM)} ${tJeux.minutes}` : ""}
@@ -655,20 +655,20 @@ export function AjoutActivite({
                   ) : (
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.level}</span>
+                      <span style={{ color: "var(--muted)" }}>{t.level}</span>
                       <span className="gold-text font-bold">{preview.scoring.niveau}</span>
                     </div>
                     <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.multiplier}</span>
+                      <span style={{ color: "var(--muted)" }}>{t.multiplier}</span>
                       <span className="gold-text font-bold">×{preview.scoring.multiplicateur}</span>
                     </div>
                     <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                      <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.baseScore}</span>
+                      <span style={{ color: "var(--muted)" }}>{t.baseScore}</span>
                       <span className="gold-text font-bold">{preview.scoring.scoreBase}</span>
                     </div>
                     {capacites.br ? (
                       <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                        <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.placementLabel}</span>
+                        <span style={{ color: "var(--muted)" }}>{t.placementLabel}</span>
                         <span className="gold-text font-bold mono-num">
                           {t.placementAffiche(preview.placement ?? 0, preview.joueurs ?? 0)}
                         </span>
@@ -676,11 +676,11 @@ export function AjoutActivite({
                     ) : (
                       <>
                         <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
-                          <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.defeatMalus}</span>
+                          <span style={{ color: "var(--muted)" }}>{t.defeatMalus}</span>
                           <span className={preview.scoring.malus > 0 ? "loss-text font-bold" : "gold-text font-bold"}>+{preview.scoring.malus}</span>
                         </div>
                         <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(152,162,176,0.08)" }}>
-                          <span style={{ color: "rgba(236,239,244,0.6)" }}>{t.mastery(preview.partiesAvant)}</span>
+                          <span style={{ color: "var(--muted)" }}>{t.mastery(preview.partiesAvant)}</span>
                           <span className="blue-text font-bold">+{Math.round(preview.scoring.surcharge * 100)}%</span>
                         </div>
                       </>
@@ -697,7 +697,7 @@ export function AjoutActivite({
                         return (
                           <>
                             <div className="text-4xl font-bold gold-text">{formaterCompact(seul.pts, seul.id)}</div>
-                            <div className="text-sm mt-1" style={{ color: "rgba(236,239,244,0.6)" }}>
+                            <div className="text-sm mt-1" style={{ color: "var(--muted)" }}>
                               {nomsExo[seul.id].toUpperCase()}
                             </div>
                           </>
@@ -708,7 +708,7 @@ export function AjoutActivite({
                           {parts.map((part) => (
                             <div key={part.id} className="text-2xl font-bold gold-text">
                               {formaterCompact(part.pts, part.id)}
-                              <span className="text-sm ml-2" style={{ color: "rgba(236,239,244,0.5)" }}>
+                              <span className="text-sm ml-2" style={{ color: "var(--faint)" }}>
                                 {nomsExo[part.id].toLowerCase()}
                               </span>
                             </div>
@@ -735,11 +735,11 @@ export function AjoutActivite({
             <div className="lol-panel p-6 text-center loss-text">{matchError}</div>
           ) : matches.length === 0 ? (
             <div className="lol-panel p-8 text-center">
-              <p style={{ color: "rgba(236,239,244,0.5)" }}>{t.noGameFound}</p>
+              <p style={{ color: "var(--faint)" }}>{t.noGameFound}</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-xs" style={{ color: "rgba(236,239,244,0.4)" }}>
+              <p className="text-xs" style={{ color: "var(--faint)" }}>
                 {t.last20Games}
               </p>
               {matches.map((m, i) => (
@@ -767,13 +767,13 @@ export function AjoutActivite({
                   <span className="text-sm font-mono shrink-0" style={{ color: "rgba(236,239,244,0.7)" }}>
                     {m.kills} / <span style={{ color: "#e05555" }}>{m.deaths}</span> / {m.assists}
                   </span>
-                  <span className="text-xs shrink-0" style={{ color: "rgba(236,239,244,0.35)" }}>
+                  <span className="text-xs shrink-0" style={{ color: "var(--faint)" }}>
                     {(() => { try { return new Date(m.date).toLocaleDateString(dateLocale); } catch { return m.date; } })()}
                   </span>
 
                   <div className="ml-auto flex items-center gap-3 shrink-0">
                     {m.indisponible ? (
-                      <span className="text-xs px-3 py-1 rounded" style={{ color: "rgba(236,239,244,0.35)" }}>{t.unavailable}</span>
+                      <span className="text-xs px-3 py-1 rounded" style={{ color: "var(--faint)" }}>{t.unavailable}</span>
                     ) : m.alreadyLogged ? (
                       <>
                         <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice))}</span>

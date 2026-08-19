@@ -91,13 +91,13 @@ export default function AdminSeuilDette() {
       }}>
         {t.titre}
       </h2>
-      <p style={{ fontSize: "0.8rem", color: "rgba(236,239,244,0.5)", marginBottom: 14, lineHeight: 1.6 }}>
+      <p style={{ fontSize: "0.8rem", color: "var(--faint)", marginBottom: 14, lineHeight: 1.6 }}>
         {t.description}
       </p>
 
       <div className="flex items-end gap-3 flex-wrap">
         <div>
-          <label className="block text-xs mb-1" style={{ color: "rgba(152,162,176,0.7)" }}>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
             {t.label}
           </label>
           <div className="flex items-center gap-2">
@@ -107,14 +107,14 @@ export default function AdminSeuilDette() {
               value={minutes}
               onChange={(e) => setMinutes(e.target.value)}
             />
-            <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{t.minutes}</span>
+            <span className="text-sm" style={{ color: "var(--faint)" }}>{t.minutes}</span>
             <input
               type="number" min="0" max="59"
               className="lol-input text-center" style={{ width: 84 }}
               value={secondes}
               onChange={(e) => setSecondes(e.target.value)}
             />
-            <span className="text-sm" style={{ color: "rgba(236,239,244,0.5)" }}>{t.secondes}</span>
+            <span className="text-sm" style={{ color: "var(--faint)" }}>{t.secondes}</span>
           </div>
         </div>
 
@@ -123,14 +123,14 @@ export default function AdminSeuilDette() {
         </button>
 
         {actuelSec !== null && (
-          <span className="text-xs" style={{ color: "rgba(152,162,176,0.6)" }}>
+          <span className="text-xs" style={{ color: "var(--steel)" }}>
             {t.actuel(lisible(actuelSec))}
             {seuilSec !== null && seuilSec > 0 && ` · ${t.seuilRappel(lisible(seuilSec))}`}
           </span>
         )}
       </div>
 
-      <p className="text-xs mt-3" style={{ color: "rgba(236,239,244,0.35)" }}>
+      <p className="text-xs mt-3" style={{ color: "var(--faint)" }}>
         {sansExercice ? t.sansExercice : t.desactive}
       </p>
       {msg && (

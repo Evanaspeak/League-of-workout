@@ -86,14 +86,14 @@ export function LigneRubrique({
         </span>
         <span style={{
           display: "block", fontSize: "0.76rem", lineHeight: 1.5,
-          color: "rgba(236,239,244,0.42)", marginTop: 2,
+          color: "var(--faint)", marginTop: 2,
         }}>
           {aide}
         </span>
       </span>
       {valeur && (
         <span className="mono-num" style={{
-          fontSize: "0.78rem", color: "rgba(236,239,244,0.55)",
+          fontSize: "0.78rem", color: "var(--muted)",
           whiteSpace: "nowrap", textAlign: "right",
         }}>
           {valeur}
@@ -116,7 +116,7 @@ export function EnteteRubrique({ titre, retour }: { titre: string; retour: strin
           display: "inline-flex", alignItems: "center", gap: 6,
           padding: "6px 12px 6px 8px", borderRadius: 999, cursor: "pointer",
           background: "transparent", border: "1px solid var(--line-strong)",
-          color: "rgba(236,239,244,0.65)", fontSize: "0.78rem",
+          color: "var(--muted)", fontSize: "0.78rem",
         }}
       >
         <Icone nom="chevron" taille={15} style={{ transform: "rotate(90deg)" }} />

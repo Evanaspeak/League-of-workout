@@ -103,7 +103,7 @@ export function Modale({
               flexShrink: 0, width: 28, height: 28, borderRadius: 6,
               background: "rgba(152,162,176,0.08)",
               border: "1px solid var(--line)",
-              color: "rgba(236,239,244,0.6)",
+              color: "var(--muted)",
               cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}
