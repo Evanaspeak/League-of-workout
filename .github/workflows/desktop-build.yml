@@ -37,10 +37,17 @@ jobs:
       - name: Version à publier
         id: version
         shell: bash
+        # La saisie passe par l'environnement, jamais par interpolation dans le
+        # script : interpolée, elle serait remplacée AVANT l'exécution, et des
+        # métacaractères shell deviendraient du code. Il faut déjà le droit
+        # d'écriture sur le dépôt pour déclencher ce workflow, donc l'enjeu est
+        # faible — mais c'est le motif exact de l'injection, autant ne pas
+        # l'écrire.
+        env:
+          VERSION_SAISIE: ${{ inputs.version }}
         run: |
-          saisie="${{ inputs.version }}"
           fichier="$(node -p "require('./package.json').version")"
-          echo "valeur=${saisie:-$fichier}" >> "$GITHUB_OUTPUT"
+          echo "valeur=${VERSION_SAISIE:-$fichier}" >> "$GITHUB_OUTPUT"
 
       - name: Build NSIS installer
         run: npx electron-builder --win --publish never

@@ -27,6 +27,13 @@ export async function recordAttempt(key: string, kind: "login" | "register" | "f
 }
 
 export function getClientIp(req: Request): string {
+  // Vercel écrase `x-forwarded-for` en entrée et n'y laisse pas passer d'IP
+  // externe — la valeur est donc fiable ICI, mais elle ne le serait plus
+  // derrière un autre proxy. `x-vercel-forwarded-for` est posé par la
+  // plateforme elle-même : le préférer fait que déménager un jour n'ouvre pas
+  // en silence la falsification de toutes les limites indexées sur l'adresse.
+  const vercel = req.headers.get("x-vercel-forwarded-for");
+  if (vercel) return vercel.split(",")[0].trim();
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return req.headers.get("x-real-ip") ?? "unknown";
