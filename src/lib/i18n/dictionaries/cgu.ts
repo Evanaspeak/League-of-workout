@@ -6,7 +6,7 @@ export const cgu = {
       title: "1. Présentation",
       paragraphs: [
         "Win or Workout (ci-après « l'Application ») est un service développé et exploité par Evan Tocquet, développeur indépendant (ci-après « l'Éditeur »). L'Application propose un suivi gamifié de l'activité physique : elle convertit les performances de l'utilisateur dans les jeux vidéo qu'il déclare en objectifs d'exercice, que celui-ci choisit de réaliser en pompes, en squats ou en boxe.",
-        "L'accès à l'Application est actuellement limité à une phase bêta fermée de 100 utilisateurs maximum.",
+        "L'Application est en phase bêta ouverte : la création d'un compte par Google ou Discord est libre. L'accès par pseudonyme et code d'accès reste soumis à invitation. L'Éditeur peut refuser ou révoquer un accès.",
       ],
     },
     article2: {
@@ -18,7 +18,7 @@ export const cgu = {
     article3: {
       title: "3. Accès à l'Application",
       paragraphs: [
-        "L'Application est accessible via le navigateur web et une application de bureau (Windows/Mac). L'accès est réservé aux utilisateurs invités durant la phase bêta. L'Éditeur se réserve le droit de modifier les conditions d'accès à tout moment.",
+        "L'Application est accessible via le navigateur web et, sous Windows, via une application de bureau. La création d'un compte par Google ou Discord est ouverte à tous ; l'accès par pseudonyme et code d'accès reste réservé aux personnes invitées. L'Éditeur se réserve le droit de modifier les conditions d'accès à tout moment.",
         "L'utilisation nécessite un compte créé via Google, Discord, ou un pseudonyme et un code d'accès. Un identifiant Riot Games peut être renseigné de façon facultative, en vue de la synchronisation automatique des parties de League of Legends.",
       ],
     },
@@ -72,7 +72,7 @@ export const cgu = {
       title: "1. Introduction",
       paragraphs: [
         "Win or Workout (hereinafter \"the Application\") is a service developed and operated by Evan Tocquet, an independent developer (hereinafter \"the Publisher\"). The Application provides a gamified physical activity tracker: it converts the user's performance in the video games they log into exercise targets, which the user chooses to complete as push-ups, squats or boxing.",
-        "Access to the Application is currently limited to a closed beta phase of a maximum of 100 users.",
+        "The Application is in open beta: creating an account with Google or Discord is unrestricted. Access by nickname and access code remains by invitation only. The Publisher may refuse or revoke access.",
       ],
     },
     article2: {
@@ -84,7 +84,7 @@ export const cgu = {
     article3: {
       title: "3. Access to the Application",
       paragraphs: [
-        "The Application is accessible via a web browser and a desktop application (Windows/Mac). Access is restricted to users invited during the beta phase. The Publisher reserves the right to modify the access conditions at any time.",
+        "The Application is accessible via a web browser and, on Windows, via a desktop application. Creating an account with Google or Discord is open to everyone; access by nickname and access code remains restricted to invited users. The Publisher reserves the right to modify the access conditions at any time.",
         "Use of the Application requires an account created via Google, Discord, or a nickname and access code. A Riot Games ID may optionally be provided, with a view to automatic synchronization of League of Legends matches.",
       ],
     },

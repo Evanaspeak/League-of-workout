@@ -2,14 +2,19 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-
-const PUBLIC = ["/login", "/waitlist", "/api/"];
+import { estPagePublique } from "@/lib/pagesPubliques";
 
 export function SessionGuard() {
   const path = usePathname();
 
   useEffect(() => {
-    if (PUBLIC.some((p) => path.startsWith(p))) return;
+    // La liste des pages publiques est commune au rail, à la visite, au
+    // compteur et à l'accueil. Celle qui était recopiée ici ne connaissait ni
+    // les CGU ni la politique de confidentialité : quelqu'un qui avait décoché
+    // « rester connecté » et qui ouvrait les conditions dans une nouvelle
+    // session de navigateur se faisait renvoyer vers la page de connexion, au
+    // lieu de lire le texte qu'il était venu lire.
+    if (estPagePublique(path)) return;
     if (typeof window === "undefined") return;
     if (window.electronLOL?.isDesktop) return;
 
