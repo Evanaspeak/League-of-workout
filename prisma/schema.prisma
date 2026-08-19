@@ -27,6 +27,14 @@ model User {
   // Pour les comptes "pseudo+code", le code est haché ici et email reste null.
   passwordHash  String?
 
+  // Génération de session. Les sessions sont des jetons signés : rien en base
+  // ne les représente, donc rien ne pouvait les révoquer. Réinitialiser le mot
+  // de passe d'un compte compromis ne mettait personne dehors — le jeton de
+  // l'intrus restait bon trente jours. Incrémenter ce compteur périme d'un coup
+  // tous les jetons émis avant, et `getCurrentUser()` le vérifie à chaque appel
+  // puisqu'il relit déjà la ligne.
+  sessionEpoch  Int     @default(0)
+
   // Infos physiques optionnelles (remplies à l'inscription si l'utilisateur veut).
   genre              String?
   age                Int?

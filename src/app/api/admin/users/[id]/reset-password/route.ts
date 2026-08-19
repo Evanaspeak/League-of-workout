@@ -28,8 +28,14 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   const newPassword = generatePassword();
   const hash = await bcrypt.hash(newPassword, 12);
+  // Réinitialiser sans périmer les sessions ne sécurisait rien : un intrus qui
+  // détenait déjà un jeton le gardait bon trente jours, et l'administrateur
+  // croyait le compte repris en main.
 
-  await prisma.user.update({ where: { id }, data: { passwordHash: hash } });
+  await prisma.user.update({
+    where: { id },
+    data: { passwordHash: hash, sessionEpoch: { increment: 1 } },
+  });
 
   return NextResponse.json({ password: newPassword });
 }

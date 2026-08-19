@@ -4,7 +4,9 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
-import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
+import { estAdmin } from "@/lib/admin";
+import { normaliserEmail } from "@/lib/identite";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -16,33 +18,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email ou pseudo", type: "text" },
         password: { label: "Mot de passe ou code", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
         const identifier = (credentials.email as string).trim();
         const secret = credentials.password as string;
 
-        // Verrouillage par identifiant (pas par IP, pour éviter le
-        // contournement via botnet distribué) : 5 échecs / 15 min.
-        if (await isRateLimited(identifier.toLowerCase(), "login")) return null;
+        // Le verrou porte sur l'identifiant ET l'adresse d'où vient la
+        // tentative. Sur l'identifiant seul, il protégeait du botnet distribué
+        // mais donnait à n'importe qui le moyen de fermer le compte d'un
+        // autre : cinq mots de passe faux, et le propriétaire légitime se
+        // heurtait au même refus que l'attaquant. Les deux réunis, chacun ne
+        // consomme que son propre budget.
+        const cle = `${identifier.toLowerCase()}|${getClientIp(req as unknown as Request)}`;
+        if (await isRateLimited(cle, "login")) return null;
 
-        // Un "@" => email (unique). Sinon => pseudo (compte pseudo+code),
-        // recherche insensible à la casse parmi les comptes avec un code/mdp.
+        // Un "@" => email. La recherche vise la forme canonique, celle que
+        // l'inscription écrit désormais : chercher la casse tapée retrouverait
+        // les lignes en casse mixte que l'ancienne inscription a pu laisser.
+        const email = identifier.includes("@") ? normaliserEmail(identifier) : null;
         const user = identifier.includes("@")
-          ? await prisma.user.findUnique({ where: { email: identifier } })
+          ? (email ? await prisma.user.findUnique({ where: { email } }) : null)
           : await prisma.user.findFirst({
               where: {
                 pseudo: { equals: identifier, mode: "insensitive" },
                 passwordHash: { not: null },
               },
+              // Des pseudos en double existent en base. Sans ordre explicite,
+              // c'est le plan d'exécution qui décide lequel répond — donc un
+              // tirage au sort à chaque connexion. Le plus ancien gagne.
+              orderBy: { createdAt: "asc" },
             });
 
         if (!user?.passwordHash) {
-          await recordAttempt(identifier.toLowerCase(), "login");
+          await recordAttempt(cle, "login");
           return null;
         }
         const valid = await bcrypt.compare(secret, user.passwordHash);
         if (!valid) {
-          await recordAttempt(identifier.toLowerCase(), "login");
+          await recordAttempt(cle, "login");
           return null;
         }
         return user;
@@ -63,12 +76,49 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (!account) return true;
-      if (account.type === "credentials") return true;
 
+      // La porte de la bêta s'appliquait au seul OAuth : le mot de passe, qui
+      // est le chemin que tout le monde emprunte, la contournait entièrement.
+      // Un compte créé par la route publique d'inscription entrait donc sans
+      // invitation, sans liste blanche et sans candidature acceptée.
       const email = user.email?.toLowerCase() ?? "";
 
       // Admin toujours autorisé
-      if (email === "evantocquet@gmail.com") return true;
+      if (estAdmin(email)) return true;
+
+      // Un compte pseudo+code n'a pas d'adresse : il vient forcément de la
+      // route d'accès bêta, qui est elle-même la porte d'entrée officielle.
+      if (account.type === "credentials" && !email) return true;
+
+      // Une connexion OAuth ne prend pas la main sur un compte qui a déjà un
+      // mot de passe et qui n'est pas encore relié à ce fournisseur.
+      //
+      // La liaison automatique par e-mail suppose que le fournisseur a vérifié
+      // l'adresse — c'est vrai, et ça protège d'une revendication OAuth
+      // mensongère. Mais elle ne dit rien de la ligne locale : n'importe qui
+      // pouvait l'avoir créée avant l'invité, mot de passe compris, et
+      // récupérait ainsi son compte au moment où il se connectait pour la
+      // première fois. On refuse, et on lui dit par où passer.
+      if (account.type === "oauth" || account.type === "oidc") {
+        try {
+          const local = email
+            ? await prisma.user.findUnique({
+                where: { email },
+                select: { id: true, passwordHash: true },
+              })
+            : null;
+          if (local?.passwordHash) {
+            const dejaRelie = await prisma.account.findFirst({
+              where: { userId: local.id, provider: account.provider },
+              select: { id: true },
+            });
+            if (!dejaRelie) return "/login?error=CompteExistant";
+          }
+        } catch (err) {
+          console.error("[auth] verification de liaison:", err);
+          return "/login?error=AccessDenied";
+        }
+      }
 
       try {
         // 1. Vérifier la liste blanche manuelle (email Google ≠ email candidature)
@@ -101,13 +151,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async jwt({ token, user }) {
-      if (user?.id) token.uid = user.id;
+      if (user?.id) {
+        token.uid = user.id;
+        // Une lecture par connexion, pas par requête : on grave la génération
+        // en cours dans le jeton, et c'est `getCurrentUser()` qui la comparera
+        // ensuite — il relit déjà la ligne, donc ça ne coûte rien de plus.
+        try {
+          const ligne = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { sessionEpoch: true },
+          });
+          token.epoch = ligne?.sessionEpoch ?? 0;
+        } catch {
+          token.epoch = 0;
+        }
+      }
       return token;
     },
 
     async session({ session, token }) {
       if (session.user && token.uid) {
         session.user.id = token.uid as string;
+        session.user.epoch = typeof token.epoch === "number" ? token.epoch : 0;
       }
       return session;
     },

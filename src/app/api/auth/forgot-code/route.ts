@@ -43,7 +43,13 @@ export async function POST(request: Request) {
     if (user && user.passwordHash) {
       const newCode = generateCode();
       const hash = await bcrypt.hash(newCode, 12);
-      await prisma.user.update({ where: { id: user.id }, data: { passwordHash: hash } });
+      // Le nouveau code périme les sessions ouvertes avec l'ancien. Sans
+      // ça, l'e-mail annonçait que le précédent ne marchait plus alors que
+      // quiconque était déjà entré y restait un mois.
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: hash, sessionEpoch: { increment: 1 } },
+      });
       await sendCodeReset(email, user.pseudo, newCode);
     }
 
