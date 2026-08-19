@@ -8,7 +8,14 @@ const MAX_ATTEMPTS = 5;
  * compteur en mémoire qui se réinitialise à chaque cold start).
  * Purge les tentatives expirées à chaque appel pour garder la table petite.
  */
-export async function isRateLimited(key: string, kind: "login" | "register" | "forgot-code"): Promise<boolean> {
+/**
+ * Nature de la tentative comptée. Nommée plutôt que répétée : les deux
+ * fonctions doivent accepter exactement le même jeu de valeurs, et une liste
+ * recopiée finit toujours par diverger.
+ */
+export type NatureTentative = "login" | "register" | "forgot-code" | "push-test";
+
+export async function isRateLimited(key: string, kind: NatureTentative): Promise<boolean> {
   const windowStart = new Date(Date.now() - WINDOW_MS);
 
   await prisma.loginAttempt.deleteMany({
@@ -22,7 +29,7 @@ export async function isRateLimited(key: string, kind: "login" | "register" | "f
   return count >= MAX_ATTEMPTS;
 }
 
-export async function recordAttempt(key: string, kind: "login" | "register" | "forgot-code"): Promise<void> {
+export async function recordAttempt(key: string, kind: NatureTentative): Promise<void> {
   await prisma.loginAttempt.create({ data: { key, kind } }).catch(() => {});
 }
 
