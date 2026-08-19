@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // Certains champions ont un ID Data Dragon différent de leur nom affiché.
 const CHAMPION_MAP: Record<string, string> = {
@@ -30,19 +30,20 @@ function toKey(name: string): string {
   return CHAMPION_MAP[name] ?? name.replace(/['\s.&]/g, "");
 }
 
-// Cache module-level : une seule requête par session navigateur.
-let _version: string | null = null;
-async function getVersion(): Promise<string> {
-  if (_version) return _version;
-  try {
-    const r = await fetch("https://ddragon.leagueoflegends.com/api/versions.json");
-    const v: string[] = await r.json();
-    _version = v[0];
-    return _version;
-  } catch {
-    return "14.24.1";
-  }
-}
+/**
+ * Version de Data Dragon, figée au build.
+ *
+ * Le composant demandait la liste des versions à Riot au montage, une fois par
+ * session de navigateur. C'était une requête réseau bloquante avant la
+ * première icône, chez un tiers, sur un chemin critique de la page — et si
+ * Riot répondait lentement, aucune icône ne s'affichait pendant ce temps.
+ * Les icônes de champions ne changent pas d'un patch à l'autre : la version
+ * n'a pas besoin d'être fraîche, elle a besoin d'exister.
+ *
+ * `NEXT_PUBLIC_DDRAGON_VERSION` permet de la relever sans toucher au code —
+ * elle est compilée au build, donc un redéploiement suffit.
+ */
+const DDRAGON_VERSION = process.env.NEXT_PUBLIC_DDRAGON_VERSION || "16.16.1";
 
 interface Props {
   name: string | null | undefined;
@@ -50,19 +51,17 @@ interface Props {
 }
 
 export function ChampionIcon({ name, size = 38 }: Props) {
-  const [src, setSrc] = useState<string | null>(null);
   // On retient le champion dont l'image a échoué, plutôt qu'un simple drapeau
   // à remettre à zéro : changer de champion suffit alors à repartir de zéro,
   // sans écrire dans un effet.
   const [echouePour, setEchouePour] = useState<string | null>(null);
   const failed = echouePour === name;
 
-  useEffect(() => {
-    if (!name) return;
-    getVersion().then((v) => {
-      setSrc(`https://ddragon.leagueoflegends.com/cdn/${v}/img/champion/${toKey(name)}.png`);
-    });
-  }, [name]);
+  // La source ne dépend plus que du nom : elle se calcule au rendu, sans
+  // effet ni second rendu pour rien.
+  const src = name
+    ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${toKey(name)}.png`
+    : null;
 
   const r = Math.round(size * 0.13);
 

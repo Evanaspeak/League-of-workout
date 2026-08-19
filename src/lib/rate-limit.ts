@@ -13,10 +13,32 @@ const MAX_ATTEMPTS = 5;
  * fonctions doivent accepter exactement le même jeu de valeurs, et une liste
  * recopiée finit toujours par diverger.
  */
-export type NatureTentative = "login" | "register" | "forgot-code" | "push-test";
+export type NatureTentative =
+  | "login" | "register" | "forgot-code" | "push-test"
+  | "game-write";
+
+/**
+ * Budget d'une nature de tentative.
+ *
+ * Cinq essais par quart d'heure convient à un mot de passe ; appliqué à une
+ * route que l'application appelle en usage normal, c'est une panne. Le budget
+ * vit donc avec la nature plutôt qu'en constante unique, et chaque route dit
+ * ce qu'un usage réel consomme.
+ */
+const BUDGETS: Partial<Record<NatureTentative, { max: number; fenetreMs: number }>> = {
+  // Enregistrer une partie est un geste humain : une soirée intense en produit
+  // une dizaine. Soixante laisse toute la marge d'un usage normal et arrête
+  // net une boucle qui écrirait sans fin.
+  "game-write": { max: 60, fenetreMs: WINDOW_MS },
+};
+
+function budget(kind: NatureTentative) {
+  return BUDGETS[kind] ?? { max: MAX_ATTEMPTS, fenetreMs: WINDOW_MS };
+}
 
 export async function isRateLimited(key: string, kind: NatureTentative): Promise<boolean> {
-  const windowStart = new Date(Date.now() - WINDOW_MS);
+  const { max, fenetreMs } = budget(kind);
+  const windowStart = new Date(Date.now() - fenetreMs);
 
   await prisma.loginAttempt.deleteMany({
     where: { key, kind, createdAt: { lt: windowStart } },
@@ -26,7 +48,7 @@ export async function isRateLimited(key: string, kind: NatureTentative): Promise
     where: { key, kind, createdAt: { gte: windowStart } },
   });
 
-  return count >= MAX_ATTEMPTS;
+  return count >= max;
 }
 
 export async function recordAttempt(key: string, kind: NatureTentative): Promise<void> {

@@ -10,6 +10,8 @@ import {
   dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
+import { analyserDatePartie } from "@/lib/dates";
+import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -27,6 +29,26 @@ export async function POST(req: Request) {
 
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  // Écrire une partie coûte plusieurs requêtes en base. La route était sans
+  // limite : un script authentifié pouvait la marteler jusqu'à épuiser le
+  // quota de la base pour tout le monde. Le verrou porte sur le compte, avec
+  // un budget très au-dessus de ce qu'une soirée de jeu consomme.
+  if (await isRateLimited(user.id, "game-write")) {
+    return NextResponse.json(
+      { error: "Trop de parties enregistrées d'affilée. Réessaie dans quelques minutes." },
+      { status: 429 },
+    );
+  }
+  await recordAttempt(user.id, "game-write");
+
+  // Une partie se joue avant d'être enregistrée.
+  let dateSaisie: Date | null = null;
+  if (body.date != null) {
+    const analyse = analyserDatePartie(body.date);
+    if (!analyse.ok) return NextResponse.json({ error: analyse.erreur }, { status: 400 });
+    dateSaisie = analyse.date;
+  }
 
   const jeu = normaliserNomJeu(body.jeu);
   const typeJeu = typeDuJeu(jeu, body.typeJeu);
@@ -118,7 +140,7 @@ export async function POST(req: Request) {
         dureeSec,
         source: body.source || "manuel",
         riotMatchId: null,
-        ...(body.date ? { date: new Date(body.date) } : {}),
+        ...(dateSaisie ? { date: dateSaisie } : {}),
       },
     });
 

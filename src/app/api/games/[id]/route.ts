@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { parseRepartition, pointsEnTemps } from "@/lib/exercices";
+import { analyserDatePartie } from "@/lib/dates";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,9 +10,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   const body = await req.json();
   if (!body.date) return NextResponse.json({ error: "Date manquante" }, { status: 400 });
+  // Corriger la date d'une partie ne doit pas permettre de la déplacer dans le
+  // futur : la borne vaut ici comme à la création.
+  const analyse = analyserDatePartie(body.date);
+  if (!analyse.ok) return NextResponse.json({ error: analyse.erreur }, { status: 400 });
   const result = await prisma.game.updateMany({
     where: { id, userId: user.id },
-    data: { date: new Date(body.date) },
+    data: { date: analyse.date },
   });
   if (result.count === 0) return NextResponse.json({ error: "Game introuvable" }, { status: 404 });
   return NextResponse.json({ ok: true });

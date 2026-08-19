@@ -46,6 +46,16 @@ const ROLES_FILTER = ["Tous", "Top", "Jungle", "Mid", "ADC", "Support", "ARAM", 
  * Cellule de résultat. Une session au temps n'a ni victoire ni défaite : sans
  * ce cas neutre, elle s'affichait « Défaite » en rouge, ce qui est faux.
  */
+/**
+ * L'instant présent au format attendu par `datetime-local`, en heure locale.
+ * `toISOString()` donnerait de l'UTC : le sélecteur plafonnerait alors une ou
+ * deux heures à côté selon le fuseau.
+ */
+function maintenantLocal(): string {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 function ResultatCell({ result, t }: { result: string; t: { victory: string; defeat: string; sessionLibelle: string } }) {
   if (result === "V") return <span className="win-text">{t.victory}</span>;
   if (result === "D") return <span className="loss-text">{t.defeat}</span>;
@@ -314,6 +324,10 @@ export default function HistoryPage() {
                                     <input
                                       type="datetime-local"
                                       className="lol-input"
+                                      // Le serveur refuse une date future ; le
+                                      // sélecteur la refuse aussi, pour ne pas
+                                      // laisser saisir ce qui sera rejeté.
+                                      max={maintenantLocal()}
                                       style={{ fontSize: "0.75rem", padding: "2px 6px" }}
                                       value={editDateVal}
                                       onChange={(e) => setEditDateVal(e.target.value)}
