@@ -579,7 +579,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <p className="eyebrow" style={{ marginBottom: 18 }}>{t.howEyebrow}</p>
           <h2 style={{ ...h2, marginBottom: 48 }}>{t.howTitle}</h2>
           <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 20,
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: 20,
           }}>
             {t.steps.map((step, i) => (
               <div key={step.num} className="reveal" style={{
@@ -656,7 +656,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           <p className="eyebrow" style={{ marginBottom: 18 }}>{t.featuresEyebrow}</p>
           <h2 style={{ ...h2, marginBottom: 48 }}>{t.featuresTitle}</h2>
           <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14,
+            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 14,
           }}>
             {t.features.map((f, i) => (
               <div key={f.title} className="reveal" style={{
