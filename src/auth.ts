@@ -77,10 +77,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (!account) return true;
 
-      // La porte de la bêta s'appliquait au seul OAuth : le mot de passe, qui
-      // est le chemin que tout le monde emprunte, la contournait entièrement.
-      // Un compte créé par la route publique d'inscription entrait donc sans
-      // invitation, sans liste blanche et sans candidature acceptée.
+      // Deux régimes, depuis l'ouverture de la bêta :
+      //   — Google et Discord entrent librement ;
+      //   — le mot de passe reste sur invitation, liste blanche ou candidature
+      //     acceptée. Cette porte-là ne s'appliquait autrefois qu'à l'OAuth,
+      //     et le mot de passe — le chemin que tout le monde emprunte — la
+      //     contournait entièrement.
       const email = user.email?.toLowerCase() ?? "";
 
       // Admin toujours autorisé
@@ -114,12 +116,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             });
             if (!dejaRelie) return "/login?error=CompteExistant";
           }
+
+          // Bêta ouverte : arriver par Google ou Discord suffit, plus besoin
+          // d'attendre qu'une candidature soit acceptée. Le contrôle ci-dessus
+          // reste, lui : il ne parle pas d'invitation mais de reprise de
+          // compte, et rien dans l'ouverture de la bêta ne le rend inutile.
+          //
+          // Un refus explicite continue de valoir refus — c'est désormais le
+          // seul moyen d'écarter quelqu'un.
+          const refus = await prisma.betaApplication.findUnique({
+            where: { email },
+            select: { status: true },
+          });
+          if (refus?.status === "rejected") return "/login?error=BetaRejected";
+          return true;
         } catch (err) {
           console.error("[auth] verification de liaison:", err);
           return "/login?error=AccessDenied";
         }
       }
 
+      // À partir d'ici : uniquement les comptes à mot de passe. Google et
+      // Discord sont sortis plus haut, la bêta leur étant ouverte.
       try {
         // 1. Vérifier la liste blanche manuelle (email Google ≠ email candidature)
         const whitelist = await prisma.systemConfig.findUnique({

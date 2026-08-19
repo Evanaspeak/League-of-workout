@@ -301,6 +301,17 @@ export default function SettingsPage() {
             />
           ))}
         </div>
+
+        {/* La déconnexion reste sur ce premier écran, sous la liste. Rangée
+            dans « Données », il fallait deviner derrière quelle rubrique elle
+            se cachait pour quitter son compte. Elle n'entre pas dans la liste
+            elle-même : les lignes portent un chevron et mènent quelque part,
+            alors que celle-ci agit tout de suite. */}
+        <form action={logout}>
+          <button type="submit" className="lol-btn lol-btn-danger w-full">
+            {t.seDeconnecter}
+          </button>
+        </form>
       </div>
     );
   }
@@ -661,8 +672,9 @@ export default function SettingsPage() {
 
       {/* ── Compte et données ──────────────────────────────────────────── */}
       {/* Portabilité des données : un droit, et deux lignes de code. La
-          déconnexion les rejoint : elle concerne le compte, pas un réglage, et
-          traînait au milieu de la page. */}
+          déconnexion, elle, est remontée sur la liste des rubriques : rangée
+          ici, il fallait deviner qu'elle se trouvait derrière « Données »
+          pour pouvoir quitter son compte. */}
       {rubrique === "donnees" && (<>
       <div className="lol-panel p-5 space-y-3">
         <p style={{ fontSize: "0.8rem", color: "var(--faint)", lineHeight: 1.6 }}>
@@ -676,12 +688,6 @@ export default function SettingsPage() {
         >
           {t.exportBouton}
         </a>
-
-        <form action={logout} style={{ borderTop: "1px solid var(--line)", paddingTop: 14, marginTop: 14 }}>
-          <button type="submit" className="lol-btn lol-btn-danger w-full">
-            {t.seDeconnecter}
-          </button>
-        </form>
       </div>
 
       <div style={{
