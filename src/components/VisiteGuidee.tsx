@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { visite as dict } from "@/lib/i18n/dictionaries/visite";
 import { estPagePublique } from "@/lib/pagesPubliques";
@@ -11,14 +11,22 @@ import { Icone } from "@/components/Icone";
  *
  * La modale d'accueil explique ce que fait le produit ; elle ne dit pas OÙ sont
  * les choses. On arrivait donc sur un tableau de bord complet sans savoir par
- * quoi commencer — et la fonction la plus utile, le rail, est justement celle
- * qu'on ne remarque pas.
+ * quoi commencer — et le rail, la fonction la plus utile au quotidien, est
+ * justement celle qu'on ne remarque pas.
  *
- * La visite éclaire les vrais éléments de l'écran, un par un. Elle ne décrit
- * pas une capture : elle pointe ce qui est réellement là, donc elle ne peut pas
- * se désynchroniser de l'interface. Les ancres sont posées par un attribut
- * `data-visite` sur les éléments concernés ; une ancre absente fait sauter
- * l'étape plutôt que casser la visite.
+ * La visite éclaire les vrais éléments de l'écran et traverse les trois pages
+ * de l'application. Elle pointe ce qui est réellement là, pas une capture :
+ * elle ne peut donc pas se désynchroniser de l'interface. Les ancres sont des
+ * attributs `data-visite` ; une ancre introuvable fait sauter l'étape plutôt
+ * que casser la visite.
+ *
+ * ── Sur la fluidité ──
+ * Le piège, quand on enchaîne les étapes, est de tout retirer de l'écran le
+ * temps de mesurer la suivante : on obtient un clignotement à chaque clic. Ici
+ * le halo et la bulle restent affichés sur l'ancienne position et se déplacent
+ * vers la nouvelle par une transition — l'écran ne se vide jamais. C'est le
+ * cadre affiché, et non l'étape visée, qui décide de ce qu'on lit : les deux
+ * changent donc ensemble, d'un seul mouvement.
  */
 
 const CLE_VUE = "low_visite";
@@ -26,13 +34,17 @@ const CLE_VUE = "low_visite";
 /** Marge autour de l'élément éclairé, en pixels. */
 const MARGE = 8;
 /** Au-delà, on considère que l'ancre ne viendra pas. */
-const ATTENTE_MAX_MS = 4000;
+const ATTENTE_MAX_MS = 5000;
+/** Durée pendant laquelle on suit l'élément, le temps que le défilement finisse. */
+const SUIVI_MS = 700;
 
 type Etape = {
   /** Valeur de `data-visite` à éclairer. */
   cle: string;
   titre: string;
   texte: string;
+  /** Page où vit l'ancre. La visite s'y rend d'elle-même. */
+  chemin?: string;
   /**
    * Ancre de remplacement sur écran étroit, où le rail est replié derrière son
    * bouton et où ses actions n'ont aucune surface à l'écran.
@@ -40,42 +52,48 @@ type Etape = {
   cleEtroite?: string;
 };
 
-function estVisible(el: Element): boolean {
+type Cadre = { i: number; left: number; top: number; width: number; height: number };
+
+function mesurer(el: Element): Omit<Cadre, "i"> | null {
   const r = el.getBoundingClientRect();
-  if (r.width === 0 || r.height === 0) return false;
+  if (r.width === 0 || r.height === 0) return null;
   // Un élément replié hors du cadre a bien une taille, mais aucune surface
   // utile : l'éclairer désignerait le vide.
-  return r.right > 0 && r.left < window.innerWidth
-    && r.bottom > 0 && r.top < window.innerHeight + r.height;
+  const dansLEcran = r.right > 0 && r.left < window.innerWidth
+    && r.bottom > -r.height && r.top < window.innerHeight + r.height;
+  if (!dansLEcran) return null;
+  return { left: r.left, top: r.top, width: r.width, height: r.height };
 }
 
 export function VisiteGuidee() {
   const t = useT(dict);
   const chemin = usePathname();
+  const routeur = useRouter();
 
   const ETAPES: Etape[] = [
-    { cle: "rail", cleEtroite: "rail-bascule", titre: t.railTitre, texte: t.railTexte },
+    { cle: "rail", cleEtroite: "rail-bascule", chemin: "/dashboard", titre: t.railTitre, texte: t.railTexte },
     { cle: "rail-session", cleEtroite: "rail-bascule", titre: t.sessionTitre, texte: t.sessionTexte },
     { cle: "rail-ajout", cleEtroite: "rail-bascule", titre: t.ajoutTitre, texte: t.ajoutTexte },
     { cle: "dette", cleEtroite: "rail-bascule", titre: t.detteTitre, texte: t.detteTexte },
     { cle: "stats", titre: t.statsTitre, texte: t.statsTexte },
-    { cle: "nav-history", titre: t.historiqueTitre, texte: t.historiqueTexte },
-    { cle: "nav-settings", titre: t.reglagesTitre, texte: t.reglagesTexte },
+    { cle: "graphique", titre: t.graphiqueTitre, texte: t.graphiqueTexte },
+    { cle: "nav-history", titre: t.navHistoriqueTitre, texte: t.navHistoriqueTexte },
+    { cle: "historique-table", chemin: "/history", titre: t.historiqueTitre, texte: t.historiqueTexte },
+    { cle: "nav-settings", titre: t.navReglagesTitre, texte: t.navReglagesTexte },
+    { cle: "rubrique-effort", chemin: "/settings", titre: t.reglagesEffortTitre, texte: t.reglagesEffortTexte },
+    { cle: "rubrique-jeux", titre: t.reglagesJeuxTitre, texte: t.reglagesJeuxTexte },
+    { cle: "rubrique-profil", titre: t.finTitre, texte: t.finTexte },
   ];
 
   const [active, setActive] = useState(false);
-  const [index, setIndex] = useState(0);
+  const [cible, setCible] = useState(0);
   /**
-   * Le cadre porte l'étape à laquelle il appartient. C'est ce qui évite de
-   * l'effacer à chaque changement d'étape : un cadre périmé se reconnaît à son
-   * indice, plutôt que de demander une remise à zéro depuis l'effet — laquelle
-   * imposerait un rendu supplémentaire.
+   * Cadre RÉELLEMENT affiché. Il porte son étape : tant que la suivante n'est
+   * pas mesurée, c'est l'ancienne qu'on continue de voir, et rien ne clignote.
    */
-  const [cadre, setCadre] = useState<{ i: number; rect: DOMRect } | null>(null);
-  const indexRef = useRef(0);
+  const [cadre, setCadre] = useState<Cadre | null>(null);
+  const cibleRef = useRef(0);
 
-  // Ne démarre qu'une fois la modale d'accueil passée : les deux en même temps
-  // feraient deux couches d'explication superposées.
   useEffect(() => {
     if (estPagePublique(chemin)) return;
     if (localStorage.getItem(CLE_VUE)) return;
@@ -87,81 +105,101 @@ export function VisiteGuidee() {
   const cloturer = useCallback(() => {
     localStorage.setItem(CLE_VUE, "1");
     setActive(false);
+    setCadre(null);
   }, []);
 
   /**
-   * Vise l'ancre de l'étape courante, en laissant à la page le temps de la
-   * poser : le tableau de bord charge ses données, et le rail n'existe pas
-   * encore à la première image.
-   *
-   * Tout part d'un minuteur, y compris la première recherche : rien ne doit
-   * poser d'état dans la foulée du rendu, ce qui imposerait un rendu de plus à
-   * chaque étape.
+   * Vise l'ancre de l'étape courante : va sur sa page s'il le faut, attend
+   * qu'elle apparaisse, l'amène à l'écran, puis la suit le temps que le
+   * défilement se termine — sans quoi le halo se poserait là où l'élément
+   * était et non là où il arrive.
    */
   useEffect(() => {
-    const i = index;
+    const i = cible;
     const etape = ETAPES[i];
     if (!active || !etape) return;
-    indexRef.current = i;
+    cibleRef.current = i;
 
     const etroit = window.innerWidth < 900;
     const cles = etroit && etape.cleEtroite ? [etape.cleEtroite, etape.cle] : [etape.cle];
     const debut = Date.now();
     let annule = false;
     let minuteur: ReturnType<typeof setTimeout>;
+    let image = 0;
 
-    const chercher = () => {
-      if (annule || indexRef.current !== i) return;
+    const trouver = () => {
       for (const cle of cles) {
         const el = document.querySelector(`[data-visite="${cle}"]`);
-        if (el && estVisible(el)) {
-          el.scrollIntoView({ block: "center", behavior: "smooth" });
-          // La mesure attend la fin du défilement, sinon le halo se pose là où
-          // l'élément était.
-          minuteur = setTimeout(() => {
-            if (!annule && indexRef.current === i) setCadre({ i, rect: el.getBoundingClientRect() });
-          }, 320);
-          return;
+        if (el) {
+          const m = mesurer(el);
+          if (m) return { el, m };
         }
+      }
+      return null;
+    };
+
+    /** Recolle le halo sur l'élément à chaque image, le temps du défilement. */
+    const suivre = (el: Element, jusqua: number) => {
+      if (annule || cibleRef.current !== i) return;
+      const m = mesurer(el);
+      if (m) setCadre({ i, ...m });
+      if (Date.now() < jusqua) image = requestAnimationFrame(() => suivre(el, jusqua));
+    };
+
+    const chercher = () => {
+      if (annule || cibleRef.current !== i) return;
+      const trouve = trouver();
+      if (trouve) {
+        trouve.el.scrollIntoView({ block: "center", behavior: "smooth" });
+        suivre(trouve.el, Date.now() + SUIVI_MS);
+        return;
       }
       if (Date.now() - debut > ATTENTE_MAX_MS) {
         // Ancre introuvable : l'étape n'a rien à montrer, on passe — et si
         // c'était la dernière, la visite s'achève.
         if (i + 1 >= ETAPES.length) cloturer();
-        else setIndex((n) => (n === i ? i + 1 : n));
+        else setCible((n) => (n === i ? i + 1 : n));
         return;
       }
-      minuteur = setTimeout(chercher, 120);
+      minuteur = setTimeout(chercher, 100);
     };
 
+    // Le changement de page part d'ici : l'ancre n'existera qu'après.
+    if (etape.chemin && chemin !== etape.chemin) routeur.push(etape.chemin);
+    // Tout passe par un minuteur, y compris la première recherche : rien ne
+    // doit poser d'état dans la foulée du rendu.
     minuteur = setTimeout(chercher, 0);
-    return () => { annule = true; clearTimeout(minuteur); };
+
+    return () => {
+      annule = true;
+      clearTimeout(minuteur);
+      cancelAnimationFrame(image);
+    };
     // Les étapes sont reconstruites à chaque rendu (les libellés viennent des
     // traductions) mais leur contenu ne change pas d'un rendu à l'autre.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, index, cloturer]);
+  }, [active, cible, chemin, cloturer, routeur]);
 
   // L'élément éclairé bouge avec la page : on resuit sa position.
   useEffect(() => {
     if (!active) return;
-    const suivre = () => {
-      const etape = ETAPES[indexRef.current];
+    const resuivre = () => {
+      const i = cibleRef.current;
+      const etape = ETAPES[i];
       if (!etape) return;
       const etroit = window.innerWidth < 900;
       const cles = etroit && etape.cleEtroite ? [etape.cleEtroite, etape.cle] : [etape.cle];
       for (const cle of cles) {
         const el = document.querySelector(`[data-visite="${cle}"]`);
-        if (el && estVisible(el)) {
-          setCadre({ i: indexRef.current, rect: el.getBoundingClientRect() });
-          return;
-        }
+        const m = el && mesurer(el);
+        if (m) { setCadre({ i, ...m }); return; }
       }
     };
-    window.addEventListener("resize", suivre);
-    window.addEventListener("scroll", suivre, true);
+    window.addEventListener("resize", resuivre);
+    window.addEventListener("scroll", resuivre, true);
     return () => {
-      window.removeEventListener("resize", suivre);
-      window.removeEventListener("scroll", suivre, true);
+      window.removeEventListener("resize", resuivre);
+      window.removeEventListener("scroll", resuivre, true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
@@ -174,34 +212,38 @@ export function VisiteGuidee() {
     return () => window.removeEventListener("keydown", surTouche);
   }, [active, cloturer]);
 
-  // Un cadre mesuré pour une autre étape ne vaut plus rien.
-  const rect = cadre && cadre.i === index ? cadre.rect : null;
-  const etape = ETAPES[index];
-  if (!active || !rect || !etape) return null;
+  // Ce qu'on LIT suit ce qu'on VOIT : l'étape affichée est celle du cadre en
+  // place, pas celle qu'on est en train de rejoindre.
+  const etape = cadre ? ETAPES[cadre.i] : null;
+  if (!active || !cadre || !etape) return null;
+
+  const affiche = cadre.i;
+  const dernier = affiche === ETAPES.length - 1;
 
   const trou = {
-    left: Math.max(4, rect.left - MARGE),
-    top: Math.max(4, rect.top - MARGE),
-    width: rect.width + MARGE * 2,
-    height: rect.height + MARGE * 2,
+    left: Math.max(4, cadre.left - MARGE),
+    top: Math.max(4, cadre.top - MARGE),
+    width: cadre.width + MARGE * 2,
+    height: cadre.height + MARGE * 2,
   };
 
   // La bulle se place sous le halo s'il reste de la place, au-dessus sinon.
-  const LARGEUR_BULLE = 330;
-  const dessous = trou.top + trou.height + 260 < window.innerHeight;
+  const LARGEUR_BULLE = 340;
+  const dessous = trou.top + trou.height + 300 < window.innerHeight;
   const bulleTop = dessous ? trou.top + trou.height + 14 : undefined;
-  const bulleBottom = dessous ? undefined : window.innerHeight - trou.top + 14;
+  const bulleBottom = dessous ? undefined : Math.max(12, window.innerHeight - trou.top + 14);
   const bulleLeft = Math.min(
     Math.max(12, trou.left + trou.width / 2 - LARGEUR_BULLE / 2),
     Math.max(12, window.innerWidth - LARGEUR_BULLE - 12),
   );
 
-  const dernier = index === ETAPES.length - 1;
+  const glisse = "0.42s cubic-bezier(0.22, 1, 0.36, 1)";
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9800 }} role="dialog" aria-modal="true">
-      {/* Le halo : un rectangle transparent dont l'ombre porte assombrit tout le
-          reste. Un seul élément, pas quatre volets à faire coïncider. */}
+      {/* Le halo : un rectangle transparent dont l'ombre portée assombrit tout
+          le reste. Un seul élément, pas quatre volets à faire coïncider — et
+          donc une seule chose à animer. */}
       <div
         aria-hidden
         style={{
@@ -209,9 +251,9 @@ export function VisiteGuidee() {
           ...trou,
           borderRadius: 12,
           border: "1px solid var(--amber)",
-          boxShadow: "0 0 0 9999px rgba(6,8,10,0.8), 0 0 22px rgba(255,180,84,0.35)",
+          boxShadow: "0 0 0 9999px rgba(6,8,10,0.82), 0 0 26px rgba(255,180,84,0.35)",
           pointerEvents: "none",
-          transition: "all 0.28s cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: `left ${glisse}, top ${glisse}, width ${glisse}, height ${glisse}`,
         }}
       />
 
@@ -228,36 +270,55 @@ export function VisiteGuidee() {
           background: "var(--bg-raised, #14171C)",
           borderColor: "var(--line-strong)",
           boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
+          transition: `left ${glisse}, top ${glisse}, bottom ${glisse}`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span className="mono-num" style={{ fontSize: "0.66rem", color: "var(--amber)", letterSpacing: "0.1em" }}>
-            {t.etape(index + 1, ETAPES.length)}
-          </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 }}>
+          {/* Une pastille par étape : on voit d'un coup d'œil ce qui reste,
+              ce qu'un « 3 / 12 » seul ne montre pas. */}
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }} aria-hidden>
+            {ETAPES.map((_, i) => (
+              <span
+                key={i}
+                style={{
+                  width: i === affiche ? 14 : 5, height: 5, borderRadius: 999,
+                  background: i <= affiche ? "var(--amber)" : "rgba(152,162,176,0.28)",
+                  transition: `width 0.3s ease, background 0.3s ease`,
+                }}
+              />
+            ))}
+          </div>
           <button
             onClick={cloturer}
             aria-label={t.passer}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(152,162,176,0.5)", lineHeight: 1 }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(152,162,176,0.5)", lineHeight: 1, flexShrink: 0 }}
           >
             <Icone nom="croix" taille={15} />
           </button>
         </div>
 
-        <h2 style={{
-          fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
-          fontSize: "1.05rem", color: "var(--bone)",
-          letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 6,
-        }}>
-          {etape.titre}
-        </h2>
-        <p style={{ fontSize: "0.82rem", lineHeight: 1.65, color: "rgba(236,239,244,0.6)" }}>
-          {etape.texte}
-        </p>
+        {/* La clé fait remonter un remplacement de nœud à chaque étape : le
+            texte apparaît en fondu au lieu de se substituer d'un coup. */}
+        <div key={affiche} style={{ animation: "visiteEntree 0.32s ease both" }}>
+          <span className="mono-num" style={{ fontSize: "0.62rem", color: "rgba(152,162,176,0.55)", letterSpacing: "0.1em" }}>
+            {t.etape(affiche + 1, ETAPES.length)}
+          </span>
+          <h2 style={{
+            fontFamily: "var(--font-heading, 'Barlow Condensed', sans-serif)",
+            fontSize: "1.05rem", color: "var(--bone)",
+            letterSpacing: "0.06em", textTransform: "uppercase", margin: "3px 0 6px",
+          }}>
+            {etape.titre}
+          </h2>
+          <p style={{ fontSize: "0.82rem", lineHeight: 1.65, color: "rgba(236,239,244,0.62)" }}>
+            {etape.texte}
+          </p>
+        </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
-          {index > 0 && (
+          {affiche > 0 && (
             <button
-              onClick={() => setIndex((n) => n - 1)}
+              onClick={() => setCible(affiche - 1)}
               style={{
                 padding: "7px 13px", borderRadius: 999, cursor: "pointer", fontSize: "0.78rem",
                 background: "transparent", border: "1px solid var(--line-strong)",
@@ -270,7 +331,7 @@ export function VisiteGuidee() {
           <button
             className="lol-btn text-sm"
             style={{ flex: 1 }}
-            onClick={() => (dernier ? cloturer() : setIndex((n) => n + 1))}
+            onClick={() => (dernier ? cloturer() : setCible(affiche + 1))}
           >
             {dernier ? t.terminer : t.suivant}
           </button>
@@ -288,6 +349,16 @@ export function VisiteGuidee() {
           </button>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes visiteEntree {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          div { transition: none !important; animation: none !important; }
+        }
+      `}</style>
     </div>
   );
 }
