@@ -24,6 +24,9 @@ const PUBLIC_PREFIXES = [
   "/confidentialite",
   "/telechargement",
   "/recuperation",
+  // Point d'entrée de la connexion demandée par l'application desktop : exiger
+  // une session pour aller s'en créer une n'aurait pas de sens.
+  "/connexion-app",
   "/api/auth",
 ];
 
