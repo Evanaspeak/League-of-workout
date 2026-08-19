@@ -68,6 +68,9 @@ export default function AdminUserList() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [resettingPwd, setResettingPwd] = useState<string | null>(null);
+  /** Compte dont l'intro est en train d'être réarmée, puis celui qui vient de l'être. */
+  const [rearmeEnCours, setRearmeEnCours] = useState<string | null>(null);
+  const [rearme, setRearme] = useState<Record<string, boolean>>({});
   const [newPasswords, setNewPasswords] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -93,6 +96,20 @@ export default function AdminUserList() {
     const data = await res.json();
     if (res.ok) setNewPasswords(prev => ({ ...prev, [id]: data.password }));
     setResettingPwd(null);
+  }
+
+  /**
+   * Fait rejouer l'intro à ce compte.
+   *
+   * Rien n'est effacé ici : les marques sont dans SON navigateur. On incrémente
+   * la génération, qui entre dans leur clé — elles deviennent caduques sur tous
+   * ses appareils à la fois.
+   */
+  async function rejouerIntro(id: string) {
+    setRearmeEnCours(id);
+    const res = await fetch(`/api/admin/users/${id}/intro`, { method: "POST" });
+    if (res.ok) setRearme((p) => ({ ...p, [id]: true }));
+    setRearmeEnCours(null);
   }
 
   async function deleteUser(id: string) {
@@ -201,6 +218,19 @@ export default function AdminUserList() {
                       {resettingPwd === u.id ? "..." : t.resetPassword}
                     </button>
                   )}
+
+                  <button
+                    onClick={e => { e.stopPropagation(); rejouerIntro(u.id); }}
+                    disabled={rearmeEnCours === u.id}
+                    style={{
+                      marginLeft: 8, padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem",
+                      cursor: "pointer", background: "transparent",
+                      border: `1px dashed ${rearme[u.id] ? "rgba(47,217,138,0.5)" : "rgba(152,162,176,0.35)"}`,
+                      color: rearme[u.id] ? "#2FD98A" : "var(--steel)",
+                    }}
+                  >
+                    {rearmeEnCours === u.id ? "..." : rearme[u.id] ? t.introRearmee : t.rejouerIntro}
+                  </button>
                 </div>
 
                 {/* Test de force & niveau */}
