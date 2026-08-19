@@ -19,17 +19,39 @@ export async function GET() {
   return NextResponse.json({ roleWeights, levelConfigs, masteryConfig, goal, user: userSansSecret });
 }
 
+/**
+ * Borne une valeur numérique venue du client.
+ *
+ * Le formulaire des réglages pose bien `min` et `max` sur ses champs — mais en
+ * HTML, donc côté navigateur seulement. Une requête directe passait des nombres
+ * arbitraires dans une configuration partagée par tout le monde : un
+ * multiplicateur assez grand rendait un score que la colonne entière ne sait pas
+ * écrire, et plus personne ne pouvait enregistrer de partie. Aucune route
+ * d'administration ne savait réparer ça.
+ */
+function borne(valeur: unknown, min: number, max: number): number {
+  const n = Number(valeur);
+  if (!Number.isFinite(n) || n < min || n > max) {
+    throw new RangeError("Valeur hors bornes");
+  }
+  return n;
+}
+
 export async function PUT(req: Request) {
+  // La session se résout avant toute branche. Elle vivait à l'intérieur de
+  // `userPrefs` : un corps qui ne contenait que la configuration partagée ne la
+  // traversait jamais, et le seul contrôle restant était celui du middleware.
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   const body = await req.json();
 
   const updates: Promise<unknown>[] = [];
 
-  // Préférences propres à l'utilisateur : toujours authentifiées et scopées à
-  // son propre compte (contrairement à la config de scoring, volontairement
-  // partagée entre bêta-testeurs).
+  // Préférences propres à l'utilisateur, scopées à son propre compte. La
+  // configuration de scoring, elle, reste volontairement partagée entre
+  // bêta-testeurs — c'est un choix produit, pas un oubli.
   if (body.userPrefs) {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
     const data: {
       exercices?: string[]; rappelSeuilPoints?: number;
@@ -90,49 +112,61 @@ export async function PUT(req: Request) {
     }
   }
 
-  if (body.roleWeights) {
-    for (const rw of body.roleWeights) {
+  // Les trois branches ci-dessous écrivent une configuration commune à tous les
+  // comptes. Chaque valeur est bornée côté serveur : un `Number()` nu laissait
+  // passer de quoi rendre un score non représentable, et c'est toute
+  // l'application qui cessait d'enregistrer des parties.
+  try {
+    if (body.roleWeights) {
+      for (const rw of body.roleWeights) {
+        updates.push(
+          prisma.roleWeight.update({
+            where: { role: String(rw.role) },
+            data: {
+              poidsMort: borne(rw.poidsMort, 0, 100),
+              poidsKill: borne(rw.poidsKill, 0, 100),
+              poidsAssist: borne(rw.poidsAssist, 0, 100),
+              maitriseActive: Boolean(rw.maitriseActive),
+            },
+          })
+        );
+      }
+    }
+
+    if (body.levelConfigs) {
+      for (const lc of body.levelConfigs) {
+        updates.push(
+          prisma.levelConfig.update({
+            where: { niveau: borne(lc.niveau, 1, 99) },
+            data: {
+              seuilGainageSec: borne(lc.seuilGainageSec, 0, 3600),
+              // Critère actuel du niveau : le nombre de pompes d'affilée.
+              ...(lc.seuilPompes != null ? { seuilPompes: borne(lc.seuilPompes, 0, 500) } : {}),
+              multiplicateur: borne(lc.multiplicateur, 0, 10),
+              malusDefaite: borne(lc.malusDefaite, 0, 100),
+            },
+          })
+        );
+      }
+    }
+
+    if (body.masteryConfig) {
       updates.push(
-        prisma.roleWeight.update({
-          where: { role: rw.role },
+        prisma.masteryConfig.update({
+          where: { id: 1 },
           data: {
-            poidsMort: Number(rw.poidsMort),
-            poidsKill: Number(rw.poidsKill),
-            poidsAssist: Number(rw.poidsAssist),
-            maitriseActive: Boolean(rw.maitriseActive),
+            surchargeMax: borne(body.masteryConfig.surchargeMax, 0, 5),
+            // Diviseur : à zéro il rendait NaN, donc un score inécrivable.
+            partiesPourMax: borne(body.masteryConfig.partiesPourMax, 1, 10000),
           },
         })
       );
     }
-  }
-
-  if (body.levelConfigs) {
-    for (const lc of body.levelConfigs) {
-      updates.push(
-        prisma.levelConfig.update({
-          where: { niveau: Number(lc.niveau) },
-          data: {
-            seuilGainageSec: Number(lc.seuilGainageSec),
-            // Critère actuel du niveau : le nombre de pompes d'affilée.
-            ...(lc.seuilPompes != null ? { seuilPompes: Number(lc.seuilPompes) } : {}),
-            multiplicateur: Number(lc.multiplicateur),
-            malusDefaite: Number(lc.malusDefaite),
-          },
-        })
-      );
+  } catch (err) {
+    if (err instanceof RangeError) {
+      return NextResponse.json({ error: "Valeur hors bornes" }, { status: 400 });
     }
-  }
-
-  if (body.masteryConfig) {
-    updates.push(
-      prisma.masteryConfig.update({
-        where: { id: 1 },
-        data: {
-          surchargeMax: Number(body.masteryConfig.surchargeMax),
-          partiesPourMax: Number(body.masteryConfig.partiesPourMax),
-        },
-      })
-    );
+    throw err;
   }
 
   await Promise.all(updates);

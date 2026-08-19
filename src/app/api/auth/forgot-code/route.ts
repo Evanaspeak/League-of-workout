@@ -1,25 +1,18 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
-import { sendCodeReset } from "@/lib/email";
-
-// Même alphabet que la génération de code initiale (beta-access) : lisible,
-// sans caractères ambigus (0/O, 1/l/I).
-function generateCode(length = 8): string {
-  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  const bytes = randomBytes(length);
-  return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
-}
+import { sendResetLink, SITE_URL } from "@/lib/email";
+import { normaliserEmail } from "@/lib/identite";
+import { empreinte, PREFIXE_RESET, VALIDITE_MS } from "@/lib/recuperation";
 
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const body = await request.json();
-    const email = String(body.email ?? "").trim().toLowerCase();
+    const body = await request.json().catch(() => null);
+    const email = normaliserEmail(body?.email);
 
-    if (!email || !email.includes("@")) {
+    if (!email) {
       return NextResponse.json({ error: "Email invalide" }, { status: 400 });
     }
 
@@ -41,16 +34,27 @@ export async function POST(request: Request) {
     // Réponse générique dans tous les cas : ne révèle jamais si l'email existe
     // ou si le compte a un code (vs. OAuth pur) — évite l'énumération de comptes.
     if (user && user.passwordHash) {
-      const newCode = generateCode();
-      const hash = await bcrypt.hash(newCode, 12);
-      // Le nouveau code périme les sessions ouvertes avec l'ancien. Sans
-      // ça, l'e-mail annonçait que le précédent ne marchait plus alors que
-      // quiconque était déjà entré y restait un mois.
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { passwordHash: hash, sessionEpoch: { increment: 1 } },
+      // Cette demande ne change RIEN sur le compte. Elle écrasait le mot de
+      // passe sur-le-champ : quiconque connaissait l'adresse de quelqu'un lui
+      // faisait donc tourner son identifiant sans qu'il ait rien demandé, et
+      // l'e-mail lui promettait pourtant le contraire. C'est l'ouverture du
+      // lien qui déclenche le remplacement, et elle seule.
+      const jeton = randomBytes(32).toString("base64url");
+      const identifier = `${PREFIXE_RESET}${email}`;
+
+      // Une demande en cours remplace la précédente : deux liens vivants pour
+      // un même compte doubleraient la surface sans rien apporter.
+      await prisma.verificationToken.deleteMany({ where: { identifier } });
+      await prisma.verificationToken.create({
+        data: {
+          identifier,
+          token: empreinte(jeton),
+          expires: new Date(Date.now() + VALIDITE_MS),
+        },
       });
-      await sendCodeReset(email, user.pseudo, newCode);
+
+      const lien = `${SITE_URL}/recuperation/valider?t=${encodeURIComponent(jeton)}`;
+      await sendResetLink(email, user.pseudo, lien);
     }
 
     return NextResponse.json({ ok: true });
