@@ -45,13 +45,14 @@ export function RailLateral() {
   if (!actif) return null;
 
   return (
-    <div className={`rail-lateral${ouvert ? " est-ouvert" : ""}`}>
+    <div className={`rail-lateral${ouvert ? " est-ouvert" : ""}`} data-visite="rail">
       <button
         type="button"
         className={`rail-bascule lol-panel${dette.alerte ? " alerte" : ""}`}
         onClick={() => setEtat((e) => ({ ...e, ouvert: !e.ouvert }))}
         aria-expanded={ouvert}
         aria-label={ouvert ? t.railReplier : t.railOuvrir}
+        data-visite="rail-bascule"
       >
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="2" strokeLinecap="round" aria-hidden>

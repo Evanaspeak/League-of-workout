@@ -389,7 +389,7 @@ export default function Dashboard() {
       )}
 
       {/* Vue d'ensemble — jamais filtrée : elle décrit toute l'activité */}
-      <div className={`grid grid-cols-1 gap-3 ${aDuTemps ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
+      <div data-visite="stats" className={`grid grid-cols-1 gap-3 ${aDuTemps ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
         <StatCard label={t.gamesPlayed} value={globalStats.totalGames} i={0} />
         <StatCard
           label={t.winrate}
@@ -533,6 +533,7 @@ export default function Dashboard() {
         <button
           type="button"
           className="rail-action lol-panel"
+          data-visite="rail-session"
           onClick={() => setModale("session")}
           style={{ borderColor: sessionActive ? "rgba(47,217,138,0.5)" : undefined }}
         >
@@ -557,6 +558,7 @@ export default function Dashboard() {
         <button
           type="button"
           className="rail-action lol-panel"
+          data-visite="rail-ajout"
           onClick={() => setModale("ajout")}
         >
           <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: "rgba(152,162,176,0.6)" }}>
