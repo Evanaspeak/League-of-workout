@@ -85,6 +85,39 @@ const CHROME_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
+/** Noms de base du cookie de session : préfixé en HTTPS, nu en local. */
+const NOMS_SESSION = ["__Secure-authjs.session-token", "authjs.session-token"];
+
+/**
+ * Pose le jeton de session, après avoir fait place nette.
+ *
+ * Au-delà d'environ 4 ko, Auth.js découpe son cookie en morceaux numérotés
+ * (`.0`, `.1`, …) et, à la lecture, CONCATÈNE tout ce qui commence par le nom
+ * de base. On n'écrivait ici qu'un cookie entier, sans retirer les morceaux
+ * d'une session précédente : les restes se collaient au nouveau jeton et le
+ * rendaient illisible. Le transfert réussissait, l'application se croyait
+ * connectée, et le site la renvoyait au vestiaire sans que rien n'explique
+ * pourquoi. Le site sait relire ces morceaux — c'est donc un cas qui arrive.
+ */
+async function poserCookieSession(ses, jwt) {
+  const existants = await ses.cookies.get({ url: BACKEND_URL }).catch(() => []);
+  for (const c of existants) {
+    if (!NOMS_SESSION.some((n) => c.name === n || c.name.startsWith(`${n}.`))) continue;
+    await ses.cookies.remove(BACKEND_URL, c.name).catch(() => {});
+  }
+  await ses.cookies.set({
+    url: BACKEND_URL,
+    name: "__Secure-authjs.session-token",
+    value: jwt,
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/",
+    // Trente jours : le cookie doit survivre à une fermeture de l'application.
+    expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+  });
+}
+
 /**
  * Barre de titre peinte par l'application.
  *
@@ -292,17 +325,7 @@ function startAuthSignalServer() {
             ? mainWindow.webContents.session
             : electronSession.defaultSession;
 
-          await ses.cookies.set({
-            url: BACKEND_URL,
-            name: "__Secure-authjs.session-token",
-            value: jwt,
-            httpOnly: true,
-            secure: true,
-            sameSite: "lax",
-            path: "/",
-            // 30-day expiration so the cookie survives app restarts (session cookies disappear on close)
-            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
-          });
+          await poserCookieSession(ses, jwt);
 
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.loadURL(`${BACKEND_URL}/dashboard`);
@@ -354,16 +377,7 @@ function startAuthSignalServer() {
             ? mainWindow.webContents.session
             : electronSession.defaultSession;
 
-          await ses.cookies.set({
-            url: BACKEND_URL,
-            name: "__Secure-authjs.session-token",
-            value: jwt,
-            httpOnly: true,
-            secure: true,
-            sameSite: "lax",
-            path: "/",
-            expirationDate: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
-          });
+          await poserCookieSession(ses, jwt);
 
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.loadURL(`${BACKEND_URL}/dashboard`);
