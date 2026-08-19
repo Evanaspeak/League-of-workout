@@ -9,7 +9,7 @@ export const adminTools = {
     error: "Erreur",
     noEmails: "Aucun email en liste blanche.",
     testSection: "TEST",
-    replayIntro: "Rejouer l'intro (splash + onboarding)",
+    replayIntro: "Rejouer l'intro (écran d'ouverture, accueil, visite guidée)",
   },
   en: {
     title: "ADMIN TOOLS",
@@ -21,6 +21,6 @@ export const adminTools = {
     error: "Error",
     noEmails: "No emails in the whitelist.",
     testSection: "TEST",
-    replayIntro: "Replay intro (splash + onboarding)",
+    replayIntro: "Replay intro (splash, welcome, guided tour)",
   },
 };
