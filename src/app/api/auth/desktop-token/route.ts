@@ -46,5 +46,9 @@ export async function POST() {
     return NextResponse.json({ error: "Token de session introuvable" }, { status: 401 });
   }
 
-  return NextResponse.json({ jwt });
+  // L'instant de l'authentification part avec le jeton : c'est lui qui permet
+  // à l'appelant de refuser une session ouverte AVANT que l'application ne la
+  // demande. Sans quoi le transfert emportait simplement la session courante
+  // du navigateur, quelle qu'elle soit et si ancienne fût-elle.
+  return NextResponse.json({ jwt, connexion: session.user.connexion ?? null });
 }

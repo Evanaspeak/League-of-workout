@@ -32,19 +32,45 @@ export function DesktopAuthHandler() {
     // Un échec ici laissait l'utilisateur sur un dashboard d'apparence normale
     // pendant que l'application restait déconnectée, sans rien pour le dire.
     // On le nomme, sinon la panne est indiscernable d'une réussite.
-    const echouer = (raison: string) => {
+    const oublier = () => {
       localStorage.removeItem("low_desktop_handoff");
       localStorage.removeItem("low_desktop_nonce");
+      localStorage.removeItem("low_desktop_arme");
+    };
+    const echouer = (raison: string) => {
+      oublier();
       window.location.assign(`/login?transfer_error=${raison}`);
     };
+
+    const arme = Number(localStorage.getItem("low_desktop_arme") ?? 0);
 
     fetch("/api/auth/desktop-token", { method: "POST" })
       .then(async (r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!data?.jwt) return echouer("token");
+        // La session doit avoir été ouverte APRÈS la demande de l'application.
+        // Sinon c'est celle qui traînait déjà dans le navigateur qu'on
+        // enverrait — et l'application repartait alors avec un compte que
+        // personne n'avait choisi. On renvoie vers une vraie connexion.
+        //
+        // Cinq secondes de marge : l'horloge du serveur n'est pas celle du
+        // poste, et il ne s'agit pas de refuser une connexion légitime pour
+        // quelques centaines de millisecondes d'écart.
+        const MARGE_MS = 5000;
+        if (arme > 0 && (typeof data.connexion !== "number" || data.connexion < arme - MARGE_MS)) {
+          oublier();
+          // L'aléa repart avec : c'est lui qui ré-armera le transfert au
+          // retour, sinon la connexion qui suit ne mènerait nulle part.
+          // `reconnexion` et non `transfer_error` : le second remplace tout le
+          // formulaire par une carte d'échec, alors qu'ici il faut justement
+          // pouvoir choisir un compte.
+          window.location.assign(
+            `/login?_desktop=1&n=${encodeURIComponent(nonce)}&reconnexion=1`
+          );
+          return;
+        }
         // Nettoie le flag avant de naviguer pour éviter toute boucle.
-        localStorage.removeItem("low_desktop_handoff");
-        localStorage.removeItem("low_desktop_nonce");
+        oublier();
         // Navigation plutôt que fetch : contourne les restrictions CORS et
         // Private Network Access de Chrome sur HTTPS→HTTP localhost. C'est
         // aussi ce qui rendait le canal atteignable depuis n'importe quel site,

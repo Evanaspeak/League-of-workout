@@ -21,6 +21,12 @@ export function DesktopModeDetector() {
     if (!nonce) return;
     localStorage.setItem("low_desktop_handoff", "1");
     localStorage.setItem("low_desktop_nonce", nonce);
+    // L'instant de la demande. Le transfert ne portera que sur une session
+    // ouverte APRÈS lui : sans cette borne, arriver ici en étant déjà connecté
+    // suffisait à expédier cette session-là vers l'application, sans que
+    // personne ne se soit authentifié — on repartait donc systématiquement
+    // avec le compte déjà ouvert dans le navigateur.
+    localStorage.setItem("low_desktop_arme", String(Date.now()));
   }, []);
   return null;
 }
