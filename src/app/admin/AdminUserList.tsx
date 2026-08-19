@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { adminUserList } from "@/lib/i18n/dictionaries/adminUserList";
+import { Icone } from "@/components/Icone";
 
 type UserStat = {
   id: string;
@@ -229,7 +230,14 @@ export default function AdminUserList() {
                       color: rearme[u.id] ? "#2FD98A" : "var(--steel)",
                     }}
                   >
-                    {rearmeEnCours === u.id ? "..." : rearme[u.id] ? t.introRearmee : t.rejouerIntro}
+                    {rearmeEnCours === u.id ? "..." : rearme[u.id] ? (
+                      // La coche se dessine : tapée en caractère, elle n'a ni
+                      // taille ni couleur, et le lecteur d'écran l'annonce.
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <Icone nom="coche" taille={13} couleur="#2FD98A" />
+                        {t.introRearmee}
+                      </span>
+                    ) : t.rejouerIntro}
                   </button>
                 </div>
 

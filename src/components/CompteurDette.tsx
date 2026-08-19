@@ -292,6 +292,16 @@ export function CompteurDette({
                   {t.forme[ligne.id]}
                 </p>
               ))}
+              {/* La consigne de prudence accompagne la consigne d'exécution :
+                  elle n'a aucun intérêt dans un article de CGU que personne
+                  n'ouvre, et tout son intérêt ici. */}
+              <p style={{
+                fontSize: "0.72rem", lineHeight: 1.5, margin: "8px 0 0",
+                paddingTop: 8, borderTop: "1px solid var(--line)",
+                color: "var(--faint)",
+              }}>
+                {t.prudence}
+              </p>
             </div>
           )}
 
