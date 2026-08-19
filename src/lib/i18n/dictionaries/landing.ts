@@ -19,6 +19,19 @@ export const landing = {
     feedPointsUnit: "points",
     // Une même dette, trois façons de la payer : c'est tout le modèle en une ligne.
     feedConversion: "= 121 pompes · 182 squats · 14 min 05 de boxe",
+    // ── Pastille d'overlay du héros ──
+    // Les valeurs sont figées et cohérentes entre elles : un KDA médiocre, donc
+    // une dette réelle, et l'écart entre victoire et défaite qu'impose le
+    // barème. Une capture doit rester vraie même en illustration.
+    pastilleSoiree: "joué ce soir, hors menus",
+    pastilleJeu: "League of Legends",
+    pastilleKda: "KDA",
+    pastilleKdaValeur: "5 / 7 / 14",
+    pastilleSiGagne: "Si gagné",
+    pastilleSiPerdu: "Si perdu",
+    pastilleGagne: "11",
+    pastillePerdu: "16",
+    pastilleTemps: "1:08:40",
     feedEntries: [
       { r: "D", jeu: "League of Legends", detail: "Classée Solo/Duo · 2/9/4", pts: 38 },
       { r: "V", jeu: "Valorant", detail: "Compétitif · 18/14/5", pts: 9 },
@@ -179,6 +192,15 @@ export const landing = {
     feedTotalLabel: "Total owed",
     feedPointsUnit: "points",
     feedConversion: "= 121 push-ups · 182 squats · 14 min 05 of boxing",
+    pastilleSoiree: "played tonight, menus excluded",
+    pastilleJeu: "League of Legends",
+    pastilleKda: "KDA",
+    pastilleKdaValeur: "5 / 7 / 14",
+    pastilleSiGagne: "If you win",
+    pastilleSiPerdu: "If you lose",
+    pastilleGagne: "11",
+    pastillePerdu: "16",
+    pastilleTemps: "1:08:40",
     feedEntries: [
       { r: "L", jeu: "League of Legends", detail: "Ranked Solo/Duo · 2/9/4", pts: 38 },
       { r: "W", jeu: "Valorant", detail: "Competitive · 18/14/5", pts: 9 },
