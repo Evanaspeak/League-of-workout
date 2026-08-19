@@ -176,6 +176,7 @@ export function CompteurDette({
       <button
         type="button"
         className="pastille-dette lol-panel"
+        data-visite="dette"
         onClick={ouvrirChrono}
         title={t.detteFaireBtn}
         aria-live="polite"

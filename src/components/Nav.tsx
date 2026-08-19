@@ -91,6 +91,7 @@ export default function Nav() {
               key={l.href}
               href={l.href}
               className="nav-lien"
+              data-visite={`nav-${l.href.replace("/", "")}`}
               style={{
                 position: "relative",
                 padding: "4px 10px",

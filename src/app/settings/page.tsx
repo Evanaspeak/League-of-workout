@@ -639,6 +639,7 @@ export default function SettingsPage() {
                 <button
                   onClick={() => {
                     localStorage.removeItem("low_onboarded");
+                    localStorage.removeItem("low_visite");
                     localStorage.removeItem("splash");
                     window.location.reload();
                   }}

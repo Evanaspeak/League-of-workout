@@ -11,6 +11,7 @@ import { DetectionSession } from "@/components/DetectionSession";
 import { PartieDetectee } from "@/components/PartieDetectee";
 import { DetteDirecte } from "@/components/DetteDirecte";
 import { CadreDesktop } from "@/components/CadreDesktop";
+import { VisiteGuidee } from "@/components/VisiteGuidee";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
@@ -80,6 +81,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SplashScreen />
             <SessionGuard />
             <OnboardingModal />
+            {/* Prend le relais de la modale : elle explique le produit, la
+                visite montre où sont les choses. */}
+            <VisiteGuidee />
             <Nav />
             <main className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
               {children}
