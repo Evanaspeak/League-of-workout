@@ -5,7 +5,7 @@
  */
 export const PAGES_PUBLIQUES = [
   "/", "/beta", "/login", "/waitlist", "/cgu", "/confidentialite",
-  "/telechargement", "/recuperation",
+  "/telechargement", "/recuperation", "/connexion-app",
 ];
 
 export function estPagePublique(chemin: string | null | undefined): boolean {

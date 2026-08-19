@@ -968,11 +968,14 @@ ipcMain.on("open-google-login", () => {
     if (mainWindow) mainWindow.loadURL(ERREUR_PORT_HTML);
     return;
   }
-  // ?_desktop=1 est détecté par DesktopModeDetector → localStorage flag → DesktopAuthHandler actif
-  // `n` accompagne le drapeau : c'est lui qui reviendra prouver que ce transfert
-  // répond bien à cette connexion-ci, et pas à une page ouverte au hasard.
+  // On ouvre la page qui part D'ELLE-MÊME chez Google. Auparavant on ouvrait la
+  // page de connexion ordinaire, où il fallait re-choisir « Google » alors
+  // qu'on venait précisément de le demander depuis l'application — un clic pour
+  // rien, et une page de plus où quelque chose peut se perdre.
+  // `n` prouvera au retour que ce transfert répond bien à cette connexion-ci,
+  // et pas à une page ouverte au hasard.
   const nonce = ouvrirAttenteAuth();
-  shell.openExternal(`${BACKEND_URL}/login?_desktop=1&n=${encodeURIComponent(nonce)}`);
+  shell.openExternal(`${BACKEND_URL}/connexion-app?p=google&n=${encodeURIComponent(nonce)}`);
   if (mainWindow) mainWindow.loadURL(WAITING_HTML);
 });
 
