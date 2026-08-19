@@ -8,6 +8,7 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { nav as navDict } from "@/lib/i18n/dictionaries/nav";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Wordmark } from "./Wordmark";
+import { chargerCompte } from "@/lib/useIdCompte";
 
 const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
 // Ces pages gèrent leur propre chrome (nav intégrée) : pas de double barre.
@@ -36,11 +37,12 @@ export default function Nav() {
 
   useEffect(() => {
     // C'est le serveur qui décide qui est administrateur : le navigateur ne
-    // connaît pas la liste des adresses.
-    fetch("/api/user")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u) => { if (u?.estAdmin) setIsAdmin(true); })
-      .catch(() => {});
+    // connaît pas la liste des adresses. La réponse est partagée avec les
+    // autres composants qui ont besoin de savoir qui est connecté — sans quoi
+    // la même question part trois à cinq fois par page.
+    let obsolete = false;
+    chargerCompte().then((u) => { if (!obsolete && u?.estAdmin) setIsAdmin(true); });
+    return () => { obsolete = true; };
   }, []);
 
   if (SELF_CHROMED.some((p) => (p === "/" ? path === "/" : path.startsWith(p)))) {
