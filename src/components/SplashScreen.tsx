@@ -12,9 +12,16 @@ export function SplashScreen() {
 
   useEffect(() => {
     if (dejaVu) return;
-    sessionStorage.setItem("splash", "1");
     const t1 = setTimeout(() => setEstompe(true), 1700);
-    const t2 = setTimeout(() => setParti(true), 2200);
+    // La marque n'est posée qu'À LA FIN, et c'est tout le sujet : la même clé
+    // sert d'instantané à `dejaVu`. L'écrire au démarrage la rendait vraie au
+    // premier nouveau rendu venu — et il en arrive toujours un — si bien que
+    // l'écran d'ouverture disparaissait dans la milliseconde. Personne ne l'a
+    // jamais vu, pas même sur une session vierge.
+    const t2 = setTimeout(() => {
+      sessionStorage.setItem("splash", "1");
+      setParti(true);
+    }, 2200);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [dejaVu]);
 

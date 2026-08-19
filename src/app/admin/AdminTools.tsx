@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { adminTools } from "@/lib/i18n/dictionaries/adminTools";
+import { oublierPremiereVisite } from "@/lib/premiereVisite";
 
 export default function AdminTools() {
   const t = useT(adminTools);
@@ -124,8 +125,7 @@ export default function AdminTools() {
         </p>
         <button
           onClick={() => {
-            localStorage.removeItem("low_onboarded");
-            localStorage.removeItem("splash");
+            oublierPremiereVisite();
             window.location.href = "/dashboard";
           }}
           style={{

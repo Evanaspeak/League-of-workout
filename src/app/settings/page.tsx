@@ -17,6 +17,7 @@ import { ReglageApplication } from "@/components/ReglageApplication";
 import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
 import { useValeurClient } from "@/lib/valeurClient";
+import { oublierPremiereVisite } from "@/lib/premiereVisite";
 import { getLevelParPompes } from "@/lib/scoring";
 import {
   EnteteRubrique, LigneRubrique, ouvrirRubrique, useRubrique,
@@ -639,10 +640,8 @@ export default function SettingsPage() {
                 </p>
                 <button
                   onClick={() => {
-                    localStorage.removeItem("low_onboarded");
-                    localStorage.removeItem("low_visite");
-                    localStorage.removeItem("splash");
-                    window.location.reload();
+                    oublierPremiereVisite();
+                    window.location.href = "/dashboard";
                   }}
                   style={{
                     width: "100%",
