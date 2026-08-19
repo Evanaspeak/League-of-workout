@@ -5,6 +5,8 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { landing } from "@/lib/i18n/dictionaries/landing";
 import { Wordmark } from "@/components/Wordmark";
 import { Icone } from "@/components/Icone";
+import { SceneProduit } from "@/components/landing/SceneProduit";
+import { PastilleOverlay } from "@/components/landing/PastilleOverlay";
 import { useMouvementReduit } from "@/lib/valeurClient";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
@@ -376,16 +378,37 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
             )}
           </div>
 
-          {/* Colonne feed */}
+          {/* Colonne produit : le relevé d'une soirée, et la pastille telle
+              qu'elle s'affiche par-dessus le jeu, posée devant lui dans le même
+              espace. C'est la seule image que ce produit peut donner. */}
           <div className="wow-hero-feed hero-rise" style={{ display: "flex", justifyContent: "flex-end", animationDelay: "0.3s" }}>
-            <DebtFeed
-              title={t.feedTitle}
-              count={t.feedCount}
-              totalLabel={t.feedTotalLabel}
-              unit={t.feedPointsUnit}
-              conversion={t.feedConversion}
-              entries={t.feedEntries}
-            />
+            <div style={{ width: "100%", maxWidth: 440 }}>
+              <SceneProduit
+                carte={
+                  <DebtFeed
+                    title={t.feedTitle}
+                    count={t.feedCount}
+                    totalLabel={t.feedTotalLabel}
+                    unit={t.feedPointsUnit}
+                    conversion={t.feedConversion}
+                    entries={t.feedEntries}
+                  />
+                }
+                pastille={
+                  <PastilleOverlay
+                    temps={t.pastilleTemps}
+                    soiree={t.pastilleSoiree}
+                    jeu={t.pastilleJeu}
+                    kda={t.pastilleKda}
+                    kdaValeur={t.pastilleKdaValeur}
+                    siGagne={t.pastilleSiGagne}
+                    siPerdu={t.pastilleSiPerdu}
+                    gagne={t.pastilleGagne}
+                    perdu={t.pastillePerdu}
+                  />
+                }
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -736,6 +759,21 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
           }
           .wow-hero-feed {
             justify-content: flex-start !important;
+          }
+          /* La scène en perspective demande de la largeur pour se lire. En
+             colonne, les deux plans se remettent à plat et s'empilent : la
+             pastille passe sous le relevé au lieu de déborder du cadre. */
+          .scene-produit {
+            perspective: none !important;
+          }
+          .scene-carte {
+            transform: none !important;
+            filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.4)) !important;
+          }
+          .scene-pastille {
+            position: static !important;
+            transform: none !important;
+            margin-top: 18px;
           }
         }
         @media (max-width: 768px) {
