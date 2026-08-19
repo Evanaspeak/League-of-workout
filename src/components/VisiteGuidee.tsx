@@ -83,7 +83,18 @@ type Cadre = { i: number; left: number; top: number; width: number; height: numb
 function mesurer(el: Element): Omit<Cadre, "i"> | null {
   const r = el.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return null;
-  return { left: r.left, top: r.top, width: r.width, height: r.height };
+  // Une ancre peut être immense : le tableau de l'historique fait plus de
+  // quatre mille pixels de haut dès qu'on a quelques dizaines de parties.
+  // L'entourer en entier n'éclaire plus rien — le cadre déborde de l'écran des
+  // deux côtés, et la bulle, placée par rapport à lui, part avec. On n'en
+  // désigne alors que le haut : c'est là que commence ce qu'on montre.
+  const hMax = Math.round(window.innerHeight * 0.62);
+  return { left: r.left, top: r.top, width: r.width, height: Math.min(r.height, hMax) };
+}
+
+/** Vrai si l'élément est plus grand que ce que l'écran peut cadrer. */
+function tropGrand(el: Element): boolean {
+  return el.getBoundingClientRect().height > window.innerHeight * 0.62;
 }
 
 export function VisiteGuidee() {
@@ -199,7 +210,12 @@ export function VisiteGuidee() {
       const trouve = trouver();
       if (trouve) {
         arreter();
-        trouve.el.scrollIntoView({ block: "center", behavior: "smooth" });
+        // Centrer un élément plus haut que l'écran met son haut loin au-dessus
+        // du cadre : on aligne alors son début.
+        trouve.el.scrollIntoView({
+          block: tropGrand(trouve.el) ? "start" : "center",
+          behavior: "smooth",
+        });
         suivre(trouve.el, Date.now() + SUIVI_MS);
         return true;
       }
