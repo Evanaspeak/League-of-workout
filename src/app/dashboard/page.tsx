@@ -417,6 +417,10 @@ export default function Dashboard() {
           value={lignesTotal.length <= 1 ? fmt(globalStats.totalPoints) : undefined}
           lignes={lignesTotal.length > 1 ? lignesTotal : undefined}
           i={2}
+          // Repli de l'étape « ce que tu dois » : la pastille de dette n'existe
+          // pas tant qu'on ne doit rien, et c'est précisément le cas d'un
+          // compte neuf — le seul public de la visite.
+          ancre="dette-carte"
         />
         {aDuTemps && (
           <StatCard
@@ -790,7 +794,9 @@ export default function Dashboard() {
       )}
 
       {/* Statistiques globales */}
-      <h2 className="titre-groupe">
+      {/* Repli de l'étape « le chiffre qui compte » : aucun graphique n'existe
+          avant d'avoir joué, et c'est ici qu'ils apparaîtront. */}
+      <h2 className="titre-groupe" data-visite="stats-globales">
         {t.globalStats}
       </h2>
       <div className={`grid gap-4 ${afficherParJeu ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>

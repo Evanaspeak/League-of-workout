@@ -21,13 +21,13 @@ export const visite = {
     ajoutTexte: "Une partie oubliée, un jeu qu'on ne sait pas lire, une soirée entière rattrapée le lendemain : tu entres le score ici et le coût se calcule exactement pareil. Le montant s'affiche avant que tu valides, jamais après.",
 
     detteTitre: "Ce que tu dois",
-    detteTexte: "Ta dette s'accumule ici, partie après partie, et elle reste visible partout. Clique dessus quand tu es prêt : un décompte t'accompagne pendant l'effort, et si tu t'arrêtes en route, seule la part réellement faite est déduite.",
+    detteTexte: "Ta dette s'accumule ici, partie après partie. Dès que tu dois quelque chose, une pastille te suit partout dans l'application : clique dessus quand tu es prêt. Un décompte t'accompagne pendant l'effort, et si tu t'arrêtes en route, seule la part réellement faite est déduite.",
 
     statsTitre: "Où tu en es",
     statsTexte: "Ton nombre d'activités, ton taux de victoire et le total accumulé depuis le début. Ces trois chiffres ne se filtrent jamais : ils décrivent tout, pour que tu aies toujours un point de repère fixe.",
 
     graphiqueTitre: "Le chiffre qui compte vraiment",
-    graphiqueTexte: "Le total ne peut que monter — il ne dit donc rien de tes progrès. Le coût MOYEN d'une partie, lui, baisse quand tu joues mieux. C'est le seul indicateur de l'application qui peut descendre, et c'est celui à surveiller.",
+    graphiqueTexte: "Le total ne peut que monter — il ne dit donc rien de tes progrès. Le coût MOYEN d'une partie, lui, baisse quand tu joues mieux : c'est le seul indicateur de l'application qui peut descendre. Il apparaît ici, avec les autres, dès tes premières parties.",
 
     // ── Historique ──
     navHistoriqueTitre: "Le détail de tout",
@@ -66,13 +66,13 @@ export const visite = {
     ajoutTexte: "A forgotten match, a game we can't read, a whole evening caught up the next day: type the score here and the cost is worked out exactly the same. The amount shows before you confirm, never after.",
 
     detteTitre: "What you owe",
-    detteTexte: "Your debt piles up here, match after match, and stays visible everywhere. Tap it when you're ready: a countdown walks you through the effort, and if you stop halfway only the part you actually did is taken off.",
+    detteTexte: "Your debt piles up here, match after match. As soon as you owe something a badge follows you everywhere in the app: tap it when you're ready. A countdown walks you through the effort, and if you stop halfway only the part you actually did is taken off.",
 
     statsTitre: "Where you stand",
     statsTexte: "Your activity count, your win rate and the total built up since day one. These three never get filtered: they describe everything, so you always have a fixed reference point.",
 
     graphiqueTitre: "The number that really counts",
-    graphiqueTexte: "The total can only go up — so it says nothing about your progress. The AVERAGE cost per match does drop when you play better. It's the only figure in the app that can go down, and it's the one to watch.",
+    graphiqueTexte: "The total can only go up — so it says nothing about your progress. The AVERAGE cost per match does drop when you play better: it's the only figure in the app that can go down. It shows up here, with the others, from your first matches on.",
 
     navHistoriqueTitre: "The detail of everything",
     navHistoriqueTexte: "Let's go there. History keeps every match you've played, with its cost and the maths behind it.",
