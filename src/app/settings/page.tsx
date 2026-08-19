@@ -18,6 +18,7 @@ import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
 import { useValeurClient } from "@/lib/valeurClient";
 import { oublierPremiereVisite } from "@/lib/premiereVisite";
+import { useIdCompte } from "@/lib/useIdCompte";
 import { getLevelParPompes } from "@/lib/scoring";
 import {
   EnteteRubrique, LigneRubrique, ouvrirRubrique, useRubrique,
@@ -52,6 +53,9 @@ export default function SettingsPage() {
   // Rubrique ouverte, lue dans l'adresse : le bouton « précédent » ramène à la
   // liste, et un lien peut viser une rubrique directement.
   const rubrique = useRubrique(RUBRIQUES) as Rubrique | null;
+  // Sert au bouton « rejouer l'intro » : les marques de première visite
+  // appartiennent au compte, pas au navigateur.
+  const uid = useIdCompte();
   // Résumés affichés à droite des lignes, pour éviter d'ouvrir juste pour voir.
   const [nbJeux, setNbJeux] = useState(0);
   const [version, setVersion] = useState<string | null>(null);
@@ -648,7 +652,7 @@ export default function SettingsPage() {
                 </p>
                 <button
                   onClick={() => {
-                    oublierPremiereVisite();
+                    oublierPremiereVisite(uid);
                     window.location.href = "/dashboard";
                   }}
                   style={{

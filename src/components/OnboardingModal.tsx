@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/onboardingModal";
+import { cleOnboarding } from "@/lib/premiereVisite";
+import { useIdCompte } from "@/lib/useIdCompte";
 
 const PUBLIC = ["/login", "/waitlist", "/beta", "/recuperation"];
 
@@ -51,19 +53,24 @@ export function OnboardingModal() {
   const [step, setStep] = useState(0);
   const [closing, setClosing] = useState(false);
 
+  const uid = useIdCompte();
+
   useEffect(() => {
     // Pages publiques (landing incluse) : l'onboarding n'a de sens qu'en app.
     if (path === "/" || PUBLIC.some((p) => path.startsWith(p))) return;
-    if (localStorage.getItem("low_onboarded")) return;
+    // Tant qu'on ignore à qui l'on s'adresse, on ne décide pas : la marque est
+    // désormais celle du COMPTE, pas celle du navigateur.
+    if (uid === undefined) return;
+    if (localStorage.getItem(cleOnboarding(uid))) return;
     // Attend que le splash soit terminé avant d'afficher
     const timer = setTimeout(() => setVisible(true), 2800);
     return () => clearTimeout(timer);
-  }, [path]);
+  }, [path, uid]);
 
   const close = () => {
     setClosing(true);
     setTimeout(() => {
-      localStorage.setItem("low_onboarded", "1");
+      localStorage.setItem(cleOnboarding(uid), "1");
       setVisible(false);
       setClosing(false);
     }, 350);
