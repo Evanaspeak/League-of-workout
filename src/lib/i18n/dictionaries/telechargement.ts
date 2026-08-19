@@ -13,6 +13,15 @@ export const telechargement = {
     etape3: "Lancez une partie — l'application détecte automatiquement les résultats.",
     etape4: "Les pompes s'accumulent en temps réel sans intervention manuelle.",
     retourDashboard: "Retour au dashboard",
+    // ── Avertissement Windows ──
+    // Dit avant le clic, pas après : ce qui fait renoncer les gens n'est pas
+    // l'avertissement lui-même, c'est de le découvrir par surprise.
+    smartScreenTitre: "Windows va afficher un avertissement",
+    smartScreenIntro: "Au lancement de l'installeur, Windows affiche « Windows a protégé votre ordinateur ». C'est normal, et voici comment passer :",
+    smartScreenEtape1: "Clique sur « Informations complémentaires ».",
+    smartScreenEtape2: "Puis sur « Exécuter quand même ».",
+    smartScreenPourquoi: "Pourquoi cet avertissement ?",
+    smartScreenExplication: "Windows le montre pour tout programme dont l'éditeur n'est pas encore certifié. Le faire disparaître demande un certificat de signature payant, délivré après vérification d'identité. Tant que Win or Workout est en bêta et n'a pas d'utilisateurs, cette dépense n'a pas de sens : elle viendra avec eux. Le code de l'application est le même, signé ou non.",
   },
   en: {
     metaTitle: "Download — Win or Workout",
@@ -28,5 +37,11 @@ export const telechargement = {
     etape3: "Start a game — the app automatically detects the results.",
     etape4: "Push-ups accumulate in real time with no manual input.",
     retourDashboard: "Back to dashboard",
+    smartScreenTitre: "Windows will show a warning",
+    smartScreenIntro: "When you run the installer, Windows shows « Windows protected your PC ». That's expected — here's how to get past it:",
+    smartScreenEtape1: "Click « More info ».",
+    smartScreenEtape2: "Then « Run anyway ».",
+    smartScreenPourquoi: "Why the warning?",
+    smartScreenExplication: "Windows shows it for any program whose publisher isn't certified yet. Removing it takes a paid signing certificate, issued after an identity check. While Win or Workout is in beta with no users, that spend makes no sense — it will come with them. The app's code is the same either way.",
   },
 };
