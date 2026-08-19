@@ -54,6 +54,12 @@ const ATTENTE_MS = 15 * 60 * 1000;
 let minuterieAttente = null;
 
 function ouvrirAttenteAuth() {
+  // Deux chemins mènent ici — le bouton de la page et l'interception de
+  // navigation — et ils peuvent se déclencher coup sur coup pour une SEULE
+  // intention de connexion. Chacun forgeait son aléa et écrasait l'autre : le
+  // premier retour se faisait alors refuser, et il fallait tout recommencer.
+  // Tant que l'attente en cours vaut encore, c'est elle qui sert.
+  if (attenteAuth && Date.now() < attenteAuth.expire) return attenteAuth.nonce;
   attenteAuth = {
     nonce: crypto.randomBytes(32).toString("base64url"),
     expire: Date.now() + ATTENTE_MS,
@@ -755,7 +761,7 @@ async function createWindow() {
       // canal local refusera le jeton au retour. Un clic de plus dans le
       // navigateur, pour un chemin de repli qui redevient identique à l'autre.
       const nonce = ouvrirAttenteAuth();
-      shell.openExternal(`${BACKEND_URL}/login?_desktop=1&n=${encodeURIComponent(nonce)}`);
+      shell.openExternal(`${BACKEND_URL}/connexion-app?p=google&n=${encodeURIComponent(nonce)}`);
       mainWindow.loadURL(WAITING_HTML);
       return;
     }
