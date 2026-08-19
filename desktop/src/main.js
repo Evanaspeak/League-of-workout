@@ -46,14 +46,32 @@ const AUTH_PORT = 3099;
  * secret que le client a lui-même émis. C'est ce qui manquait.
  */
 let attenteAuth = null; // { nonce, expire }
-const ATTENTE_MS = 5 * 60 * 1000;
+// Cinq minutes ne suffisaient pas : choisir un compte, taper un mot de passe et
+// passer une double authentification dépasse couramment ce délai, et l'aléa
+// expirait pendant que le joueur s'exécutait — le retour se faisait alors
+// refuser sans que rien ne l'explique.
+const ATTENTE_MS = 15 * 60 * 1000;
+let minuterieAttente = null;
 
 function ouvrirAttenteAuth() {
   attenteAuth = {
     nonce: crypto.randomBytes(32).toString("base64url"),
     expire: Date.now() + ATTENTE_MS,
   };
+  // Une attente sans fin n'est pas une attente : passé le délai, on le dit.
+  if (minuterieAttente) clearTimeout(minuterieAttente);
+  minuterieAttente = setTimeout(abandonnerAttente, ATTENTE_MS);
   return attenteAuth.nonce;
+}
+
+/** Le délai est écoulé : on rend la main plutôt que de tourner indéfiniment. */
+function abandonnerAttente() {
+  attenteAuth = null;
+  minuterieAttente = null;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  // Ne rien faire si la connexion a fini par aboutir et qu'on est ailleurs.
+  if (!mainWindow.webContents.getURL().startsWith("data:text/html")) return;
+  mainWindow.loadURL(ATTENTE_EXPIREE_HTML);
 }
 
 /** Vrai si cet aléa est bien celui que nous attendons, et qu'il vaut encore. */
@@ -134,6 +152,11 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
   .dots span:nth-child(2) { animation-delay: .2s; }
   .dots span:nth-child(3) { animation-delay: .4s; }
   @keyframes blink { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
+  button { font: inherit; font-size: 13px; padding: 9px 18px; margin: 0 5px;
+    border-radius: 6px; cursor: pointer; border: 1px solid #FFB454;
+    background: rgba(255,180,84,.12); color: #FFB454; }
+  button.discret { border-color: rgba(236,239,244,.2); background: transparent;
+    color: rgba(236,239,244,.55); }
 </style></head>
 <body>
   ${BANDE_DEPLACEMENT}
@@ -148,6 +171,15 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
   <p style="font-size:12px;margin-top:8px;color:rgba(236,239,244,.3)">
     Cette fenêtre se met à jour automatiquement une fois connecté.
   </p>
+  <!-- Sans cette porte de sortie, le moindre grain de sable — onglet fermé,
+       mauvais navigateur par défaut, retour perdu en route — laissait la
+       fenêtre tourner indéfiniment, sans rien à faire d'autre que quitter. -->
+  <div id="secours" style="display:none;margin-top:26px;text-align:center">
+    <p style="font-size:12px;color:rgba(236,239,244,.4);margin-bottom:12px">Rien ne se passe ?</p>
+    <button onclick="window.electronLOL &amp;&amp; window.electronLOL.openGoogleLogin()">Rouvrir le navigateur</button>
+    <button class="discret" onclick="window.electronLOL &amp;&amp; window.electronLOL.retourConnexion()">Revenir à la connexion</button>
+  </div>
+  <script>setTimeout(function(){document.getElementById('secours').style.display='block'},20000)</script>
 </body></html>`)}`;
 
 // Le canal de connexion est un port unique sur la machine : si une autre
@@ -174,11 +206,54 @@ const ERREUR_PORT_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!D
      reçoit la connexion.</p>
 </body></html>`)}`;
 
+// Le délai d'attente est écoulé. Mieux vaut une fin nette, avec de quoi
+// recommencer, qu'une animation qui tourne pour l'éternité.
+const ATTENTE_EXPIREE_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0C0E11; color: #ECEFF4; font-family: 'Segoe UI', sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100vh; gap: 14px; text-align: center; padding: 32px; }
+  h2 { font-size: 19px; letter-spacing: .06em; color: #FFB454; }
+  p  { color: rgba(236,239,244,.55); font-size: 14px; max-width: 460px; line-height: 1.65; }
+  button { font: inherit; font-size: 13px; padding: 9px 18px; margin: 14px 5px 0;
+    border-radius: 6px; cursor: pointer; border: 1px solid #FFB454;
+    background: rgba(255,180,84,.12); color: #FFB454; }
+  button.discret { border-color: rgba(236,239,244,.2); background: transparent;
+    color: rgba(236,239,244,.55); }
+</style></head>
+<body>
+  ${BANDE_DEPLACEMENT}
+  <h2>CONNEXION NON TERMINÉE</h2>
+  <p>Le navigateur n'a pas rendu la connexion à l'application. Soit elle n'a pas
+     été menée à son terme, soit le retour s'est perdu en chemin.</p>
+  <div>
+    <button onclick="window.electronLOL &amp;&amp; window.electronLOL.openGoogleLogin()">Réessayer</button>
+    <button class="discret" onclick="window.electronLOL &amp;&amp; window.electronLOL.retourConnexion()">Autre méthode</button>
+  </div>
+</body></html>`)}`;
+
 // ── Serveur local d'auth (port 3099) ────────────────────────────────────────
 // Chrome (après OAuth) poste le JWT ici pour qu'Electron puisse l'utiliser.
 
+/**
+ * Le canal doit répondre sur les DEUX boucles locales.
+ *
+ * On n'écoutait que sur 127.0.0.1 pendant que la page web navigue vers
+ * `localhost`. Or Windows résout `localhost` vers ::1 avant 127.0.0.1, et un
+ * navigateur qui tombe sur une pile muette n'a pas toujours de quoi se
+ * rabattre : le transfert échouait alors sans un mot, et l'application
+ * attendait indéfiniment.
+ *
+ * Deux écoutes séparées plutôt qu'une écoute sur `::` : cette dernière aurait
+ * accepté des connexions venues du réseau local, sur un canal qui distribue un
+ * jeton de session.
+ */
+const ADRESSES_BOUCLE = ["127.0.0.1", "::1"];
+
 function startAuthSignalServer() {
-  const server = http.createServer((req, res) => {
+  const gererRequete = (req, res) => {
     res.setHeader("Access-Control-Allow-Origin", BACKEND_URL);
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -211,6 +286,7 @@ function startAuthSignalServer() {
             return;
           }
           attenteAuth = null; // usage unique
+          if (minuterieAttente) { clearTimeout(minuterieAttente); minuterieAttente = null; }
 
           const ses = mainWindow
             ? mainWindow.webContents.session
@@ -273,6 +349,7 @@ function startAuthSignalServer() {
             return;
           }
           attenteAuth = null; // usage unique
+          if (minuterieAttente) { clearTimeout(minuterieAttente); minuterieAttente = null; }
           const ses = mainWindow
             ? mainWindow.webContents.session
             : electronSession.defaultSession;
@@ -305,16 +382,41 @@ function startAuthSignalServer() {
 
     res.writeHead(404);
     res.end();
-  });
+  };
 
-  server.on("error", (err) => {
-    if (err.code === "EADDRINUSE") {
-      canalPret = false;
-      console.warn(`[WOW] Port ${AUTH_PORT} déjà utilisé — une autre instance détient le canal.`);
+  // Une écoute par pile, servant le même traitement. Qu'une pile manque sur un
+  // poste donné n'est pas une panne ; qu'elle soit OCCUPÉE en est une, car
+  // c'est alors une autre instance qui recevra le retour de connexion sur cette
+  // adresse-là. On attend donc que les deux tentatives aient répondu avant de
+  // déclarer le canal ouvert.
+  let restantes = ADRESSES_BOUCLE.length;
+  let ouvertes = 0;
+  let occupe = false;
+
+  const conclure = () => {
+    if (restantes > 0) return;
+    canalPret = ouvertes > 0 && !occupe;
+    if (occupe) {
+      console.warn(`[WOW] Port ${AUTH_PORT} déjà pris — une autre instance détient le canal.`);
+    } else if (ouvertes === 0) {
+      console.warn("[WOW] Aucune boucle locale n'écoute : le transfert de session échouera.");
     }
-  });
+  };
 
-  server.listen(AUTH_PORT, "127.0.0.1", () => { canalPret = true; });
+  for (const adresse of ADRESSES_BOUCLE) {
+    const serveur = http.createServer(gererRequete);
+    serveur.on("error", (err) => {
+      if (err.code === "EADDRINUSE") occupe = true;
+      else console.warn(`[WOW] Écoute ${adresse} indisponible :`, err.code);
+      restantes -= 1;
+      conclure();
+    });
+    serveur.listen(AUTH_PORT, adresse, () => {
+      ouvertes += 1;
+      restantes -= 1;
+      conclure();
+    });
+  }
 }
 
 // ── Réglages propres à la machine ───────────────────────────────────────────
@@ -852,6 +954,13 @@ ipcMain.on("open-google-login", () => {
 // Discord fonctionne bien dans un popup Electron natif.
 ipcMain.on("open-discord-popup", () => {
   openAuthPopup();
+});
+
+// Retour à la page de connexion depuis une page d'attente ou d'échec.
+ipcMain.on("auth:retour-connexion", () => {
+  if (minuterieAttente) { clearTimeout(minuterieAttente); minuterieAttente = null; }
+  attenteAuth = null;
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.loadURL(`${BACKEND_URL}/login`);
 });
 
 // ── Mise à jour automatique ─────────────────────────────────────────────────

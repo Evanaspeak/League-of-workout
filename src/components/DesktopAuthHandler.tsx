@@ -1,6 +1,19 @@
 "use client";
 import { useEffect } from "react";
 
+/**
+ * Un seul transfert par chargement de page.
+ *
+ * Le composant est monté des deux côtés du retour anticipé du tableau de bord,
+ * si bien que le passage de « en chargement » à « chargé » le démonte puis le
+ * remonte. Sans ce verrou, un deuxième transfert pouvait partir pendant que le
+ * premier était encore en vol — et l'aléa étant à usage unique, le second se
+ * faisait refuser.
+ *
+ * Hors du composant : une ref serait remise à zéro par ce même remontage.
+ */
+let transfertLance = false;
+
 // Exécuté dans Chrome après un OAuth réussi, uniquement si Electron a ouvert
 // Chrome avec ?_desktop=1 (flag sauvegardé en localStorage par DesktopModeDetector).
 // Transfère le JWT à l'app Electron via navigation localhost:3099.
@@ -13,6 +26,8 @@ export function DesktopAuthHandler() {
     if (!localStorage.getItem("low_desktop_handoff")) return;
     const nonce = localStorage.getItem("low_desktop_nonce");
     if (!nonce) return;
+    if (transfertLance) return;
+    transfertLance = true;
 
     // Un échec ici laissait l'utilisateur sur un dashboard d'apparence normale
     // pendant que l'application restait déconnectée, sans rien pour le dire.

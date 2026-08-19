@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld("electronLOL", {
   openGoogleLogin: () => ipcRenderer.send("open-google-login"),
   // Discord fonctionne dans un popup Electron natif.
   openDiscordLogin: () => ipcRenderer.send("open-discord-popup"),
+  // Sortie de secours depuis la page d'attente : rien n'y ramenait la
+  // connexion, et la fenêtre restait bloquée sur son animation.
+  retourConnexion: () => ipcRenderer.send("auth:retour-connexion"),
   onGameEnded: (callback) => subscribe("game-ended", callback),
   onGameStarted: (callback) => subscribe("game-started", callback),
   // Overlay en jeu : le réglage vit côté application, pas dans le compte —

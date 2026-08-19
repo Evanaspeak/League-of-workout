@@ -222,7 +222,20 @@ export default function Dashboard() {
     if (ok) loadDash();
   };
 
-  if (!data) return <div className="text-center py-20 gold-text">{t.loading}</div>;
+  // Le transfert de session vers l'application desktop ne dépend pas des
+  // statistiques : il était monté plus bas, donc APRÈS ce retour anticipé.
+  // Tant que le tableau de bord chargeait, le relais n'était pas même tenté —
+  // et si le chargement échouait, l'application restait indéfiniment sur son
+  // écran « Authentification en cours », le navigateur affichant pourtant une
+  // session parfaitement valide.
+  if (!data) {
+    return (
+      <>
+        <DesktopAuthHandler />
+        <div className="text-center py-20 gold-text">{t.loading}</div>
+      </>
+    );
+  }
 
   // Les données restent en POINTS D'EFFORT : on ne convertit qu'à l'affichage,
   // ce qui laisse les échelles des graphiques inchangées (conversion linéaire).
