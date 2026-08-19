@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { ABONNEMENTS_MAX, endpointAcceptable, pushConfigure, notifier } from "@/lib/push";
+import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 
 /** État des notifications pour le compte courant. */
 export async function GET() {
@@ -84,6 +85,19 @@ export async function DELETE(req: Request) {
 export async function PUT() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  // Une notification de test part vers tous les appareils du compte, à chaque
+  // appel et sans limite : de quoi se harceler soi-même, et faire porter à
+  // notre service d'envoi une charge que rien ne borne. Le compteur porte sur
+  // le COMPTE et non sur l'adresse : c'est le compte qui reçoit.
+  const cle = `push-test|${user.id}`;
+  if (await isRateLimited(cle, "push-test")) {
+    return NextResponse.json(
+      { error: "Trop d'essais. Réessaie dans quelques minutes." },
+      { status: 429 },
+    );
+  }
+  await recordAttempt(cle, "push-test");
 
   const envoyees = await notifier(user.id, {
     titre: "Win or Workout",
