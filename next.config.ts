@@ -25,6 +25,11 @@ const securityHeaders = [
       // Le service worker des notifications doit pouvoir s'enregistrer.
       "worker-src 'self'",
       "frame-ancestors 'none'",
+      // Ces deux-là ne retombent PAS sur `default-src` (CSP niveau 3) : sans
+      // les écrire, ils restent libres. `base-uri` empêche de réécrire la base
+      // des URL relatives, `form-action` d'envoyer un formulaire ailleurs.
+      "base-uri 'self'",
+      "form-action 'self'",
     ].join("; "),
   },
 ];

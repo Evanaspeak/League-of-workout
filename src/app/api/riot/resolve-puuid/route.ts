@@ -1,18 +1,30 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { REGIONS_RIOT, routageDe, validerRiotId } from "@/lib/riot-champs";
 
 export async function POST(req: Request) {
-  const { riotId: rawRiotId, region } = await req.json();
+  // La session se vérifie AVANT de parler à Riot. Elle ne l'était qu'après,
+  // pour décider s'il fallait enregistrer le résultat : l'appel sortant, lui,
+  // partait dans tous les cas avec la clé du serveur. Seul le middleware
+  // séparait donc Internet d'un annuaire Riot gratuit tenu à nos frais.
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  // Strip invisible Unicode directional/formatting chars injected by the League client (e.g. U+2066, U+2069)
-  const riotId = Array.from(rawRiotId as string)
-    .filter((c) => {
-      const code = c.codePointAt(0) ?? 0;
-      return code >= 0x20 && !(code >= 0x200b && code <= 0x206f) && code !== 0xfeff;
-    })
-    .join("")
-    .trim();
+  // Un corps qui n'est pas du JSON, ou dont `riotId` n'est pas une chaîne,
+  // faisait remonter une exception non rattrapée et répondait 500.
+  const body = await req.json().catch(() => null);
+  const riotId = validerRiotId(body?.riotId);
+  if (!riotId) {
+    return NextResponse.json({ error: "Format invalide. Utilise pseudo#tag" }, { status: 400 });
+  }
+
+  const region = typeof body?.region === "string" && REGIONS_RIOT.includes(body.region)
+    ? body.region
+    : null;
+  if (!region) {
+    return NextResponse.json({ error: "Région inconnue" }, { status: 400 });
+  }
 
   const apiKey = process.env.RIOT_API_KEY?.trim();
   if (!apiKey) {
@@ -20,22 +32,11 @@ export async function POST(req: Request) {
   }
 
   const [gameName, tagLine] = riotId.split("#");
-  if (!gameName || !tagLine) {
-    return NextResponse.json({ error: "Format invalide. Utilise pseudo#tag" }, { status: 400 });
-  }
-
-  const REGION_ROUTING: Record<string, string> = {
-    EUW1: "europe", EUN1: "europe", TR1: "europe", RU: "europe",
-    NA1: "americas", BR1: "americas", LA1: "americas", LA2: "americas",
-    KR: "asia", JP1: "asia",
-    OC1: "sea", PH2: "sea", SG2: "sea", TH2: "sea", TW2: "sea", VN2: "sea",
-  };
-
-  const routing = REGION_ROUTING[region] ?? "europe";
+  const routing = routageDe(region);
 
   const res = await fetch(
     `https://${routing}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-    { headers: { "X-Riot-Token": apiKey } }
+    { headers: { "X-Riot-Token": apiKey } },
   );
 
   if (!res.ok) {
@@ -43,13 +44,10 @@ export async function POST(req: Request) {
   }
 
   const data = await res.json();
-  const user = await getCurrentUser();
-  if (user) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { riotPuuid: data.puuid, riotId, riotRegion: region },
-    });
-  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { riotPuuid: data.puuid, riotId, riotRegion: region },
+  });
 
   return NextResponse.json({ puuid: data.puuid, gameName: data.gameName, tagLine: data.tagLine });
 }

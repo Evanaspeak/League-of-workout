@@ -1,14 +1,26 @@
 "use client";
 import { useEffect } from "react";
 
-// Détecte ?_desktop=1 sur la page login (posé par Electron via shell.openExternal)
-// et sauvegarde un flag localStorage pour que DesktopAuthHandler sache qu'il doit
-// transférer la session à l'app Electron après l'OAuth.
+/**
+ * Détecte l'ouverture faite par l'application desktop et mémorise le transfert
+ * à venir, ainsi que l'aléa qui l'autorisera.
+ *
+ * Le drapeau seul ne prouvait rien : n'importe quel site pouvait ouvrir
+ * `/login?_desktop=1` chez la victime pour l'armer, et le tableau de bord
+ * mettait ensuite son jeton de session dans une adresse — donc dans
+ * l'historique du navigateur. L'aléa vient de l'application elle-même : sans
+ * lui, le canal local refuse le transfert.
+ */
 export function DesktopModeDetector() {
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("_desktop") === "1") {
-      localStorage.setItem("low_desktop_handoff", "1");
-    }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("_desktop") !== "1") return;
+    const nonce = params.get("n");
+    // Pas d'aléa, pas de transfert : un drapeau posé par un tiers ne mène nulle
+    // part, et c'est exactement ce qu'on veut.
+    if (!nonce) return;
+    localStorage.setItem("low_desktop_handoff", "1");
+    localStorage.setItem("low_desktop_nonce", nonce);
   }, []);
   return null;
 }

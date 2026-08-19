@@ -21,6 +21,9 @@ const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
 const { surveillerClient } = require("./lcu");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
+// `crypto` global d'Electron est celui du navigateur : ni randomBytes, ni
+// timingSafeEqual. C'est bien le module Node qu'il faut ici.
+const crypto = require("crypto");
 
 // Désactive les Client Hints (Sec-CH-UA) qui trahissent Electron auprès de
 // Google OAuth même quand le user-agent est spoofé en Chrome standard.
@@ -28,6 +31,37 @@ app.commandLine.appendSwitch("disable-features", "UserAgentClientHint");
 
 const BACKEND_URL = process.env.LOW_BACKEND_URL || "https://winorworkout.com";
 const AUTH_PORT = 3099;
+
+/**
+ * Connexion en cours : l'aléa que nous avons émis, et jusqu'à quand il vaut.
+ *
+ * Sans lui, le canal local acceptait n'importe quel jeton venu de n'importe où.
+ * Une navigation de premier niveau depuis une page web quelconque suffisait à
+ * poser la session d'un inconnu dans l'application — et aucune protection du
+ * navigateur ne s'y oppose : CORS ne s'applique pas aux navigations, Private
+ * Network Access ne les couvre pas, le contenu mixte autorise 127.0.0.1, et
+ * SameSite est hors sujet puisque le jeton voyage dans l'adresse.
+ *
+ * Les clients comparables (Discord, Slack, Spotify) lient leur transfert à un
+ * secret que le client a lui-même émis. C'est ce qui manquait.
+ */
+let attenteAuth = null; // { nonce, expire }
+const ATTENTE_MS = 5 * 60 * 1000;
+
+function ouvrirAttenteAuth() {
+  attenteAuth = {
+    nonce: crypto.randomBytes(32).toString("base64url"),
+    expire: Date.now() + ATTENTE_MS,
+  };
+  return attenteAuth.nonce;
+}
+
+/** Vrai si cet aléa est bien celui que nous attendons, et qu'il vaut encore. */
+function nonceValide(recu) {
+  if (!attenteAuth || Date.now() > attenteAuth.expire) return false;
+  if (typeof recu !== "string" || recu.length !== attenteAuth.nonce.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(recu), Buffer.from(attenteAuth.nonce));
+}
 
 const CHROME_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
@@ -157,12 +191,26 @@ function startAuthSignalServer() {
     }
 
     // GET /set-session?t=JWT — navigation-based handoff from Chrome (bypasses PNA/mixed-content)
-    if (req.method === "GET" && req.url && req.url.startsWith("/set-session")) {
+    // Chemin comparé exactement : `startsWith` laissait passer /set-sessionXYZ.
+    const chemin = req.url ? new URL(req.url, `http://127.0.0.1:${AUTH_PORT}`).pathname : "";
+    if (req.method === "GET" && chemin === "/set-session") {
       (async () => {
         try {
           const urlObj = new URL(req.url, `http://127.0.0.1:${AUTH_PORT}`);
+          // L'aléa d'abord, le jeton ensuite : un appelant qui n'a pas ouvert la
+          // connexion n'apprend rien de la forme attendue de la requête.
+          if (!nonceValide(urlObj.searchParams.get("n"))) {
+            res.writeHead(403, { "Content-Type": "text/plain" });
+            res.end("nonce invalide");
+            return;
+          }
           const jwt = urlObj.searchParams.get("t");
-          if (!jwt) throw new Error("missing token");
+          if (!jwt) {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("jeton manquant");
+            return;
+          }
+          attenteAuth = null; // usage unique
 
           const ses = mainWindow
             ? mainWindow.webContents.session
@@ -189,19 +237,42 @@ function startAuthSignalServer() {
           res.writeHead(302, { Location: `${BACKEND_URL}/api/auth/desktop-complete` });
           res.end();
         } catch (err) {
+          // Le message d'erreur reste au journal : le renvoyer décrivait le
+          // fonctionnement interne du canal à qui frappait à la porte.
+          console.error("canal auth (GET)", err);
           res.writeHead(500, { "Content-Type": "text/plain" });
-          res.end(String(err));
+          res.end("erreur interne");
         }
       })();
       return;
     }
 
-    if (req.method === "POST" && req.url === "/set-session") {
+    if (req.method === "POST" && chemin === "/set-session") {
       let body = "";
       req.on("data", (c) => (body += c));
       req.on("end", async () => {
         try {
-          const { jwt } = JSON.parse(body);
+          let recu;
+          try {
+            recu = JSON.parse(body);
+          } catch {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("corps illisible");
+            return;
+          }
+          const { jwt, nonce } = recu ?? {};
+          if (!nonceValide(nonce)) {
+            res.writeHead(403);
+            res.end("nonce invalide");
+            return;
+          }
+          // `cookies.set` rejette une valeur absente, ce qui finissait en 500.
+          if (typeof jwt !== "string" || jwt === "") {
+            res.writeHead(400, { "Content-Type": "text/plain" });
+            res.end("jeton manquant");
+            return;
+          }
+          attenteAuth = null; // usage unique
           const ses = mainWindow
             ? mainWindow.webContents.session
             : electronSession.defaultSession;
@@ -224,8 +295,9 @@ function startAuthSignalServer() {
           res.writeHead(200, { "Content-Type": "application/json" });
           res.end(JSON.stringify({ ok: true }));
         } catch (err) {
-          res.writeHead(500);
-          res.end(String(err));
+          console.error("canal auth (POST)", err);
+          res.writeHead(500, { "Content-Type": "text/plain" });
+          res.end("erreur interne");
         }
       });
       return;
@@ -562,8 +634,21 @@ async function createWindow() {
         mainWindow.loadURL(ERREUR_PORT_HTML);
         return;
       }
-      shell.openExternal(url);
+      // On renvoie vers notre propre page de connexion plutôt que vers l'URL
+      // OAuth brute : c'est elle qui porte l'aléa du transfert, et sans lui le
+      // canal local refusera le jeton au retour. Un clic de plus dans le
+      // navigateur, pour un chemin de repli qui redevient identique à l'autre.
+      const nonce = ouvrirAttenteAuth();
+      shell.openExternal(`${BACKEND_URL}/login?_desktop=1&n=${encodeURIComponent(nonce)}`);
       mainWindow.loadURL(WAITING_HTML);
+      return;
+    }
+    // La fenêtre n'a ni barre d'adresse, ni bouton retour, ni menu : une
+    // navigation hors du domaine y serait un aller sans retour, sous l'identité
+    // de l'application. On la renvoie au navigateur système.
+    if (!url.startsWith(BACKEND_URL) && !url.startsWith("data:")) {
+      event.preventDefault();
+      shell.openExternal(url);
     }
   });
 
@@ -757,7 +842,10 @@ ipcMain.on("open-google-login", () => {
     return;
   }
   // ?_desktop=1 est détecté par DesktopModeDetector → localStorage flag → DesktopAuthHandler actif
-  shell.openExternal(`${BACKEND_URL}/login?_desktop=1`);
+  // `n` accompagne le drapeau : c'est lui qui reviendra prouver que ce transfert
+  // répond bien à cette connexion-ci, et pas à une page ouverte au hasard.
+  const nonce = ouvrirAttenteAuth();
+  shell.openExternal(`${BACKEND_URL}/login?_desktop=1&n=${encodeURIComponent(nonce)}`);
   if (mainWindow) mainWindow.loadURL(WAITING_HTML);
 });
 

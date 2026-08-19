@@ -61,6 +61,11 @@ export const config = {
   // envoyer les cookies, et un service worker redirigé vers /login ne
   // s'enregistre jamais.
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|api/pwa-icon|opengraph-image|icon$|apple-icon$|.*\\.png$|.*\\.svg$).*)",
+    // Les exclusions portent sur des chemins précis, jamais sur une extension.
+    // « .*\\.png$ » dispensait du contrôle TOUTE adresse finissant par .png —
+    // y compris /api/admin/users/x.png, qui atteint bien son handler. Les
+    // contrôles en place dans chaque handler rattrapaient le coup ; la
+    // convention « les pages sont protégées par le middleware » était fausse.
+    "/((?!_next/static|_next/image|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|api/pwa-icon|opengraph-image|icon$|apple-icon$|icons/|images/).*)",
   ],
 };

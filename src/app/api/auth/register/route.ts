@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
+import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 
 const BETA_LIMIT = 100;
 
@@ -13,20 +14,25 @@ export async function POST(request: Request) {
     }
     await recordAttempt(ip, "register");
 
-    const { email, password, pseudo } = await request.json();
+    const body = await request.json();
+    const password = body.password;
 
-    if (!email || !password || !pseudo) {
-      return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
-    }
-    if (typeof email !== "string" || !email.includes("@")) {
+    // L'adresse est ramenée à sa forme canonique AVANT le contrôle d'unicité
+    // comme avant l'écriture. Sans ça, l'index unique (octet par octet) laisse
+    // passer une variante de casse que le test d'administrateur (insensible à
+    // la casse) accepte ensuite : c'était le chemin d'escalade.
+    const email = normaliserEmail(body.email);
+    if (!email) {
       return NextResponse.json({ error: "Email invalide" }, { status: 400 });
     }
     if (typeof password !== "string" || password.length < 8) {
       return NextResponse.json({ error: "Mot de passe trop court (min 8 caractères)" }, { status: 400 });
     }
-    if (typeof pseudo !== "string" || pseudo.trim().length < 2) {
-      return NextResponse.json({ error: "Pseudo trop court (min 2 caractères)" }, { status: 400 });
+    const verdict = validerPseudo(body.pseudo);
+    if (!verdict.ok) {
+      return NextResponse.json({ error: verdict.erreur }, { status: verdict.statut });
     }
+    const pseudo = verdict.valeur;
 
     const count = await prisma.user.count();
     if (count >= BETA_LIMIT) {
@@ -37,13 +43,16 @@ export async function POST(request: Request) {
     if (existing) {
       return NextResponse.json({ error: "Un compte existe déjà avec cet email" }, { status: 409 });
     }
+    if (await pseudoDejaPris(pseudo)) {
+      return NextResponse.json({ error: "Ce pseudo est déjà pris. Choisis-en un autre." }, { status: 409 });
+    }
 
     const passwordHash = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.create({
       data: {
         email,
-        pseudo: pseudo.trim(),
+        pseudo,
         passwordHash,
         betaRank: count + 1,
       },

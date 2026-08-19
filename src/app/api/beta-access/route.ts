@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
+import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 
 const BETA_LIMIT = 100;
 
@@ -28,31 +29,26 @@ export async function POST(request: Request) {
     await recordAttempt(ip, "register");
 
     const body = await request.json();
-    const pseudo = String(body.pseudo ?? "").trim();
-
-    // Pseudo : seul champ obligatoire.
-    if (pseudo.length < 2) {
-      return NextResponse.json({ error: "Pseudo trop court (min 2 caractères)" }, { status: 400 });
+    // Pseudo : seul champ obligatoire. Les règles vivent dans `identite`, avec
+    // celles des deux autres chemins d'écriture — c'est leur divergence qui a
+    // ouvert l'escalade d'administrateur.
+    const verdict = validerPseudo(body.pseudo);
+    if (!verdict.ok) {
+      return NextResponse.json({ error: verdict.erreur }, { status: verdict.statut });
     }
-    if (pseudo.length > 24) {
-      return NextResponse.json({ error: "Pseudo trop long (max 24 caractères)" }, { status: 400 });
-    }
-    if (!/^[\p{L}\p{N} _.\-]+$/u.test(pseudo)) {
-      return NextResponse.json({ error: "Pseudo invalide (lettres, chiffres, espaces uniquement)" }, { status: 400 });
-    }
+    const pseudo = verdict.valeur;
 
     // Email optionnel (pour la récupération de compte). Si fourni : valider + unicité.
-    const rawEmail = String(body.email ?? "").trim().toLowerCase();
     let email: string | null = null;
-    if (rawEmail) {
-      if (!rawEmail.includes("@") || rawEmail.length < 5) {
+    if (body.email) {
+      email = normaliserEmail(body.email);
+      if (!email) {
         return NextResponse.json({ error: "Email invalide" }, { status: 400 });
       }
-      const emailTaken = await prisma.user.findUnique({ where: { email: rawEmail }, select: { id: true } });
+      const emailTaken = await prisma.user.findUnique({ where: { email }, select: { id: true } });
       if (emailTaken) {
         return NextResponse.json({ error: "Un compte existe déjà avec cet email" }, { status: 409 });
       }
-      email = rawEmail;
     }
 
     const count = await prisma.user.count();
@@ -61,11 +57,7 @@ export async function POST(request: Request) {
     }
 
     // Unicité côté appli (pas de contrainte DB : des pseudos existants sont dupliqués).
-    const taken = await prisma.user.findFirst({
-      where: { pseudo: { equals: pseudo, mode: "insensitive" } },
-      select: { id: true },
-    });
-    if (taken) {
+    if (await pseudoDejaPris(pseudo)) {
       return NextResponse.json({ error: "Ce pseudo est déjà pris. Choisis-en un autre." }, { status: 409 });
     }
 

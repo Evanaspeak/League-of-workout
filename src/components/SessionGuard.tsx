@@ -17,6 +17,15 @@ export function SessionGuard() {
     if (params.get("li") === "1") {
       // Première arrivée après connexion → marque la session navigateur comme active
       sessionStorage.setItem("low_alive", "1");
+
+      // Les connexions OAuth repartent par une redirection : impossible de
+      // demander un cookie volatile depuis la page de connexion, qu'on a déjà
+      // quittée. On le fait ici, au premier atterrissage, sinon la case
+      // décochée ne changerait rien pour Google et Discord.
+      if (localStorage.getItem("low_rm") === "false") {
+        fetch("/api/auth/session-volatile", { method: "POST" }).catch(() => {});
+      }
+
       params.delete("li");
       const clean = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
       window.history.replaceState({}, "", clean);

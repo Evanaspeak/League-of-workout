@@ -2,15 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { routageDe, validerPuuid } from "@/lib/riot-champs";
 
 export const dynamic = "force-dynamic";
 
-const REGION_ROUTING: Record<string, string> = {
-  EUW1: "europe", EUN1: "europe", TR1: "europe", RU: "europe",
-  NA1: "americas", BR1: "americas", LA1: "americas", LA2: "americas",
-  KR: "asia", JP1: "asia",
-  OC1: "sea", PH2: "sea", SG2: "sea", TH2: "sea", TW2: "sea", VN2: "sea",
-};
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -34,7 +29,13 @@ async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Respon
 export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  if (!user.riotPuuid) {
+  // Le PUUID vient de la base, mais rien ne garantissait ce qu'on y avait
+  // écrit : il partait brut dans l'URL et un dièse suffisait à s'approprier le
+  // chemin comme la requête envoyés sous la clé du serveur. Un compte dont le
+  // PUUID est mal formé se voit renvoyé vers ses réglages, comme un compte qui
+  // n'en a pas — c'est le même remède.
+  const puuid = validerPuuid(user.riotPuuid);
+  if (!puuid) {
     return NextResponse.json({ error: "PUUID manquant. Configure ton Riot ID dans Réglages." }, { status: 400 });
   }
 
@@ -43,11 +44,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Clé API Riot manquante (RIOT_API_KEY dans .env)" }, { status: 500 });
   }
 
-  const routing = REGION_ROUTING[user.riotRegion] ?? "europe";
-  const puuid = user.riotPuuid;
+  const routing = routageDe(user.riotRegion);
 
   const idsRes = await riotFetch(
-    `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=1`,
+    `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?start=0&count=1`,
     apiKey
   );
   if (!idsRes.ok) {

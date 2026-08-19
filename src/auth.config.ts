@@ -8,30 +8,27 @@ export const authConfig = {
   providers: [
     // allowDangerousEmailAccountLinking : lie automatiquement un compte OAuth à
     // un utilisateur existant ayant le même email (évite l'erreur
-    // OAuthAccountNotLinked). Sûr car Google et Discord vérifient l'email.
+    // OAuthAccountNotLinked).
+    //
+    // « Sûr car Google et Discord vérifient l'email » : c'était le mauvais
+    // modèle de menace. La vérification du fournisseur protège d'une
+    // revendication OAuth mensongère, jamais de la ligne LOCALE — que
+    // n'importe qui pouvait créer avant l'invité, mot de passe compris, pour
+    // récupérer son compte à sa première connexion. Le garde-fou vit
+    // maintenant dans le callback `signIn` de `auth.ts` : une connexion OAuth
+    // ne prend pas la main sur un compte qui a déjà un mot de passe et n'est
+    // pas encore relié à ce fournisseur.
     Google({ allowDangerousEmailAccountLinking: true }),
     Discord({ allowDangerousEmailAccountLinking: true }),
   ],
   trustHost: true,
   session: { strategy: "jwt" as const },
   pages: { signIn: "/login" },
-  callbacks: {
-    // Détermine si une requête est autorisée (middleware).
-    authorized({ auth, request }) {
-      const { pathname } = request.nextUrl;
-      const isPublic =
-        pathname === "/" ||
-        pathname.startsWith("/beta") ||
-        pathname.startsWith("/api/beta") ||
-        pathname.startsWith("/login") ||
-        pathname.startsWith("/waitlist") ||
-        pathname.startsWith("/cgu") ||
-        pathname.startsWith("/confidentialite") ||
-        pathname.startsWith("/telechargement") ||
-        pathname.startsWith("/recuperation") ||
-        pathname.startsWith("/api/auth");
-      if (isPublic) return true;
-      return !!auth?.user;
-    },
-  },
+  // Pas de callback `authorized` ici, volontairement.
+  //
+  // `middleware.ts` enveloppe `auth()` avec sa propre fonction : next-auth
+  // exécute alors celle-ci et JETTE le booléen que `authorized` aurait rendu.
+  // La liste de routes publiques qui vivait ici n'avait donc aucun effet — un
+  // piège de maintenance, où corriger une copie laissait l'autre diverger en
+  // silence. La politique tient en un seul endroit : `PUBLIC_PREFIXES`.
 } satisfies NextAuthConfig;

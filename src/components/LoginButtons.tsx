@@ -76,6 +76,7 @@ export function LoginButtons() {
       if (result?.error) {
         setError(t.erreurPseudoCode);
       } else {
+        await appliquerMemorisation();
         window.location.assign("/dashboard?li=1");
       }
     } catch {
@@ -92,6 +93,22 @@ export function LoginButtons() {
     }
   };
 
+  /**
+   * Case décochée : on demande au serveur de rendre le cookie volatile.
+   *
+   * `saveRm` n'écrivait que dans le navigateur, et Auth.js pose de toute façon
+   * un cookie persistant de trente jours. Sur un poste partagé, la case ne
+   * protégeait donc de rien — c'est pourtant tout ce qu'elle promet.
+   */
+  const appliquerMemorisation = async () => {
+    if (rememberMe) return;
+    try {
+      await fetch("/api/auth/session-volatile", { method: "POST" });
+    } catch {
+      /* la session reste persistante : mieux vaut ça qu'un échec de connexion */
+    }
+  };
+
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -102,6 +119,7 @@ export function LoginButtons() {
       if (result?.error) {
         setError(t.erreurEmailMotDePasse);
       } else {
+        await appliquerMemorisation();
         window.location.assign("/dashboard?li=1");
       }
     } catch {
@@ -132,6 +150,7 @@ export function LoginButtons() {
         setSuccess(t.compteCreeConnexion);
         setMode("login");
       } else {
+        await appliquerMemorisation();
         window.location.assign("/dashboard?li=1");
       }
     } catch {

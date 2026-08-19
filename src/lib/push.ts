@@ -2,6 +2,47 @@ import webpush from "web-push";
 import { prisma } from "./prisma";
 
 /**
+ * Services de notification légitimes.
+ *
+ * `endpoint` est une URL fournie par le client, conservée en base, puis appelée
+ * par le serveur. `web-push` ne vérifie ni le schéma ni l'hôte : il appelle ce
+ * qu'on lui donne. Sans liste, un compte transformait l'application en sonde —
+ * et, comme rien ne plafonne le nombre d'abonnements, en relais amplificateur
+ * dirigé vers la cible de son choix, au départ de nos adresses.
+ *
+ * La validation TLS reste active côté `web-push`, donc les services internes en
+ * clair étaient déjà hors d'atteinte. Ce verrou-ci ferme le reste.
+ */
+const HOTES_PUSH = [
+  "fcm.googleapis.com",              // Chrome, Edge, Brave
+  "updates.push.services.mozilla.com", // Firefox
+  "web.push.apple.com",             // Safari, iOS
+];
+const SUFFIXES_PUSH = [
+  ".notify.windows.com",            // Windows / WNS
+  ".push.apple.com",
+  ".googleapis.com",
+];
+
+/** Nombre d'appareils par compte. Au-delà, le plus ancien cède la place. */
+export const ABONNEMENTS_MAX = 10;
+
+/** Vrai si cette adresse est bien celle d'un service de notification connu. */
+export function endpointAcceptable(brut: unknown): brut is string {
+  if (typeof brut !== "string" || brut.length > 1024) return false;
+  let url: URL;
+  try {
+    url = new URL(brut);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  const hote = url.hostname.toLowerCase();
+  return HOTES_PUSH.includes(hote) || SUFFIXES_PUSH.some((s) => hote.endsWith(s));
+}
+
+
+/**
  * Notifications web. Elles servent le seul moment où quelqu'un est vraiment
  * disponible pour payer sa dette : entre deux parties, dans la file d'attente.
  * Sans elles, il faut penser à ouvrir l'application — ce que personne ne fait

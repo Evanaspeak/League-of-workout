@@ -9,14 +9,17 @@ export function DesktopAuthHandler() {
     if (typeof window === "undefined") return;
     // Ne s'exécute pas dans l'app Electron elle-même.
     if (window.electronLOL?.isDesktop) return;
-    // Ne s'exécute que si Electron a ouvert Chrome avec ?_desktop=1.
+    // Ne s'exécute que si Electron a ouvert Chrome avec ?_desktop=1 ET son aléa.
     if (!localStorage.getItem("low_desktop_handoff")) return;
+    const nonce = localStorage.getItem("low_desktop_nonce");
+    if (!nonce) return;
 
     // Un échec ici laissait l'utilisateur sur un dashboard d'apparence normale
     // pendant que l'application restait déconnectée, sans rien pour le dire.
     // On le nomme, sinon la panne est indiscernable d'une réussite.
     const echouer = (raison: string) => {
       localStorage.removeItem("low_desktop_handoff");
+      localStorage.removeItem("low_desktop_nonce");
       window.location.assign(`/login?transfer_error=${raison}`);
     };
 
@@ -26,10 +29,14 @@ export function DesktopAuthHandler() {
         if (!data?.jwt) return echouer("token");
         // Nettoie le flag avant de naviguer pour éviter toute boucle.
         localStorage.removeItem("low_desktop_handoff");
-        // Navigate instead of fetch — bypasses Chrome CORS/Private Network Access
-        // restrictions that block HTTPS→HTTP localhost fetch() requests.
+        localStorage.removeItem("low_desktop_nonce");
+        // Navigation plutôt que fetch : contourne les restrictions CORS et
+        // Private Network Access de Chrome sur HTTPS→HTTP localhost. C'est
+        // aussi ce qui rendait le canal atteignable depuis n'importe quel site,
+        // d'où l'aléa qui accompagne désormais le jeton.
         window.location.assign(
           `http://localhost:3099/set-session?t=${encodeURIComponent(data.jwt)}`
+          + `&n=${encodeURIComponent(nonce)}`
         );
       })
       .catch(() => echouer("reseau"));
