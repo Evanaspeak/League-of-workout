@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { telechargement as telechargementDict } from "@/lib/i18n/dictionaries/telechargement";
+import { Icone } from "@/components/Icone";
 
 export function TelechargementClient({
   downloadUrl,
@@ -81,6 +82,56 @@ export function TelechargementClient({
           <p style={{ marginTop: "0.7rem", fontSize: "0.75rem", color: "rgba(236,239,244,0.35)" }}>
             {t.versionLabel(version)}
           </p>
+        )}
+
+        {/* Avertissement Windows, annoncé AVANT de le rencontrer.
+            Ce qui fait renoncer les gens n'est pas l'avertissement — c'est de
+            tomber dessus sans prévenir, sur un programme qu'ils viennent de
+            télécharger. Dit à l'avance, il devient une formalité. */}
+        {downloadUrl && (
+          <div style={{
+            marginTop: "1.6rem",
+            padding: "1rem 1.15rem",
+            borderRadius: 6,
+            textAlign: "left",
+            background: "rgba(255,180,84,0.06)",
+            border: "1px solid rgba(255,180,84,0.28)",
+          }}>
+            <p style={{
+              display: "flex", alignItems: "center", gap: 8,
+              fontSize: "0.8rem", fontWeight: 600, color: "var(--amber)", marginBottom: "0.6rem",
+            }}>
+              <Icone nom="alerte" taille={16} />
+              {t.smartScreenTitre}
+            </p>
+            <p style={{ fontSize: "0.78rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.7 }}>
+              {t.smartScreenIntro}
+            </p>
+            {/* Les numéros sont rétablis explicitement : la remise à zéro des
+                styles les enlève, or ici l'ordre des deux clics compte. */}
+            <ol style={{
+              margin: "0.6rem 0 0", paddingLeft: "1.4rem", listStyle: "decimal",
+              fontSize: "0.78rem", color: "rgba(236,239,244,0.6)", lineHeight: 1.9,
+            }}>
+              <li>{t.smartScreenEtape1}</li>
+              <li>{t.smartScreenEtape2}</li>
+            </ol>
+
+            <details style={{ marginTop: "0.85rem" }}>
+              <summary style={{
+                cursor: "pointer", fontSize: "0.75rem",
+                color: "rgba(236,239,244,0.45)", listStyle: "none",
+              }}>
+                {t.smartScreenPourquoi}
+              </summary>
+              <p style={{
+                marginTop: "0.5rem", fontSize: "0.75rem",
+                color: "rgba(236,239,244,0.45)", lineHeight: 1.75,
+              }}>
+                {t.smartScreenExplication}
+              </p>
+            </details>
+          </div>
         )}
 
         {!downloadUrl && (
