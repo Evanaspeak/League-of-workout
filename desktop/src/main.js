@@ -828,6 +828,17 @@ async function createWindow() {
       app.quit();
       return;
     }
+    // Une fenêtre déjà invisible n'a pas de croix à cliquer : cette demande-là
+    // ne vient pas du joueur, mais de Windows — un installeur, typiquement, qui
+    // réclame l'arrêt avant de remplacer les fichiers. La renvoyer en veille
+    // laissait l'installation buter sur « ne peut pas être fermé », avec pour
+    // seule issue d'aller tuer le processus à la main. On s'arrête, en passant
+    // par le nettoyage habituel.
+    if (!mainWindow.isVisible()) {
+      onQuitte = true;
+      app.quit();
+      return;
+    }
     event.preventDefault();
     mainWindow.hide();
     signalerVeille();
