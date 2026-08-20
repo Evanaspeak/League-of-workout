@@ -70,12 +70,20 @@ export async function PUT(req: Request) {
 
   const updated = await prisma.user.update({ where: { id: user.id }, data });
 
-  // Met à jour l'objectif si fourni
+  // Met à jour l'objectif si fourni. La valeur était reprise par un `Number()`
+  // nu : une saisie non numérique donnait NaN, que Prisma refuse d'écrire, et
+  // la requête tombait en erreur serveur au lieu de dire ce qui n'allait pas.
+  // Le plafond, lui, garde l'objectif dans un ordre de grandeur qu'un corps
+  // humain peut atteindre.
   if (body.objectifTotalPompes !== undefined) {
+    const objectif = Math.round(Number(body.objectifTotalPompes));
+    if (!Number.isFinite(objectif) || objectif < 1 || objectif > 10_000_000) {
+      return NextResponse.json({ error: "Objectif invalide" }, { status: 400 });
+    }
     await prisma.goal.upsert({
       where: { userId: user.id },
-      update: { objectifTotalPompes: Number(body.objectifTotalPompes) },
-      create: { userId: user.id, objectifTotalPompes: Number(body.objectifTotalPompes) },
+      update: { objectifTotalPompes: objectif },
+      create: { userId: user.id, objectifTotalPompes: objectif },
     });
   }
 
