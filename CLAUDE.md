@@ -46,6 +46,7 @@ src/
     history/page.tsx                # Historique parties + pompes (client)
     admin/page.tsx                  # Panel admin (server) — restreint à evantocquet@gmail.com
     admin/AdminChampionEditor.tsx   # Éditeur liste champions (client)
+    admin/AdminRatiosExercices.tsx  # Réglage des ratios squats et boxe (client)
     settings/page.tsx               # Réglages utilisateur
     login/page.tsx                  # Login
     telechargement/page.tsx         # Page download app desktop
@@ -57,6 +58,8 @@ src/
       games/preview/route.ts        # POST preview scoring sans sauvegarder
       champions/route.ts            # GET liste champions (DB override ou défaut)
       admin/config/champions/route.ts  # GET/PUT/DELETE liste champions (admin only)
+      admin/config/exercices/route.ts  # GET/PUT/DELETE ratios entre exercices (admin only)
+      exercices/ratios/route.ts     # GET public — ratios en vigueur, relus par le navigateur
       riot/match-history/route.ts   # GET 20 dernières parties Riot
       riot/last-game/route.ts       # GET dernière partie Riot
   components/
@@ -84,7 +87,7 @@ desktop/              # App Electron Windows
 - `RoleWeight` — poids K/D/A par rôle (config globale)
 - `LevelConfig` — niveaux 1-5, seuils gainage, multiplicateur, malusDefaite
 - `MasteryConfig` — surchargeMax (0.5), partiesPourMax (100)
-- `SystemConfig` — key/value JSON pour config admin (ex: key="champions")
+- `SystemConfig` — key/value JSON pour config admin (clés : "champions", "exercices")
 
 ## Fonctionnalités implémentées
 
@@ -105,6 +108,15 @@ desktop/              # App Electron Windows
   - **lastRole** et **lastGainageSec** persistés en localStorage
   - **ChampionInput** autocomplete avec validation (rejette hors liste)
   - Preview scoring avant confirmation
+
+### Ratios entre exercices (admin)
+- Panneau `/admin` → squats et boxe réglables par rapport aux pompes
+- Les pompes restent l'unité de référence, non modifiable : `Game.pompesCalculees`
+  stocke des points d'effort où 1 point = 1 pompe depuis le premier jour
+- Chargés par `chargerRatios()` dans le layout racine (cache mémoire 60 s) et
+  dans `/api/dette` et `/api/games` ; relus côté navigateur via
+  `/api/exercices/ratios`, parce que les pages prérendues gardent sinon la
+  valeur du déploiement — `revalidatePath` ne débloque pas une page statique
 
 ### Admin (/admin)
 - Accès restreint : `user.email === "evantocquet@gmail.com"`
@@ -128,9 +140,20 @@ desktop/              # App Electron Windows
 - Admin check toujours côté serveur (getCurrentUser + email check)
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
+## Tests
+301 tests, 24 suites. Base et session doublées : aucune dépendance à PostgreSQL
+ni aux variables d'environnement, `npx jest` suffit. La CI
+(`.github/workflows/tests.yml`) lance types et tests à chaque poussée.
+
+Les tests de routes API appellent les handlers directement, avec les outils de
+`src/test/api.ts`. Ce qui est systématiquement éprouvé : refus sans session,
+refus pour un compte non administrateur là où c'est requis, et filtrage par
+compte sur chaque requête en base.
+
 ## Commandes utiles
 ```bash
 npm run dev          # Lancer en local
+npx jest             # Lancer les tests
 npx tsc --noEmit     # Vérifier TypeScript avant commit
 npx prisma generate  # Regénérer client après modif schema
 npx prisma studio    # UI DB locale
