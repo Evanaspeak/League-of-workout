@@ -36,7 +36,7 @@ export async function sendCodeReset(to: string, pseudo: string, newCode: string)
   await resend.emails.send({
     from: FROM,
     to,
-    subject: "Ton nouveau code d'accès — Win or Workout",
+    subject: "Ton nouveau code d'accès · Win or Workout",
     html: `
       ${WRAPPER_OPEN}
         <h1 style="font-size:1.4rem;color:#ECEFF4;margin-bottom:16px;">Nouveau code, ${nom}</h1>
@@ -74,13 +74,13 @@ export async function sendResetLink(to: string, pseudo: string, lien: string) {
   await resend.emails.send({
     from: FROM,
     to,
-    subject: "Récupérer ton accès — Win or Workout",
+    subject: "Récupérer ton accès · Win or Workout",
     html: `
       ${WRAPPER_OPEN}
         <h1 style="font-size:1.4rem;color:#ECEFF4;margin-bottom:16px;">Récupérer ton accès, ${nom}</h1>
         <p style="line-height:1.7;color:rgba(236,239,244,0.75);margin-bottom:20px;">
           Quelqu'un a demandé un nouveau code de connexion pour ce compte.
-          <strong>Rien n'a changé pour l'instant</strong> — ton code actuel fonctionne toujours.
+          <strong>Rien n'a changé pour l'instant</strong> : ton code actuel fonctionne toujours.
         </p>
         <a href="${lien}"
            style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#FF4D2E,#FF8A3D);color:#fff;font-weight:700;text-decoration:none;border-radius:8px;margin-bottom:20px;">

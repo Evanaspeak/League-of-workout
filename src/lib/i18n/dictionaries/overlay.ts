@@ -5,7 +5,7 @@ export const overlay = {
     active: "Overlay activé",
     desactive: "Overlay désactivé",
     limitePleinEcran:
-      "En plein écran, League garde l'écran pour lui seul et l'overlay disparaît. Passe le jeu en « Sans bordure » pour le voir — l'image est identique, et il revient tout seul.",
+      "En plein écran, League garde l'écran pour lui seul et l'overlay disparaît. Passe le jeu en « Sans bordure » pour le voir : l'image est identique, et il revient tout seul.",
     positionTitre: "Position à l'écran",
     positionAide: "En haut à droite, la pastille recouvre le score et le CS. Choisis un coin libre.",
     coins: { "haut-gauche": "Haut gauche", "haut-droite": "Haut droite", "bas-gauche": "Bas gauche", "bas-droite": "Bas droite" } as Record<string, string>,
@@ -17,7 +17,7 @@ export const overlay = {
     // que l'application n'a pas, et Windows ne lui livre alors pas la
     // combinaison. Mieux vaut dire ce qui marche que répéter ce qui échoue.
     raccourciEnJeu:
-      "En jeu, League tourne avec des privilèges plus élevés que l'application (Vanguard) et Windows ne nous livre plus la combinaison — le raccourci reste sans effet tant que le jeu a le focus. Pour la masquer pendant une partie, passe par l'icône près de l'horloge : clic droit, « Afficher / masquer l'overlay ». Elle répond toujours.",
+      "En jeu, League tourne avec des privilèges plus élevés que l'application (Vanguard) et Windows ne nous livre plus la combinaison : le raccourci reste sans effet tant que le jeu a le focus. Pour la masquer pendant une partie, passe par l'icône près de l'horloge : clic droit, « Afficher / masquer l'overlay ». Elle répond toujours.",
     placerBtn: "Placer à la main",
     placerTerminer: "Terminer le placement",
     placerEnCours: "La pastille est attrapable : traîne-la où tu veux, y compris par-dessus le jeu en « Sans bordure ». Clique sur « Terminer » quand elle est bien.",
@@ -25,7 +25,7 @@ export const overlay = {
     // ── Réglage par jeu ──
     jeuxTitre: "Overlay, jeu par jeu",
     jeuxAide: "Chaque jeu occupe l'écran à sa façon : le coin libre sur League recouvre autre chose ailleurs. Le réglage suit donc le jeu, pas la machine.",
-    jeuxAucun: "Aucun jeu détectable sur cet ordinateur — il n'y a rien à régler pour l'instant.",
+    jeuxAucun: "Aucun jeu détectable sur cet ordinateur : il n'y a rien à régler pour l'instant.",
     jeuAffiche: "Pastille affichée",
     jeuMasque: "Pastille masquée",
     versionAncienne: "Mets l'application à jour pour régler l'overlay jeu par jeu. En attendant, le réglage ci-dessous vaut pour tous les jeux.",
@@ -36,7 +36,7 @@ export const overlay = {
     active: "Overlay on",
     desactive: "Overlay off",
     limitePleinEcran:
-      "In fullscreen, League keeps the display to itself and the overlay disappears. Switch the game to « Borderless » to see it — the picture is identical, and it comes back on its own.",
+      "In fullscreen, League keeps the display to itself and the overlay disappears. Switch the game to « Borderless » to see it: the picture is identical, and it comes back on its own.",
     positionTitre: "On-screen position",
     positionAide: "Top right covers the score and CS. Pick a free corner.",
     coins: { "haut-gauche": "Top left", "haut-droite": "Top right", "bas-gauche": "Bottom left", "bas-droite": "Bottom right" } as Record<string, string>,
@@ -45,14 +45,14 @@ export const overlay = {
       "No shortcut could be registered: every combination is already taken by another app.",
     raccourciCoin: (combinaison: string) => `${combinaison} moves it from corner to corner.`,
     raccourciEnJeu:
-      "In game, League runs with higher privileges than the app (Vanguard) and Windows stops delivering the combination — the shortcut does nothing while the game has focus. To hide the panel mid-match, use the icon near the clock: right-click, « Show / hide overlay ». That always responds.",
+      "In game, League runs with higher privileges than the app (Vanguard) and Windows stops delivering the combination: the shortcut does nothing while the game has focus. To hide the panel mid-match, use the icon near the clock: right-click, « Show / hide overlay ». That always responds.",
     placerBtn: "Place it by hand",
     placerTerminer: "Done placing",
     placerEnCours: "The panel can be grabbed: drag it wherever you like, including over the game in « Borderless ». Click « Done » once it sits right.",
     placerLibre: "Placed by hand. Picking a corner clears it.",
     jeuxTitre: "Overlay, game by game",
     jeuxAide: "Every game fills the screen differently: the corner that's free in League covers something else elsewhere. So the setting follows the game, not the machine.",
-    jeuxAucun: "No detectable game on this computer — nothing to set up yet.",
+    jeuxAucun: "No detectable game on this computer: nothing to set up yet.",
     jeuAffiche: "Panel shown",
     jeuMasque: "Panel hidden",
     versionAncienne: "Update the app to set the overlay per game. Until then, the setting below applies to every game.",

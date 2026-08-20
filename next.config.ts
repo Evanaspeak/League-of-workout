@@ -21,6 +21,10 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://ddragon.leagueoflegends.com",
       "font-src 'self' data:",
+      // La vidéo de démonstration est servie depuis le site. Sans cette ligne
+      // elle retombe sur `default-src` — qui l'autoriserait ici, mais qui peut
+      // se resserrer demain sans qu'on pense au lecteur.
+      "media-src 'self'",
       "connect-src 'self' https://ddragon.leagueoflegends.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
       // Le service worker des notifications doit pouvoir s'enregistrer.
       "worker-src 'self'",

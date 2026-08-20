@@ -38,6 +38,7 @@ const JEUX: Jeu[] = [
   { nom: "Counter-Strike 2",  court: "CS2", code: "cs2", teinte: "#F0A83C", genre: "fps" },
   { nom: "Fortnite",          court: "Fortnite", code: "fortnite", teinte: "#8E6BFF", genre: "br" },
   { nom: "Apex Legends",      court: "Apex", code: "apex", teinte: "#DA292A", genre: "br" },
+  { nom: "PUBG",              court: "PUBG", code: "pubg", teinte: "#F4B942", genre: "br" },
   { nom: "Call of Duty: Warzone", court: "Warzone", code: "warzone", teinte: "#9BAE6B", genre: "br" },
   { nom: "Rocket League",     court: "Rocket League", code: "rocket-league", teinte: "#3AA7F0", genre: "sport" },
   { nom: "Teamfight Tactics", court: "TFT", code: "tft", teinte: "#B389FF", genre: "tactique" },

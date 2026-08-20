@@ -8,7 +8,7 @@ import AdminHeader from "./AdminHeader";
 import { estAdmin } from "@/lib/admin";
 
 
-export const metadata = { title: "Admin — Win or Workout" };
+export const metadata = { title: "Admin · Win or Workout" };
 
 export default async function AdminPage() {
   const user = await getCurrentUser();

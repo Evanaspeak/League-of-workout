@@ -23,7 +23,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const user = await prisma.user.findUnique({ where: { id }, select: { id: true, passwordHash: true } });
   if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
   if (!user.passwordHash) {
-    return NextResponse.json({ error: "Ce compte utilise Google ou Discord — pas de mot de passe à réinitialiser" }, { status: 400 });
+    return NextResponse.json({ error: "Ce compte utilise Google ou Discord : pas de mot de passe à réinitialiser" }, { status: 400 });
   }
 
   const newPassword = generatePassword();

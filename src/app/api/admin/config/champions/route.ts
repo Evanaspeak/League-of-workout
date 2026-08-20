@@ -33,7 +33,7 @@ export async function PUT(req: Request) {
     });
     return NextResponse.json({ ok: true, count: cleaned.length });
   } catch {
-    return NextResponse.json({ error: "Erreur base de données — la table SystemConfig n'existe pas encore." }, { status: 500 });
+    return NextResponse.json({ error: "Erreur base de données : la table SystemConfig n'existe pas encore." }, { status: 500 });
   }
 }
 

@@ -1,6 +1,6 @@
 export const adminSeuil = {
   fr: {
-    titre: "Compteur de boxe — valeur de test",
+    titre: "Compteur de boxe · valeur de test",
     description:
       "Force la valeur du compteur en attente, sans passer par des parties. Pratique pour vérifier le passage en alerte, la notification et le chronomètre. Le seuil de déclenchement, lui, se règle dans Réglages.",
     label: "Mettre le compteur à",
@@ -17,7 +17,7 @@ export const adminSeuil = {
     sansExercice: "Coche la boxe dans tes réglages pour utiliser le compteur.",
   },
   en: {
-    titre: "Boxing counter — test value",
+    titre: "Boxing counter · test value",
     description:
       "Force the pending counter to a value without logging games. Handy to check the alert state, the notification and the countdown. The trigger threshold itself lives in Settings.",
     label: "Set counter to",

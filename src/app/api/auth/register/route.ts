@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     const count = await prisma.user.count();
     if (count >= BETA_LIMIT) {
-      return NextResponse.json({ error: "Beta complète — les 100 places sont prises." }, { status: 403 });
+      return NextResponse.json({ error: "Beta complète : les 100 places sont prises." }, { status: 403 });
     }
 
     const existing = await prisma.user.findUnique({ where: { email } });

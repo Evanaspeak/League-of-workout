@@ -1,31 +1,42 @@
 # Logos des jeux
 
-La bande de la page d'accueil affiche un glyphe dessiné pour chaque jeu — un
-repère honnête, qui n'emprunte l'identité de personne.
+La bande de la page d'accueil affiche le logo officiel du jeu quand un fichier
+est présent ici, et un glyphe dessiné pour ce site quand il n'y en a pas.
 
-Pour afficher le vrai logo d'un jeu, déposer ici un fichier SVG nommé d'après
-le code du jeu :
+## Ce qui est présent
 
-| Jeu                    | Fichier attendu        |
-|------------------------|------------------------|
-| League of Legends      | `league.svg`           |
-| Valorant               | `valorant.svg`         |
-| Counter-Strike 2       | `cs2.svg`              |
-| Fortnite               | `fortnite.svg`         |
-| Apex Legends           | `apex.svg`             |
-| Call of Duty: Warzone  | `warzone.svg`          |
-| Rocket League          | `rocket-league.svg`    |
-| Teamfight Tactics      | `tft.svg`              |
-| Minecraft              | `minecraft.svg`        |
-| World of Warcraft      | `wow.svg`              |
-| Grand Theft Auto V     | `gta5.svg`             |
-| Elden Ring             | `elden-ring.svg`       |
+| Jeu               | Fichier         | Source                |
+|-------------------|-----------------|-----------------------|
+| League of Legends | `league.svg`    | Simple Icons (CC0)    |
+| Valorant          | `valorant.svg`  | Simple Icons (CC0)    |
+| Counter-Strike 2  | `cs2.svg`       | Simple Icons (CC0)    |
+| Fortnite          | `fortnite.svg`  | Simple Icons (CC0)    |
+| PUBG              | `pubg.svg`      | Simple Icons (CC0)    |
 
+Les glyphes monochromes viennent de la collection [Simple Icons], publiée en
+CC0 : les fichiers sont librement redistribuables. Ils ont été teintés à la
+couleur officielle de chaque marque.
+
+Les marques elles-mêmes restent la propriété de leurs éditeurs. Elles sont
+affichées ici au titre de la compatibilité, c'est-à-dire pour dire quels jeux
+l'application prend en charge. Le pied de page du site porte déjà la mention
+de non-affiliation.
+
+[Simple Icons]: https://simpleicons.org
+
+## Ce qui manque
+
+Ces jeux gardent leur glyphe dessiné, faute de fichier redistribuable :
+`apex`, `rocket-league`, `tft`, `warzone`, `minecraft`, `wow`, `gta5`,
+`elden-ring`.
+
+Pour en ajouter un, déposer `<code>.svg` ici avec le nom attendu ci-dessus.
 Rien d'autre à changer : le fichier présent remplace le glyphe, le fichier
-absent le laisse en place. La bande ne se casse jamais parce qu'un logo manque.
+absent le laisse en place. La présence est constatée sur le disque au rendu
+serveur, la bande ne se casse jamais parce qu'un logo manque.
 
-**Avant de déposer un fichier**, vérifier les conditions d'utilisation de la
-marque concernée. La plupart des éditeurs publient un kit presse qui précise ce
-qui est autorisé (mention de compatibilité, taille minimale, zone de
-protection, interdiction de modifier les couleurs). Un logo utilisé hors de ces
-conditions engage l'éditeur du site, pas celui du jeu.
+**Avant d'ajouter un fichier pris ailleurs**, vérifier les conditions d'usage
+de la marque. La plupart des éditeurs publient un kit presse qui précise ce qui
+est autorisé : taille minimale, zone de protection, interdiction de modifier
+les couleurs. Un logo utilisé hors de ces conditions engage l'éditeur du site,
+pas celui du jeu.

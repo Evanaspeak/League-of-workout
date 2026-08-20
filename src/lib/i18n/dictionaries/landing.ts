@@ -3,12 +3,12 @@ export const landing = {
     navDownload: "Télécharger",
     navLoggedIn: "Mon espace",
     navLoggedOut: "Se connecter",
-    heroBadge: "Bêta ouverte — Google, Discord ou un simple pseudo",
+    heroBadge: "Bêta ouverte : Google, Discord ou un simple pseudo",
     // Sans point final : le titre est une phrase, pas deux, et la virgule fait
     // le travail que faisaient deux points mal placés.
     heroTitleLine1: "Gagne ta game,",
     heroTitleLine2: "ou paie en sueur",
-    heroSubtitle: "Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe — et plus tu joues bien, moins tu paies.",
+    heroSubtitle: "Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe. Plus tu joues bien, moins tu paies.",
     heroTelecharger: "Télécharger pour Windows",
     heroTelechargerNote: "Gratuit · Windows 10 et 11 · aucune carte bancaire",
     heroVersion: (v: string) => `Version ${v}`,
@@ -18,7 +18,7 @@ export const landing = {
     heroDownload: "Télécharger l'app Windows",
     heroBeta: "Créer mon compte",
     heroLogin: "Se connecter",
-    heroApercuTitre: "Win or Workout — Tableau de bord",
+    heroApercuTitre: "Win or Workout · Tableau de bord",
     heroApercuAlt: "Le tableau de bord de Win or Workout : 105 activités, 55 % de winrate, 2 203 points de dette et la progression vers l'objectif.",
 
     // ── La bande des jeux ──
@@ -30,6 +30,9 @@ export const landing = {
     boucleTitre: "Trois temps, et c'est réglé",
     boucleSoustitre: "Ce que tu fais avec l'application, en entier. Il n'y a rien d'autre à apprendre.",
     boucleLegende: "Les trois temps de la boucle",
+    videoTitre: "Une partie perdue, la dette calculée, les pompes faites à côté de la chaise",
+    videoLecture: "Lancer",
+    videoPause: "Mettre en pause",
     // Les libellés des trois vignettes. Ils étaient écrits en dur dans le
     // composant : la page anglaise affichait « pompes » au milieu du reste.
     boucleVignettes: {
@@ -57,7 +60,7 @@ export const landing = {
       {
         numero: "02",
         titre: "L'app chiffre l'addition",
-        texte: "Ta performance, ton niveau de forme et le résultat donnent un nombre. Il s'affiche pendant que tu saisis — rien à calculer, rien à valider.",
+        texte: "Ta performance, ton niveau de forme et le résultat donnent un nombre. Il s'affiche pendant que tu saisis : rien à calculer, rien à valider.",
       },
       {
         numero: "03",
@@ -75,15 +78,15 @@ export const landing = {
         image: "/images/produit/historique.png",
         titre: "L'historique",
         legende: "Chaque partie, son coût, et le cumul qui monte. Modifiable et supprimable, ligne par ligne.",
-        cadre: "Win or Workout — Historique",
+        cadre: "Win or Workout · Historique",
         alt: "L'historique de Win or Workout : une liste de parties League of Legends, Valorant, Fortnite et Minecraft avec la dette de chacune et le cumul.",
         largeur: 2720, hauteur: 1660,
       },
       {
         image: "/images/produit/stats.png",
         titre: "Les statistiques",
-        legende: "Le cumul ne fait que monter. Le coût moyen par partie, lui, descend quand tu joues mieux — c'est le seul chiffre qui dit si tu progresses.",
-        cadre: "Win or Workout — Statistiques",
+        legende: "Le cumul ne fait que monter. Le coût moyen par partie, lui, descend quand tu joues mieux. C'est le seul chiffre qui dit si tu progresses.",
+        cadre: "Win or Workout · Statistiques",
         alt: "Trois graphiques : la dette par jeu, la progression cumulative sur trois mois et le coût moyen par activité semaine après semaine.",
         largeur: 1880, hauteur: 1106,
       },
@@ -91,7 +94,7 @@ export const landing = {
         image: "/images/produit/mobile.png",
         titre: "Sur téléphone",
         legende: "Le même compte, la même dette. Pratique pour enregistrer une partie depuis le canapé.",
-        cadre: "Win or Workout — Mobile",
+        cadre: "Win or Workout · Mobile",
         alt: "Win or Workout sur téléphone : le tableau de bord adapté à un écran étroit.",
         largeur: 1170, hauteur: 1680,
       },
@@ -127,8 +130,8 @@ export const landing = {
     statsLabel: "La réalité des gamers",
     stats: [
       { value: "-30%", label: "de pas quotidiens chez les gamers par rapport à la population générale (Withings)" },
-      { value: "13h", label: "de jeu par semaine en moyenne — soit près de 2h par jour (ESA, 2023)" },
-      { value: "4ème", label: "cause de mortalité mondiale — la sédentarité, devant l'obésité (OMS)" },
+      { value: "13h", label: "de jeu par semaine en moyenne, soit près de 2h par jour (ESA, 2023)" },
+      { value: "4ème", label: "cause de mortalité mondiale : la sédentarité, devant l'obésité (OMS)" },
       { value: "+20%", label: "de mémoire et concentration après 20 min d'exercice modéré (PNAS / Univ. Illinois)" },
     ],
 
@@ -137,7 +140,7 @@ export const landing = {
     problemTitleLine2: "ne rien faire pendant",
     problemTitleHighlight: "des heures",
     problemPara1: "Une soirée de jeu dépasse facilement les six heures. Entre les parties, les lobbies, les replays et le stream, on reste assis des journées entières. Le corps paie la note.",
-    problemPara2: "La sédentarité chronique augmente les risques cardiovasculaires, réduit la concentration et dégrade les performances cognitives — exactement ce dont tu as besoin pour carry.",
+    problemPara2: "La sédentarité chronique augmente les risques cardiovasculaires, réduit la concentration et dégrade les performances cognitives. Exactement ce dont tu as besoin pour carry.",
     problemStats: [
       { label: "Temps assis moyen / jour (gamer PC)", value: "8-10h" },
       { label: "Adultes insuffisamment actifs (OMS)", value: "1 sur 4" },
@@ -148,7 +151,7 @@ export const landing = {
     // ── Comment tu paies : le cœur du modèle, une dette convertible ──
     payEyebrow: "Une dette, trois monnaies",
     payTitle: "Tu choisis comment tu paies",
-    paySubtitle: "L'app ne compte pas des pompes : elle compte des points d'effort. Le même coût se convertit dans l'exercice qui te va — et tu peux même le partager entre plusieurs. Rien à acheter, rien à installer, ça se fait entre deux parties.",
+    paySubtitle: "L'app ne compte pas des pompes : elle compte des points d'effort. Le même coût se convertit dans l'exercice qui te va, et tu peux même le partager entre plusieurs. Rien à acheter, rien à installer, ça se fait entre deux parties.",
     payUnitLabel: "Pour une partie à 38 points",
     payModes: [
       {
@@ -176,15 +179,15 @@ export const landing = {
     payFootnote: "Le poids du corps suffit, et ça se tient scientifiquement :",
     paySources: [
       {
-        label: "Yang et al., JAMA Network Open (2019) — la capacité à faire des pompes est fortement associée à un risque cardiovasculaire plus faible",
+        label: "Yang et al., JAMA Network Open (2019) : la capacité à faire des pompes est fortement associée à un risque cardiovasculaire plus faible",
         href: "https://doi.org/10.1001/jamanetworkopen.2018.8341",
       },
       {
-        label: "Calatayud et al., J. Strength & Conditioning Research (2015) — à activation musculaire comparable, pompes et développé couché produisent des gains de force similaires",
+        label: "Calatayud et al., J. Strength & Conditioning Research (2015) : à activation musculaire comparable, pompes et développé couché produisent des gains de force similaires",
         href: "https://pubmed.ncbi.nlm.nih.gov/?term=Calatayud+bench+press+push-up+comparable+strength+gains",
       },
       {
-        label: "Cogley et al., J. Strength & Conditioning Research (2005) — analyse EMG de l'activation des pectoraux et triceps pendant les pompes",
+        label: "Cogley et al., J. Strength & Conditioning Research (2005) : analyse EMG de l'activation des pectoraux et triceps pendant les pompes",
         href: "https://pubmed.ncbi.nlm.nih.gov/?term=Cogley+muscle+activation+hand+positions+push-up",
       },
     ],
@@ -264,10 +267,10 @@ export const landing = {
     navDownload: "Download",
     navLoggedIn: "My space",
     navLoggedOut: "Log in",
-    heroBadge: "Open beta — Google, Discord or just a nickname",
+    heroBadge: "Open beta: Google, Discord or just a nickname",
     heroTitleLine1: "Win your game,",
     heroTitleLine2: "or pay in sweat",
-    heroSubtitle: "Every match has a price, based on how you played. You settle it in push-ups, squats or boxing — and the better you play, the less you pay.",
+    heroSubtitle: "Every match has a price, based on how you played. You settle it in push-ups, squats or boxing. The better you play, the less you pay.",
     heroTelecharger: "Download for Windows",
     heroTelechargerNote: "Free · Windows 10 and 11 · no credit card",
     heroVersion: (v: string) => `Version ${v}`,
@@ -277,7 +280,7 @@ export const landing = {
     heroDownload: "Download the Windows app",
     heroBeta: "Create my account",
     heroLogin: "Log in",
-    heroApercuTitre: "Win or Workout — Dashboard",
+    heroApercuTitre: "Win or Workout · Dashboard",
     heroApercuAlt: "The Win or Workout dashboard: 105 activities, 55% win rate, 2,203 points owed and progress toward the goal.",
 
     jeuxLegende: "Supported games",
@@ -287,6 +290,9 @@ export const landing = {
     boucleTitre: "Three beats, and you're done",
     boucleSoustitre: "Everything you do with the app, in full. There is nothing else to learn.",
     boucleLegende: "The three beats of the loop",
+    videoTitre: "A match lost, the debt worked out, the push-ups done next to the chair",
+    videoLecture: "Play",
+    videoPause: "Pause",
     boucleVignettes: {
       jeu: "League of Legends",
       defaite: "Defeat",
@@ -312,7 +318,7 @@ export const landing = {
       {
         numero: "02",
         titre: "The app works out the bill",
-        texte: "Your performance, your fitness level and the result give a number. It appears as you type — nothing to compute, nothing to confirm.",
+        texte: "Your performance, your fitness level and the result give a number. It appears as you type: nothing to compute, nothing to confirm.",
       },
       {
         numero: "03",
@@ -329,15 +335,15 @@ export const landing = {
         image: "/images/produit/historique.png",
         titre: "History",
         legende: "Every match, its cost, and the running total. Editable and deletable, row by row.",
-        cadre: "Win or Workout — History",
+        cadre: "Win or Workout · History",
         alt: "The Win or Workout history: a list of League of Legends, Valorant, Fortnite and Minecraft matches with the debt of each and the running total.",
         largeur: 2720, hauteur: 1660,
       },
       {
         image: "/images/produit/stats.png",
         titre: "Statistics",
-        legende: "The total only ever goes up. The average cost per match goes down when you play better — it's the one number that tells you whether you're improving.",
-        cadre: "Win or Workout — Statistics",
+        legende: "The total only ever goes up. The average cost per match goes down when you play better. It's the one number that tells you whether you're improving.",
+        cadre: "Win or Workout · Statistics",
         alt: "Three charts: debt per game, cumulative progress over three months, and average cost per activity week by week.",
         largeur: 1880, hauteur: 1106,
       },
@@ -345,7 +351,7 @@ export const landing = {
         image: "/images/produit/mobile.png",
         titre: "On your phone",
         legende: "Same account, same debt. Handy for logging a match from the sofa.",
-        cadre: "Win or Workout — Mobile",
+        cadre: "Win or Workout · Mobile",
         alt: "Win or Workout on a phone: the dashboard fitted to a narrow screen.",
         largeur: 1170, hauteur: 1680,
       },
@@ -376,8 +382,8 @@ export const landing = {
     statsLabel: "The gamer reality check",
     stats: [
       { value: "-30%", label: "fewer daily steps for gamers compared to the general population (Withings)" },
-      { value: "13h", label: "of gaming per week on average — almost 2h a day (ESA, 2023)" },
-      { value: "4th", label: "leading cause of death worldwide — inactivity, ahead of obesity (WHO)" },
+      { value: "13h", label: "of gaming per week on average, almost 2h a day (ESA, 2023)" },
+      { value: "4th", label: "leading cause of death worldwide: inactivity, ahead of obesity (WHO)" },
       { value: "+20%", label: "boost in memory and focus after just 20 min of moderate exercise (PNAS / Univ. of Illinois)" },
     ],
 
@@ -386,7 +392,7 @@ export const landing = {
     problemTitleLine2: "doing nothing for",
     problemTitleHighlight: "hours on end",
     problemPara1: "A gaming night easily runs past six hours. Between matches, lobbies, replays, and stream, you're glued to your chair all day. Your body pays the price.",
-    problemPara2: "Chronic inactivity raises cardiovascular risk, kills your focus, and tanks cognitive performance — exactly what you need to carry.",
+    problemPara2: "Chronic inactivity raises cardiovascular risk, kills your focus, and tanks cognitive performance. Exactly what you need to carry.",
     problemStats: [
       { label: "Avg. time seated / day (PC gamer)", value: "8-10h" },
       { label: "Adults not active enough (WHO)", value: "1 in 4" },
@@ -396,7 +402,7 @@ export const landing = {
 
     payEyebrow: "One debt, three currencies",
     payTitle: "You pick how you pay",
-    paySubtitle: "The app doesn't count push-ups: it counts effort points. The same cost converts into whichever exercise suits you — and you can even split it across several. Nothing to buy, nothing to set up, it fits between two matches.",
+    paySubtitle: "The app doesn't count push-ups: it counts effort points. The same cost converts into whichever exercise suits you, and you can even split it across several. Nothing to buy, nothing to set up, it fits between two matches.",
     payUnitLabel: "For a game costing 38 points",
     payModes: [
       {
@@ -424,15 +430,15 @@ export const landing = {
     payFootnote: "Your bodyweight is enough, and the research backs it:",
     paySources: [
       {
-        label: "Yang et al., JAMA Network Open (2019) — push-up capacity is strongly associated with lower cardiovascular risk",
+        label: "Yang et al., JAMA Network Open (2019): push-up capacity is strongly associated with lower cardiovascular risk",
         href: "https://doi.org/10.1001/jamanetworkopen.2018.8341",
       },
       {
-        label: "Calatayud et al., J. Strength & Conditioning Research (2015) — at matched muscle activation, push-ups and bench press produce similar strength gains",
+        label: "Calatayud et al., J. Strength & Conditioning Research (2015): at matched muscle activation, push-ups and bench press produce similar strength gains",
         href: "https://pubmed.ncbi.nlm.nih.gov/?term=Calatayud+bench+press+push-up+comparable+strength+gains",
       },
       {
-        label: "Cogley et al., J. Strength & Conditioning Research (2005) — EMG analysis of chest and triceps activation during push-ups",
+        label: "Cogley et al., J. Strength & Conditioning Research (2005): EMG analysis of chest and triceps activation during push-ups",
         href: "https://pubmed.ncbi.nlm.nih.gov/?term=Cogley+muscle+activation+hand+positions+push-up",
       },
     ],

@@ -50,7 +50,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://winorworkout.com"),
-  title: { default: "Win or Workout", template: "%s — Win or Workout" },
+  title: { default: "Win or Workout", template: "%s · Win or Workout" },
   description: "Tu gagnes ta game, ou tu paies en sueur. L'app qui convertit tes parties en entraînement.",
   applicationName: "Win or Workout",
   manifest: "/manifest.webmanifest",
