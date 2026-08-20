@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import LandingClient from "./LandingClient";
 import { dernierInstalleur, PAGE_RELEASES } from "@/lib/release";
+import { logosDisponibles } from "@/lib/logosJeux";
 
 export const metadata = {
   title: "Win or Workout — Gagne ta game, ou paie en sueur",
@@ -41,6 +42,7 @@ export default async function LandingPage() {
         isLoggedIn={isLoggedIn}
         telechargement={installeur?.url ?? PAGE_RELEASES}
         version={installeur?.version ?? null}
+        logosJeux={logosDisponibles()}
       />
     </>
   );

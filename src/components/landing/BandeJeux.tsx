@@ -12,31 +12,39 @@ import { useMouvementReduit } from "@/lib/valeurClient";
  * dessinée pour ce site — sa couleur d'identité, et un glyphe qui dit son
  * genre (l'objectif d'un MOBA, le réticule d'un FPS, l'anneau qui se resserre
  * d'un battle royale, le cube d'un bac à sable). C'est un repère honnête, qui
- * n'emprunte l'identité de personne. Le jour où l'on obtient les kits presse
- * des éditeurs, seul le contenu de `glyphe` change.
+ * n'emprunte l'identité de personne.
+ *
+ * L'emplacement du vrai logo est prêt : déposer un fichier
+ * `public/images/jeux/<code>.svg` — le code est celui de chaque entrée
+ * ci-dessous — suffit à le voir remplacer le glyphe. Rien d'autre à changer.
+ * La présence du fichier est constatée sur le disque au rendu serveur, pas
+ * devinée dans le navigateur : la bande ne se casse jamais parce qu'un logo
+ * manque, et le dépôt ne contient aucune marque qui ne nous appartienne pas.
  */
 
 type Jeu = {
   nom: string;
   court: string;
+  /** Nom du fichier attendu dans `public/images/jeux/`, sans extension. */
+  code: string;
   /** Couleur d'identité du jeu, reprise du jeu lui-même. */
   teinte: string;
   genre: "moba" | "fps" | "br" | "temps" | "sport" | "tactique";
 };
 
 const JEUX: Jeu[] = [
-  { nom: "League of Legends", court: "League", teinte: "#C89B3C", genre: "moba" },
-  { nom: "Valorant",          court: "Valorant", teinte: "#FF4655", genre: "fps" },
-  { nom: "Counter-Strike 2",  court: "CS2", teinte: "#F0A83C", genre: "fps" },
-  { nom: "Fortnite",          court: "Fortnite", teinte: "#8E6BFF", genre: "br" },
-  { nom: "Apex Legends",      court: "Apex", teinte: "#DA292A", genre: "br" },
-  { nom: "Call of Duty: Warzone", court: "Warzone", teinte: "#9BAE6B", genre: "br" },
-  { nom: "Rocket League",     court: "Rocket League", teinte: "#3AA7F0", genre: "sport" },
-  { nom: "Teamfight Tactics", court: "TFT", teinte: "#B389FF", genre: "tactique" },
-  { nom: "Minecraft",         court: "Minecraft", teinte: "#5FA83C", genre: "temps" },
-  { nom: "World of Warcraft", court: "WoW", teinte: "#F4C542", genre: "temps" },
-  { nom: "Grand Theft Auto V", court: "GTA V", teinte: "#4FBF7F", genre: "temps" },
-  { nom: "Elden Ring",        court: "Elden Ring", teinte: "#D6B15C", genre: "temps" },
+  { nom: "League of Legends", court: "League", code: "league", teinte: "#C89B3C", genre: "moba" },
+  { nom: "Valorant",          court: "Valorant", code: "valorant", teinte: "#FF4655", genre: "fps" },
+  { nom: "Counter-Strike 2",  court: "CS2", code: "cs2", teinte: "#F0A83C", genre: "fps" },
+  { nom: "Fortnite",          court: "Fortnite", code: "fortnite", teinte: "#8E6BFF", genre: "br" },
+  { nom: "Apex Legends",      court: "Apex", code: "apex", teinte: "#DA292A", genre: "br" },
+  { nom: "Call of Duty: Warzone", court: "Warzone", code: "warzone", teinte: "#9BAE6B", genre: "br" },
+  { nom: "Rocket League",     court: "Rocket League", code: "rocket-league", teinte: "#3AA7F0", genre: "sport" },
+  { nom: "Teamfight Tactics", court: "TFT", code: "tft", teinte: "#B389FF", genre: "tactique" },
+  { nom: "Minecraft",         court: "Minecraft", code: "minecraft", teinte: "#5FA83C", genre: "temps" },
+  { nom: "World of Warcraft", court: "WoW", code: "wow", teinte: "#F4C542", genre: "temps" },
+  { nom: "Grand Theft Auto V", court: "GTA V", code: "gta5", teinte: "#4FBF7F", genre: "temps" },
+  { nom: "Elden Ring",        court: "Elden Ring", code: "elden-ring", teinte: "#D6B15C", genre: "temps" },
 ];
 
 /** Un glyphe par genre : ce que le jeu demande, dessiné. */
@@ -62,25 +70,33 @@ function Glyphe({ genre, teinte }: { genre: Jeu["genre"]; teinte: string }) {
   }
 }
 
-function Pastille({ jeu }: { jeu: Jeu }) {
+function Pastille({ jeu, avecLogo }: { jeu: Jeu; avecLogo: boolean }) {
   return (
     <div className="jeu-tuile" style={{ ["--teinte" as string]: jeu.teinte }} title={jeu.nom}>
-      <span className="jeu-glyphe"><Glyphe genre={jeu.genre} teinte={jeu.teinte} /></span>
+      <span className="jeu-glyphe">
+        {avecLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- taille fixe, pas de variantes à générer
+          <img src={`/images/jeux/${jeu.code}.svg`} alt="" width={22} height={22} className="jeu-logo" />
+        ) : (
+          <Glyphe genre={jeu.genre} teinte={jeu.teinte} />
+        )}
+      </span>
       <span className="jeu-nom">{jeu.court}</span>
     </div>
   );
 }
 
-export function BandeJeux({ legende }: { legende: string }) {
+export function BandeJeux({ legende, logos }: { legende: string; logos: string[] }) {
   const mouvementReduit = useMouvementReduit();
+  const disponibles = new Set(logos);
   // Deux exemplaires bout à bout : le défilement boucle sans saut visible.
   // Le second est masqué aux lecteurs d'écran, qui liraient sinon deux fois.
   return (
     <div className="bande-jeux" aria-label={legende}>
       <div className={`bande-jeux-piste${mouvementReduit ? " immobile" : ""}`}>
-        {JEUX.map((j) => <Pastille key={j.nom} jeu={j} />)}
+        {JEUX.map((j) => <Pastille key={j.nom} jeu={j} avecLogo={disponibles.has(j.code)} />)}
         <span aria-hidden style={{ display: "contents" }}>
-          {JEUX.map((j) => <Pastille key={`bis-${j.nom}`} jeu={j} />)}
+          {JEUX.map((j) => <Pastille key={`bis-${j.nom}`} jeu={j} avecLogo={disponibles.has(j.code)} />)}
         </span>
       </div>
     </div>
