@@ -1,0 +1,196 @@
+import { requete, corps, utilisateur } from "@/test/api";
+
+jest.mock("@/lib/prisma", () => ({
+  prisma: {
+    game: { findMany: jest.fn(), create: jest.fn(), count: jest.fn() },
+    user: { findUnique: jest.fn(), update: jest.fn() },
+    roleWeight: { findMany: jest.fn() },
+    levelConfig: { findMany: jest.fn() },
+    masteryConfig: { findFirst: jest.fn() },
+  },
+}));
+jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
+jest.mock("@/lib/rate-limit", () => ({ isRateLimited: jest.fn(), recordAttempt: jest.fn() }));
+jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
+jest.mock("@/lib/push", () => ({ notifier: jest.fn().mockResolvedValue(undefined) }));
+
+import { GET, POST } from "./route";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth-helpers";
+import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { notifier } from "@/lib/push";
+
+const session = getCurrentUser as jest.Mock;
+const bride = isRateLimited as jest.Mock;
+const game = prisma.game as unknown as { findMany: jest.Mock; create: jest.Mock; count: jest.Mock };
+const user = prisma.user as unknown as { findUnique: jest.Mock; update: jest.Mock };
+
+/** Configuration de scoring minimale mais cohérente, comme en base. */
+const NIVEAUX = [1, 2, 3, 4, 5].map((niveau) => ({
+  niveau,
+  seuilGainageSec: niveau * 30,
+  seuilPompes: niveau * 20,
+  // Un multiplicateur franc rend les attentes lisibles : ce qui est vérifié
+  // ici, c'est la route, pas le barème — le barème a ses propres tests.
+  multiplicateur: 2,
+  malusDefaite: 10,
+}));
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  session.mockResolvedValue(utilisateur({ pompesMax: 20 }));
+  bride.mockResolvedValue(false);
+  game.findMany.mockResolvedValue([]);
+  game.count.mockResolvedValue(0);
+  game.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "g1", ...data }));
+  user.findUnique.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+  user.update.mockResolvedValue({ dettePointsDus: 40 });
+  (prisma.roleWeight.findMany as jest.Mock).mockResolvedValue([
+    { role: "MID", poidsKill: 1, poidsMort: 2, poidsAssist: 0.5, maitriseActive: true },
+  ]);
+  (prisma.levelConfig.findMany as jest.Mock).mockResolvedValue(NIVEAUX);
+  (prisma.masteryConfig.findFirst as jest.Mock).mockResolvedValue({ surchargeMax: 0.5, partiesPourMax: 100 });
+});
+
+const post = (body: unknown) => POST(requete("/api/games", { method: "POST", body }));
+
+const partie = (extra: Record<string, unknown> = {}) => ({
+  jeu: "League of Legends", role: "MID", champion: "Ahri",
+  kills: 2, deaths: 9, assists: 4, result: "D", ...extra,
+});
+
+describe("GET /api/games", () => {
+  it("refuse sans session", async () => {
+    session.mockResolvedValue(null);
+    expect((await GET()).status).toBe(401);
+    expect(game.findMany).not.toHaveBeenCalled();
+  });
+
+  it("ne rend que les parties du demandeur", async () => {
+    // La seule protection entre comptes est ce filtre : s'il disparaît, la
+    // route sert l'historique de tout le monde sans que rien ne change à
+    // l'écran de celui qui l'a demandé.
+    session.mockResolvedValue(utilisateur({ id: "u42" }));
+    await GET();
+    expect(game.findMany.mock.calls[0][0].where).toEqual({ userId: "u42" });
+  });
+});
+
+describe("POST /api/games", () => {
+  it("refuse sans session", async () => {
+    session.mockResolvedValue(null);
+    expect((await post(partie())).status).toBe(401);
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
+  it("refuse quand le budget d'écriture est épuisé", async () => {
+    bride.mockResolvedValue(true);
+    const r = await post(partie());
+    expect(r.status).toBe(429);
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
+  it("compte la tentative avant d'écrire", async () => {
+    await post(partie());
+    expect(recordAttempt).toHaveBeenCalledWith("u1", "game-write");
+  });
+
+  it("écrit la partie au nom du demandeur", async () => {
+    session.mockResolvedValue(utilisateur({ id: "u42", pompesMax: 20 }));
+    await post(partie());
+    expect(game.create.mock.calls[0][0].data.userId).toBe("u42");
+  });
+
+  it("refuse une date dans le futur", async () => {
+    const demain = new Date(Date.now() + 86_400_000).toISOString();
+    const r = await post(partie({ date: demain }));
+    expect(r.status).toBe(400);
+    expect(String((await corps(r)).error)).toMatch(/futur/);
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
+  it("accepte une date passée et la garde", async () => {
+    await post(partie({ date: "2026-01-02T21:30" }));
+    expect(game.create.mock.calls[0][0].data.date).toBeInstanceOf(Date);
+  });
+
+  it("refuse une durée nulle sur un jeu compté au temps", async () => {
+    const r = await post({ jeu: "Minecraft", dureeSec: 0 });
+    expect(r.status).toBe(400);
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
+  it("enregistre une session au temps", async () => {
+    const r = await post({ jeu: "Minecraft", dureeSec: 3600 });
+    expect(r.status).toBe(200);
+    const data = game.create.mock.calls[0][0].data;
+    expect(data.typeJeu).toBe("temps");
+    expect(data.dureeSec).toBe(3600);
+    expect(data.pompesCalculees).toBeGreaterThan(0);
+  });
+
+  it("refuse un battle royale sans classement", async () => {
+    const r = await post({ jeu: "Apex Legends", kills: 3 });
+    expect(r.status).toBe(400);
+  });
+
+  it("déduit la victoire du classement en battle royale", async () => {
+    await post({ jeu: "Apex Legends", kills: 5, placement: 1, joueurs: 60 });
+    expect(game.create.mock.calls[0][0].data.result).toBe("V");
+  });
+
+  it("fige la ventilation quand plusieurs exercices sont retenus", async () => {
+    // L'historique doit rester fidèle même si la sélection change ensuite.
+    await post(partie({ exercices: ["pompes", "boxe"] }));
+    const data = game.create.mock.calls[0][0].data;
+    const parts = JSON.parse(data.repartition);
+    expect(Object.keys(parts).sort()).toEqual(["boxe", "pompes"]);
+    expect(parts.pompes + parts.boxe).toBe(data.pompesCalculees);
+  });
+
+  it("ne stocke aucune ventilation pour un exercice unique", async () => {
+    await post(partie({ exercice: "pompes" }));
+    expect(game.create.mock.calls[0][0].data.repartition).toBeNull();
+  });
+
+  it("n'ajoute au compteur que la part comptée en temps", async () => {
+    await post(partie({ exercice: "pompes" }));
+    expect(user.update).not.toHaveBeenCalled();
+  });
+
+  it("ajoute au compteur la part de boxe", async () => {
+    await post(partie({ exercice: "boxe" }));
+    expect(user.update.mock.calls[0][0].data.dettePointsDus.increment).toBeGreaterThan(0);
+  });
+
+  it("ne prévient qu'au franchissement du seuil", async () => {
+    // Le compteur part de zéro et reste sous le seuil : pas de notification.
+    user.findUnique.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+    user.update.mockResolvedValue({ dettePointsDus: 5 });
+    await post(partie({ exercice: "boxe" }));
+    expect(notifier).not.toHaveBeenCalled();
+  });
+
+  it("prévient une fois le seuil franchi", async () => {
+    user.findUnique.mockResolvedValue({ dettePointsDus: 10, rappelSeuilSec: 300, exercices: ["boxe"] });
+    user.update.mockResolvedValue({ dettePointsDus: 100 });
+    await post(partie({ exercice: "boxe" }));
+    expect(notifier).toHaveBeenCalled();
+  });
+
+  it("ne prévient pas deux fois pour le même franchissement", async () => {
+    // Déjà au-dessus avant l'écriture : le joueur a été prévenu à la partie
+    // précédente, le redire à chaque fois ferait couper les notifications.
+    user.findUnique.mockResolvedValue({ dettePointsDus: 100, rappelSeuilSec: 300, exercices: ["boxe"] });
+    user.update.mockResolvedValue({ dettePointsDus: 140 });
+    await post(partie({ exercice: "boxe" }));
+    expect(notifier).not.toHaveBeenCalled();
+  });
+
+  it("garde la partie même si le compteur échoue", async () => {
+    user.update.mockRejectedValue(new Error("base injoignable"));
+    const r = await post(partie({ exercice: "boxe" }));
+    expect(r.status).toBe(200);
+    expect((await corps(r)).dettePointsDus).toBeNull();
+  });
+});
