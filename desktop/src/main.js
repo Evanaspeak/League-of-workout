@@ -238,7 +238,7 @@ const ERREUR_PORT_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!D
 <body>
   ${BANDE_DEPLACEMENT}
   <h2>CONNEXION IMPOSSIBLE</h2>
-  <p>Une autre application Win or Workout est déjà ouverte sur cet ordinateur —
+  <p>Une autre application Win or Workout est déjà ouverte sur cet ordinateur :
      probablement une ancienne version.</p>
   <p style="color:rgba(236,239,244,.35);font-size:13px">
      Fermez-la complètement, puis relancez celle-ci. Sans cela, c'est elle qui

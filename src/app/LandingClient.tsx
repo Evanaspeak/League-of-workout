@@ -9,6 +9,8 @@ import { PastilleOverlay } from "@/components/landing/PastilleOverlay";
 import { ScenePartie } from "@/components/landing/ScenePartie";
 import { BandeJeux } from "@/components/landing/BandeJeux";
 import { BoucleDemo } from "@/components/landing/BoucleDemo";
+import { VideoFond } from "@/components/landing/VideoFond";
+import type { VideoBoucle } from "@/lib/videoBoucle";
 import { CadreApp } from "@/components/landing/CadreApp";
 import { LogoWindows } from "@/components/landing/LogoOS";
 import { useMouvementReduit } from "@/lib/valeurClient";
@@ -252,7 +254,7 @@ function DebtFeed({
 
 /* ── Landing ─────────────────────────────────────────────────────────────── */
 export default function LandingClient({
-  isLoggedIn, telechargement, version, logosJeux,
+  isLoggedIn, telechargement, version, logosJeux, video,
 }: {
   isLoggedIn: boolean;
   /** L'installeur de la dernière version, résolu côté serveur. */
@@ -260,6 +262,8 @@ export default function LandingClient({
   version: string | null;
   /** Les logos de jeux réellement présents dans le dépôt, constatés au rendu. */
   logosJeux: string[];
+  /** La vidéo de démonstration, si le fichier a été déposé. */
+  video: VideoBoucle | null;
 }) {
   const t = useT(landing);
   useRevealOnScroll();
@@ -308,7 +312,16 @@ export default function LandingClient({
           convaincre en trois secondes n'a pas de place pour de la décoration
           qui ne porte aucun sens. Ce qui remplit le cadre à droite est
           désormais le produit lui-même.                                     */}
-      <section className="hero-section">
+      <section className={`hero-section${video ? " hero-video" : ""}`}>
+        {video && (
+          <VideoFond
+            sources={video.sources}
+            affiche={video.affiche}
+            titre={t.videoTitre}
+            lecture={t.videoLecture}
+            pause={t.videoPause}
+          />
+        )}
         <div className="wow-hero">
           {/* Colonne texte */}
           <div className="hero-col-texte">
@@ -351,18 +364,24 @@ export default function LandingClient({
 
           {/* Colonne produit : une capture réelle du tableau de bord, dans une
               fenêtre. C'est la première chose que le visiteur voit du logiciel,
-              et il n'y en avait aucune. */}
-          <div className="wow-hero-visuel hero-rise" style={{ animationDelay: "0.26s" }}>
-            <CadreApp
-              src="/images/produit/dashboard.png"
-              alt={t.heroApercuAlt}
-              titre={t.heroApercuTitre}
-              largeur={1880}
-              hauteur={688}
-              priorite
-              tailles="(max-width: 960px) 100vw, 620px"
-            />
-          </div>
+              et il n'y en avait aucune.
+              Quand une vidéo tourne derrière, elle montre déjà le produit en
+              usage : une capture par-dessus ferait deux images concurrentes
+              dans le même cadre. La colonne se retire, et les captures de la
+              galerie plus bas continuent de faire la preuve. */}
+          {!video && (
+            <div className="wow-hero-visuel hero-rise" style={{ animationDelay: "0.26s" }}>
+              <CadreApp
+                src="/images/produit/dashboard.png"
+                alt={t.heroApercuAlt}
+                titre={t.heroApercuTitre}
+                largeur={1880}
+                hauteur={688}
+                priorite
+                tailles="(max-width: 960px) 100vw, 620px"
+              />
+            </div>
+          )}
         </div>
       </section>
 

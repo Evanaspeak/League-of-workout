@@ -26,7 +26,7 @@ export const recuperation = {
     validerCorps: "Note-le : il ne s'affichera qu'une fois. Ton ancien code ne fonctionne plus, et les sessions ouvertes avec ont été fermées.",
     validerPseudo: (pseudo: string) => `Connecte-toi avec le pseudo « ${pseudo} » et ce code.`,
     validerEchecTitre: "Lien invalide ou expiré",
-    validerEchecCorps: "Ce lien a déjà servi, ou il a plus d'une heure. Demande-en un nouveau — ton code actuel n'a pas changé.",
+    validerEchecCorps: "Ce lien a déjà servi, ou il a plus d'une heure. Demande-en un nouveau : ton code actuel n'a pas changé.",
     validerRedemander: "Demander un nouveau lien",
   },
   en: {
@@ -52,7 +52,7 @@ export const recuperation = {
     validerCorps: "Write it down: it is shown once. Your old code no longer works, and sessions opened with it were closed.",
     validerPseudo: (pseudo: string) => `Sign in with the username “${pseudo}” and this code.`,
     validerEchecTitre: "Invalid or expired link",
-    validerEchecCorps: "This link was already used, or it is over an hour old. Request a new one — your current code has not changed.",
+    validerEchecCorps: "This link was already used, or it is over an hour old. Request a new one: your current code has not changed.",
     validerRedemander: "Request a new link",
   },
 };

@@ -1,7 +1,7 @@
 export const notifications = {
   fr: {
     titre: "Notifications",
-    aide: "Quand ta dette de boxe franchit ton seuil, l'app te prévient sur cet appareil — même si l'onglet est fermé. L'idée est de te le dire au bon moment : entre deux parties, quand tu es dans la file d'attente et que tu as deux minutes.",
+    aide: "Quand ta dette de boxe franchit ton seuil, l'app te prévient sur cet appareil, même si l'onglet est fermé. L'idée est de te le dire au bon moment : entre deux parties, quand tu es dans la file d'attente et que tu as deux minutes.",
     indisponible: "Ce navigateur ne gère pas les notifications, ou elles ne sont pas configurées sur ce déploiement.",
     refuse: "Tu as refusé les notifications pour ce site. Il faut les réautoriser dans les réglages de ton navigateur.",
     activer: "Activer les notifications",
@@ -19,7 +19,7 @@ export const notifications = {
   },
   en: {
     titre: "Notifications",
-    aide: "When your boxing debt crosses your threshold, the app tells you on this device — even with the tab closed. The point is to catch you at the right moment: between two matches, sat in queue with two minutes to spare.",
+    aide: "When your boxing debt crosses your threshold, the app tells you on this device, even with the tab closed. The point is to catch you at the right moment: between two matches, sat in queue with two minutes to spare.",
     indisponible: "This browser doesn't support notifications, or they aren't configured on this deployment.",
     refuse: "You blocked notifications for this site. You'll need to re-allow them in your browser settings.",
     activer: "Turn on notifications",

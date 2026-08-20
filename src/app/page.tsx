@@ -2,9 +2,10 @@ import { auth } from "@/auth";
 import LandingClient from "./LandingClient";
 import { dernierInstalleur, PAGE_RELEASES } from "@/lib/release";
 import { logosDisponibles } from "@/lib/logosJeux";
+import { videoBoucle } from "@/lib/videoBoucle";
 
 export const metadata = {
-  title: "Win or Workout — Gagne ta game, ou paie en sueur",
+  title: "Win or Workout · Gagne ta game, ou paie en sueur",
   description: "Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe. Quinze jeux pris en charge, application Windows gratuite.",
   alternates: { canonical: "/" },
 };
@@ -43,6 +44,7 @@ export default async function LandingPage() {
         telechargement={installeur?.url ?? PAGE_RELEASES}
         version={installeur?.version ?? null}
         logosJeux={logosDisponibles()}
+        video={videoBoucle()}
       />
     </>
   );
