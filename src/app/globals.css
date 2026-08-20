@@ -1610,3 +1610,6 @@ body {
   .scene-partie { aspect-ratio: 4 / 3; }
   .scene-partie-pastille { right: 7%; bottom: 9%; width: min(78%, 260px); }
 }
+
+/* Le vrai logo, quand un fichier a été déposé (voir public/images/jeux). */
+.jeu-logo { display: block; width: 22px; height: 22px; object-fit: contain; }

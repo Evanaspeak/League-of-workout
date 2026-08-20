@@ -252,12 +252,14 @@ function DebtFeed({
 
 /* ── Landing ─────────────────────────────────────────────────────────────── */
 export default function LandingClient({
-  isLoggedIn, telechargement, version,
+  isLoggedIn, telechargement, version, logosJeux,
 }: {
   isLoggedIn: boolean;
   /** L'installeur de la dernière version, résolu côté serveur. */
   telechargement: string;
   version: string | null;
+  /** Les logos de jeux réellement présents dans le dépôt, constatés au rendu. */
+  logosJeux: string[];
 }) {
   const t = useT(landing);
   useRevealOnScroll();
@@ -367,7 +369,7 @@ export default function LandingClient({
       {/* ══ BANDE DES JEUX ═══════════════════════════════════════════════ */}
       <section className="section-jeux">
         <p className="eyebrow section-jeux-titre">{t.jeuxTitre}</p>
-        <BandeJeux legende={t.jeuxLegende} />
+        <BandeJeux legende={t.jeuxLegende} logos={logosJeux} />
       </section>
 
       {/* ══ LA BOUCLE ════════════════════════════════════════════════════ */}
