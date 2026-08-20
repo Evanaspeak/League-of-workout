@@ -260,8 +260,8 @@ export default function LandingClient({
   /** L'installeur de la dernière version, résolu côté serveur. */
   telechargement: string;
   version: string | null;
-  /** Les logos de jeux réellement présents dans le dépôt, constatés au rendu. */
-  logosJeux: string[];
+  /** Les logos de jeux présents dans le dépôt : code du jeu → nom de fichier. */
+  logosJeux: Record<string, string>;
   /** La vidéo de démonstration, si le fichier a été déposé. */
   video: VideoBoucle | null;
 }) {
