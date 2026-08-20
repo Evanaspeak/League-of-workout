@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, toExerciceIds } from "@/lib/exercices";
+import { estAdmin } from "@/lib/admin";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -112,10 +113,30 @@ export async function PUT(req: Request) {
     }
   }
 
-  // Les trois branches ci-dessous écrivent une configuration commune à tous les
-  // comptes. Chaque valeur est bornée côté serveur : un `Number()` nu laissait
-  // passer de quoi rendre un score non représentable, et c'est toute
-  // l'application qui cessait d'enregistrer des parties.
+  // Les trois branches ci-dessous écrivent une configuration commune à TOUS les
+  // comptes : poids par rôle, seuils de niveau, surcharge de maîtrise. Elles
+  // décident de ce que chaque utilisateur devra physiquement faire.
+  //
+  // Elles étaient ouvertes à n'importe quel compte connecté. Le bornage des
+  // valeurs empêchait de rendre un score inécrivable, mais rien n'empêchait de
+  // mettre le multiplicateur à zéro — plus personne ne doit rien — ou le malus
+  // de défaite au maximum, pour tout le monde et sans que personne le voie. Le
+  // panneau était réservé aux bêta-testeurs dans l'interface, ce qui ne
+  // protégeait rien : l'interface n'est pas une frontière, la route l'est.
+  //
+  // La lecture reste ouverte, elle : chacun a le droit de savoir comment sa
+  // dette est calculée.
+  const configPartagee = body.roleWeights || body.levelConfigs || body.masteryConfig;
+  if (configPartagee && !estAdmin(user.email)) {
+    return NextResponse.json(
+      { error: "Cette configuration est commune à tous les comptes" },
+      { status: 403 },
+    );
+  }
+
+  // Chaque valeur reste bornée côté serveur : un `Number()` nu laissait passer
+  // de quoi rendre un score non représentable, et c'est toute l'application qui
+  // cessait d'enregistrer des parties.
   try {
     if (body.roleWeights) {
       for (const rw of body.roleWeights) {
