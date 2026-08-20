@@ -1513,7 +1513,9 @@ body {
    ce qu'il fait à droite, un filet entre chaque. On lit une fiche technique,
    pas une grille de vignettes. */
 .liste-features { display: block; border-top: 1px solid var(--line); }
-.section-desktop .feature,
+/* Un seul sélecteur, à une seule classe. `.section-desktop .feature` traînait
+   dans cette liste : plus spécifique, il l'emportait sur la version téléphone
+   posée plus bas, et la fiche restait sur deux colonnes à 390 px. */
 .feature {
   display: grid;
   grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
@@ -1573,11 +1575,16 @@ body {
    carré, la feuille de spécifications a besoin de deux colonnes lisibles.
    Et les deux blocs s'alignent par le haut — centrés, la scène flottait au
    milieu d'une colonne deux fois plus haute qu'elle. */
-.section-desktop .payer-grille {
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-  align-items: start;
+/* Sous condition de largeur : sans elle, la règle passait après la version
+   téléphone de `.payer-grille` et lui réimposait deux colonnes — la scène de
+   jeu se retrouvait écrasée dans une bande de 180 px à côté du titre. */
+@media (min-width: 1001px) {
+  .section-desktop .payer-grille {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: start;
+  }
+  .section-desktop .feature { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr); gap: 10px 20px; }
 }
-.section-desktop .feature { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr); gap: 10px 20px; }
 
 
 /* ── La boucle, resserrée ────────────────────────────────────────────────
@@ -1595,3 +1602,11 @@ body {
 .vign-paie-sur { font-size: 0.95rem; font-weight: 500; color: var(--faint); }
 .vign-anneau { flex-shrink: 0; transition: opacity 0.3s ease; }
 .vign-anneau circle:last-child { transition: stroke-dashoffset 0.07s linear, stroke 0.3s ease; }
+
+
+/* Sur un écran étroit, la pastille occupait presque toute la scène et venait
+   frôler le cadre. Elle respire, et la scène s'allonge un peu pour la porter. */
+@media (max-width: 620px) {
+  .scene-partie { aspect-ratio: 4 / 3; }
+  .scene-partie-pastille { right: 7%; bottom: 9%; width: min(78%, 260px); }
+}
