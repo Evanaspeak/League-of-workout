@@ -72,6 +72,10 @@ export default function SettingsPage() {
   // des jeux, avec sa propre sauvegarde.
   const [profileForm, setProfileForm] = useState({ pseudo: "", objectifTotalPompes: 1000 });
   const [betaRank, setBetaRank] = useState<number | null>(null);
+  // Les coefficients réglés dans la rubrique « avancé » sont communs à tous les
+  // comptes. La route ne laisse plus que l'administration les écrire ; l'écran
+  // suit, sinon le panneau resterait ouvert pour ne rendre qu'un refus.
+  const [estAdmin, setEstAdmin] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
   const [profileError, setProfileError] = useState("");
@@ -112,6 +116,7 @@ export default function SettingsPage() {
         objectifTotalPompes: s.goal?.objectifTotalPompes ?? 1000,
       });
       setBetaRank(u.betaRank ?? null);
+      setEstAdmin(Boolean(u.estAdmin));
       // Repli explicite : une réponse incomplète posait `undefined` dans ces
       // états, et la liste des rubriques — qui lit `levelConfigs.length` pour
       // afficher le niveau — emportait alors toute la page.
@@ -266,7 +271,7 @@ export default function SettingsPage() {
       ? [{ id: "application" as Rubrique, icone: "moniteur" as NomIcone, titre: t.sectionApplication, aide: t.rubriqueApplicationAide, valeur: version ?? undefined }]
       : []),
     { id: "donnees", icone: "telecharger", titre: t.exportTitre, aide: t.rubriqueDonneesAide },
-    ...(betaRank !== null
+    ...(estAdmin
       ? [{ id: "avance" as Rubrique, icone: "cerveau" as NomIcone, titre: t.parametresAvancesBeta, aide: t.rubriqueAvanceAide }]
       : []),
   ];
@@ -508,7 +513,7 @@ export default function SettingsPage() {
       )}
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}
-      {rubrique === "avance" && betaRank !== null && masteryConfig && (
+      {rubrique === "avance" && estAdmin && masteryConfig && (
         <div>
             <div className="lol-panel p-5 space-y-6">
 
