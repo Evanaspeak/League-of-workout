@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeEffort, exercicesEnTemps, repartirPoints, secondesParPoint, toExerciceIds,
 } from "@/lib/exercices";
+import { chargerRatios } from "@/lib/exercicesConfig";
 
 /**
  * Dette en attente. Seuls les exercices comptés en temps s'y accumulent :
@@ -31,6 +32,9 @@ function reponse(user: {
 }
 
 export async function GET() {
+  // La dette s'exprime en temps d'effort : sans les ratios réglés en
+  // administration, la durée renvoyée serait celle des valeurs d'origine.
+  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   return NextResponse.json(reponse(user));
@@ -42,6 +46,9 @@ export async function GET() {
  *  - `{ secondes: 120 }`   → paiement partiel, converti en points au prorata
  */
 export async function PATCH(req: Request) {
+  // La dette s'exprime en temps d'effort : sans les ratios réglés en
+  // administration, la durée renvoyée serait celle des valeurs d'origine.
+  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
@@ -71,6 +78,9 @@ export async function PATCH(req: Request) {
  * le rappel sans devoir enregistrer des parties jusqu'à franchir le seuil.
  */
 export async function PUT(req: Request) {
+  // La dette s'exprime en temps d'effort : sans les ratios réglés en
+  // administration, la durée renvoyée serait celle des valeurs d'origine.
+  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 

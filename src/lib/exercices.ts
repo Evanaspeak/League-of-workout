@@ -31,16 +31,96 @@ export type ExerciceDef = {
   secondesParRep?: number;
 };
 
+/**
+ * Ratios livrés avec l'application. Ils servent de valeur de repli quand
+ * l'administration n'en a défini aucun, et de borne de retour au défaut.
+ */
+export const RATIOS_DEFAUT: Record<ExerciceId, number> = {
+  pompes: 1,
+  squats: 1.5,
+  boxe: 7,
+};
+
 export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   // Référence historique : 1 pompe = 1 point d'effort.
-  pompes: { id: "pompes", ratio: 1, unite: "reps", pas: 1, secondesParRep: 6 },
+  pompes: { id: "pompes", ratio: RATIOS_DEFAUT.pompes, unite: "reps", pas: 1, secondesParRep: 6 },
   // Les jambes encaissent plus de répétitions que le haut du corps.
-  squats: { id: "squats", ratio: 1.5, unite: "reps", pas: 1, secondesParRep: 5 },
+  squats: { id: "squats", ratio: RATIOS_DEFAUT.squats, unite: "reps", pas: 1, secondesParRep: 5 },
   // Sac ou shadow : cardio soutenu, compté en temps de travail effectif.
-  boxe: { id: "boxe", ratio: 7, unite: "temps", pas: 5 },
+  boxe: { id: "boxe", ratio: RATIOS_DEFAUT.boxe, unite: "temps", pas: 5 },
 };
 
 export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
+
+/**
+ * Exercices dont le ratio se règle depuis l'administration.
+ *
+ * Les pompes n'en sont pas, et c'est volontaire : le point d'effort EST la
+ * pompe. `Game.pompesCalculees` stocke des points depuis le premier jour, et
+ * changer ce ratio-là relirait tout l'historique dans une autre unité sans
+ * qu'aucun écran ne le dise. Régler les deux autres par rapport aux pompes
+ * donne exactement le même pouvoir de réglage, en gardant une référence fixe.
+ */
+export const EXERCICES_REGLABLES: ExerciceId[] = ["squats", "boxe"];
+
+/**
+ * Bornes acceptées pour chaque ratio. Elles ne sont pas décoratives : un
+ * ratio nul ferait disparaître la dette, un ratio négatif la rendrait
+ * négative, et une valeur démesurée transformerait une défaite en punition
+ * intenable. La validation vit ici, donc elle s'applique aussi bien à la
+ * saisie de l'administration qu'à une valeur déjà en base.
+ */
+export const RATIO_BORNES: Record<ExerciceId, { min: number; max: number }> = {
+  pompes: { min: 1, max: 1 },
+  squats: { min: 0.2, max: 10 },
+  boxe: { min: 1, max: 60 },
+};
+
+/** Ratios tels qu'ils circulent entre la base, le serveur et le navigateur. */
+export type RatiosExercices = Record<ExerciceId, number>;
+
+/**
+ * Ramène une valeur quelconque à un jeu de ratios utilisable : complet,
+ * numérique, et dans les bornes. Tout ce qui manque ou déraille retombe sur
+ * le défaut, exercice par exercice — une valeur illisible pour la boxe ne doit
+ * pas emporter celle des squats.
+ */
+export function normaliserRatios(brut: unknown): RatiosExercices {
+  const objet = (brut && typeof brut === "object" ? brut : {}) as Record<string, unknown>;
+  const out = { ...RATIOS_DEFAUT };
+  for (const id of EXERCICE_IDS) {
+    const v = Number(objet[id]);
+    if (!Number.isFinite(v)) continue;
+    const { min, max } = RATIO_BORNES[id];
+    out[id] = Math.min(max, Math.max(min, v));
+  }
+  return out;
+}
+
+/**
+ * Installe les ratios pour tout le processus.
+ *
+ * La conversion points → répétitions est appelée depuis une dizaine d'écrans
+ * par des fonctions synchrones ; leur passer la configuration en argument
+ * aurait voulu dire modifier chaque appel. Les ratios étant globaux — les
+ * mêmes pour tout le monde, pas un réglage par compte — les poser sur le
+ * module donne le même résultat sans propager un paramètre partout.
+ *
+ * Idempotent, et sans état à réinitialiser : appeler deux fois avec la même
+ * valeur ne change rien.
+ */
+export function appliquerRatios(valeurs: unknown): RatiosExercices {
+  const ratios = normaliserRatios(valeurs);
+  for (const id of EXERCICE_IDS) EXERCICES[id].ratio = ratios[id];
+  return ratios;
+}
+
+/** Ratios actuellement en vigueur, tels que les conversions les utilisent. */
+export function ratiosActuels(): RatiosExercices {
+  const out = {} as RatiosExercices;
+  for (const id of EXERCICE_IDS) out[id] = EXERCICES[id].ratio;
+  return out;
+}
 
 export const EXERCICE_DEFAUT: ExerciceId = "pompes";
 

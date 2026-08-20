@@ -28,6 +28,10 @@ const PUBLIC_PREFIXES = [
   // une session pour aller s'en créer une n'aurait pas de sens.
   "/connexion-app",
   "/api/auth",
+  // Trois nombres de configuration, déjà présents dans le HTML de chaque page.
+  // La page d'accueil les relit sans session : les protéger la casserait sans
+  // rien protéger.
+  "/api/exercices/ratios",
 ];
 
 export default auth((req) => {

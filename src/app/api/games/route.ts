@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
+import { chargerRatios } from "@/lib/exercicesConfig";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
@@ -25,6 +26,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  // Enregistrer une partie fait franchir des seuils de rappel exprimés en
+  // secondes : la conversion doit utiliser les ratios en vigueur.
+  await chargerRatios();
   const body = await req.json();
 
   const user = await getCurrentUser();

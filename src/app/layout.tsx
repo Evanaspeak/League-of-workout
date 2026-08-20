@@ -16,6 +16,8 @@ import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
 import { LocaleProvider } from "@/lib/i18n/LocaleContext";
+import { RatiosExercicesProvider } from "@/components/RatiosExercices";
+import { chargerRatios } from "@/lib/exercicesConfig";
 
 /**
  * Titrage de la marque.
@@ -78,10 +80,28 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/**
+ * Fenêtre de régénération des pages.
+ *
+ * La mise en page charge les ratios d'exercices, réglables depuis
+ * l'administration. Sans cette valeur, les pages sans données propres au
+ * compte sont figées à la génération : elles gardaient les ratios du déploiement
+ * et aucune invalidation ne les rattrapait, parce qu'une route entièrement
+ * statique n'écoute pas `revalidatePath`. Avec elle, l'invalidation prend effet
+ * immédiatement, et cinq minutes servent de filet si elle échoue.
+ */
+export const revalidate = 300;
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Les ratios d'exercices se règlent depuis l'administration. Les charger ici
+  // les installe pour le rendu serveur de toute la page, et la valeur descend
+  // au navigateur pour qu'il convertisse à l'identique.
+  const ratios = await chargerRatios();
+
   return (
     <html lang="fr" className={`h-full ${titrage.variable} ${barlow.variable} ${plexMono.variable}`}>
       <body className="min-h-full flex flex-col">
+        <RatiosExercicesProvider valeurs={ratios}>
         <LocaleProvider>
           <SessionProvider>
             {/* Marque la racine quand on tourne dans l'application desktop :
@@ -110,6 +130,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <DetteDirecte />
           </SessionProvider>
         </LocaleProvider>
+        </RatiosExercicesProvider>
         {/* Mesure d'audience sans cookie ni identifiant persistant : elle ne
             permet pas de suivre quelqu'un d'une visite à l'autre, ce qui évite
             la bannière de consentement. Elle sert à savoir combien de monde
