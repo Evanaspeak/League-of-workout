@@ -5,14 +5,14 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { landing } from "@/lib/i18n/dictionaries/landing";
 import { Wordmark } from "@/components/Wordmark";
 import { Icone } from "@/components/Icone";
-import { SceneProduit } from "@/components/landing/SceneProduit";
 import { PastilleOverlay } from "@/components/landing/PastilleOverlay";
+import { ScenePartie } from "@/components/landing/ScenePartie";
+import { BandeJeux } from "@/components/landing/BandeJeux";
+import { BoucleDemo } from "@/components/landing/BoucleDemo";
+import { CadreApp } from "@/components/landing/CadreApp";
+import { LogoWindows } from "@/components/landing/LogoOS";
 import { useMouvementReduit } from "@/lib/valeurClient";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-
-// La page /telechargement résout elle-même la dernière version publiée : y
-// envoyer évite de figer une URL d'installeur qui périme à chaque release.
-const DOWNLOAD_URL = "/telechargement";
 
 /* Chaque icône a sa couleur — la palette vit dans le contenu */
 const ICON_COLORS: Record<string, string> = {
@@ -79,6 +79,20 @@ function Icon({ name, size = 20, color = "var(--steel)" }: { name: string; size?
       </>
     ),
     heart: <path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3Z" />,
+    chaise: (
+      <>
+        <path d="M6 4v9h9V4" />
+        <path d="M15 13H4v3h11" />
+        <path d="M6 16v4M15 16v4" />
+      </>
+    ),
+    coeur: <path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3Z" />,
+    horloge: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.5 2" />
+      </>
+    ),
   };
   return (
     <svg
@@ -237,7 +251,14 @@ function DebtFeed({
 }
 
 /* ── Landing ─────────────────────────────────────────────────────────────── */
-export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
+export default function LandingClient({
+  isLoggedIn, telechargement, version,
+}: {
+  isLoggedIn: boolean;
+  /** L'installeur de la dernière version, résolu côté serveur. */
+  telechargement: string;
+  version: string | null;
+}) {
   const t = useT(landing);
   useRevealOnScroll();
 
@@ -252,7 +273,7 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
   };
 
   return (
-    <div className="full-bleed" style={{
+    <div className="full-bleed accueil" style={{
       background: "var(--ink)",
       color: "var(--bone)",
       marginTop: "-1.5rem",
@@ -266,10 +287,6 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         WebkitBackdropFilter: "blur(14px)",
         borderBottom: "1px solid var(--line)",
       }}>
-        {/* Les tailles passent par une variable plutôt que par des valeurs
-            posées ici : un style en ligne ne peut pas être repris par une
-            requête de média, et c'est bien elle qui doit décider sur un
-            écran étroit. */}
         <div className="wow-nav" style={{ maxWidth: 1200, margin: "0 auto", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link href="/" style={{ textDecoration: "none", display: "inline-flex" }}>
             <Wordmark fontSize="var(--marque-nav)" />
@@ -283,169 +300,214 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{ padding: "0 24px", position: "relative", overflow: "hidden" }}>
-        {/* Halos d'ambiance */}
-        <div aria-hidden style={{
-          position: "absolute", top: "-12%", left: "-6%", width: 520, height: 520,
-          borderRadius: "50%", background: "rgba(157,124,255,0.13)",
-          filter: "blur(100px)", pointerEvents: "none",
-        }} />
-        <div aria-hidden style={{
-          position: "absolute", bottom: "-8%", right: "-4%", width: 460, height: 460,
-          borderRadius: "50%", background: "rgba(255,77,46,0.11)",
-          filter: "blur(110px)", pointerEvents: "none",
-        }} />
-
-        <div className="wow-hero" style={{
-          maxWidth: 1200, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "1.05fr 0.95fr",
-          gap: 56, alignItems: "center",
-          minHeight: "calc(100dvh - 60px)",
-          paddingTop: 48, paddingBottom: 64,
-          position: "relative",
-        }}>
+      {/* ══ HERO ══════════════════════════════════════════════════════════
+          Les deux halos flous qui traînaient ici sont partis : ils ne
+          disaient rien, ils brouillaient le texte, et une page qui doit
+          convaincre en trois secondes n'a pas de place pour de la décoration
+          qui ne porte aucun sens. Ce qui remplit le cadre à droite est
+          désormais le produit lui-même.                                     */}
+      <section className="hero-section">
+        <div className="wow-hero">
           {/* Colonne texte */}
-          <div>
-            <Link href="/beta" style={{ textDecoration: "none" }}>
-              <span className="hero-rise" style={{
-                display: "inline-flex", alignItems: "center", gap: 10,
-                marginBottom: 28, animationDelay: "0.05s",
-              }}>
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background: "var(--victory)",
-                  animation: "pulse 2s ease-in-out infinite",
-                }} />
-                <span className="eyebrow" style={{ color: "var(--muted)" }}>{t.heroBadge}</span>
-              </span>
-            </Link>
+          <div className="hero-col-texte">
+            <span className="hero-rise hero-badge" style={{ animationDelay: "0.05s" }}>
+              <span className="hero-badge-point" />
+              <span className="eyebrow">{t.heroBadge}</span>
+            </span>
 
-            <h1 className="hero-rise" style={{
-              fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              fontSize: "clamp(3rem, 7.2vw, 5.4rem)",
-              lineHeight: 0.98,
-              letterSpacing: "0.01em",
-              margin: "0 0 26px",
-              animationDelay: "0.12s",
-            }}>
-              <span style={{ display: "block", color: "var(--bone)" }}>{t.heroTitleLine1}</span>
-              <span className="brand-fire" style={{ display: "block", paddingBottom: "0.08em" }}>{t.heroTitleLine2}</span>
+            <h1 className="hero-rise hero-titre" style={{ animationDelay: "0.12s" }}>
+              <span className="hero-titre-l1">{t.heroTitleLine1}</span>
+              <span className="brand-fire hero-titre-l2">{t.heroTitleLine2}</span>
             </h1>
 
-            <p className="hero-rise" style={{
-              fontSize: "clamp(1rem, 1.6vw, 1.1rem)", lineHeight: 1.65,
-              color: "var(--muted)", maxWidth: 500, marginBottom: 30,
-              animationDelay: "0.2s",
-            }}>
+            <p className="hero-rise hero-sous" style={{ animationDelay: "0.2s" }}>
               {t.heroSubtitle}
             </p>
 
-            {/* Jeux supportés */}
-            <div className="mono-num hero-rise" style={{
-              display: "flex", flexWrap: "wrap", alignItems: "center",
-              gap: "8px 14px", marginBottom: 38,
-              fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase",
-              animationDelay: "0.28s",
-            }}>
-              <span style={{ color: "var(--victory)" }}>{t.heroGamesLive}</span>
-              <Slash height={11} />
-              <span style={{ color: "var(--faint)" }}>{t.heroGamesNext}</span>
-            </div>
-
-            <div className="hero-rise" style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", animationDelay: "0.36s" }}>
-              <Link href="/beta" className="wow-cta">
-                {t.heroBeta}
-              </Link>
-              <Link href={isLoggedIn ? "/dashboard" : "/login"} className="wow-ghost">
-                {isLoggedIn ? t.navLoggedIn : t.heroLogin}
-              </Link>
-            </div>
-
-            {DOWNLOAD_URL && (
-              <a href={DOWNLOAD_URL} className="mono-num hero-rise" style={{
-                display: "inline-block", marginTop: 22,
-                fontSize: "0.72rem", letterSpacing: "0.08em",
-                color: "var(--faint)", textDecoration: "none",
-                borderBottom: "1px solid var(--line-strong)",
-                paddingBottom: 2,
-                animationDelay: "0.44s",
-              }}>
-                {t.heroDownload}<Icone nom="fleche-bas" taille={14} style={{ marginLeft: 6 }} />
+            {/* Le bouton principal est un bouton de téléchargement, et il en a
+                l'air : le logo de la plateforme répond avant le texte à la
+                seule question qui compte — est-ce que ça tourne chez moi ?
+                Le lien pointait auparavant sur une page intermédiaire, en
+                caractères gris soulignés, sous les deux vrais boutons. */}
+            <div className="hero-rise hero-actions" style={{ animationDelay: "0.3s" }}>
+              <a href={telechargement} className="cta-telecharger" data-visite="telecharger">
+                <LogoWindows taille={20} />
+                <span className="cta-telecharger-texte">
+                  {t.heroTelecharger}
+                  {version && <em>{t.heroVersion(version)}</em>}
+                </span>
               </a>
-            )}
+              <Link href={isLoggedIn ? "/dashboard" : "/beta"} className="wow-ghost hero-ghost">
+                {isLoggedIn ? t.navLoggedIn : t.heroBeta}
+              </Link>
+            </div>
+
+            <p className="hero-rise hero-note" style={{ animationDelay: "0.38s" }}>
+              {t.heroTelechargerNote}
+            </p>
           </div>
 
-          {/* Colonne produit : le relevé d'une soirée, et la pastille telle
-              qu'elle s'affiche par-dessus le jeu, posée devant lui dans le même
-              espace. C'est la seule image que ce produit peut donner. */}
-          <div className="wow-hero-feed hero-rise" style={{ display: "flex", justifyContent: "flex-end", animationDelay: "0.3s" }}>
-            <div style={{ width: "100%", maxWidth: 440 }}>
-              <SceneProduit
-                carte={
-                  <DebtFeed
-                    title={t.feedTitle}
-                    count={t.feedCount}
-                    totalLabel={t.feedTotalLabel}
-                    unit={t.feedPointsUnit}
-                    conversion={t.feedConversion}
-                    entries={t.feedEntries}
-                  />
-                }
-                pastille={
-                  <PastilleOverlay
-                    temps={t.pastilleTemps}
-                    soiree={t.pastilleSoiree}
-                    jeu={t.pastilleJeu}
-                    kda={t.pastilleKda}
-                    kdaValeur={t.pastilleKdaValeur}
-                    siGagne={t.pastilleSiGagne}
-                    siPerdu={t.pastilleSiPerdu}
-                    gagne={t.pastilleGagne}
-                    perdu={t.pastillePerdu}
-                  />
-                }
+          {/* Colonne produit : une capture réelle du tableau de bord, dans une
+              fenêtre. C'est la première chose que le visiteur voit du logiciel,
+              et il n'y en avait aucune. */}
+          <div className="wow-hero-visuel hero-rise" style={{ animationDelay: "0.26s" }}>
+            <CadreApp
+              src="/images/produit/dashboard.png"
+              alt={t.heroApercuAlt}
+              titre={t.heroApercuTitre}
+              largeur={1880}
+              hauteur={688}
+              priorite
+              tailles="(max-width: 960px) 100vw, 620px"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ══ BANDE DES JEUX ═══════════════════════════════════════════════ */}
+      <section className="section-jeux">
+        <p className="eyebrow section-jeux-titre">{t.jeuxTitre}</p>
+        <BandeJeux legende={t.jeuxLegende} />
+      </section>
+
+      {/* ══ LA BOUCLE ════════════════════════════════════════════════════ */}
+      <section className="section-boucle">
+        <div className="conteneur">
+          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.boucleEyebrow}</p>
+          <h2 style={{ ...h2, marginBottom: 12 }}>{t.boucleTitre}</h2>
+          <p className="section-intro">{t.boucleSoustitre}</p>
+          <BoucleDemo temps={t.boucleTemps} legende={t.boucleLegende} aria={t.boucleAria} />
+        </div>
+      </section>
+
+      {/* ══ LE PRODUIT, EN CAPTURES ══════════════════════════════════════ */}
+      <section className="section-produit">
+        <div className="conteneur">
+          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.produitEyebrow}</p>
+          <h2 style={{ ...h2, marginBottom: 12 }}>{t.produitTitre}</h2>
+          <p className="section-intro">{t.produitSoustitre}</p>
+
+          <div className="galerie">
+            {t.produitCaptures.map((c, i) => (
+              <figure key={c.image} className={`galerie-item reveal${i === 2 ? " galerie-item-etroit" : ""}`} style={{ transitionDelay: `${i * 90}ms` }}>
+                <CadreApp
+                  src={c.image}
+                  alt={c.alt}
+                  titre={c.cadre}
+                  largeur={c.largeur}
+                  hauteur={c.hauteur}
+                  tailles={i === 2 ? "(max-width: 960px) 70vw, 300px" : "(max-width: 960px) 100vw, 700px"}
+                />
+                <figcaption>
+                  <strong>{c.titre}</strong>
+                  <span>{c.legende}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ LE PROBLÈME ══════════════════════════════════════════════════
+          Les chiffres s'enchaînaient en paragraphes, sans respiration : on
+          les lisait comme un mur. Chacun tient désormais dans son propre
+          bloc, avec un pictogramme et une jauge qui le rend comparable. */}
+      <section className="section-probleme">
+        <div className="conteneur">
+          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.problemEyebrow}</p>
+          <h2 style={{ ...h2, marginBottom: 20, maxWidth: "18ch" }}>
+            {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
+            <span style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
+          </h2>
+          <p className="section-intro" style={{ maxWidth: "62ch" }}>{t.problemPara1}</p>
+
+          <div className="infographie">
+            {t.stats.map((s, i) => (
+              <div key={s.value} className="info-carte reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+                <Icon name={INFO_ICONES[i] ?? "horloge"} size={20} color={INFO_TEINTES[i] ?? "var(--amber)"} />
+                <div className="mono-num info-val" style={{ color: INFO_TEINTES[i] ?? "var(--amber)" }}>{s.value}</div>
+                <p className="info-label">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="section-note">{t.problemPara2}</p>
+        </div>
+      </section>
+
+      {/* ══ UNE DETTE, TROIS MONNAIES ════════════════════════════════════ */}
+      <section className="section-payer">
+        <div className="conteneur">
+          <div className="payer-grille">
+            <div>
+              <p className="eyebrow" style={{ marginBottom: 16 }}>{t.payEyebrow}</p>
+              <h2 style={{ ...h2, marginBottom: 12 }}>{t.payTitle}</h2>
+              <p className="section-intro" style={{ marginBottom: 26 }}>{t.paySubtitle}</p>
+
+              <p className="eyebrow" style={{ marginBottom: 14 }}>{t.payUnitLabel}</p>
+              <div className="bande-tarifs">
+                {t.payModes.map((m, i) => (
+                  <div key={m.name} className="reveal tarif" style={{ transitionDelay: `${i * 100}ms` }}>
+                    <div className="tarif-entete">
+                      <Icon name={m.icon} size={18} color={ICON_COLORS[m.icon] ?? "var(--steel)"} />
+                      <span>{m.name}</span>
+                    </div>
+                    <p className="mono-num tarif-valeur">{m.valeur}</p>
+                    <p className="tarif-desc">{m.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="payer-partage">{t.payShareNote}</p>
+            </div>
+
+            {/* Une soirée qui se remplit sous les yeux : le même relevé que
+                dans l'application, et la conversion en bas. */}
+            <div className="payer-feed reveal">
+              <DebtFeed
+                title={t.feedTitle}
+                count={t.feedCount}
+                totalLabel={t.feedTotalLabel}
+                unit={t.feedPointsUnit}
+                conversion={t.feedConversion}
+                entries={t.feedEntries}
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* STAT STRIP */}
-      <section style={{
-        borderTop: "1px solid var(--line)",
-        borderBottom: "1px solid var(--line)",
-        background: "var(--carbon)",
-        padding: "44px 24px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="eyebrow" style={{ marginBottom: 28 }}>{t.statsLabel}</p>
-          {/* Quatre chiffres de même taille se lisent comme une liste : aucun ne
-              ressort, et rien ne dit lequel compte. Le premier constat porte le
-              propos — il domine, les trois autres l'étayent. */}
-          <div className="bande-stats">
-            <div className="reveal" style={{ transitionDelay: "0ms" }}>
-              <div className="mono-num chiffre-phare">{t.stats[0].value}</div>
-              <div style={{
-                fontSize: "0.92rem", color: "var(--muted)", lineHeight: 1.5, maxWidth: "26ch",
-              }}>
-                {t.stats[0].label}
-              </div>
-            </div>
-
-            <div className="bande-stats-appui">
-              {t.stats.slice(1).map((s, i) => (
-                <div key={s.value} className="reveal" style={{ transitionDelay: `${(i + 1) * 80}ms` }}>
-                  <div className="mono-num" style={{
-                    fontSize: "clamp(1.35rem, 2.2vw, 1.75rem)", fontWeight: 600,
-                    color: "var(--amber)", lineHeight: 1, marginBottom: 8,
-                  }}>
-                    {s.value}
-                  </div>
-                  <div style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.5 }}>
-                    {s.label}
+      {/* ══ L'APP DESKTOP ET SON OVERLAY ═════════════════════════════════ */}
+      <section className="section-desktop">
+        <div className="conteneur payer-grille">
+          <div className="desktop-scene reveal">
+            <ScenePartie
+              etiquette={t.overlayEtiquette}
+              pastille={
+                <PastilleOverlay
+                  temps={t.pastilleTemps}
+                  soiree={t.pastilleSoiree}
+                  jeu={t.pastilleJeu}
+                  kda={t.pastilleKda}
+                  kdaValeur={t.pastilleKdaValeur}
+                  siGagne={t.pastilleSiGagne}
+                  siPerdu={t.pastilleSiPerdu}
+                  gagne={t.pastilleGagne}
+                  perdu={t.pastillePerdu}
+                />
+              }
+            />
+            <p className="desktop-legende">{t.overlayLegende}</p>
+          </div>
+          <div>
+            <p className="eyebrow" style={{ marginBottom: 16 }}>{t.featuresEyebrow}</p>
+            <h2 style={{ ...h2, marginBottom: 28 }}>{t.featuresTitle}</h2>
+            <div className="liste-features">
+              {t.features.slice(0, 6).map((f, i) => (
+                <div key={f.title} className="reveal feature" style={{ transitionDelay: `${i * 70}ms` }}>
+                  <div style={{ paddingTop: 5 }}><Slash height={13} /></div>
+                  <div>
+                    <div className="feature-titre">{f.title}</div>
+                    <div className="feature-desc">{f.desc}</div>
                   </div>
                 </div>
               ))}
@@ -454,99 +516,36 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </section>
 
-      {/* LE PROBLÈME */}
-      <section style={{ padding: "96px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <div className="wow-grid-2" style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: 56, alignItems: "center",
-        }}>
-          <div className="reveal">
-            <p className="eyebrow" style={{ marginBottom: 18 }}>{t.problemEyebrow}</p>
-            <h2 style={{ ...h2, marginBottom: 24 }}>
-              {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
-              <span style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
-            </h2>
-            <p style={{ fontSize: "0.97rem", lineHeight: 1.75, color: "var(--muted)", marginBottom: 16 }}>
-              {t.problemPara1}
-            </p>
-            <p style={{ fontSize: "0.97rem", lineHeight: 1.75, color: "var(--muted)" }}>
-              {t.problemPara2}
-            </p>
+      {/* ══ CTA FINAL ════════════════════════════════════════════════════ */}
+      <section className="section-cta">
+        <div className="reveal" style={{ maxWidth: 720, margin: "0 auto" }}>
+          <h2 className="cta-titre">
+            <span className="brand-fire" style={{ paddingBottom: "0.08em" }}>{t.ctaTitle}</span>
+          </h2>
+          <p className="cta-sous">{t.ctaSubtitle}</p>
+          <div className="cta-actions">
+            <a href={telechargement} className="cta-telecharger cta-telecharger-grand">
+              <LogoWindows taille={22} />
+              <span className="cta-telecharger-texte">
+                {t.heroTelecharger}
+                {version && <em>{t.heroVersion(version)}</em>}
+              </span>
+            </a>
+            <Link href={isLoggedIn ? "/dashboard" : "/beta"} className="wow-ghost hero-ghost">
+              {isLoggedIn ? t.navLoggedIn : t.ctaBeta}
+            </Link>
           </div>
-          <div className="reveal" style={{
-            background: "var(--carbon)",
-            border: "1px solid var(--line)",
-            borderRadius: 16, padding: "12px 28px",
-            transitionDelay: "120ms",
-          }}>
-            {t.problemStats.map((item, i) => (
-              <div key={item.label} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16,
-                padding: "18px 0",
-                borderBottom: i < t.problemStats.length - 1 ? "1px solid var(--line)" : "none",
-              }}>
-                <span style={{ fontSize: "0.87rem", color: "var(--muted)" }}>{item.label}</span>
-                <span className="mono-num" style={{ fontSize: "1.15rem", fontWeight: 600, color: "var(--ember)", whiteSpace: "nowrap" }}>
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          <p className="hero-note" style={{ marginTop: 18 }}>{t.heroTelechargerNote}</p>
 
-      {/* COMMENT TU PAIES — le cœur du modèle : une dette, plusieurs monnaies */}
-      <section style={{
-        borderTop: "1px solid var(--line)",
-        padding: "96px 24px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="eyebrow" style={{ marginBottom: 18 }}>{t.payEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 14 }}>{t.payTitle}</h2>
-          <p style={{ fontSize: "0.97rem", color: "var(--muted)", maxWidth: 660, lineHeight: 1.7, marginBottom: 34 }}>
-            {t.paySubtitle}
-          </p>
-
-          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.payUnitLabel}</p>
-
-          {/* Ce sont trois prix pour le même effort, pas trois sujets : une
-              bande tarifaire le dit mieux que trois cartes côte à côte, où le
-              montant se retrouvait plus petit que le nom de l'exercice. */}
-          <div className="bande-tarifs">
-            {t.payModes.map((m, i) => (
-              <div key={m.name} className="reveal tarif" style={{ transitionDelay: `${i * 100}ms` }}>
-                <div className="tarif-entete">
-                  <Icon name={m.icon} size={18} color={ICON_COLORS[m.icon] ?? "var(--steel)"} />
-                  <span>{m.name}</span>
-                </div>
-                <p className="mono-num tarif-valeur">{m.valeur}</p>
-                <p className="tarif-desc">{m.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <p style={{
-            fontSize: "0.88rem", color: "var(--muted)", lineHeight: 1.7,
-            marginTop: 22, paddingLeft: 14, borderLeft: "2px solid var(--ember)",
-          }}>
-            {t.payShareNote}
-          </p>
-
-          {/* Sources : gardées, mais reléguées en note — elles justifient le
-              poids du corps, elles ne sont plus l'argument principal. */}
-          <div style={{ marginTop: 48 }}>
-            <p className="eyebrow" style={{ marginBottom: 6 }}>{t.sourcesTitle}</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--faint)", marginBottom: 12, lineHeight: 1.6 }}>
-              {t.payFootnote}
-            </p>
-            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8, maxWidth: 760 }}>
+          {/* Les sources restent accessibles, mais en bas : elles étayent le
+              propos, elles ne sont pas le propos. */}
+          <details className="sources">
+            <summary>{t.sourcesTitle}</summary>
+            <p className="sources-intro">{t.payFootnote}</p>
+            <ul>
               {t.paySources.map((s) => (
-                <li key={s.href} style={{ fontSize: "0.76rem", lineHeight: 1.6, color: "var(--faint)" }}>
-                  <a href={s.href} target="_blank" rel="noopener noreferrer"
-                    style={{ color: "var(--signal)", textDecoration: "none" }}>
-                    {/* Le navigateur autorise une coupure entre un texte et une
-                        icône : sur ces libellés longs, elle tombait seule au
-                        début de la ligne suivante. L'icône voyage donc avec le
-                        dernier mot, comme on évite une veuve. */}
+                <li key={s.href}>
+                  <a href={s.href} target="_blank" rel="noopener noreferrer">
                     {(() => {
                       const mots = s.label.split(" ");
                       const dernier = mots.pop() ?? "";
@@ -564,262 +563,14 @@ export default function LandingClient({ isLoggedIn }: { isLoggedIn: boolean }) {
                 </li>
               ))}
             </ul>
-          </div>
+          </details>
         </div>
       </section>
-
-
-      {/* COMMENT ÇA MARCHE */}
-      <section style={{
-        borderTop: "1px solid var(--line)",
-        background: "var(--carbon)",
-        padding: "96px 24px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="eyebrow" style={{ marginBottom: 18 }}>{t.howEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 48 }}>{t.howTitle}</h2>
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: 20,
-          }}>
-            {t.steps.map((step, i) => (
-              <div key={step.num} className="reveal" style={{
-                background: "var(--ink)",
-                border: "1px solid var(--line)",
-                borderRadius: 16, padding: "30px 28px",
-                transitionDelay: `${i * 110}ms`,
-              }}>
-                <div className="mono-num" style={{
-                  display: "inline-flex", alignItems: "center", gap: 10,
-                  fontSize: "0.75rem", fontWeight: 600, color: "var(--ember)",
-                  marginBottom: 20, letterSpacing: "0.1em",
-                }}>
-                  {step.num}
-                  <span style={{ width: 28, height: 1, background: "rgba(255,77,46,0.35)" }} />
-                </div>
-                <h3 style={{
-                  fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
-                  fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em",
-                  fontSize: "1.3rem", color: "var(--bone)", marginBottom: 10,
-                }}>
-                  {step.title}
-                </h3>
-                <p style={{ fontSize: "0.88rem", lineHeight: 1.7, color: "var(--muted)" }}>
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* BIENFAITS */}
-      <section style={{ padding: "96px 24px", maxWidth: 1100, margin: "0 auto" }}>
-        <p className="eyebrow" style={{ marginBottom: 18 }}>{t.benefitsEyebrow}</p>
-        <h2 style={{ ...h2, marginBottom: 14 }}>{t.benefitsTitle}</h2>
-        <p style={{ fontSize: "0.97rem", color: "var(--muted)", maxWidth: 520, lineHeight: 1.7, marginBottom: 48 }}>
-          {t.benefitsSubtitle}
-        </p>
-        <div style={{
-          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16,
-        }}>
-          {t.benefits.map((b, i) => (
-            <div key={b.title} className="reveal" style={{
-              background: "var(--carbon)",
-              border: "1px solid var(--line)",
-              borderRadius: 14, padding: "26px 24px",
-              transitionDelay: `${i * 90}ms`,
-            }}>
-              <div style={{ marginBottom: 16 }}>
-                <Icon name={b.icon} size={22} color={ICON_COLORS[b.icon] ?? "var(--steel)"} />
-              </div>
-              <h3 style={{
-                fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
-                fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.03em",
-                fontSize: "1.15rem", color: "var(--bone)", marginBottom: 8,
-              }}>
-                {b.title}
-              </h3>
-              <p style={{ fontSize: "0.85rem", lineHeight: 1.65, color: "var(--muted)" }}>
-                {b.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section style={{
-        borderTop: "1px solid var(--line)",
-        padding: "96px 24px",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="eyebrow" style={{ marginBottom: 18 }}>{t.featuresEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 48 }}>{t.featuresTitle}</h2>
-          <div style={{
-            display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))", gap: 14,
-          }}>
-            {t.features.map((f, i) => (
-              <div key={f.title} className="reveal" style={{
-                display: "flex", gap: 16, padding: "20px",
-                background: "var(--carbon)",
-                border: "1px solid var(--line)",
-                borderRadius: 12,
-                transitionDelay: `${(i % 3) * 70}ms`,
-              }}>
-                <div style={{ paddingTop: 5 }}>
-                  <Slash height={13} />
-                </div>
-                <div>
-                  <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "var(--bone)", marginBottom: 4 }}>
-                    {f.title}
-                  </div>
-                  <div style={{ fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.6 }}>
-                    {f.desc}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA FINAL */}
-      <section style={{
-        borderTop: "1px solid var(--line)",
-        padding: "110px 24px",
-        textAlign: "center",
-      }}>
-        <div className="reveal" style={{ maxWidth: 720, margin: "0 auto" }}>
-          <h2 style={{
-            fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
-            fontWeight: 700, textTransform: "uppercase",
-            fontSize: "clamp(2.2rem, 4.6vw, 3.4rem)",
-            lineHeight: 1.02, marginBottom: 18,
-          }}>
-            <span className="brand-fire" style={{ paddingBottom: "0.08em" }}>{t.ctaTitle}</span>
-          </h2>
-          <p style={{ fontSize: "0.97rem", color: "var(--muted)", lineHeight: 1.7, marginBottom: 38 }}>
-            {t.ctaSubtitle}
-          </p>
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/beta" className="wow-cta" style={{ fontSize: "1rem", padding: "14px 34px" }}>
-              {t.ctaBeta}
-            </Link>
-            {DOWNLOAD_URL && (
-              <a href={DOWNLOAD_URL} className="wow-ghost" style={{ fontSize: "1rem", padding: "14px 34px" }}>
-                {t.ctaDownload}
-              </a>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <style>{`
-        .wow-cta {
-          position: relative;
-          overflow: hidden;
-          display: inline-block;
-          padding: 13px 30px;
-          border-radius: 8px;
-          background: linear-gradient(135deg, #FF4D2E 0%, #FF7A35 100%);
-          color: #fff;
-          font-family: var(--font-heading, 'Chakra Petch', sans-serif);
-          font-weight: 600;
-          font-size: 0.95rem;
-          letter-spacing: 0.09em;
-          text-transform: uppercase;
-          text-decoration: none;
-          transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-        }
-        .wow-cta::after {
-          content: "";
-          position: absolute;
-          top: 0; bottom: 0;
-          left: -80%;
-          width: 55%;
-          background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
-          transform: skewX(-20deg);
-          pointer-events: none;
-        }
-        .wow-cta:hover {
-          transform: translateY(-1px);
-          filter: brightness(1.07);
-          box-shadow: 0 8px 30px rgba(255, 110, 46, 0.4);
-        }
-        .wow-cta:hover::after { animation: sheen 0.65s ease; }
-        .wow-ghost {
-          display: inline-block;
-          padding: 13px 30px;
-          border-radius: 8px;
-          border: 1px solid var(--line-strong);
-          color: var(--bone);
-          font-family: var(--font-heading, 'Chakra Petch', sans-serif);
-          font-weight: 600;
-          font-size: 0.95rem;
-          letter-spacing: 0.09em;
-          text-transform: uppercase;
-          text-decoration: none;
-          transition: border-color 0.15s ease, background 0.15s ease;
-        }
-        .wow-ghost:hover {
-          border-color: rgba(236, 239, 244, 0.35);
-          background: rgba(236, 239, 244, 0.05);
-        }
-        /* Bandeau du haut : marque, sélecteur de langue et bouton sur une
-           seule ligne. Avec un titrage moins étroit, les trois ne tenaient
-           plus dans 360 px en français — « Se connecter » est deux fois plus
-           long que « Log in » — et la page se mettait à défiler de travers.
-           Les trois se resserrent ensemble plutôt que d'en sacrifier un. */
-        .wow-nav { --marque-nav: 1.1rem; padding: 0 24px; gap: 12px; }
-        /* Sur deux lignes, il double la hauteur du bandeau : il se resserre,
-           il ne se replie pas. */
-        .wow-ghost-nav { padding: 7px 18px; font-size: 0.82rem; white-space: nowrap; }
-
-        @media (max-width: 520px) {
-          .wow-nav { --marque-nav: 0.92rem; padding: 0 14px; gap: 10px; }
-          .wow-ghost-nav {
-            padding: 7px 12px;
-            font-size: 0.76rem;
-            letter-spacing: 0.04em;
-          }
-        }
-        /* Les petits Android et les iPhone SE font encore 320 px de large. */
-        @media (max-width: 390px) {
-          .wow-nav { --marque-nav: 0.82rem; padding: 0 10px; gap: 8px; }
-          .wow-ghost-nav { padding: 6px 10px; font-size: 0.7rem; }
-        }
-        @media (max-width: 960px) {
-          .wow-hero {
-            grid-template-columns: 1fr !important;
-            gap: 40px !important;
-            min-height: 0 !important;
-            padding-top: 56px !important;
-          }
-          .wow-hero-feed {
-            justify-content: flex-start !important;
-          }
-          /* La scène en perspective demande de la largeur pour se lire. En
-             colonne, les deux plans se remettent à plat et s'empilent : la
-             pastille passe sous le relevé au lieu de déborder du cadre. */
-          .scene-produit {
-            perspective: none !important;
-          }
-          .scene-carte {
-            transform: none !important;
-            filter: drop-shadow(0 12px 22px rgba(0, 0, 0, 0.4)) !important;
-          }
-          .scene-pastille {
-            position: static !important;
-            transform: none !important;
-            margin-top: 18px;
-          }
-        }
-        @media (max-width: 768px) {
-          .wow-grid-2 {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
+
+/** Un pictogramme et une teinte par constat : quatre chiffres alignés en
+ *  colonne se lisaient comme une liste de courses. */
+const INFO_ICONES = ["chaise", "horloge", "coeur", "zap"];
+const INFO_TEINTES = ["var(--amber)", "var(--signal)", "var(--ember)", "var(--victory)"];
