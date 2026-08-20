@@ -235,6 +235,12 @@ export async function POST(req: Request) {
       fileClassee: typeof body.fileClassee === "boolean" ? body.fileClassee : null,
       source: body.source || "manuel",
       riotMatchId: body.riotMatchId || null,
+      // La date saisie était validée puis oubliée : seule la branche des
+      // sessions au temps la reprenait. Rattraper une soirée passée — l'usage
+      // que la validation autorise explicitement — enregistrait la partie à
+      // l'instant présent, ce qui décalait les statistiques par période sans
+      // qu'aucun écran ne le signale.
+      ...(dateSaisie ? { date: dateSaisie } : {}),
     },
   });
 
