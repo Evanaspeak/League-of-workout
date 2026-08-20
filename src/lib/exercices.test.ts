@@ -2,6 +2,8 @@ import {
   EXERCICES, EXERCICE_IDS, quantite, formaterCompact, repartir, repartirPoints,
   parseRepartition, partPourExercice, pointsEnTemps, secondesParPoint,
   toExerciceId, toExerciceIds, isExerciceId, estEnTemps, exercicesEnTemps,
+  appliquerRatios, normaliserRatios, ratiosActuels, dureeEffort,
+  RATIOS_DEFAUT, RATIO_BORNES,
   type ExerciceId,
 } from "./exercices";
 
@@ -162,5 +164,51 @@ describe("les identifiants d'exercice venus de la base", () => {
 
   test("l'ordre du catalogue est respecté, quel que soit l'ordre d'entrée", () => {
     expect(toExerciceIds(["boxe", "pompes"])).toEqual(["pompes", "boxe"]);
+  });
+});
+
+describe("ratios réglables", () => {
+  afterEach(() => appliquerRatios(RATIOS_DEFAUT));
+
+  it("part des valeurs d'origine", () => {
+    expect(ratiosActuels()).toEqual(RATIOS_DEFAUT);
+  });
+
+  it("applique un ratio et change la conversion", () => {
+    appliquerRatios({ squats: 3 });
+    expect(quantite(10, "squats")).toBe(30);
+    expect(formaterCompact(10, "squats")).toBe("30");
+  });
+
+  it("laisse les pompes à l'unité de référence", () => {
+    // Le point d'effort EST la pompe : ce ratio ne doit jamais bouger, même
+    // si une valeur traîne en base.
+    appliquerRatios({ pompes: 4, squats: 2 });
+    expect(ratiosActuels().pompes).toBe(1);
+    expect(quantite(10, "pompes")).toBe(10);
+  });
+
+  it("ramène les valeurs hors bornes dans les bornes", () => {
+    expect(normaliserRatios({ squats: 0 }).squats).toBe(RATIO_BORNES.squats.min);
+    expect(normaliserRatios({ squats: -5 }).squats).toBe(RATIO_BORNES.squats.min);
+    expect(normaliserRatios({ boxe: 9999 }).boxe).toBe(RATIO_BORNES.boxe.max);
+  });
+
+  it("ignore ce qui n'est pas un nombre, exercice par exercice", () => {
+    const r = normaliserRatios({ squats: "beaucoup", boxe: 12 });
+    expect(r.squats).toBe(RATIOS_DEFAUT.squats);
+    expect(r.boxe).toBe(12);
+  });
+
+  it("survit à une valeur absente ou illisible", () => {
+    expect(normaliserRatios(null)).toEqual(RATIOS_DEFAUT);
+    expect(normaliserRatios(undefined)).toEqual(RATIOS_DEFAUT);
+    expect(normaliserRatios("nawak")).toEqual(RATIOS_DEFAUT);
+  });
+
+  it("répercute le ratio sur la durée d'effort", () => {
+    const avant = dureeEffort(20, ["boxe"]);
+    appliquerRatios({ boxe: 14 });
+    expect(dureeEffort(20, ["boxe"])).toBe(avant * 2);
   });
 });

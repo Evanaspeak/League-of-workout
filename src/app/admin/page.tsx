@@ -4,6 +4,7 @@ import AdminChampionEditor from "./AdminChampionEditor";
 import AdminUserList from "./AdminUserList";
 import AdminTools from "./AdminTools";
 import AdminSeuilDette from "./AdminSeuilDette";
+import AdminRatiosExercices from "./AdminRatiosExercices";
 import AdminHeader from "./AdminHeader";
 import { estAdmin } from "@/lib/admin";
 
@@ -18,6 +19,7 @@ export default async function AdminPage() {
     <div className="space-y-6">
       <AdminHeader email={user.email} />
       <AdminUserList />
+      <AdminRatiosExercices />
       <AdminSeuilDette />
       <AdminChampionEditor />
       <AdminTools />
