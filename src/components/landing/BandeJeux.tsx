@@ -71,13 +71,13 @@ function Glyphe({ genre, teinte }: { genre: Jeu["genre"]; teinte: string }) {
   }
 }
 
-function Pastille({ jeu, avecLogo }: { jeu: Jeu; avecLogo: boolean }) {
+function Pastille({ jeu, logo }: { jeu: Jeu; logo?: string }) {
   return (
     <div className="jeu-tuile" style={{ ["--teinte" as string]: jeu.teinte }} title={jeu.nom}>
       <span className="jeu-glyphe">
-        {avecLogo ? (
+        {logo ? (
           // eslint-disable-next-line @next/next/no-img-element -- taille fixe, pas de variantes à générer
-          <img src={`/images/jeux/${jeu.code}.svg`} alt="" width={22} height={22} className="jeu-logo" />
+          <img src={`/images/jeux/${logo}`} alt="" width={22} height={22} className="jeu-logo" />
         ) : (
           <Glyphe genre={jeu.genre} teinte={jeu.teinte} />
         )}
@@ -87,17 +87,16 @@ function Pastille({ jeu, avecLogo }: { jeu: Jeu; avecLogo: boolean }) {
   );
 }
 
-export function BandeJeux({ legende, logos }: { legende: string; logos: string[] }) {
+export function BandeJeux({ legende, logos }: { legende: string; logos: Record<string, string> }) {
   const mouvementReduit = useMouvementReduit();
-  const disponibles = new Set(logos);
   // Deux exemplaires bout à bout : le défilement boucle sans saut visible.
   // Le second est masqué aux lecteurs d'écran, qui liraient sinon deux fois.
   return (
     <div className="bande-jeux" aria-label={legende}>
       <div className={`bande-jeux-piste${mouvementReduit ? " immobile" : ""}`}>
-        {JEUX.map((j) => <Pastille key={j.nom} jeu={j} avecLogo={disponibles.has(j.code)} />)}
+        {JEUX.map((j) => <Pastille key={j.nom} jeu={j} logo={logos[j.code]} />)}
         <span aria-hidden style={{ display: "contents" }}>
-          {JEUX.map((j) => <Pastille key={`bis-${j.nom}`} jeu={j} avecLogo={disponibles.has(j.code)} />)}
+          {JEUX.map((j) => <Pastille key={`bis-${j.nom}`} jeu={j} logo={logos[j.code]} />)}
         </span>
       </div>
     </div>
