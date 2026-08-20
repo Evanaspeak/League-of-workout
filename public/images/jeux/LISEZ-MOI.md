@@ -18,7 +18,7 @@ Le vectoriel est préférable, il reste net à toutes les tailles.
 | Counter-Strike 2      | `cs2`           | oui     |
 | Fortnite              | `fortnite`      | oui     |
 | PUBG                  | `pubg`          | oui     |
-| Apex Legends          | `apex`          | non     |
+| Apex Legends          | `apex`          | oui     |
 | Call of Duty: Warzone | `warzone`       | non     |
 | Rocket League         | `rocket-league` | non     |
 | Teamfight Tactics     | `tft`           | non     |
@@ -29,9 +29,13 @@ Le vectoriel est préférable, il reste net à toutes les tailles.
 
 ## Ce qui est en place
 
-Les cinq glyphes présents viennent de [Simple Icons], collection publiée en CC0
+Cinq des six glyphes présents viennent de [Simple Icons], collection publiée en CC0
 donc librement redistribuable, et portent la couleur officielle que la
 collection publie avec chaque marque.
+
+Apex Legends n'y figure pas : le mark a été redessiné pour ce site d'après le
+logo officiel, dans sa variante blanche, celle que la charte destine aux fonds
+sombres. Aucune couleur n'a été inventée.
 
 Deux exceptions : Counter-Strike et Fortnite déclarent le noir comme couleur
 officielle. Sur un fond sombre, un logo noir n'existe pas. Toutes les chartes
@@ -41,7 +45,7 @@ destine à ce fond.
 
 [Simple Icons]: https://simpleicons.org
 
-## Les huit qui manquent
+## Les sept qui manquent
 
 Aucune collection redistribuable ne les publie. Il faut les prendre au kit
 presse de l'éditeur, ou dans une source dont on connaît les conditions.
