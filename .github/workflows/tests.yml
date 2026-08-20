@@ -1,0 +1,35 @@
+# Les tests ne servent que s'ils tournent sans qu'on y pense.
+#
+# Ils sont conçus pour ne dépendre de rien : base et session sont doublées,
+# donc aucune variable d'environnement, aucun PostgreSQL, aucun secret. Le
+# poste de travail et le serveur d'intégration exécutent exactement la même
+# commande.
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Le client Prisma est généré, pas versionné : sans lui, la compilation
+      # ne trouve pas les types des modèles.
+      - run: npx prisma generate
+
+      - name: Types
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npx jest --ci
