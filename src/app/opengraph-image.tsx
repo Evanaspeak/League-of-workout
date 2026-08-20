@@ -2,8 +2,16 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Win or Workout — Gagne ta game, ou paie en pompes";
+export const alt = "Win or Workout — Gagne ta game, ou paie en sueur";
 
+/**
+ * La carte affichée quand le lien est partagé.
+ *
+ * C'est la surface la plus vue de tout le site quand on communique sur Reddit
+ * ou Discord — et elle portait encore l'ancienne accroche, ponctuée des deux
+ * points qu'on venait précisément d'enlever du titre. Elle porte maintenant la
+ * même phrase que la page, dit ce que fait le produit, et nomme la plateforme.
+ */
 export default function OgImage() {
   return new ImageResponse(
     (
@@ -13,37 +21,43 @@ export default function OgImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "center",
+          padding: "0 84px",
           background: "#0C0E11",
           backgroundImage:
-            "radial-gradient(ellipse 60% 50% at 12% 0%, rgba(157,124,255,0.16) 0%, rgba(12,14,17,0) 60%)," +
-            "radial-gradient(ellipse 55% 45% at 92% 100%, rgba(255,77,46,0.15) 0%, rgba(12,14,17,0) 58%)",
+            "radial-gradient(ellipse 70% 55% at 82% 100%, rgba(255,77,46,0.16) 0%, rgba(12,14,17,0) 62%)",
         }}
       >
-        {/* Wordmark */}
-        <div style={{ display: "flex", alignItems: "center", gap: 26 }}>
-          <span style={{ color: "#ECEFF4", fontSize: 110, fontWeight: 800, fontFamily: "sans-serif", letterSpacing: 4 }}>
+        {/* Marque */}
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <span style={{ color: "#ECEFF4", fontSize: 46, fontWeight: 800, fontFamily: "sans-serif", letterSpacing: 3 }}>
             WIN
           </span>
-          <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ width: 16, height: 96, background: "#FF4D2E", transform: "skewX(-18deg)", borderRadius: 4 }} />
-            <div style={{ width: 16, height: 96, background: "#FFB454", transform: "skewX(-18deg)", borderRadius: 4 }} />
+          <div style={{ display: "flex", gap: 7 }}>
+            <div style={{ width: 9, height: 40, background: "#FF4D2E", transform: "skewX(-18deg)", borderRadius: 2 }} />
+            <div style={{ width: 9, height: 40, background: "#FFB454", transform: "skewX(-18deg)", borderRadius: 2 }} />
           </div>
-          <span style={{ color: "#ECEFF4", fontSize: 110, fontWeight: 800, fontFamily: "sans-serif", letterSpacing: 4 }}>
+          <span style={{ color: "#ECEFF4", fontSize: 46, fontWeight: 800, fontFamily: "sans-serif", letterSpacing: 3 }}>
             WORKOUT
           </span>
         </div>
 
-        {/* Tagline */}
-        <div style={{ display: "flex", gap: 14, marginTop: 44, fontSize: 34, fontFamily: "sans-serif", fontWeight: 600 }}>
-          <span style={{ color: "#ECEFF4" }}>Gagne ta game.</span>
-          <span style={{ color: "#FF6A38" }}>Ou paie en pompes.</span>
+        {/* L'accroche, sur deux lignes et sans point — comme sur la page. */}
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 46, fontSize: 84, fontFamily: "sans-serif", fontWeight: 800, lineHeight: 1.02, letterSpacing: -1 }}>
+          <span style={{ color: "#ECEFF4" }}>Gagne ta game,</span>
+          <span style={{ color: "#FF6A38" }}>ou paie en sueur</span>
         </div>
 
-        {/* Jeux */}
-        <div style={{ display: "flex", marginTop: 34, fontSize: 19, fontFamily: "monospace", color: "#98A2B0", letterSpacing: 3 }}>
-          LEAGUE OF LEGENDS · VALORANT · FORTNITE · COD
+        <div style={{ display: "flex", marginTop: 34, fontSize: 27, fontFamily: "sans-serif", color: "#9AA3B0", maxWidth: 900, lineHeight: 1.4 }}>
+          Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe.
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 40, fontSize: 20, fontFamily: "monospace", color: "#7F8896", letterSpacing: 2 }}>
+          <span style={{ display: "flex", color: "#ECEFF4", background: "#FF4D2E", padding: "10px 20px", borderRadius: 8, letterSpacing: 3, fontWeight: 700 }}>
+            APPLICATION WINDOWS GRATUITE
+          </span>
+          <span style={{ display: "flex" }}>15 JEUX PRIS EN CHARGE</span>
         </div>
       </div>
     ),
