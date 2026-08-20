@@ -1490,3 +1490,108 @@ body {
   .wow-nav { --marque-nav: 0.74rem; padding: 0 8px; gap: 6px; }
   .wow-ghost-nav { padding: 5px 8px; font-size: 0.64rem; letter-spacing: 0.02em; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   QUATRIÈME PASSE — sortir de la recette
+   Le reproche le plus difficile du rapport : « ça sent le rendu généré ».
+   Il ne se corrige pas en ajoutant des effets, mais en enlevant la recette —
+   fond sombre, cartes arrondies, accent orange, partout pareil — et en la
+   remplaçant par la forme que ce produit-ci possède déjà : un relevé de
+   compte. Des filets, des chiffres alignés à droite, des totaux. Ce sont ses
+   propres objets, pas un habillage emprunté.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Les fonds alternent de section en section. L'ordre ayant changé, deux
+   sections claires se retrouvaient côte à côte. */
+.section-payer { background: var(--ink); }
+.section-probleme { background: var(--carbon); border-top: 1px solid var(--line); }
+
+/* ── Les fonctionnalités en feuille de spécifications ────────────────────
+   Six cartes arrondies alignées, c'est exactement l'image que le rapport
+   décrit. La même information tient dans une liste réglée : le nom à gauche,
+   ce qu'il fait à droite, un filet entre chaque. On lit une fiche technique,
+   pas une grille de vignettes. */
+.liste-features { display: block; border-top: 1px solid var(--line); }
+.section-desktop .feature,
+.feature {
+  display: grid;
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+  gap: 10px 26px;
+  align-items: baseline;
+  padding: 18px 2px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  transition: background 0.2s ease;
+}
+.feature:hover { background: rgba(236, 239, 244, 0.02); }
+/* Le slash de la marque tient lieu de puce : c'est la géométrie du logo, pas
+   un ornement pris ailleurs. */
+.feature-titre {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--bone);
+  margin: 0;
+}
+.feature-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+
+@media (max-width: 620px) {
+  .feature { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* ── L'infographie du problème, pleine largeur ───────────────────────────
+   Quatre constats dans une boîte arrondie se lisaient comme quatre cartes de
+   plus. Sans boîte, avec un filet entre chaque et un chiffre qui domine, ils
+   se lisent comme un tableau — ce qu'ils sont. */
+.infographie {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--line-strong);
+  border-radius: 0;
+  gap: 0;
+}
+.info-carte {
+  background: none;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 26px 24px 26px 0;
+}
+.info-carte:last-child { border-right: none; }
+@media (max-width: 700px) {
+  .info-carte { border-right: none; padding-right: 0; }
+}
+
+
+/* La section desktop inverse les proportions : la scène de jeu se suffit d'un
+   carré, la feuille de spécifications a besoin de deux colonnes lisibles.
+   Et les deux blocs s'alignent par le haut — centrés, la scène flottait au
+   milieu d'une colonne deux fois plus haute qu'elle. */
+.section-desktop .payer-grille {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  align-items: start;
+}
+.section-desktop .feature { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr); gap: 10px 20px; }
+
+
+/* ── La boucle, resserrée ────────────────────────────────────────────────
+   La vignette flottait au milieu d'une colonne deux fois plus large qu'elle.
+   La colonne de gauche épouse maintenant la vignette, le texte prend le
+   reste, et la scène ne réserve plus de hauteur qu'elle n'utilise pas. */
+@media (min-width: 761px) {
+  .boucle-temps { grid-template-columns: minmax(0, 340px) minmax(0, 1fr); }
+  .boucle-scene { min-height: 268px; }
+}
+
+/* Le décompte du troisième temps : le compteur monte, l'anneau se referme. */
+.vign-paie-entete { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.vign-paie-val { margin-bottom: 0; display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.vign-paie-sur { font-size: 0.95rem; font-weight: 500; color: var(--faint); }
+.vign-anneau { flex-shrink: 0; transition: opacity 0.3s ease; }
+.vign-anneau circle:last-child { transition: stroke-dashoffset 0.07s linear, stroke 0.3s ease; }

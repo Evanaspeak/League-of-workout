@@ -30,6 +30,23 @@ export const landing = {
     boucleTitre: "Trois temps, et c'est réglé",
     boucleSoustitre: "Ce que tu fais avec l'application, en entier. Il n'y a rien d'autre à apprendre.",
     boucleLegende: "Les trois temps de la boucle",
+    // Les libellés des trois vignettes. Ils étaient écrits en dur dans le
+    // composant : la page anglaise affichait « pompes » au milieu du reste.
+    boucleVignettes: {
+      jeu: "League of Legends",
+      defaite: "Défaite",
+      detailPartie: "Classée Solo/Duo · 34 min",
+      performance: "Performance",
+      niveau: "Ton niveau",
+      niveauValeur: "3 · ×1,8",
+      malus: "Défaite",
+      malusValeur: "+40 %",
+      dette: "Dette",
+      pts: "pts",
+      aPayer: "À payer maintenant",
+      unite: "pompes",
+      choix: ["38 pompes", "57 squats", "4 min 25 de boxe"],
+    },
     boucleAria: "Démonstration : une partie perdue, le calcul de la dette, puis le paiement",
     boucleTemps: [
       {
@@ -270,6 +287,21 @@ export const landing = {
     boucleTitre: "Three beats, and you're done",
     boucleSoustitre: "Everything you do with the app, in full. There is nothing else to learn.",
     boucleLegende: "The three beats of the loop",
+    boucleVignettes: {
+      jeu: "League of Legends",
+      defaite: "Defeat",
+      detailPartie: "Ranked Solo/Duo · 34 min",
+      performance: "Performance",
+      niveau: "Your level",
+      niveauValeur: "3 · ×1.8",
+      malus: "Loss",
+      malusValeur: "+40%",
+      dette: "Owed",
+      pts: "pts",
+      aPayer: "Due now",
+      unite: "push-ups",
+      choix: ["38 push-ups", "57 squats", "4 min 25 of boxing"],
+    },
     boucleAria: "Demo: a lost match, the debt being calculated, then the payment",
     boucleTemps: [
       {

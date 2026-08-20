@@ -4,7 +4,7 @@ import { dernierInstalleur, PAGE_RELEASES } from "@/lib/release";
 
 export const metadata = {
   title: "Win or Workout — Gagne ta game, ou paie en sueur",
-  description: "Win or Workout suit tes parties et calcule ta dette de pompes après chaque game, selon ta performance. League of Legends aujourd'hui — d'autres jeux bientôt.",
+  description: "Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe. Quinze jeux pris en charge, application Windows gratuite.",
   alternates: { canonical: "/" },
 };
 
@@ -15,7 +15,7 @@ const JSON_LD = {
   name: "Win or Workout",
   url: "https://winorworkout.com",
   description:
-    "Application qui convertit les parties de jeux vidéo en pompes : chaque game génère une dette d'exercice calculée selon la performance.",
+    "Application qui convertit les parties de jeux vidéo en effort physique : chaque partie génère une dette calculée selon la performance, payable en pompes, en squats ou en boxe.",
   applicationCategory: "HealthApplication",
   operatingSystem: "Web, Windows",
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },

@@ -376,7 +376,7 @@ export default function LandingClient({
           <p className="eyebrow" style={{ marginBottom: 16 }}>{t.boucleEyebrow}</p>
           <h2 style={{ ...h2, marginBottom: 12 }}>{t.boucleTitre}</h2>
           <p className="section-intro">{t.boucleSoustitre}</p>
-          <BoucleDemo temps={t.boucleTemps} legende={t.boucleLegende} aria={t.boucleAria} />
+          <BoucleDemo temps={t.boucleTemps} legende={t.boucleLegende} aria={t.boucleAria} libelles={t.boucleVignettes} />
         </div>
       </section>
 
@@ -408,32 +408,6 @@ export default function LandingClient({
         </div>
       </section>
 
-      {/* ══ LE PROBLÈME ══════════════════════════════════════════════════
-          Les chiffres s'enchaînaient en paragraphes, sans respiration : on
-          les lisait comme un mur. Chacun tient désormais dans son propre
-          bloc, avec un pictogramme et une jauge qui le rend comparable. */}
-      <section className="section-probleme">
-        <div className="conteneur">
-          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.problemEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 20, maxWidth: "18ch" }}>
-            {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
-            <span style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
-          </h2>
-          <p className="section-intro" style={{ maxWidth: "62ch" }}>{t.problemPara1}</p>
-
-          <div className="infographie">
-            {t.stats.map((s, i) => (
-              <div key={s.value} className="info-carte reveal" style={{ transitionDelay: `${i * 80}ms` }}>
-                <Icon name={INFO_ICONES[i] ?? "horloge"} size={20} color={INFO_TEINTES[i] ?? "var(--amber)"} />
-                <div className="mono-num info-val" style={{ color: INFO_TEINTES[i] ?? "var(--amber)" }}>{s.value}</div>
-                <p className="info-label">{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <p className="section-note">{t.problemPara2}</p>
-        </div>
-      </section>
 
       {/* ══ UNE DETTE, TROIS MONNAIES ════════════════════════════════════ */}
       <section className="section-payer">
@@ -504,15 +478,41 @@ export default function LandingClient({
             <div className="liste-features">
               {t.features.slice(0, 6).map((f, i) => (
                 <div key={f.title} className="reveal feature" style={{ transitionDelay: `${i * 70}ms` }}>
-                  <div style={{ paddingTop: 5 }}><Slash height={13} /></div>
-                  <div>
-                    <div className="feature-titre">{f.title}</div>
-                    <div className="feature-desc">{f.desc}</div>
-                  </div>
+                  {/* Le nom à gauche, ce qu'il fait à droite : une feuille de
+                      spécifications se lit en deux colonnes, pas en vignettes. */}
+                  <div className="feature-titre"><Slash height={12} />{f.title}</div>
+                  <div className="feature-desc">{f.desc}</div>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ══ LE PROBLÈME ══════════════════════════════════════════════════
+          Les chiffres s'enchaînaient en paragraphes, sans respiration : on
+          les lisait comme un mur. Chacun tient désormais dans son propre
+          bloc, avec un pictogramme et une jauge qui le rend comparable. */}
+      <section className="section-probleme">
+        <div className="conteneur">
+          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.problemEyebrow}</p>
+          <h2 style={{ ...h2, marginBottom: 20, maxWidth: "18ch" }}>
+            {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
+            <span style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
+          </h2>
+          <p className="section-intro" style={{ maxWidth: "62ch" }}>{t.problemPara1}</p>
+
+          <div className="infographie">
+            {t.stats.map((s, i) => (
+              <div key={s.value} className="info-carte reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+                <Icon name={INFO_ICONES[i] ?? "horloge"} size={20} color={INFO_TEINTES[i] ?? "var(--amber)"} />
+                <div className="mono-num info-val" style={{ color: INFO_TEINTES[i] ?? "var(--amber)" }}>{s.value}</div>
+                <p className="info-label">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="section-note">{t.problemPara2}</p>
         </div>
       </section>
 
