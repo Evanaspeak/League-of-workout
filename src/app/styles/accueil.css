@@ -1,0 +1,974 @@
+/* Page d'accueil, des trois passes de refonte. */
+/* ══════════════════════════════════════════════════════════════════════════
+   PAGE D'ACCUEIL — refonte du 20 août 2026
+   Un designer extérieur a relevé cinq choses : aucune image du produit, un
+   bouton de téléchargement invisible, des jeux listés en texte, un titre
+   coupé par des points, et des halos décoratifs qui embrouillaient la lecture.
+   Ce bloc porte la réponse. Il vit à la fin de la feuille pour rester lisible
+   d'un seul tenant, et parce qu'il ne concerne qu'une page.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.accueil .conteneur { max-width: 1120px; margin: 0 auto; }
+
+/* Une intro de section : la respiration entre le titre et le contenu. */
+.accueil .section-intro {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 58ch;
+  margin: 0 0 40px;
+}
+.accueil .section-note {
+  font-size: 0.94rem;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 34px 0 0;
+  padding-left: 16px;
+  border-left: 2px solid var(--ember);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────
+   Plus de halos. Un dégradé de fond très bas, qui ne fait que détacher la
+   section de la suivante, et rien d'autre. */
+.hero-section {
+  padding: clamp(40px, 6vw, 76px) 24px clamp(48px, 6vw, 80px);
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 77, 46, 0.055) 0%, transparent 62%),
+    var(--ink);
+}
+.wow-hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
+  gap: clamp(36px, 5vw, 60px);
+  align-items: center;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 26px;
+}
+.hero-badge-point {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--victory);
+  box-shadow: 0 0 0 4px rgba(47, 217, 138, 0.14);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.hero-titre {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 700;
+  text-transform: uppercase;
+  /* Le titre porte la page : il descend jusqu'à 2,6 rem sur un téléphone,
+     pas plus bas, sinon il cesse d'être un titre. */
+  /* 4,2 rem au maximum : à 4,9 rem, « GAGNE TA GAME, » se coupait en deux
+     lignes dans sa colonne, et le titre en occupait quatre. */
+  /* Deux lignes, pas quatre. La taille est bornée par la largeur de la
+     colonne : « OU PAIE EN SUEUR » doit tenir d'un seul tenant, c'est la
+     structure que le titre doit avoir. */
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: 0.005em;
+  margin: 0 0 22px;
+}
+.hero-titre-l1 { display: block; color: var(--bone); }
+.hero-titre-l2 { display: block; padding-bottom: 0.08em; }
+
+.hero-sous {
+  font-size: clamp(1.02rem, 1.5vw, 1.14rem);
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 46ch;
+  margin: 0 0 32px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.hero-note {
+  margin: 16px 0 0;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--faint);
+}
+
+/* ── Le bouton de téléchargement ─────────────────────────────────────────
+   Il était en bas à gauche, en gris, souligné d'un filet, sous les deux vrais
+   boutons : personne ne le voyait. C'est pourtant l'action principale de la
+   page. Il devient le bouton le plus contrasté de l'écran, il porte le logo
+   de la plateforme, et il dit la version qu'il livre. */
+.cta-telecharger {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 26px 14px 22px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #FF4D2E 0%, #FF7A35 58%, #FF9A3D 100%);
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  box-shadow: 0 10px 30px rgba(255, 96, 46, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+.cta-telecharger:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 16px 40px rgba(255, 96, 46, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+.cta-telecharger:focus-visible {
+  outline: 2px solid var(--bone);
+  outline-offset: 3px;
+}
+.cta-telecharger-texte {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.cta-telecharger-texte em {
+  font-style: normal;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-weight: 400;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  opacity: 0.82;
+  margin-top: 3px;
+}
+.cta-telecharger-grand { padding: 17px 32px 17px 28px; }
+.cta-telecharger-grand .cta-telecharger-texte { font-size: 1.02rem; }
+
+/* ── Le cadre de fenêtre autour des captures ─────────────────────────────
+   Une image brute se lit comme une illustration ; la même image dans une
+   fenêtre se lit comme un logiciel. */
+.cadre-app {
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--carbon);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(236, 239, 244, 0.04) inset;
+}
+.cadre-app-barre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 34px;
+  padding: 0 14px;
+  background: rgba(236, 239, 244, 0.035);
+  border-bottom: 1px solid var(--line);
+}
+.cadre-app-pastilles { display: inline-flex; gap: 6px; flex-shrink: 0; }
+.cadre-app-pastilles i {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(236, 239, 244, 0.16);
+}
+.cadre-app-pastilles i:first-child { background: rgba(255, 77, 46, 0.55); }
+.cadre-app-titre {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cadre-app-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ── Bande des jeux ──────────────────────────────────────────────────────
+   Un joueur reconnaît un jeu à sa couleur avant d'en lire le nom. */
+.section-jeux {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--carbon);
+  padding: 30px 0 34px;
+  overflow: hidden;
+}
+.section-jeux-titre {
+  text-align: center;
+  margin: 0 0 22px;
+  color: var(--faint);
+}
+.bande-jeux {
+  /* Les bords s'estompent : la bande continue au-delà du cadre, elle ne s'y
+     arrête pas net. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+}
+.bande-jeux-piste {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  animation: defileJeux 46s linear infinite;
+}
+.bande-jeux:hover .bande-jeux-piste { animation-play-state: paused; }
+.bande-jeux-piste.immobile { animation: none; flex-wrap: wrap; width: auto; justify-content: center; }
+
+@keyframes defileJeux {
+  from { transform: translate3d(0, 0, 0); }
+  /* Deux exemplaires bout à bout : à mi-course, l'image est identique. */
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
+.jeu-tuile {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px 11px 14px;
+  border-radius: 10px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.jeu-tuile:hover {
+  border-color: color-mix(in srgb, var(--teinte) 45%, transparent);
+  transform: translateY(-2px);
+}
+.jeu-glyphe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--teinte) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--teinte) 24%, transparent);
+  flex-shrink: 0;
+}
+.jeu-nom {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 600;
+  font-size: 0.84rem;
+  letter-spacing: 0.03em;
+  color: var(--bone);
+}
+
+/* ── La boucle ───────────────────────────────────────────────────────────
+   Trois temps qui s'enchaînent seuls. C'est la démonstration que le site
+   n'avait pas : ni capture, ni vidéo, ni rien qui montre l'usage. */
+.section-boucle {
+  padding: clamp(64px, 8vw, 104px) 24px;
+}
+.boucle { margin-top: 8px; }
+.boucle-scene {
+  position: relative;
+  min-height: 300px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--carbon);
+  overflow: hidden;
+}
+.boucle-temps {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 52px);
+  align-items: center;
+  padding: clamp(26px, 4vw, 46px);
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.boucle-temps.actif { opacity: 1; transform: none; pointer-events: auto; }
+.boucle-num {
+  display: block;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: var(--ember);
+  margin-bottom: 12px;
+}
+.boucle-texte h3 {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  line-height: 1.1;
+  color: var(--bone);
+  margin: 0 0 12px;
+}
+.boucle-texte p {
+  font-size: 0.94rem;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 0;
+  max-width: 42ch;
+}
+.boucle-visuel { display: flex; justify-content: center; }
+
+.boucle-barre {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+.boucle-onglet {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.boucle-onglet:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; border-radius: 4px; }
+.boucle-jauge {
+  display: block;
+  height: 2px;
+  background: var(--line-strong);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.boucle-onglet.actif .boucle-jauge::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ember);
+  transform-origin: left;
+  animation: boucleJauge 3.4s linear forwards;
+}
+@keyframes boucleJauge { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.boucle-onglet-nom {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  transition: color 0.2s ease;
+}
+.boucle-onglet.actif .boucle-onglet-nom { color: var(--bone); }
+
+/* Les vignettes de la boucle : les mêmes éléments d'interface que
+   l'application, à l'échelle d'une image. */
+.vign {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  background: var(--ink);
+  padding: 20px 22px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+}
+.vign-entete { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+.vign-jeu { font-size: 0.8rem; color: var(--muted); }
+.vign-etat {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 999px;
+}
+.vign-etat.perdu { color: var(--loss); background: rgba(255, 90, 71, 0.1); border: 1px solid rgba(255, 90, 71, 0.3); }
+.vign-kda {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 2.4rem; font-weight: 600; line-height: 1;
+  display: flex; align-items: baseline; gap: 6px; color: var(--bone);
+}
+.vign-kda-sep { color: var(--faint); font-size: 1.5rem; }
+.vign-kda-val.mort { color: var(--loss); }
+.vign-legende { margin-top: 12px; font-size: 0.74rem; color: var(--faint); }
+
+.vign-ligne {
+  display: flex; justify-content: space-between; gap: 14px;
+  padding: 9px 0; border-bottom: 1px solid var(--line);
+  font-size: 0.82rem; color: var(--muted);
+}
+.vign-mono { font-family: var(--font-mono, 'IBM Plex Mono', monospace); color: var(--bone); }
+.vign-malus { color: var(--ember); }
+.vign-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; }
+.vign-total > span:first-child {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint);
+}
+.vign-total-val {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 2rem; font-weight: 700; color: var(--ember); line-height: 1;
+}
+.vign-total-val i, .vign-paie-val i {
+  font-style: normal; font-size: 0.7rem; font-weight: 500; margin-left: 6px; opacity: 0.75;
+}
+.vign-paie-titre {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint);
+  margin-bottom: 10px;
+}
+.vign-paie-val {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 2.7rem; font-weight: 700; color: var(--bone); line-height: 1; margin-bottom: 18px;
+}
+.vign-paie-choix { display: flex; flex-wrap: wrap; gap: 7px; }
+.vign-puce {
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.68rem; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--faint);
+}
+.vign-puce.actif { border-color: rgba(255, 77, 46, 0.4); color: var(--ember); background: rgba(255, 77, 46, 0.08); }
+
+/* ── Galerie de captures ─────────────────────────────────────────────────
+   « Nike ne vend pas de chaussures sans en montrer une paire. » */
+.section-produit {
+  border-top: 1px solid var(--line);
+  background: var(--carbon);
+  padding: clamp(64px, 8vw, 104px) 24px;
+}
+.galerie {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 3vw, 40px);
+  align-items: start;
+}
+.galerie-item { margin: 0; }
+.galerie-item figcaption {
+  display: block;
+  margin-top: 16px;
+}
+.galerie-item figcaption strong {
+  display: block;
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.92rem;
+  color: var(--bone);
+  margin-bottom: 6px;
+}
+.galerie-item figcaption span {
+  font-size: 0.86rem;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 46ch;
+  display: block;
+}
+/* La capture de téléphone est haute et étroite : elle prend une colonne mais
+   pas toute sa largeur, sinon elle écrase tout le reste. */
+.galerie-item-etroit { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 24px; align-items: center; }
+.galerie-item-etroit figcaption { margin-top: 0; }
+
+/* ── Le problème, en infographie ─────────────────────────────────────────
+   Les chiffres s'enchaînaient en paragraphes : on les lisait comme un mur. */
+.section-probleme { padding: clamp(64px, 8vw, 104px) 24px; }
+.infographie {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.info-carte {
+  background: var(--carbon);
+  padding: clamp(22px, 3vw, 30px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.info-val {
+  font-size: clamp(2.1rem, 4vw, 2.9rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+.info-label {
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Paiement et desktop ─────────────────────────────────────────────────*/
+.section-payer {
+  border-top: 1px solid var(--line);
+  background: var(--carbon);
+  padding: clamp(64px, 8vw, 104px) 24px;
+}
+.section-desktop {
+  border-top: 1px solid var(--line);
+  padding: clamp(64px, 8vw, 104px) 24px;
+}
+.payer-grille {
+  display: grid;
+  grid-template-columns: minmax(0, 1.32fr) minmax(0, 0.68fr);
+  gap: clamp(32px, 5vw, 60px);
+  align-items: center;
+}
+.payer-feed { display: flex; justify-content: center; }
+.payer-partage {
+  font-size: 0.88rem; color: var(--muted); line-height: 1.7;
+  margin: 20px 0 0; padding-left: 14px; border-left: 2px solid var(--ember);
+}
+.desktop-carte {
+  background: var(--carbon);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 26px 24px;
+  width: 100%;
+  max-width: 400px;
+}
+.desktop-carte-texte { font-size: 0.88rem; line-height: 1.7; color: var(--muted); margin: 12px 0 0; }
+
+.liste-features { display: flex; flex-direction: column; gap: 12px; }
+.feature {
+  display: flex; gap: 16px; padding: 18px 20px;
+  background: var(--carbon); border: 1px solid var(--line); border-radius: 12px;
+}
+.section-desktop .feature { background: var(--carbon-2); }
+.feature-titre { font-size: 0.92rem; font-weight: 600; color: var(--bone); margin-bottom: 4px; }
+.feature-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+/* ── CTA final ───────────────────────────────────────────────────────────*/
+.section-cta {
+  border-top: 1px solid var(--line);
+  background:
+    radial-gradient(90% 120% at 50% 100%, rgba(255, 77, 46, 0.06) 0%, transparent 60%),
+    var(--carbon);
+  padding: clamp(76px, 9vw, 118px) 24px;
+  text-align: center;
+}
+.cta-titre {
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 700; text-transform: uppercase;
+  font-size: clamp(2.1rem, 4.6vw, 3.3rem);
+  line-height: 1.02; margin: 0 0 16px;
+}
+.cta-sous { font-size: 1rem; color: var(--muted); line-height: 1.7; margin: 0 0 34px; }
+.cta-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+
+.sources {
+  margin-top: 54px;
+  text-align: left;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+.sources summary {
+  cursor: pointer;
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--faint);
+}
+.sources summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+.sources-intro { font-size: 0.8rem; color: var(--faint); margin: 14px 0 10px; }
+.sources ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.sources li { font-size: 0.76rem; line-height: 1.6; color: var(--faint); }
+.sources a { color: var(--signal); text-decoration: none; }
+.sources a:hover { text-decoration: underline; }
+
+/* ── Adaptations ─────────────────────────────────────────────────────────*/
+@media (max-width: 1000px) {
+  .wow-hero { grid-template-columns: 1fr; }
+  .payer-grille { grid-template-columns: 1fr; }
+  .galerie { grid-template-columns: 1fr; }
+  .galerie-item-etroit { grid-template-columns: minmax(0, 200px) minmax(0, 1fr); }
+  .section-desktop .desktop-scene { order: 2; }
+}
+@media (max-width: 760px) {
+  .boucle-temps { grid-template-columns: 1fr; align-content: center; gap: 22px; }
+  .boucle-scene { min-height: 430px; }
+  .boucle-visuel { justify-content: flex-start; }
+  .boucle-onglet-nom { display: none; }
+  .boucle-barre { gap: 8px; }
+}
+@media (max-width: 560px) {
+  .galerie-item-etroit { grid-template-columns: 1fr; }
+  .galerie-item-etroit figcaption { margin-top: 14px; }
+  .cta-telecharger, .hero-ghost { width: 100%; justify-content: center; }
+  .cta-telecharger-texte { align-items: center; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bande-jeux-piste { animation: none; }
+  .boucle-onglet.actif .boucle-jauge::after { animation: none; transform: scaleX(1); }
+  .boucle-temps { position: relative; opacity: 1; transform: none; pointer-events: auto; }
+  .boucle-scene { min-height: 0; display: flex; flex-direction: column; }
+  .boucle-temps + .boucle-temps { border-top: 1px solid var(--line); }
+}
+
+/* ── Boutons de la page d'accueil ────────────────────────────────────────
+   Ils vivaient dans une balise <style> à la fin du composant. Sortis de là,
+   ils sont lisibles avec le reste de la feuille, et une requête de média peut
+   enfin les atteindre. */
+.wow-cta {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  padding: 13px 30px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #FF4D2E 0%, #FF7A35 100%);
+  color: #fff;
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.wow-cta::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -80%;
+  width: 55%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+.wow-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.07);
+  box-shadow: 0 8px 30px rgba(255, 110, 46, 0.4);
+}
+.wow-cta:hover::after { animation: sheen 0.65s ease; }
+
+.wow-ghost {
+  display: inline-block;
+  padding: 13px 30px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  color: var(--bone);
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.wow-ghost:hover {
+  border-color: rgba(236, 239, 244, 0.35);
+  background: rgba(236, 239, 244, 0.05);
+}
+.wow-ghost:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+
+/* La variante du héros vit ICI, après `.wow-ghost`, et pas plus haut dans la
+   feuille : à spécificité égale, c'est l'ordre qui tranche, et la règle placée
+   avant se faisait écraser sans bruit. Les deux actions tiennent alors sur une
+   ligne — à 30 px de marge intérieure, la seconde passait dessous. */
+.hero-ghost { padding: 15px 18px; font-size: 0.85rem; letter-spacing: 0.06em; }
+
+/* Bandeau du haut : marque, sélecteur de langue et bouton sur une seule
+   ligne. Les trois se resserrent ensemble plutôt que d'en sacrifier un. */
+.wow-nav { --marque-nav: 1.1rem; padding: 0 24px; gap: 12px; }
+.wow-ghost-nav { padding: 7px 18px; font-size: 0.82rem; white-space: nowrap; }
+
+@media (max-width: 520px) {
+  .wow-nav { --marque-nav: 0.92rem; padding: 0 14px; gap: 10px; }
+  .wow-ghost-nav { padding: 7px 12px; font-size: 0.76rem; letter-spacing: 0.04em; }
+}
+/* Les petits Android et les iPhone SE font encore 320 px de large. */
+@media (max-width: 390px) {
+  .wow-nav { --marque-nav: 0.82rem; padding: 0 10px; gap: 8px; }
+  .wow-ghost-nav { padding: 6px 10px; font-size: 0.7rem; }
+}
+
+
+/* ── Corrections de la refonte, deuxième passe ───────────────────────────*/
+
+/* La bande tarifaire vit désormais dans une colonne, pas sur toute la largeur :
+   trois montants à 2,6 rem s'y coupaient en deux. Ils s'adaptent au cadre. */
+.section-payer .bande-tarifs { grid-template-columns: repeat(auto-fit, minmax(min(168px, 100%), 1fr)); }
+.section-payer .tarif { padding: 22px 20px; }
+.section-payer .tarif-valeur { font-size: clamp(1.5rem, 2.2vw, 1.95rem); }
+.section-payer .tarif-desc { font-size: 0.8rem; line-height: 1.6; }
+
+/* ── L'overlay, posé sur une partie ──────────────────────────────────────*/
+.scene-partie {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(150deg, #10141b 0%, #0b0e13 55%, #0a0d11 100%);
+}
+.scene-partie-ecran { position: absolute; inset: 0; }
+/* Des lignes de HUD suggérées : on n'imite aucun jeu, on pose un décor. */
+.sp-barre {
+  position: absolute;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(236, 239, 244, 0.06);
+}
+.sp-barre-1 { top: 11%; left: 8%; width: 22%; }
+.sp-barre-2 { top: 11%; right: 8%; width: 14%; background: rgba(110, 155, 255, 0.12); }
+.sp-barre-3 { bottom: 12%; left: 50%; transform: translateX(-50%); width: 34%; height: 8px; }
+.sp-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 100% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+.scene-partie-etiquette {
+  position: absolute;
+  top: 14px; left: 16px;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
+  font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(236, 239, 244, 0.42);
+}
+.scene-partie-etiquette::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--loss); box-shadow: 0 0 0 3px rgba(255, 90, 71, 0.16);
+}
+.scene-partie-pastille {
+  position: absolute;
+  right: 4.5%; bottom: 7%;
+  width: min(62%, 300px);
+}
+.desktop-legende {
+  font-size: 0.85rem; line-height: 1.65; color: var(--muted);
+  margin: 18px 0 0; max-width: 46ch;
+}
+
+/* ── Hero : la capture mérite plus de place que le texte ─────────────────*/
+@media (min-width: 1001px) {
+  .wow-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.1fr); }
+}
+
+/* ── Galerie : la capture de téléphone ne doit pas écraser la section ────*/
+/* La règle vit sous condition de largeur : posée sans, elle passait après la
+   version téléphone de la galerie et lui réimposait une colonne de 230 px —
+   la page débordait alors de 41 px à 320 px. */
+@media (min-width: 561px) {
+  .galerie-item-etroit { grid-template-columns: minmax(0, 230px) minmax(0, 1fr); }
+}
+@media (min-width: 1001px) { .galerie-item-etroit { grid-column: 1 / -1; } }
+
+
+/* ── Troisième passe : ce que la mesure a montré ─────────────────────────
+   À 320 px, le bouton de téléchargement imposait sa largeur minimale à toute
+   la grille : « TÉLÉCHARGER POUR WINDOWS » ne se coupe pas, et la page se
+   mettait à défiler de travers. Les colonnes ne peuvent plus être poussées
+   par leur contenu, et le bouton se resserre au lieu de forcer. */
+.wow-hero > * { min-width: 0; }
+.payer-grille > * { min-width: 0; }
+
+@media (max-width: 430px) {
+  .cta-telecharger { padding: 13px 16px; gap: 9px; }
+  .cta-telecharger-texte { font-size: 0.8rem; letter-spacing: 0.03em; }
+  .cta-telecharger-texte em { font-size: 0.6rem; }
+  .hero-ghost { padding: 13px 16px; font-size: 0.82rem; letter-spacing: 0.04em; }
+  .hero-section { padding-left: 16px; padding-right: 16px; }
+  .section-boucle, .section-produit, .section-probleme,
+  .section-payer, .section-desktop, .section-cta { padding-left: 16px; padding-right: 16px; }
+  .hero-note { font-size: 0.66rem; }
+}
+
+/* Deux pixels de trop dans le bandeau à 320 px : la marque, le sélecteur de
+   langue et le bouton ne tenaient pas tout à fait. Ils se resserrent encore
+   un cran plutôt que d'imposer un défilement horizontal à toute la page. */
+@media (max-width: 360px) {
+  .wow-nav { --marque-nav: 0.74rem; padding: 0 8px; gap: 6px; }
+  .wow-ghost-nav { padding: 5px 8px; font-size: 0.64rem; letter-spacing: 0.02em; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   QUATRIÈME PASSE — sortir de la recette
+   Le reproche le plus difficile du rapport : « ça sent le rendu généré ».
+   Il ne se corrige pas en ajoutant des effets, mais en enlevant la recette —
+   fond sombre, cartes arrondies, accent orange, partout pareil — et en la
+   remplaçant par la forme que ce produit-ci possède déjà : un relevé de
+   compte. Des filets, des chiffres alignés à droite, des totaux. Ce sont ses
+   propres objets, pas un habillage emprunté.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Les fonds alternent de section en section. L'ordre ayant changé, deux
+   sections claires se retrouvaient côte à côte. */
+.section-payer { background: var(--ink); }
+.section-probleme { background: var(--carbon); border-top: 1px solid var(--line); }
+
+/* ── Les fonctionnalités en feuille de spécifications ────────────────────
+   Six cartes arrondies alignées, c'est exactement l'image que le rapport
+   décrit. La même information tient dans une liste réglée : le nom à gauche,
+   ce qu'il fait à droite, un filet entre chaque. On lit une fiche technique,
+   pas une grille de vignettes. */
+.liste-features { display: block; border-top: 1px solid var(--line); }
+/* Un seul sélecteur, à une seule classe. `.section-desktop .feature` traînait
+   dans cette liste : plus spécifique, il l'emportait sur la version téléphone
+   posée plus bas, et la fiche restait sur deux colonnes à 390 px. */
+.feature {
+  display: grid;
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
+  gap: 10px 26px;
+  align-items: baseline;
+  padding: 18px 2px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  transition: background 0.2s ease;
+}
+.feature:hover { background: rgba(236, 239, 244, 0.02); }
+/* Le slash de la marque tient lieu de puce : c'est la géométrie du logo, pas
+   un ornement pris ailleurs. */
+.feature-titre {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: var(--bone);
+  margin: 0;
+}
+.feature-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+
+@media (max-width: 620px) {
+  .feature { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* ── L'infographie du problème, pleine largeur ───────────────────────────
+   Quatre constats dans une boîte arrondie se lisaient comme quatre cartes de
+   plus. Sans boîte, avec un filet entre chaque et un chiffre qui domine, ils
+   se lisent comme un tableau — ce qu'ils sont. */
+.infographie {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--line-strong);
+  border-radius: 0;
+  gap: 0;
+}
+.info-carte {
+  background: none;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 26px 24px 26px 0;
+}
+.info-carte:last-child { border-right: none; }
+@media (max-width: 700px) {
+  .info-carte { border-right: none; padding-right: 0; }
+}
+
+
+/* La section desktop inverse les proportions : la scène de jeu se suffit d'un
+   carré, la feuille de spécifications a besoin de deux colonnes lisibles.
+   Et les deux blocs s'alignent par le haut — centrés, la scène flottait au
+   milieu d'une colonne deux fois plus haute qu'elle. */
+/* Sous condition de largeur : sans elle, la règle passait après la version
+   téléphone de `.payer-grille` et lui réimposait deux colonnes — la scène de
+   jeu se retrouvait écrasée dans une bande de 180 px à côté du titre. */
+@media (min-width: 1001px) {
+  .section-desktop .payer-grille {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: start;
+  }
+  .section-desktop .feature { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr); gap: 10px 20px; }
+}
+
+
+/* ── La boucle, resserrée ────────────────────────────────────────────────
+   La vignette flottait au milieu d'une colonne deux fois plus large qu'elle.
+   La colonne de gauche épouse maintenant la vignette, le texte prend le
+   reste, et la scène ne réserve plus de hauteur qu'elle n'utilise pas. */
+@media (min-width: 761px) {
+  .boucle-temps { grid-template-columns: minmax(0, 340px) minmax(0, 1fr); }
+  .boucle-scene { min-height: 268px; }
+}
+
+/* Le décompte du troisième temps : le compteur monte, l'anneau se referme. */
+.vign-paie-entete { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.vign-paie-val { margin-bottom: 0; display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+.vign-paie-sur { font-size: 0.95rem; font-weight: 500; color: var(--faint); }
+.vign-anneau { flex-shrink: 0; transition: opacity 0.3s ease; }
+.vign-anneau circle:last-child { transition: stroke-dashoffset 0.07s linear, stroke 0.3s ease; }
+
+
+/* Sur un écran étroit, la pastille occupait presque toute la scène et venait
+   frôler le cadre. Elle respire, et la scène s'allonge un peu pour la porter. */
+@media (max-width: 620px) {
+  .scene-partie { aspect-ratio: 4 / 3; }
+  .scene-partie-pastille { right: 7%; bottom: 9%; width: min(78%, 260px); }
+}
+
+/* Le vrai logo, quand un fichier a été déposé (voir public/images/jeux). */
+.jeu-logo { display: block; width: 22px; height: 22px; object-fit: contain; }
+
+/* ── La vidéo de démonstration, en fond de héros ─────────────────────────
+   Elle occupe les trois premières secondes de la page, là où le rapport dit
+   que tout se joue. Deux voiles la recouvrent : l'un dense à gauche, pour que
+   le titre reste lisible quelle que soit l'image qui passe dessous ; l'autre
+   en bas, pour raccorder la section à la suivante. */
+.hero-video { position: relative; isolation: isolate; }
+.video-fond {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--ink);
+}
+.video-fond video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* La vidéo ne doit pas rivaliser avec le texte : elle porte l'ambiance et
+     la preuve d'usage, pas la lecture. Assez présente, tout de même, pour
+     qu'on suive ce qui s'y passe : c'est la démonstration que le rapport
+     réclamait, elle n'a pas à devenir une texture. */
+  opacity: 0.72;
+}
+.video-fond-voile {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--ink) 0%, rgba(12,14,17,0.93) 33%, rgba(12,14,17,0.42) 60%, rgba(12,14,17,0.16) 100%),
+    linear-gradient(0deg, var(--ink) 0%, rgba(12,14,17,0) 32%);
+}
+.hero-video .wow-hero { position: relative; }
+
+.video-fond-bouton {
+  position: absolute;
+  right: 22px; bottom: 20px;
+  z-index: 2;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(236, 239, 244, 0.2);
+  background: rgba(12, 14, 17, 0.66);
+  backdrop-filter: blur(8px);
+  color: var(--bone);
+  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
+  font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.video-fond-bouton:hover { background: rgba(12, 14, 17, 0.88); border-color: rgba(236, 239, 244, 0.4); }
+.video-fond-bouton:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+
+/* Avec une vidéo derrière, le texte occupe le héros à lui seul : il prend un
+   peu plus de place, et la section respire davantage en hauteur. */
+.hero-video .wow-hero { grid-template-columns: minmax(0, 1fr); min-height: min(76vh, 720px); align-content: center; }
+.hero-video .hero-col-texte { max-width: 46rem; }
+
+@media (max-width: 760px) {
+  /* Sur un téléphone tenu à la verticale, une vidéo en 16:9 recadrée en
+     `cover` ne montre plus qu'une bande du centre. On la laisse, mais le voile
+     se densifie : le titre passe avant l'ambiance. */
+  .video-fond video { opacity: 0.42; }
+  .video-fond-voile {
+    background:
+      linear-gradient(180deg, rgba(12,14,17,0.72) 0%, rgba(12,14,17,0.86) 55%, var(--ink) 100%);
+  }
+  .video-fond-bouton { right: 14px; bottom: 14px; }
+}

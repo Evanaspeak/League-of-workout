@@ -1,0 +1,129 @@
+/* Barre de navigation et rail latéral. */
+/* ── Navigation : repli sur petit écran ─────────────────────────────────────
+   Au-delà de trois liens, la barre débordait horizontalement et coupait le
+   dernier libellé à mi-mot. Sous 720 px, les liens passent dans un panneau. */
+.nav-burger {
+  display: none;
+  width: 36px;
+  height: 36px;
+  margin-right: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--bone);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-panneau {
+  display: none;
+  border-top: 1px solid var(--line);
+  background: rgba(12, 14, 17, 0.98);
+}
+@media (max-width: 720px) {
+  .nav-burger { display: flex; }
+  .nav-lien { display: none !important; }
+  .nav-panneau { display: block; }
+}
+
+/* ── Rail latéral ───────────────────────────────────────────────────────────
+   Colonne fixe dans la marge droite : dette en attente, puis les actions de la
+   page. Elle suit le scroll et reste visible partout dans l'app. Sur grand
+   écran elle se loge dans la marge, et redescend en bas à droite dès que la
+   marge disparaît — la colonne pousse alors vers le haut. */
+.rail-lateral {
+  position: fixed;
+  z-index: 8000;
+  right: clamp(12px, 2vw, 28px);
+  bottom: 16px;
+  width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Le rail ne couvre que ses pastilles : le reste de la page reste cliquable. */
+  pointer-events: none;
+}
+.rail-lateral > * {
+  pointer-events: auto;
+}
+.rail-contenu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Repli sur petit écran ──────────────────────────────────────────────────
+   Sous 1180 px il n'y a pas de marge à occuper : déployé, le rail couvrirait
+   un tiers de l'écran et passerait par-dessus le contenu. Il se replie donc
+   derrière un bouton, qui garde le signal de dette pour ne rien masquer. */
+.rail-bascule {
+  display: none;
+  width: 42px;
+  height: 42px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--bone);
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  transition: border-color 0.2s;
+}
+.rail-bascule.alerte { border-color: rgba(255,77,46,0.55); }
+.rail-point {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ember);
+  border: 2px solid var(--bg-raised, #14181D);
+}
+
+@media (max-width: 1179px) {
+  .rail-lateral { width: auto; align-items: flex-end; }
+  .rail-bascule { display: flex; }
+  .rail-contenu { display: none; width: 168px; }
+  .rail-lateral.est-ouvert .rail-contenu { display: flex; }
+}
+/* La page laisse la marge au rail au lieu de passer dessous. Uniquement là où
+   il existe : les pages publiques restent pleine largeur. À garder avant le
+   bloc suivant — une règle placée après un sélecteur `::-webkit-scrollbar` est
+   avalée à la compilation. */
+@media (min-width: 1180px) {
+  body[data-rail="1"] main {
+    padding-right: 196px;
+  }
+}
+@media (min-width: 1180px) {
+  .rail-lateral {
+    top: 96px;
+    bottom: auto;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    /* La barre de défilement du rail ne doit pas rogner les pastilles. */
+    scrollbar-width: none;
+  }
+  .rail-lateral::-webkit-scrollbar { width: 0; }
+}
+.pastille-dette {
+  width: 100%;
+}
+/* Action du rail : même gabarit que la pastille de dette. */
+.rail-action {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s, background 0.15s;
+}
+.rail-action:hover {
+  border-color: var(--amber);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pastille-dette,
+  .rail-action { transition: none; }
+}

@@ -1,0 +1,37 @@
+/* Barre de titre de l'application desktop. */
+/* ─── Barre de titre de l'application desktop ──────────────────────────────
+   La fenêtre n'a plus la barre de Windows : ne restent que les boutons
+   système, dessinés par l'OS en haut à droite par-dessus la page. Deux
+   conséquences à traiter ici.
+
+   1. Plus rien ne permet de déplacer la fenêtre à la souris tant qu'aucune
+      zone n'est désignée. La barre de navigation joue ce rôle : elle occupe
+      exactement la hauteur réservée (56 px), et chaque page du site en a une.
+   2. Une zone de déplacement avale les clics. Tout ce qui s'y trouve et qui
+      doit rester cliquable est donc explicitement rendu à la souris. */
+
+.cadre-desktop nav {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.cadre-desktop nav a,
+.cadre-desktop nav button,
+.cadre-desktop nav select,
+.cadre-desktop nav input,
+.cadre-desktop nav label,
+.cadre-desktop nav [role="button"] {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+/* Place laissée aux boutons réduire / agrandir / fermer, qui flottent
+   au-dessus du coin haut droit. Sans elle, le sélecteur de langue passait
+   dessous et devenait impossible à atteindre.
+
+   `!important` parce que les barres de la page d'accueil, de /beta et de
+   /recuperation posent leur marge en style en ligne : sans ça, la règle ne
+   s'appliquerait qu'aux pages de l'application et pas à celles-là. */
+.cadre-desktop nav > div {
+  padding-right: 150px !important;
+}
