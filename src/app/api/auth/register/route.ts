@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
+import { MESSAGES_PORTE, porteMotDePasse } from "@/lib/porteBeta";
 import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 
 const BETA_LIMIT = 100;
@@ -33,6 +34,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: verdict.erreur }, { status: verdict.statut });
     }
     const pseudo = verdict.valeur;
+
+    // La porte de connexion n'ouvre le mot de passe qu'aux invités. Elle le
+    // faisait seule, après coup : on créait donc un compte parfaitement
+    // valide dont la première connexion était refusée, en accusant le mot de
+    // passe. On pose la question avant d'écrire, et on dit la vraie raison.
+    const porte = await porteMotDePasse(email);
+    if (!porte.ouverte) {
+      return NextResponse.json({ error: MESSAGES_PORTE[porte.raison] }, { status: 403 });
+    }
 
     const count = await prisma.user.count();
     if (count >= BETA_LIMIT) {

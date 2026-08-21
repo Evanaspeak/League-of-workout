@@ -749,6 +749,28 @@ async function createWindow() {
     );
   }
 
+  /**
+   * Ouvre une adresse dans le navigateur du système, mais seulement si c'en
+   * est une.
+   *
+   * `shell.openExternal` confie l'adresse au système d'exploitation, qui la
+   * remet au programme associé au protocole. Sur `http` et `https`, c'est le
+   * navigateur. Sur d'autres — `file:`, `smb:`, ou les protocoles internes de
+   * Windows — c'est autre chose, et l'adresse vient ici d'une page. Il faudrait
+   * d'abord une faille dans la page pour en arriver là, mais la consigne
+   * d'Electron est explicite et le filtre ne coûte rien.
+   */
+  function ouvrirDehors(brut) {
+    let adresse;
+    try {
+      adresse = new URL(brut);
+    } catch {
+      return;
+    }
+    if (adresse.protocol !== "http:" && adresse.protocol !== "https:") return;
+    shell.openExternal(adresse.toString());
+  }
+
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (isOAuthUrl(url)) {
       event.preventDefault();
@@ -770,14 +792,14 @@ async function createWindow() {
     // de l'application. On la renvoie au navigateur système.
     if (!url.startsWith(BACKEND_URL) && !url.startsWith("data:")) {
       event.preventDefault();
-      shell.openExternal(url);
+      ouvrirDehors(url);
     }
   });
 
   // Même chose pour les popups OAuth (window.open).
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (isOAuthUrl(url) || !url.startsWith(BACKEND_URL)) {
-      shell.openExternal(url);
+      ouvrirDehors(url);
       return { action: "deny" };
     }
     return { action: "allow" };

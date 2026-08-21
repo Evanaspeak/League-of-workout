@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { REGIONS_RIOT, routageDe, validerRiotId } from "@/lib/riot-champs";
 
 export async function POST(req: Request) {
@@ -10,6 +11,18 @@ export async function POST(req: Request) {
   // séparait donc Internet d'un annuaire Riot gratuit tenu à nos frais.
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  // Cette route interroge Riot sous la clé du serveur, partagée par tous les
+  // comptes. Le verrou porte donc sur le compte : relier son Riot ID est un
+  // geste rare, et vingt essais par quart d'heure couvrent largement une
+  // erreur de région ou de pseudo.
+  if (await isRateLimited(user.id, "riot-lookup")) {
+    return NextResponse.json(
+      { error: "Trop de recherches d'affilée. Réessaie dans quelques minutes." },
+      { status: 429 },
+    );
+  }
+  await recordAttempt(user.id, "riot-lookup");
 
   // Un corps qui n'est pas du JSON, ou dont `riotId` n'est pas une chaîne,
   // faisait remonter une exception non rattrapée et répondait 500.

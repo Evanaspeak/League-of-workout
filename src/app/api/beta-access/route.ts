@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
+import { autoriserAdresse } from "@/lib/porteBeta";
 import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 
 const BETA_LIMIT = 100;
@@ -77,6 +78,13 @@ export async function POST(request: Request) {
         sportsHoursPerWeek: toIntOrNull(body.sportsHoursPerWeek),
       },
     });
+
+    // Cette route EST la porte d'entrée officielle : ce qui en sort a le droit
+    // d'entrer. La porte de connexion le déduisait de l'absence d'adresse, ce
+    // qui devenait faux dès que le champ e-mail — facultatif — était rempli :
+    // la personne repartait avec un code et un compte qu'elle ne pouvait
+    // jamais ouvrir. On l'inscrit donc explicitement.
+    await autoriserAdresse(email);
 
     await prisma.goal
       .create({ data: { userId: user.id, objectifTotalPompes: 1000 } })

@@ -45,3 +45,9 @@ dev.db
 .next/
 node_modules/
 __pycache__/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
