@@ -23,9 +23,11 @@ const PAGES = ["/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargem
 const PAGES_CONNECTEES = ["/dashboard", "/history", "/settings"];
 const JETON = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf8").trim() : null;
 
-/** Seuils WCAG AA : 4.5 pour le texte courant, 3 pour le grand texte. */
-const AA = 4.5;
-const AA_GRAND = 3;
+/*
+ * Seuils WCAG AA : 4,5 pour le texte courant, 3 pour le grand texte. Ils sont
+ * écrits dans la fonction de mesure plus bas, et non ici : celle-ci s'exécute
+ * dans le navigateur, où rien de ce fichier n'existe.
+ */
 
 const mesure = () => {
   /** Luminance relative d'une couleur, selon la définition WCAG. */

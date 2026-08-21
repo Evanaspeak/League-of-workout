@@ -1,0 +1,90 @@
+/* Jetons de couleur, réinitialisation et fondations. */
+/* ════════════════════════════════════════════════════════════════════════
+   WIN OR WORKOUT — Design System (V26)
+   Concept : le scoreboard règle la dette.
+   EMBER   (braise)  = la dette, l'action — CTA, défaites, le "//" de la marque.
+   AMBER   (ambre)   = les valeurs, les records — l'« or » des stats.
+   VICTORY (vert)    = la game est gagnée.
+   VIOLET  (gaming)  = ambiance, graphiques, profondeur.
+   Le chrome (bordures, labels) reste graphite ; la couleur porte le sens
+   et la chaleur.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Fonds */
+  --ink:      #0C0E11;
+  --carbon:   #14171C;
+  --carbon-2: #191D23;
+
+  /* Chrome neutre */
+  --line:        rgba(236, 239, 244, 0.08);
+  --line-strong: rgba(236, 239, 244, 0.18);
+  --steel:       #98A2B0;
+
+  /* Texte */
+  --bone:  #ECEFF4;
+  --muted: rgba(236, 239, 244, 0.60);
+  /* 0.50 est le seuil sous lequel le texte secondaire passe sous le rapport
+     de contraste 4.5:1 exigé par le niveau AA sur le fond de l'application.
+     À 0.38, il était à 3.25:1 — illisible pour beaucoup de monde. */
+  --faint: rgba(236, 239, 244, 0.50);
+
+  /* Pôles sémantiques */
+  --ember:      #FF4D2E;
+  --ember-deep: #E03A1C;
+  --ember-soft: rgba(255, 77, 46, 0.12);
+  --amber:      #FFB454; /* valeurs, records, chaleur — l'« or » des stats */
+  --amber-soft: rgba(255, 180, 84, 0.12);
+  --violet:      #9D7CFF; /* ambiance gaming, graphiques */
+  --violet-soft: rgba(157, 124, 255, 0.10);
+  --victory:      #2FD98A;
+  --victory-soft: rgba(47, 217, 138, 0.10);
+  --signal:      #6E9BFF; /* info / live / liens in-app */
+  --signal-soft: rgba(110, 155, 255, 0.10);
+
+  --win:  #2FD98A;
+  --loss: #FF5A47;
+
+  /* Dégradé de marque : le feu, du rouge braise à l'ambre */
+  --brand-gradient: linear-gradient(135deg, #FF4D2E 0%, #FF8A3D 62%, #FFB454 100%);
+
+  /* Aliases legacy (anciens tokens gold/cyan → nouvelle palette) */
+  --bg-deep:   var(--ink);
+  --bg-base:   #101319;
+  --bg-raised: var(--carbon);
+  --bg-high:   var(--carbon-2);
+  --gold:        var(--amber);
+  --gold-light:  var(--bone);
+  --gold-dim:    rgba(255, 180, 84, 0.5);
+  --gold-subtle: rgba(255, 180, 84, 0.08);
+  --gold-glow:   rgba(255, 180, 84, 0.2);
+  --cyan: var(--signal);
+  --red:  var(--ember-deep);
+  --border:       var(--line);
+  --border-hover: var(--line-strong);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+html { height: 100%; }
+
+body {
+  background-color: var(--ink);
+  /* Halos d'ambiance : violet en haut, braise en bas — le noir n'est jamais plat */
+  background-image:
+    radial-gradient(ellipse 75% 55% at 15% -8%,  rgba(157, 124, 255, 0.08) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 45% at 95% 110%, rgba(255, 77, 46, 0.07)  0%, transparent 58%);
+  background-attachment: fixed;
+  color: var(--bone);
+  font-family: var(--font-body, 'Barlow', 'Segoe UI', sans-serif);
+  min-height: 100%;
+  line-height: 1.6;
+  overflow-x: clip;
+}
+
+/* Sort du <main> boxé (max-w-6xl) pour occuper toute la largeur — landing */
+.full-bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+::selection { background: var(--ember); color: #fff; }
