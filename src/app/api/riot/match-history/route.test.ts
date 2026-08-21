@@ -19,7 +19,7 @@ const reponse = (corpsJson: unknown, status = 200) =>
 beforeEach(() => {
   jest.clearAllMocks();
   appels = [];
-  session.mockResolvedValue(utilisateur({ riotPuuid: PUUID, riotRegion: "euw1" }));
+  session.mockResolvedValue(utilisateur({ riotPuuid: PUUID, riotRegion: "EUW1" }));
   (prisma.game.findMany as jest.Mock).mockResolvedValue([]);
   process.env.RIOT_API_KEY = "RGAPI-test";
   global.fetch = jest.fn(async (url: string | URL | Request) => {
@@ -75,7 +75,7 @@ describe("GET /api/riot/match-history", () => {
   });
 
   it("ne rapproche l'historique que des parties du demandeur", async () => {
-    session.mockResolvedValue(utilisateur({ id: "u42", riotPuuid: PUUID, riotRegion: "euw1" }));
+    session.mockResolvedValue(utilisateur({ id: "u42", riotPuuid: PUUID, riotRegion: "EUW1" }));
     await GET();
     expect((prisma.game.findMany as jest.Mock).mock.calls[0][0].where.userId).toBe("u42");
   });

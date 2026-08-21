@@ -15,7 +15,7 @@ const MAX_ATTEMPTS = 5;
  */
 export type NatureTentative =
   | "login" | "register" | "forgot-code" | "push-test"
-  | "game-write";
+  | "game-write" | "riot-lookup";
 
 /**
  * Budget d'une nature de tentative.
@@ -30,6 +30,11 @@ const BUDGETS: Partial<Record<NatureTentative, { max: number; fenetreMs: number 
   // une dizaine. Soixante laisse toute la marge d'un usage normal et arrête
   // net une boucle qui écrirait sans fin.
   "game-write": { max: 60, fenetreMs: WINDOW_MS },
+  // Relier son compte Riot se fait une fois, deux si on s'est trompé de
+  // région. Chaque appel consomme le quota de la clé du serveur, qui est
+  // partagée par tout le monde : sans borne, un seul compte peut la vider et
+  // priver les autres de la synchronisation.
+  "riot-lookup": { max: 20, fenetreMs: WINDOW_MS },
 };
 
 function budget(kind: NatureTentative) {
