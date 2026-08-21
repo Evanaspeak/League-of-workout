@@ -346,6 +346,7 @@ export default function HistoryPage() {
                                         setEditingDateId(g.id);
                                       }}
                                       title={t.editDateTitle}
+                                      aria-label={t.editDateTitle}
                                       style={{ color: "var(--faint)", background: "none", border: "none", cursor: "pointer", fontSize: "0.75rem", lineHeight: 1 }}
                                     ><Icone nom="crayon" taille={14} /></button>
                                   </div>
@@ -464,6 +465,7 @@ export default function HistoryPage() {
                                 <button
                                   onClick={() => setLigneDepliee(depliee ? null : g.id)}
                                   title={t.detailToggleTitle}
+                                      aria-label={t.detailToggleTitle}
                                   aria-expanded={depliee}
                                   style={{
                                     color: depliee ? "var(--amber)" : "rgba(152,162,176,0.5)",
@@ -475,6 +477,7 @@ export default function HistoryPage() {
                                   onClick={() => handleDelete(g.id)}
                                   disabled={deletingId === g.id}
                                   title={t.deleteGameTitle}
+                                      aria-label={t.deleteGameTitle}
                                   style={{ color: "rgba(220,80,80,0.7)", lineHeight: 1, background: "none", border: "none", cursor: "pointer", fontSize: "1rem", padding: "2px 6px", borderRadius: "4px" }}
                                   onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(220,80,80,1)")}
                                   onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(220,80,80,0.7)")}

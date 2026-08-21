@@ -87,6 +87,18 @@ jobs:
       - name: Parcours
         run: npm run e2e
 
+      # L'accessibilité se mesure, elle ne se devine pas. Sans jeton de session
+      # le script s'en tient aux pages publiques, ce qui suffit : les écrans
+      # connectés partagent les mêmes composants et les mêmes couleurs.
+      - name: Accessibilité
+        run: |
+          npx next start -p 3311 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:3311/cgu > /dev/null && break
+            sleep 1
+          done
+          npm run a11y
+
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
