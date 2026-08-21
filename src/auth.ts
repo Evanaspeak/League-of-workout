@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
 import { estAdmin } from "@/lib/admin";
+import { porteMotDePasse } from "@/lib/porteBeta";
 import { normaliserEmail } from "@/lib/identite";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -139,25 +140,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // À partir d'ici : uniquement les comptes à mot de passe. Google et
       // Discord sont sortis plus haut, la bêta leur étant ouverte.
       try {
-        // 1. Vérifier la liste blanche manuelle (email Google ≠ email candidature)
-        const whitelist = await prisma.systemConfig.findUnique({
-          where: { key: "betaWhitelistEmails" },
-          select: { value: true },
-        });
-        const whitelistEmails: string[] = whitelist ? JSON.parse(whitelist.value) : [];
-        if (whitelistEmails.includes(email)) return true;
-
-        // 2. Vérifier la candidature acceptée
-        const application = await prisma.betaApplication.findUnique({
-          where: { email },
-          select: { status: true },
-        });
-
-        if (application?.status === "accepted") return true;
-        if (application?.status === "rejected") return "/login?error=BetaRejected";
-        if (application?.status === "pending") return "/login?error=BetaPending";
-
-        // Aucune candidature
+        // La règle vit dans `porteBeta`, consultée aussi par la création de
+        // compte. Elle était écrite ici seulement : le formulaire d'inscription
+        // ne la connaissait pas et fabriquait des comptes inutilisables.
+        const porte = await porteMotDePasse(email);
+        if (porte.ouverte) return true;
+        if (porte.raison === "refusee") return "/login?error=BetaRejected";
+        if (porte.raison === "en-attente") return "/login?error=BetaPending";
         return "/login?error=AccessDenied";
       } catch (err) {
         console.error("[auth] signIn callback error:", err);

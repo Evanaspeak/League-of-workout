@@ -6,10 +6,17 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/lib/rate-limit", () => ({
   isRateLimited: jest.fn(), recordAttempt: jest.fn(), getClientIp: () => "203.0.113.7",
 }));
+// La porte d'invitation a ses propres tests : ici on l'ouvre, pour éprouver
+// tout ce qui vient après elle.
+jest.mock("@/lib/porteBeta", () => {
+  const reel = jest.requireActual("@/lib/porteBeta");
+  return { ...reel, porteMotDePasse: jest.fn().mockResolvedValue({ ouverte: true }) };
+});
 
 import { POST } from "./route";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { porteMotDePasse } from "@/lib/porteBeta";
 
 const bride = isRateLimited as jest.Mock;
 const user = prisma.user as unknown as Record<string, jest.Mock>;
@@ -24,6 +31,7 @@ beforeEach(() => {
   user.findUnique.mockResolvedValue(null);
   user.findFirst.mockResolvedValue(null);
   user.create.mockImplementation(async ({ data }: { data: unknown }) => ({ id: "u9", ...(data as object) }));
+  (porteMotDePasse as jest.Mock).mockResolvedValue({ ouverte: true });
 });
 
 /**
@@ -88,6 +96,26 @@ describe("POST /api/auth/register", () => {
   it("refuse un pseudo déjà pris", async () => {
     user.findFirst.mockResolvedValue({ id: "deja" });
     expect((await inscrire(VALIDE)).status).toBe(409);
+    expect(user.create).not.toHaveBeenCalled();
+  });
+
+  it("refuse une adresse sans invitation, avant d'écrire quoi que ce soit", async () => {
+    // C'est le défaut trouvé par le test de bout en bout : le compte se créait,
+    // l'écran annonçait « Compte créé », et la connexion suivante était refusée
+    // en accusant le mot de passe. On refuse maintenant à l'entrée, et on dit
+    // la vraie raison.
+    (porteMotDePasse as jest.Mock).mockResolvedValue({ ouverte: false, raison: "sans-invitation" });
+    const r = await inscrire(VALIDE);
+    expect(r.status).toBe(403);
+    expect(String((await corps(r)).error)).toMatch(/Google|Discord|invit/i);
+    expect(user.create).not.toHaveBeenCalled();
+  });
+
+  it("dit qu'une candidature est en attente plutôt que de créer un doublon", async () => {
+    (porteMotDePasse as jest.Mock).mockResolvedValue({ ouverte: false, raison: "en-attente" });
+    const r = await inscrire(VALIDE);
+    expect(r.status).toBe(403);
+    expect(String((await corps(r)).error)).toMatch(/examen|cours/i);
     expect(user.create).not.toHaveBeenCalled();
   });
 

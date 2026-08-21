@@ -33,3 +33,65 @@ jobs:
 
       - name: Tests
         run: npx jest --ci
+
+  parcours:
+    # Les tests de bout en bout ne peuvent pas se passer d'une base ni d'un
+    # navigateur : ils vivent donc dans un travail séparé, pour que l'échec
+    # d'un parcours reste distinguable de l'échec d'un test unitaire.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wow
+          POSTGRES_PASSWORD: wow
+          POSTGRES_DB: wow
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://wow:wow@localhost:5432/wow
+      DIRECT_URL: postgresql://wow:wow@localhost:5432/wow
+      AUTH_SECRET: integration-continue-non-secret-0000000000
+      AUTH_URL: http://127.0.0.1:3311
+      NEXTAUTH_URL: http://127.0.0.1:3311
+      AUTH_TRUST_HOST: "true"
+      E2E_PORT: "3311"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx prisma generate
+
+      # Le schéma est posé à partir du modèle plutôt que par les migrations :
+      # l'historique de migrations n'est pas rejouable depuis zéro, et ce qui
+      # importe ici est que la base ressemble au schéma courant.
+      - name: Poser le schéma
+        run: |
+          npx prisma migrate diff --from-empty --to-schema ./prisma/schema.prisma --script > /tmp/schema.sql
+          psql "$DATABASE_URL" -q -f /tmp/schema.sql
+
+      - run: npm run build
+
+      - name: Installer le navigateur
+        run: npx playwright install --with-deps chromium
+
+      - name: Parcours
+        run: npm run e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: rapport-parcours
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
