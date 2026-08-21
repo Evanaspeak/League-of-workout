@@ -17,6 +17,29 @@ git checkout main && git merge claude/excel-app-conversion-5hk2fg
 git push origin main
 ```
 
+## Travail sur une fenêtre longue (IMPORTANT)
+
+Quand l'utilisateur annonce qu'il s'absente pour une durée donnée — « je pars
+huit heures », « je reviens demain matin » — cette durée est la durée du
+travail attendu, pas un délai maximal.
+
+Une réponse s'arrête quand elle se termine : il n'y a personne qui continue
+entre deux messages. Il faut donc **armer des reprises** au moment où
+l'absence est annoncée, sans quoi le travail s'arrête à la fin du premier tour.
+
+Procédure :
+1. Constituer une liste de travaux qui ne demandent aucune décision de
+   l'utilisateur — tests, audits, performance, accessibilité, rangement,
+   documentation. Elle doit couvrir la fenêtre entière.
+2. Programmer une reprise (`send_later`, ou une boucle programmée) avant de
+   rendre la main.
+3. À chaque reprise : prendre le travail suivant, le finir, le publier, puis
+   reprogrammer la suivante.
+4. Ne rendre le bilan qu'à la fin de la fenêtre annoncée.
+
+Ce qui demande un arbitrage produit ne se décide pas seul : ça part dans les
+questions, pas dans le code.
+
 ## Versionnage des déploiements Vercel (IMPORTANT)
 À chaque mise en prod (merge sur `main`), nommer le **commit de merge** avec un
 préfixe de version incrémental `Vx — description` (V1, V2, V3…) pour que la
