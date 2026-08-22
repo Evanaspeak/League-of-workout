@@ -171,7 +171,7 @@
     </div>
 
     <div class="lignes">
-      <div class="ligne" id="ligne-kda"><span>KDA</span><b id="kda">–</b></div>
+      <div class="ligne" id="ligne-kda"><span id="kda-titre">KDA</span><b id="kda">–</b></div>
       <!-- Deux nombres plutôt qu'un : à mi-partie l'issue n'est pas connue, et
            une victoire ne coûte pas la même chose qu'une défaite. Annoncer un
            seul chiffre reviendrait à parier à la place du joueur. -->
@@ -200,6 +200,7 @@
   const sousCompteur = document.getElementById("sous-compteur");
   const capture = document.getElementById("capture");
   const ligneKda = document.getElementById("ligne-kda");
+  const kdaTitre = document.getElementById("kda-titre");
   const ligneGagne = document.getElementById("ligne-gagne");
   const lignePerdu = document.getElementById("ligne-perdu");
   const kda = document.getElementById("kda");
@@ -262,7 +263,15 @@
        * qu'il compte vraiment.
        */
       const avecReleve = !enPartie || etat.releve !== false;
-      for (const l of [ligneKda, ligneGagne, lignePerdu]) {
+      /**
+       * Les chiffres lus à l'écran remplacent le KDA sur un jeu qui n'expose
+       * rien. La ligne existe alors, même sans relevé d'API — c'est la lecture
+       * de l'image qui la remplit. Les deux projections restent masquées : sans
+       * le classement, il n'y a rien d'honnête à annoncer.
+       */
+      const apex = etat.apex;
+      ligneKda.style.display = avecReleve || apex ? "flex" : "none";
+      for (const l of [ligneGagne, lignePerdu]) {
         l.style.display = avecReleve ? "flex" : "none";
       }
       sousCompteur.textContent = avecReleve
@@ -270,7 +279,18 @@
         : "jeu ouvert ce soir, menus compris";
 
       const s = etat.score;
-      kda.textContent = s ? `${s.kills} / ${s.deaths} / ${s.assists}` : "–";
+      if (apex) {
+        kdaTitre.textContent = "Élim / dégâts";
+        const d = apex.degats === null || apex.degats === undefined ? "–" : apex.degats;
+        kdaTitre.nextElementSibling.textContent = `${apex.eliminations} / ${d}`;
+        // Un chiffre sur lequel les modes de lecture ont divergé ne se donne
+        // pas du même air qu'un chiffre sûr.
+        kda.style.opacity = apex.sur ? "1" : "0.55";
+      } else {
+        kdaTitre.textContent = "KDA";
+        kda.style.opacity = "1";
+        kda.textContent = s ? `${s.kills} / ${s.deaths} / ${s.assists}` : "–";
+      }
 
       // `dette` porte désormais la projection de la partie en cours, calculée
       // par la page avec les mêmes règles que l'enregistrement final. Avant,

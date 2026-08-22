@@ -26,7 +26,8 @@ let previenuUneFois = false;
  * @param {(actif: boolean) => void} actions.setOverlayActif
  */
 function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOverlay, raccourci,
-                   capturer, raccourciCapture, ouvrirCaptures, lireEcran }) {
+                   capturer, raccourciCapture, ouvrirCaptures, lireEcran,
+                   releveActif, setReleveActif }) {
   const image = nativeImage.createFromPath(path.join(__dirname, "..", "build", "tray.png"));
   tray = new Tray(image);
   tray.setToolTip("Win or Workout");
@@ -76,6 +77,18 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOver
      * quand un jeu tourne, Windows taisant ses notifications à ce moment-là.
      */
     ...(lireEcran ? [{ label: "Lire les chiffres à l'écran", click: lireEcran }] : []),
+    /**
+     * La lecture en boucle pendant la partie, qui fait vivre la pastille.
+     *
+     * Elle capture l'écran toutes les cinq secondes : imperceptible en
+     * principe, mais c'est au joueur d'en juger sur sa machine.
+     */
+    ...(releveActif ? [{
+      label: "Lire l'écran pendant la partie",
+      type: "checkbox",
+      checked: releveActif(),
+      click: (item) => { setReleveActif(item.checked); tray.setContextMenu(construireMenu()); },
+    }] : []),
     { type: "separator" },
     { label: "Quitter", click: quitter },
   ]);
