@@ -1,5 +1,6 @@
 export const history = {
   fr: {
+    legendeTableau: "Toutes les activités enregistrées, la plus récente en premier",
     pageTitle: "HISTORIQUE",
     tabPompes: "Dette",
     aramTitle: "L'ARAM du chaos n'apparaît pas ici.",
@@ -99,6 +100,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   en: {
+    legendeTableau: "Every logged activity, most recent first",
     pageTitle: "HISTORY",
     tabPompes: "Owed",
     aramTitle: "Chaos ARAM doesn't show up here.",
@@ -196,6 +198,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   es: {
+    legendeTableau: "Todas las actividades registradas, la más reciente primero",
     pageTitle: "HISTORIAL",
     tabPompes: "Deuda",
     aramTitle: "El ARAM del caos no aparece aquí.",
@@ -293,6 +296,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   de: {
+    legendeTableau: "Alle eingetragenen Aktivitäten, die neueste zuerst",
     pageTitle: "VERLAUF",
     tabPompes: "Schuld",
     aramTitle: "Das Chaos-ARAM taucht hier nicht auf.",
@@ -390,6 +394,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   zh: {
+    legendeTableau: "全部已记录的活动，最新的排在最前",
     pageTitle: "历史记录",
     tabPompes: "欠账",
     aramTitle: "混乱大乱斗不会出现在这里。",
@@ -487,6 +492,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   ja: {
+    legendeTableau: "記録したすべてのアクティビティ、新しい順",
     pageTitle: "履歴",
     tabPompes: "負債",
     aramTitle: "カオス ARAM はここには出ません。",

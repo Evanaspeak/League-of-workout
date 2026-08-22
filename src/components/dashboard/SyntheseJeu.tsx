@@ -4,6 +4,7 @@ import type { useT } from "@/lib/i18n/LocaleContext";
 import type { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { AXE_TICK, AXE_TICK_FORT, INFOBULLE, RAYON_BARRE, TEINTES } from "@/lib/graphiques";
 import { ChampionCard, type ChampSummary } from "./Cartes";
+import { ResumeGraphique, decrireRepartition } from "./ResumeGraphique";
 
 type T = ReturnType<typeof useT<typeof dashboard>>;
 
@@ -60,8 +61,12 @@ export function SyntheseJeu({
                 ))}
               </div>
             </div>
+            {(() => {
+              const detail = decrireRepartition(repartition, "label", "pompes", fmt);
+              return detail ? <ResumeGraphique texte={t.grapheRepartition(titreRepartition, detail)} /> : null;
+            })()}
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={repartition}>
+              <BarChart data={repartition} accessibilityLayer>
                 <XAxis dataKey="label" tick={AXE_TICK_FORT} />
                 <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip

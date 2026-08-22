@@ -72,6 +72,23 @@ for (const largeur of LARGEURS) {
     await page.addStyleTag({
       content: "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}",
     });
+    // Les captures de produit se chargent en différé : `networkidle` peut
+    // arriver avant elles, et deux séries montrent alors des cadres vides d'un
+    // côté et des images de l'autre — une différence qui ne vient d'aucune
+    // ligne de code. On attend que chaque image ait réellement fini.
+    await page.evaluate(async () => {
+      // Une image en chargement différé sous la ligne de flottaison ne
+      // commence jamais à charger tant qu'on ne l'atteint pas : l'attendre
+      // sans limite bloquerait pour toujours. Chaque attente court donc
+      // contre un délai.
+      const attentes = [...document.images]
+        .filter((i) => !i.complete)
+        .map((i) => Promise.race([
+          new Promise((r) => { i.onload = i.onerror = r; }),
+          new Promise((r) => setTimeout(r, 4000)),
+        ]));
+      await Promise.all(attentes);
+    }).catch(() => {});
     await page.waitForTimeout(1500);
     const nom = `${largeur}${chemin.replace(/\//g, "_") || "_accueil"}.png`;
     const image = await page.screenshot({ fullPage: true });

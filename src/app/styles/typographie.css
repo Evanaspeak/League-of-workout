@@ -157,3 +157,21 @@
 :lang(ja) .titre-accent {
   display: block;
 }
+
+/* Lu par les lecteurs d'écran, invisible à l'œil.
+   Un graphique ne dit rien à qui ne le voit pas : sa forme n'existe que pour
+   la vue. Le résumé qui l'accompagne porte donc les chiffres eux-mêmes, et il
+   se place ici plutôt que dans un attribut, où il serait limité à une ligne
+   sans structure. `clip-path` plutôt que `display:none`, qui retirerait aussi
+   le texte de l'arbre d'accessibilité. */
+.lecture-ecran {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
