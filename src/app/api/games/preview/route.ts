@@ -79,6 +79,7 @@ export async function POST(req: Request) {
       partiesAvant: 0,
       gainageSec,
       exercice,
+      exercices: selection,
       repartition: repartirPoints(scoringTemps.pointsFinaux, selection),
       typeJeu,
       dureeSec,
@@ -105,6 +106,7 @@ export async function POST(req: Request) {
       partiesAvant: 0,
       gainageSec,
       exercice,
+      exercices: selection,
       repartition: repartirPoints(scoringBr.pompesFinales, selection),
       placement,
       joueurs,
@@ -125,16 +127,30 @@ export async function POST(req: Request) {
       partiesAvant: 0,
       gainageSec,
       exercice,
+      exercices: selection,
       repartition: repartirPoints(scoringRl.pompesFinales, selection),
     });
   }
 
+  /**
+   * `gainageEquivalent`, et non `gainageSec`.
+   *
+   * C'est le seuil du niveau retenu — celui que le test de pompes a fixé. Les
+   * quatre autres barèmes le recevaient déjà ; celui des parties classiques,
+   * non. Il repartait donc du gainage brut, c'est-à-dire d'un niveau qui
+   * n'était plus le bon depuis que le niveau se lit sur le test de force.
+   *
+   * L'aperçu et l'enregistrement rendaient alors deux chiffres différents pour
+   * la même partie. Sur l'overlay, où l'aperçu est appelé sans gainage, la
+   * projection tombait au niveau de repli : quatre pompes annoncées pour dix
+   * réellement dues. Un test compare désormais les deux routes.
+   */
   const scoring = calcScore({
     kills: capacites.kda ? Number(body.kills) || 0 : 0,
     deaths: capacites.kda ? Number(body.deaths) || 0 : 0,
     assists: capacites.kda ? Number(body.assists) || 0 : 0,
     result: body.result === "V" ? "V" : "D",
-    gainageSec,
+    gainageSec: gainageEquivalent,
     partiesAvant,
     roleWeights,
     levelConfigs,
@@ -142,7 +158,7 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({
-    scoring, partiesAvant, gainageSec, exercice,
+    scoring, partiesAvant, gainageSec, exercice, exercices: selection,
     repartition: repartirPoints(scoring.pompesFinales, selection),
   });
 }
