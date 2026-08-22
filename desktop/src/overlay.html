@@ -103,6 +103,16 @@
   .ligne b.dette { color: #FF8A3D; }
   .ligne b.gagne { color: #2FD98A; }
 
+  /* Un état de lecture n'est pas un chiffre : il ne prend pas l'allure d'un
+     chiffre. Sans ça, « écran noir » s'affiche en gras monospace, comme une
+     valeur relevée. */
+  .ligne b.attente {
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 10px;
+    color: rgba(236, 239, 244, 0.5);
+  }
+
   .jeu { color: #6E9BFF; }
   .jeu.actif { color: #2FD98A; }
 
@@ -283,14 +293,31 @@
         // Le cartouche compte l'escouade entière : le libellé le dit, sinon
         // on prend les frags des coéquipiers pour les siens.
         kdaTitre.textContent = "Escouade";
-        const d = apex.degats === null || apex.degats === undefined ? "–" : apex.degats;
-        kdaTitre.nextElementSibling.textContent = `${apex.eliminations} / ${d}`;
-        // Un chiffre sur lequel les modes de lecture ont divergé ne se donne
-        // pas du même air qu'un chiffre sûr.
-        kda.style.opacity = apex.sur ? "1" : "0.55";
+        kda.style.opacity = "1";
+        if (apex.attente) {
+          /**
+           * La lecture qui n'a rien donné le dit.
+           *
+           * Cette ligne restait cachée tant qu'aucun chiffre n'était lu : une
+           * pastille vide, sans un mot, pendant qu'une boucle tournait toutes
+           * les cinq secondes. Rien ne distinguait « ça arrive » de « la
+           * lecture ne marche pas », et il n'y avait aucun moyen de le savoir
+           * sans ouvrir le journal.
+           */
+          kda.className = "attente";
+          kda.textContent = apex.attente;
+        } else {
+          kda.className = "";
+          const d = apex.degats === null || apex.degats === undefined ? "–" : apex.degats;
+          kda.textContent = `${apex.eliminations} / ${d}`;
+          // Un chiffre sur lequel les modes de lecture ont divergé ne se donne
+          // pas du même air qu'un chiffre sûr.
+          kda.style.opacity = apex.sur ? "1" : "0.55";
+        }
       } else {
         kdaTitre.textContent = "KDA";
         kda.style.opacity = "1";
+        kda.className = "";
         kda.textContent = s ? `${s.kills} / ${s.deaths} / ${s.assists}` : "–";
       }
 

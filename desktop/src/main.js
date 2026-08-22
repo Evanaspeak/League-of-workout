@@ -1251,9 +1251,27 @@ app.whenReady().then(() => {
     releveEnCours = true;
     try {
       const image = await imageEcran();
-      if (!image || image.isEmpty() || estNoir(image)) return;
+      /**
+       * Chaque issue se dit sur la pastille.
+       *
+       * Ces trois cas se terminaient par un `return` muet : la ligne restait
+       * cachée, la boucle tournait, et l'on ne pouvait pas distinguer une
+       * lecture qui échoue d'une lecture qui n'a jamais démarré. « Écran noir »
+       * en particulier se corrige tout seul — Apex en fenêtré sans bordure au
+       * lieu du plein écran exclusif — encore faut-il savoir que c'est ça.
+       */
+      if (!image || image.isEmpty()) {
+        return overlay.definirReleveApex({ attente: "pas d'image" });
+      }
+      if (estNoir(image)) {
+        return overlay.definirReleveApex({ attente: "écran noir" });
+      }
       const c = await lecteur.lireCartouche(image);
-      if (c.eliminations.valeur === null) return;
+      if (c.eliminations.valeur === null) {
+        // Dans les menus et l'écran de sélection, le cartouche n'existe pas :
+        // ne rien lire y est l'état normal, pas une panne.
+        return overlay.definirReleveApex({ attente: "rien à lire" });
+      }
       dernieresElim = c.eliminations;
       overlay.definirReleveApex({
         eliminations: c.eliminations.valeur,
@@ -1266,17 +1284,29 @@ app.whenReady().then(() => {
       // secondes pour rien, et à faire remonter la même erreur indéfiniment.
       if (lecteur.panne()) {
         reglerReleve(false);
+        overlay.definirReleveApex({ attente: "lecture indisponible" });
         overlay.signalerCapture({ ok: false, texte: "Lecture d'écran indisponible" });
         console.warn("[WOW] Lecture d'écran désactivée :", lecteur.panne());
+      } else {
+        overlay.definirReleveApex({ attente: "lecture en échec" });
+        console.warn("[WOW] Relevé raté :", err?.message ?? err);
       }
-      void err;
     }
     finally { releveEnCours = false; }
   };
 
   const reglerReleve = (actif) => {
     if (minuteurReleve) { clearInterval(minuteurReleve); minuteurReleve = null; }
-    if (actif) { relever(); minuteurReleve = setInterval(relever, PERIODE_RELEVE_MS); }
+    // La pastille sort des captures pendant qu'on lit l'écran : posée en haut
+    // à droite, elle recouvre le cartouche même qu'on vient chercher.
+    overlay.protegerDeLaCapture(Boolean(actif));
+    if (actif) {
+      // Le premier relevé demande le chargement du moteur — quelques secondes.
+      // La ligne le dit tout de suite, sinon la pastille paraît inerte.
+      overlay.definirReleveApex({ attente: "lecture…" });
+      relever();
+      minuteurReleve = setInterval(relever, PERIODE_RELEVE_MS);
+    }
   };
 
   const lireEcran = async () => {

@@ -45,6 +45,8 @@ const LARGEUR = 230;
 const HAUTEUR = 210;
 
 let fenetre = null;
+/** La pastille doit-elle rester hors des captures d'écran ? */
+let protege = false;
 /**
  * Position posée à la main, en pixels d'écran. Elle l'emporte sur le coin :
  * quatre coins ne suffisent pas, l'interface d'un jeu n'occupe jamais les mêmes
@@ -224,6 +226,10 @@ function creerOverlay() {
   // Laisse passer tous les clics vers le jeu : l'overlay est purement visuel.
   fenetre.setIgnoreMouseEvents(true, { forward: true });
 
+  // Une fenêtre recréée en pleine partie doit retrouver l'exclusion de capture,
+  // sinon la lecture se remet à buter dessus sans que rien ne le signale.
+  if (protege) fenetre.setContentProtection(true);
+
   fenetre.loadFile(path.join(__dirname, "overlay.html"));
   // Le contenu se charge de façon asynchrone : l'état doit lui être renvoyé
   // une fois prêt, sinon une fenêtre recréée en pleine partie afficherait
@@ -381,8 +387,27 @@ function coinSuivant() {
  * d'une API. `sur` dit si les modes de lecture se sont accordés — un chiffre
  * incertain s'affiche autrement, plutôt que de se faire passer pour acquis.
  */
-function definirReleveApex({ eliminations, degats, sur }) {
+function definirReleveApex({ eliminations, degats, sur, attente }) {
+  // `attente` porte l'état d'une lecture qui n'a rien donné : « écran noir »,
+  // « rien à lire ». La ligne existe alors quand même, avec sa raison — une
+  // pastille muette ne dit pas si la boucle tourne.
+  if (attente) return envoyerEtat({ apex: { attente } });
   envoyerEtat({ apex: { eliminations, degats, sur: Boolean(sur) } });
+}
+
+/**
+ * Retire la pastille des captures d'écran, sans la retirer de l'écran.
+ *
+ * La pastille se pose par défaut en haut à droite — exactement là où Apex
+ * dessine son cartouche d'éliminations. Elle recouvrait donc le nombre que la
+ * lecture allait chercher : l'outil se cachait sa propre mesure. Windows sait
+ * exclure une fenêtre de la capture (`WDA_EXCLUDEFROMCAPTURE`) tout en la
+ * laissant visible au joueur ; c'est ce que fait cet appel, et c'est mieux que
+ * de déplacer une pastille que le joueur a posée où il la voulait.
+ */
+function protegerDeLaCapture(valeur) {
+  protege = Boolean(valeur);
+  if (fenetre && !fenetre.isDestroyed()) fenetre.setContentProtection(protege);
 }
 
 /** Dette en cours, poussée par la page qui la calcule. */
@@ -545,6 +570,7 @@ module.exports = {
   initOverlay, afficher, masquer, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
   definirReleveApex,
+  protegerDeLaCapture,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
   definirPlacement, lirePlacement, appliquerConfig,
 };
