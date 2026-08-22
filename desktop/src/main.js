@@ -1261,9 +1261,15 @@ app.whenReady().then(() => {
     }
     try {
       const c = await lecteur.lireCartouche(image);
-      // Le cartouche d'éliminations n'est PAS visible sur l'écran de classement :
-      // ce sont deux instants différents. On garde donc le dernier relevé, et
-      // on le joint au classement quand celui-ci paraît.
+      /**
+       * Le cartouche en haut à droite compte l'ESCOUADE, pas le joueur.
+       *
+       * Une capture du récapitulatif de fin l'a montré sans ambiguïté :
+       * « FRAGS DE L'ESCOUADE 11 » quand la carte du joueur affichait 4. Ce
+       * chiffre sert donc à faire vivre la pastille — c'est bien le total de
+       * l'équipe qu'on veut y voir — mais surtout PAS à enregistrer une partie.
+       * Les statistiques personnelles vivent sur l'écran de récapitulatif.
+       */
       if (c.eliminations.valeur !== null) dernieresElim = c.eliminations;
 
       const fin = await lecteur.lireFinDePartie(image);
@@ -1273,14 +1279,17 @@ app.whenReady().then(() => {
           mainWindow.webContents.send("apex:partie-lue", {
             jeu: "Apex Legends",
             classement: valeur,
-            eliminations: dernieresElim?.valeur ?? 0,
+            // Tant que le récapitulatif n'est pas lu, on n'invente pas un
+            // nombre d'éliminations : zéro annoncé comme incertain vaut mieux
+            // qu'un total d'escouade présenté comme le sien.
+            eliminations: 0,
             accord, essais,
-            elimSures: dernieresElim ? dernieresElim.accord === dernieresElim.essais : false,
+            elimSures: false,
           });
         }
         return overlay.signalerCapture({
           ok: true,
-          texte: `Classement ${valeur} · ${dernieresElim?.valeur ?? 0} élim — enregistrement…`,
+          texte: `Classement ${valeur} — enregistrement, élim à compléter`,
         });
       }
       const dit = (n) => (n.valeur === null ? "?" : `${n.valeur}`);

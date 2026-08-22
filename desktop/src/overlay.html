@@ -280,7 +280,9 @@
 
       const s = etat.score;
       if (apex) {
-        kdaTitre.textContent = "Élim / dégâts";
+        // Le cartouche compte l'escouade entière : le libellé le dit, sinon
+        // on prend les frags des coéquipiers pour les siens.
+        kdaTitre.textContent = "Escouade";
         const d = apex.degats === null || apex.degats === undefined ? "–" : apex.degats;
         kdaTitre.nextElementSibling.textContent = `${apex.eliminations} / ${d}`;
         // Un chiffre sur lequel les modes de lecture ont divergé ne se donne
