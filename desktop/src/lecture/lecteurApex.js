@@ -39,6 +39,11 @@ let renonce = null;
  * l'embarque : finir une partie ne doit pas dépendre d'un service extérieur,
  * et le fichier ne change jamais. Empaquetée, l'application lit dans
  * `resources`; en développement, dans le dossier du dépôt.
+ *
+ * Côté empaquetage, le dossier `donnees` passe donc par `extraResources` et
+ * NON par `files` : `files` le mettrait dans `app.asar`, où ce chemin ne mène
+ * pas. C'est ce qu'il faisait, et le défaut ne se voyait pas — introuvable, le
+ * modèle était simplement téléchargé, et l'attente ne finissait pas.
  */
 function dossierDonnees() {
   const { app } = require("electron");
