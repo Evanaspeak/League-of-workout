@@ -21,7 +21,7 @@ const JSON_LD = {
   applicationCategory: "HealthApplication",
   operatingSystem: "Web, Windows",
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-  inLanguage: ["fr", "en"],
+  inLanguage: ["fr", "en", "es", "de", "zh", "ja"],
 };
 
 export default async function LandingPage() {
