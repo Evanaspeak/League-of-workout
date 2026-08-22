@@ -22,7 +22,6 @@
       "build/tray.png",
       "package.json"
     ],
-    "//": "Le modèle de lecture ne peut PAS vivre dans `files` : il finirait dans app.asar, quand le code le cherche dans `resources`. Introuvable, la bibliothèque partait le télécharger et la lecture ne rendait jamais la main.",
     "extraResources": [
       { "from": "donnees", "to": "donnees" }
     ],
