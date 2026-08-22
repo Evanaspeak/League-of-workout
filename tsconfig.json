@@ -5,6 +5,13 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    // Une variable, un import ou un paramètre que rien ne lit est du code mort
+    // que rien d'autre ne signale : ESLint ne le voit qu'en avertissement, et
+    // le compilateur l'écarte du paquet livré sans rien dire. `ROLES_FILTER`
+    // avait survécu au départ du filtre par rôle, et la réponse d'ajout de
+    // partie était déstructurée sans être lue.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",

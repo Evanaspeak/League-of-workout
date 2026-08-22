@@ -127,9 +127,6 @@ export const EXERCICE_DEFAUT: ExerciceId = "pompes";
 /** Seuil de rappel par défaut, en points d'effort (≈ 5 min de boxe). */
 export const RAPPEL_SEUIL_DEFAUT = 45;
 
-/** Seuils proposés dans les réglages, exprimés en points d'effort. 0 = désactivé. */
-export const RAPPEL_SEUILS = [0, 45, 90, 135] as const;
-
 /**
  * Paliers proposés pour le compteur de boxe, en SECONDES d'effort. C'est la
  * seule unité comparable entre exercices, et celle que le compteur affiche.

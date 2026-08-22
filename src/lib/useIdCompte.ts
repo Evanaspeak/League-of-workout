@@ -34,11 +34,6 @@ export function chargerCompte(): Promise<Compte | null> {
   return enCours;
 }
 
-/** À appeler si le compte a pu changer sans rechargement de page. */
-export function oublierCompte(): void {
-  enCours = null;
-}
-
 /** Le compte connecté : `undefined` tant qu'on ne sait pas, `null` si aucun. */
 export function useCompte(): Compte | null | undefined {
   const [compte, setCompte] = useState<Compte | null | undefined>(undefined);

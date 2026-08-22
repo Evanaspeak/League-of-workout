@@ -21,8 +21,3 @@ export const CHAMPIONS: string[] = [
   "Warwick", "Wukong", "Xayah", "Xerath", "Xin Zhao", "Yasuo", "Yone", "Yorick",
   "Yunara", "Yuumi", "Zaahen", "Zac", "Zed", "Zeri", "Ziggs", "Zilean", "Zoe", "Zyra",
 ];
-
-export function findChampion(name: string): string | undefined {
-  const normalized = name.trim().toLowerCase();
-  return CHAMPIONS.find((c) => c.toLowerCase() === normalized);
-}

@@ -53,7 +53,6 @@ type PreviewResult = {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ROLES_FILTER = ["Tous", "Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"];
 const ROLES_FORM = ["Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"];
 
 // ─── Composant ───────────────────────────────────────────────────────────────
@@ -263,7 +262,6 @@ export function AjoutActivite({
     });
 
     if (res.ok) {
-      const { game, scoring } = await res.json();
       onAjout();
       window.dispatchEvent(new Event("wow-dette-changee"));
       setPreview(null);
