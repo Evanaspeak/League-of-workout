@@ -17,6 +17,19 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
 const PAGES = ["/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargement"];
 
 /**
+ * L'audit ne tournait qu'en français, et le contraste comme le nom accessible
+ * dépendent du texte affiché : un mot allemand deux fois plus long peut
+ * déborder de son bouton, et une langue qui traduit mal un libellé peut le
+ * vider. Une langue se passe en argument ; sans argument, on les passe toutes.
+ *
+ *   node scripts/accessibilite.mjs                → les six langues
+ *   node scripts/accessibilite.mjs http://… de    → l'allemand seul
+ */
+const LANGUES = ["fr", "en", "es", "de", "zh", "ja"];
+const langueDemandee = process.argv[3];
+const aTester = langueDemandee ? [langueDemandee] : LANGUES;
+
+/**
  * Pages qui demandent un compte. Le jeton se dépose dans un fichier par
  * l'appelant : le script ne sait pas en fabriquer, et n'a pas à savoir.
  */
@@ -115,6 +128,7 @@ let total = 0;
 const aVisiter = JETON ? [...PAGES, ...PAGES_CONNECTEES] : PAGES;
 if (!JETON) console.log("(pas de jeton : seules les pages publiques sont mesurées)");
 
+for (const langue of aTester) {
 for (const chemin of aVisiter) {
   const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, locale: "fr-FR" });
   if (JETON) {
@@ -124,18 +138,21 @@ for (const chemin of aVisiter) {
     }]);
   }
   const page = await ctx.newPage();
-  await page.addInitScript(() => {
+  await page.addInitScript((__langue) => {
     try {
       sessionStorage.setItem("splash", "1");
       // La modale d'accueil et la visite recouvrent la page : on mesure ce
-      // qu'il y a dessous, pas le voile.
+      // qu'il y a dessous, pas le voile. Le ménage vient EN PREMIER : posée
+      // avant, la langue était emportée avec le reste, et l'audit tournait
+      // toujours dans la langue par défaut sans le dire.
       for (const c of Object.keys(localStorage)) {
         if (c.startsWith("low_")) localStorage.removeItem(c);
       }
       localStorage.setItem("low_onboarded", "1");
       localStorage.setItem("low_visite", "1");
+      localStorage.setItem("low_locale", __langue);
     } catch {}
-  });
+  }, langue);
   const reponse = await page.goto(BASE + chemin, { waitUntil: "networkidle" }).catch(() => null);
   if (!reponse || !reponse.ok()) {
     console.log(`\n${chemin} — injoignable (${reponse ? reponse.status() : "erreur"})`);
@@ -155,7 +172,7 @@ for (const chemin of aVisiter) {
   const normaliser = (c) => c.replace(/\/+$/, "") || "/";
   const arrivee = normaliser(new URL(page.url()).pathname);
   if (arrivee !== normaliser(chemin)) {
-    console.log(`\n═══ ${chemin}`);
+    console.log(`\n═══ ${langue} · ${chemin}`);
     console.log(`  NON MESURÉ : la navigation a abouti sur ${arrivee}`);
     total += 1;
     await ctx.close();
@@ -219,7 +236,7 @@ for (const chemin of aVisiter) {
     return out;
   });
 
-  console.log(`\n═══ ${chemin}`);
+  console.log(`\n═══ ${langue} · ${chemin}`);
   if (!contrastes.length && !sansNom.length && !sansAlt.length && !sansMarque.length && !muets.length) {
     console.log("  rien à signaler");
   }
@@ -232,6 +249,7 @@ for (const chemin of aVisiter) {
   for (const m of muets) console.log(`  ${m}`);
   total += contrastes.length + sansNom.length + sansAlt.length + sansMarque.length + muets.length;
   await ctx.close();
+}
 }
 
 console.log(`\n${total} constat(s).`);
