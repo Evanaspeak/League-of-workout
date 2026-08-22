@@ -89,6 +89,26 @@ describe("dictionnaires de traduction", () => {
       }
     });
 
+    it("n'emploie que les écritures des six langues", () => {
+      // Une frappe qui dérape passe tous les autres contrôles : les clés se
+      // correspondent, les natures aussi, et un mot russe au milieu d'une
+      // phrase japonaise s'affiche sans rien casser. Le cyrillique, le hangul
+      // et le thaï n'appartiennent à aucune des six langues : leur présence
+      // est forcément un accident.
+      const etrangeres = /[\u0400-\u04FF\uAC00-\uD7AF\u0E00-\u0E7F]/;
+      const fautes: string[] = [];
+      for (const langue of ["fr", "en", "es", "de", "zh", "ja"] as const) {
+        const jeu = (exporte as Record<string, unknown>)[langue];
+        if (jeu === undefined) continue;
+        for (const c of chemins(jeu)) {
+          let v: unknown = jeu;
+          for (const m of c.split(".")) v = (v as Record<string, unknown>)[m];
+          if (typeof v === "string" && etrangeres.test(v)) fautes.push(`${langue}.${c}`);
+        }
+      }
+      expect(fautes).toEqual([]);
+    });
+
     it("ne laisse aucune traduction vide des deux côtés", () => {
       // Une chaîne vide d'un seul côté peut être voulue : l'anglais déplace
       // parfois un mot d'un morceau de phrase à l'autre, et l'écran qui les
