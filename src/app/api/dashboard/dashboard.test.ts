@@ -4,6 +4,9 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     game: { findMany: jest.fn() },
     goal: { findUnique: jest.fn() },
+    // Les paliers du test de force voyagent avec les statistiques depuis
+    // qu'un aller-retour a été retiré du premier rendu.
+    levelConfig: { findMany: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
@@ -25,8 +28,11 @@ const partie = (champs: Record<string, unknown> = {}) => ({
   typeJeu: "parties", source: "manuel", ...champs,
 });
 
+const niveaux = prisma.levelConfig as unknown as { findMany: jest.Mock };
+
 beforeEach(() => {
   jest.clearAllMocks();
+  niveaux.findMany.mockResolvedValue([]);
   session.mockResolvedValue(utilisateur({ exercices: ["pompes"] }));
   game.findMany.mockResolvedValue([partie()]);
   (prisma.goal.findUnique as jest.Mock).mockResolvedValue({ objectifTotalPompes: 1000 });

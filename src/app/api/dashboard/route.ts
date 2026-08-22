@@ -10,9 +10,15 @@ export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const [toutesLesGames, goal] = await Promise.all([
+  // Les paliers du test de force partaient dans une seconde requête, vers
+  // `/api/settings`. Le rappel du test est le plus grand bloc de texte de
+  // l'écran : tant qu'il manquait, le navigateur n'avait rien de grand à
+  // afficher, et sur un téléphone bridé le premier rendu utile arrivait à
+  // 3,8 secondes. Un aller-retour de moins, et tout arrive ensemble.
+  const [toutesLesGames, goal, levelConfigs] = await Promise.all([
     prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
+    prisma.levelConfig.findMany({ orderBy: { niveau: "asc" } }),
   ]);
 
   const params = new URL(req.url).searchParams;
@@ -325,6 +331,10 @@ export async function GET(req: Request) {
     mostPlayed,
     leastEfficient,
     objectifTotalPompes: goal?.objectifTotalPompes ?? 1000,
+    // Ce qu'il faut pour décider si le rappel du test de force doit paraître.
+    levelConfigs,
+    pompesMax: user.pompesMax ?? 0,
+    pompesMaxLe: user.pompesMaxLe ?? null,
     // Exercices sélectionnés : servent à convertir les points d'effort à
     // l'affichage et à ventiler les totaux.
     exercices: toExerciceIds(user?.exercices),
