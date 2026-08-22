@@ -95,6 +95,17 @@ await page.addInitScript((__compte) => {
 }, COMPTE);
 
 await page.goto(BASE + CHEMIN, { waitUntil: "networkidle" });
+// Une session invalide renvoie vers la connexion, qui est légère et rapide :
+// on mesurerait d'excellents chiffres sur la mauvaise page.
+{
+  const normaliser = (c) => c.replace(/\/+$/, "") || "/";
+  const arrivee = normaliser(new URL(page.url()).pathname);
+  if (arrivee !== normaliser(CHEMIN)) {
+    console.error(`\n${CHEMIN} : la navigation a abouti sur ${arrivee}. Rien n'est mesuré.`);
+    await navigateur.close();
+    process.exit(2);
+  }
+}
 await page.waitForTimeout(2000);
 // Le LCP se lit AVANT tout défilement : ensuite, il élirait un élément du bas.
 const lcp = (await page.evaluate(() => window.__mesures)).lcp;
