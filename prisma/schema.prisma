@@ -44,11 +44,25 @@ model User {
   introGeneration Int   @default(0)
 
   // Infos physiques optionnelles (remplies à l'inscription si l'utilisateur veut).
+  //
+  // Croisées avec l'activité physique enregistrée, ce sont des données de santé
+  // au sens de l'article 9 du RGPD : elles ne se traitent qu'avec un
+  // consentement explicite, distinct de celui donné pour le reste du compte.
   genre              String?
   age                Int?
   poids              Int?
   taille             Int?
   sportsHoursPerWeek Int?
+
+  // Consentement au traitement des données de santé ci-dessus.
+  //
+  // Deux dates plutôt qu'un booléen : il faut pouvoir distinguer trois états —
+  // jamais demandé, accepté, refusé — et savoir QUAND. Un consentement sans
+  // date ne se prouve pas, et c'est à nous de le prouver (art. 7.1).
+  // Un refus efface les cinq champs ci-dessus ; la date du refus reste, pour
+  // ne pas redemander à chaque connexion.
+  santeConsentiLe DateTime?
+  santeRefuseLe   DateTime?
 
   // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à

@@ -108,6 +108,55 @@ export async function PUT(req: Request) {
       data.pompesMaxLe = new Date();
     }
 
+    /**
+     * Les mesures physiques, enfin modifiables — et seulement avec le
+     * consentement.
+     *
+     * Elles étaient saisies à l'inscription puis figées à vie : quelqu'un qui
+     * perd huit kilos gardait son ancien poids, et le droit de rectification
+     * n'avait aucun chemin. Elles relèvent de l'article 9 du RGPD, donc la
+     * route les refuse tant que le consentement explicite n'est pas donné.
+     * L'interface le demande avant d'ouvrir le formulaire ; l'interface n'est
+     * pas une frontière, cette vérification l'est.
+     */
+    const SANTE = {
+      genre: (v: unknown) => {
+        const g = String(v);
+        // « Non précisé » est une valeur, pas une absence : le calcul prend
+        // alors la moyenne des deux autres.
+        if (!["homme", "femme", "non-precise"].includes(g)) throw new RangeError("Genre inconnu");
+        return g;
+      },
+      age: (v: unknown) => Math.round(borne(v, 13, 99)),
+      poids: (v: unknown) => Math.round(borne(v, 30, 300)),
+      taille: (v: unknown) => Math.round(borne(v, 100, 250)),
+      sportsHoursPerWeek: (v: unknown) => Math.round(borne(v, 0, 40)),
+    } as const;
+
+    const santeDemandee = Object.keys(SANTE)
+      .filter((c) => body.userPrefs[c] !== undefined);
+
+    if (santeDemandee.length > 0) {
+      if (!user.santeConsentiLe) {
+        return NextResponse.json(
+          { error: "Consentement aux données de santé requis" },
+          { status: 403 },
+        );
+      }
+      try {
+        for (const champ of santeDemandee) {
+          const valeur = body.userPrefs[champ];
+          // Vider un champ est un droit : une chaîne vide ou `null` l'efface,
+          // sans qu'il faille retirer le consentement pour tout le reste.
+          (data as Record<string, unknown>)[champ] = valeur === null || valeur === ""
+            ? null
+            : SANTE[champ as keyof typeof SANTE](valeur);
+        }
+      } catch {
+        return NextResponse.json({ error: "Mesure physique hors bornes" }, { status: 400 });
+      }
+    }
+
     if (Object.keys(data).length > 0) {
       updates.push(prisma.user.update({ where: { id: user.id }, data }));
     }

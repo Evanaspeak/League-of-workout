@@ -141,3 +141,53 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(r.status).toBe(400);
   });
 });
+
+/**
+ * Les mesures physiques sont des données de santé : la route ne les écrit
+ * qu'avec le consentement explicite, quelle que soit l'interface qui appelle.
+ */
+describe("mesures physiques", () => {
+  const mesures = (userPrefs: Record<string, unknown>) => put({ userPrefs });
+
+  it("refuse sans consentement, et n'écrit rien", async () => {
+    session.mockResolvedValue(utilisateur({ santeConsentiLe: null }));
+    const r = await mesures({ poids: 78 });
+    expect(r.status).toBe(403);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
+  it("écrit avec le consentement", async () => {
+    session.mockResolvedValue(utilisateur({ santeConsentiLe: new Date() }));
+    const r = await mesures({ poids: 78, taille: 180, age: 27, genre: "homme", sportsHoursPerWeek: 4 });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data).toMatchObject({
+      poids: 78, taille: 180, age: 27, genre: "homme", sportsHoursPerWeek: 4,
+    });
+  });
+
+  it("laisse vider un champ sans retirer le consentement", async () => {
+    session.mockResolvedValue(utilisateur({ santeConsentiLe: new Date() }));
+    await mesures({ poids: null, taille: "" });
+    expect(p.user.update.mock.calls[0][0].data).toMatchObject({ poids: null, taille: null });
+  });
+
+  it("borne chaque mesure, et rejette un genre inconnu", async () => {
+    session.mockResolvedValue(utilisateur({ santeConsentiLe: new Date() }));
+    for (const prefs of [{ poids: 5 }, { poids: 900 }, { taille: 12 }, { age: 4 },
+                         { sportsHoursPerWeek: 200 }, { genre: "autre chose" }]) {
+      expect((await mesures(prefs)).status).toBe(400);
+    }
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
+  it("accepte « non précisé », qui est une valeur et non une absence", async () => {
+    session.mockResolvedValue(utilisateur({ santeConsentiLe: new Date() }));
+    expect((await mesures({ genre: "non-precise" })).status).toBe(200);
+  });
+
+  it("écrit sur le compte de la session", async () => {
+    session.mockResolvedValue(utilisateur({ santeConsentiLe: new Date() }));
+    await mesures({ poids: 80 });
+    expect(p.user.update.mock.calls[0][0].where).toEqual({ id: "u1" });
+  });
+});

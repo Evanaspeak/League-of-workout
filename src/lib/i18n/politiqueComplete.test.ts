@@ -56,6 +56,10 @@ const ATTENDU: Record<string, RegExp> = {
   taille: /taille/i,
   sportsHoursPerWeek: /heures de sport/i,
   pompesMax: /nombre maximum de pompes/i,
+  // Une seule ligne du tableau décrit les deux dates : c'est la même réponse,
+  // acceptée ou refusée, et l'article 7.1 impose de pouvoir la prouver.
+  santeConsentiLe: /réponse au consentement santé/i,
+  santeRefuseLe: /réponse au consentement santé/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */
