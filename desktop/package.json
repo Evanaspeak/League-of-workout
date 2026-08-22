@@ -1,6 +1,6 @@
 {
   "name": "win-or-workout-desktop",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "App desktop + overlay pour Win or Workout",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
