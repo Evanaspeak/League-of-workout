@@ -752,13 +752,9 @@ export default function SettingsPage() {
               {t.supprimerLeCompte}
             </h3>
             <p style={{ fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "1rem" }}>
-              {locale === "fr" ? (
-                <>Cette action est irréversible. Pour confirmer, tapez{" "}
-                  <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong> ci-dessous.</>
-              ) : (
-                <>This action is irreversible. To confirm, type{" "}
-                  <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong> below.</>
-              )}
+              {t.confirmPhraseAvant}
+              <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong>
+              {t.confirmPhraseApres}
             </p>
             <input
               autoFocus
