@@ -96,6 +96,8 @@ let dernierEtat = {
   score: null,
   dette: null,
   jeu: null,
+  /** Chiffres lus à l'écran, pour les jeux qui n'exposent rien. */
+  apex: null,
   /** Faux quand le jeu n'expose rien : la fenêtre masque alors ce qu'elle ne
    *  pourra pas remplir. */
   releve: false,
@@ -284,7 +286,7 @@ function definirEnPartie(valeur, jeu = null) {
     // Sans relevé, personne ne viendra dire combien de temps s'est écoulé :
     // c'est l'horloge du poste qui compte, depuis maintenant.
     debutSansReleve = releve ? null : Date.now();
-    envoyerEtat({ enPartie: true, partieSec: 0, score: null, jeu, releve });
+    envoyerEtat({ enPartie: true, partieSec: 0, score: null, jeu, releve, apex: null });
   } else if (!enPartie && avant) {
     // La partie qui s'achève rejoint le cumul : c'est du temps réellement
     // joué. Ce qui suit — menus, file d'attente, pause — n'y entrera pas.
@@ -370,6 +372,17 @@ function lirePlacement() {
 /** Passe au coin suivant : c'est ce que déclenche le raccourci clavier. */
 function coinSuivant() {
   return definirCoin(COINS[(COINS.indexOf(coinActuel) + 1) % COINS.length]);
+}
+
+/**
+ * Chiffres relevés à l'écran pour un jeu qui ne se raconte pas.
+ *
+ * Apex n'expose rien : ces valeurs viennent de la lecture de l'image, pas
+ * d'une API. `sur` dit si les modes de lecture se sont accordés — un chiffre
+ * incertain s'affiche autrement, plutôt que de se faire passer pour acquis.
+ */
+function definirReleveApex({ eliminations, degats, sur }) {
+  envoyerEtat({ apex: { eliminations, degats, sur: Boolean(sur) } });
 }
 
 /** Dette en cours, poussée par la page qui la calcule. */
@@ -531,6 +544,7 @@ function lireRaccourcis() {
 module.exports = {
   initOverlay, afficher, masquer, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
+  definirReleveApex,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
   definirPlacement, lirePlacement, appliquerConfig,
 };

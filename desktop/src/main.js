@@ -467,6 +467,26 @@ function ecrireReglage(cle, valeur) {
   }
 }
 
+/**
+ * Jeux qui exposent une partie en cours à qui sait la lire.
+ *
+ * Pour eux, la lecture d'écran n'a aucun intérêt : l'API locale dit tout, et
+ * plus vite. La même liste vit dans `overlay.js`, qui s'en sert pour masquer
+ * les lignes qu'il ne pourra pas remplir.
+ */
+const JEUX_QUI_SE_RACONTENT = new Set(["League of Legends", "Teamfight Tactics"]);
+
+/**
+ * Lire l'écran en boucle pendant la partie : actif par défaut.
+ *
+ * Le réglage existe parce que la capture n'est pas gratuite. Sur une machine
+ * juste, ou sur un écran très défini, quelqu'un peut préférer une pastille
+ * moins vivante à la moindre saccade.
+ */
+function releveEcranActif() {
+  return lireReglages().releveEcran !== false;
+}
+
 // ── Overlay : un réglage par jeu ────────────────────────────────────────────
 //
 // La place libre à l'écran dépend de l'interface du jeu. Le coin qui convient à
@@ -1186,6 +1206,51 @@ app.whenReady().then(() => {
    * jamais vu marcher à la main ne se débogue pas.
    */
   let dernieresElim = null;
+
+  /**
+   * Relève le cartouche pendant la partie, pour faire vivre la pastille.
+   *
+   * Apex n'expose rien : sans cette lecture, les lignes « éliminations » et
+   * « dégâts » resteraient vides toute la partie. On les remplit en lisant
+   * l'écran, comme le ferait quelqu'un qui regarde.
+   *
+   * Cinq secondes est un compromis mesuré : la capture d'un écran 3440×1440
+   * est une lecture de mémoire graphique de quelques dizaines de millisecondes.
+   * À ce rythme elle passe inaperçue ; à une seconde, elle se sentirait.
+   *
+   * La boucle ne tourne QUE pendant qu'un jeu sans télémétrie est lancé. Dans
+   * les menus, au bureau, ou sur League — qui se raconte tout seul — elle ne
+   * capture rien.
+   */
+  const PERIODE_RELEVE_MS = 5000;
+  let minuteurReleve = null;
+  let releveEnCours = false;
+
+  const relever = async () => {
+    // Un relevé qui traîne ne doit pas en déclencher un second : sur une
+    // machine chargée, ils s'empileraient et la capture deviendrait continue.
+    if (releveEnCours) return;
+    releveEnCours = true;
+    try {
+      const image = await imageEcran();
+      if (!image || image.isEmpty() || estNoir(image)) return;
+      const c = await lecteur.lireCartouche(image);
+      if (c.eliminations.valeur === null) return;
+      dernieresElim = c.eliminations;
+      overlay.definirReleveApex({
+        eliminations: c.eliminations.valeur,
+        degats: c.degats.valeur,
+        sur: c.eliminations.accord === c.eliminations.essais,
+      });
+    } catch { /* le relevé suivant réessaiera */ }
+    finally { releveEnCours = false; }
+  };
+
+  const reglerReleve = (actif) => {
+    if (minuteurReleve) { clearInterval(minuteurReleve); minuteurReleve = null; }
+    if (actif) { relever(); minuteurReleve = setInterval(relever, PERIODE_RELEVE_MS); }
+  };
+
   const lireEcran = async () => {
     const image = await imageEcran();
     if (!image || image.isEmpty() || estNoir(image)) {
@@ -1246,6 +1311,13 @@ app.whenReady().then(() => {
       // Le chemin de secours quand le raccourci global est détenu ailleurs.
       capturer: () => capturer("apex").then(signalerCapture).catch(() => {}),
       lireEcran,
+      releveActif: releveEcranActif,
+      setReleveActif: (actif) => {
+        ecrireReglage("releveEcran", Boolean(actif));
+        // Le jeu en cours voit le changement tout de suite : c'est en jouant
+        // qu'on s'aperçoit qu'une capture gêne.
+        reglerReleve(Boolean(actif) && jeuCourant !== null && !JEUX_QUI_SE_RACONTENT.has(jeuCourant));
+      },
       raccourciCapture,
       ouvrirCaptures: () => shell.openPath(dossierCaptures()),
       overlayActif: () => overlayAutorise(),
@@ -1276,6 +1348,8 @@ app.whenReady().then(() => {
     if (type === "jeu-demarre") {
       jeuCourant = jeu;
       overlay.definirEnPartie(true, jeu);
+      // Seuls les jeux qui ne se racontent pas ont besoin qu'on les lise.
+      if (releveEcranActif() && !JEUX_QUI_SE_RACONTENT.has(jeu)) reglerReleve(true);
       // La pastille prend la place réglée pour CE jeu : l'interface de chacun
       // laisse libre un endroit différent.
       overlay.appliquerConfig(overlayDuJeu(jeu));
@@ -1283,6 +1357,8 @@ app.whenReady().then(() => {
       if (actions.fenetre) ouvrirFenetre();
     } else if (type === "jeu-arrete") {
       jeuCourant = null;
+      reglerReleve(false);
+      dernieresElim = null;
       overlay.definirEnPartie(false);
       overlay.masquer();
     }
