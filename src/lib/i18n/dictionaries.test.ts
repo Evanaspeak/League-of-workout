@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -129,5 +129,44 @@ describe("dictionnaires de traduction", () => {
       }
       expect(morte).toEqual([]);
     });
+  });
+});
+
+/**
+ * Un dictionnaire que personne ne lit.
+ *
+ * Deux fichiers de langue ont survécu six semaines à la suppression de leurs
+ * écrans. Rien ne le signalait : les clés se correspondaient d'une langue à
+ * l'autre, les natures aussi, et TypeScript ne se plaint pas d'un module que
+ * personne n'importe. On s'en est aperçu en les traduisant en quatre langues
+ * de plus — 364 lignes de texte pour des pages qui n'existent plus.
+ */
+describe("dictionnaires effectivement employés", () => {
+  const RACINE = join(__dirname, "..", "..", "..");
+
+  /** Tous les fichiers source du dépôt, hors dossiers engendrés. */
+  function sources(dossier: string, out: string[] = []): string[] {
+    for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+      if (entree.name.startsWith(".") || entree.name === "node_modules") continue;
+      const chemin = join(dossier, entree.name);
+      if (entree.isDirectory()) sources(chemin, out);
+      else if (/\.(ts|tsx)$/.test(entree.name)) out.push(chemin);
+    }
+    return out;
+  }
+
+  it("chaque dictionnaire est importé quelque part", () => {
+    const fichiersSource = [
+      ...sources(join(RACINE, "src")),
+      ...sources(join(RACINE, "e2e")),
+    ].filter((f) => !f.startsWith(DOSSIER));
+    const contenu = fichiersSource.map((f) => readFileSync(f, "utf8")).join("\n");
+
+    const orphelins = fichiers
+      .filter((f) => !f.endsWith(".test.ts"))
+      .map((f) => f.replace(/\.ts$/, ""))
+      .filter((nom) => !contenu.includes(`dictionaries/${nom}"`));
+
+    expect(orphelins).toEqual([]);
   });
 });
