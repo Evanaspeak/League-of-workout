@@ -1135,6 +1135,24 @@ if (!app.requestSingleInstanceLock()) {
   });
 }
 
+/**
+ * Dernier rempart contre une exception non rattrapée.
+ *
+ * Electron affiche par défaut une boîte « A JavaScript error occurred » et
+ * arrête l'application. C'est arrivé au lancement d'un jeu, parce qu'une
+ * variante du moteur de lecture manquait à l'empaquetage : le chargeur
+ * WebAssembly remontait son erreur hors de toute chaîne de promesses.
+ *
+ * Rien de ce que fait cette application ne justifie de mourir devant le
+ * joueur au milieu d'une partie. On journalise et on continue.
+ */
+process.on("uncaughtException", (err) => {
+  console.error("[WOW] Exception non rattrapée :", err?.stack ?? err);
+});
+process.on("unhandledRejection", (raison) => {
+  console.error("[WOW] Promesse rejetée sans traitement :", raison);
+});
+
 app.whenReady().then(() => {
   // Windows exige un identifiant d'application pour afficher les
   // notifications ; sans lui, l'avertissement de mise en veille n'apparaîtrait
@@ -1242,7 +1260,17 @@ app.whenReady().then(() => {
         degats: c.degats.valeur,
         sur: c.eliminations.accord === c.eliminations.essais,
       });
-    } catch { /* le relevé suivant réessaiera */ }
+    } catch (err) {
+      // Un moteur qui ne se charge pas ne se chargera pas davantage au tour
+      // suivant : insister reviendrait à capturer l'écran toutes les cinq
+      // secondes pour rien, et à faire remonter la même erreur indéfiniment.
+      if (lecteur.panne()) {
+        reglerReleve(false);
+        overlay.signalerCapture({ ok: false, texte: "Lecture d'écran indisponible" });
+        console.warn("[WOW] Lecture d'écran désactivée :", lecteur.panne());
+      }
+      void err;
+    }
     finally { releveEnCours = false; }
   };
 

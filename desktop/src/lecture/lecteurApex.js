@@ -20,6 +20,17 @@ const { ZONES } = require("./zonesApex");
  */
 let ouvrier = null;
 let ouverture = null;
+/**
+ * Le moteur a-t-il renoncé pour de bon ?
+ *
+ * Une variante du moteur absente de l'empaquetage faisait remonter une
+ * exception non rattrapée depuis le chargeur WebAssembly, hors de toute chaîne
+ * de promesses — et l'application entière tombait, au lancement du jeu, avec
+ * une boîte d'erreur. Une lecture d'écran est un confort : elle n'a pas le
+ * droit d'emporter le reste. Après un échec, on n'essaie plus, et on le dit
+ * une fois.
+ */
+let renonce = null;
 
 /**
  * Où trouver le modèle de lecture.
@@ -37,19 +48,33 @@ function dossierDonnees() {
 }
 
 async function moteur() {
+  if (renonce) throw new Error(renonce);
   if (ouvrier) return ouvrier;
   if (!ouverture) {
-    const { createWorker } = require("tesseract.js");
-    ouverture = createWorker("eng", 1, {
-      langPath: dossierDonnees(),
-      gzip: false,
-      // Le journal de la bibliothèque part sur la sortie standard à chaque
-      // reconnaissance : illisible, et sans intérêt ici.
-      logger: () => {},
-      errorHandler: () => {},
-    }).then((w) => { ouvrier = w; return w; });
+    ouverture = (async () => {
+      const { createWorker } = require("tesseract.js");
+      const w = await createWorker("eng", 1, {
+        langPath: dossierDonnees(),
+        gzip: false,
+        // Le journal de la bibliothèque part sur la sortie standard à chaque
+        // reconnaissance : illisible, et sans intérêt ici.
+        logger: () => {},
+        errorHandler: () => {},
+      });
+      ouvrier = w;
+      return w;
+    })().catch((err) => {
+      renonce = err?.message ?? String(err);
+      ouverture = null;
+      throw err;
+    });
   }
   return ouverture;
+}
+
+/** Ce qui a fait renoncer le moteur, ou `null` s'il va bien. */
+function panne() {
+  return renonce;
 }
 
 /** Arrête le moteur. Appelé à la fermeture de l'application. */
@@ -154,4 +179,4 @@ async function lireCartouche(image) {
   return { eliminations, assistances, degats };
 }
 
-module.exports = { lireFinDePartie, lireCartouche, lireZone, fermer };
+module.exports = { lireFinDePartie, lireCartouche, lireZone, fermer, panne };
