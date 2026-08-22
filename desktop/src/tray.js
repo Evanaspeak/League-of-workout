@@ -26,7 +26,7 @@ let previenuUneFois = false;
  * @param {(actif: boolean) => void} actions.setOverlayActif
  */
 function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOverlay, raccourci,
-                   capturer, raccourciCapture, ouvrirCaptures }) {
+                   capturer, raccourciCapture, ouvrirCaptures, lireEcran }) {
   const image = nativeImage.createFromPath(path.join(__dirname, "..", "build", "tray.png"));
   tray = new Tray(image);
   tray.setToolTip("Win or Workout");
@@ -69,6 +69,13 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOver
       click: capturer,
     }] : []),
     ...(ouvrirCaptures ? [{ label: "Ouvrir le dossier des captures", click: ouvrirCaptures }] : []),
+    /**
+     * Lecture des chiffres d'Apex, déclenchée à la main.
+     *
+     * Le résultat s'affiche dans l'overlay : c'est le seul endroit visible
+     * quand un jeu tourne, Windows taisant ses notifications à ce moment-là.
+     */
+    ...(lireEcran ? [{ label: "Lire les chiffres à l'écran", click: lireEcran }] : []),
     { type: "separator" },
     { label: "Quitter", click: quitter },
   ]);

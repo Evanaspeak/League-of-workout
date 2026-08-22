@@ -148,4 +148,4 @@ function lireRaccourciCapture() {
   return raccourciActif;
 }
 
-module.exports = { initCapture, capturer, lireRaccourciCapture, dossier };
+module.exports = { initCapture, capturer, lireRaccourciCapture, dossier, imageEcran, estNoir };

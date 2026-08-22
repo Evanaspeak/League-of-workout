@@ -1,6 +1,6 @@
 {
   "name": "win-or-workout-desktop",
-  "version": "0.7.3",
+  "version": "0.8.0",
   "description": "App desktop + overlay pour Win or Workout",
   "main": "src/main.js",
   "author": "Evan Tocquet <evantocquet@gmail.com>",
@@ -20,7 +20,12 @@
       "src/**/*",
       "build/icon.png",
       "build/tray.png",
-      "package.json"
+      "package.json",
+      "!node_modules/tesseract.js-core/tesseract-core.wasm*",
+      "!node_modules/tesseract.js-core/tesseract-core-simd.wasm*",
+      "!node_modules/tesseract.js-core/tesseract-core-relaxedsimd.wasm*",
+      "!node_modules/tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm*",
+      "donnees/**/*"
     ],
     "win": {
       "target": "nsis",
@@ -48,6 +53,7 @@
     "artifactName": "Win-or-Workout-Setup-${version}.${ext}"
   },
   "dependencies": {
-    "electron-updater": "^6.8.9"
+    "electron-updater": "^6.8.9",
+    "tesseract.js": "^7.0.0"
   }
 }
