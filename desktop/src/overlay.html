@@ -17,6 +17,7 @@
   }
 
   .pastille {
+    position: relative;
     margin: 0;
     padding: 10px 13px;
     border-radius: 12px;
@@ -126,6 +127,30 @@
     color: #2FD98A;
   }
   body.placement .consigne { display: block; }
+
+  /*
+     Retour de capture, posé PAR-DESSUS le bas de la pastille.
+     Allonger la pastille pour un message de deux secondes et demie la
+     rendrait plus encombrante en permanence — et la fenêtre est en
+     `overflow: hidden` : ce qui dépasse de ses 210 pixels serait coupé sans
+     un mot, ce qui est déjà arrivé une fois ici.
+  */
+  .capture {
+    display: none;
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    text-align: center;
+    word-break: break-all;
+    backdrop-filter: blur(2px);
+  }
+  .capture.ok    { display: block; background: rgba(47,217,138,0.15); color: #2FD98A; }
+  .capture.echec { display: block; background: rgba(255,77,46,0.15);  color: #FF8A3D; }
 </style>
 </head>
 <body>
@@ -155,6 +180,8 @@
       <div class="ligne" id="ligne-attente" style="display:none"><span>En attente</span><b class="dette" id="dette-due">–</b></div>
     </div>
 
+    <div class="capture" id="capture"></div>
+
     <div class="consigne">Traîne-moi où tu veux, puis « Terminer ».</div>
   </div>
 
@@ -171,6 +198,7 @@
   const compteur = document.getElementById("compteur");
   const jeu = document.getElementById("jeu");
   const sousCompteur = document.getElementById("sous-compteur");
+  const capture = document.getElementById("capture");
   const ligneKda = document.getElementById("ligne-kda");
   const ligneGagne = document.getElementById("ligne-gagne");
   const lignePerdu = document.getElementById("ligne-perdu");
@@ -199,6 +227,9 @@
    */
   let enPartie = false;
   let sessionSec = 0;
+  /** Instant de la dernière capture affichée, pour ne pas la rejouer. */
+  let dernierePose = 0;
+  let minuteurCapture = null;
 
   function afficherTemps() {
     // Hors partie le total tient : c'est ce qui a été joué, pas un chrono en
@@ -251,6 +282,22 @@
       const texte = (v) => (v ? String(v) : "–");
       detteV.textContent = texte(d && d.victoire);
       detteD.textContent = texte(d && d.defaite);
+
+      /**
+       * Retour de capture d'écran.
+       *
+       * `pose` porte l'instant de la capture : sans lui, un état repoussé pour
+       * une autre raison — la dette qui change, une partie qui démarre —
+       * rallumerait le message déjà éteint, puisque l'état est fusionné et non
+       * remplacé.
+       */
+      if (etat.capture && etat.capture.pose !== dernierePose) {
+        dernierePose = etat.capture.pose;
+        capture.textContent = etat.capture.texte;
+        capture.className = `capture ${etat.capture.ok ? "ok" : "echec"}`;
+        clearTimeout(minuteurCapture);
+        minuteurCapture = setTimeout(() => { capture.className = "capture"; }, 2500);
+      }
 
       // L'effort déjà dû, hors partie en cours : il ne concerne que les
       // exercices comptés en temps, et n'a rien à afficher sans eux.

@@ -1152,6 +1152,15 @@ app.whenReady().then(() => {
    * dossier vide.
    */
   const signalerCapture = ({ chemin, raison }) => {
+    // L'overlay d'abord : dès qu'un jeu tourne, Windows active tout seul
+    // l'Assistant de concentration — règle « Quand je joue à un jeu » —, et les
+    // notifications ne s'affichent plus. On appuyait sur la touche sans rien
+    // voir, donc sans savoir si le raccourci nous appartenait.
+    overlay.signalerCapture({
+      ok: Boolean(chemin),
+      texte: chemin ? `Capture : ${path.basename(chemin)}` : `Échec : ${raison || "raison inconnue"}`,
+    });
+    // La notification reste, pour les captures prises hors jeu.
     if (!Notification.isSupported()) return;
     new Notification({
       title: chemin ? "Capture enregistrée" : "Capture impossible",
