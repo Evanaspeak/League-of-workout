@@ -10,6 +10,7 @@ import {
   PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
+import { MesuresPhysiques } from "@/components/MesuresPhysiques";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageJeux } from "@/components/ReglageJeux";
 import { Icone } from "@/components/Icone";
@@ -362,6 +363,11 @@ export default function SettingsPage() {
         </button>
       </div>
       )}
+
+      {/* Les mesures physiques vivent dans leur propre bloc : elles portent
+          une question de consentement, qui doit pouvoir changer de réponse
+          sans recharger le reste des réglages. */}
+      {rubrique === "profil" && <MesuresPhysiques />}
 
       {/* ── Ton effort : force, exercices, rappels ──────────────────────── */}
       {rubrique === "effort" && (
