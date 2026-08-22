@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
@@ -25,9 +26,34 @@ import { TestPompes } from "@/components/TestPompes";
 import { getLevelParPompes, testAFaire, type LevelCfg } from "@/lib/scoring";
 import { StatCard, type ChampSummary } from "@/components/dashboard/Cartes";
 import { ComparatifJeux } from "@/components/dashboard/ComparatifJeux";
-import { GraphiquePeriode } from "@/components/dashboard/GraphiquePeriode";
-import { SyntheseJeu } from "@/components/dashboard/SyntheseJeu";
-import { GraphiquesGlobaux } from "@/components/dashboard/GraphiquesGlobaux";
+import { PlaceGraphique } from "@/components/dashboard/Squelette";
+
+/**
+ * Les graphiques arrivent à part.
+ *
+ * La bibliothèque de tracés pèse 447 ko, et elle se retrouvait dans le morceau
+ * de code commun : l'historique et les réglages, qui n'ont aucun graphique, la
+ * téléchargeaient quand même. Sur un téléphone au réseau moyen et au
+ * processeur quatre fois plus lent, le premier rendu utile du tableau de bord
+ * arrivait à 3,7 secondes, contre 0,9 pour l'historique.
+ *
+ * Chargés à la demande, ils forment leur propre morceau : les deux autres
+ * écrans ne le voient plus, et le haut du tableau de bord s'affiche sans
+ * l'attendre. Le cadre est réservé pendant ce temps, sinon la page sauterait
+ * au moment où les tracés se posent.
+ */
+const GraphiquePeriode = dynamic(
+  () => import("@/components/dashboard/GraphiquePeriode").then((m) => m.GraphiquePeriode),
+  { ssr: false, loading: () => <PlaceGraphique /> },
+);
+const SyntheseJeu = dynamic(
+  () => import("@/components/dashboard/SyntheseJeu").then((m) => m.SyntheseJeu),
+  { ssr: false, loading: () => <PlaceGraphique /> },
+);
+const GraphiquesGlobaux = dynamic(
+  () => import("@/components/dashboard/GraphiquesGlobaux").then((m) => m.GraphiquesGlobaux),
+  { ssr: false, loading: () => <PlaceGraphique double /> },
+);
 import { Squelette } from "@/components/dashboard/Squelette";
 import { AXE_TICK_DENSE, INFOBULLE, RAYON_BARRE, TEINTES } from "@/lib/graphiques";
 

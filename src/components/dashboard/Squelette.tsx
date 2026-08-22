@@ -31,3 +31,20 @@ export function Squelette() {
     </div>
   );
 }
+
+/**
+ * La place d'un bloc de graphique pendant qu'il se charge.
+ *
+ * Sa hauteur reprend celle du bloc réel : un titre, puis deux cents pixels de
+ * tracé. Sans cette réserve, la page se replierait au moment où les
+ * graphiques se posent, et le déplacement cumulé remonterait.
+ */
+export function PlaceGraphique({ double = false }: { double?: boolean }) {
+  return (
+    <div className="grid gap-4 grid-cols-1" aria-hidden>
+      {(double ? [0, 1] : [0]).map((i) => (
+        <div key={i} className="bloc-graphique" style={{ height: 250 }} />
+      ))}
+    </div>
+  );
+}
