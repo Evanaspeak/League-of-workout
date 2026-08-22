@@ -215,9 +215,28 @@ await lente.addInitScript((__compte) => {
   }).observe({ type: "largest-contentful-paint", buffered: true });
 }, COMPTE);
 await lente.goto(BASE + CHEMIN, { waitUntil: "load" });
+{
+  // Le même contrôle que sur la passe rapide, et pour la même raison : une
+  // session périmée renvoie les écrans connectés vers la connexion, qui se
+  // charge vite et rendrait un chiffre flatteur sur une page qu'on ne mesure
+  // pas. Il ne couvrait que la première moitié du script.
+  const normaliser = (c) => c.replace(/\/+$/, "") || "/";
+  const arrivee = normaliser(new URL(lente.url()).pathname);
+  if (arrivee !== normaliser(CHEMIN)) {
+    console.error(`\n${CHEMIN} : sur téléphone, la navigation a abouti sur ${arrivee}. Rien n'est mesuré.`);
+    await navigateur.close();
+    process.exit(2);
+  }
+}
 await lente.waitForTimeout(6000);
 const lcpLent = (await lente.evaluate(() => window.__mesures)).lcp;
 console.log(`\n  Sur téléphone, réseau moyen et processeur quatre fois plus lent :`);
-console.log(`  LCP           ${Math.round(lcpLent)} ms      (bon en dessous de ${SEUILS.lcp})`);
+// Le seuil était affiché sans jamais dire s'il était franchi : « LCP 3776 ms
+// (bon en dessous de 2500) » se lit comme un satisfecit. C'est au rapport de
+// trancher, pas au lecteur.
+const verdictLent = lcpLent > SEUILS.lcp
+  ? `À CORRIGER, au-dessus de ${SEUILS.lcp}`
+  : `dans le seuil de ${SEUILS.lcp}`;
+console.log(`  LCP           ${Math.round(lcpLent)} ms      (${verdictLent})`);
 
 await navigateur.close();
