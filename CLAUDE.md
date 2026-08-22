@@ -141,6 +141,24 @@ desktop/              # App Electron Windows
   `/api/exercices/ratios`, parce que les pages prérendues gardent sinon la
   valeur du déploiement — `revalidatePath` ne débloque pas une page statique
 
+### Langues
+Six langues : français, anglais, espagnol, allemand, chinois, japonais.
+`src/lib/i18n/dictionaries/` — un fichier par écran, un bloc par langue. Le
+français et l'anglais sont exigés ; une langue absente retombe sur l'anglais,
+jamais sur du vide (`useT`).
+
+Règles :
+- Aucun texte dans un composant. Un composant ne compare jamais `locale` à une
+  langue — un test le refuse.
+- Les jours, les mois, les dates et les nombres passent par `Intl`, avec
+  `etiquetteLocale(locale)`. Jamais de table écrite à la main.
+- La minuscule au fil d'une phrase passe par `enMinuscule` / `useMinuscule` :
+  en allemand, les noms communs gardent leur majuscule.
+- Les erreurs des routes API se traduisent dans `src/lib/i18n/apiErrors.ts`,
+  la clé étant le message français tel qu'il circule sur le réseau.
+- CGU et politique de confidentialité restent en français et en anglais ; un
+  bandeau (`LangueDocument`) le dit aux quatre autres langues.
+
 ### Admin (/admin)
 - Accès restreint : `user.email === "evantocquet@gmail.com"`
 - Éditeur liste champions (1 par ligne) → stocké en DB table SystemConfig
@@ -164,14 +182,30 @@ desktop/              # App Electron Windows
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-301 tests, 24 suites. Base et session doublées : aucune dépendance à PostgreSQL
-ni aux variables d'environnement, `npx jest` suffit. La CI
-(`.github/workflows/tests.yml`) lance types et tests à chaque poussée.
+559 tests unitaires, 32 suites. Base et session doublées : aucune dépendance à
+PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
+(`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
+parcours navigateur dans un second job avec un PostgreSQL de service.
 
 Les tests de routes API appellent les handlers directement, avec les outils de
 `src/test/api.ts`. Ce qui est systématiquement éprouvé : refus sans session,
 refus pour un compte non administrateur là où c'est requis, et filtrage par
 compte sur chaque requête en base.
+
+Au navigateur (`npm run e2e`) : `e2e/parcours.spec.ts` suit le chemin complet
+d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques dans les
+six langues.
+
+### Ce que les tests de langue attrapent
+- `src/lib/i18n/dictionaries.test.ts` — mêmes clés d'une langue à l'autre,
+  mêmes natures de valeur, aucune clé morte, et aucune écriture étrangère aux
+  six langues (une frappe qui dérape ne se voit pas autrement).
+- `src/lib/i18n/langueEnDur.test.ts` — refuse toute comparaison de `locale` à
+  une langue hors du dossier `i18n`. C'est le raccourci qui avait laissé un
+  écran en anglais pour quatre langues sur six.
+- `e2e/langues.spec.ts` — aucun « undefined » à l'écran, aucun débordement
+  horizontal (c'est ainsi qu'un mot allemand trop long se signale), `lang`
+  posé sur la page, et six textes réellement différents.
 
 ## Commandes utiles
 ```bash
