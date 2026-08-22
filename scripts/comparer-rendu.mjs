@@ -42,6 +42,8 @@ const jeton = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf
 const compte = existsSync("/tmp/uid.txt") ? readFileSync("/tmp/uid.txt", "utf8").trim() : "";
 const navigateur = await chromium.launch(existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {});
 const empreintes = {};
+/** Pages qui n'ont pas répondu à l'adresse demandée. */
+const detournees = [];
 
 for (const largeur of LARGEURS) {
   for (const chemin of PAGES) {
@@ -69,6 +71,15 @@ for (const largeur of LARGEURS) {
     // Toute animation, tout curseur clignotant, toute donnée horodatée fait
     // diverger deux captures qui montrent pourtant la même mise en page.
     await page.goto(BASE + chemin, { waitUntil: "networkidle" }).catch(() => {});
+    // Une session invalide renvoie les écrans connectés vers la connexion, et
+    // les deux séries capturent alors la même page de connexion : la
+    // comparaison rend « aucune différence » sans avoir rien comparé.
+    const normaliser = (c) => c.replace(/\/+$/, "") || "/";
+    const arrivee = normaliser(new URL(page.url()).pathname);
+    if (arrivee !== normaliser(chemin)) {
+      console.error(`  ${chemin} : la navigation a abouti sur ${arrivee} — capture non représentative`);
+      detournees.push(chemin);
+    }
     await page.addStyleTag({
       content: "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}",
     });
@@ -99,6 +110,11 @@ for (const largeur of LARGEURS) {
 }
 writeFileSync(join(dossier, "empreintes.json"), JSON.stringify(empreintes, null, 2));
 await navigateur.close();
+
+if (detournees.length) {
+  console.error(`\n${detournees.length} page(s) détournée(s) : la série ne vaut rien tant que ce n'est pas réglé.`);
+  process.exit(2);
+}
 
 if (MODE === "apres") {
   const avant = JSON.parse(readFileSync(join(RACINE, "avant", "empreintes.json"), "utf8"));

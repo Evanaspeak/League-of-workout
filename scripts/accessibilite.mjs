@@ -139,6 +139,25 @@ for (const chemin of aVisiter) {
   const reponse = await page.goto(BASE + chemin, { waitUntil: "networkidle" }).catch(() => null);
   if (!reponse || !reponse.ok()) {
     console.log(`\n${chemin} — injoignable (${reponse ? reponse.status() : "erreur"})`);
+    total += 1;
+    await ctx.close();
+    continue;
+  }
+  /**
+   * A-t-on bien atterri sur la page demandée ?
+   *
+   * Une session invalide renvoie les écrans connectés vers la connexion, et
+   * une redirection répond « 200 » comme les autres. Sans ce contrôle, le
+   * script mesurait la page de connexion et annonçait que le tableau de bord
+   * n'avait rien à signaler. Vérifié : avec un jeton inventé, il rendait
+   * « 0 constat » sur les trois écrans connectés.
+   */
+  const normaliser = (c) => c.replace(/\/+$/, "") || "/";
+  const arrivee = normaliser(new URL(page.url()).pathname);
+  if (arrivee !== normaliser(chemin)) {
+    console.log(`\n═══ ${chemin}`);
+    console.log(`  NON MESURÉ : la navigation a abouti sur ${arrivee}`);
+    total += 1;
     await ctx.close();
     continue;
   }
