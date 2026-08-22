@@ -42,8 +42,8 @@ describe("dictionnaires de traduction", () => {
 
   describe.each(fichiers)("%s", (fichier) => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const module = require(join(DOSSIER, fichier)) as Record<string, { fr?: unknown; en?: unknown }>;
-    const exporte = Object.values(module).find((v) => v && typeof v === "object" && "fr" in v);
+    const charge = require(join(DOSSIER, fichier)) as Record<string, { fr?: unknown; en?: unknown }>;
+    const exporte = Object.values(charge).find((v) => v && typeof v === "object" && "fr" in v);
 
     it("exporte un dictionnaire à deux langues", () => {
       expect(exporte).toBeDefined();
