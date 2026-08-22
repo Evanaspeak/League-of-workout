@@ -155,14 +155,25 @@ for (const chemin of aVisiter) {
     const arret = await page.evaluate(() => {
       const el = document.activeElement;
       if (!el || el === document.body) return null;
-      const style = getComputedStyle(el);
-      const marque =
-        (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) ||
-        style.boxShadow !== "none" ||
-        style.borderColor !== getComputedStyle(el, ":not(:focus)").borderColor;
+      /**
+       * On compare l'élément à lui-même, une fois avec le focus et une fois
+       * sans. C'est la seule mesure honnête : deviner à partir des règles CSS
+       * ne dit pas si quelque chose CHANGE, et la version précédente de ce
+       * contrôle comparait un style à lui-même — elle ne pouvait rien trouver.
+       * Trois listes déroulantes sans contour lui avaient échappé.
+       */
+      const lire = () => {
+        const s = getComputedStyle(el);
+        return [s.outlineStyle, s.outlineWidth, s.outlineColor,
+                s.boxShadow, s.borderColor, s.backgroundColor, s.color].join("|");
+      };
+      const avecFocus = lire();
+      el.blur();
+      const sansFocus = lire();
+      el.focus();
       return {
         cle: `${el.tagName}.${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}`,
-        marque,
+        marque: avecFocus !== sansFocus,
       };
     });
     if (!arret) break;
@@ -171,8 +182,26 @@ for (const chemin of aVisiter) {
     if (!arret.marque) sansMarque.push(arret.cle);
   }
 
+  /**
+   * Les graphiques et les tableaux : ce qu'un lecteur d'écran ne peut pas
+   * déduire de la forme. Un graphique sans résumé s'annonce « graphique » et
+   * s'arrête là ; un tableau sans nom s'annonce par son nombre de colonnes.
+   */
+  const muets = await page.evaluate(() => {
+    const out = [];
+    const resumes = document.querySelectorAll(".lecture-ecran").length;
+    const traces = document.querySelectorAll("svg.recharts-surface").length;
+    if (traces > resumes) out.push(`${traces - resumes} graphique(s) sans résumé lu`);
+    for (const t of document.querySelectorAll("table")) {
+      if (!t.getAttribute("aria-label") && !t.querySelector("caption")) {
+        out.push(`tableau sans nom (${t.querySelectorAll("tbody tr").length} lignes)`);
+      }
+    }
+    return out;
+  });
+
   console.log(`\n═══ ${chemin}`);
-  if (!contrastes.length && !sansNom.length && !sansAlt.length && !sansMarque.length) {
+  if (!contrastes.length && !sansNom.length && !sansAlt.length && !sansMarque.length && !muets.length) {
     console.log("  rien à signaler");
   }
   for (const c of contrastes) {
@@ -181,7 +210,8 @@ for (const chemin of aVisiter) {
   for (const n of sansNom) console.log(`  commande sans nom : ${n}`);
   for (const a of sansAlt) console.log(`  image sans alt : ${a}`);
   for (const f of sansMarque) console.log(`  arrêt clavier sans marque visible : ${f}`);
-  total += contrastes.length + sansNom.length + sansAlt.length + sansMarque.length;
+  for (const m of muets) console.log(`  ${m}`);
+  total += contrastes.length + sansNom.length + sansAlt.length + sansMarque.length + muets.length;
   await ctx.close();
 }
 

@@ -31,7 +31,10 @@ export default function ConfidentialiteClient() {
 
       <Section title={t.article2.title}>
         <p>{t.article2.intro}</p>
-        <table>
+        {/* Un lecteur d'écran annonce « tableau, trois colonnes » et rien de
+            plus. Le titre de l'article dit de quoi il parle, et il est déjà
+            traduit : inutile d'inventer une clé pour le répéter. */}
+        <table aria-label={t.article2.title}>
           <thead>
             <tr>
               {t.article2.tableHeaders.map((h, i) => <th key={i}>{h}</th>)}

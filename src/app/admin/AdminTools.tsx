@@ -78,7 +78,7 @@ export default function AdminTools() {
             style={{
               flex: 1, padding: "7px 12px", borderRadius: 6, fontSize: "0.85rem",
               background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
-              color: "#ECEFF4", outline: "none",
+              color: "#ECEFF4",
             }}
           />
           <button
