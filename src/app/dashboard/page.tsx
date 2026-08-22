@@ -28,6 +28,7 @@ import { ComparatifJeux } from "@/components/dashboard/ComparatifJeux";
 import { GraphiquePeriode } from "@/components/dashboard/GraphiquePeriode";
 import { SyntheseJeu } from "@/components/dashboard/SyntheseJeu";
 import { GraphiquesGlobaux } from "@/components/dashboard/GraphiquesGlobaux";
+import { Squelette } from "@/components/dashboard/Squelette";
 import { AXE_TICK_DENSE, INFOBULLE, RAYON_BARRE, TEINTES } from "@/lib/graphiques";
 
 /**
@@ -54,6 +55,10 @@ type DashData = {
   /** Coût moyen d'une activité, semaine par semaine : le seul indicateur qui peut descendre. */
   moyenneParSemaine?: { semaine: string; moyenne: number; parties: number }[];
   statsByPeriod: { hour: PeriodStat[]; weekday: PeriodStat[]; month: PeriodStat[] };
+  /** Paliers du test de force, livrés avec le reste pour éviter un aller-retour. */
+  levelConfigs?: LevelCfg[];
+  pompesMax?: number;
+  pompesMaxLe?: string | null;
   dailyPompes: { date: string; total: number }[];
   /** Effort accumulé aujourd'hui, et seuil au-delà duquel on prévient. */
   pointsAujourdhui?: number;
@@ -115,9 +120,18 @@ export default function Dashboard() {
   const [arretEnCours, setArretEnCours] = useState(false);
   // Test de force : le niveau n'est plus redemandé à chaque session, il vit sur
   // le compte. Chargé à l'ouverture de la modale, pas au chargement du tableau.
-  const [pompesMax, setPompesMax] = useState(0);
-  const [pompesMaxLe, setPompesMaxLe] = useState<string | null>(null);
-  const [niveaux, setNiveaux] = useState<LevelCfg[]>([]);
+  /**
+   * Le test de force vient maintenant avec les statistiques, dans la même
+   * réponse. On ne le recopie pas dans un état : le faire imposerait un second
+   * rendu, et le rappel du test — deux cent trente-trois pixels — apparaîtrait
+   * après le reste en poussant toute la page vers le bas. Mesuré à 0,083 de
+   * déplacement cumulé, deux fois sur trois.
+   *
+   * Seul l'enregistrement d'un nouveau test garde un état : il doit s'afficher
+   * avant que le serveur n'ait confirmé.
+   */
+  const [testLocal, setTestLocal] = useState<{ max: number; le: string } | null>(null);
+
 
   const {
     sessionActive, sessionGames, sessionError, polling, countdown, sessionNiveau,
@@ -193,20 +207,11 @@ export default function Dashboard() {
 
   const dailyLoading = statsPeriod === "daily" && dailyCharge !== calendarDate;
 
-  // Le niveau vient du test de force enregistré sur le compte. Il se chargeait
-  // à l'ouverture de la modale de session, pour épargner le tableau ; mais le
-  // rappel du test s'affiche désormais sur la page elle-même, et il ne peut pas
-  // décider s'il doit paraître sans connaître la date du dernier test.
-  useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((s) => {
-        setNiveaux(s.levelConfigs ?? []);
-        setPompesMax(s.user?.pompesMax ?? 0);
-        setPompesMaxLe(s.user?.pompesMaxLe ?? null);
-      })
-      .catch(() => {});
-  }, []);
+  // Le niveau vient du test de force enregistré sur le compte. Il arrivait par
+  // une requête à part, ce qui faisait paraître le rappel du test après le
+  // reste et poussait toute la page vers le bas. Il voyage désormais avec les
+  // statistiques : une seule réponse, et rien ne bouge après coup.
+
 
   const handleSavePompesMax = async (valeur: number) => {
     const res = await fetch("/api/settings", {
@@ -215,10 +220,16 @@ export default function Dashboard() {
       body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
     });
     if (res.ok) {
-      setPompesMax(valeur);
-      setPompesMaxLe(new Date().toISOString());
+      setTestLocal({ max: valeur, le: new Date().toISOString() });
     }
   };
+
+  // Les trois valeurs du test de force, lues directement de la réponse — sauf
+  // celle qu'on vient d'enregistrer, qui doit paraître sans attendre le
+  // rechargement des statistiques.
+  const niveaux: LevelCfg[] = data?.levelConfigs ?? [];
+  const pompesMax = testLocal?.max ?? data?.pompesMax ?? 0;
+  const pompesMaxLe = testLocal?.le ?? data?.pompesMaxLe ?? null;
 
   // Niveau affiché pendant la session : celui que le serveur appliquera, déduit
   // du test de force. Tant que le test n'est pas fait, le compte reste au plus bas.
@@ -258,7 +269,8 @@ export default function Dashboard() {
     return (
       <>
         <DesktopAuthHandler />
-        <div className="text-center py-20 gold-text">{t.loading}</div>
+        <span className="lecture-ecran" role="status">{t.loading}</span>
+        <Squelette />
       </>
     );
   }

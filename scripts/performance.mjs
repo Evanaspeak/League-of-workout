@@ -18,12 +18,41 @@
  *
  * Usage : node scripts/performance.mjs [adresse] [chemin]
  */
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
 
 const BASE = process.argv[2] ?? "http://127.0.0.1:3311";
 const CHEMIN = process.argv[3] ?? "/";
 const CHROMIUM = "/opt/pw-browsers/chromium";
+
+/**
+ * Les écrans qui demandent un compte se mesurent comme les autres, à condition
+ * de leur donner une session. Le jeton se dépose dans un fichier par
+ * l'appelant : le script ne sait pas en fabriquer, et n'a pas à savoir.
+ *
+ * Auth.js découpe le cookie quand il dépasse la taille d'un en-tête : il faut
+ * le redécouper à l'identique, sinon le serveur ne le reconnaît pas et la page
+ * mesurée est celle de connexion.
+ */
+const JETON = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf8").trim() : null;
+const HOTE = new URL(BASE).hostname;
+/**
+ * La mémoire de la modale d'accueil et de la visite est propre au compte —
+ * `low_onboarded:<id>`. Sans l'identifiant, elles s'ouvrent par-dessus la page
+ * et deviennent le plus grand élément affiché : on chronomètre alors une
+ * modale au lieu du contenu, et le chiffre ne veut plus rien dire.
+ */
+const COMPTE = existsSync("/tmp/uid.txt") ? readFileSync("/tmp/uid.txt", "utf8").trim() : "";
+
+function cookies() {
+  if (!JETON) return [];
+  const parts = JETON.length > 3500
+    ? [["authjs.session-token.0", JETON.slice(0, 3500)], ["authjs.session-token.1", JETON.slice(3500)]]
+    : [["authjs.session-token", JETON]];
+  return parts.map(([name, value]) => ({
+    name, value, domain: HOTE, path: "/", httpOnly: true, sameSite: "Lax",
+  }));
+}
 
 /** Seuils publiés par Google pour un chargement jugé bon. */
 const SEUILS = { lcp: 2500, cls: 0.1 };
@@ -32,6 +61,7 @@ const navigateur = await chromium.launch(
   existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {},
 );
 const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, locale: "fr-FR" });
+await ctx.addCookies(cookies());
 const page = await ctx.newPage();
 
 /** Poids transféré, par nature de ressource. */
@@ -44,10 +74,15 @@ page.on("response", async (r) => {
   parNature.set(type, (parNature.get(type) ?? 0) + taille);
 });
 
-await page.addInitScript(() => {
+await page.addInitScript((__compte) => {
   // L'écran d'ouverture recouvre la page : mesuré avec, on chronomètre une
   // animation plutôt que le contenu.
-  try { sessionStorage.setItem("splash", "1"); } catch {}
+  try {
+    sessionStorage.setItem("splash", "1");
+    for (const c of ["low_onboarded", "low_visite", `low_onboarded:${__compte}`, `low_visite:${__compte}`]) {
+      localStorage.setItem(c, "1");
+    }
+  } catch {}
   window.__mesures = { lcp: 0, cls: 0 };
   new PerformanceObserver((l) => {
     for (const e of l.getEntries()) window.__mesures.lcp = e.startTime;
@@ -57,7 +92,7 @@ await page.addInitScript(() => {
       if (!e.hadRecentInput) window.__mesures.cls += e.value;
     }
   }).observe({ type: "layout-shift", buffered: true });
-});
+}, COMPTE);
 
 await page.goto(BASE + CHEMIN, { waitUntil: "networkidle" });
 await page.waitForTimeout(2000);
@@ -99,6 +134,7 @@ console.log(soucis.length ? `\n  À corriger : ${soucis.join(", ")}` : "\n  Dans
 
 // ── Seconde passe, connexion bridée ───────────────────────────────────────
 const ctxLent = await navigateur.newContext({ viewport: { width: 390, height: 844 }, locale: "fr-FR" });
+await ctxLent.addCookies(cookies());
 const lente = await ctxLent.newPage();
 const cdp = await ctxLent.newCDPSession(lente);
 await cdp.send("Network.enable");
@@ -111,13 +147,18 @@ await cdp.send("Network.emulateNetworkConditions", {
   latency: 150,
 });
 await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-await lente.addInitScript(() => {
-  try { sessionStorage.setItem("splash", "1"); } catch {}
+await lente.addInitScript((__compte) => {
+  try {
+    sessionStorage.setItem("splash", "1");
+    for (const c of ["low_onboarded", "low_visite", `low_onboarded:${__compte}`, `low_visite:${__compte}`]) {
+      localStorage.setItem(c, "1");
+    }
+  } catch {}
   window.__mesures = { lcp: 0 };
   new PerformanceObserver((l) => {
     for (const e of l.getEntries()) window.__mesures.lcp = e.startTime;
   }).observe({ type: "largest-contentful-paint", buffered: true });
-});
+}, COMPTE);
 await lente.goto(BASE + CHEMIN, { waitUntil: "load" });
 await lente.waitForTimeout(6000);
 const lcpLent = (await lente.evaluate(() => window.__mesures)).lcp;
