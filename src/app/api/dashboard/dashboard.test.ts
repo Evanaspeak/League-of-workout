@@ -54,6 +54,24 @@ describe("GET /api/dashboard", () => {
     expect(game.findMany.mock.calls[0][0].where).toEqual({ userId: "u42" });
   });
 
+  it("rend le test de force du demandeur, et rien d'autre", async () => {
+    // Ces trois valeurs ont rejoint la réponse pour épargner un aller-retour
+    // au premier rendu. Elles viennent du compte : elles doivent venir de
+    // CELUI qui demande, et la réponse ne doit rien porter de plus intime.
+    session.mockResolvedValue(utilisateur({
+      id: "u42", pompesMax: 27, pompesMaxLe: new Date("2026-08-01T10:00:00Z"),
+      passwordHash: "ne-doit-pas-sortir", codeHash: "ne-doit-pas-sortir",
+    }));
+    game.findMany.mockResolvedValue([]);
+    const corpsRendu = await corps(await dash());
+    expect(corpsRendu.pompesMax).toBe(27);
+    expect(corpsRendu.pompesMaxLe).toEqual(new Date("2026-08-01T10:00:00Z").toISOString());
+    const rendu = JSON.stringify(corpsRendu);
+    expect(rendu).not.toContain("ne-doit-pas-sortir");
+    expect(rendu).not.toContain("passwordHash");
+    expect(rendu).not.toContain("codeHash");
+  });
+
   it("rend un tableau de bord vide sans planter", async () => {
     // Le premier écran que voit un inscrit : il ne doit pas tomber en erreur
     // parce qu'il n'y a encore rien à afficher.
