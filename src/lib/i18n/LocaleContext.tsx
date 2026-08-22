@@ -105,7 +105,32 @@ export function useT<T extends { fr: Record<string, unknown> }>(
 }
 
 /** Étiquette à passer aux formats de date et de nombre du navigateur. */
+export function etiquetteLocale(locale: Locale): string {
+  return ETIQUETTES[locale] ?? "en-US";
+}
+
+/** La même chose, pour un composant qui n'a pas la langue sous la main. */
 export function useDateLocale(): string {
   const { locale } = useLocale();
-  return ETIQUETTES[locale] ?? "en-US";
+  return etiquetteLocale(locale);
+}
+
+/**
+ * Passe un mot en minuscule pour l'écrire au fil d'une phrase — sauf en
+ * allemand, où les noms communs gardent leur majuscule. « 8 min 25 boxen »
+ * n'est pas une faute de style : c'est une faute d'orthographe, et elle
+ * apparaissait partout où un nom d'exercice suivait un nombre.
+ *
+ * La règle vit ici et non dans les écrans : c'est une propriété de la langue,
+ * pas de la mise en page.
+ */
+export function enMinuscule(mot: string, locale: Locale): string {
+  if (locale === "de") return mot;
+  return mot.toLocaleLowerCase(etiquetteLocale(locale));
+}
+
+/** La même chose, pour un composant qui n'a pas la langue sous la main. */
+export function useMinuscule(): (mot: string) => string {
+  const { locale } = useLocale();
+  return (mot: string) => enMinuscule(mot, locale);
 }

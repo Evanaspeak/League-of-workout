@@ -1,6 +1,6 @@
 "use client";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 
 /** Résumé d'un champion, tel que le renvoie /api/dashboard. */
@@ -22,6 +22,7 @@ export function StatCard({ label, value, sub, lignes, i = 0, ancre }: {
   /** Ancre de la visite guidée, quand cette carte sert de repli à une étape. */
   ancre?: string;
 }) {
+  const minuscule = useMinuscule();
   return (
     <div className="stat-card p-4 flex flex-col gap-1 rise" data-visite={ancre} style={{ animationDelay: `${i * 80}ms` }}>
       <span style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.12em", color: "var(--faint)" }}>{label}</span>
@@ -30,7 +31,7 @@ export function StatCard({ label, value, sub, lignes, i = 0, ancre }: {
           {lignes.map((l) => (
             <span key={l.nom} style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
               <span className="mono-num" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.2 }}>{l.valeur}</span>
-              <span style={{ fontSize: "0.7rem", color: "var(--faint)" }}>{l.nom.toLowerCase()}</span>
+              <span style={{ fontSize: "0.7rem", color: "var(--faint)" }}>{minuscule(l.nom)}</span>
             </span>
           ))}
         </span>

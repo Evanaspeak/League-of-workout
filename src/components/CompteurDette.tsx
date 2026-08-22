@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
 import { estPagePublique } from "@/lib/pagesPubliques";
@@ -50,6 +50,7 @@ export function CompteurDette({
 } = {}) {
   const pathname = usePathname();
   const t = useT(exercicesDict);
+  const minuscule = useMinuscule();
   const nomsExo: Record<ExerciceId, string> = {
     pompes: t.pompesNom, squats: t.squatsNom, boxe: t.boxeNom,
   };
@@ -212,7 +213,7 @@ export function CompteurDette({
               {formaterCompact(ligne.pts, ligne.id)}
             </span>
             <span style={{ fontSize: "0.66rem", color: "var(--faint)" }}>
-              {nomsExo[ligne.id].toLowerCase()}
+              {minuscule(nomsExo[ligne.id])}
             </span>
           </div>
         ))}
@@ -262,7 +263,7 @@ export function CompteurDette({
                   {formaterCompact(ligne.pts, ligne.id)}
                 </div>
                 <div className="text-xs" style={{ color: "var(--faint)" }}>
-                  {nomsExo[ligne.id].toLowerCase()}
+                  {minuscule(nomsExo[ligne.id])}
                 </div>
               </div>
             ))}

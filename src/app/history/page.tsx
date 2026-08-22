@@ -2,7 +2,7 @@
 import { Icone } from "@/components/Icone";
 import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import {
   formaterCompact, parseRepartition, toExerciceId, ventiler, type ExerciceId,
@@ -66,6 +66,7 @@ function ResultatCell({ result, t }: { result: string; t: { victory: string; def
 
 export default function HistoryPage() {
   const t = useT(history);
+  const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = {
@@ -451,7 +452,7 @@ export default function HistoryPage() {
                                       marginLeft: 5, fontWeight: 400, fontSize: "0.72rem",
                                       color: "var(--steel)",
                                     }}>
-                                      {nomsExo[part.id].toLowerCase()}
+                                      {minuscule(nomsExo[part.id])}
                                     </span>
                                   </div>
                                 ))}
