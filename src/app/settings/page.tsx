@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { logout, deleteAccount } from "@/lib/actions";
-import { useT, useLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -45,6 +45,7 @@ type Rubrique = (typeof RUBRIQUES)[number];
 
 export default function SettingsPage() {
   const t = useT(settingsDict);
+  const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const { locale } = useLocale();
   // Lu sans effet : le rendu serveur dit « non », le navigateur tranche, et
@@ -482,7 +483,7 @@ export default function SettingsPage() {
                     {formaterCompact(plafond, id)}
                   </div>
                   <div style={{ fontSize: "0.7rem", color: "var(--faint)" }}>
-                    {EXO_LABELS[id].nom.toLowerCase()}
+                    {minuscule(EXO_LABELS[id].nom)}
                   </div>
                 </div>
               ))}

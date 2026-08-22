@@ -218,6 +218,11 @@ export async function GET(req: Request) {
   }
 
   const weekdayOrder = [1, 2, 3, 4, 5, 6, 0];
+  // Le serveur ne nomme plus les jours ni les mois : il envoie leur numéro, et
+  // le navigateur les nomme dans la langue du lecteur. Écrits ici, ils
+  // restaient français au milieu d'un tableau de bord allemand ou japonais —
+  // et il aurait fallu six tables au lieu d'une fonction que le navigateur
+  // possède déjà.
   const weekdayLabels = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const monthLabels = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
@@ -229,11 +234,13 @@ export async function GET(req: Request) {
     })).filter((_, h) => !!byHour[h]),
     weekday: weekdayOrder.map((wd, i) => ({
       label: weekdayLabels[i],
+      jour: wd,
       avg: byWeekday[wd] ? Math.round(byWeekday[wd].total / byWeekday[wd].count) : 0,
       total: byWeekday[wd]?.total ?? 0,
     })),
     month: monthLabels.map((label, i) => ({
       label,
+      mois: i,
       avg: byMonth[i] ? Math.round(byMonth[i].total / byMonth[i].count) : 0,
       total: byMonth[i]?.total ?? 0,
     })).filter((_, i) => !!byMonth[i]),

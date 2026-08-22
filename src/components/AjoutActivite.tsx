@@ -5,7 +5,7 @@ import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
 import { ChampionInput } from "@/components/ChampionInput";
 import { useChampions, championConnu } from "@/lib/useChampions";
-import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
@@ -76,6 +76,7 @@ export function AjoutActivite({
   enModale?: boolean;
 }) {
   const t = useT(history);
+  const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = {
@@ -709,7 +710,7 @@ export function AjoutActivite({
                             <div key={part.id} className="text-2xl font-bold gold-text">
                               {formaterCompact(part.pts, part.id)}
                               <span className="text-sm ml-2" style={{ color: "var(--faint)" }}>
-                                {nomsExo[part.id].toLowerCase()}
+                                {minuscule(nomsExo[part.id])}
                               </span>
                             </div>
                           ))}

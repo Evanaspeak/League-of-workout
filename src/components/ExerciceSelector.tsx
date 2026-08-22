@@ -1,5 +1,5 @@
 "use client";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
   EXERCICES, EXERCICE_IDS, formaterCompact, type ExerciceId,
@@ -23,6 +23,7 @@ export function ExerciceSelector({
   compact?: boolean;
 }) {
   const t = useT(exercicesDict);
+  const minuscule = useMinuscule();
   const noms: Record<ExerciceId, string> = {
     pompes: t.pompesNom,
     squats: t.squatsNom,
@@ -111,7 +112,7 @@ export function ExerciceSelector({
                 display: "block", fontSize: "0.78rem", color: "var(--amber)", marginTop: compact ? 2 : 8,
               }}>
                 {EXERCICES[id].unite === "reps"
-                  ? `${formaterCompact(exemplePoints, id)} ${noms[id].toLowerCase()}`
+                  ? `${formaterCompact(exemplePoints, id)} ${minuscule(noms[id])}`
                   : formaterCompact(exemplePoints, id)}
               </span>
             </span>

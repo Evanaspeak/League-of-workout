@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
@@ -8,7 +8,7 @@ import {
   LineChart, Line, CartesianGrid,
 } from "recharts";
 import { useSession } from "@/lib/SessionContext";
-import { useT, useDateLocale, useLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -32,7 +32,12 @@ import {
   RAYON_BARRE, GRILLE_TRAIT, TEINTES,
 } from "@/lib/graphiques";
 
-type PeriodStat = { label: string; avg: number; total: number };
+/**
+ * `jour` (0 = dimanche) et `mois` (0 = janvier) viennent du serveur ; `label`
+ * est le repli français des installations plus anciennes. C'est le
+ * navigateur qui nomme le jour et le mois, dans la langue du lecteur.
+ */
+type PeriodStat = { label: string; jour?: number; mois?: number; avg: number; total: number };
 
 type DashData = {
   totalGames: number;
@@ -80,6 +85,7 @@ type DashData = {
 
 export default function Dashboard() {
   const t = useT(dashboard);
+  const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const dateLocale = useDateLocale();
@@ -87,6 +93,7 @@ export default function Dashboard() {
   /** Modale ouverte depuis le rail latéral. */
   const [modale, setModale] = useState<"session" | "ajout" | null>(null);
   const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
+
   const [statsMode, setStatsMode] = useState<"avg" | "total">("avg");
   const [calendarDate, setCalendarDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [dailyHourly, setDailyHourly] = useState<{ label: string; total: number }[] | null>(null);
@@ -120,6 +127,27 @@ export default function Dashboard() {
     typeSession, jeuSession, chronoSec, chronoErreur, arreterChrono, dettePoints,
   } = useSession();
   const { locale } = useLocale();
+  /**
+   * Les jours et les mois se nomment avec `Intl`, jamais avec une table écrite
+   * à la main : six langues voudraient six tables, et le navigateur sait déjà
+   * le faire. Le 4 janvier 1970 était un dimanche — c'est le point de départ
+   * qui fait correspondre le numéro de jour à sa date.
+   */
+  const periodeTraduite = useMemo(() => {
+    const source = data?.statsByPeriod?.[statsPeriod === "daily" ? "weekday" : statsPeriod] ?? [];
+    const etiquette = etiquetteLocale(locale);
+    const jours = new Intl.DateTimeFormat(etiquette, { weekday: "short", timeZone: "UTC" });
+    const mois = new Intl.DateTimeFormat(etiquette, { month: "short", timeZone: "UTC" });
+    return source.map((p) => {
+      if (typeof p.jour === "number") {
+        return { ...p, label: jours.format(new Date(Date.UTC(1970, 0, 4 + p.jour))) };
+      }
+      if (typeof p.mois === "number") {
+        return { ...p, label: mois.format(new Date(Date.UTC(1970, p.mois, 1))) };
+      }
+      return p;
+    });
+  }, [data, statsPeriod, locale]);
 
   const loadDash = (filtre: ExerciceId | null = filtreExo, jeu: string | null = filtreJeu) => {
     const qs = new URLSearchParams();
@@ -537,7 +565,7 @@ export default function Dashboard() {
                 {formaterCompact(data.recordPompes, exerciceRecord)}
               </span>
               {EXERCICES[exerciceRecord].unite === "reps" && (
-                <span style={{ fontSize: "0.72rem", color: "var(--faint)" }}>{nomsExo[exerciceRecord].toLowerCase()}</span>
+                <span style={{ fontSize: "0.72rem", color: "var(--faint)" }}>{minuscule(nomsExo[exerciceRecord])}</span>
               )}
             </div>
           )}
@@ -982,7 +1010,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data.statsByPeriod[statsPeriod]}>
+              <BarChart data={periodeTraduite}>
                 <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
                 <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip
