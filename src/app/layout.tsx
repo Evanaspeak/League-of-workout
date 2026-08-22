@@ -4,6 +4,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
 import { SessionGuard } from "@/components/SessionGuard";
+import { ConsentementSante } from "@/components/ConsentementSante";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
 import { MajDesktop } from "@/components/MajDesktop";
@@ -111,6 +112,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <CadreDesktop />
             <SplashScreen />
             <SessionGuard />
+            {/* Passe avant l'accueil et la visite : tant que la question du
+                consentement n'a pas de réponse, l'application détient des
+                données qu'elle n'a pas le droit de traiter. */}
+            <ConsentementSante />
             <OnboardingModal />
             {/* Prend le relais de la modale : elle explique le produit, la
                 visite montre où sont les choses. */}

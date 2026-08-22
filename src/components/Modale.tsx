@@ -17,12 +17,23 @@ export function Modale({
   titre,
   onFermer,
   largeur = "34rem",
+  sansFermeture = false,
   children,
 }: {
   titre: string;
   onFermer: () => void;
   /** Largeur maximale du panneau. */
   largeur?: string;
+  /**
+   * Retire les trois sorties : croix, Échap, clic sur le fond.
+   *
+   * À n'employer que pour une fenêtre qui POSE UNE QUESTION dont la réponse
+   * conditionne la suite — un consentement, par exemple, qu'on ne peut pas
+   * traiter comme un « plus tard » sans continuer à faire ce qu'on demande la
+   * permission de faire. La fenêtre doit alors porter elle-même ses issues,
+   * toutes deux au même niveau : refuser doit être aussi simple qu'accepter.
+   */
+  sansFermeture?: boolean;
   children: React.ReactNode;
 }) {
   const panneauRef = useRef<HTMLDivElement>(null);
@@ -33,6 +44,9 @@ export function Modale({
   // le focus à la croix, en plein milieu de la saisie. On le lit par référence.
   const fermerRef = useRef(onFermer);
   useEffect(() => { fermerRef.current = onFermer; }, [onFermer]);
+  // Lu par référence pour la même raison : l'effet ne se rejoue pas.
+  const sansFermetureRef = useRef(sansFermeture);
+  useEffect(() => { sansFermetureRef.current = sansFermeture; }, [sansFermeture]);
 
   useEffect(() => {
     // Le focus entre dans la fenêtre et n'en sort plus tant qu'elle est
@@ -43,7 +57,7 @@ export function Modale({
     (premier ?? panneauRef.current)?.focus();
 
     const surTouche = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { fermerRef.current(); return; }
+      if (e.key === "Escape") { if (!sansFermetureRef.current) fermerRef.current(); return; }
       if (e.key !== "Tab") return;
       const cibles = Array.from(
         panneauRef.current?.querySelectorAll<HTMLElement>(FOCUSABLES) ?? [],
@@ -76,7 +90,7 @@ export function Modale({
       role="dialog"
       aria-modal="true"
       aria-label={titre}
-      onClick={(e) => { if (e.target === e.currentTarget) onFermer(); }}
+      onClick={(e) => { if (!sansFermeture && e.target === e.currentTarget) onFermer(); }}
       style={{
         position: "fixed", inset: 0, zIndex: 9000,
         background: "rgba(6,8,10,0.82)",
@@ -95,7 +109,9 @@ export function Modale({
       >
         <div className="flex items-center justify-between gap-3 mb-4">
           <h2 className="titre-section">{titre}</h2>
-          <button
+          {/* Pas de croix quand il n'y a pas de sortie : un bouton qui ne ferme
+              rien est pire que pas de bouton. */}
+          {!sansFermeture && <button
             type="button"
             onClick={onFermer}
             aria-label="Fermer"
@@ -112,7 +128,7 @@ export function Modale({
               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
-          </button>
+          </button>}
         </div>
         {children}
       </div>
