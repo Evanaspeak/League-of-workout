@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { comptePublic } from "@/lib/compte";
 import { estAdmin } from "@/lib/admin";
 import { pseudoDejaPris, validerPseudo } from "@/lib/identite";
 import { REGIONS_RIOT, validerPuuid, validerRiotId } from "@/lib/riot-champs";
@@ -10,13 +11,9 @@ export async function GET() {
   await seedDefaults();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  // Le hash du mot de passe ne doit jamais quitter le serveur.
-  const safeUser: Record<string, unknown> = { ...user };
-  delete safeUser.passwordHash;
   // Le navigateur ne connaît pas la liste des administrateurs : c'est le
   // serveur qui tranche, et le client se contente d'afficher ou non le lien.
-  safeUser.estAdmin = estAdmin(user.email);
-  return NextResponse.json(safeUser);
+  return NextResponse.json({ ...comptePublic(user), estAdmin: estAdmin(user.email) });
 }
 
 export async function PUT(req: Request) {

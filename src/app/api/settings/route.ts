@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { comptePublic } from "@/lib/compte";
 import { isExerciceId, toExerciceIds } from "@/lib/exercices";
 import { estAdmin } from "@/lib/admin";
 
@@ -14,10 +15,9 @@ export async function GET() {
     prisma.masteryConfig.findFirst(),
     prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
-  // Le hash du mot de passe n'a rien à faire dans le navigateur.
-  const { passwordHash: _ignore, ...userSansSecret } = user;
-  void _ignore;
-  return NextResponse.json({ roleWeights, levelConfigs, masteryConfig, goal, user: userSansSecret });
+  return NextResponse.json({
+    roleWeights, levelConfigs, masteryConfig, goal, user: comptePublic(user),
+  });
 }
 
 /**
