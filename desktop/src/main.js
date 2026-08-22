@@ -18,7 +18,8 @@ const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
 const { initTray, signalerVeille } = require("./tray");
 const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
-const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures } = require("./capture");
+const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures, imageEcran, estNoir } = require("./capture");
+const lecteur = require("./lecture/lecteurApex");
 const { surveillerClient } = require("./lcu");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
@@ -1169,6 +1170,45 @@ app.whenReady().then(() => {
     }).show();
   };
   const raccourciCapture = initCapture(signalerCapture);
+
+  /**
+   * Lit les chiffres qu'Apex dessine à l'écran, et dit ce qu'il a compris.
+   *
+   * Déclenché à la main pour l'instant : c'est ce qui permet de vérifier la
+   * chaîne complète — capture, découpe, lecture — sur une vraie machine, avant
+   * de la déclencher toute seule en fin de partie. Un automatisme qu'on n'a
+   * jamais vu marcher à la main ne se débogue pas.
+   */
+  const lireEcran = async () => {
+    const image = await imageEcran();
+    if (!image || image.isEmpty() || estNoir(image)) {
+      return overlay.signalerCapture({
+        ok: false,
+        texte: "Écran noir — Apex en plein écran exclusif ?",
+      });
+    }
+    try {
+      const fin = await lecteur.lireFinDePartie(image);
+      if (fin) {
+        const { valeur, accord, essais } = fin.classement;
+        return overlay.signalerCapture({
+          ok: true,
+          texte: `Fin de partie — classement ${valeur} (${accord}/${essais})`,
+        });
+      }
+      const c = await lecteur.lireCartouche(image);
+      const dit = (n) => (n.valeur === null ? "?" : `${n.valeur}`);
+      const sur = c.eliminations.valeur !== null;
+      overlay.signalerCapture({
+        ok: sur,
+        texte: sur
+          ? `${dit(c.eliminations)} élim · ${dit(c.assistances)} ass · ${dit(c.degats)} dég`
+          : "Rien de lisible — ni fin de partie, ni cartouche",
+      });
+    } catch (err) {
+      overlay.signalerCapture({ ok: false, texte: `Lecture impossible : ${err?.message ?? err}` });
+    }
+  };
   if (raccourciCapture) {
     console.log(`Capture d'écran : ${raccourciCapture} → ${dossierCaptures()}`);
   } else {
@@ -1184,6 +1224,7 @@ app.whenReady().then(() => {
       raccourci: overlay.lireRaccourcis().bascule,
       // Le chemin de secours quand le raccourci global est détenu ailleurs.
       capturer: () => capturer("apex").then(signalerCapture).catch(() => {}),
+      lireEcran,
       raccourciCapture,
       ouvrirCaptures: () => shell.openPath(dossierCaptures()),
       overlayActif: () => overlayAutorise(),
@@ -1244,6 +1285,9 @@ app.on("before-quit", (event) => {
   nettoyageLance = true;
   event.preventDefault();
   oublierSessionSiDemande().finally(() => {
+    // Le moteur de lecture tient un fil de travail : sans arrêt explicite, le
+    // processus survit à la fenêtre et l'application ne se ferme jamais.
+    lecteur.fermer();
     if (stopWatcher) stopWatcher();
     if (stopOverlay) stopOverlay();
     if (stopJeux) stopJeux();
