@@ -63,8 +63,21 @@ export function DetteDirecte() {
     window.electronLOL?.publierDette?.(projection);
   }, []);
 
-  /** Relit l'effort déjà dû, celui que la pastille du site affiche aussi. */
+  /**
+   * Relit l'effort déjà dû ET les exercices choisis.
+   *
+   * Les deux étaient séparés, et les exercices n'étaient lus qu'une fois, au
+   * montage. L'application desktop garde sa page ouverte toute la soirée :
+   * quelqu'un qui passait de « pompes et boxe » à « pompes » dans les réglages
+   * continuait donc à lire deux exercices sur la pastille jusqu'au prochain
+   * redémarrage. Le réglage n'a de sens que s'il prend effet en jouant, c'est
+   * justement là qu'on le change.
+   */
   const chargerAttente = useCallback(async () => {
+    try {
+      const u = await fetch("/api/user").then((r) => (r.ok ? r.json() : null));
+      if (u?.exercices) exercicesRef.current = toExerciceIds(u.exercices);
+    } catch { /* on garde la sélection connue */ }
     try {
       const res = await fetch("/api/dette");
       if (!res.ok) return;
@@ -76,19 +89,9 @@ export function DetteDirecte() {
     } catch { /* la prochaine partie relira */ }
   }, []);
 
-  // Exercices du compte : ils décident de l'unité affichée. Un joueur qui a
-  // choisi les squats ne doit pas lire un nombre de pompes.
   useEffect(() => {
     if (!window.electronLOL?.publierDette) return;
-    let vivant = true;
-    (async () => {
-      try {
-        const u = await fetch("/api/user").then((r) => r.json());
-        if (vivant) exercicesRef.current = toExerciceIds(u?.exercices);
-      } catch { /* pompes par défaut */ }
-      await chargerAttente();
-    })();
-    return () => { vivant = false; };
+    void chargerAttente();
   }, [chargerAttente]);
 
   useEffect(() => {
@@ -102,8 +105,13 @@ export function DetteDirecte() {
   useEffect(() => {
     const pont = window.electronLOL;
     if (!pont?.onPhase) return;
-    return pont.onPhase((p) => { contexteRef.current = { file: p.file, role: p.role }; });
-  }, []);
+    return pont.onPhase((p) => {
+      contexteRef.current = { file: p.file, role: p.role };
+      // La partie qui se prépare est le moment de relire les réglages : c'est
+      // juste avant de lancer qu'on vient de les changer.
+      void chargerAttente();
+    });
+  }, [chargerAttente]);
 
   const calculer = useCallback(async (score: ScoreDirect) => {
     const role =
@@ -131,7 +139,13 @@ export function DetteDirecte() {
         }),
       });
       if (!res.ok) return;
-      const { scoring } = await res.json();
+      const { scoring, exercices } = await res.json();
+      // La sélection vient du serveur, avec le calcul qu'elle habille : c'est
+      // la seule façon d'être sûr que l'unité affichée est celle du compte au
+      // moment du calcul, et non celle d'il y a trois heures.
+      if (Array.isArray(exercices) && exercices.length > 0) {
+        exercicesRef.current = toExerciceIds(exercices);
+      }
       const base = Number(scoring?.scoreBase) || 0;
       const surcharge = Number(scoring?.surcharge) || 0;
       const defaite = Number(scoring?.pompesFinales) || 0;
