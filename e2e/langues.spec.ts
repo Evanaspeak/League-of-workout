@@ -74,3 +74,80 @@ test("la page d'accueil change vraiment de texte d'une langue à l'autre", async
   }
   expect(identiques).toEqual([]);
 });
+
+/**
+ * Les écrans qui demandent un compte, dans les six langues.
+ *
+ * Ils portent l'essentiel du texte de l'application, et rien ne les couvrait :
+ * les contrôles ci-dessus s'arrêtent aux pages publiques. Un compte est créé
+ * une fois, par le même chemin qu'un vrai visiteur, puis son état de
+ * navigateur sert aux dix-huit visites.
+ */
+test.describe("écrans connectés", () => {
+  test.describe.configure({ mode: "serial" });
+
+  const marque = Date.now().toString(36);
+  const COMPTE = { pseudo: `Lang${marque}`, email: `lang-${marque}@example.test` };
+  let etat: import("@playwright/test").BrowserContextOptions["storageState"];
+
+  test("ouvrir un compte pour la suite", async ({ browser }) => {
+    const ctx = await browser.newContext();
+    const page = await ctx.newPage();
+    await page.addInitScript(() => {
+      try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+    });
+    await page.goto("/beta");
+    await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
+    await page.locator('input[type="email"]').first().fill(COMPTE.email);
+    await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
+
+    const bloc = page.locator(".mono-num").first();
+    await bloc.waitFor({ timeout: 20_000 });
+    const code = (await bloc.innerText()).trim();
+
+    await page.goto("/login");
+    await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
+    await page.getByPlaceholder(/ton code|your code/i).fill(code);
+    await Promise.all([
+      page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+      page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
+    ]);
+    // L'identifiant sert à désamorcer la modale d'accueil, dont la mémoire est
+    // propre au compte : sans lui elle recouvre chaque écran mesuré.
+    const moi = await page.request.get("/api/user");
+    expect(moi.ok()).toBeTruthy();
+    const uid = (await moi.json()).id as string;
+    await page.evaluate((u) => {
+      try {
+        for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+          localStorage.setItem(c, "1");
+        }
+      } catch { /* stockage refusé */ }
+    }, uid);
+    etat = await ctx.storageState();
+    await ctx.close();
+  });
+
+  for (const langue of LANGUES) {
+    for (const chemin of ["/dashboard", "/history", "/settings"]) {
+      test(`${langue} · ${chemin}`, async ({ browser }) => {
+        const ctx = await browser.newContext({ storageState: etat });
+        const page = await ctx.newPage();
+        await ouvrirEn(page, langue, chemin);
+        // Les graphiques arrivent à part : on leur laisse le temps de se poser.
+        await page.waitForTimeout(1200);
+
+        const texte = await page.evaluate(() => document.body.innerText);
+        expect({ chemin, langue, trous: texte.match(/\bundefined\b|\[object Object\]/g) ?? [] })
+          .toEqual({ chemin, langue, trous: [] });
+
+        const deborde = await page.evaluate(() =>
+          document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+        expect({ chemin, langue, deborde }).toEqual({ chemin, langue, deborde: false });
+
+        expect(await page.evaluate(() => document.documentElement.lang)).toBe(langue);
+        await ctx.close();
+      });
+    }
+  }
+});

@@ -192,9 +192,10 @@ Les tests de routes API appellent les handlers directement, avec les outils de
 refus pour un compte non administrateur là où c'est requis, et filtrage par
 compte sur chaque requête en base.
 
-Au navigateur (`npm run e2e`) : `e2e/parcours.spec.ts` suit le chemin complet
-d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques dans les
-six langues.
+Au navigateur (`npm run e2e`), 56 tests : `e2e/parcours.spec.ts` suit le chemin
+complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
+puis les trois écrans connectés — tableau de bord, historique, réglages — dans
+les six langues, sur un compte qu'il ouvre lui-même.
 
 ### Ce que les tests de langue attrapent
 - `src/lib/i18n/dictionaries.test.ts` — mêmes clés d'une langue à l'autre,
