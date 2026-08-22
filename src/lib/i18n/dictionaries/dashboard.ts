@@ -1,5 +1,11 @@
 export const dashboard = {
   fr: {
+    // Résumés lus par les lecteurs d'écran : un graphique ne dit rien à qui
+    // ne le voit pas, le texte porte donc les chiffres eux-mêmes.
+    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
+      `Graphique « ${titre} » : ${n} points, de ${debut} à ${fin}.`,
+    grapheRepartition: (titre: string, detail: string) =>
+      `Graphique « ${titre} » : ${detail}.`,
     pageTitle: "DASHBOARD",
     loading: "Chargement...",
     syncBannerTitle: "Synchronisation League bientôt disponible",
@@ -92,6 +98,10 @@ export const dashboard = {
     levelLabel: (n: number) => `Niveau ${n}`,
   },
   en: {
+    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
+      `Chart "${titre}": ${n} points, from ${debut} to ${fin}.`,
+    grapheRepartition: (titre: string, detail: string) =>
+      `Chart "${titre}": ${detail}.`,
     pageTitle: "DASHBOARD",
     loading: "Loading...",
     syncBannerTitle: "League sync coming soon",
@@ -184,6 +194,10 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   es: {
+    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
+      `Gráfico «${titre}»: ${n} puntos, de ${debut} a ${fin}.`,
+    grapheRepartition: (titre: string, detail: string) =>
+      `Gráfico «${titre}»: ${detail}.`,
     pageTitle: "PANEL",
     loading: "Cargando…",
     syncBannerTitle: "Sincronización con League disponible pronto",
@@ -276,6 +290,10 @@ export const dashboard = {
     levelLabel: (n: number) => `Nivel ${n}`,
   },
   de: {
+    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
+      `Diagramm „${titre}“: ${n} Punkte, von ${debut} bis ${fin}.`,
+    grapheRepartition: (titre: string, detail: string) =>
+      `Diagramm „${titre}“: ${detail}.`,
     pageTitle: "ÜBERSICHT",
     loading: "Wird geladen…",
     syncBannerTitle: "League-Abgleich kommt bald",
@@ -368,6 +386,10 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   zh: {
+    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
+      `图表「${titre}」：${n} 个数据点，从 ${debut} 到 ${fin}。`,
+    grapheRepartition: (titre: string, detail: string) =>
+      `图表「${titre}」：${detail}。`,
     pageTitle: "面板",
     loading: "加载中…",
     syncBannerTitle: "League 同步即将开放",
@@ -460,6 +482,10 @@ export const dashboard = {
     levelLabel: (n: number) => `等级 ${n}`,
   },
   ja: {
+    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
+      `グラフ「${titre}」：${n} 点、${debut} から ${fin} まで。`,
+    grapheRepartition: (titre: string, detail: string) =>
+      `グラフ「${titre}」：${detail}。`,
     pageTitle: "ダッシュボード",
     loading: "読み込み中…",
     syncBannerTitle: "League との同期は近日対応",

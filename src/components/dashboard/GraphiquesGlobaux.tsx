@@ -8,6 +8,7 @@ import {
   AXE_TICK, AXE_TICK_DENSE, AXE_TICK_FORT_DENSE, INFOBULLE,
   RAYON_BARRE, GRILLE_TRAIT, TEINTES,
 } from "@/lib/graphiques";
+import { ResumeGraphique, decrireEvolution, decrireRepartition } from "./ResumeGraphique";
 
 type T = ReturnType<typeof useT<typeof dashboard>>;
 
@@ -68,8 +69,12 @@ export function GraphiquesGlobaux({
                 ))}
               </div>
             </div>
+            {(() => {
+              const detail = decrireRepartition(parJeu, "jeu", "pompes", fmt);
+              return detail ? <ResumeGraphique texte={t.grapheRepartition(t.detteParJeu(vue), detail)} /> : null;
+            })()}
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={parJeu}>
+              <BarChart data={parJeu} accessibilityLayer>
                 <XAxis dataKey="jeu" tick={AXE_TICK_FORT_DENSE} interval={0} />
                 <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip
@@ -85,8 +90,12 @@ export function GraphiquesGlobaux({
         {cumulData.length > 0 && (
           <div className="bloc-graphique">
             <h2 className="titre-section mb-3">{t.cumulativeProgress}</h2>
+            {(() => {
+              const e = decrireEvolution(cumulData, "cumul", fmt);
+              return e ? <ResumeGraphique texte={t.grapheEvolution(t.cumulativeProgress, e.n, e.debut, e.fin)} /> : null;
+            })()}
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={cumulData}>
+              <LineChart data={cumulData} accessibilityLayer>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRILLE_TRAIT} />
                 <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
                 <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
@@ -104,8 +113,13 @@ export function GraphiquesGlobaux({
           <div className="bloc-graphique md:col-span-2" data-visite="graphique">
             <h2 className="titre-section">{t.progressionTitre}</h2>
             <p className="text-xs mt-1 mb-3" style={{ color: "var(--faint)" }}>{t.progressionAide}</p>
+            {(() => {
+              const e = decrireEvolution(moyenneParSemaine, "moyenne", fmt);
+              return e ? <ResumeGraphique texte={t.grapheEvolution(t.progressionTitre, e.n, e.debut, e.fin)} /> : null;
+            })()}
             <ResponsiveContainer width="100%" height={200}>
               <LineChart
+                accessibilityLayer
                 data={moyenneParSemaine.map((s) => ({
                   ...s,
                   label: new Date(s.semaine + "T12:00:00")

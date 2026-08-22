@@ -121,6 +121,19 @@
 }
 .lol-select:focus { border-color: rgba(255, 180, 84, 0.5); }
 
+/* Les deux règles ci-dessus posent `outline: none` puis ne rendent qu'un
+   changement de couleur de bordure — gris translucide vers ambre translucide.
+   À la souris cela suffit, parce qu'on sait où l'on a cliqué. Au clavier, non :
+   c'est le seul repère qui dit où l'on se trouve, et une mesure l'a trouvé
+   indétectable sur les trois listes déroulantes de l'historique.
+   `:focus-visible` ne se déclenche qu'à la navigation clavier : la souris ne
+   voit donc rien changer. */
+.lol-select:focus-visible,
+.lol-input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
 /* ── Utility ────────────────────────────────────────────────────────────── */
 .gold-text  { color: var(--amber); font-weight: 600; }
 .blue-text  { color: var(--signal); }

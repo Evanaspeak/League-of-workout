@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recha
 import type { useT } from "@/lib/i18n/LocaleContext";
 import type { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { AXE_TICK, AXE_TICK_DENSE, INFOBULLE, RAYON_BARRE, TEINTES } from "@/lib/graphiques";
+import { ResumeGraphique, decrireRepartition } from "./ResumeGraphique";
 
 type T = ReturnType<typeof useT<typeof dashboard>>;
 
@@ -101,14 +102,20 @@ export function GraphiquePeriode({
           {chargement ? (
             <div className="text-center py-8 gold-text text-sm">{t.loading}</div>
           ) : detailHoraire && detailHoraire.length > 0 ? (
+            <>
+            {(() => {
+              const detail = decrireRepartition(detailHoraire, "label", "total", fmt);
+              return detail ? <ResumeGraphique texte={t.grapheRepartition(t.dailyDetail, detail)} /> : null;
+            })()}
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={detailHoraire}>
+              <BarChart data={detailHoraire} accessibilityLayer>
                 <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
                 <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
                 <Tooltip contentStyle={INFOBULLE} formatter={(v) => [fmt(Number(v)), t.tooltipTotal]} />
                 <Bar dataKey="total" fill={TEINTES.periode} radius={RAYON_BARRE} />
               </BarChart>
             </ResponsiveContainer>
+            </>
           ) : (
             <div className="text-center py-8" style={{ color: "var(--faint)", fontSize: "0.85rem" }}>
               {t.noGameThisDay}
@@ -116,8 +123,14 @@ export function GraphiquePeriode({
           )}
         </div>
       ) : (
+        <>
+        {(() => {
+          const titre = mode === "avg" ? t.avgPompesPerGame : t.totalPompesLabel;
+          const detail = decrireRepartition(points, "label", mode, fmt);
+          return detail ? <ResumeGraphique texte={t.grapheRepartition(titre, detail)} /> : null;
+        })()}
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={points}>
+          <BarChart data={points} accessibilityLayer>
             <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
             <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
             <Tooltip
@@ -127,6 +140,7 @@ export function GraphiquePeriode({
             <Bar dataKey={mode} fill={TEINTES.dette} radius={RAYON_BARRE} />
           </BarChart>
         </ResponsiveContainer>
+        </>
       )}
     </div>
   );

@@ -270,7 +270,16 @@ export default function HistoryPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto" data-visite="historique-table">
-                  <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: modeColonnes === "parties" ? 760 : 660 }}>
+                  {/* Un lecteur d'écran annonce « tableau » et le nombre de
+                      colonnes ; sans nom, il ne dit pas de quoi il parle. Le nom
+                      passe par `aria-label` et non par une balise `caption` :
+                      celle-ci reste une boîte de mise en page même rendue
+                      invisible, et décalait les lignes de quatre pixels. */}
+                  <table
+                    className="w-full text-sm"
+                    aria-label={t.legendeTableau}
+                    style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: modeColonnes === "parties" ? 760 : 660 }}
+                  >
                     <thead>
                       <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                         <th className="text-left px-3 py-1">{t.tableDate}</th>
