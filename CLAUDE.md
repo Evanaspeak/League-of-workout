@@ -220,6 +220,18 @@ Le test résout les imports relatifs comme les alias `@/`, et exempte les
 fichiers que Next.js charge par convention de nom (`page`, `layout`, `route`,
 `sitemap`, `manifest`…), les déclarations `.d.ts` et `src/generated/`.
 
+Un cran plus fin, `noUnusedLocals` et `noUnusedParameters` sont activés dans
+`tsconfig.json`. Ils attrapent ce qu'aucun script ne peut voir : une constante
+qu'on ne lit plus, un import devenu partiel, une déstructuration dont personne
+ne se sert. `ROLES_FILTER` avait survécu au départ du filtre par rôle, et la
+réponse d'ajout de partie était déstructurée sans être lue.
+
+Restent 36 symboles exportés qu'un seul fichier emploie. Ce n'est pas du code
+mort — juste un `export` plus large que nécessaire. Le resserrer sur les seules
+valeurs aurait du sens ; sur les types qui figurent dans la signature d'une
+fonction exportée, non : le module deviendrait pénible à consommer. Laissé en
+l'état, faute d'un gain qui justifie la retouche.
+
 - `dictionaries.test.ts` refuse aussi un dictionnaire que personne n'importe.
   Deux fichiers de langue avaient survécu six semaines à la suppression de
   leurs écrans, et ont fini traduits en quatre langues de plus avant qu'on s'en

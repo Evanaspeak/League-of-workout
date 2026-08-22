@@ -1,5 +1,5 @@
 "use client";
-import { useLocale, LANGUES, type Locale } from "@/lib/i18n/LocaleContext";
+import { useLocale, type Locale } from "@/lib/i18n/LocaleContext";
 
 /**
  * Dit au lecteur que le document qu'il a sous les yeux n'existe pas dans sa
@@ -61,6 +61,3 @@ export function LangueDocument() {
     </p>
   );
 }
-
-/** Les langues où l'avis a lieu d'être — utile aux tests. */
-export const LANGUES_SANS_DOCUMENT = LANGUES.filter((l) => AVIS[l] !== "");

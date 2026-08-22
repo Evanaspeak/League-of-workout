@@ -1,4 +1,4 @@
-import { requete, corps, utilisateur, admin } from "@/test/api";
+import { requete, corps } from "@/test/api";
 
 /** Cookies vus par les routes qui manipulent la session. */
 let magasin: { name: string; value: string }[] = [];

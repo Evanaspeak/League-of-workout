@@ -20,13 +20,3 @@ export function notifierSysteme(titre: string, corps: string, marque?: string): 
     new Notification(titre, { body: corps, icon: "/icon", tag: marque });
   } catch { /* certains navigateurs refusent hors service worker */ }
 }
-
-/**
- * Vrai quand un rappel peut réellement s'afficher — donc quand il vaut la peine
- * d'en proposer l'activation.
- */
-export function notificationsPossibles(): boolean {
-  if (typeof window === "undefined") return false;
-  if (window.electronLOL?.notifier) return true;
-  return "Notification" in window;
-}
