@@ -74,7 +74,7 @@ export const telechargement = {
     bientotDisponible: "Bald verfügbar: der Download-Link kommt zum Erscheinen hierher.",
     versionLabel: (v: string) => `Version ${v} · aktualisiert sich nach der Installation selbst`,
     commentCaFonctionne: "Wie funktioniert das?",
-    etape1: "Installier die Anwendung auf deinem Windows-PC.",
+    etape1: "Installiere die Anwendung auf deinem Windows-PC.",
     etape2: "Melde dich mit deinem Win-or-Workout-Konto an.",
     etape3: "Starte eine Partie: die Anwendung erkennt die Ergebnisse von allein.",
     etape4: "Die Liegestütze sammeln sich in Echtzeit, ohne dass du etwas eintragen musst.",
