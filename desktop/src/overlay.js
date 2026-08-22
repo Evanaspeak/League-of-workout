@@ -446,9 +446,23 @@ function surveiller() {
   }, 2000);
 }
 
-/** Pousse un état vers la fenêtre d'overlay (partie en cours, chrono, jeu). */
+/**
+ * Pousse un état vers la fenêtre d'overlay (partie en cours, chrono, jeu).
+ *
+ * Le temps de soirée se recalcule à chaque envoi pour un jeu sans relevé.
+ *
+ * La fenêtre avance son compteur d'une seconde par seconde, mais le remet à
+ * l'heure sur chaque état reçu — c'est ce qui garde League aligné sur l'horloge
+ * de la partie. Or `sessionSec` n'était mis à jour que PAR ce relevé : pour
+ * Apex il restait à zéro, et le moindre envoi — une capture d'écran, la dette
+ * qui bouge — renvoyait le chrono à « --:-- ». Il ne montait jamais plus de
+ * quelques secondes.
+ */
 function envoyerEtat(etat) {
   dernierEtat = { ...dernierEtat, ...etat };
+  if (debutSansReleve !== null) {
+    dernierEtat.sessionSec = cumulSec + Math.round((Date.now() - debutSansReleve) / 1000);
+  }
   if (fenetre && !fenetre.isDestroyed()) {
     fenetre.webContents.send("overlay:etat", dernierEtat);
   }
