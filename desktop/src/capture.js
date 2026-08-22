@@ -66,26 +66,50 @@ async function imageEcran() {
 }
 
 /**
- * Enregistre une capture et rend son chemin, ou `null` si l'image est vide.
+ * L'écran est-il noir ?
  *
- * Une image entièrement noire est le symptôme du plein écran exclusif. La
- * signaler vaut mieux que d'écrire un fichier inutile que personne ne pensera
- * à ouvrir avant de me l'envoyer.
+ * Le plein écran exclusif contourne le compositeur : la capture revient noire.
+ * Le premier test comparait le poids du PNG à un seuil — grossier, et faux sur
+ * une scène simplement sombre, qui se compresse aussi très bien. On regarde
+ * maintenant les pixels : un échantillon régulier suffit, il n'y a pas besoin
+ * de lire deux millions de points pour savoir qu'il n'y a rien dessus.
+ */
+function estNoir(image) {
+  const bitmap = image.toBitmap(); // BGRA, quatre octets par pixel
+  // Un nombre premier : l'échantillon ne suit aucune grille de l'interface.
+  // Assez serré pour qu'un petit élément lumineux sur fond noir — un écran de
+  // chargement — ne passe pas pour un écran vide.
+  const pas = 4 * 101;
+  let vus = 0;
+  for (let i = 0; i + 2 < bitmap.length; i += pas) {
+    // Un pixel non strictement noir suffit à trancher : on cherche du contenu,
+    // pas une moyenne.
+    if (bitmap[i] > 12 || bitmap[i + 1] > 12 || bitmap[i + 2] > 12) return false;
+    vus += 1;
+  }
+  return vus > 0;
+}
+
+/**
+ * Enregistre une capture et rend son chemin, ou `null` si rien n'est lisible.
+ *
+ * Le format est le JPEG, pas le PNG. Un PNG de plein écran à haute résolution
+ * dépasse les vingt-cinq mégaoctets, et GitHub refuse au-delà : les captures
+ * étaient trop lourdes pour sortir de la machine, ce qui les rendait inutiles.
+ * À qualité 92 la même image tient en deux à quatre mégaoctets, et les
+ * artefacts restent bien en deçà de ce qui gênerait la lecture de chiffres —
+ * on lit des caractères de vingt pixels de haut, pas des dégradés.
  */
 async function capturer(etiquette = "ecran") {
   const image = await imageEcran();
   if (!image || image.isEmpty()) return { chemin: null, raison: "aucune image" };
-
-  const png = image.toPNG();
-  // Une capture de plein écran exclusif revient noire. Le test est grossier
-  // mais suffit : un PNG entièrement noir se compresse à presque rien.
-  if (png.length < 20_000) {
+  if (estNoir(image)) {
     return { chemin: null, raison: "écran noir — le jeu est probablement en plein écran exclusif" };
   }
 
-  const nom = `${horodatage()}_${etiquette}.png`;
+  const nom = `${horodatage()}_${etiquette}.jpg`;
   const chemin = path.join(dossier(), nom);
-  fs.writeFileSync(chemin, png);
+  fs.writeFileSync(chemin, image.toJPEG(92));
   return { chemin, raison: null, taille: image.getSize() };
 }
 
