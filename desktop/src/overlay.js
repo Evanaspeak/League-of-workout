@@ -18,6 +18,19 @@
 const { BrowserWindow, screen, globalShortcut } = require("electron");
 const path = require("path");
 
+/**
+ * Jeux qui exposent une partie en cours à qui sait la lire.
+ *
+ * League ouvre une API locale pendant la partie : horloge, KDA, champion. Rien
+ * de tel chez Apex, Fortnite ou PUBG — et il ne s'agit pas d'un oubli, c'est
+ * qu'aucune de ces éditions n'expose quoi que ce soit à un programme tiers.
+ *
+ * La distinction compte pour l'affichage : une ligne qui ne peut JAMAIS se
+ * remplir doit disparaître, pas afficher un tiret. Un tiret se lit comme
+ * « en attente », et on attend alors quelque chose qui ne viendra pas.
+ */
+const JEUX_AVEC_RELEVE = new Set(["League of Legends", "Teamfight Tactics"]);
+
 /** Marge depuis le bord de l'écran, en pixels. */
 const MARGE = 24;
 
@@ -83,6 +96,9 @@ let dernierEtat = {
   score: null,
   dette: null,
   jeu: null,
+  /** Faux quand le jeu n'expose rien : la fenêtre masque alors ce qu'elle ne
+   *  pourra pas remplir. */
+  releve: false,
 };
 
 /**
@@ -95,6 +111,15 @@ let dernierEtat = {
 let cumulSec = 0;
 /** Dernière durée relevée sur la partie en cours, à verser au cumul à la fin. */
 let partieEnCoursSec = 0;
+/**
+ * Instant de lancement d'un jeu qui ne se raconte pas, ou `null`.
+ *
+ * Chez Apex, « la partie » au sens de l'overlay commence au lancement du jeu et
+ * finit à sa fermeture : rien ne distingue un lobby d'un déploiement. Le temps
+ * compté est donc celui du poste, et il inclut les menus — c'est le seul qu'on
+ * puisse honnêtement produire, et le libellé le dit.
+ */
+let debutSansReleve = null;
 
 /**
  * Crée la fenêtre d'overlay. Elle démarre cachée : c'est `afficher()` ou le
@@ -255,13 +280,28 @@ function definirEnPartie(valeur, jeu = null) {
 
   if (enPartie && !avant) {
     partieEnCoursSec = 0;
-    envoyerEtat({ enPartie: true, partieSec: 0, score: null, jeu });
+    const releve = JEUX_AVEC_RELEVE.has(jeu);
+    // Sans relevé, personne ne viendra dire combien de temps s'est écoulé :
+    // c'est l'horloge du poste qui compte, depuis maintenant.
+    debutSansReleve = releve ? null : Date.now();
+    envoyerEtat({ enPartie: true, partieSec: 0, score: null, jeu, releve });
   } else if (!enPartie && avant) {
     // La partie qui s'achève rejoint le cumul : c'est du temps réellement
     // joué. Ce qui suit — menus, file d'attente, pause — n'y entrera pas.
+    //
+    // Pour un jeu sans relevé, `partieEnCoursSec` n'a jamais été alimenté :
+    // le temps se lit sur l'horloge du poste, sinon la soirée se solderait à
+    // zéro et le compteur retomberait à « --:-- » en fermant le jeu.
+    if (debutSansReleve !== null) {
+      partieEnCoursSec = Math.round((Date.now() - debutSansReleve) / 1000);
+      debutSansReleve = null;
+    }
     cumulSec += partieEnCoursSec;
     partieEnCoursSec = 0;
-    envoyerEtat({ enPartie: false, partieSec: 0, sessionSec: cumulSec, score: null, jeu: null });
+    envoyerEtat({
+      enPartie: false, partieSec: 0, sessionSec: cumulSec,
+      score: null, jeu: null, releve: false,
+    });
   }
 }
 

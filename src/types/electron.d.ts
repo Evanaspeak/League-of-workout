@@ -16,7 +16,7 @@ export type EtatOverlay = {
   coin: string;
   coins: string[];
   /** `null` quand aucune combinaison n'a pu être prise par le système. */
-  raccourcis: { bascule: string | null; coin: string | null };
+  raccourcis: { bascule: string | null; coin: string | null; capture?: string | null };
   /** Mode placement en cours : la pastille se laisse attraper à la souris. */
   placement: boolean;
   /** Position posée à la main, ou `null` si c'est encore le coin qui décide. */
@@ -36,7 +36,7 @@ export type EtatOverlayJeux = {
   /** Jeux dont on sait détecter le lancement : eux seuls sont réglables. */
   jeux: string[];
   coins: string[];
-  raccourcis: { bascule: string | null; coin: string | null };
+  raccourcis: { bascule: string | null; coin: string | null; capture?: string | null };
   placement: boolean;
   config: Record<string, OverlayJeu>;
 };

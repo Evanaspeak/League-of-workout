@@ -24,6 +24,17 @@ import type { ContextePartie, ScoreDirect } from "@/types/electron";
 /** Délai avant recalcul, pour ne pas relancer l'aperçu à chaque mort. */
 const DELAI_CALCUL_MS = 1500;
 
+/**
+ * Jeux qui exposent une partie en cours à qui sait la lire.
+ *
+ * La même liste vit côté application desktop, qui s'en sert pour masquer les
+ * lignes qu'elle ne pourra pas remplir. Ici elle décide de ce qu'on publie :
+ * pour un jeu qui ne se raconte pas, il n'y a pas de projection à faire, mais
+ * il reste l'effort déjà dû — et c'est justement le chiffre qu'on veut avoir
+ * sous les yeux en jouant.
+ */
+const JEUX_AVEC_RELEVE = new Set(["League of Legends", "Teamfight Tactics"]);
+
 type Projection = {
   /** Ce qu'il y aura à faire si la partie est gagnée. */
   victoire: string;
@@ -155,6 +166,42 @@ export function DetteDirecte() {
       if (minuteurRef.current) clearTimeout(minuteurRef.current);
     };
   }, [calculer]);
+
+  /**
+   * Un jeu qui ne se raconte pas : on publie quand même ce qui est dû.
+   *
+   * Sans relevé, `onReleve` ne se déclenche jamais et l'overlay n'affichait
+   * donc rien du tout — ni projection, ce qui est normal, ni effort en attente,
+   * ce qui ne l'est pas. Le chiffre existe pourtant, et c'est celui qu'on
+   * regarde entre deux parties.
+   */
+  useEffect(() => {
+    const pont = window.electronLOL;
+    if (!pont?.onJeuDetecte || !pont.publierDette) return;
+
+    return pont.onJeuDetecte(async ({ type, jeu }) => {
+      if (JEUX_AVEC_RELEVE.has(jeu)) return;
+      if (type === "jeu-arrete") { publier(null); return; }
+      await chargerAttente();
+      publier({ victoire: "", defaite: "", enAttente: enAttenteRef.current });
+    });
+  }, [chargerAttente, publier]);
+
+  // La dette bouge pendant qu'on joue — une partie enregistrée, un effort
+  // rendu. L'overlay doit suivre, sinon il affiche le chiffre de l'ouverture
+  // pendant toute la soirée.
+  useEffect(() => {
+    const pont = window.electronLOL;
+    if (!pont?.publierDette) return;
+    const surChangement = async () => {
+      await chargerAttente();
+      if (enAttenteRef.current) {
+        publier({ victoire: "", defaite: "", enAttente: enAttenteRef.current });
+      }
+    };
+    window.addEventListener("wow-dette-changee", surChangement);
+    return () => window.removeEventListener("wow-dette-changee", surChangement);
+  }, [chargerAttente, publier]);
 
   // Partie finie : la projection n'a plus d'objet, et l'effort qu'elle annonçait
   // vient de rejoindre ce qui est réellement dû.
