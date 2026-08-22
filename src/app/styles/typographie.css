@@ -135,3 +135,25 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
+
+/* Le chinois et le japonais s'écrivent sans espaces : le navigateur coupe donc
+   la ligne entre deux caractères quelconques, et un titre finit sur une
+   syllabe orpheline — « 就是几 / 小时 » sépare un nombre de son unité.
+   `auto-phrase` demande au moteur de couper aux frontières de syntagme quand
+   il sait les trouver ; ailleurs il retombe sur le comportement d'origine.
+   La règle vise `:lang()`, que `LocaleProvider` pose sur `<html>`. */
+:lang(zh) h1, :lang(zh) h2, :lang(zh) h3, :lang(zh) .titre-section,
+:lang(ja) h1, :lang(ja) h2, :lang(ja) h3, :lang(ja) .titre-section {
+  word-break: auto-phrase;
+}
+
+/* Le troisième morceau du titre passe à la ligne parce qu'une espace le sépare
+   du deuxième. En chinois et en japonais il n'y a pas d'espace, et la coupure
+   tombe donc au milieu du groupe accentué : « 一坐就是几 / 小时 » sépare le
+   nombre de son unité. On rend la ligne explicite plutôt que de compter sur
+   la largeur du conteneur, qui ne veut pas dire la même chose d'une écriture
+   à l'autre — `18ch` fait dix-huit chiffres, mais neuf idéogrammes. */
+:lang(zh) .titre-accent,
+:lang(ja) .titre-accent {
+  display: block;
+}

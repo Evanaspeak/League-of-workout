@@ -127,7 +127,18 @@ function Slash({ height = 12 }: { height?: number }) {
 
 /* ── Le feed de dette : la soirée facturée, game par game ────────────────── */
 /** `r` vaut V/W, D/L, ou N pour une session au temps, qui ne se gagne ni ne se perd. */
-type FeedEntry = { r: string; jeu: string; detail: string; pts: number };
+/**
+ * `r` est la lettre affichée dans la pastille, elle change avec la langue.
+ * `issue` est le résultat lui-même : c'est lui qui donne la couleur, sinon
+ * un « S » de Sieg passerait pour une défaite en allemand.
+ */
+type FeedEntry = {
+  r: string;
+  issue: "gagne" | "perdu" | "neutre";
+  jeu: string;
+  detail: string;
+  pts: number;
+};
 
 function DebtFeed({
   title, count, totalLabel, unit, conversion, entries,
@@ -177,9 +188,9 @@ function DebtFeed({
       {/* Rows */}
       <div>
         {entries.map((e, i) => {
-          const isWin = e.r === "V" || e.r === "W";
+          const isWin = e.issue === "gagne";
           // Une session au temps n'a ni victoire ni défaite : elle reste neutre.
-          const isNeutre = e.r === "N";
+          const isNeutre = e.issue === "neutre";
           const teinte = isNeutre ? "var(--steel)" : isWin ? "var(--victory)" : "var(--loss)";
           const fond = isNeutre
             ? "rgba(152,162,176,0.1)"
@@ -519,7 +530,7 @@ export default function LandingClient({
           <p className="eyebrow" style={{ marginBottom: 16 }}>{t.problemEyebrow}</p>
           <h2 style={{ ...h2, marginBottom: 20, maxWidth: "18ch" }}>
             {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
-            <span style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
+            <span className="titre-accent" style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
           </h2>
           <p className="section-intro" style={{ maxWidth: "62ch" }}>{t.problemPara1}</p>
 
