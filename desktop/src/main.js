@@ -18,6 +18,7 @@ const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
 const { initTray, signalerVeille } = require("./tray");
 const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
+const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures } = require("./capture");
 const { surveillerClient } = require("./lcu");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
@@ -628,7 +629,7 @@ function etatOverlay(jeu = jeuCourant) {
     coins: overlay.COINS,
     position: config.position,
     libre: config.position !== null,
-    raccourcis: overlay.lireRaccourcis(),
+    raccourcis: { ...overlay.lireRaccourcis(), capture: lireRaccourciCapture() },
     placement: overlay.lirePlacement().placement,
   };
 }
@@ -637,7 +638,7 @@ function etatOverlay(jeu = jeuCourant) {
 ipcMain.handle("overlay:jeux-lire", () => ({
   jeux: jeuxReglables(),
   coins: overlay.COINS,
-  raccourcis: overlay.lireRaccourcis(),
+  raccourcis: { ...overlay.lireRaccourcis(), capture: lireRaccourciCapture() },
   placement: overlay.lirePlacement().placement,
   config: Object.fromEntries(jeuxReglables().map((j) => [j, overlayDuJeu(j)])),
 }));
@@ -653,7 +654,7 @@ ipcMain.handle("overlay:jeu-ecrire", (_e, { jeu, ...patch } = {}) => {
   return {
     jeux: jeuxReglables(),
     coins: overlay.COINS,
-    raccourcis: overlay.lireRaccourcis(),
+    raccourcis: { ...overlay.lireRaccourcis(), capture: lireRaccourciCapture() },
     placement: overlay.lirePlacement().placement,
     config: Object.fromEntries(jeuxReglables().map((j) => [j, overlayDuJeu(j)])),
   };
@@ -1137,6 +1138,34 @@ app.whenReady().then(() => {
   // Aucun jeu ne tourne encore : la pastille prend les réglages par défaut,
   // et se replacera au premier jeu détecté.
   stopOverlay = overlay.initOverlay(overlayDuJeu(null));
+
+  /**
+   * Raccourci de capture d'écran.
+   *
+   * Apex n'expose rien : le compteur d'éliminations et le classement n'existent
+   * que dessinés à l'écran. Lire ces chiffres suppose d'abord d'en avoir des
+   * images — celles de VOTRE résolution et de VOTRE échelle d'interface, parce
+   * que les zones à découper en dépendent entièrement.
+   *
+   * La notification n'est pas un ornement : sans retour, on ne sait pas si le
+   * raccourci a été pris par une autre application, et on repart avec un
+   * dossier vide.
+   */
+  const signalerCapture = ({ chemin, raison }) => {
+    if (!Notification.isSupported()) return;
+    new Notification({
+      title: chemin ? "Capture enregistrée" : "Capture impossible",
+      body: chemin ? path.basename(chemin) : String(raison || "raison inconnue"),
+      icon: path.join(__dirname, "..", "build", "icon.png"),
+    }).show();
+  };
+  const raccourciCapture = initCapture(signalerCapture);
+  if (raccourciCapture) {
+    console.log(`Capture d'écran : ${raccourciCapture} → ${dossierCaptures()}`);
+  } else {
+    console.log("Capture d'écran : aucun raccourci disponible, tous sont pris.");
+  }
+
   createWindow();
   try {
     stopTray = initTray({
@@ -1144,6 +1173,10 @@ app.whenReady().then(() => {
       quitter: () => app.quit(),
       basculerOverlay: overlay.basculer,
       raccourci: overlay.lireRaccourcis().bascule,
+      // Le chemin de secours quand le raccourci global est détenu ailleurs.
+      capturer: () => capturer("apex").then(signalerCapture).catch(() => {}),
+      raccourciCapture,
+      ouvrirCaptures: () => shell.openPath(dossierCaptures()),
       overlayActif: () => overlayAutorise(),
       setOverlayActif: (actif) => {
         // Depuis l'icône, on parle du jeu en cours — ou du défaut hors partie.

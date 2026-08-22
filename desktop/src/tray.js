@@ -25,7 +25,8 @@ let previenuUneFois = false;
  * @param {() => boolean} actions.overlayActif Lit le réglage de l'overlay.
  * @param {(actif: boolean) => void} actions.setOverlayActif
  */
-function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOverlay, raccourci }) {
+function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOverlay, raccourci,
+                   capturer, raccourciCapture, ouvrirCaptures }) {
   const image = nativeImage.createFromPath(path.join(__dirname, "..", "build", "tray.png"));
   tray = new Tray(image);
   tray.setToolTip("Win or Workout");
@@ -53,6 +54,21 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOver
         tray.setContextMenu(construireMenu());
       },
     },
+    { type: "separator" },
+    /**
+     * Capture d'écran, pour calibrer la lecture des chiffres d'Apex.
+     *
+     * Le raccourci global peut être détenu par Discord ou GeForce, auquel cas
+     * il ne fait rien et personne ne sait pourquoi. Ce menu répond toujours :
+     * c'est le chemin de secours, et le seul dont on soit sûr.
+     */
+    ...(capturer ? [{
+      label: raccourciCapture
+        ? `Capturer l'écran\t${raccourciCapture}`
+        : "Capturer l'écran",
+      click: capturer,
+    }] : []),
+    ...(ouvrirCaptures ? [{ label: "Ouvrir le dossier des captures", click: ouvrirCaptures }] : []),
     { type: "separator" },
     { label: "Quitter", click: quitter },
   ]);
