@@ -128,8 +128,14 @@
    indétectable sur les trois listes déroulantes de l'historique.
    `:focus-visible` ne se déclenche qu'à la navigation clavier : la souris ne
    voit donc rien changer. */
-.lol-select:focus-visible,
-.lol-input:focus-visible {
+/* Toute commande de saisie, classée ou non. La règle visait d'abord les deux
+   classes maison ; les champs de l'écran de connexion sont stylés en ligne et
+   n'en portent aucune, si bien qu'ils restaient sans repère au clavier — sur
+   le premier écran que touche quelqu'un qui revient. On vise donc les balises,
+   là où rien ne peut échapper. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }

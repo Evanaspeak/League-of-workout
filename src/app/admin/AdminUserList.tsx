@@ -138,7 +138,7 @@ export default function AdminUserList() {
         style={{
           width: "100%", marginBottom: 16, padding: "8px 12px", borderRadius: 6,
           background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
-          color: "#ECEFF4", fontSize: "0.85rem", outline: "none", boxSizing: "border-box",
+          color: "#ECEFF4", fontSize: "0.85rem", boxSizing: "border-box",
         }}
       />
 

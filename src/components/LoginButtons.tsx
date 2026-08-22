@@ -35,7 +35,10 @@ const INPUT_STYLE: React.CSSProperties = {
   borderRadius: 8,
   color: "var(--bone)",
   fontSize: "0.88rem",
-  outline: "none",
+  // Pas d'`outline: "none"` ici : un style en ligne l'emporte sur toute
+  // feuille, y compris sur la règle qui donne un contour au focus clavier. Ces
+  // deux champs sont restés sans repère jusqu'à ce qu'une mesure les trouve —
+  // sur l'écran de connexion, le premier que touche quelqu'un qui revient.
   boxSizing: "border-box",
 };
 

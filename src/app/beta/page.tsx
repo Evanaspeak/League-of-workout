@@ -14,7 +14,8 @@ const FIELD_STYLE = {
   padding: "12px 14px",
   color: "var(--bone)",
   fontSize: "0.95rem",
-  outline: "none",
+  // Pas d'`outline: "none"` : un style en ligne l'emporte sur la feuille, y
+  // compris sur le contour du focus clavier.
   boxSizing: "border-box" as const,
   colorScheme: "dark" as const,
 };
