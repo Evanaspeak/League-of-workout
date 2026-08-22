@@ -271,6 +271,12 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 - **Une page qui dépend d'un service extérieur** (`/telechargement` lit les
   releases GitHub) diffère d'une exécution à l'autre sans que rien n'ait changé.
   `comparer-rendu.mjs` les liste à part, sous « à vérifier à la main ».
+- **Confondre « rien trouvé » et « rien regardé ».** `accessibilite.mjs`
+  comptait dans le même total les défauts trouvés et les pages qu'il n'avait
+  pas pu atteindre. Un rapport annonçant « 45 constats » pouvait donc désigner
+  quarante-cinq pages jamais ouvertes — l'inverse exact d'un audit. Les deux
+  chiffres sont désormais séparés, et les pages non mesurées s'annoncent sous
+  le total au lieu de s'y fondre.
 - **Tuer le serveur avec `pkill -f`.** Le motif `next start -p 3311` figure
   aussi dans la ligne de commande du shell qui lance la commande : `pkill` tue
   le shell, le serveur survit, et le `next start` suivant échoue sur
