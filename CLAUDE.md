@@ -182,7 +182,7 @@ Règles :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-551 tests unitaires, 33 suites. Base et session doublées : aucune dépendance à
+556 tests unitaires, 34 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -191,6 +191,14 @@ Les tests de routes API appellent les handlers directement, avec les outils de
 `src/test/api.ts`. Ce qui est systématiquement éprouvé : refus sans session,
 refus pour un compte non administrateur là où c'est requis, et filtrage par
 compte sur chaque requête en base.
+
+L'empreinte du mot de passe ne sort pas de la base : `getCurrentUser` la retire
+par `omit`, et un test le vérifie sur la requête elle-même. Les deux routes qui
+rendent le compte par diffusion passent en plus par `comptePublic`
+(`src/lib/compte.ts`), parce qu'un `{ ...user }` publie tout ce qu'on lui remet.
+Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
+module entier, et le filtre y serait remplacé par une doublure — les tests de
+fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
 Au navigateur (`npm run e2e`), 56 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques

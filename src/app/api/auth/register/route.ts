@@ -49,7 +49,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Beta complète : les 100 places sont prises." }, { status: 403 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    // Une existence se répond par oui ou non : inutile de charger la ligne
+    // entière, empreinte du mot de passe comprise, pour la jeter aussitôt.
+    const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
     if (existing) {
       return NextResponse.json({ error: "Un compte existe déjà avec cet email" }, { status: 409 });
     }
