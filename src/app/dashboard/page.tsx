@@ -3,10 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useSession } from "@/lib/SessionContext";
 import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
@@ -26,11 +23,12 @@ import { RailActions } from "@/components/RailLateral";
 import { Modale } from "@/components/Modale";
 import { TestPompes } from "@/components/TestPompes";
 import { getLevelParPompes, testAFaire, type LevelCfg } from "@/lib/scoring";
-import { StatCard, ChampionCard, type ChampSummary } from "@/components/dashboard/Cartes";
-import {
-  AXE_TICK, AXE_TICK_DENSE, AXE_TICK_FORT, AXE_TICK_FORT_DENSE, INFOBULLE,
-  RAYON_BARRE, GRILLE_TRAIT, TEINTES,
-} from "@/lib/graphiques";
+import { StatCard, type ChampSummary } from "@/components/dashboard/Cartes";
+import { ComparatifJeux } from "@/components/dashboard/ComparatifJeux";
+import { GraphiquePeriode } from "@/components/dashboard/GraphiquePeriode";
+import { SyntheseJeu } from "@/components/dashboard/SyntheseJeu";
+import { GraphiquesGlobaux } from "@/components/dashboard/GraphiquesGlobaux";
+import { AXE_TICK_DENSE, INFOBULLE, RAYON_BARRE, TEINTES } from "@/lib/graphiques";
 
 /**
  * `jour` (0 = dimanche) et `mois` (0 = janvier) viennent du serveur ; `label`
@@ -774,254 +772,47 @@ export default function Dashboard() {
       {/* Comparaison entre jeux — uniquement en vue d'ensemble. Sur un jeu
           filtré, c'est sa synthèse propre qui prend le relais plus bas. */}
       {filtreJeu === null && jeuxJoues.length > 1 && (
-        <div className="lol-panel p-4 space-y-3">
-          <div>
-            <h2 className="titre-section">{t.comparatifTitre}</h2>
-            <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.comparatifAide}</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: 620 }}>
-              <thead>
-                <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
-                  <th className="text-left px-3 py-1">{t.colJeu}</th>
-                  <th className="text-right px-3 py-1">{t.colActivites}</th>
-                  <th className="text-right px-3 py-1">{t.colWinrate}</th>
-                  <th className="text-right px-3 py-1">{t.colDette}</th>
-                  <th className="text-right px-3 py-1">{t.colDetteMoy}</th>
-                  <th className="text-right px-3 py-1">{t.colTemps}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jeuxJoues.map((j) => (
-                  <tr key={j.nom} style={{ background: "var(--bg-raised)" }}>
-                    <td className="px-3 py-2" style={{ whiteSpace: "nowrap" }}>
-                      <button
-                        onClick={() => setFiltreJeu(j.nom)}
-                        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "var(--signal)" }}
-                      >
-                        {j.nom}
-                      </button>
-                    </td>
-                    <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--bone)" }}>{j.games}</td>
-                    {/* Un jeu au temps n'a pas de winrate, un jeu à parties n'a
-                        pas de durée : la case reste vide plutôt que de mentir. */}
-                    <td className="px-3 py-2 text-right mono-num" style={{ color: j.winrate === null ? "rgba(152,162,176,0.35)" : "rgba(236,239,244,0.8)" }}>
-                      {j.winrate === null ? t.sansObjet : `${j.winrate}%`}
-                    </td>
-                    <td className="px-3 py-2 text-right mono-num gold-text font-semibold">{fmt(j.points)}</td>
-                    <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--muted)" }}>{fmt(j.detteMoyenne)}</td>
-                    <td className="px-3 py-2 text-right mono-num" style={{ color: j.tempsJoueSec > 0 ? "rgba(236,239,244,0.8)" : "rgba(152,162,176,0.35)" }}>
-                      {j.tempsJoueSec > 0 ? formaterTempsJeu(j.tempsJoueSec) : t.sansObjet}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <ComparatifJeux
+          jeux={jeuxJoues}
+          t={t}
+          onChoisirJeu={setFiltreJeu}
+          fmt={fmt}
+          formaterTempsJeu={formaterTempsJeu}
+        />
       )}
 
       {/* Statistiques globales */}
       {/* Repli de l'étape « le chiffre qui compte » : aucun graphique n'existe
           avant d'avoir joué, et c'est ici qu'ils apparaîtront. */}
-      <h2 className="titre-groupe" data-visite="stats-globales">
-        {t.globalStats}
-      </h2>
-      <div className={`grid gap-4 ${afficherParJeu ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-        {afficherParJeu && (
-          <div className="bloc-graphique">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="titre-section">
-                {t.detteParJeu(roleView)}
-              </h2>
-              <div className="flex gap-1">
-                {(["total", "avg"] as const).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setRoleView(key)}
-                    className="text-xs px-2 py-1 rounded"
-                    style={{
-                      background: roleView === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                      color: roleView === key ? "#ECEFF4" : "var(--faint)",
-                      border: `1px solid ${roleView === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
-                    }}
-                  >
-                    {key === "total" ? t.total : t.average}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={jeuData}>
-                <XAxis dataKey="jeu" tick={AXE_TICK_FORT_DENSE} interval={0} />
-                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
-                <Tooltip
-                  contentStyle={INFOBULLE}
-                  formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerActivite : t.tooltipTotal]}
-                />
-                <Bar dataKey="pompes" fill={TEINTES.jeux} radius={RAYON_BARRE} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {(data.cumulByDate ?? []).length > 0 && (() => {
-          const dateCount: Record<string, number> = {};
-          const cumulData = (data.cumulByDate ?? []).map((d) => {
-            const shortDate = new Date(d.date.slice(0, 10) + "T12:00:00").toLocaleDateString(dateLocale, { day: "numeric", month: "short" });
-            dateCount[shortDate] = (dateCount[shortDate] || 0) + 1;
-            const label = dateCount[shortDate] === 1 ? shortDate : `${shortDate} (${dateCount[shortDate]})`;
-            return { ...d, label };
-          });
-          return (
-            <div className="bloc-graphique">
-              <h2 className="titre-section mb-3">{t.cumulativeProgress}</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={cumulData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={GRILLE_TRAIT} />
-                  <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
-                  <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
-                  <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={INFOBULLE} />
-                  <Line dataKey="cumul" stroke={TEINTES.dette} strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          );
-        })()}
-
-        {/* Coût moyen par activité, semaine après semaine. C'est le seul
-            graphique qui peut descendre : le cumul ne fait que monter et le
-            total par jour suit surtout le temps qu'on a joué. */}
-        {(data.moyenneParSemaine ?? []).length > 1 && (
-          <div className="bloc-graphique md:col-span-2" data-visite="graphique">
-            <h2 className="titre-section">
-              {t.progressionTitre}
-            </h2>
-            <p className="text-xs mt-1 mb-3" style={{ color: "var(--faint)" }}>
-              {t.progressionAide}
-            </p>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart
-                data={(data.moyenneParSemaine ?? []).map((s) => ({
-                  ...s,
-                  label: new Date(s.semaine + "T12:00:00").toLocaleDateString(dateLocale, {
-                    day: "numeric", month: "short",
-                  }),
-                }))}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke={GRILLE_TRAIT} />
-                <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
-                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
-                <Tooltip
-                  contentStyle={INFOBULLE}
-                  formatter={(v, _n, p) => [
-                    `${fmt(Number(v))} · ${t.surNParties(Number(p?.payload?.parties ?? 0))}`,
-                    t.progressionSerie,
-                  ]}
-                />
-                <Line dataKey="moyenne" stroke={TEINTES.moyenne} strokeWidth={2} dot={{ r: 3, fill: TEINTES.moyenne }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </div>
+      <GraphiquesGlobaux
+        t={t}
+        dateLocale={dateLocale}
+        parJeu={afficherParJeu ? jeuData : null}
+        cumul={data.cumulByDate ?? []}
+        moyenneParSemaine={data.moyenneParSemaine ?? []}
+        vue={roleView}
+        setVue={setRoleView}
+        fmt={fmt}
+        fmtAxe={fmtAxe}
+      />
 
       {/* Analytiques par période */}
       {data.statsByPeriod && data.totalGames > 0 && (
-        <div className="bloc-graphique">
-          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <h2 className="titre-section">
-              {statsPeriod === "daily" ? t.dailyDetail : statsMode === "avg" ? t.avgPompesPerGame : t.totalPompesLabel}
-            </h2>
-            <div className="flex gap-1 flex-wrap">
-              {statsPeriod !== "daily" && (
-                <>
-                  {(["avg", "total"] as const).map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setStatsMode(m)}
-                      className="text-xs px-2 py-1 rounded"
-                      style={{
-                        background: statsMode === m ? "rgba(110,155,255,0.2)" : "rgba(152,162,176,0.06)",
-                        color: statsMode === m ? "#6E9BFF" : "var(--faint)",
-                        border: `1px solid ${statsMode === m ? "rgba(110,155,255,0.4)" : "rgba(152,162,176,0.12)"}`,
-                      }}
-                    >
-                      {m === "avg" ? t.average : t.total}
-                    </button>
-                  ))}
-                  <span style={{ width: 1, background: "rgba(152,162,176,0.15)", margin: "0 2px" }} />
-                </>
-              )}
-              {(["hour", "weekday", "month", "daily"] as const).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setStatsPeriod(key)}
-                  className="text-xs px-2 py-1 rounded"
-                  style={{
-                    background: statsPeriod === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                    color: statsPeriod === key ? "#ECEFF4" : "var(--faint)",
-                    border: `1px solid ${statsPeriod === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
-                  }}
-                >
-                  {key === "hour" ? t.hour : key === "weekday" ? t.weekday : key === "month" ? t.month : t.calendar}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {statsPeriod === "daily" ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <input
-                  type="date"
-                  className="lol-input"
-                  style={{ fontSize: "0.85rem", width: "auto" }}
-                  value={calendarDate}
-                  onChange={(e) => setCalendarDate(e.target.value)}
-                  max={new Date().toISOString().slice(0, 10)}
-                />
-                {dailySummary && !dailyLoading && (
-                  <span className="text-sm" style={{ color: "var(--faint)" }}>
-                    <span className="gold-text font-bold">{fmt(dailySummary.total)}</span> ·{" "}
-                    <span style={{ color: "var(--faint)" }}>{t.gamesCount(dailySummary.games)}</span>
-                  </span>
-                )}
-              </div>
-              {dailyLoading ? (
-                <div className="text-center py-8 gold-text text-sm">{t.loading}</div>
-              ) : dailyHourly && dailyHourly.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={dailyHourly}>
-                    <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
-                    <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
-                    <Tooltip
-                      contentStyle={INFOBULLE}
-                      formatter={(v) => [fmt(Number(v)), t.tooltipTotal]}
-                    />
-                    <Bar dataKey="total" fill={TEINTES.periode} radius={RAYON_BARRE} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-center py-8" style={{ color: "var(--faint)", fontSize: "0.85rem" }}>
-                  {t.noGameThisDay}
-                </div>
-              )}
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={periodeTraduite}>
-                <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
-                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
-                <Tooltip
-                  contentStyle={INFOBULLE}
-                  formatter={(v) => [fmt(Number(v)), statsMode === "avg" ? t.tooltipAvgPerGameFull : t.tooltipTotal]}
-                />
-                <Bar dataKey={statsMode} fill={TEINTES.dette} radius={RAYON_BARRE} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
+        <GraphiquePeriode
+          t={t}
+          periode={statsPeriod}
+          setPeriode={setStatsPeriod}
+          mode={statsMode}
+          setMode={setStatsMode}
+          points={periodeTraduite}
+          date={calendarDate}
+          setDate={setCalendarDate}
+          detailHoraire={dailyHourly}
+          resume={dailySummary}
+          chargement={dailyLoading}
+          fmt={fmt}
+          fmtAxe={fmtAxe}
+        />
       )}
 
       {data.totalGames === 0 && (
@@ -1040,69 +831,23 @@ export default function Dashboard() {
           seul jeu : on les regroupe sous son nom plutôt que de les laisser
           passer pour des statistiques générales. */}
       {jeuUnique !== null && (repartitionData.length > 0 || data.mostPlayed || data.leastEfficient) && (
-        <div className="space-y-3">
-          <div>
-            <h2 className="titre-groupe">
-              {t.syntheseDe(jeuUnique)}
-            </h2>
-            <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>
-              {estBattleRoyale ? t.sectionBrDesc : t.sectionLeagueDesc}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
-        {repartitionData.length > 0 && (
-          <div className="bloc-graphique">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="titre-section">
-                {estBattleRoyale
-                  ? (multi ? t.pompesByMode(roleView) : t.parModeDe(nomsExo[exercice], roleView))
-                  : (multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView))}
-              </h2>
-              <div className="flex gap-1">
-                {(["total", "avg"] as const).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => setRoleView(key)}
-                    className="text-xs px-2 py-1 rounded"
-                    style={{
-                      background: roleView === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                      color: roleView === key ? "#ECEFF4" : "var(--faint)",
-                      border: `1px solid ${roleView === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
-                    }}
-                  >
-                    {key === "total" ? t.total : t.average}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={repartitionData}>
-                <XAxis dataKey="label" tick={AXE_TICK_FORT} />
-                <YAxis tickFormatter={fmtAxe} tick={AXE_TICK} />
-                <Tooltip
-                  contentStyle={INFOBULLE}
-                  formatter={(v) => [fmt(Number(v)), roleView === "avg" ? t.tooltipAvgPerGame : t.tooltipTotal]}
-                />
-                <Bar dataKey="pompes" fill={TEINTES.dette} radius={RAYON_BARRE} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-          </div>
-
-      {/* Champion spotlights */}
-      {(data.mostPlayed || data.leastEfficient) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {data.mostPlayed && (
-            <ChampionCard champ={data.mostPlayed} badge={t.mostPlayedBadge} badgeColor="#FFB454" t={t} />
-          )}
-          {data.leastEfficient && (
-            <ChampionCard champ={data.leastEfficient} badge={t.leastEfficientBadge} badgeColor="#FF5A47" t={t} />
-          )}
-        </div>
-      )}
-        </div>
+        <SyntheseJeu
+          jeu={jeuUnique}
+          t={t}
+          description={estBattleRoyale ? t.sectionBrDesc : t.sectionLeagueDesc}
+          titreRepartition={
+            estBattleRoyale
+              ? (multi ? t.pompesByMode(roleView) : t.parModeDe(nomsExo[exercice], roleView))
+              : (multi ? t.pompesByRole(roleView) : t.parRoleDe(nomsExo[exercice], roleView))
+          }
+          repartition={repartitionData}
+          vue={roleView}
+          setVue={setRoleView}
+          mostPlayed={data.mostPlayed ?? null}
+          leastEfficient={data.leastEfficient ?? null}
+          fmt={fmt}
+          fmtAxe={fmtAxe}
+        />
       )}
 
     </div>

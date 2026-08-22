@@ -18,7 +18,15 @@ const RACINE = process.argv[3] ?? "/tmp/rendu";
 const BASE = process.env.BASE_RENDU ?? "http://127.0.0.1:3311";
 const CHROMIUM = "/opt/pw-browsers/chromium";
 
+/**
+ * `/telechargement` interroge l'API GitHub pour connaître la dernière version
+ * publiée, avec un cache d'une heure. Selon que le cache est chaud ou froid au
+ * moment de la capture, la page affiche le numéro de version ou ne l'affiche
+ * pas — et deux séries divergent sans qu'une seule ligne de code ait bougé.
+ * C'est la seule page du lot dont une différence ne prouve rien.
+ */
 const PAGES = ["/", "/cgu", "/login", "/beta", "/telechargement", "/dashboard", "/history", "/settings"];
+const PAGES_INSTABLES = new Set(["_telechargement"]);
 const LARGEURS = [360, 768, 1280];
 
 const dossier = join(RACINE, MODE);
@@ -78,6 +86,13 @@ await navigateur.close();
 if (MODE === "apres") {
   const avant = JSON.parse(readFileSync(join(RACINE, "avant", "empreintes.json"), "utf8"));
   const differentes = Object.keys(empreintes).filter((n) => avant[n] !== empreintes[n]);
+  // Une page dont le contenu dépend d'un service extérieur se signale à part :
+  // sa différence est une question, pas un constat.
+  const instables = differentes.filter((n) => [...PAGES_INSTABLES].some((p) => n.includes(p)));
+  if (instables.length) {
+    console.log(`${instables.length} page(s) dépendant d'un service extérieur — à vérifier à la main :`);
+    for (const n of instables) console.log(`  ${n}`);
+  }
   const manquantes = Object.keys(avant).filter((n) => !(n in empreintes));
   if (differentes.length === 0 && manquantes.length === 0) {
     console.log(`${Object.keys(empreintes).length} captures, aucune différence.`);
