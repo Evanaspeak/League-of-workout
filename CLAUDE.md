@@ -182,7 +182,7 @@ Règles :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-559 tests unitaires, 32 suites. Base et session doublées : aucune dépendance à
+549 tests unitaires, 32 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -207,6 +207,48 @@ les six langues, sur un compte qu'il ouvre lui-même.
 - `e2e/langues.spec.ts` — aucun « undefined » à l'écran, aucun débordement
   horizontal (c'est ainsi qu'un mot allemand trop long se signale), `lang`
   posé sur la page, et six textes réellement différents.
+- `dictionaries.test.ts` refuse aussi un dictionnaire que personne n'importe.
+  Deux fichiers de langue avaient survécu six semaines à la suppression de
+  leurs écrans, et ont fini traduits en quatre langues de plus avant qu'on s'en
+  aperçoive : 364 lignes écrites pour des pages qui n'existent plus.
+
+## Scripts de mesure
+
+Trois scripts pilotent un Chromium sur l'application lancée en local. Ils ne
+tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
+
+```bash
+node scripts/accessibilite.mjs   # neuf pages, six langues, règles WCAG
+node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
+node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
+```
+
+### Leurs pièges, tous rencontrés
+- **Mesurer la mauvaise page.** Avec un cookie de session périmé, les trois
+  scripts rendaient un rapport vert sur des pages de connexion qu'ils n'avaient
+  jamais quittées. Chacun vérifie désormais qu'il est bien où il croit être et
+  sort en erreur sinon. C'est le premier contrôle à écrire, pas le dernier.
+- **Comparer une chose à elle-même.** Le contrôle du focus lisait
+  `getComputedStyle(el, ":not(:focus)")` — l'argument est un pseudo-élément, pas
+  un pseudo-classe : la fonction rendait deux fois le même style et concluait
+  toujours à la conformité. Il faut comparer l'élément au focus à l'élément sans
+  focus, en le retirant réellement.
+- **Poser la langue trop tôt.** `low_locale` était écrit avant la boucle qui
+  nettoie les clés `low_` : l'audit annonçait six langues et les passait six
+  fois en français.
+- **Attendre une image qui ne se charge jamais.** Les images en chargement
+  différé sous la ligne de flottaison ne commencent jamais : l'attente doit être
+  bornée (`Promise.race` à 4 s), sinon la capture ne rend jamais la main.
+- **Reconstruire pendant une mesure.** Un `npm run build` en cours de campagne
+  invalide les fragments CSS déjà servis : la page se capture sans style et
+  toutes les comparaisons deviennent fausses. Ne jamais reconstruire ni tuer le
+  serveur pendant qu'un test navigateur tourne.
+- **Une page qui dépend d'un service extérieur** (`/telechargement` lit les
+  releases GitHub) diffère d'une exécution à l'autre sans que rien n'ait changé.
+  `comparer-rendu.mjs` les liste à part, sous « à vérifier à la main ».
+
+Chacun de ces contrôles a été éprouvé en le sabotant volontairement : un outil
+de mesure qui ne sait pas échouer ne mesure rien.
 
 ## Commandes utiles
 ```bash
