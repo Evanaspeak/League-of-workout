@@ -182,7 +182,7 @@ Règles :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-550 tests unitaires, 33 suites. Base et session doublées : aucune dépendance à
+551 tests unitaires, 33 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -271,6 +271,13 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 - **Une page qui dépend d'un service extérieur** (`/telechargement` lit les
   releases GitHub) diffère d'une exécution à l'autre sans que rien n'ait changé.
   `comparer-rendu.mjs` les liste à part, sous « à vérifier à la main ».
+- **Tuer le serveur avec `pkill -f`.** Le motif `next start -p 3311` figure
+  aussi dans la ligne de commande du shell qui lance la commande : `pkill` tue
+  le shell, le serveur survit, et le `next start` suivant échoue sur
+  EADDRINUSE dans un journal que personne ne lit. Huit tests navigateur ont
+  ainsi échoué sur un `.next` d'avant la reconstruction, et le diagnostic est
+  parti vers une feuille de style absente qui n'a jamais existé. Trouver le
+  processus (`ps -eo pid,args | grep next-server`) et le tuer par son numéro.
 
 Chacun de ces contrôles a été éprouvé en le sabotant volontairement : un outil
 de mesure qui ne sait pas échouer ne mesure rien.
