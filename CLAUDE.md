@@ -182,7 +182,7 @@ Règles :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-556 tests unitaires, 34 suites. Base et session doublées : aucune dépendance à
+571 tests unitaires, 35 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -191,6 +191,13 @@ Les tests de routes API appellent les handlers directement, avec les outils de
 `src/test/api.ts`. Ce qui est systématiquement éprouvé : refus sans session,
 refus pour un compte non administrateur là où c'est requis, et filtrage par
 compte sur chaque requête en base.
+
+Toutes les routes ont un test, sauf `auth/[...nextauth]`, qui appartient à
+Auth.js. Les six dernières couvertes — configuration du scoring, rejeu de
+l'intro, expiration de session, fin de connexion desktop, session volatile,
+dernière partie Riot — l'ont été après un recensement qui résout les imports des
+tests jusqu'aux fichiers de route : chercher le nom du dossier dans le texte des
+tests donnait des faux positifs.
 
 L'empreinte du mot de passe ne sort pas de la base : `getCurrentUser` la retire
 par `omit`, et un test le vérifie sur la requête elle-même. Les deux routes qui
@@ -261,6 +268,12 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
   scripts rendaient un rapport vert sur des pages de connexion qu'ils n'avaient
   jamais quittées. Chacun vérifie désormais qu'il est bien où il croit être et
   sort en erreur sinon. C'est le premier contrôle à écrire, pas le dernier.
+- **Chercher un mot là où on veut un attribut.** Le test de suppression de
+  cookie lisait `toMatch(/Secure/)` sur l'en-tête entier. Or le nom du cookie
+  commence lui-même par `__Secure-` : la condition était vraie quoi qu'il
+  arrive, et le test survivait au retrait pur et simple de l'attribut. Les
+  attributs se lisent après le premier point-virgule, jamais dans la chaîne
+  entière.
 - **Comparer une chose à elle-même.** Le contrôle du focus lisait
   `getComputedStyle(el, ":not(:focus)")` — l'argument est un pseudo-élément, pas
   un pseudo-classe : la fonction rendait deux fois le même style et concluait
