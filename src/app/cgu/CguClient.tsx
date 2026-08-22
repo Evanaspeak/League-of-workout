@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { LangueDocument } from "@/components/LangueDocument";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { cgu } from "@/lib/i18n/dictionaries/cgu";
 
@@ -18,6 +19,7 @@ export default function CguClient() {
         <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
           {t.versionLabel(DATE)}
         </p>
+        <LangueDocument />
       </div>
 
       <Section title={t.article1.title}>
