@@ -718,6 +718,12 @@ ipcMain.on("notif:afficher", (_e, { titre, corps } = {}) => {
 
 ipcMain.on("fenetre:ouvrir", () => ouvrirFenetre());
 
+// Ce que la page veut dire au joueur pendant qu'il joue : la pastille est le
+// seul endroit visible, Windows taisant ses notifications dès qu'un jeu tourne.
+ipcMain.on("overlay:message", (_e, { texte, ok } = {}) => {
+  overlay.signalerCapture({ ok: Boolean(ok), texte: String(texte || "") });
+});
+
 // ── Fenêtre principale ───────────────────────────────────────────────────────
 
 async function createWindow() {
@@ -1179,6 +1185,7 @@ app.whenReady().then(() => {
    * de la déclencher toute seule en fin de partie. Un automatisme qu'on n'a
    * jamais vu marcher à la main ne se débogue pas.
    */
+  let dernieresElim = null;
   const lireEcran = async () => {
     const image = await imageEcran();
     if (!image || image.isEmpty() || estNoir(image)) {
@@ -1188,15 +1195,29 @@ app.whenReady().then(() => {
       });
     }
     try {
+      const c = await lecteur.lireCartouche(image);
+      // Le cartouche d'éliminations n'est PAS visible sur l'écran de classement :
+      // ce sont deux instants différents. On garde donc le dernier relevé, et
+      // on le joint au classement quand celui-ci paraît.
+      if (c.eliminations.valeur !== null) dernieresElim = c.eliminations;
+
       const fin = await lecteur.lireFinDePartie(image);
       if (fin) {
         const { valeur, accord, essais } = fin.classement;
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send("apex:partie-lue", {
+            jeu: "Apex Legends",
+            classement: valeur,
+            eliminations: dernieresElim?.valeur ?? 0,
+            accord, essais,
+            elimSures: dernieresElim ? dernieresElim.accord === dernieresElim.essais : false,
+          });
+        }
         return overlay.signalerCapture({
           ok: true,
-          texte: `Fin de partie — classement ${valeur} (${accord}/${essais})`,
+          texte: `Classement ${valeur} · ${dernieresElim?.valeur ?? 0} élim — enregistrement…`,
         });
       }
-      const c = await lecteur.lireCartouche(image);
       const dit = (n) => (n.valeur === null ? "?" : `${n.valeur}`);
       const sur = c.eliminations.valeur !== null;
       overlay.signalerCapture({

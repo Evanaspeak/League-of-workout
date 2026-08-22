@@ -10,6 +10,7 @@ import { MajDesktop } from "@/components/MajDesktop";
 import { DetectionSession } from "@/components/DetectionSession";
 import { PartieDetectee } from "@/components/PartieDetectee";
 import { DetteDirecte } from "@/components/DetteDirecte";
+import { PartieApexLue } from "@/components/PartieApexLue";
 import { CadreDesktop } from "@/components/CadreDesktop";
 import { VisiteGuidee } from "@/components/VisiteGuidee";
 import { Footer } from "@/components/Footer";
@@ -128,6 +129,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <PartieDetectee />
             {/* Calcule ce que la partie en cours coûte, pour l'overlay. */}
             <DetteDirecte />
+            <PartieApexLue />
           </SessionProvider>
         </LocaleProvider>
         </RatiosExercicesProvider>

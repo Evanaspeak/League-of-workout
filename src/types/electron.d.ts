@@ -134,6 +134,21 @@ declare global {
       onJeuDetecte?: (
         callback: (e: { type: "jeu-demarre" | "jeu-arrete"; jeu: string; session: boolean }) => void
       ) => () => void;
+      /** Chiffres lus sur l'écran d'Apex, poussés par l'application (0.8+). */
+      onPartieLue?: (
+        callback: (lu: {
+          jeu: string;
+          classement: number;
+          eliminations: number;
+          /** Modes de lecture d'accord, sur le nombre essayé. */
+          accord: number;
+          essais: number;
+          /** Vrai quand les éliminations ont fait l'unanimité. */
+          elimSures: boolean;
+        }) => void
+      ) => () => void;
+      /** Affiche un message dans la pastille : Windows tait ses notifications en jeu. */
+      direDansOverlay?: (texte: string, ok: boolean) => void;
       demarrageLire?: () => Promise<{ actif: boolean; disponible: boolean }>;
       demarrageEcrire?: (actif: boolean) => Promise<{ actif: boolean; disponible: boolean }>;
     };

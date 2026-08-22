@@ -70,6 +70,26 @@ contextBridge.exposeInMainWorld("electronLOL", {
   /** Ouvre la fenêtre : c'est ce que fait un clic sur la notification. */
   ouvrirFenetre: () => ipcRenderer.send("fenetre:ouvrir"),
 
+  /**
+   * Chiffres lus sur l'écran d'Apex, poussés vers la page.
+   *
+   * La lecture se fait dans l'application, qui seule voit l'écran ; c'est la
+   * page qui enregistre, parce qu'elle seule porte la session du compte.
+   */
+  onPartieLue: (callback) => {
+    const handler = (_e, donnees) => callback(donnees);
+    ipcRenderer.on("apex:partie-lue", handler);
+    return () => ipcRenderer.removeListener("apex:partie-lue", handler);
+  },
+
+  /**
+   * Ce que la page veut afficher dans la pastille.
+   *
+   * Passer par une notification Windows ne servirait à rien : dès qu'un jeu
+   * tourne, l'Assistant de concentration les supprime toutes.
+   */
+  direDansOverlay: (texte, ok) => ipcRenderer.send("overlay:message", { texte, ok }),
+
   // Placement libre de l'overlay : le mode saisie rend la pastille attrapable
   // à la souris, le temps de la poser où elle ne gêne pas.
   overlayPlacement: (actif, jeu) => ipcRenderer.invoke("overlay:placement", { actif, jeu }),
