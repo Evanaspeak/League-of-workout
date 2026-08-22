@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useSession } from "@/lib/SessionContext";
 import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
@@ -50,12 +49,15 @@ const SyntheseJeu = dynamic(
   () => import("@/components/dashboard/SyntheseJeu").then((m) => m.SyntheseJeu),
   { ssr: false, loading: () => <PlaceGraphique /> },
 );
+const GraphiqueSession = dynamic(
+  () => import("@/components/dashboard/GraphiqueSession").then((m) => m.GraphiqueSession),
+  { ssr: false, loading: () => <PlaceGraphique /> },
+);
 const GraphiquesGlobaux = dynamic(
   () => import("@/components/dashboard/GraphiquesGlobaux").then((m) => m.GraphiquesGlobaux),
   { ssr: false, loading: () => <PlaceGraphique double /> },
 );
 import { Squelette } from "@/components/dashboard/Squelette";
-import { AXE_TICK_DENSE, INFOBULLE, RAYON_BARRE, TEINTES } from "@/lib/graphiques";
 
 /**
  * `jour` (0 = dimanche) et `mois` (0 = janvier) viennent du serveur ; `label`
@@ -747,19 +749,12 @@ export default function Dashboard() {
             )}
 
             {sessionGames.length > 0 && (
-              <div className="lol-panel p-3" style={{ background: "rgba(152,162,176,0.04)" }}>
-                <h3 className="titre-bloc mb-2">
-                  {t.pompesPerGameSession}
-                </h3>
-                <ResponsiveContainer width="100%" height={140}>
-                  <BarChart data={sessionChartData}>
-                    <XAxis dataKey="label" tick={AXE_TICK_DENSE} />
-                    <YAxis tickFormatter={fmtAxe} tick={AXE_TICK_DENSE} />
-                    <Tooltip formatter={(v) => fmt(Number(v))} contentStyle={INFOBULLE} />
-                    <Bar dataKey="pompes" fill={TEINTES.periode} radius={RAYON_BARRE} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <GraphiqueSession
+                titre={t.pompesPerGameSession}
+                points={sessionChartData}
+                fmt={fmt}
+                fmtAxe={fmtAxe}
+              />
             )}
 
             {sessionGames.length > 0 && (

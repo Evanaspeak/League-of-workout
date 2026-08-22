@@ -271,6 +271,21 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 - **Une page qui dépend d'un service extérieur** (`/telechargement` lit les
   releases GitHub) diffère d'une exécution à l'autre sans que rien n'ait changé.
   `comparer-rendu.mjs` les liste à part, sous « à vérifier à la main ».
+- **Peser ce que le serveur annonce, pas ce qui arrive.** `performance.mjs`
+  lisait la taille dans l'en-tête `content-length`. Next.js ne l'envoie pas sur
+  les fragments JavaScript : compressés, ils partent en `Transfer-Encoding:
+  chunked`, sans longueur annoncée. Le script rendait donc « script 0 ko » sur
+  toutes les pages — précisément la mesure pour laquelle il existe — et seules
+  les polices, servies en fichiers statiques, apparaissaient. Il lit maintenant
+  l'API de chronométrage des ressources du navigateur, en gardant l'en-tête
+  pour les ressources d'un autre domaine qui n'autorisent pas la lecture de
+  leurs temps. Le tableau de bord passait de 131 ko annoncés à 545 ko réels.
+- **Prendre un préchargement pour un chargement.** Sur `/settings`, 104 ko de
+  recharts apparaissaient dans les ressources. Ce n'était pas la page qui les
+  chargeait : le routeur préchargeait `/dashboard`, lié depuis la navigation.
+  Un préchargement par `import()` s'annonce `initiatorType: "script"`, comme un
+  chargement ordinaire — c'est l'instant de la requête qui les distingue, après
+  le `load`, et `renderBlockingStatus: "non-blocking"`.
 - **Confondre « rien trouvé » et « rien regardé ».** `accessibilite.mjs`
   comptait dans le même total les défauts trouvés et les pages qu'il n'avait
   pas pu atteindre. Un rapport annonçant « 45 constats » pouvait donc désigner

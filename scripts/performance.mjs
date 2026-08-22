@@ -64,15 +64,58 @@ const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }
 await ctx.addCookies(cookies());
 const page = await ctx.newPage();
 
-/** Poids transféré, par nature de ressource. */
-const parNature = new Map();
+/**
+ * Poids transféré, par nature de ressource.
+ *
+ * La taille se lisait dans l'en-tête `content-length`. Next.js ne l'envoie pas
+ * sur les fragments JavaScript : compressés, ils partent en
+ * `Transfer-Encoding: chunked`, sans longueur annoncée. Le script rendait donc
+ * « script 0 ko » sur toutes les pages — c'est-à-dire précisément la mesure
+ * pour laquelle il existe. Seules les polices, servies en fichiers statiques,
+ * avaient une longueur : d'où 130 ko identiques d'une page à l'autre.
+ *
+ * On lit maintenant ce que le navigateur a réellement reçu, par l'API de
+ * chronométrage des ressources. Elle rend zéro pour une ressource d'un autre
+ * domaine qui n'autorise pas la lecture de ses temps (les polices Google) :
+ * pour celles-là, l'en-tête reste la meilleure source. On garde donc les deux
+ * et on retient la plus grande.
+ */
+const parUrl = new Map();
 let requetes = 0;
-page.on("response", async (r) => {
+page.on("response", (r) => {
   requetes++;
-  const type = r.request().resourceType();
   const taille = Number(r.headers()["content-length"] ?? 0);
-  parNature.set(type, (parNature.get(type) ?? 0) + taille);
+  const courant = parUrl.get(r.url());
+  parUrl.set(r.url(), {
+    type: r.request().resourceType(),
+    entete: Math.max(courant?.entete ?? 0, taille),
+  });
 });
+
+/** Ce que le navigateur dit avoir reçu, url par url. */
+async function poidsReels() {
+  const mesures = await page.evaluate(() =>
+    performance.getEntriesByType("resource").map((e) => ({
+      url: e.name,
+      // `encodedBodySize` est le corps compressé, hors en-têtes ; c'est le
+      // chiffre qui compte pour un réseau lent.
+      taille: e.encodedBodySize || e.transferSize || 0,
+    })));
+  const parNature = new Map();
+  const vues = new Set();
+  for (const { url, taille } of mesures) {
+    vues.add(url);
+    const connu = parUrl.get(url);
+    const nature = connu?.type ?? "autre";
+    parNature.set(nature, (parNature.get(nature) ?? 0) + Math.max(taille, connu?.entete ?? 0));
+  }
+  // Ce que l'API de chronométrage n'a pas vu (le document lui-même, entre
+  // autres) garde la taille annoncée par son en-tête.
+  for (const [url, { type, entete }] of parUrl) {
+    if (!vues.has(url) && entete > 0) parNature.set(type, (parNature.get(type) ?? 0) + entete);
+  }
+  return parNature;
+}
 
 await page.addInitScript((__compte) => {
   // L'écran d'ouverture recouvre la page : mesuré avec, on chronomètre une
@@ -123,6 +166,7 @@ const nav = await page.evaluate(() => {
 });
 
 const ko = (o) => `${Math.round(o / 1024)} ko`;
+const parNature = await poidsReels();
 const total = [...parNature.values()].reduce((a, b) => a + b, 0);
 
 console.log(`\n═══ ${CHEMIN}`);
