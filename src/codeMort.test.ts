@@ -94,3 +94,50 @@ describe("code mort", () => {
     expect(orphelins).toEqual([]);
   });
 });
+
+/**
+ * Une classe CSS que personne ne pose.
+ *
+ * Une section entière de la page d'accueil a été réécrite en juin ; sa feuille
+ * de style est restée, 85 lignes que le navigateur télécharge à chaque visite
+ * pour n'en rien faire. Rien ne le disait : le CSS ne se compile pas, et une
+ * règle sans élément à qui s'appliquer ne produit aucune erreur.
+ *
+ * Le contrôle est volontairement permissif — il suffit que le nom de la classe
+ * paraisse quelque part dans le code pour qu'elle soit tenue pour employée.
+ * Une classe composée à la volée (`` `tarif-${x}` ``) ne doit jamais faire
+ * échouer une poussée légitime ; mieux vaut laisser passer une classe morte
+ * que bloquer une classe vivante.
+ */
+describe("CSS mort", () => {
+  function feuilles(dossier: string, out: string[] = []): string[] {
+    for (const entree of readdirSync(dossier, { withFileTypes: true })) {
+      if (entree.name.startsWith(".") || entree.name === "node_modules") continue;
+      const chemin = join(dossier, entree.name);
+      if (entree.isDirectory()) feuilles(chemin, out);
+      else if (entree.name.endsWith(".css")) out.push(chemin);
+    }
+    return out;
+  }
+
+  it("chaque classe déclarée est posée quelque part", () => {
+    const code = fichiersSource(SRC)
+      .map((f) => readFileSync(f, "utf8"))
+      .join("\n");
+
+    const inutiles: string[] = [];
+    const vues = new Set<string>();
+    for (const feuille of feuilles(SRC)) {
+      for (const m of readFileSync(feuille, "utf8").matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) {
+        const classe = m[1];
+        if (vues.has(classe)) continue;
+        vues.add(classe);
+        if (!new RegExp(`\\b${classe}\\b`).test(code)) {
+          inutiles.push(`${classe} (${relative(SRC, feuille)})`);
+        }
+      }
+    }
+
+    expect(inutiles).toEqual([]);
+  });
+});
