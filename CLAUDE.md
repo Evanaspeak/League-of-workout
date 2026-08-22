@@ -279,6 +279,14 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 - **Une page qui dépend d'un service extérieur** (`/telechargement` lit les
   releases GitHub) diffère d'une exécution à l'autre sans que rien n'ait changé.
   `comparer-rendu.mjs` les liste à part, sous « à vérifier à la main ».
+- **Ne contrôler que la moitié du script.** Le contrôle d'atterrissage ajouté
+  aux trois outils ne couvrait, dans `performance.mjs`, que la passe sur poste.
+  La passe sur téléphone bridé mesurait sans vérifier où elle était — et la
+  page de connexion, qui se charge vite, y aurait rendu un chiffre flatteur.
+  Un contrôle qu'on ajoute se pose partout où la mesure se fait, pas au premier
+  endroit rencontré.
+- **Afficher un seuil sans dire s'il est franchi.** « LCP 3776 ms (bon en
+  dessous de 2500) » se lit comme un satisfecit. C'est au rapport de trancher.
 - **Peser ce que le serveur annonce, pas ce qui arrive.** `performance.mjs`
   lisait la taille dans l'en-tête `content-length`. Next.js ne l'envoie pas sur
   les fragments JavaScript : compressés, ils partent en `Transfer-Encoding:
@@ -310,6 +318,22 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 
 Chacun de ces contrôles a été éprouvé en le sabotant volontairement : un outil
 de mesure qui ne sait pas échouer ne mesure rien.
+
+### Le tableau de bord sur téléphone bridé
+3476 ms de LCP, au-dessus du seuil de 2500 — les seuls des neuf pages à le
+franchir. Ce n'est pas un problème de poids : `/history` et `/settings` ont un
+paquet de départ comparable et paraissent à 1300 ms.
+
+La chaîne, mesurée sur 4G moyenne et processeur quatre fois plus lent : le
+JavaScript initial charge jusqu'à 2845 ms, l'hydratation suit, les quatre
+appels API partent ensemble à 3080 ms, et le plus grand élément — le rappel du
+test de force — paraît à 3448 ms. Le tableau de bord n'a rien de grand à
+montrer tant que ses données ne sont pas revenues, alors que les deux autres
+écrans élisent un élément déjà présent.
+
+Faire venir ce texte plus tôt suppose de rendre le premier écran côté serveur :
+la page est entièrement cliente et lit tout après montage. C'est un chantier,
+pas une retouche — il n'a pas été entrepris de nuit.
 
 ## Commandes utiles
 ```bash
