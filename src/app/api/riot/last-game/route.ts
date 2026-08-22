@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
+import { COUT, messageRefus, reserverRiot } from "@/lib/riotBudget";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,17 @@ export async function GET(req: Request) {
   }
 
   const routing = routageDe(user.riotRegion);
+
+  /**
+   * Deux requêtes à chaque tour. Le mode session appelle cette route toutes les
+   * deux minutes, et la clé de développement en autorise cent par deux minutes :
+   * cinquante joueurs simultanés en font le tour, sans que personne n'ait rien
+   * fait d'anormal. Le refus vaut mieux que le 429 en cascade.
+   */
+  const refus = await reserverRiot(user.id, COUT.dernierePartie);
+  if (refus) {
+    return NextResponse.json({ error: messageRefus(refus) }, { status: 429 });
+  }
 
   const idsRes = await riotFetch(
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?start=0&count=1`,

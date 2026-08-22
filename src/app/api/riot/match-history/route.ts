@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
+import { COUT, messageRefus, rendreAuBudget, reserverRiot } from "@/lib/riotBudget";
 
 export const dynamic = "force-dynamic";
 
@@ -60,17 +61,39 @@ export async function GET() {
 
   const routing = routageDe(user.riotRegion);
 
+  /**
+   * La réservation est posée avant le premier appel, pas après.
+   *
+   * Vingt et une requêtes sur une clé qui en autorise cent par deux minutes :
+   * cinq ouvertures d'historique simultanées la vident. Réserver après coup
+   * laisserait partir tous les appels concurrents, chacun ayant vu du budget
+   * libre — et la reprise automatique de `riotFetch` doublerait la charge
+   * exactement quand elle est déjà trop haute.
+   */
+  const refus = await reserverRiot(user.id, COUT.historique);
+  if (refus) {
+    return NextResponse.json({ error: messageRefus(refus) }, { status: 429 });
+  }
+  // Ce qui n'est pas dépensé revient au budget : le cache évite le plus souvent
+  // dix-neuf des vingt requêtes de détail.
+  let depense = 0;
+
   const idsRes = await riotFetch(
     `https://${routing}.api.riotgames.com/lol/match/v5/matches/by-puuid/${encodeURIComponent(puuid)}/ids?start=0&count=20`,
     apiKey
   );
+  depense += 1;
   if (!idsRes.ok) {
+    await rendreAuBudget(COUT.historique, depense);
     const err = await idsRes.json().catch(() => ({}));
     return NextResponse.json({ error: `Erreur Riot API: ${idsRes.status}`, details: err }, { status: idsRes.status });
   }
 
   const ids: string[] = await idsRes.json();
-  if (!ids.length) return NextResponse.json([]);
+  if (!ids.length) {
+    await rendreAuBudget(COUT.historique, depense);
+    return NextResponse.json([]);
+  }
 
   const logged = await prisma.game.findMany({
     where: { riotMatchId: { in: ids }, userId: user.id },
@@ -93,6 +116,7 @@ export async function GET() {
     await Promise.all(
       batch.map(async (id) => {
         try {
+          depense += 1;
           const res = await riotFetch(
             `https://${routing}.api.riotgames.com/lol/match/v5/matches/${id}`,
             apiKey
@@ -151,5 +175,6 @@ export async function GET() {
     };
   });
 
+  await rendreAuBudget(COUT.historique, depense);
   return NextResponse.json(results);
 }
