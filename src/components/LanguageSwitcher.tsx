@@ -1,8 +1,8 @@
 "use client";
 import { Icone } from "@/components/Icone";
 import { useState, useRef, useEffect } from "react";
-import { useLocale } from "@/lib/i18n/LocaleContext";
-import { Drapeau } from "./Drapeau";
+import { useLocale, type Locale } from "@/lib/i18n/LocaleContext";
+import { Drapeau, type Pays } from "./Drapeau";
 
 /**
  * Drapeau et code de langue côte à côte. Le code prime : c'est lui qui nomme
@@ -10,9 +10,15 @@ import { Drapeau } from "./Drapeau";
  * qu'à repérer l'option d'un coup d'œil, et il est dessiné plutôt qu'emoji :
  * Windows ne sait pas rendre les emoji de drapeaux.
  */
-const OPTIONS: { code: "fr" | "en"; pays: "fr" | "us"; label: string }[] = [
+const OPTIONS: { code: Locale; pays: Pays; label: string }[] = [
   { code: "fr", pays: "fr", label: "Français" },
   { code: "en", pays: "us", label: "English" },
+  { code: "es", pays: "es", label: "Español" },
+  { code: "de", pays: "de", label: "Deutsch" },
+  // Chaque langue est nommée dans sa propre écriture : quelqu'un qui cherche
+  // la sienne la reconnaît, même s'il ne lit ni le français ni l'anglais.
+  { code: "zh", pays: "cn", label: "中文" },
+  { code: "ja", pays: "jp", label: "日本語" },
 ];
 
 export function LanguageSwitcher() {

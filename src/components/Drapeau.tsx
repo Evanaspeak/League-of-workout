@@ -8,7 +8,9 @@
  *
  * Un SVG s'affiche partout, à toutes les tailles, sans dépendre du système.
  */
-export function Drapeau({ pays, taille = 16 }: { pays: "fr" | "us"; taille?: number }) {
+export type Pays = "fr" | "us" | "es" | "de" | "cn" | "jp";
+
+export function Drapeau({ pays, taille = 16 }: { pays: Pays; taille?: number }) {
   const hauteur = Math.round(taille * 0.7);
   const commun = {
     width: taille,
@@ -30,6 +32,49 @@ export function Drapeau({ pays, taille = 16 }: { pays: "fr" | "us"; taille?: num
         <rect width="20" height="14" fill="#F5F5F5" />
         <rect width="6.67" height="14" fill="#002654" />
         <rect x="13.33" width="6.67" height="14" fill="#CE1126" />
+      </svg>
+    );
+  }
+
+  if (pays === "es") {
+    // Rouge, or, rouge, dans un rapport 1-2-1. Les armes du centre ne sont
+    // qu'une tache à cette taille : on les laisse.
+    return (
+      <svg {...commun} aria-hidden>
+        <rect width="20" height="14" fill="#AA151B" />
+        <rect y="3.5" width="20" height="7" fill="#F1BF00" />
+      </svg>
+    );
+  }
+
+  if (pays === "de") {
+    return (
+      <svg {...commun} aria-hidden>
+        <rect width="20" height="4.67" fill="#000000" />
+        <rect y="4.67" width="20" height="4.66" fill="#DD0000" />
+        <rect y="9.33" width="20" height="4.67" fill="#FFCE00" />
+      </svg>
+    );
+  }
+
+  if (pays === "cn") {
+    // Une grande étoile et quatre petites, dans le canton supérieur gauche.
+    return (
+      <svg {...commun} aria-hidden>
+        <rect width="20" height="14" fill="#DE2910" />
+        <circle cx="3.4" cy="3.6" r="1.5" fill="#FFDE00" />
+        {[[6.6, 1.4], [8.1, 3], [8.1, 5.2], [6.6, 6.7]].map(([x, y]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r="0.62" fill="#FFDE00" />
+        ))}
+      </svg>
+    );
+  }
+
+  if (pays === "jp") {
+    return (
+      <svg {...commun} aria-hidden>
+        <rect width="20" height="14" fill="#F5F5F5" />
+        <circle cx="10" cy="7" r="4.2" fill="#BC002D" />
       </svg>
     );
   }

@@ -69,6 +69,26 @@ describe("dictionnaires de traduction", () => {
       expect(divergentes).toEqual([]);
     });
 
+    it("donne aux langues présentes exactement les mêmes clés", () => {
+      // Le français et l'anglais sont exigés, les quatre autres se remplissent
+      // au fil du temps. Mais une langue à demi traduite est pire que pas de
+      // langue du tout : l'écran mélangerait alors deux idiomes sans logique.
+      // Une langue présente doit donc l'être entièrement.
+      const reference = chemins(exporte!.fr);
+      for (const langue of ["es", "de", "zh", "ja"] as const) {
+        const jeu = (exporte as Record<string, unknown>)[langue];
+        if (jeu === undefined) continue;
+        expect({ langue, manquantes: reference.filter((c) => !chemins(jeu).includes(c)) })
+          .toEqual({ langue, manquantes: [] });
+        expect({ langue, enTrop: chemins(jeu).filter((c) => !reference.includes(c)) })
+          .toEqual({ langue, enTrop: [] });
+        const divergentes = reference
+          .filter((c) => nature(exporte!.fr, c) !== nature(jeu, c))
+          .map((c) => `${c} : ${nature(exporte!.fr, c)} en français, ${nature(jeu, c)} en ${langue}`);
+        expect(divergentes).toEqual([]);
+      }
+    });
+
     it("ne laisse aucune traduction vide des deux côtés", () => {
       // Une chaîne vide d'un seul côté peut être voulue : l'anglais déplace
       // parfois un mot d'un morceau de phrase à l'autre, et l'écran qui les
