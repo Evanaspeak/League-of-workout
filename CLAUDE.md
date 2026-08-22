@@ -357,6 +357,28 @@ npx prisma generate  # Regénérer client après modif schema
 npx prisma studio    # UI DB locale
 ```
 
+## Déploiement Vercel
+
+La commande de construction sur Vercel n'est **pas** celle de `package.json` :
+c'est `prisma generate && prisma migrate deploy && next build`, réglée dans le
+tableau de bord. Construire ici avec `npm run build` ne lance donc pas la même
+chose, et un échec Vercel peut très bien ne pas se reproduire en local.
+
+Vercel déploie **toute branche poussée**. Une branche sans code — dépôt de
+fichiers, notes — échoue sur `prisma generate` en six secondes et envoie un
+courriel d'échec. Y poser un `vercel.json` la met à l'écart :
+
+```json
+{ "git": { "deploymentEnabled": false } }
+```
+
+Turbopack refuse d'analyser un chemin de fichier composé d'un paramètre ou
+d'un tableau étalé : il annonce « Dynamic filesystem access causes tracing of
+the whole project » et embarque tout le dépôt dans la fonction. Les chemins
+lus au disque s'écrivent en toutes lettres, et de préférence à la racine du
+module — la page qui les consomme est rendue à la construction, la présence se
+constate donc une fois pour toutes (`src/lib/videoBoucle.ts`).
+
 ## Points d'attention
 - `NEXT_PUBLIC_*` vars compilées au build → redeploy Vercel nécessaire après ajout
 - `prisma migrate deploy` utilisé par Vercel (pas `db push`) → toute nouvelle table nécessite une migration dans `prisma/migrations/`

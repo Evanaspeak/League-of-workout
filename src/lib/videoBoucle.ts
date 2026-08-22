@@ -19,20 +19,36 @@ export type VideoBoucle = {
   affiche: string | null;
 };
 
-const DOSSIER = ["public", "videos"];
-
-function present(nom: string): boolean {
-  return existsSync(join(process.cwd(), ...DOSSIER, nom));
-}
+/**
+ * Présence constatée une seule fois, au chargement du module.
+ *
+ * Le chemin se composait d'abord d'un tableau étalé et d'un paramètre, puis
+ * d'un paramètre seul : dans les deux cas Turbopack renonce à l'analyser et
+ * annonce « Dynamic filesystem access causes tracing of the whole project » —
+ * il embarque alors tout le dépôt dans la fonction, faute de savoir ce qui
+ * sera lu.
+ *
+ * Écrire chaque appel en toutes lettres, à la racine du module, rend la
+ * lecture analysable. C'est aussi plus juste : la page d'accueil est rendue à
+ * la construction, donc ces fichiers sont constatés une fois pour toutes, et
+ * non à chaque rendu.
+ */
+const A_WEBM = existsSync(join(process.cwd(), "public/videos/boucle.webm"));
+const A_MP4 = existsSync(join(process.cwd(), "public/videos/boucle.mp4"));
+const AFFICHES = [
+  ["boucle.jpg", existsSync(join(process.cwd(), "public/videos/boucle.jpg"))],
+  ["boucle.png", existsSync(join(process.cwd(), "public/videos/boucle.png"))],
+  ["boucle.webp", existsSync(join(process.cwd(), "public/videos/boucle.webp"))],
+] as const;
 
 export function videoBoucle(): VideoBoucle | null {
   const sources: VideoBoucle["sources"] = [];
   // WebM d'abord : à qualité égale il pèse nettement moins. Le MP4 reste le
   // format que tout lit, il ferme la marche.
-  if (present("boucle.webm")) sources.push({ src: "/videos/boucle.webm", type: "video/webm" });
-  if (present("boucle.mp4")) sources.push({ src: "/videos/boucle.mp4", type: "video/mp4" });
+  if (A_WEBM) sources.push({ src: "/videos/boucle.webm", type: "video/webm" });
+  if (A_MP4) sources.push({ src: "/videos/boucle.mp4", type: "video/mp4" });
   if (sources.length === 0) return null;
 
-  const affiche = ["boucle.jpg", "boucle.png", "boucle.webp"].find(present);
+  const affiche = AFFICHES.find(([, present]) => present)?.[0] ?? null;
   return { sources, affiche: affiche ? `/videos/${affiche}` : null };
 }
