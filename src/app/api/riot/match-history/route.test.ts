@@ -1,6 +1,19 @@
 import { corps, utilisateur } from "@/test/api";
 
-jest.mock("@/lib/prisma", () => ({ prisma: { game: { findMany: jest.fn() } } }));
+jest.mock("@/lib/prisma", () => ({
+  prisma: {
+    game: { findMany: jest.fn() },
+    // La route réserve désormais son coût sur le budget de la clé Riot avant
+    // d'appeler quoi que ce soit.
+    loginAttempt: {
+      count: jest.fn().mockResolvedValue(0),
+      create: jest.fn().mockResolvedValue({}),
+      createMany: jest.fn().mockResolvedValue({}),
+      deleteMany: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  },
+}));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { GET } from "./route";
@@ -98,5 +111,22 @@ describe("GET /api/riot/match-history", () => {
     const r = await GET();
     expect(r.status).toBe(200);
     expect(await corps(r)).toEqual([]);
+  });
+
+  /**
+   * Le budget de la clé, vu depuis la route.
+   *
+   * Ce qui compte ici, c'est qu'AUCUN appel ne parte : laisser filer la
+   * requête pour la voir revenir en 429 déclencherait la reprise automatique,
+   * qui multiplie la charge au moment précis où elle est déjà trop haute.
+   */
+  it("refuse sans appeler Riot quand la clé est saturée", async () => {
+    const compteur = (prisma as unknown as { loginAttempt: Record<string, jest.Mock> }).loginAttempt;
+    compteur.count.mockImplementation(({ where }: { where: { kind: string } }) =>
+      Promise.resolve(where.kind === "riot-cle" ? 90 : 0));
+    const avant = appels.length;
+    const r = await GET();
+    expect(r.status).toBe(429);
+    expect(appels.length).toBe(avant);
   });
 });
