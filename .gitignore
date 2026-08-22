@@ -51,3 +51,6 @@ __pycache__/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Scripts de mesure jetables, écrits dans le dossier pour atteindre node_modules.
+scripts/.*.tmp.mjs
