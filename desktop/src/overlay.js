@@ -377,6 +377,43 @@ function definirDette(dette) {
   envoyerEtat({ dette });
 }
 
+/** Minuteur du retrait automatique après un signal de capture. */
+let retraitApresCapture = null;
+
+/**
+ * Dit à l'écran qu'une capture vient d'être prise.
+ *
+ * La notification Windows ne suffit pas : dès qu'un jeu tourne, l'Assistant de
+ * concentration s'active tout seul — règle « Quand je joue à un jeu », activée
+ * par défaut — et supprime les notifications. On appuyait donc sur la touche
+ * sans rien voir, ce qui revient à ne pas savoir si le raccourci nous
+ * appartient.
+ *
+ * L'overlay, lui, est à nous et il est déjà au premier plan. Si la pastille
+ * est masquée, on la montre le temps du message : deux secondes et demie sur
+ * un écran de fin de partie ne dérangent personne, et c'est le seul moment où
+ * l'on appuie.
+ */
+function signalerCapture({ ok, texte }) {
+  envoyerEtat({ capture: { ok: Boolean(ok), texte: String(texte || ""), pose: Date.now() } });
+
+  if (retraitApresCapture) {
+    clearTimeout(retraitApresCapture);
+    retraitApresCapture = null;
+  }
+  if (voulu) return;
+
+  // Montrée pour le seul message : on ne touche ni à `voulu` ni à `manuel`,
+  // sinon la surveillance croirait à un affichage demandé et le maintiendrait.
+  if (!fenetre || fenetre.isDestroyed()) creerOverlay();
+  fenetre.showInactive();
+  fenetre.setAlwaysOnTop(true, "screen-saver");
+  retraitApresCapture = setTimeout(() => {
+    retraitApresCapture = null;
+    if (!voulu && fenetre && !fenetre.isDestroyed()) fenetre.hide();
+  }, 2600);
+}
+
 /**
  * Deux corrections, à intervalle régulier.
  *
@@ -479,7 +516,7 @@ function lireRaccourcis() {
 
 module.exports = {
   initOverlay, afficher, masquer, basculer,
-  envoyerEtat, definirEnPartie, definirReleve, definirDette,
+  envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
   definirPlacement, lirePlacement, appliquerConfig,
 };
