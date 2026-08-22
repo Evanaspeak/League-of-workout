@@ -182,7 +182,7 @@ Règles :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-549 tests unitaires, 32 suites. Base et session doublées : aucune dépendance à
+550 tests unitaires, 33 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -207,6 +207,19 @@ les six langues, sur un compte qu'il ouvre lui-même.
 - `e2e/langues.spec.ts` — aucun « undefined » à l'écran, aucun débordement
   horizontal (c'est ainsi qu'un mot allemand trop long se signale), `lang`
   posé sur la page, et six textes réellement différents.
+### Code mort
+`src/codeMort.test.ts` refuse un fichier de `src/` que rien n'importe. Trois
+trouvailles à l'écriture : deux dictionnaires de langue survivant de six
+semaines à la suppression de leurs écrans, et `DesktopLoginButton`, remplacé
+par la version intégrée à `LoginButtons`. Rien ne les signalait — TypeScript ne
+se plaint pas d'un fichier que personne ne lit, et le compilateur l'écarte du
+paquet livré : le coût est humain, pas technique. On le paie en le traduisant,
+en le corrigeant, en l'auditant, pour rien.
+
+Le test résout les imports relatifs comme les alias `@/`, et exempte les
+fichiers que Next.js charge par convention de nom (`page`, `layout`, `route`,
+`sitemap`, `manifest`…), les déclarations `.d.ts` et `src/generated/`.
+
 - `dictionaries.test.ts` refuse aussi un dictionnaire que personne n'importe.
   Deux fichiers de langue avaient survécu six semaines à la suppression de
   leurs écrans, et ont fini traduits en quatre langues de plus avant qu'on s'en
