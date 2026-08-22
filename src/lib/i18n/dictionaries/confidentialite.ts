@@ -18,19 +18,27 @@ export const confidentialite = {
         ["Riot ID & PUUID", "Saisi par l'utilisateur", "Synchronisation des parties via l'API Riot"],
         ["Données de parties", "API Riot / Saisie manuelle", "Calcul et historique des pompes"],
         ["Mot de passe", "Inscription email", "Authentification (stocké haché, jamais en clair)"],
+        ["Genre, âge, poids, taille", "Candidature bêta et réglages", "Niveau de départ et estimation de l'énergie dépensée"],
+        ["Heures de sport par semaine", "Candidature bêta et réglages", "Calibrage du niveau de départ"],
+        ["Nombre maximum de pompes", "Test de force dans l'Application", "Multiplicateur appliqué à la dette"],
+        ["Candidature bêta", "Formulaire d'inscription", "Sélection des cent premiers comptes (motivation, provenance, engagement)"],
+        ["Abonnement aux notifications", "Autorisation donnée au navigateur", "Envoi des rappels de dette"],
       ],
-      outro: "Aucune donnée de santé au sens médical, aucun moyen de paiement, et aucune donnée de localisation ne sont collectés.",
+      outro: "Le genre, l'âge, le poids et la taille, croisés avec l'activité physique enregistrée, constituent des données de santé au sens de l'article 9 du RGPD. Ils servent uniquement à fixer votre niveau de départ et à estimer l'énergie dépensée. Ils ne sont ni revendus, ni transmis à un tiers, ni utilisés à d'autres fins. Aucun moyen de paiement et aucune donnée de localisation ne sont collectés.",
     },
     article3: {
       title: "3. Base légale",
       paragraphs: [
         "Les traitements reposent sur votre consentement (art. 6.1.a RGPD), exprimé lors de la création du compte, et sur l'exécution du service auquel vous avez souscrit (art. 6.1.b).",
+        "Les données de santé énumérées à l'article 2 relèvent de l'article 9 du RGPD. Leur traitement repose sur votre consentement explicite (art. 9.2.a), recueilli séparément du reste et révocable à tout moment depuis vos réglages.",
+        "Le refus n'empêche pas d'utiliser l'Application : sans ces données, le niveau de départ est établi par le seul test de force, et l'estimation de l'énergie dépensée n'est pas affichée.",
       ],
     },
     article4: {
       title: "4. Durée de conservation",
       paragraphs: [
         "Vos données sont conservées aussi longtemps que votre compte est actif. En cas de demande de suppression, toutes vos données personnelles sont effacées dans un délai de 30 jours.",
+        "Un compte resté sans aucune connexion pendant deux ans est supprimé avec l'ensemble de ses données, après un courriel d'avertissement envoyé trente jours plus tôt.",
       ],
     },
     article5: {
@@ -63,6 +71,7 @@ export const confidentialite = {
         { label: "Droit à l'effacement", text: "demander la suppression de votre compte et de toutes vos données" },
         { label: "Droit à la portabilité", text: "recevoir vos données dans un format lisible" },
         { label: "Droit d'opposition", text: "vous opposer à un traitement" },
+        { label: "Droit de retirer votre consentement", text: "à tout moment depuis vos réglages, sans que cela remette en cause ce qui a été traité avant" },
       ],
       exerciseLabel: "Pour exercer ces droits, contactez-nous à :",
       cnilPrefix: "En cas de litige non résolu, vous pouvez saisir la",
@@ -102,19 +111,27 @@ export const confidentialite = {
         ["Riot ID & PUUID", "Entered by the user", "Match synchronization via the Riot API"],
         ["Match data", "Riot API / Manual entry", "Push-up calculation and history"],
         ["Password", "Email registration", "Authentication (stored hashed, never in plain text)"],
+        ["Gender, age, weight, height", "Beta application and settings", "Starting level and estimated energy spent"],
+        ["Weekly hours of sport", "Beta application and settings", "Calibration of the starting level"],
+        ["Maximum number of push-ups", "Strength test in the Application", "Multiplier applied to the debt"],
+        ["Beta application", "Registration form", "Selection of the first hundred accounts (motivation, referral, commitment)"],
+        ["Notification subscription", "Permission granted to the browser", "Sending debt reminders"],
       ],
-      outro: "No health data in the medical sense, no payment information, and no location data are collected.",
+      outro: "Gender, age, weight and height, combined with the physical activity recorded, constitute health data within the meaning of Article 9 GDPR. They are used solely to set your starting level and to estimate the energy you spend. They are never sold, never passed to a third party, and never used for any other purpose. No payment information and no location data are collected.",
     },
     article3: {
       title: "3. Legal Basis",
       paragraphs: [
         "Processing is based on your consent (GDPR art. 6.1.a), given when creating your account, and on the performance of the service you subscribed to (art. 6.1.b).",
+        "The health data listed in Article 2 falls under Article 9 GDPR. Its processing is based on your explicit consent (art. 9.2.a), collected separately from the rest and withdrawable at any time from your settings.",
+        "Refusing does not prevent you from using the Application: without this data, your starting level is set by the strength test alone, and the estimate of energy spent is not shown.",
       ],
     },
     article4: {
       title: "4. Retention Period",
       paragraphs: [
         "Your data is retained for as long as your account is active. In the event of a deletion request, all your personal data is erased within 30 days.",
+        "An account with no sign-in for two years is deleted along with all its data, after a warning email sent thirty days beforehand.",
       ],
     },
     article5: {
@@ -147,6 +164,7 @@ export const confidentialite = {
         { label: "Right to erasure", text: "request the deletion of your account and all your data" },
         { label: "Right to data portability", text: "receive your data in a readable format" },
         { label: "Right to object", text: "object to processing" },
+        { label: "Right to withdraw consent", text: "at any time from your settings, without affecting what was processed beforehand" },
       ],
       exerciseLabel: "To exercise these rights, contact us at:",
       cnilPrefix: "In the event of an unresolved dispute, you may refer the matter to the",
