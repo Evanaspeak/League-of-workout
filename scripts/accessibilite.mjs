@@ -124,6 +124,15 @@ const navigateur = await chromium.launch(
   existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {},
 );
 let total = 0;
+/**
+ * Les pages qu'on n'a pas pu mesurer, comptées à part.
+ *
+ * Elles entraient dans le même compteur que les défauts trouvés. Un rapport
+ * annonçant « 45 constats » pouvait donc désigner quarante-cinq pages jamais
+ * atteintes — l'inverse exact d'un audit — et rien dans le total ne permettait
+ * de faire la différence.
+ */
+let nonMesurees = 0;
 
 const aVisiter = JETON ? [...PAGES, ...PAGES_CONNECTEES] : PAGES;
 if (!JETON) console.log("(pas de jeton : seules les pages publiques sont mesurées)");
@@ -156,7 +165,7 @@ for (const chemin of aVisiter) {
   const reponse = await page.goto(BASE + chemin, { waitUntil: "networkidle" }).catch(() => null);
   if (!reponse || !reponse.ok()) {
     console.log(`\n${chemin} — injoignable (${reponse ? reponse.status() : "erreur"})`);
-    total += 1;
+    nonMesurees += 1;
     await ctx.close();
     continue;
   }
@@ -174,7 +183,7 @@ for (const chemin of aVisiter) {
   if (arrivee !== normaliser(chemin)) {
     console.log(`\n═══ ${langue} · ${chemin}`);
     console.log(`  NON MESURÉ : la navigation a abouti sur ${arrivee}`);
-    total += 1;
+    nonMesurees += 1;
     await ctx.close();
     continue;
   }
@@ -253,5 +262,8 @@ for (const chemin of aVisiter) {
 }
 
 console.log(`\n${total} constat(s).`);
+if (nonMesurees > 0) {
+  console.log(`${nonMesurees} page(s) NON MESURÉE(S) — le zéro ci-dessus ne les couvre pas.`);
+}
 await navigateur.close();
 process.exit(total > 0 ? 1 : 0);
