@@ -1267,16 +1267,21 @@ app.whenReady().then(() => {
         return overlay.definirReleveApex({ attente: "écran noir" });
       }
       const c = await lecteur.lireCartouche(image);
-      if (c.eliminations.valeur === null) {
-        // Dans les menus et l'écran de sélection, le cartouche n'existe pas :
-        // ne rien lire y est l'état normal, pas une panne.
+      if (c === null) {
+        // Dans les menus, au largage et tant que l'escouade n'a rien fait, le
+        // cartouche n'existe pas : ne rien lire y est l'état normal.
         return overlay.definirReleveApex({ attente: "rien à lire" });
       }
-      dernieresElim = c.eliminations;
+      // Les éliminations peuvent manquer là où les dégâts sont là : le
+      // cartouche ne dessine que ses cases non nulles. On garde alors les
+      // dégâts, plutôt que de jeter la lecture entière.
+      if (c.eliminations.valeur !== null) dernieresElim = c.eliminations;
       overlay.definirReleveApex({
         eliminations: c.eliminations.valeur,
         degats: c.degats.valeur,
-        sur: c.eliminations.accord === c.eliminations.essais,
+        sur: c.degats.accord === c.degats.essais
+          && (c.eliminations.valeur === null
+            || c.eliminations.accord === c.eliminations.essais),
       });
     } catch (err) {
       // Un moteur qui ne se charge pas ne se chargera pas davantage au tour
@@ -1328,7 +1333,7 @@ app.whenReady().then(() => {
        * l'équipe qu'on veut y voir — mais surtout PAS à enregistrer une partie.
        * Les statistiques personnelles vivent sur l'écran de récapitulatif.
        */
-      if (c.eliminations.valeur !== null) dernieresElim = c.eliminations;
+      if (c && c.eliminations.valeur !== null) dernieresElim = c.eliminations;
 
       const fin = await lecteur.lireFinDePartie(image);
       if (fin) {
@@ -1351,10 +1356,9 @@ app.whenReady().then(() => {
         });
       }
       const dit = (n) => (n.valeur === null ? "?" : `${n.valeur}`);
-      const sur = c.eliminations.valeur !== null;
       overlay.signalerCapture({
-        ok: sur,
-        texte: sur
+        ok: Boolean(c),
+        texte: c
           ? `${dit(c.eliminations)} élim · ${dit(c.assistances)} ass · ${dit(c.degats)} dég`
           : "Rien de lisible — ni fin de partie, ni cartouche",
       });
