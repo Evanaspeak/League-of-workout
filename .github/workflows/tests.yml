@@ -86,13 +86,31 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
 
-      # Le schéma est posé à partir du modèle plutôt que par les migrations :
-      # l'historique de migrations n'est pas rejouable depuis zéro, et ce qui
-      # importe ici est que la base ressemble au schéma courant.
-      - name: Poser le schéma
+      # La base se monte par les MIGRATIONS, comme en production.
+      #
+      # Elle se montait par un diff du schéma, parce que l'historique n'était
+      # pas rejouable depuis zéro : aucune migration ne créait « User ». Le
+      # raccourci cachait le défaut au lieu de le signaler — les parcours
+      # passaient au vert sur une base qu'aucune reprise après sinistre
+      # n'aurait pu reconstruire. Depuis le socle, `migrate deploy` part d'une
+      # base vide, et c'est ici que ça se vérifie à chaque poussée.
+      - name: Monter la base par les migrations
+        run: npx prisma migrate deploy
+
+      # Et le résultat doit correspondre au schéma, sans quoi les migrations
+      # construisent autre chose que ce que le code attend. Un diff vide est la
+      # seule preuve qui vaille.
+      - name: Vérifier que la base correspond au schéma
         run: |
-          npx prisma migrate diff --from-empty --to-schema ./prisma/schema.prisma --script > /tmp/schema.sql
-          psql "$DATABASE_URL" -q -f /tmp/schema.sql
+          set -euo pipefail
+          ecart=$(npx prisma migrate diff \
+            --from-url "$DATABASE_URL" --to-schema ./prisma/schema.prisma --script \
+            | grep -v '^Loaded Prisma config' | grep -v '^\s*$' || true)
+          if [ -n "$ecart" ]; then
+            echo "::error::La base montée par les migrations diffère du schéma."
+            echo "$ecart"
+            exit 1
+          fi
 
       - run: npm run build
 
