@@ -332,7 +332,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-999 tests unitaires, 77 suites. Base et session doublées : aucune dépendance à
+1003 tests unitaires, 78 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -381,6 +381,26 @@ rien ne se cliquait derrière. Une modale ajoutée se traverse dans
 - `e2e/langues.spec.ts` — aucun « undefined » à l'écran, aucun débordement
   horizontal (c'est ainsi qu'un mot allemand trop long se signale), `lang`
   posé sur la page, et six textes réellement différents.
+### La porte des routes d'API
+`src/porteRoutes.test.ts` regarde le dossier `src/app/api` plutôt que les
+fichiers connus. Chaque route doit exiger une session, ou figurer dans
+`SANS_SESSION` avec la raison de sa dispense. Et une route dispensée qui
+**écrit en base** doit montrer un autre verrou : limite par adresse IP, secret
+partagé, jeton reçu par courriel, adresse-laissez-passer. Une porte ouverte qui
+ne fait que lire est une décision ; une porte ouverte qui écrit est un accident.
+
+Les tests par route restent, et ils sont bons. Leur angle mort est celui de
+tous les tests écrits à la main : ils ne disent rien de la route qu'on ajoutera
+demain. Éprouvé en fabriquant une route qui écrit sans rien pour la garder,
+puis en la dispensant sans lui donner de verrou : chaque sabotage tombe sur son
+propre test.
+
+La revue qui a précédé ce garde n'a trouvé **aucune faille exploitable** sur les
+quarante-sept routes : tout est filtré par `userId`, aucun SQL brut, aucun
+secret en dur, la région Riot passe par une liste fermée avant d'entrer dans une
+URL, et le CSP écrit `base-uri` et `form-action`, qui ne retombent pas sur
+`default-src`.
+
 ### Les fenêtres modales
 `src/modalesAnnoncees.test.ts` refuse tout recouvrement plein écran qui ne
 porte pas `role="dialog"` et `aria-modal`. Trois fenêtres étaient dans ce cas —
