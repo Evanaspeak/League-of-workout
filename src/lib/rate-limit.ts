@@ -15,7 +15,8 @@ const MAX_ATTEMPTS = 5;
  */
 export type NatureTentative =
   | "login" | "register" | "forgot-code" | "push-test"
-  | "game-write" | "riot-lookup" | "riot-read" | "riot-cle";
+  | "game-write" | "riot-lookup" | "riot-read" | "riot-cle"
+  | "signalement";
 
 /**
  * Budget d'une nature de tentative.
@@ -51,6 +52,10 @@ const BUDGETS: Partial<Record<NatureTentative, { max: number; fenetreMs: number 
    * ce qui part sans passer par ici.
    */
   "riot-cle": { max: 90, fenetreMs: 2 * 60 * 1000 },
+  // Signaler un problème est ouvert sans session : la borne porte sur
+  // l'adresse. Cinq par quart d'heure laisse décrire plusieurs soucis d'affilée
+  // et ferme la porte à qui voudrait remplir la table.
+  "signalement": { max: 5, fenetreMs: WINDOW_MS },
 };
 
 function budget(kind: NatureTentative) {
