@@ -91,8 +91,15 @@ export function DetteDirecte() {
 
   useEffect(() => {
     if (!window.electronLOL?.publierDette) return;
-    void chargerAttente();
-  }, [chargerAttente]);
+    // Publier dès l'ouverture, et pas seulement au premier événement : la
+    // pastille de la barre des tâches doit être juste à l'instant où
+    // l'application s'ouvre, pas au bout d'une partie.
+    void chargerAttente().then(() => {
+      if (enAttenteRef.current) {
+        publier({ victoire: "", defaite: "", enAttente: enAttenteRef.current });
+      }
+    });
+  }, [chargerAttente, publier]);
 
   useEffect(() => {
     const surChangement = () => { chargerAttente(); };

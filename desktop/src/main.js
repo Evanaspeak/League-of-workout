@@ -638,7 +638,35 @@ ipcMain.handle("demarrage:ecrire", (_e, actif) => ({
   disponible: app.isPackaged,
 }));
 
-ipcMain.on("overlay:dette", (_e, dette) => overlay.definirDette(dette));
+/**
+ * Une pastille sur l'icône de la barre des tâches quand quelque chose est dû.
+ *
+ * Le titre de l'onglet ne se voit pas quand la fenêtre est réduite, et c'est
+ * l'état le plus fréquent pendant qu'on joue. L'icône, elle, reste visible.
+ *
+ * `setBadgeCount` demande un nombre, et la dette s'exprime parfois en durée —
+ * « 4 min 20 » n'en est pas un. On pose donc 1, qui suffit à faire apparaître
+ * la marque : ce qui compte ici est « il y a quelque chose », pas « combien ».
+ * Le détail vit dans la pastille de l'overlay et dans le titre de la fenêtre.
+ */
+function marquerIcone(dette) {
+  const du = Boolean(dette && String(dette.enAttente ?? "").trim() !== "");
+  try {
+    app.setBadgeCount(du ? 1 : 0);
+  } catch {
+    // Selon la version de Windows, la pastille n'existe pas. Ce n'est pas une
+    // panne : le titre de la fenêtre porte l'information de toute façon.
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const base = "Win or Workout";
+    mainWindow.setTitle(du ? `(${dette.enAttente}) ${base}` : base);
+  }
+}
+
+ipcMain.on("overlay:dette", (_e, dette) => {
+  overlay.definirDette(dette);
+  marquerIcone(dette);
+});
 
 /** Tout ce que les réglages affichent de l'overlay, en une seule réponse. */
 function etatOverlay(jeu = jeuCourant) {
