@@ -1,4 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
+import { purgerTentatives } from "./limiteur";
 
 /**
  * Les trois parcours qui font l'application : entrer, enregistrer une défaite,
@@ -101,6 +102,7 @@ test.describe("parcours complet", () => {
     const page = await ouvrir(browser);
     // C'est le chemin réellement ouvert pour un nouveau venu : le formulaire
     // e-mail de /login est réservé aux invités, et il le dit maintenant.
+    await purgerTentatives();
     await page.goto("/beta");
     await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
     await page.locator('input[type="email"]').first().fill(COMPTE.email);

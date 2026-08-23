@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { purgerTentatives } from "./limiteur";
 import { LANGUES } from "../src/lib/i18n/LocaleContext";
 
 /**
@@ -96,6 +97,7 @@ test.describe("écrans connectés", () => {
     await page.addInitScript(() => {
       try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
     });
+    await purgerTentatives();
     await page.goto("/beta");
     await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
     await page.locator('input[type="email"]').first().fill(COMPTE.email);

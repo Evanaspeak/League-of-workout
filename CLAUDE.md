@@ -582,7 +582,40 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
-### Le tableau de bord sur téléphone bridé
+### Le tableau de bord sur téléphone bridé — réglé
+Le premier écran est rendu au serveur depuis. Le titre et le rappel du test de
+force ne dépendent que de trois valeurs (`User.pompesMax`, `User.pompesMaxLe`,
+les paliers), lues dans `src/app/dashboard/page.tsx` et passées en `depart` au
+composant client `TableauDeBord`. Le reste de la page n'a pas bougé : elle est
+toujours cliente, elle lit toujours `/api/dashboard` après montage.
+
+**1172 ms au lieu de 3456**, et le plus grand élément est bien le rappel. Les
+neuf écrans sont désormais sous le seuil de 2500 ms.
+
+L'ordre des sources compte, et il est écrit dans le composant : ce qu'on vient
+de saisir passe devant la réponse de l'API, qui passe devant ce que le serveur
+a rendu. Le départ serveur n'est jamais faux, il est seulement le plus ancien
+des trois. Le fragment est écrit une fois et rendu dans les deux états — avant
+et après l'arrivée des données — sinon il sauterait au moment de la bascule.
+
+`e2e/premier-ecran.spec.ts` lit le HTML **brut** de la réponse, pas la page
+rendue : une fois hydratée, elle afficherait le rappel dans les deux cas et le
+défaut ne se verrait pas. Éprouvé en retirant le fragment du rendu d'attente :
+le test tombe.
+
+Ce que ça coûte : `/dashboard` passe de statique à rendu à la demande. La page
+était derrière l'authentification de toute façon, et son HTML statique ne
+contenait rien d'utile.
+
+#### La suite navigateur butait sur son propre limiteur
+Le sixième fichier de parcours ne pouvait pas ouvrir de compte : cinq
+inscriptions par quart d'heure, et chaque fichier en fait une. La panne ne
+ressemblait pas à sa cause — c'est le fichier ajouté en dernier qui échouait,
+quel qu'il soit, et il passait seul. La purge existait déjà mais une seule fois
+avant toute la suite, donc sans effet sur ce que la suite fait elle-même.
+`e2e/limiteur.ts` la rend appelable, et chaque ouverture de compte l'appelle.
+
+### Le tableau de bord sur téléphone bridé (avant correction)
 3476 ms de LCP, au-dessus du seuil de 2500 — les seuls des neuf pages à le
 franchir. Ce n'est pas un problème de poids : `/history` et `/settings` ont un
 paquet de départ comparable et paraissent à 1300 ms.
