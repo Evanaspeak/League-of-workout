@@ -582,6 +582,65 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Ce que les pages publiques emportaient pour rien
+La mise en page racine montait vingt composants clients sur **chaque** page.
+Six ne peuvent rien faire sans l'application Windows (`window.electronLOL`),
+sept commencent par `if (estPagePublique(chemin)) return`. Autrement dit :
+quelqu'un qui ouvre les CGU depuis un téléphone téléchargeait la modale
+d'accueil, la visite guidée, la demande de consentement santé, la détection de
+partie, la lecture d'écran d'Apex — et leurs dictionnaires en six langues —
+pour ne rien en montrer. Ce sont exactement les pages qu'un visiteur voit en
+premier.
+
+Deux ponts les chargent à la demande. `PontDesktop` décide sur la présence du
+pont Electron, `PontConnecte` sur `usePathname()` : deux valeurs connues au
+rendu, sans requête, donc sans texte qui apparaît en retard.
+
+| page | avant | après |
+|---|---|---|
+| `/cgu` | 213 ko | 182 ko |
+| `/calculateur` | 214 ko | 184 ko |
+| `/telechargement` | 214 ko | 183 ko |
+| `/` | 252 ko | 222 ko |
+| `/login` | 246 ko | 217 ko |
+
+Une trentaine de kilo-octets sur les dix pages publiques ; les trois écrans
+connectés prennent 8 ko de plus, le prix d'un fragment supplémentaire. C'est le
+bon sens de l'échange.
+
+Trois pièces restent dans la mise en page, et pour des raisons distinctes :
+`ServiceWorkerActif` doit s'enregistrer pour tout le monde (c'est lui qui porte
+la page de secours hors ligne), `Nav` et `Footer` s'affichent partout, et
+`RailLateral` rend du vrai balisage — le différer ferait sauter la page au
+moment où il se pose.
+
+Ce qui n'a **pas** été fait, et pourquoi : les dictionnaires partent en six
+langues sur chaque page, alors qu'on en lit une. Les découper suppose de
+connaître la langue au serveur, or elle est lue dans le stockage du navigateur
+(`low_locale`, puis `navigator.language`). Un chargement par langue les ferait
+donc arriver après le montage : le texte paraîtrait en retard, c'est-à-dire
+exactement le défaut qu'on vient de corriger sur le tableau de bord. Ça se
+règle en mettant la langue dans l'adresse, ce qui est une décision de produit.
+
+`src/pontsDeChargement.test.ts` garde le mécanisme. Il repose sur deux choses
+que rien ne signale si elles disparaissent : l'import doit rester
+`dynamic(..., { ssr: false })`, et la mise en page ne doit pas importer ces
+composants elle-même — un seul import direct ramène le module dans le morceau
+commun, pont ou pas pont. Le composant se comporterait exactement pareil ; le
+défaut ne se verrait qu'à la balance.
+
+Deux pièges rencontrés en écrivant ce test, tous deux découverts en le
+sabotant :
+- **Lire la liste dans le mécanisme qu'on éprouve.** La première version tirait
+  les noms des déclarations `const X = dynamic(...)`. Remplacer un import
+  dynamique par un import ordinaire faisait donc sortir le nom de la liste, et
+  le test vérifiait la propriété sur les seuls composants qui l'avaient encore.
+  Les deux sabotages passaient au vert. La liste vient maintenant du JSX rendu,
+  la seule chose qu'on ne peut pas retirer sans retirer le composant.
+- **Borner une déclaration au nombre de caractères.** « Les 400 caractères qui
+  suivent » laissaient lire le `ssr: false` de la déclaration d'après. La
+  déclaration s'arrête à la suivante, pas à une longueur.
+
 ### Le tableau de bord sur téléphone bridé — réglé
 Le premier écran est rendu au serveur depuis. Le titre et le rappel du test de
 force ne dépendent que de trois valeurs (`User.pompesMax`, `User.pompesMaxLe`,
