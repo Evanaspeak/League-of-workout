@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { nomsExercices } from "@/lib/nomsExercices";
 import { useValeurClient } from "@/lib/valeurClient";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
@@ -78,9 +79,7 @@ export function AjoutActivite({
   const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
-  const nomsExo: Record<ExerciceId, string> = {
-    pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
-  };
+  const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
   const dateLocale = useDateLocale();
   const { locale } = useLocale();
 

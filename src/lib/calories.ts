@@ -28,6 +28,12 @@ export const MET: Record<ExerciceId, number> = {
   pompes: 8.0,
   squats: 5.5,
   boxe: 7.8,
+  // Le gainage est isométrique : soutenu, mais sans déplacement de masse.
+  planche: 4.0,
+  // L'exercice au poids du corps le plus coûteux du lot.
+  tractions: 8.0,
+  // Course à allure d'entretien, autour de dix kilomètres à l'heure.
+  course: 9.8,
 };
 
 /**
@@ -46,6 +52,15 @@ export const PART_A_L_EFFORT: Record<ExerciceId, number> = {
   pompes: 0.42,
   squats: 0.5,
   boxe: 1,
+  // Un gainage se tient sans pause : tout le temps compté est du temps sous
+  // tension.
+  planche: 1,
+  // Vingt secondes par traction, repos compris, dont six de travail réel.
+  // Cela met la traction autour d'une kilocalorie pièce à 70 kg, ce que
+  // donne la littérature.
+  tractions: 0.3,
+  // On ne s'arrête pas en courant.
+  course: 1,
 };
 
 /**

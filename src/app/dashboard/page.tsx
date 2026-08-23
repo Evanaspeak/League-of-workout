@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { nomsExercices } from "@/lib/nomsExercices";
 import { SerieEtRetard } from "@/components/SerieEtRetard";
 import { Paliers } from "@/components/Paliers";
 import { PremiersPas } from "@/components/PremiersPas";
@@ -315,9 +316,7 @@ export default function Dashboard() {
   const exercicesJoues = EXERCICE_IDS.filter((id) => (data.pointsParExercice?.[id] ?? 0) > 0);
   const multi = filtreExo === null && exercicesJoues.length > 1;
   const exercice = filtreExo ?? (exercicesJoues[0] ?? exercicesActifs[0]);
-  const nomsExo: Record<ExerciceId, string> = {
-    pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
-  };
+  const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
   // Ventilation du total : une ligne par exercice réellement utilisé.
   const lignesTotal = Object.entries(data.pointsParExercice ?? {})
     .filter(([, pts]) => pts > 0)
