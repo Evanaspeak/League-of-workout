@@ -1,5 +1,6 @@
 "use client";
 import { Icone } from "@/components/Icone";
+import { CorrectionDates } from "@/components/CorrectionDates";
 import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { useT, useDateLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
@@ -269,7 +270,21 @@ export default function HistoryPage() {
                   <p style={{ color: "var(--faint)" }}>{t.noGameToDisplay}</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto" data-visite="historique-table">
+                <div className="space-y-3" data-visite="historique-table">
+                  {/* Réparer une soirée entière d'un coup : le défaut de date
+                      collait toutes les parties d'un soir sur le jour de la
+                      saisie, et les reprendre une par une n'est pas un travail
+                      qu'on demande à quelqu'un. */}
+                  <CorrectionDates
+                    parties={games.map((g) => ({ id: g.id, date: g.date }))}
+                    surCorrection={() => {
+                      fetch("/api/games")
+                        .then((r) => r.json())
+                        .then((d) => { if (Array.isArray(d)) setGames(d); })
+                        .catch(() => {});
+                    }}
+                  />
+                <div className="overflow-x-auto">
                   {/* Un lecteur d'écran annonce « tableau » et le nombre de
                       colonnes ; sans nom, il ne dit pas de quoi il parle. Le nom
                       passe par `aria-label` et non par une balise `caption` :
@@ -524,6 +539,7 @@ export default function HistoryPage() {
                       })()}
                     </tbody>
                   </table>
+                </div>
                 </div>
               )}
             </>
