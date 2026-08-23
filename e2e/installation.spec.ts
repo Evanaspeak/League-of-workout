@@ -120,6 +120,44 @@ test("ne recouvre pas le compteur de dette", async ({ browser }) => {
   await ctx.close();
 });
 
+test("attrape l'invite du navigateur même émise avant le montage", async ({ browser }) => {
+  // Le navigateur n'émet `beforeinstallprompt` qu'une fois, et ce moment ne se
+  // commande pas. L'écouter depuis un effet revient à parier qu'il n'est pas
+  // encore passé — pari perdu de temps en temps, et perdu pour de bon.
+  //
+  // Chromium ne l'émet pas de lui-même ici : on le simule au plus tôt, avant
+  // tout script de la page, pour reproduire exactement le cas manqué.
+  const ctx = await browser.newContext({ storageState: etat, ...IPHONE });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      localStorage.setItem("low_visites", "2");
+      // Le composant écarte iOS avant même de regarder l'invite : on se fait
+      // passer pour un navigateur qui, lui, en émet une.
+      Object.defineProperty(navigator, "userAgent", {
+        get: () => "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126 Mobile",
+      });
+    } catch { /* stockage refusé */ }
+    // Émise au moment où le document est prêt : après le petit script de la
+    // page, qui est là pour ça, et avant que React n'ait monté quoi que ce
+    // soit. C'est exactement la fenêtre où l'ancienne version perdait
+    // l'événement.
+    document.addEventListener("DOMContentLoaded", () => {
+      const invite = new Event("beforeinstallprompt") as Event & {
+        prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }>;
+      };
+      invite.prompt = () => Promise.resolve();
+      invite.userChoice = Promise.resolve({ outcome: "accepted" });
+      window.dispatchEvent(invite);
+    });
+  });
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1500);
+  await expect(page.getByRole("dialog", { name: /écran d.accueil/i })).toBeVisible();
+  await ctx.close();
+});
+
 test("ne repropose plus après un refus", async ({ browser }) => {
   const { ctx, page } = await surIPhone(browser, { [CLE_VISITES]: "9", [CLE_REFUS]: "1" });
   await expect(banniere(page)).toBeHidden();
