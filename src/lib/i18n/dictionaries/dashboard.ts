@@ -1,5 +1,11 @@
 export const dashboard = {
   fr: {
+    debutTitre: "Ta première semaine",
+    debutTexte: (restantes: number) =>
+      `Encore ${restantes} ${restantes > 1 ? "parties" : "partie"} à enregistrer pour voir à quoi ressemble une semaine complète.`,
+    debutJours: (jours: number) =>
+      jours === 0 ? "Dernier jour" : `${jours} ${jours > 1 ? "jours restants" : "jour restant"}`,
+    debutAvancement: (faites: number, but: number) => `${faites} sur ${but}`,
     pauseTitre: (n: number) => `${n} défaites d'affilée`,
     pauseTexte: "Ça arrive à tout le monde, et ça ne s'améliore généralement pas en enchaînant. Une pause, un verre d'eau, et la suivante ira mieux.",
     veilleTitre: "Un mot sur le volume",
@@ -112,6 +118,12 @@ export const dashboard = {
     levelLabel: (n: number) => `Niveau ${n}`,
   },
   en: {
+    debutTitre: "Your first week",
+    debutTexte: (restantes: number) =>
+      `${restantes} more ${restantes > 1 ? "games" : "game"} to log, and you get to see what a full week looks like.`,
+    debutJours: (jours: number) =>
+      jours === 0 ? "Last day" : `${jours} ${jours > 1 ? "days left" : "day left"}`,
+    debutAvancement: (faites: number, but: number) => `${faites} of ${but}`,
     pauseTitre: (n: number) => `${n} losses in a row`,
     pauseTexte: "It happens to everyone, and it rarely gets better by queueing again. A break, a glass of water, and the next one will go better.",
     veilleTitre: "A word about volume",
@@ -222,6 +234,12 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   es: {
+    debutTitre: "Tu primera semana",
+    debutTexte: (restantes: number) =>
+      `${restantes} ${restantes > 1 ? "partidas" : "partida"} más por registrar y verás cómo es una semana entera.`,
+    debutJours: (jours: number) =>
+      jours === 0 ? "Último día" : `${jours} ${jours > 1 ? "días restantes" : "día restante"}`,
+    debutAvancement: (faites: number, but: number) => `${faites} de ${but}`,
     pauseTitre: (n: number) => `${n} derrotas seguidas`,
     pauseTexte: "Le pasa a todo el mundo, y no suele mejorar encadenando partidas. Una pausa, un vaso de agua, y la siguiente irá mejor.",
     veilleTitre: "Una palabra sobre el volumen",
@@ -332,6 +350,12 @@ export const dashboard = {
     levelLabel: (n: number) => `Nivel ${n}`,
   },
   de: {
+    debutTitre: "Deine erste Woche",
+    debutTexte: (restantes: number) =>
+      `Noch ${restantes} ${restantes > 1 ? "Runden" : "Runde"} eintragen, dann siehst du, wie eine ganze Woche aussieht.`,
+    debutJours: (jours: number) =>
+      jours === 0 ? "Letzter Tag" : `${jours} ${jours > 1 ? "Tage übrig" : "Tag übrig"}`,
+    debutAvancement: (faites: number, but: number) => `${faites} von ${but}`,
     pauseTitre: (n: number) => `${n} Niederlagen in Folge`,
     pauseTexte: "Das passiert jedem, und es wird selten besser, wenn man gleich weiterspielt. Eine Pause, ein Glas Wasser, und die nächste läuft besser.",
     veilleTitre: "Ein Wort zum Umfang",
@@ -442,6 +466,10 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   zh: {
+    debutTitre: "你的第一周",
+    debutTexte: (restantes: number) => `再记录 ${restantes} 局，就能看到完整一周是什么样子。`,
+    debutJours: (jours: number) => jours === 0 ? "最后一天" : `还剩 ${jours} 天`,
+    debutAvancement: (faites: number, but: number) => `${faites} / ${but}`,
     pauseTitre: (n: number) => `连续 ${n} 场失败`,
     pauseTexte: "谁都会遇到，而继续排下去通常不会变好。休息一下，喝杯水，下一局会更顺。",
     veilleTitre: "关于运动量的一句话",
@@ -552,6 +580,10 @@ export const dashboard = {
     levelLabel: (n: number) => `等级 ${n}`,
   },
   ja: {
+    debutTitre: "最初の一週間",
+    debutTexte: (restantes: number) => `あと ${restantes} 試合記録すれば、一週間ぶんの姿が見えます。`,
+    debutJours: (jours: number) => jours === 0 ? "最終日" : `残り ${jours} 日`,
+    debutAvancement: (faites: number, but: number) => `${faites} / ${but}`,
     pauseTitre: (n: number) => `${n} 連敗`,
     pauseTexte: "誰にでもあることで、続けて回してもたいてい良くなりません。少し休んで、水を一杯。次はきっとましになります。",
     veilleTitre: "運動量について一言",

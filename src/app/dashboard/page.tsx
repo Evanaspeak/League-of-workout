@@ -4,6 +4,7 @@ import { nomsExercices } from "@/lib/nomsExercices";
 import { SerieEtRetard } from "@/components/SerieEtRetard";
 import { Paliers } from "@/components/Paliers";
 import { PremiersPas } from "@/components/PremiersPas";
+import { OBJECTIF_PARTIES } from "@/lib/premiereSemaine";
 import dynamic from "next/dynamic";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
@@ -98,6 +99,10 @@ type DashData = {
   pointsAujourdhui?: number;
   veille?: { pointsJour: number; pointsSemaine: number; alerte: "jour" | "semaine" | null };
   defaitesDAffilee?: number;
+  premiereSemaine?: {
+    parties: number; restantes: number; joursRestants: number;
+    atteint: boolean; visible: boolean;
+  };
   plafondQuotidien?: number;
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
@@ -502,6 +507,50 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {/* Les sept premiers jours décident du reste : ce qu'on fait pendant
+          cette semaine-là dit si on reviendra, et le produit n'y peut plus
+          grand-chose après. L'objectif est donc petit — cinq parties, ce qu'on
+          enregistre en une soirée — et il disparaît au bout de sept jours,
+          atteint ou non. Un objectif raté qui reste affiché n'est plus un
+          objectif, c'est un reproche. */}
+      {data.premiereSemaine?.visible && (
+        <div className="lol-panel p-4">
+          <div style={{
+            display: "flex", justifyContent: "space-between",
+            alignItems: "baseline", gap: 12, flexWrap: "wrap",
+          }}>
+            <div style={{ color: "var(--gold)", fontWeight: 600 }}>{t.debutTitre}</div>
+            <div className="text-xs" style={{ color: "var(--faint)" }}>
+              {t.debutJours(data.premiereSemaine.joursRestants)}
+            </div>
+          </div>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.6, margin: "4px 0 10px" }}>
+            {t.debutTexte(data.premiereSemaine.restantes)}
+          </p>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={OBJECTIF_PARTIES}
+            aria-valuenow={data.premiereSemaine.parties}
+            aria-label={t.debutTitre}
+            className="h-2 rounded-full overflow-hidden"
+            style={{ background: "rgba(152,162,176,0.16)" }}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.round((data.premiereSemaine.parties / OBJECTIF_PARTIES) * 100)}%`,
+                background: "var(--brand-gradient)",
+                transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            />
+          </div>
+          <div className="text-xs mt-2" style={{ color: "var(--steel)" }}>
+            {t.debutAvancement(data.premiereSemaine.parties, OBJECTIF_PARTIES)}
+          </div>
+        </div>
+      )}
 
       {/* Trois défaites d'affilée : on le dit une fois, sans y revenir. Un
           rappel qui reviendrait à chaque défaite deviendrait un reproche, et
