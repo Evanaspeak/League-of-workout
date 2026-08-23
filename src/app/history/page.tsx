@@ -39,6 +39,8 @@ type Game = {
   joueurs?: number | null;
   /** JSON de ventilation entre exercices, absent si un seul est concerné. */
   repartition?: string | null;
+  /** Variante d'exécution déclarée à l'enregistrement ("genoux"). */
+  variante?: string | null;
 };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -477,6 +479,19 @@ export default function HistoryPage() {
                                     }}>
                                       {minuscule(nomsExo[part.id])}
                                     </span>
+                                    {/* L'annotation d'exécution, là où elle se
+                                        lit : sur la ligne qu'elle qualifie. Le
+                                        chiffre, lui, ne bouge pas — une pompe
+                                        genoux au sol vaut une pompe. */}
+                                    {part.id === "pompes" && g.variante === "genoux" && (
+                                      <span style={{
+                                        marginLeft: 5, fontWeight: 400, fontSize: "0.62rem",
+                                        color: "var(--steel)", border: "1px solid var(--line-strong)",
+                                        borderRadius: 999, padding: "1px 6px",
+                                      }}>
+                                        {tExo.varianteBadge}
+                                      </span>
+                                    )}
                                   </div>
                                 ))}
                               </td>

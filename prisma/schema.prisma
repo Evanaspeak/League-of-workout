@@ -87,6 +87,15 @@ model User {
   // Depuis quand, pour pouvoir le rappeler sans le réclamer.
   suspensionDepuis   DateTime?
 
+  // Variante d'exécution déclarée pour les pompes : "genoux" ou rien.
+  //
+  // Elle ne change AUCUN calcul — des pompes genoux au sol coûtent le même
+  // nombre de points. Un ratio adapté aurait été plus juste sur le papier et
+  // faux à l'usage : il aurait effacé la seule chose qu'on vient regarder.
+  // Voir trois semaines d'historique annotées, puis l'annotation disparaître,
+  // dit une progression qu'aucun coefficient ne dit.
+  variantePompes String?
+
   // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
   // l'autre. `exercice` (singulier) est l'ancienne version, conservée en base
@@ -206,6 +215,12 @@ model Game {
   // Ventilation de la dette entre exercices, en JSON : {"pompes":23,"boxe":23}.
   // Null quand un seul exercice est concerné — `exercice` suffit alors.
   repartition         String?
+  // Variante d'exécution en vigueur au moment de l'enregistrement ("genoux").
+  // Recopiée depuis le réglage du compte plutôt que lue au moment de
+  // l'affichage : le réglage change, l'historique ne doit pas changer avec.
+  // Quelqu'un qui arrête les genoux au sol verrait sinon ses trois premières
+  // semaines se réécrire d'un coup.
+  variante            String?
   // Jeu concerné, et façon dont il génère de la dette :
   //   "parties" → résultat et KDA (League of Legends, Valorant…)
   //   "temps"   → durée jouée, sans victoire ni défaite (Minecraft…)

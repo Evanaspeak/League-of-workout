@@ -106,6 +106,8 @@ export default function SettingsPage() {
   const [seuilSec, setSeuilSec] = useState<number>(RAPPEL_SEUIL_SEC_DEFAUT);
   // Avertissement de volume quotidien, en points d'effort. 0 = désactivé.
   const [plafond, setPlafond] = useState<number>(0);
+  /** Variante d'exécution des pompes déclarée pour soi : "genoux" ou rien. */
+  const [variante, setVariante] = useState<string | null>(null);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
 
@@ -134,6 +136,7 @@ export default function SettingsPage() {
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
       setPlafond(s.user?.plafondQuotidien ?? 0);
+      setVariante(s.user?.variantePompes ?? null);
       setPompesMax(s.user?.pompesMax ?? 0);
       setPompesMaxLe(s.user?.pompesMaxLe ?? null);
     });
@@ -176,6 +179,28 @@ export default function SettingsPage() {
       body: JSON.stringify({
         userPrefs: { exercices: nextExercices, rappelSeuilPoints: nextSeuil },
       }),
+    });
+    setSavingExo(false);
+    if (res.ok) {
+      setSavedExo(true);
+      setTimeout(() => setSavedExo(false), 2000);
+    }
+  };
+
+  /**
+   * Déclare — ou retire — la variante d'exécution des pompes.
+   *
+   * Le retrait ne réécrit rien : les parties déjà enregistrées gardent leur
+   * annotation. C'est tout l'intérêt, on veut pouvoir relire d'où on part.
+   */
+  const handleSaveVariante = async (prochaine: string | null) => {
+    setVariante(prochaine);
+    setSavingExo(true);
+    setSavedExo(false);
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { variantePompes: prochaine } }),
     });
     setSavingExo(false);
     if (res.ok) {
@@ -411,6 +436,46 @@ export default function SettingsPage() {
 
           {exercicesSel.length > 1 && (
             <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
+          )}
+
+          {/* La variante ne se propose que si les pompes sont de la partie :
+              ailleurs, elle ne qualifierait rien. */}
+          {exercicesSel.includes("pompes") && (
+            <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }} className="space-y-2">
+              <h3 className="text-sm" style={{ color: "var(--bone)", fontWeight: 600 }}>
+                {tExo.varianteTitre}
+              </h3>
+              <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+                {tExo.varianteAide}
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {[
+                  { valeur: null, libelle: tExo.varianteInactive },
+                  { valeur: "genoux", libelle: tExo.varianteActive },
+                ].map(({ valeur, libelle }) => {
+                  const actif = valeur === variante;
+                  return (
+                    <button
+                      key={libelle}
+                      onClick={() => handleSaveVariante(valeur)}
+                      aria-pressed={actif}
+                      style={{
+                        padding: "7px 14px",
+                        borderRadius: 999,
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                        background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                        border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                        color: actif ? "var(--amber)" : "var(--muted)",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {libelle}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
 

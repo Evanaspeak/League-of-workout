@@ -140,6 +140,27 @@ describe("PUT /api/settings — préférences personnelles", () => {
     const r = await put({ userPrefs: { pompesMax: 100000 } });
     expect(r.status).toBe(400);
   });
+
+  it("accepte la variante d'exécution des pompes", async () => {
+    const r = await put({ userPrefs: { variantePompes: "genoux" } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.variantePompes).toBe("genoux");
+  });
+
+  it("accepte de la retirer", async () => {
+    // Le geste qu'on fait le jour où on n'en a plus besoin. `null` doit
+    // arriver jusqu'à la base : un `undefined` laisserait le réglage en place
+    // et l'historique continuerait de s'annoter.
+    const r = await put({ userPrefs: { variantePompes: null } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.variantePompes).toBeNull();
+  });
+
+  it("refuse une variante inconnue", async () => {
+    const r = await put({ userPrefs: { variantePompes: "sur une main" } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
 });
 
 /**

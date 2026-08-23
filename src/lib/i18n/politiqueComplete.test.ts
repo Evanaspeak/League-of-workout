@@ -74,6 +74,9 @@ const ATTENDU: Record<string, RegExp> = {
   // n'est demandée.
   exercicesSuspendus: /exercices mis de côté/i,
   suspensionDepuis: /exercices mis de côté/i,
+  // Dire qu'on fait ses pompes genoux au sol frôle la santé sans en être :
+  // la politique le décrit, et dit qu'aucune raison n'est demandée.
+  variantePompes: /variante d'exécution des pompes/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */

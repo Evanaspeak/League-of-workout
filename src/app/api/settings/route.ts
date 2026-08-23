@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { comptePublic } from "@/lib/compte";
 import { isExerciceId, toExerciceIds } from "@/lib/exercices";
 import { estAdmin } from "@/lib/admin";
+import { toVariante } from "@/lib/variantes";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -58,6 +59,7 @@ export async function PUT(req: Request) {
       exercices?: string[]; rappelSeuilPoints?: number;
       rappelSeuilSec?: number; plafondQuotidien?: number;
       pompesMax?: number; pompesMaxLe?: Date;
+      variantePompes?: string | null;
     } = {};
 
     if (body.userPrefs.exercices !== undefined) {
@@ -94,6 +96,18 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Plafond quotidien invalide" }, { status: 400 });
       }
       data.plafondQuotidien = Math.round(plafond);
+    }
+
+    // Variante d'exécution des pompes. Elle ne touche à aucun calcul : elle
+    // est recopiée sur les parties enregistrées ensuite, pour qu'on puisse se
+    // relire. `null` la retire — c'est le geste qu'on fait le jour où on n'en
+    // a plus besoin, et il ne doit rien réécrire de l'historique passé.
+    if (body.userPrefs.variantePompes !== undefined) {
+      const v = body.userPrefs.variantePompes;
+      if (v !== null && toVariante(v) === null) {
+        return NextResponse.json({ error: "Variante inconnue" }, { status: 400 });
+      }
+      data.variantePompes = v === null ? null : toVariante(v);
     }
 
     // Test de pompes maximales : c'est lui qui fixe le niveau, donc le

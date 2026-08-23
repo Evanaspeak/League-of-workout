@@ -194,3 +194,35 @@ describe("POST /api/games", () => {
     expect((await corps(r)).dettePointsDus).toBeNull();
   });
 });
+
+/**
+ * L'annotation d'exécution recopiée du compte vers la partie.
+ *
+ * Elle ne touche à aucun chiffre — et c'est précisément ce qui la rend
+ * fragile : rien dans le total ne signalerait qu'on annote des pompes qui
+ * n'ont pas eu lieu, ou qu'on a cessé de les annoter.
+ */
+describe("variante d'exécution", () => {
+  it("se recopie sur la partie", async () => {
+    session.mockResolvedValue(utilisateur({ pompesMax: 20, variantePompes: "genoux" }));
+    await post(partie({ exercice: "pompes" }));
+    expect(game.create.mock.calls[0][0].data.variante).toBe("genoux");
+  });
+
+  it("tombe quand les pompes ne sont pas de l'effort", async () => {
+    session.mockResolvedValue(utilisateur({ pompesMax: 20, variantePompes: "genoux" }));
+    await post(partie({ exercice: "boxe" }));
+    expect(game.create.mock.calls[0][0].data.variante).toBeNull();
+  });
+
+  it("vaut nul quand le compte n'en déclare aucune", async () => {
+    await post(partie({ exercice: "pompes" }));
+    expect(game.create.mock.calls[0][0].data.variante).toBeNull();
+  });
+
+  it("ignore une valeur hors catalogue restée en base", async () => {
+    session.mockResolvedValue(utilisateur({ pompesMax: 20, variantePompes: "sur une main" }));
+    await post(partie({ exercice: "pompes" }));
+    expect(game.create.mock.calls[0][0].data.variante).toBeNull();
+  });
+});
