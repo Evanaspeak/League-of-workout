@@ -151,9 +151,17 @@ export function LoginClient({
         )}
 
         <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.8rem" }}>
+          {/* Le nom du produit EST le titre de cette page, et il n'était
+              qu'un `div` : l'écran n'avait donc aucun titre de niveau un.
+              Un lecteur d'écran ne peut pas sauter au contenu, et un moteur
+              de recherche ne voit rien qui dise de quoi la page parle. Les
+              marges sont reprises telles quelles pour que rien ne bouge. */}
+          <h1 style={{
+            display: "flex", justifyContent: "center",
+            margin: "0 0 0.8rem", fontSize: "inherit", fontWeight: "inherit",
+          }}>
             <Wordmark fontSize="1.35rem" />
-          </div>
+          </h1>
           <p className="eyebrow" style={{ marginTop: "0.4rem" }}>
             {t.accesReserve}
           </p>

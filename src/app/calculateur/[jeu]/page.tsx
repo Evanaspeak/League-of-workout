@@ -29,13 +29,37 @@ export async function generateMetadata(
   if (!jeu) return { title: "Calculateur" };
 
   const titre = `Combien de pompes pour une défaite sur ${jeu} ?`;
+  const adresse = `https://winorworkout.com/calculateur/${slug}`;
   return {
-    title: titre,
+    /**
+     * `absolute` retire le suffixe « · Win or Workout » du gabarit.
+     *
+     * Le titre EST la question qu'on a tapée : c'est ce qui dit à la personne
+     * qu'elle est arrivée au bon endroit. Avec le suffixe, la question
+     * atteignait 75 caractères et Google la coupait — au milieu du nom du jeu,
+     * c'est-à-dire au mot qui prouvait qu'on répondait bien à SA question.
+     * Sans lui, quatorze pages sur quinze tiennent sous soixante caractères.
+     */
+    title: { absolute: titre },
     description:
       `Le calcul de Win or Workout pour ${jeu} : réglez votre partie, obtenez le nombre de pompes. `
       + "Sans compte et sans inscription.",
     alternates: { canonical: `/calculateur/${slug}` },
-    openGraph: { title: titre, type: "website" },
+    /**
+     * L'image et l'adresse sont redites ici, et il le faut.
+     *
+     * Next.js remplace le bloc `openGraph` du parent au lieu de le compléter :
+     * déclarer un titre suffisait à faire disparaître l'image et l'adresse
+     * héritées de la mise en page racine. Ces pages sont précisément celles
+     * qu'on colle dans un salon Discord, et elles y arrivaient sans vignette.
+     */
+    openGraph: {
+      title: titre,
+      type: "website",
+      url: adresse,
+      siteName: "Win or Workout",
+      images: ["/opengraph-image"],
+    },
   };
 }
 

@@ -582,6 +582,50 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Audit SEO des pages publiques — treize constats, douze corrigés
+Le calculateur par jeu est le seul canal d'acquisition qui travaille sans qu'on
+s'en occupe. Ce sont exactement les pages où les défauts trouvés se payaient.
+
+Deux vrais, tous deux invisibles à l'écran :
+
+- **Le titre des pages par jeu atteignait 75 caractères.** Le gabarit y
+  ajoutait « · Win or Workout », et Google coupait la question au milieu du nom
+  du jeu — c'est-à-dire au mot qui prouvait qu'on répondait bien à celle qu'on
+  venait de taper. `title: { absolute: … }` retire le suffixe : quatorze pages
+  sur quinze tiennent sous soixante caractères.
+- **Ces mêmes pages partaient sans vignette.** Next.js **remplace** le bloc
+  `openGraph` du parent au lieu de le compléter : déclarer un `title` suffisait
+  à effacer l'image et l'adresse héritées de la mise en page racine. Elles sont
+  redéclarées, avec la raison écrite au-dessus.
+
+Puis quatre plus petits : `/login` n'avait aucun `h1` — le nom du produit y
+tenait lieu de titre dans un `div`, donc rien pour sauter au contenu et rien
+qui dise de quoi la page parle ; la description des CGU faisait 53 caractères,
+trop court pour que le moteur la préfère à un extrait de son choix ;
+`/waitlist` n'avait ni titre ni `noindex`.
+
+**Interdire l'exploration n'empêche pas l'indexation.** `/waitlist` était dans
+`robots.txt`, ce qui ne la sortait pas des résultats : une adresse interdite
+d'exploration peut être indexée depuis un lien, et paraît alors sans titre ni
+description — le pire des deux mondes. Un moteur ne lit « ne m'indexe pas » que
+s'il a le droit d'ouvrir la page. L'interdiction a donc été levée en même temps
+que la balise a été posée. `/bilan` l'a remplacée dans la liste.
+
+Trois constats étaient **faux**, et il valait mieux le vérifier que « corriger » :
+- « douze images sans alt » sur l'accueil — les logos de jeux portent
+  `alt=""` volontairement, le nom du jeu étant écrit à côté. Mon contrôle
+  lisait `!img.alt`, qui est vrai pour un alt vide comme pour un alt absent ;
+- « pas de lien canonique » sur `/login`, `/recuperation`, `/waitlist` — une
+  page qui dit « ne m'indexe pas » n'a pas besoin de canonique.
+
+Reste un constat, assumé : « Combien de pompes pour une défaite sur Call of
+Duty: Warzone ? » fait 62 caractères. Raccourcir la question la viderait de ce
+qui la rend utile.
+
+`e2e/seo.spec.ts` garde l'ensemble — onze contrôles sur les balises rendues,
+pas sur le code qui les produit. Éprouvé en retirant la vignette et en
+remettant le suffixe du titre : chaque sabotage nomme son test.
+
 ### Le bilan de saison (question 105)
 L'application ne sait dire que le présent — ce qu'on doit, là, maintenant.
 Quatre-vingt-dix jours mis bout à bout disent autre chose, et c'est la seule
