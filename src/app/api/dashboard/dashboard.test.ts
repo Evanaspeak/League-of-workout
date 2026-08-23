@@ -138,3 +138,38 @@ describe("GET /api/dashboard/daily", () => {
     expect(d.total).toBe(55);
   });
 });
+
+/**
+ * L'énergie dépensée ne se calcule qu'avec le consentement.
+ *
+ * La politique de confidentialité l'écrit noir sur blanc : sans lui, cette
+ * estimation n'est pas affichée. Un engagement qu'on ne tient qu'à moitié n'en
+ * est pas un, et le poids relève de l'article 9.
+ */
+describe("énergie dépensée", () => {
+  beforeEach(() => {
+    game.findMany.mockResolvedValue([partie()]);
+  });
+
+  it("ne sort pas sans consentement, même si le poids est en base", async () => {
+    session.mockResolvedValue(utilisateur({ poids: 78, santeConsentiLe: null }));
+    const r = await corps(await tableauDeBord(requete("/api/dashboard")));
+    expect(r.calories).toBeNull();
+  });
+
+  it("ne sort pas avec le consentement mais sans poids", async () => {
+    session.mockResolvedValue(utilisateur({ poids: null, santeConsentiLe: new Date() }));
+    const r = await corps(await tableauDeBord(requete("/api/dashboard")));
+    expect(r.calories).toBeNull();
+  });
+
+  it("sort quand les deux sont là, avec son équivalence en marche", async () => {
+    session.mockResolvedValue(utilisateur({ poids: 78, santeConsentiLe: new Date() }));
+    const r = await corps(await tableauDeBord(requete("/api/dashboard")));
+    const c = r.calories as { total: number; marcheMin: number } | null;
+    expect(c).not.toBeNull();
+    expect(c!.total).toBeGreaterThan(0);
+    expect(c!.marcheMin).toBeGreaterThan(0);
+  });
+});
+
