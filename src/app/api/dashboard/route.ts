@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { pointsSur, veiller } from "@/lib/veille";
+import { defaitesDAffilee } from "@/lib/serieDeDefaites";
 import { caloriesDePoints, minutesDeMarche } from "@/lib/calories";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -336,6 +337,15 @@ export async function GET(req: Request) {
      * qui se sert de l'application pour se punir ne le règle pas. Cette
      * veille-ci ne se désactive donc pas, et ne bloque rien non plus.
      */
+    /**
+     * Série de défaites en cours, dans la séance en cours.
+     *
+     * Elle se calcule ici parce que le serveur a l'ordre exact des parties ;
+     * le navigateur, lui, n'a que ce qu'on lui envoie.
+     */
+    defaitesDAffilee: defaitesDAffilee(
+      [...toutesLesGames].reverse().map((g) => ({ date: g.date, result: g.result })),
+    ),
     veille: veiller(
       pointsSur(toutesLesGames, 1),
       pointsSur(toutesLesGames, 7),

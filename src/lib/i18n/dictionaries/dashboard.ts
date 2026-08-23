@@ -1,5 +1,7 @@
 export const dashboard = {
   fr: {
+    pauseTitre: (n: number) => `${n} défaites d'affilée`,
+    pauseTexte: "Ça arrive à tout le monde, et ça ne s'améliore généralement pas en enchaînant. Une pause, un verre d'eau, et la suivante ira mieux.",
     veilleTitre: "Un mot sur le volume",
     veilleJour: "Vous avez généré beaucoup d'effort aujourd'hui. Rien ne vous oblige à tout rendre le jour même : la dette attend, et la répartir sur plusieurs jours vaut mieux que de la solder d'un coup.",
     veilleSemaine: "Le volume de cette semaine est élevé. Si vous ressentez une douleur qui dure, arrêtez l'exercice concerné et demandez l'avis d'un médecin.",
@@ -110,6 +112,8 @@ export const dashboard = {
     levelLabel: (n: number) => `Niveau ${n}`,
   },
   en: {
+    pauseTitre: (n: number) => `${n} losses in a row`,
+    pauseTexte: "It happens to everyone, and it rarely gets better by queueing again. A break, a glass of water, and the next one will go better.",
     veilleTitre: "A word about volume",
     veilleJour: "You have generated a lot of effort today. Nothing forces you to clear it the same day: the debt waits, and spreading it over several days beats clearing it in one go.",
     veilleSemaine: "This week's volume is high. If you feel pain that lasts, stop that exercise and see a doctor.",
@@ -218,6 +222,8 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   es: {
+    pauseTitre: (n: number) => `${n} derrotas seguidas`,
+    pauseTexte: "Le pasa a todo el mundo, y no suele mejorar encadenando partidas. Una pausa, un vaso de agua, y la siguiente irá mejor.",
     veilleTitre: "Una palabra sobre el volumen",
     veilleJour: "Hoy has generado mucho esfuerzo. Nada te obliga a saldarlo el mismo día: la deuda espera, y repartirla en varios días es mejor que liquidarla de una vez.",
     veilleSemaine: "El volumen de esta semana es alto. Si sientes un dolor que persiste, deja ese ejercicio y consulta a un médico.",
@@ -326,6 +332,8 @@ export const dashboard = {
     levelLabel: (n: number) => `Nivel ${n}`,
   },
   de: {
+    pauseTitre: (n: number) => `${n} Niederlagen in Folge`,
+    pauseTexte: "Das passiert jedem, und es wird selten besser, wenn man gleich weiterspielt. Eine Pause, ein Glas Wasser, und die nächste läuft besser.",
     veilleTitre: "Ein Wort zum Umfang",
     veilleJour: "Du hast heute viel Aufwand angesammelt. Nichts zwingt dich, alles am selben Tag abzuarbeiten: Die Schuld wartet, und sie über mehrere Tage zu verteilen ist besser, als sie auf einmal zu tilgen.",
     veilleSemaine: "Der Umfang dieser Woche ist hoch. Wenn du anhaltende Schmerzen spürst, lass die betreffende Übung und geh zum Arzt.",
@@ -434,6 +442,8 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   zh: {
+    pauseTitre: (n: number) => `连续 ${n} 场失败`,
+    pauseTexte: "谁都会遇到，而继续排下去通常不会变好。休息一下，喝杯水，下一局会更顺。",
     veilleTitre: "关于运动量的一句话",
     veilleJour: "你今天累积了很多运动量。没有必要当天还清：欠账会等着，分几天完成比一次做完更好。",
     veilleSemaine: "本周的运动量偏高。如果出现持续的疼痛，请停下相关项目并就医。",
@@ -542,6 +552,8 @@ export const dashboard = {
     levelLabel: (n: number) => `等级 ${n}`,
   },
   ja: {
+    pauseTitre: (n: number) => `${n} 連敗`,
+    pauseTexte: "誰にでもあることで、続けて回してもたいてい良くなりません。少し休んで、水を一杯。次はきっとましになります。",
     veilleTitre: "運動量について一言",
     veilleJour: "今日はかなりの運動量になりました。その日のうちに返しきる必要はありません。負債は待ちますし、数日に分けたほうが一度に片づけるより良いです。",
     veilleSemaine: "今週の運動量は多めです。続く痛みを感じたら、その種目はやめて医師に相談してください。",

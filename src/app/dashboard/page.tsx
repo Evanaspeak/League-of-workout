@@ -97,6 +97,7 @@ type DashData = {
   /** Effort accumulé aujourd'hui, et seuil au-delà duquel on prévient. */
   pointsAujourdhui?: number;
   veille?: { pointsJour: number; pointsSemaine: number; alerte: "jour" | "semaine" | null };
+  defaitesDAffilee?: number;
   plafondQuotidien?: number;
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
@@ -501,6 +502,20 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {/* Trois défaites d'affilée : on le dit une fois, sans y revenir. Un
+          rappel qui reviendrait à chaque défaite deviendrait un reproche, et
+          un reproche se ferme sans se lire. */}
+      {(data.defaitesDAffilee ?? 0) >= 3 && (
+        <div className="lol-panel p-4">
+          <div style={{ color: "var(--gold)", fontWeight: 600, marginBottom: 4 }}>
+            {t.pauseTitre(data.defaitesDAffilee ?? 0)}
+          </div>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+            {t.pauseTexte}
+          </p>
+        </div>
+      )}
 
       {/* Ce qu'on voit du volume, dit une fois et sans y revenir. Ça ne
           bloque rien : le choix a été fait de laisser chacun libre de
