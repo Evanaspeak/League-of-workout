@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { SerieEtRetard } from "@/components/SerieEtRetard";
 import { Paliers } from "@/components/Paliers";
+import { PremiersPas } from "@/components/PremiersPas";
 import dynamic from "next/dynamic";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
@@ -893,6 +894,11 @@ export default function Dashboard() {
           fmtAxe={fmtAxe}
         />
       )}
+
+      {/* Un compte neuf voit une démonstration chiffrée plutôt qu'un message
+          qui le renvoie ailleurs : c'est la seule question qu'on se pose à ce
+          moment-là, et elle mérite un nombre. */}
+      {data.totalGames === 0 && <PremiersPas pompesMax={data.pompesMax ?? 0} />}
 
       {data.totalGames === 0 && (
         <div className="lol-panel p-8 text-center space-y-2">
