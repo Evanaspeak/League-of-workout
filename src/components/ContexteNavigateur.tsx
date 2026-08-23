@@ -27,6 +27,9 @@ function fuseauDuNavigateur(): string | null {
   }
 }
 
+/** Ce qui a déjà été remonté pendant cette ouverture de l'application. */
+const CLE_ENVOYE = "low_contexte_envoye";
+
 export function ContexteNavigateur() {
   const { locale } = useLocale();
   const pathname = usePathname();
@@ -38,17 +41,39 @@ export function ContexteNavigateur() {
     const fuseau = fuseauDuNavigateur();
     const cle = `${locale}|${fuseau ?? ""}`;
     if (envoye.current === cle) return;
+
+    // Une seule écriture par ouverture de l'application, et non une par page.
+    // La première version se contentait du garde en mémoire, qui repart à zéro
+    // à chaque chargement : chaque navigation déclenchait donc une écriture en
+    // base pour une valeur inchangée. Mesuré avant et après : ça ne change
+    // rien au temps d'affichage — l'écriture ne bloquait pas le rendu. C'est
+    // une requête de moins, pas une page plus rapide, et il ne faut pas se
+    // raconter le contraire.
+    try {
+      if (sessionStorage.getItem(CLE_ENVOYE) === cle) { envoye.current = cle; return; }
+    } catch { /* stockage refusé : on écrira, ce qui reste correct */ }
     envoye.current = cle;
-    fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userPrefs: { langue: locale, ...(fuseau ? { fuseau } : {}) },
-      }),
-    }).catch(() => {
-      // Hors ligne, ou session expirée : on retentera au prochain changement.
-      envoye.current = null;
-    });
+
+    // Après le chargement : rien ici n'est urgent, et le faire pendant que la
+    // page se monte revient à retarder ce que l'utilisateur attend.
+    const poser = () => {
+      fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userPrefs: { langue: locale, ...(fuseau ? { fuseau } : {}) },
+        }),
+      }).then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        try { sessionStorage.setItem(CLE_ENVOYE, cle); } catch { /* sans mémoire */ }
+      }).catch(() => {
+        // Hors ligne, ou session expirée : on retentera au prochain changement.
+        envoye.current = null;
+      });
+    };
+    if (document.readyState === "complete") { poser(); return; }
+    window.addEventListener("load", poser);
+    return () => window.removeEventListener("load", poser);
   }, [locale, pathname]);
 
   return null;
