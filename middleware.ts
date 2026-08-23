@@ -32,6 +32,10 @@ const PUBLIC_PREFIXES = [
   // La page d'accueil les relit sans session : les protéger la casserait sans
   // rien protéger.
   "/api/exercices/ratios",
+  // La sonde de supervision. Exiger une session la rendrait muette le jour où
+  // c'est l'authentification qui est tombée — c'est-à-dire le jour où elle
+  // servirait.
+  "/api/sante",
 ];
 
 export default auth((req) => {
