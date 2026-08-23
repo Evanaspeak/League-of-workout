@@ -38,7 +38,17 @@ export function ComparatifJeux({
         <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.comparatifAide}</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm" style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: 620 }}>
+        {/*
+          * Le titre au-dessus ne suffit pas à un lecteur d'écran : il annonce
+          * « tableau », puis rien. `aria-label` le nomme sans rien changer à la
+          * mise en page — un `<caption>` décalait les lignes de quatre pixels,
+          * et c'est le défaut qu'on avait corrigé ailleurs de la même façon.
+          */}
+        <table
+          className="w-full text-sm"
+          aria-label={t.comparatifTitre}
+          style={{ borderCollapse: "separate", borderSpacing: "0 4px", minWidth: 620 }}
+        >
           <thead>
             <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
               <th className="text-left px-3 py-1">{t.colJeu}</th>

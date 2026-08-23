@@ -261,6 +261,128 @@ for (const chemin of aVisiter) {
 }
 }
 
+/**
+ * Deux contrôles qui ne dépendent pas de la langue, passés une seule fois.
+ *
+ * L'animation réduite et la couleur seule ne changent pas d'un dictionnaire à
+ * l'autre : les repasser six fois allongerait la campagne sans rien apprendre.
+ */
+let horsLangue = 0;
+
+/**
+ * Animation réduite.
+ *
+ * Le système peut demander qu'on bouge moins — c'est un réglage d'accessibilité,
+ * pas une préférence esthétique : pour certaines personnes, une animation
+ * déclenche un vertige. On ouvre donc un contexte qui le demande, et on regarde
+ * ce qui bouge encore.
+ */
+{
+  const ctx = await navigateur.newContext({ reducedMotion: "reduce" });
+  const page = await ctx.newPage();
+  for (const chemin of aVisiter) {
+    if (JETON) {
+      await ctx.addCookies([{
+        name: "authjs.session-token", value: JETON,
+        domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
+      }]);
+    }
+    await page.goto(`${BASE}${chemin}`, { waitUntil: "networkidle" }).catch(() => {});
+    const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
+    if (arrivee !== (chemin.replace(/\/+$/, "") || "/")) continue;
+
+    const bougent = await page.evaluate(() => {
+      const out = [];
+      // Au-delà d'un dixième de seconde, ce n'est plus un fondu discret.
+      const SEUIL_MS = 100;
+      const duree = (v) => Math.max(...String(v).split(",")
+        .map((d) => (d.trim().endsWith("ms") ? parseFloat(d) : parseFloat(d) * 1000))
+        .map((n) => (Number.isFinite(n) ? n : 0)), 0);
+      for (const el of document.querySelectorAll("body *")) {
+        const s = getComputedStyle(el);
+        if (s.visibility === "hidden" || s.display === "none") continue;
+        const anim = s.animationName !== "none" ? duree(s.animationDuration) : 0;
+        const trans = duree(s.transitionDuration);
+        if (Math.max(anim, trans) > SEUIL_MS) {
+          out.push(`${el.tagName.toLowerCase()}${el.className ? "." + String(el.className).split(" ")[0] : ""} ${Math.round(Math.max(anim, trans))} ms`);
+        }
+      }
+      return [...new Set(out)].slice(0, 6);
+    });
+    if (bougent.length) {
+      console.log(`\n═══ animation réduite · ${chemin}`);
+      for (const b of bougent) console.log(`  bouge encore : ${b}`);
+      horsLangue += bougent.length;
+    }
+  }
+  await ctx.close();
+}
+
+/**
+ * La couleur seule.
+ *
+ * Victoire en vert, défaite en rouge : pour un daltonien, ce sont deux gris.
+ * Le contrôle cherche les éléments peints avec l'une des deux couleurs et
+ * vérifie qu'ils portent aussi du texte — une lettre, un mot, un chiffre.
+ * Une pastille de couleur vide ne dit rien à qui ne distingue pas les deux.
+ */
+{
+  const ctx = await navigateur.newContext();
+  const page = await ctx.newPage();
+  for (const chemin of aVisiter) {
+    if (JETON) {
+      await ctx.addCookies([{
+        name: "authjs.session-token", value: JETON,
+        domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
+      }]);
+    }
+    await page.goto(`${BASE}${chemin}`, { waitUntil: "networkidle" }).catch(() => {});
+    const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
+    if (arrivee !== (chemin.replace(/\/+$/, "") || "/")) continue;
+
+    const muettes = await page.evaluate(() => {
+      const CIBLES = ["rgb(47, 217, 138)", "rgb(255, 90, 71)"];
+      const out = [];
+      for (const el of document.querySelectorAll("body *")) {
+        const s = getComputedStyle(el);
+        if (!CIBLES.includes(s.color) && !CIBLES.includes(s.backgroundColor)) continue;
+        if (s.visibility === "hidden" || s.display === "none") continue;
+        /**
+         * La couleur n'est seule que si RIEN, autour, ne dit la même chose.
+         *
+         * La première version ne regardait que l'élément lui-même, et signalait
+         * les points décoratifs posés à côté d'un libellé — trois faux positifs
+         * sur la page d'accueil. Une pastille verte suivie du mot « en ligne »
+         * ne pose aucun problème : c'est le mot qui informe, le point décore.
+         *
+         * On remonte donc jusqu'à trois parents : si l'un d'eux porte du texte,
+         * la couleur n'est pas le seul porteur du sens.
+         */
+        const texte = (el.textContent || "").trim();
+        const nom = el.getAttribute("aria-label") || el.getAttribute("title") || "";
+        if (texte || nom || el.querySelector("svg, img")) continue;
+        let parent = el.parentElement;
+        let entoure = false;
+        for (let i = 0; i < 3 && parent; i += 1) {
+          if ((parent.textContent || "").trim() !== "") { entoure = true; break; }
+          parent = parent.parentElement;
+        }
+        if (entoure) continue;
+        out.push(`${el.tagName.toLowerCase()}${el.className ? "." + String(el.className).split(" ")[0] : ""}`);
+      }
+      return [...new Set(out)].slice(0, 6);
+    });
+    if (muettes.length) {
+      console.log(`\n═══ couleur seule · ${chemin}`);
+      for (const m of muettes) console.log(`  couleur sans texte : ${m}`);
+      horsLangue += muettes.length;
+    }
+  }
+  await ctx.close();
+}
+
+total += horsLangue;
+
 console.log(`\n${total} constat(s).`);
 if (nonMesurees > 0) {
   console.log(`${nonMesurees} page(s) NON MESURÉE(S) — le zéro ci-dessus ne les couvre pas.`);
