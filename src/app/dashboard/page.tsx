@@ -71,6 +71,8 @@ type DashData = {
   wins: number;
   winrate: number;
   totalPompes: number;
+  /** Absent tant que le consentement aux données de santé n'est pas donné. */
+  calories: { total: number; marcheMin: number } | null;
   recordPompes: number;
   pompesByRole: Record<string, number>;
   gamesByRole: Record<string, number>;
@@ -496,6 +498,39 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {/* L'énergie dépensée n'apparaît qu'avec le consentement aux données de
+          santé : sans le poids, il n'y a rien à estimer, et la politique de
+          confidentialité annonce qu'on ne l'affiche pas. */}
+      {data.calories && (
+        <div className="lol-panel p-4" style={{
+          display: "flex", alignItems: "baseline", justifyContent: "space-between",
+          gap: 12, flexWrap: "wrap",
+        }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <span style={{
+              fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "uppercase",
+              color: "var(--steel)",
+            }}>
+              {t.energieLabel}
+            </span>
+            <span style={{ fontSize: "0.72rem", color: "var(--steel)" }}>
+              {t.energieEstimation}
+            </span>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <b style={{
+              fontFamily: "var(--font-heading)", fontSize: "1.6rem", color: "var(--gold)",
+              fontVariantNumeric: "tabular-nums",
+            }}>
+              {fmt(data.calories.total)} kcal
+            </b>
+            <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+              {t.energieSub(data.calories.marcheMin)}
+            </div>
+          </div>
+        </div>
+      )}
 
       {data.objectifTotalPompes > 0 && (
         <div className="lol-panel p-4 space-y-2 rise" style={{ animationDelay: "320ms" }}>

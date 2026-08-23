@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { caloriesDePoints, minutesDeMarche } from "@/lib/calories";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
@@ -338,6 +339,27 @@ export async function GET(req: Request) {
     // Exercices sélectionnés : servent à convertir les points d'effort à
     // l'affichage et à ventiler les totaux.
     exercices: toExerciceIds(user?.exercices),
+    /**
+     * Énergie dépensée, ou rien.
+     *
+     * Le calcul a besoin du poids, qui est une donnée de santé au sens de
+     * l'article 9. La politique de confidentialité dit noir sur blanc que sans
+     * consentement, cette estimation n'est pas affichée : on ne la calcule donc
+     * pas, plutôt que de la calculer sur une valeur par défaut et de tenir un
+     * engagement à moitié.
+     *
+     * Le chiffre est calculé ici et non dans le navigateur pour que le poids
+     * n'ait pas à voyager pour ça.
+     */
+    calories: user.santeConsentiLe && user.poids
+      ? {
+          total: caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids),
+          marcheMin: minutesDeMarche(
+            caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids),
+            user.poids,
+          ),
+        }
+      : null,
     global: {
       totalGames: globalGames,
       wins: globalWins,
