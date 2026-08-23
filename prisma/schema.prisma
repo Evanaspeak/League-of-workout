@@ -79,6 +79,14 @@ model User {
   // diffusion.
   jetonObs String? @unique
 
+  // Exercices mis de côté, blessure ou gêne. Ils sortent d'`exercices` — la
+  // liste active, que tout le reste de l'application lit déjà — et attendent
+  // ici qu'on les reprenne. Les garder à part évite de toucher aux six
+  // endroits qui répartissent la dette, et donc d'en oublier un.
+  exercicesSuspendus String[] @default([])
+  // Depuis quand, pour pouvoir le rappeler sans le réclamer.
+  suspensionDepuis   DateTime?
+
   // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
   // l'autre. `exercice` (singulier) est l'ancienne version, conservée en base
