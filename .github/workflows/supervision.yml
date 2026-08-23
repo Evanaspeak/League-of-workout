@@ -1,0 +1,80 @@
+# Est-ce que le site répond ?
+#
+# Personne ne le sait aujourd'hui. Le site tombe, la base s'endort, un
+# déploiement casse une page — et on l'apprend en allant cliquer, ou par
+# quelqu'un qui le signale. Une application qu'on lance auprès de cent
+# personnes ne peut pas dépendre de ça.
+#
+# Ce travail échoue quand le site va mal, et GitHub envoie alors un courriel.
+# C'est une supervision pauvre, et c'est volontaire : elle ne coûte rien, ne
+# dépend d'aucun service tiers, et prévient la seule personne qui puisse agir.
+name: Supervision
+
+on:
+  schedule:
+    # Toutes les quinze minutes, à une minute qui n'est ni 0 ni 30 : tout le
+    # monde planifie sur les heures rondes, et GitHub décale les travaux qui
+    # s'y bousculent.
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+# Une exécution à la fois : sur un incident long, les travaux s'empileraient
+# et chacun enverrait son courriel.
+concurrency:
+  group: supervision
+  cancel-in-progress: false
+
+jobs:
+  sonder:
+    runs-on: ubuntu-latest
+    env:
+      ADRESSE: ${{ vars.URL_SUPERVISION || 'https://winorworkout.com' }}
+    steps:
+      - name: Interroger la sonde
+        run: |
+          set -uo pipefail
+
+          # La réponse se LIT, elle ne se cherche pas au motif.
+          #
+          # La première version faisait `grep '"ok":true'`. Elle échouait sur
+          # `"ok": true` — un espace de plus, et le site en parfaite santé
+          # déclenchait l'alerte toutes les quinze minutes. Une supervision qui
+          # crie au loup finit par ne plus être lue, ce qui est pire que pas de
+          # supervision du tout. `jq` est installé sur les exécuteurs GitHub.
+          lire() { printf '%s' "$1" | jq -r "$2" 2>/dev/null || echo ""; }
+
+          # Trois essais espacés : un déploiement Vercel en cours rend
+          # brièvement des erreurs, et réveiller quelqu'un pour ça userait
+          # l'alerte jusqu'à ce qu'elle ne serve plus à rien.
+          for essai in 1 2 3; do
+            # `|| echo "000"` concaténait deux valeurs : curl écrit déjà « 000 »
+            # quand il n'a rien obtenu, et l'echo en ajoutait un second. Le code
+            # valait « 000000 », la branche « site injoignable » n'était jamais
+            # atteinte, et l'alerte annonçait un code HTTP qui n'existe pas.
+            code=$(curl -sS -o /tmp/sante.json -w '%{http_code}' \
+                     --max-time 25 "$ADRESSE/api/sante" 2>/dev/null) || code="000"
+            corps=$(cat /tmp/sante.json 2>/dev/null || echo '{}')
+            echo "essai $essai : HTTP $code — $corps"
+
+            if [ "$code" = "200" ] && [ "$(lire "$corps" '.ok')" = "true" ]; then
+              # Une base qui se réveille n'est pas une panne, mais ça se dit :
+              # c'est ce que le premier visiteur de la journée subit.
+              if [ "$(lire "$corps" '.reveil')" = "true" ]; then
+                echo "::warning::La base dormait, elle a mis $(lire "$corps" '.ms') ms à répondre."
+              fi
+              echo "Site debout."
+              exit 0
+            fi
+            [ "$essai" -lt 3 ] && sleep 20
+          done
+
+          # `curl` rend 000 quand il n'a même pas obtenu de réponse : ce n'est
+          # pas la même panne qu'un 503, qui prouve au moins que le site tourne.
+          if [ "$code" = "000" ]; then
+            echo "::error::Le site ne répond pas du tout ($ADRESSE)."
+          elif [ "$(lire "$corps" '.base')" = "injoignable" ]; then
+            echo "::error::Le site répond mais la base est injoignable."
+          else
+            echo "::error::La sonde rend HTTP $code."
+          fi
+          exit 1
