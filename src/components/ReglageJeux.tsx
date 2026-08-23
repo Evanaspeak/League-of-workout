@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { overlay as dictOverlay } from "@/lib/i18n/dictionaries/overlay";
 import { detection as dictDetection } from "@/lib/i18n/dictionaries/detection";
@@ -52,6 +53,16 @@ export function ReglageJeux() {
     () => Boolean(window.electronLOL) && !window.electronLOL?.overlayJeuxLire,
     false,
   );
+
+  /**
+   * La page est-elle ouverte dans un navigateur ordinaire ?
+   *
+   * Alors il n'y a qu'un jeu dans la liste, et c'est normal : sans
+   * l'application, ni pastille ni détection. Ce qui ne l'était pas, c'est de
+   * ne rien en dire. La section annonce « chaque jeu a ses réglages », montre
+   * un seul jeu, et laisse chercher où sont passés les autres.
+   */
+  const surLeWeb = useValeurClient(() => !window.electronLOL, false);
 
   useEffect(() => {
     const pont = typeof window !== "undefined" ? window.electronLOL : undefined;
@@ -111,6 +122,23 @@ export function ReglageJeux() {
 
       {jeux && jeux.jeux.length === 0 && (
         <p className="text-xs" style={{ color: "var(--faint)" }}>{t.jeuxAucun}</p>
+      )}
+
+      {surLeWeb && (
+        <div style={{
+          border: "1px solid var(--line)", borderRadius: 6,
+          padding: "11px 14px", display: "flex", flexDirection: "column", gap: 5,
+        }}>
+          <span style={{ color: "var(--bone)", fontWeight: 600, fontSize: "0.85rem" }}>
+            {t.surLeWebTitre}
+          </span>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6, margin: 0 }}>
+            {t.surLeWebAide}
+          </p>
+          <Link href="/telechargement" style={{ color: "var(--amber)", fontSize: "0.8rem" }}>
+            {t.surLeWebLien}
+          </Link>
+        </div>
       )}
 
       {ordonnes.map((jeu) => {

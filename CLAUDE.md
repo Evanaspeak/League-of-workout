@@ -124,6 +124,16 @@ desktop/              # App Electron Windows
 - Graphique période avec toggle **Moyenne/Total** + onglets : Heure | Jour | Mois | **Calendrier**
   - Calendrier : date picker → détail horaire via `/api/dashboard/daily`
 
+### « Tes jeux » depuis un navigateur
+La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
+exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection
+automatique, et il ne reste que le compte Riot à rattacher. Ce qui ne l'était
+pas, c'est de ne rien en dire — on cherchait où étaient passés les autres jeux.
+`ReglageJeux` affiche donc, hors application, ce qu'on peut y faire, ce qui
+demande l'application, et le lien pour l'installer.
+
+Une section qui promet plus qu'elle ne donne doit au moins dire pourquoi.
+
 ### Historique (history/page.tsx)
 
 **Sur téléphone, ce sont des cartes, pas un tableau.** Le tableau compte
@@ -347,13 +357,14 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 69 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 71 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
 puis les trois écrans connectés — tableau de bord, historique, réglages — dans
 les six langues, sur un compte qu'il ouvre lui-même, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
-de secours hors ligne, et `e2e/historique.spec.ts` regarde l'historique sur un
-écran de téléphone.
+de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
+écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
+pourquoi il n'y a qu'un jeu hors application.
 
 Le parcours complet a échoué en CI dès l'arrivée de la demande de
 consentement santé : elle est modale, elle recouvre la modale d'accueil, et
