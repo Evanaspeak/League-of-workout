@@ -1,0 +1,51 @@
+/** L'invitation à poser l'application sur l'écran d'accueil du téléphone. */
+export const installation = {
+  fr: {
+    titre: "Mettre l'app sur ton écran d'accueil",
+    aide: "Elle s'ouvre en plein écran, et c'est la seule façon de recevoir les rappels sur iPhone.",
+    installer: "Installer",
+    plusTard: "Non merci",
+    fermer: "Fermer",
+    gesteIOS: "Touche Partager en bas de Safari, puis « Sur l'écran d'accueil ».",
+  },
+  en: {
+    titre: "Put the app on your home screen",
+    aide: "It opens full screen, and it is the only way to get reminders on an iPhone.",
+    installer: "Install",
+    plusTard: "No thanks",
+    fermer: "Close",
+    gesteIOS: "Tap Share at the bottom of Safari, then “Add to Home Screen”.",
+  },
+  es: {
+    titre: "Pon la app en tu pantalla de inicio",
+    aide: "Se abre a pantalla completa, y es la única forma de recibir los avisos en un iPhone.",
+    installer: "Instalar",
+    plusTard: "No, gracias",
+    fermer: "Cerrar",
+    gesteIOS: "Toca Compartir abajo en Safari y luego «Añadir a pantalla de inicio».",
+  },
+  de: {
+    titre: "Die App auf den Startbildschirm legen",
+    aide: "Sie öffnet sich im Vollbild, und auf dem iPhone ist es der einzige Weg zu Erinnerungen.",
+    installer: "Installieren",
+    plusTard: "Nein danke",
+    fermer: "Schließen",
+    gesteIOS: "Tippe unten in Safari auf Teilen und dann auf „Zum Home-Bildschirm“.",
+  },
+  zh: {
+    titre: "把应用放到主屏幕",
+    aide: "打开就是全屏，而且在 iPhone 上这是收到提醒的唯一办法。",
+    installer: "安装",
+    plusTard: "不用了",
+    fermer: "关闭",
+    gesteIOS: "点 Safari 下方的分享，再选「添加到主屏幕」。",
+  },
+  ja: {
+    titre: "ホーム画面にアプリを置く",
+    aide: "全画面で開きます。iPhone で通知を受け取る方法はこれだけです。",
+    installer: "インストール",
+    plusTard: "今はしない",
+    fermer: "閉じる",
+    gesteIOS: "Safari 下部の共有をタップし、「ホーム画面に追加」を選びます。",
+  },
+};

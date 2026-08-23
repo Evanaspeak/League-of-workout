@@ -372,6 +372,27 @@ courriel d'échec. Y poser un `vercel.json` la met à l'écart :
 { "git": { "deploymentEnabled": false } }
 ```
 
+### Une base neuve ne se construit pas depuis `prisma/migrations`
+Le schéma d'origine a été poussé sur Neon avant que le dossier de migrations
+existe : aucune migration ne crée `User`, `Game` ni `Goal`. Sur une base vide,
+`prisma migrate deploy` échoue donc à la cinquième migration
+(`20260707140000_add_user_optional_fields`, « relation "User" does not exist »)
+et laisse une ligne en échec dans `_prisma_migrations` qui bloque tout le
+reste. Ça ne se voit pas en production, dont la base est antérieure — ça se
+voit le jour où l'on provisionne un environnement, une base de test, ou une
+reprise après sinistre.
+
+Pour monter une base de travail (tests navigateur, essai local) :
+
+```bash
+npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script \
+  | grep -v '^Loaded Prisma config' > /tmp/socle.sql
+psql -d wow -f /tmp/socle.sql
+```
+
+`prisma db push` ferait la même chose mais réclame un consentement explicite
+de l'utilisateur, et refuse de tourner sans lui.
+
 Turbopack refuse d'analyser un chemin de fichier composé d'un paramètre ou
 d'un tableau étalé : il annonce « Dynamic filesystem access causes tracing of
 the whole project » et embarque tout le dépôt dans la fonction. Les chemins
