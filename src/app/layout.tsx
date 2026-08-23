@@ -5,6 +5,7 @@ import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
 import { SessionGuard } from "@/components/SessionGuard";
 import { ConsentementSante } from "@/components/ConsentementSante";
+import { TitreAvecDette } from "@/components/TitreAvecDette";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
 import { MajDesktop } from "@/components/MajDesktop";
@@ -112,6 +113,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <CadreDesktop />
             <SplashScreen />
             <SessionGuard />
+            {/* Le compteur de dette dans le titre de l'onglet : le rappel le
+                moins coûteux qui existe, et le seul visible pendant qu'on
+                joue. */}
+            <TitreAvecDette />
             {/* Passe avant l'accueil et la visite : tant que la question du
                 consentement n'a pas de réponse, l'application détient des
                 données qu'elle n'a pas le droit de traiter. */}
