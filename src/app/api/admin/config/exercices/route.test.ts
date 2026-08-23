@@ -76,7 +76,10 @@ describe("routes admin des ratios d'exercices", () => {
     it("rend la valeur enregistrée", async () => {
       config.findUnique.mockResolvedValue({ key: "exercices", value: JSON.stringify({ squats: 4, boxe: 12 }) });
       const d = await corps(await GET());
-      expect(d.ratios).toEqual({ pompes: 1, squats: 4, boxe: 12 });
+      // `toMatchObject` et non `toEqual` : le catalogue s'agrandit, et un
+      // exercice ajouté ne doit pas faire échouer un test qui ne parle pas de
+      // lui. Ce qui compte ici, c'est que la valeur enregistrée ressorte.
+      expect(d.ratios).toMatchObject({ pompes: 1, squats: 4, boxe: 12 });
       expect(d.parDefaut).toBe(false);
     });
 
@@ -102,9 +105,9 @@ describe("routes admin des ratios d'exercices", () => {
 
     it("enregistre des ratios valides", async () => {
       const d = await corps(await put({ ratios: { squats: 2, boxe: 9 } }));
-      expect(d.ratios).toEqual({ pompes: 1, squats: 2, boxe: 9 });
+      expect(d.ratios).toMatchObject({ pompes: 1, squats: 2, boxe: 9 });
       expect(JSON.parse(config.upsert.mock.calls[0][0].update.value))
-        .toEqual({ pompes: 1, squats: 2, boxe: 9 });
+        .toMatchObject({ pompes: 1, squats: 2, boxe: 9 });
     });
 
     it("ignore une tentative de déplacer les pompes", async () => {

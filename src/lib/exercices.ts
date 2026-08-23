@@ -11,9 +11,18 @@
  * calibrage pour déterminer le niveau (1 à 5) de l'utilisateur.
  */
 
-export type ExerciceId = "pompes" | "squats" | "boxe";
+export type ExerciceId =
+  | "pompes" | "squats" | "boxe"
+  | "planche" | "tractions" | "course";
 
-export type UniteExercice = "reps" | "temps";
+export type UniteExercice = "reps" | "temps" | "distance";
+
+/**
+ * Groupe travaillé, pour qu'une rotation évite trois jours de pectoraux
+ * d'affilée. Le champ existe avant l'écran qui s'en servira : le renseigner
+ * plus tard supposerait de rouvrir six définitions et d'en oublier une.
+ */
+export type GroupeMusculaire = "haut" | "bas" | "tronc" | "cardio";
 
 export type ExerciceDef = {
   id: ExerciceId;
@@ -29,6 +38,16 @@ export type ExerciceDef = {
    * donne directement des secondes.
    */
   secondesParRep?: number;
+  /** Ce qu'il travaille. */
+  groupe: GroupeMusculaire;
+  /**
+   * Demande-t-il du matériel ?
+   *
+   * Les tractions supposent une barre, et la corde une corde. Le dire évite
+   * qu'on choisisse un exercice qu'on ne pourra pas faire, et découvre le
+   * problème une fois la dette due.
+   */
+  materiel: boolean;
 };
 
 /**
@@ -39,15 +58,34 @@ export const RATIOS_DEFAUT: Record<ExerciceId, number> = {
   pompes: 1,
   squats: 1.5,
   boxe: 7,
+  // Le gainage tenu coûte moins qu'un round de sac à la seconde : cinq
+  // secondes de planche valent un point.
+  planche: 5,
+  // Une traction vaut cinq points. Le premier réglage en donnait quarante pour
+  // cent points : c'est le contraire de ce qu'on veut, puisque l'exercice est
+  // le plus exigeant du lot. Vingt tractions pour cent points, soit à peu près
+  // le même temps que cent pompes une fois les repos comptés.
+  tractions: 0.2,
+  // Vingt mètres par point. Cent points font deux kilomètres, soit à peu près
+  // le temps que demandent cent pompes une fois les repos comptés.
+  course: 0.02,
 };
 
 export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   // Référence historique : 1 pompe = 1 point d'effort.
-  pompes: { id: "pompes", ratio: RATIOS_DEFAUT.pompes, unite: "reps", pas: 1, secondesParRep: 6 },
+  pompes: { id: "pompes", ratio: RATIOS_DEFAUT.pompes, unite: "reps", pas: 1, secondesParRep: 6, groupe: "haut", materiel: false },
   // Les jambes encaissent plus de répétitions que le haut du corps.
-  squats: { id: "squats", ratio: RATIOS_DEFAUT.squats, unite: "reps", pas: 1, secondesParRep: 5 },
+  squats: { id: "squats", ratio: RATIOS_DEFAUT.squats, unite: "reps", pas: 1, secondesParRep: 5, groupe: "bas", materiel: false },
   // Sac ou shadow : cardio soutenu, compté en temps de travail effectif.
-  boxe: { id: "boxe", ratio: RATIOS_DEFAUT.boxe, unite: "temps", pas: 5 },
+  boxe: { id: "boxe", ratio: RATIOS_DEFAUT.boxe, unite: "temps", pas: 5, groupe: "cardio", materiel: false },
+  // Gainage tenu, compté en secondes. Le même mouvement sert de test de force
+  // pour les comptes qui n'ont pas encore fait le test de pompes.
+  planche: { id: "planche", ratio: RATIOS_DEFAUT.planche, unite: "temps", pas: 5, groupe: "tronc", materiel: false },
+  // Barre nécessaire, et c'est dit : découvrir qu'on ne peut pas faire son
+  // exercice une fois la dette due est la pire façon de l'apprendre.
+  tractions: { id: "tractions", ratio: RATIOS_DEFAUT.tractions, unite: "reps", pas: 1, secondesParRep: 20, groupe: "haut", materiel: true },
+  // Course, en kilomètres. Le pas de cent mètres évite d'afficher « 1,37 km ».
+  course: { id: "course", ratio: RATIOS_DEFAUT.course, unite: "distance", pas: 0.1, secondesParRep: 360, groupe: "cardio", materiel: false },
 };
 
 export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
@@ -61,7 +99,7 @@ export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
  * qu'aucun écran ne le dise. Régler les deux autres par rapport aux pompes
  * donne exactement le même pouvoir de réglage, en gardant une référence fixe.
  */
-export const EXERCICES_REGLABLES: ExerciceId[] = ["squats", "boxe"];
+export const EXERCICES_REGLABLES: ExerciceId[] = ["squats", "boxe", "planche", "tractions", "course"];
 
 /**
  * Bornes acceptées pour chaque ratio. Elles ne sont pas décoratives : un
@@ -74,6 +112,11 @@ export const RATIO_BORNES: Record<ExerciceId, { min: number; max: number }> = {
   pompes: { min: 1, max: 1 },
   squats: { min: 0.2, max: 10 },
   boxe: { min: 1, max: 60 },
+  planche: { min: 1, max: 60 },
+  tractions: { min: 0.05, max: 1 },
+  // Cinq mètres par point au minimum, deux cents au maximum : en deçà la
+  // course devient un marathon, au-delà elle efface la dette.
+  course: { min: 0.005, max: 0.2 },
 };
 
 /** Ratios tels qu'ils circulent entre la base, le serveur et le navigateur. */
@@ -170,7 +213,17 @@ export function toExerciceIds(v: unknown): ExerciceId[] {
 export function quantite(points: number, exercice: ExerciceId): number {
   const def = EXERCICES[exercice];
   const brut = Math.max(0, points) * def.ratio;
-  return Math.round(brut / def.pas) * def.pas;
+  const arrondi = Math.round(brut / def.pas) * def.pas;
+  /**
+   * Un pas décimal laisse traîner les flottants : 3 × 0,1 vaut
+   * 0,30000000000000004, et la distance s'afficherait ainsi. On recale sur le
+   * nombre de décimales du pas lui-même.
+   */
+  if (!Number.isInteger(def.pas)) {
+    const decimales = String(def.pas).split(".")[1]?.length ?? 1;
+    return Number(arrondi.toFixed(decimales));
+  }
+  return arrondi;
 }
 
 /** Formate une durée en secondes : 45 → « 45 s », 850 → « 14 min 10 ». */
@@ -189,7 +242,12 @@ export function formaterDuree(totalSecondes: number): string {
  */
 export function formaterCompact(points: number, exercice: ExerciceId): string {
   const q = quantite(points, exercice);
-  return EXERCICES[exercice].unite === "temps" ? formaterDuree(q) : String(q);
+  const unite = EXERCICES[exercice].unite;
+  if (unite === "temps") return formaterDuree(q);
+  // La distance porte son unité : « 2,4 » seul ne dit pas des kilomètres, et
+  // c'est le seul exercice dont la quantité ne se compte pas en répétitions.
+  if (unite === "distance") return `${q.toLocaleString("fr-FR")} km`;
+  return String(q);
 }
 
 /**
@@ -215,7 +273,9 @@ export function ventiler(
  */
 export function formaterAxe(points: number, exercice: ExerciceId): string {
   const q = quantite(points, exercice);
-  if (EXERCICES[exercice].unite !== "temps") return String(q);
+  const unite = EXERCICES[exercice].unite;
+  if (unite === "distance") return `${q} km`;
+  if (unite !== "temps") return String(q);
   if (q < 60) return `${q}s`;
   return `${Math.round(q / 60)} min`;
 }
@@ -284,6 +344,8 @@ export function secondesParPoint(exercice: ExerciceId): number {
   const def = EXERCICES[exercice];
   // Un exercice compté en temps donne déjà des secondes par point.
   if (def.unite === "temps") return def.ratio;
+  // Pour une distance, `secondesParRep` porte les secondes par kilomètre :
+  // c'est la même multiplication, avec une autre unité de départ.
   return def.ratio * (def.secondesParRep ?? 0);
 }
 

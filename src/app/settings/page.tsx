@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { descriptionsExercices, nomsExercices } from "@/lib/nomsExercices";
 import { logout, deleteAccount } from "@/lib/actions";
 import { useT, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
@@ -65,11 +66,11 @@ export default function SettingsPage() {
   const [nbJeux, setNbJeux] = useState(0);
   const [version, setVersion] = useState<string | null>(null);
 
-  const EXO_LABELS: Record<ExerciceId, { nom: string; desc: string }> = {
-    pompes: { nom: tExo.pompesNom, desc: tExo.pompesDesc },
-    squats: { nom: tExo.squatsNom, desc: tExo.squatsDesc },
-    boxe: { nom: tExo.boxeNom, desc: tExo.boxeDesc },
-  };
+  const nomsExo = nomsExercices(tExo);
+  const descsExo = descriptionsExercices(tExo);
+  const EXO_LABELS = Object.fromEntries(
+    EXERCICE_IDS.map((id) => [id, { nom: nomsExo[id], desc: descsExo[id] }]),
+  ) as Record<ExerciceId, { nom: string; desc: string }>;
 
   /** « 38 pompes » pour les répétitions, « 4 min 26 » pour le temps. */
   // ── Profile ──

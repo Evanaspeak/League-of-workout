@@ -1,5 +1,11 @@
 export const exercices = {
   fr: {
+    plancheNom: "Planche",
+    tractionsNom: "Tractions",
+    courseNom: "Course",
+    plancheDesc: "Tronc. Gainage tenu, compté en secondes.",
+    tractionsDesc: "Haut du corps, le plus exigeant. Barre nécessaire.",
+    courseDesc: "Cardio, compté en kilomètres.",
     sectionTitle: "Tes exercices",
     sectionHint:
       "Coche un ou plusieurs exercices. Si tu en coches plusieurs, ils tournent à tour de rôle d'une partie à l'autre. Les parties déjà enregistrées gardent l'exercice avec lequel elles ont été jouées.",
@@ -43,6 +49,9 @@ export const exercices = {
     // n'ouvre. Il vit désormais là où la consigne est donnée.
     prudence: "Écoute ton corps : arrête-toi si tu ressens une douleur. En cas de doute sur tes capacités, demande l'avis d'un médecin.",
     forme: {
+      planche: "Avant-bras au sol sous les épaules, corps aligné. Serre le ventre et les fessiers, ne creuse pas le bas du dos. Arrête-toi quand la position se casse, pas après.",
+      tractions: "Prise un peu plus large que les épaules. Tire en amenant les coudes vers le bas, menton au-dessus de la barre. Descends complètement sans lâcher les épaules.",
+      course: "Foulée courte, pieds sous le bassin, épaules relâchées. Une allure où tu peux encore parler. Si tu ne peux plus, ralentis.",
       pompes: "Mains sous les épaules, corps aligné de la tête aux talons. Descends jusqu'à frôler le sol, remonte sans bloquer les coudes. Si le bas du dos creuse, passe sur les genoux.",
       squats: "Pieds écartés largeur de bassin, poids sur les talons. Descends comme pour t'asseoir, genoux dans l'axe des pieds. Pas plus bas que ce que tes genoux acceptent.",
       boxe: "Garde haute, coudes rentrés, menton baissé. Frappe depuis les hanches plutôt qu'avec les bras seuls. Sur sac, poignets alignés avec l'avant-bras.",
@@ -67,6 +76,12 @@ export const exercices = {
     rappelAutorisees: "Notifications activées",
   },
   en: {
+    plancheNom: "Plank",
+    tractionsNom: "Pull-ups",
+    courseNom: "Running",
+    plancheDesc: "Core. Held position, counted in seconds.",
+    tractionsDesc: "Upper body, the hardest of the lot. Needs a bar.",
+    courseDesc: "Cardio, counted in kilometres.",
     sectionTitle: "Your exercises",
     sectionHint:
       "Tick one or more exercises. With several ticked, they rotate from one game to the next. Games already logged keep the exercise they were played with.",
@@ -106,6 +121,9 @@ export const exercices = {
     formeTitre: "How to do it",
     prudence: "Listen to your body: stop if anything hurts. If you have any doubt about your fitness, ask a doctor first.",
     forme: {
+      planche: "Forearms on the floor under your shoulders, body in line. Brace your stomach and glutes, do not let your lower back sag. Stop when the position breaks, not after.",
+      tractions: "Grip slightly wider than your shoulders. Pull by driving your elbows down, chin over the bar. Come all the way down without letting your shoulders go.",
+      course: "Short stride, feet under your hips, shoulders loose. A pace where you can still talk. If you cannot, slow down.",
       pompes: "Hands under your shoulders, body in a line from head to heels. Go down until you almost touch the floor, come back up without locking your elbows. If your lower back sags, drop to your knees.",
       squats: "Feet hip-width apart, weight on your heels. Go down like you're sitting back, knees tracking over your feet. No lower than your knees are happy with.",
       boxe: "Guard up, elbows in, chin down. Punch from the hips rather than with your arms alone. On a bag, keep your wrist in line with your forearm.",
@@ -130,6 +148,12 @@ export const exercices = {
     rappelAutorisees: "Notifications enabled",
   },
   es: {
+    plancheNom: "Plancha",
+    tractionsNom: "Dominadas",
+    courseNom: "Carrera",
+    plancheDesc: "Tronco. Posición mantenida, contada en segundos.",
+    tractionsDesc: "Tren superior, lo más exigente. Hace falta una barra.",
+    courseDesc: "Cardio, contado en kilómetros.",
     sectionTitle: "Tus ejercicios",
     sectionHint:
       "Marca uno o varios ejercicios. Si marcas varios, se van alternando de una partida a otra. Las partidas ya registradas conservan el ejercicio con el que se jugaron.",
@@ -169,6 +193,9 @@ export const exercices = {
     formeTitre: "Cómo hacerlo",
     prudence: "Escucha a tu cuerpo: para si sientes dolor. Si dudas de tu estado físico, consulta antes con un médico.",
     forme: {
+      planche: "Antebrazos en el suelo bajo los hombros, cuerpo alineado. Aprieta abdomen y glúteos, no hundas la zona lumbar. Para cuando se rompe la postura, no después.",
+      tractions: "Agarre algo más ancho que los hombros. Tira llevando los codos hacia abajo, barbilla por encima de la barra. Baja del todo sin soltar los hombros.",
+      course: "Zancada corta, pies bajo la cadera, hombros sueltos. Un ritmo en el que aún puedas hablar. Si no puedes, afloja.",
       pompes: "Manos bajo los hombros, cuerpo alineado de la cabeza a los talones. Baja hasta rozar el suelo y sube sin bloquear los codos. Si se te hunde la zona lumbar, apoya las rodillas.",
       squats: "Pies a la anchura de la cadera, peso en los talones. Baja como si fueras a sentarte, con las rodillas en línea con los pies. Nunca más abajo de lo que aguanten tus rodillas.",
       boxe: "Guardia alta, codos pegados, barbilla baja. Golpea desde la cadera, no solo con los brazos. En saco, muñeca alineada con el antebrazo.",
@@ -193,6 +220,12 @@ export const exercices = {
     rappelAutorisees: "Notificaciones activadas",
   },
   de: {
+    plancheNom: "Unterarmstütz",
+    tractionsNom: "Klimmzüge",
+    courseNom: "Laufen",
+    plancheDesc: "Rumpf. Gehaltene Position, in Sekunden gezählt.",
+    tractionsDesc: "Oberkörper, das Härteste hier. Eine Stange ist nötig.",
+    courseDesc: "Ausdauer, in Kilometern gezählt.",
     sectionTitle: "Deine Übungen",
     sectionHint:
       "Hak eine oder mehrere Übungen an. Bei mehreren wechseln sie sich von Partie zu Partie ab. Bereits eingetragene Partien behalten die Übung, mit der sie gespielt wurden.",
@@ -232,6 +265,9 @@ export const exercices = {
     formeTitre: "Wie es geht",
     prudence: "Hör auf deinen Körper: hör auf, sobald etwas wehtut. Wenn du unsicher bist, wie belastbar du bist, frag vorher eine Ärztin oder einen Arzt.",
     forme: {
+      planche: "Unterarme unter den Schultern am Boden, Körper in einer Linie. Bauch und Gesäß anspannen, das Kreuz nicht durchhängen lassen. Aufhören, wenn die Position bricht, nicht danach.",
+      tractions: "Griff etwas breiter als die Schultern. Zieh, indem du die Ellbogen nach unten führst, Kinn über die Stange. Ganz herunter, ohne die Schultern loszulassen.",
+      course: "Kurzer Schritt, Füße unter der Hüfte, Schultern locker. Ein Tempo, bei dem du noch sprechen kannst. Wenn nicht, langsamer.",
       pompes: "Hände unter den Schultern, Körper in einer Linie von Kopf bis Ferse. Runter, bis du den Boden fast berührst, hoch, ohne die Ellenbogen durchzudrücken. Sackt der untere Rücken durch, geh auf die Knie.",
       squats: "Füße hüftbreit, Gewicht auf den Fersen. Geh runter, als wolltest du dich setzen, Knie in Richtung der Füße. Nicht tiefer, als deine Knie mitmachen.",
       boxe: "Deckung oben, Ellenbogen dicht am Körper, Kinn runter. Schlag aus der Hüfte, nicht nur mit den Armen. Am Sack: Handgelenk in einer Linie mit dem Unterarm.",
@@ -256,6 +292,12 @@ export const exercices = {
     rappelAutorisees: "Benachrichtigungen aktiviert",
   },
   zh: {
+    plancheNom: "平板支撑",
+    tractionsNom: "引体向上",
+    courseNom: "跑步",
+    plancheDesc: "核心。保持姿势，按秒计算。",
+    tractionsDesc: "上半身，本组中最吃力的一项。需要单杠。",
+    courseDesc: "有氧，按公里计算。",
     sectionTitle: "你的动作",
     sectionHint:
       "勾选一个或多个动作。勾了多个的话，它们会一局一局轮着来。已经记录的对局，保留当时所用的动作。",
@@ -295,6 +337,9 @@ export const exercices = {
     formeTitre: "怎么做",
     prudence: "听身体的：疼就停下。如果不确定自己的身体状况，先问问医生。",
     forme: {
+      planche: "前臂着地位于肩膀正下方，身体成一条直线。收紧腹部和臀部，腰不要塌。姿势一散就停，不要硬撑。",
+      tractions: "握距略宽于肩。以肘部下压的方式上拉，下巴过杠。完全下放，但肩膀不要松开。",
+      course: "步幅短，脚落在髋部下方，肩膀放松。保持还能说话的配速。说不出话就减速。",
       pompes: "双手在肩膀正下方，从头到脚跟保持一条直线。下降到快贴地，再撑起来，肘部不要锁死。腰部塌下去的话，就换成跪姿。",
       squats: "两脚与髋同宽，重心落在脚跟。像要坐下去那样下蹲，膝盖与脚尖同向。别蹲得比膝盖能接受的更低。",
       boxe: "手要抬高护住，肘部收紧，下巴收低。出拳靠转髋带动，而不是只用手臂。打沙袋时，手腕要跟前臂成一条线。",
@@ -319,6 +364,12 @@ export const exercices = {
     rappelAutorisees: "通知已开启",
   },
   ja: {
+    plancheNom: "プランク",
+    tractionsNom: "懸垂",
+    courseNom: "ランニング",
+    plancheDesc: "体幹。姿勢を保ち、秒で数えます。",
+    tractionsDesc: "上半身。この中で最もきつい種目です。バーが必要。",
+    courseDesc: "有酸素。キロメートルで数えます。",
     sectionTitle: "あなたの種目",
     sectionHint:
       "種目を一つ以上選んでください。複数選ぶと、試合ごとに交代で回ります。すでに記録した試合は、そのとき使った種目のままです。",
@@ -358,6 +409,9 @@ export const exercices = {
     formeTitre: "やり方",
     prudence: "体の声を聞いてください。痛みを感じたらやめること。体力に不安があるときは、先に医師に相談してください。",
     forme: {
+      planche: "前腕を肩の真下について、体を一直線に。お腹とお尻を締め、腰を反らせないこと。姿勢が崩れたらそこでやめる、その先ではなく。",
+      tractions: "肩幅よりやや広く握ります。ひじを下へ引くように上げ、あごをバーの上へ。肩を抜かずに、最後まで下ろします。",
+      course: "歩幅は短く、足は腰の真下、肩の力は抜いて。まだ話せる程度のペースで。話せなくなったら落としてください。",
       pompes: "手は肩の真下、頭からかかとまで一直線に。床すれすれまで下ろし、肘を伸ばし切らずに戻します。腰が落ちるようなら膝をついてください。",
       squats: "足は腰幅、体重はかかとに。腰を下ろすように沈み、膝はつま先と同じ向きに。膝が嫌がるところより深くは下げないこと。",
       boxe: "ガードは高く、肘は締めて、あごは引く。腕だけでなく腰から打ちます。サンドバッグでは手首を前腕と一直線に。",

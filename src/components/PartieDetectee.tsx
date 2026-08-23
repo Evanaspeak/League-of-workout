@@ -15,6 +15,7 @@ export const ROLE_DEFAUT = "Jungle";
  */
 const NOMS: Record<ExerciceId, string> = {
   pompes: "pompes", squats: "squats", boxe: "de boxe",
+  planche: "de planche", tractions: "tractions", course: "de course",
 };
 
 /**

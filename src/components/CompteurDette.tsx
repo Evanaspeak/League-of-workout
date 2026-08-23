@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { nomsExercices } from "@/lib/nomsExercices";
 import { jourLocal } from "@/lib/serie";
 import { usePathname } from "next/navigation";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
@@ -52,9 +53,7 @@ export function CompteurDette({
   const pathname = usePathname();
   const t = useT(exercicesDict);
   const minuscule = useMinuscule();
-  const nomsExo: Record<ExerciceId, string> = {
-    pompes: t.pompesNom, squats: t.squatsNom, boxe: t.boxeNom,
-  };
+  const nomsExo: Record<ExerciceId, string> = nomsExercices(t);
 
   const [dette, setDette] = useState<Dette | null>(null);
   const [chronoOuvert, setChronoOuvert] = useState(false);

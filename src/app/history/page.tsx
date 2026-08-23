@@ -1,5 +1,6 @@
 "use client";
 import { Icone } from "@/components/Icone";
+import { nomsExercices } from "@/lib/nomsExercices";
 import { CorrectionDates } from "@/components/CorrectionDates";
 import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
@@ -70,9 +71,7 @@ export default function HistoryPage() {
   const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
-  const nomsExo: Record<ExerciceId, string> = {
-    pompes: tExo.pompesNom, squats: tExo.squatsNom, boxe: tExo.boxeNom,
-  };
+  const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
   /** « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité. */
   const resumeParExo = (parExercice: Record<string, number>) => {
     const parts = ventiler(parExercice).map((v) => `${nomsExo[v.id]} ${v.valeur}`);

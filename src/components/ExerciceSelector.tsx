@@ -1,5 +1,6 @@
 "use client";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { nomsExercices, descriptionsExercices } from "@/lib/nomsExercices";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
   EXERCICES, EXERCICE_IDS, formaterCompact, type ExerciceId,
@@ -24,16 +25,8 @@ export function ExerciceSelector({
 }) {
   const t = useT(exercicesDict);
   const minuscule = useMinuscule();
-  const noms: Record<ExerciceId, string> = {
-    pompes: t.pompesNom,
-    squats: t.squatsNom,
-    boxe: t.boxeNom,
-  };
-  const descs: Record<ExerciceId, string> = {
-    pompes: t.pompesDesc,
-    squats: t.squatsDesc,
-    boxe: t.boxeDesc,
-  };
+  const noms: Record<ExerciceId, string> = nomsExercices(t);
+  const descs: Record<ExerciceId, string> = descriptionsExercices(t);
 
   const basculer = (id: ExerciceId) => {
     const coche = selection.includes(id);
