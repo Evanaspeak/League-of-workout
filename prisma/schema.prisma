@@ -95,6 +95,16 @@ model User {
   // Nulle tant qu'aucun écran n'a eu l'occasion de la remonter.
   langue String?
 
+  // Recevoir le bilan hebdomadaire par courriel. Un envoi récurrent sans
+  // bouton d'arrêt n'est pas un service rendu, c'est une nuisance qu'on
+  // s'inflige à soi-même : celui qui ne peut pas l'éteindre se désabonne de
+  // tout, y compris de ce qui lui servait.
+  bilanActif Boolean @default(true)
+
+  // Date du dernier bilan hebdomadaire envoyé. Sans elle, un travail horaire
+  // enverrait le même bilan vingt-quatre fois dans la journée.
+  bilanLe DateTime?
+
   // Date de la dernière relance envoyée après une absence. Sans elle, le
   // travail horaire renverrait la même relance toutes les vingt-quatre heures
   // à quelqu'un qui a précisément choisi de ne pas revenir — le moyen le plus

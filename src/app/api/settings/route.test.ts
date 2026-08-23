@@ -170,6 +170,18 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update).not.toHaveBeenCalled();
   });
 
+  it("laisse couper le bilan hebdomadaire", async () => {
+    // Un envoi récurrent sans bouton d'arrêt n'est pas un service rendu.
+    const r = await put({ userPrefs: { bilanActif: false } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.bilanActif).toBe(false);
+  });
+
+  it("refuse autre chose qu'un booléen pour le bilan", async () => {
+    const r = await put({ userPrefs: { bilanActif: "oui" } });
+    expect(r.status).toBe(400);
+  });
+
   it("refuse une variante inconnue", async () => {
     const r = await put({ userPrefs: { variantePompes: "sur une main" } });
     expect(r.status).toBe(400);
