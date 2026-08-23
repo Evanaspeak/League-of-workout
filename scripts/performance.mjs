@@ -44,6 +44,18 @@ const HOTE = new URL(BASE).hostname;
  */
 const COMPTE = existsSync("/tmp/uid.txt") ? readFileSync("/tmp/uid.txt", "utf8").trim() : "";
 
+// Le piège ci-dessus était décrit, et rien ne l'empêchait : sans `/tmp/uid.txt`,
+// le script mesurait sans broncher — et il l'a fait. Deux écrans sur trois
+// chronométraient la modale d'accueil, à 3,7 s, pendant que la page elle-même
+// paraissait en 1,3 s. Un piège qu'on documente sans le fermer se retombe
+// dedans.
+if (JETON && !COMPTE) {
+  console.error("Jeton présent mais /tmp/uid.txt absent : les modales d'accueil");
+  console.error("s'ouvriraient par-dessus la page et seraient chronométrées à sa");
+  console.error("place. Écrire l'identifiant du compte dans /tmp/uid.txt.");
+  process.exit(2);
+}
+
 function cookies() {
   if (!JETON) return [];
   const parts = JETON.length > 3500
@@ -126,9 +138,26 @@ await page.addInitScript((__compte) => {
       localStorage.setItem(c, "1");
     }
   } catch {}
-  window.__mesures = { lcp: 0, cls: 0 };
+  // Le temps seul ne se diagnostique pas : « 3,2 s » ne dit ni ce qui est
+  // apparu, ni ce qu'il attendait. Le nom de l'élément le plus grand transforme
+  // un chiffre en piste — c'est lui qui a montré que le tableau de bord attend
+  // ses données plutôt que de peser trop lourd.
+  window.__dansUneModale = (el) => !!(el && el.closest && el.closest('[role="dialog"]'));
+  window.__decrire = (el) => {
+    if (!el) return "(élément inconnu)";
+    const balise = el.tagName ? el.tagName.toLowerCase() : "?";
+    const classe = typeof el.className === "string" && el.className
+      ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".") : "";
+    const texte = (el.innerText || el.alt || "").trim().replace(/\s+/g, " ").slice(0, 48);
+    return `${balise}${classe}${texte ? ` « ${texte} »` : ""}`;
+  };
+  window.__mesures = { lcp: 0, cls: 0, element: "", modale: false };
   new PerformanceObserver((l) => {
-    for (const e of l.getEntries()) window.__mesures.lcp = e.startTime;
+    for (const e of l.getEntries()) {
+      window.__mesures.lcp = e.startTime;
+      window.__mesures.element = window.__decrire(e.element);
+      window.__mesures.modale = window.__dansUneModale(e.element);
+    }
   }).observe({ type: "largest-contentful-paint", buffered: true });
   new PerformanceObserver((l) => {
     for (const e of l.getEntries()) {
@@ -171,6 +200,7 @@ const total = [...parNature.values()].reduce((a, b) => a + b, 0);
 
 console.log(`\n═══ ${CHEMIN}`);
 console.log(`  LCP           ${Math.round(m.lcp)} ms      (bon en dessous de ${SEUILS.lcp})`);
+console.log(`    plus grand  ${m.element || "(non relevé)"}`);
 console.log(`  CLS           ${m.cls.toFixed(3)}          (bon en dessous de ${SEUILS.cls})`);
 if (nav) {
   console.log(`  DOM prêt      ${Math.round(nav.dom)} ms`);
@@ -209,9 +239,26 @@ await lente.addInitScript((__compte) => {
       localStorage.setItem(c, "1");
     }
   } catch {}
-  window.__mesures = { lcp: 0 };
+  // Le temps seul ne se diagnostique pas : « 3,2 s » ne dit ni ce qui est
+  // apparu, ni ce qu'il attendait. Le nom de l'élément le plus grand transforme
+  // un chiffre en piste — c'est lui qui a montré que le tableau de bord attend
+  // ses données plutôt que de peser trop lourd.
+  window.__dansUneModale = (el) => !!(el && el.closest && el.closest('[role="dialog"]'));
+  window.__decrire = (el) => {
+    if (!el) return "(élément inconnu)";
+    const balise = el.tagName ? el.tagName.toLowerCase() : "?";
+    const classe = typeof el.className === "string" && el.className
+      ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".") : "";
+    const texte = (el.innerText || el.alt || "").trim().replace(/\s+/g, " ").slice(0, 48);
+    return `${balise}${classe}${texte ? ` « ${texte} »` : ""}`;
+  };
+  window.__mesures = { lcp: 0, element: "", modale: false };
   new PerformanceObserver((l) => {
-    for (const e of l.getEntries()) window.__mesures.lcp = e.startTime;
+    for (const e of l.getEntries()) {
+      window.__mesures.lcp = e.startTime;
+      window.__mesures.element = window.__decrire(e.element);
+      window.__mesures.modale = window.__dansUneModale(e.element);
+    }
   }).observe({ type: "largest-contentful-paint", buffered: true });
 }, COMPTE);
 await lente.goto(BASE + CHEMIN, { waitUntil: "load" });
@@ -229,7 +276,8 @@ await lente.goto(BASE + CHEMIN, { waitUntil: "load" });
   }
 }
 await lente.waitForTimeout(6000);
-const lcpLent = (await lente.evaluate(() => window.__mesures)).lcp;
+const mesureLente = await lente.evaluate(() => window.__mesures);
+const lcpLent = mesureLente.lcp;
 console.log(`\n  Sur téléphone, réseau moyen et processeur quatre fois plus lent :`);
 // Le seuil était affiché sans jamais dire s'il était franchi : « LCP 3776 ms
 // (bon en dessous de 2500) » se lit comme un satisfecit. C'est au rapport de
@@ -238,5 +286,14 @@ const verdictLent = lcpLent > SEUILS.lcp
   ? `À CORRIGER, au-dessus de ${SEUILS.lcp}`
   : `dans le seuil de ${SEUILS.lcp}`;
 console.log(`  LCP           ${Math.round(lcpLent)} ms      (${verdictLent})`);
+console.log(`    plus grand  ${mesureLente.element || "(non relevé)"}`);
+// Le plus grand élément dans une boîte de dialogue veut dire qu'on a
+// chronométré une modale, pas la page. Le chiffre est alors sans objet, et
+// l'annoncer serait pire que de ne rien annoncer.
+if (mesureLente.modale || m.modale) {
+  console.error("\n  Le plus grand élément est dans une modale : c'est elle qui a été");
+  console.error("  mesurée, pas la page. Écarter la modale avant de mesurer.");
+  process.exit(2);
+}
 
 await navigateur.close();

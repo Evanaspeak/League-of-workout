@@ -36,6 +36,22 @@ const aTester = langueDemandee ? [langueDemandee] : LANGUES;
 const PAGES_CONNECTEES = ["/dashboard", "/history", "/settings"];
 const JETON = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf8").trim() : null;
 
+/**
+ * L'identifiant du compte audité.
+ *
+ * La mémoire de la modale d'accueil et de la visite lui est propre —
+ * `low_onboarded:<id>`. Sans lui, les deux s'ouvrent par-dessus la page : on
+ * audite alors une modale, et le rapport annonce « rien à signaler » sur des
+ * écrans qu'il n'a jamais regardés. C'est arrivé, et rien ne le disait.
+ */
+const COMPTE = existsSync("/tmp/uid.txt") ? readFileSync("/tmp/uid.txt", "utf8").trim() : "";
+if (JETON && !COMPTE) {
+  console.error("Jeton présent mais /tmp/uid.txt absent : les modales d'accueil");
+  console.error("recouvriraient les écrans connectés et seraient auditées à leur");
+  console.error("place. Écrire l'identifiant du compte dans /tmp/uid.txt.");
+  process.exit(2);
+}
+
 /*
  * Seuils WCAG AA : 4,5 pour le texte courant, 3 pour le grand texte. Ils sont
  * écrits dans la fonction de mesure plus bas, et non ici : celle-ci s'exécute
@@ -147,7 +163,7 @@ for (const chemin of aVisiter) {
     }]);
   }
   const page = await ctx.newPage();
-  await page.addInitScript((__langue) => {
+  await page.addInitScript(([__langue, __compte]) => {
     try {
       sessionStorage.setItem("splash", "1");
       // La modale d'accueil et la visite recouvrent la page : on mesure ce
@@ -157,11 +173,15 @@ for (const chemin of aVisiter) {
       for (const c of Object.keys(localStorage)) {
         if (c.startsWith("low_")) localStorage.removeItem(c);
       }
-      localStorage.setItem("low_onboarded", "1");
-      localStorage.setItem("low_visite", "1");
+      // Les deux formes : l'ancienne, sans compte, et celle rattachée au
+      // compte, qui est la seule que l'application lit encore.
+      for (const c of ["low_onboarded", "low_visite"]) {
+        localStorage.setItem(c, "1");
+        if (__compte) localStorage.setItem(`${c}:${__compte}`, "1");
+      }
       localStorage.setItem("low_locale", __langue);
     } catch {}
-  }, langue);
+  }, [langue, COMPTE]);
   const reponse = await page.goto(BASE + chemin, { waitUntil: "networkidle" }).catch(() => null);
   if (!reponse || !reponse.ok()) {
     console.log(`\n${chemin} — injoignable (${reponse ? reponse.status() : "erreur"})`);
@@ -188,6 +208,33 @@ for (const chemin of aVisiter) {
     continue;
   }
   await page.waitForTimeout(1200);
+
+  /**
+   * Une modale recouvre-t-elle la page ?
+   *
+   * Le contrôle d'atterrissage ci-dessus ne voit que l'adresse. Une modale
+   * s'ouvre à la même adresse, prend tout l'écran et emporte le focus : ce
+   * qu'on audite alors, c'est elle. Le rapport annonçait « rien à signaler »
+   * sur des écrans qu'il n'avait jamais regardés — et la page dessous n'a
+   * jamais été vue.
+   */
+  const modale = await page.evaluate(() => {
+    const boites = [...document.querySelectorAll('[role="dialog"]')];
+    const visible = boites.find((b) => {
+      const r = b.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    });
+    return visible ? (visible.getAttribute("aria-label") || visible.innerText || "sans nom")
+      .trim().replace(/\s+/g, " ").slice(0, 60) : null;
+  });
+  if (modale) {
+    console.log(`\n═══ ${langue} · ${chemin}`);
+    console.log(`  NON MESURÉ : une modale recouvre la page — « ${modale} »`);
+    nonMesurees += 1;
+    await ctx.close();
+    continue;
+  }
+
   const { contrastes, sansNom, sansAlt } = await page.evaluate(mesure);
 
   // Parcours au clavier : chaque arrêt doit se voir. Sans marque visible, on

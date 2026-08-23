@@ -422,27 +422,54 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 Chacun de ces contrôles a été éprouvé en le sabotant volontairement : un outil
 de mesure qui ne sait pas échouer ne mesure rien.
 
-### Campagne du 23 août, sur un compte peuplé
+### Campagne du 23 août — et ce qu'elle a appris sur les outils
+Le premier passage annonçait que les trois écrans connectés dépassaient les
+2500 ms sur téléphone bridé : tableau de bord 3376, réglages 3240, historique
+3132. C'était faux, et ça a demandé deux corrections pour le voir.
+
+`performance.mjs` ne relevait que le TEMPS du plus grand élément, jamais LEQUEL.
+Un chiffre sans nom ne se diagnostique pas — il ne dit ni ce qui est apparu, ni
+ce que ça attendait. Le nom ajouté, la réponse est tombée en une exécution : le
+plus grand élément était **la modale de consentement santé**, sur les trois
+pages. Les écrans n'étaient pas mesurés du tout.
+
+Consentement donné, deuxième surprise : le plus grand élément devenait **la
+modale d'accueil**. Sa mémoire est rattachée au compte (`low_onboarded:<id>`),
+le script lit l'identifiant dans `/tmp/uid.txt` — et acceptait de tourner sans.
+Le piège était décrit en commentaire depuis des semaines, et rien ne
+l'empêchait. Un piège qu'on documente sans le fermer se retombe dedans.
+
+Les vrais chiffres, une fois les deux modales écartées :
+
+| écran | LCP téléphone bridé | plus grand élément |
+|---|---|---|
+| `/history` | 900 ms | pied de page |
+| `/settings` | 920 ms | pied de page |
+| `/dashboard` | 3456 ms | le rappel du test de force |
+
+Donc : aucune régression. Le tableau de bord reste le seul écran au-dessus du
+seuil, pour la raison déjà connue — il n'a rien à montrer tant que ses données
+ne sont pas revenues — et le nom de l'élément le confirme maintenant tout seul.
+
+Sur poste, tout est large sous les seuils (LCP 128 à 436 ms, CLS 0).
 Accessibilité : **0 constat** sur neuf pages et six langues, aucune page
-laissée de côté. Le compte portait quatre parties — un audit sur un compte vide
-mesure des cadres vides, c'est le piège déjà rencontré.
+laissée de côté.
 
-Performance sur poste : tout est large sous les seuils (LCP 250 à 870 ms,
-CLS 0).
-
-Sur téléphone bridé, les **trois écrans connectés** dépassent maintenant les
-2500 ms : tableau de bord 3376, réglages 3240, historique 3132. La campagne
-précédente ne relevait que le tableau de bord (3476), avec l'historique et les
-réglages autour de 1300 ms. Deux lectures possibles, et elle n'a pas été
-tranchée faute de temps : soit les écrans se sont alourdis pendant la nuit,
-soit la machine de mesure est simplement plus chargée qu'alors — un serveur
-PostgreSQL et un serveur Next y tournent désormais en même temps. Les chiffres
-sur poste, eux, n'ont pas bougé, ce qui plaide plutôt pour la seconde.
+Trois gardes ajoutés, dans les deux scripts :
+- refus de démarrer quand un jeton est présent sans `/tmp/uid.txt` — **éprouvé**,
+  les deux scripts sortent en erreur ;
+- refus de publier un chiffre quand le plus grand élément est dans un
+  `[role="dialog"]` (`performance.mjs`) ;
+- page marquée « NON MESURÉ » quand une modale la recouvre
+  (`accessibilite.mjs`). Ces deux derniers sont écrits mais **pas encore
+  éprouvés par sabotage** : la tentative avec un identifiant bidon n'a pas fait
+  réapparaître la modale, il reste donc à comprendre par quel chemin elle est
+  neutralisée avant de pouvoir dire que le garde mord.
 
 Une piste écartée en la mesurant : `ContexteNavigateur` écrivait en base à
-chaque chargement de page. C'était un gaspillage réel, corrigé, et **ça ne
-changeait rien au temps d'affichage** — mesuré avant et après. Une requête de
-moins, pas une page plus rapide.
+chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
+temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
+plus rapide.
 
 ### Le tableau de bord sur téléphone bridé
 3476 ms de LCP, au-dessus du seuil de 2500 — les seuls des neuf pages à le
