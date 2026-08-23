@@ -65,6 +65,13 @@ model User {
   santeRefuseLe   DateTime?
 
   signalements Signalement[]
+  paiements    Paiement[]
+
+  // Depuis quand une dette non payée court. Posée quand le compteur passe de
+  // zéro à positif, effacée quand il retombe à zéro. Sans elle, « en retard
+  // depuis trois jours » ne se calcule pas : le compteur ne dit que combien on
+  // doit, jamais depuis quand.
+  detteDepuis DateTime?
 
   // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
@@ -269,6 +276,31 @@ model MasteryConfig {
 model SystemConfig {
   key   String @id
   value String // JSON
+}
+
+// ─── Paiements de dette ─────────────────────────────────────────────────────
+
+// Une fois où la dette a été payée.
+//
+// Le compteur `dettePointsDus` ne dit que l'état courant : il ne garde aucune
+// trace de ce qui a été fait. Sans historique, une série de jours consécutifs
+// ne se calcule pas, et elle ne se rattrape pas après coup.
+model Paiement {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Points d'effort acquittés.
+  points Int
+
+  // Jour LOCAL du paiement, au format AAAA-MM-JJ. Le jour UTC ne convient pas :
+  // quelqu'un qui paie à une heure du matin verrait sa série comptée sur la
+  // veille ou le lendemain selon son fuseau.
+  jour String
+
+  @@index([userId, jour])
 }
 
 // ─── Signalements ───────────────────────────────────────────────────────────

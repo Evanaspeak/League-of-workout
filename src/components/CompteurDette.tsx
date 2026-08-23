@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { jourLocal } from "@/lib/serie";
 import { usePathname } from "next/navigation";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
@@ -147,7 +148,13 @@ export function CompteurDette({
       const res = await fetch("/api/dette", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(toutFait ? { tout: true } : { secondes: secondesFaites }),
+        // Le jour part d'ici : le serveur ne connaît que l'heure UTC, et la
+        // série d'un paiement fait à une heure du matin basculerait sur la
+        // veille ou le lendemain selon le fuseau de la personne.
+        body: JSON.stringify({
+          ...(toutFait ? { tout: true } : { secondes: secondesFaites }),
+          jour: jourLocal(),
+        }),
       });
       if (res.ok) setDette(await res.json());
     } catch { /* on referme quand même, la dette sera relue au prochain chargement */ }

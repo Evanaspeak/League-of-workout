@@ -64,6 +64,10 @@ const ATTENDU: Record<string, RegExp> = {
   // données : le message et son contexte. Elle se décrit donc, elle ne
   // s'exempte pas.
   signalements: /signalement de problème/i,
+  paiements: /paiements de dette/i,
+  // Date de début de la dette courante : elle sert au retard, et elle se
+  // décrit avec l'historique des paiements plutôt que séparément.
+  detteDepuis: /paiements de dette/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */
@@ -75,7 +79,17 @@ function champsDuCompte(): string[] {
   return bloc[1]
     .split("\n")
     .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith("//") && !l.startsWith("@@"))
+    .filter((l) => (
+      l !== ""
+      // Les trois formes de commentaire que Prisma accepte, plus le corps d'un
+      // bloc JSDoc : ne sauter que « // » faisait passer « /** », « * » et
+      // « */ » pour des noms de champs, et le test rendait alors une liste de
+      // fragments de commentaire au lieu de sa vraie réponse.
+      && !l.startsWith("//")
+      && !l.startsWith("/*")
+      && !l.startsWith("*")
+      && !l.startsWith("@@")
+    ))
     .map((l) => l.split(/\s+/)[0]);
 }
 

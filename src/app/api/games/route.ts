@@ -276,7 +276,14 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
     });
     const maj = await prisma.user.update({
       where: { id: userId },
-      data: { dettePointsDus: { increment: points } },
+      data: {
+        dettePointsDus: { increment: points },
+        // La dette qui NAÎT pose sa date de début ; une dette déjà en cours
+        // garde la sienne. Sans cette distinction, chaque nouvelle partie
+        // remettrait le compteur de retard à zéro, et personne ne serait
+        // jamais en retard.
+        ...((avant?.dettePointsDus ?? 0) <= 0 ? { detteDepuis: new Date() } : {}),
+      },
       select: { dettePointsDus: true },
     });
 
