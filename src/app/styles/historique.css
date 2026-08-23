@@ -1,0 +1,188 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   L'historique sur téléphone.
+
+   Le tableau compte jusqu'à neuf colonnes et réclame 760 px. Sous cette
+   largeur, il défilait horizontalement : on voyait la date OU le résultat,
+   jamais l'activité entière, et le KDA se coupait au milieu d'un chiffre.
+   Un tableau qu'on doit balayer de gauche à droite pour lire une seule ligne
+   n'est plus un tableau, c'est un formulaire à remplir de mémoire.
+
+   Les deux présentations sont rendues, et c'est ici qu'on choisit. Un
+   basculement en JavaScript dépendrait de la largeur, que le rendu serveur ne
+   connaît pas : la première peinture montrerait la mauvaise vue, puis
+   sauterait.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.historique-cartes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historique-tableau { display: none; }
+
+@media (min-width: 760px) {
+  .historique-cartes { display: none; }
+  .historique-tableau { display: block; }
+}
+
+/* ── Une activité ───────────────────────────────────────────────────────── */
+/* Deux blocs : ce qui s'est passé, puis ce que ça coûte. Le trait entre les
+   deux est la seule séparation nécessaire — sur soixante-six activités, chaque
+   pixel de hauteur en trop se paie en défilement. */
+.carte-activite {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 12px;
+}
+
+.carte-activite-haut {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.carte-activite-titre {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.carte-activite-nom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Un nom de champion long ne doit pas pousser la carte hors de l'écran :
+   c'est précisément le défaut qu'on vient corriger. */
+.carte-activite-nom > span:first-child {
+  color: var(--bone);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carte-activite-nom > :last-child { flex: 0 0 auto; }
+
+.carte-activite-precisions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.74rem;
+  color: var(--steel);
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+.carte-activite-precisions > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* La cible tactile fait 44 px alors que le crayon n'en fait que treize :
+   c'est la règle de toutes les commandes de l'application, et un crayon de
+   treize pixels se rate une fois sur deux. Les marges négatives lui donnent
+   cette cible sans allonger la carte. */
+.carte-activite-crayon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -15px 0 -15px -14px;
+  background: none;
+  border: none;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.carte-activite-edition {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.carte-activite-edition input {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.carte-activite-edition button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  margin: -10px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.carte-activite-pied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+
+.carte-activite-cout {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+.carte-activite-variante {
+  margin-left: 5px;
+  font-size: 0.62rem;
+  color: var(--steel);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+
+.carte-activite-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.carte-activite-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -12px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.carte-activite-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  font-size: 0.74rem;
+  color: var(--muted);
+}
