@@ -118,7 +118,12 @@ export function InvitationInstallation() {
       aria-label={t.titre}
       className="lol-panel"
       style={{
-        position: "fixed", left: 12, right: 12, bottom: 12, zIndex: 9400,
+        position: "fixed", left: 12, right: 12, zIndex: 9400,
+        // Au-dessus du bouton du rail, qui vit en bas à droite sous 1180 px :
+        // 42 px de bouton, 16 px de marge basse, 10 px d'écart. À 12 px du bas,
+        // la bannière le recouvrait — c'est-à-dire qu'elle cachait le compteur
+        // de dette, ce que l'application a de plus important à montrer.
+        bottom: 68,
         padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10,
         boxShadow: "0 12px 34px rgba(0,0,0,0.5)",
       }}
