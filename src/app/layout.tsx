@@ -8,6 +8,7 @@ import { ConsentementSante } from "@/components/ConsentementSante";
 import { TitreAvecDette } from "@/components/TitreAvecDette";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
+import { InvitationInstallation } from "@/components/InvitationInstallation";
 import { MajDesktop } from "@/components/MajDesktop";
 import { DetectionSession } from "@/components/DetectionSession";
 import { PartieDetectee } from "@/components/PartieDetectee";
@@ -140,6 +141,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Calcule ce que la partie en cours coûte, pour l'overlay. */}
             <DetteDirecte />
             <PartieApexLue />
+            {/* Propose l'écran d'accueil à la troisième visite, sur téléphone. */}
+            <InvitationInstallation />
           </SessionProvider>
         </LocaleProvider>
         </RatiosExercicesProvider>
