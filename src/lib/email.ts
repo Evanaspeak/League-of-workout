@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { lignesBilan, type TextesBilan } from "./i18n/courriels";
+import type { Bilan } from "./bilanHebdo";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Win or Workout <noreply@winorworkout.com>";
@@ -66,6 +68,53 @@ export async function sendResetLink(to: string, pseudo: string, lien: string) {
       ${WRAPPER_CLOSE}
     `,
   });
+}
+
+/**
+ * Le bilan de la semaine.
+ *
+ * Court, et sans image : un courriel qui demande de faire défiler ne se lit
+ * pas, et la semaine suivante il ne s'ouvre plus. Les chiffres sont ceux que
+ * l'application affiche déjà — le courriel ne calcule rien de son côté, il ne
+ * fait que rappeler ce qui s'est passé à quelqu'un qui n'a pas ouvert la page.
+ */
+export async function envoyerBilanHebdo(
+  to: string,
+  pseudo: string,
+  t: TextesBilan,
+  bilan: Bilan,
+  detteRestante: boolean,
+) {
+  if (!resend) return false;
+  const nom = echapper(pseudo);
+  const lignes = lignesBilan(t, bilan).map(({ libelle, valeur }) => `
+    <tr>
+      <td style="padding:7px 0;color:rgba(236,239,244,0.6);font-size:0.92rem;">${echapper(libelle)}</td>
+      <td style="padding:7px 0;color:#ECEFF4;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;">${echapper(valeur)}</td>
+    </tr>`).join("");
+
+  await resend.emails.send({
+    from: FROM,
+    to,
+    subject: `${t.sujet} · Win or Workout`,
+    html: `
+      ${WRAPPER_OPEN}
+        <h1 style="font-size:1.4rem;color:#ECEFF4;margin-bottom:18px;">${echapper(t.titre(nom))}</h1>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">${lignes}</table>
+        <p style="line-height:1.7;color:rgba(236,239,244,0.75);margin-bottom:20px;">
+          ${echapper(t.cloture(detteRestante))}
+        </p>
+        <a href="${SITE}/dashboard"
+           style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#FF4D2E,#FF8A3D);color:#fff;font-weight:700;text-decoration:none;border-radius:8px;">
+          ${echapper(t.lien)}
+        </a>
+        <p style="margin-top:22px;font-size:0.82rem;color:rgba(236,239,244,0.4);">
+          <a href="${SITE}/settings" style="color:rgba(236,239,244,0.5);">${echapper(t.arret)}</a>
+        </p>
+      ${WRAPPER_CLOSE}
+    `,
+  });
+  return true;
 }
 
 export { SITE as SITE_URL };

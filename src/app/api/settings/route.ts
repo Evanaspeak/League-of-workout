@@ -64,6 +64,7 @@ export async function PUT(req: Request) {
       variantePompes?: string | null;
       langue?: string;
       fuseau?: string;
+      bilanActif?: boolean;
     } = {};
 
     if (body.userPrefs.exercices !== undefined) {
@@ -110,6 +111,15 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Langue inconnue" }, { status: 400 });
       }
       data.langue = body.userPrefs.langue;
+    }
+
+    // Recevoir ou non le bilan hebdomadaire. Un envoi récurrent doit pouvoir
+    // s'éteindre : celui qui ne peut pas l'éteindre se désabonne de tout.
+    if (body.userPrefs.bilanActif !== undefined) {
+      if (typeof body.userPrefs.bilanActif !== "boolean") {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.bilanActif = body.userPrefs.bilanActif;
     }
 
     // Fuseau horaire, pour savoir quelle heure il est chez la personne. Le

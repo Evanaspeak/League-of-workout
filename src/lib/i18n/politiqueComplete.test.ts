@@ -35,6 +35,7 @@ const HORS_POLITIQUE: Record<string, string> = {
   plafondQuotidien: "réglage d'avertissement de volume",
   langue: "réglage d'affichage, rangé côté serveur pour écrire les notifications dans la bonne langue",
   relanceLe: "date d'un envoi que nous avons fait, pas une donnée fournie",
+
   dettePointsDus: "état de jeu calculé, décrit par « données de parties »",
   gainageMaxSec: "mesure de force, décrite par « nombre maximum de pompes »",
   pompesMaxLe: "date du test de force, décrite avec lui",
@@ -83,6 +84,11 @@ const ATTENDU: Record<string, RegExp> = {
   // affirmait « aucune donnée de localisation » et ne pouvait plus le dire tel
   // quel. Elle décrit maintenant ce qui est gardé, et ce qui ne l'est pas.
   fuseau: /fuseau horaire/i,
+  // Le bilan est le seul envoi récurrent : la politique dit qu'il existe, et
+  // qu'il s'arrête. Un envoi récurrent qu'on ne peut pas éteindre n'aurait
+  // rien à faire dans un produit.
+  bilanActif: /bilan hebdomadaire/i,
+  bilanLe: /bilan hebdomadaire/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */

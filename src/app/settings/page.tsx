@@ -108,6 +108,8 @@ export default function SettingsPage() {
   const [plafond, setPlafond] = useState<number>(0);
   /** Variante d'exécution des pompes déclarée pour soi : "genoux" ou rien. */
   const [variante, setVariante] = useState<string | null>(null);
+  /** Recevoir le bilan hebdomadaire par courriel. */
+  const [bilanActif, setBilanActif] = useState(true);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
 
@@ -137,6 +139,7 @@ export default function SettingsPage() {
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
       setPlafond(s.user?.plafondQuotidien ?? 0);
       setVariante(s.user?.variantePompes ?? null);
+      setBilanActif(s.user?.bilanActif !== false);
       setPompesMax(s.user?.pompesMax ?? 0);
       setPompesMaxLe(s.user?.pompesMaxLe ?? null);
     });
@@ -201,6 +204,29 @@ export default function SettingsPage() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userPrefs: { variantePompes: prochaine } }),
+    });
+    setSavingExo(false);
+    if (res.ok) {
+      setSavedExo(true);
+      setTimeout(() => setSavedExo(false), 2000);
+    }
+  };
+
+  /**
+   * Allume ou coupe le bilan hebdomadaire.
+   *
+   * Un envoi récurrent sans bouton d'arrêt n'est pas un service rendu : celui
+   * qui ne peut pas l'éteindre se désabonne de tout, y compris de ce qui lui
+   * servait.
+   */
+  const handleSaveBilan = async (actif: boolean) => {
+    setBilanActif(actif);
+    setSavingExo(true);
+    setSavedExo(false);
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrefs: { bilanActif: actif } }),
     });
     setSavingExo(false);
     if (res.ok) {
@@ -507,6 +533,42 @@ export default function SettingsPage() {
                   {seuil === 0
                     ? tExo.rappelDesactive
                     : tExo.rappelSeuilValeur(seuil % 60 === 0 ? `${seuil / 60} min` : `${seuil} s`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Bilan hebdomadaire */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 className="titre-section">{tExo.bilanTitre}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+            {tExo.bilanAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {[
+              { valeur: true, libelle: tExo.bilanActif },
+              { valeur: false, libelle: tExo.bilanInactif },
+            ].map(({ valeur, libelle }) => {
+              const actif = valeur === bilanActif;
+              return (
+                <button
+                  key={libelle}
+                  onClick={() => handleSaveBilan(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    minHeight: 44,
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {libelle}
                 </button>
               );
             })}

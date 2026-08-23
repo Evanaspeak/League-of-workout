@@ -186,6 +186,14 @@ sortent :
 - **Le rappel du matin.** Une soirée qui finit à deux heures laisse une dette
   que personne ne paie avant d'aller dormir, et le rappel de seuil est déjà
   parti la veille au milieu d'une partie.
+- **Le bilan de la semaine**, par courriel, le lundi à neuf heures locales.
+  L'application ne sait dire que le présent — ce qu'on doit, là, maintenant.
+  Sept jours mis bout à bout disent autre chose. Rien ne part sur une semaine
+  vide : un courriel qui dit zéro est celui qu'on se désabonne en l'ouvrant, et
+  l'absence est déjà traitée par la relance. Il s'éteint d'un clic
+  (`User.bilanActif`, réglages) et le courriel porte le lien — un envoi
+  récurrent sans bouton d'arrêt fait se désabonner de tout, y compris de ce
+  qui servait.
 - **La relance des absents**, après deux semaines sans une partie. Une fois, et
   une seule (`User.relanceLe`) : une application qui redit tous les jours « tu
   nous manques » se fait couper, et elle l'a cherché. La date se pose même si
@@ -251,7 +259,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-964 tests unitaires, 73 suites. Base et session doublées : aucune dépendance à
+989 tests unitaires, 75 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.

@@ -1,4 +1,5 @@
-# Les envois programmés : rappel du matin, relance des absents.
+# Les envois programmés : rappel du matin, relance des absents, bilan de la
+# semaine.
 #
 # Une soirée qui finit à deux heures laisse une dette que personne ne paie
 # avant d'aller dormir, et le rappel de seuil est déjà parti la veille, au
@@ -64,5 +65,28 @@ jobs:
 
           # Zéro envoi n'est pas une erreur : à cette heure-ci, il n'y a
           # peut-être personne au matin qui doive quelque chose.
+          jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
+            || { echo "::error::Réponse inattendue"; exit 1; }
+
+      - name: Bilan de la semaine
+        run: |
+          set -o pipefail
+          reponse=$(mktemp)
+          code=$(curl -sS -o "$reponse" -w '%{http_code}' \
+            -X POST "$SITE/api/mail/hebdo" \
+            -H "x-rappel-secret: $SECRET" \
+            --max-time 120) || code=000
+
+          echo "HTTP $code"
+          cat "$reponse"; echo
+
+          if [ "$code" = "000" ]; then
+            echo "::error::Site injoignable"; exit 1
+          fi
+          if [ "$code" != "200" ]; then
+            echo "::error::La route a répondu $code"; exit 1
+          fi
+          # Le bilan ne part que le lundi, à neuf heures locales : vingt-trois
+          # exécutions sur vingt-quatre n'envoient rien, et c'est normal.
           jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
             || { echo "::error::Réponse inattendue"; exit 1; }
