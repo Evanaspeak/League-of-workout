@@ -422,6 +422,28 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 Chacun de ces contrôles a été éprouvé en le sabotant volontairement : un outil
 de mesure qui ne sait pas échouer ne mesure rien.
 
+### Campagne du 23 août, sur un compte peuplé
+Accessibilité : **0 constat** sur neuf pages et six langues, aucune page
+laissée de côté. Le compte portait quatre parties — un audit sur un compte vide
+mesure des cadres vides, c'est le piège déjà rencontré.
+
+Performance sur poste : tout est large sous les seuils (LCP 250 à 870 ms,
+CLS 0).
+
+Sur téléphone bridé, les **trois écrans connectés** dépassent maintenant les
+2500 ms : tableau de bord 3376, réglages 3240, historique 3132. La campagne
+précédente ne relevait que le tableau de bord (3476), avec l'historique et les
+réglages autour de 1300 ms. Deux lectures possibles, et elle n'a pas été
+tranchée faute de temps : soit les écrans se sont alourdis pendant la nuit,
+soit la machine de mesure est simplement plus chargée qu'alors — un serveur
+PostgreSQL et un serveur Next y tournent désormais en même temps. Les chiffres
+sur poste, eux, n'ont pas bougé, ce qui plaide plutôt pour la seconde.
+
+Une piste écartée en la mesurant : `ContexteNavigateur` écrivait en base à
+chaque chargement de page. C'était un gaspillage réel, corrigé, et **ça ne
+changeait rien au temps d'affichage** — mesuré avant et après. Une requête de
+moins, pas une page plus rapide.
+
 ### Le tableau de bord sur téléphone bridé
 3476 ms de LCP, au-dessus du seuil de 2500 — les seuls des neuf pages à le
 franchir. Ce n'est pas un problème de poids : `/history` et `/settings` ont un
