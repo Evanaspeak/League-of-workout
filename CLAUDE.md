@@ -582,6 +582,57 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Le bilan de saison (question 105)
+L'application ne sait dire que le présent — ce qu'on doit, là, maintenant.
+Quatre-vingt-dix jours mis bout à bout disent autre chose, et c'est la seule
+chose qu'on ait envie de montrer à quelqu'un.
+
+`/bilan` affiche les chiffres de la période ; `/api/bilan/image` en dessine une
+**image**. La distinction n'est pas cosmétique : une image se poste sur
+Discord, dans une conversation, sur un réseau. Une page ne se poste pas — elle
+demande à celui d'en face de cliquer, et il ne clique pas.
+
+Trois décisions, avec leur raison :
+
+- **Quatre-vingt-dix jours**, et non « la saison ». C'est l'ordre de grandeur
+  d'un split classé, et une durée qui a du contenu à montrer sans remonter à
+  des parties qu'on ne se rappelle plus. Aller chercher la vraie date de fin de
+  saison lierait l'écran au calendrier d'un seul jeu, alors que l'application en
+  suit une quinzaine.
+- **Rendue au serveur**, pas capturée dans le navigateur. Une capture dépend de
+  la taille de la fenêtre, du thème et des polices installées : elle rend une
+  image différente à chaque appareil. Ici, le même compte donne toujours la
+  même image.
+- **Aucune adresse publique.** L'image se lit avec la session de son
+  propriétaire, qui l'enregistre et la partage lui-même. Rendre les
+  statistiques de quelqu'un lisibles par une adresse est une décision qui se
+  prend — elle n'a pas à être un effet de bord du fait qu'on voulait une image.
+  Un test de route refuse d'ailleurs que la réponse porte autre chose que les
+  chiffres et le pseudo : ce qui traîne dans une réponse d'API finit à l'écran
+  de quelqu'un d'autre.
+
+Le calcul vit dans `src/lib/bilanSaison.ts`, hors des routes : la page et
+l'image le lisent toutes les deux, et une règle posée dans une seule des deux
+finit par ne valoir que pour l'une d'elles — cette divergence-là a déjà coûté
+une soirée ici.
+
+**Les mots de l'image ne peuvent pas passer par `useT`** : elle est dessinée au
+serveur, sans composant ni stockage local. C'est la situation des notifications
+et du courriel hebdomadaire, et la même réponse — `src/lib/i18n/imageBilan.ts`,
+avec la langue rangée sur le compte. Sans ça l'image serait partie en français
+à tout le monde, et rien ne l'aurait signalé : celui qui écrit l'application la
+lit en français. Un test refuse un dictionnaire recopié six fois.
+
+`etiquetteLocale` a déménagé de `LocaleContext` (module client) vers
+`langues.ts` : une image rendue au serveur a besoin des formats `Intl` sans
+traîner React avec elle. Le premier jet écrivait la période
+« 2026-05-25 → 2026-08-23 », ce qui se lit comme une sortie de base de données.
+
+Quatre tests navigateur : la page montre les chiffres, l'image sort en PNG —
+vérifié sur la signature du fichier, pas sur sa taille, parce qu'une page
+d'erreur rendue en 200 passerait un contrôle de taille — et elle ne sort pas
+sans session.
+
 ### Dépendances, au 23 août
 `npm audit` : **zéro vulnérabilité**, dans l'application comme dans
 l'application desktop.

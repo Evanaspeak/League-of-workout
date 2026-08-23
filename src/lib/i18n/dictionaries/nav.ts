@@ -2,6 +2,7 @@ export const nav = {
   fr: {
     dashboard: "Dashboard",
     historique: "Historique",
+    bilan: "Ta saison",
     reglages: "Réglages",
     admin: "Admin",
     ouvrirMenu: "Ouvrir le menu",
@@ -14,6 +15,7 @@ export const nav = {
   en: {
     dashboard: "Dashboard",
     historique: "History",
+    bilan: "Your season",
     reglages: "Settings",
     admin: "Admin",
     ouvrirMenu: "Open menu",
@@ -26,6 +28,7 @@ export const nav = {
   es: {
     dashboard: "Panel",
     historique: "Historial",
+    bilan: "Tu temporada",
     reglages: "Ajustes",
     admin: "Admin",
     ouvrirMenu: "Abrir el menú",
@@ -38,6 +41,7 @@ export const nav = {
   de: {
     dashboard: "Übersicht",
     historique: "Verlauf",
+    bilan: "Deine Saison",
     reglages: "Einstellungen",
     admin: "Admin",
     ouvrirMenu: "Menü öffnen",
@@ -50,6 +54,7 @@ export const nav = {
   zh: {
     dashboard: "总览",
     historique: "记录",
+    bilan: "你的赛季",
     reglages: "设置",
     admin: "管理",
     ouvrirMenu: "打开菜单",
@@ -62,6 +67,7 @@ export const nav = {
   ja: {
     dashboard: "ダッシュボード",
     historique: "履歴",
+    bilan: "あなたのシーズン",
     reglages: "設定",
     admin: "管理",
     ouvrirMenu: "メニューを開く",

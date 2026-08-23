@@ -42,3 +42,22 @@ export function heureLocale(instant: Date, fuseau: unknown): number | null {
   if (!Number.isFinite(n)) return null;
   return n % 24;
 }
+
+/**
+ * Le jour de calendrier (AAAA-MM-JJ) dans un fuseau, à un instant donné.
+ *
+ * Le bilan de saison range les parties par journée. Prendre le jour UTC ferait
+ * basculer une partie jouée à une heure du matin sur la veille — c'est-à-dire
+ * exactement les soirées que cette application existe pour compter.
+ *
+ * Sans fuseau connu, on retombe sur UTC. C'est un défaut assumé et borné :
+ * ici, contrairement à une notification, se tromper de jour ne réveille
+ * personne à trois heures du matin.
+ */
+export function jourDansFuseau(instant: Date, fuseau: unknown): string {
+  if (!estFuseauValide(fuseau)) return instant.toISOString().slice(0, 10);
+  // « en-CA » rend AAAA-MM-JJ, ce qui évite de recoller les morceaux à la main.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: fuseau, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(instant);
+}

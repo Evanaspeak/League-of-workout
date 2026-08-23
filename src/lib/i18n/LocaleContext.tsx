@@ -1,17 +1,12 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useValeurClient } from "@/lib/valeurClient";
-import { estLocale, type Locale } from "./langues";
+import { estLocale, etiquetteLocale, type Locale } from "./langues";
 
 // La liste elle-même vit dans un module sans React : une route API qui valide
 // une langue n'a pas à tirer tout le contexte avec elle. Réexportée ici, où
 // une trentaine de composants la lisent déjà.
-export { LANGUES, estLocale, type Locale } from "./langues";
-
-/** Étiquette de langue pour les formats de date et de nombre. */
-const ETIQUETTES: Record<Locale, string> = {
-  fr: "fr-FR", en: "en-US", es: "es-ES", de: "de-DE", zh: "zh-CN", ja: "ja-JP",
-};
+export { LANGUES, estLocale, etiquetteLocale, type Locale } from "./langues";
 
 const STORAGE_KEY = "low_locale";
 
@@ -91,11 +86,6 @@ export function useT<T extends { fr: Record<string, unknown> }>(
 ): T["fr"] {
   const { locale } = useLocale();
   return (dict as Partial<Record<Locale, T["fr"]>>)[locale] ?? dict.en;
-}
-
-/** Étiquette à passer aux formats de date et de nombre du navigateur. */
-export function etiquetteLocale(locale: Locale): string {
-  return ETIQUETTES[locale] ?? "en-US";
 }
 
 /** La même chose, pour un composant qui n'a pas la langue sous la main. */

@@ -1,4 +1,4 @@
-import { estFuseauValide, heureLocale } from "./fuseau";
+import { estFuseauValide, heureLocale, jourDansFuseau } from "./fuseau";
 
 describe("validité d'un fuseau", () => {
   it("accepte des identifiants IANA réels", () => {
@@ -36,5 +36,30 @@ describe("heure locale", () => {
     // enverrait la notification au mauvais moment.
     expect(heureLocale(instant, "Europe/Neverland")).toBeNull();
     expect(heureLocale(instant, null)).toBeNull();
+  });
+});
+
+describe("le jour de calendrier dans un fuseau", () => {
+  test("suit le fuseau plutôt que l'heure UTC", () => {
+    // Une heure du matin à Paris, c'est encore la veille en UTC.
+    const instant = new Date("2026-06-02T23:30:00Z");
+    expect(jourDansFuseau(instant, "Europe/Paris")).toBe("2026-06-03");
+    expect(jourDansFuseau(instant, "UTC")).toBe("2026-06-02");
+  });
+
+  test("recule aussi bien qu'il avance", () => {
+    const instant = new Date("2026-06-02T02:00:00Z");
+    expect(jourDansFuseau(instant, "America/Los_Angeles")).toBe("2026-06-01");
+  });
+
+  test("rend le format attendu, sans séparateur exotique", () => {
+    expect(jourDansFuseau(new Date("2026-01-05T12:00:00Z"), "Asia/Tokyo")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  test("retombe sur UTC quand le fuseau est inconnu", () => {
+    const instant = new Date("2026-06-02T23:30:00Z");
+    for (const mauvais of [null, undefined, "", "Mars/Olympus", 42]) {
+      expect(jourDansFuseau(instant, mauvais)).toBe("2026-06-02");
+    }
   });
 });
