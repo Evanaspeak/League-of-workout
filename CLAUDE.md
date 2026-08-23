@@ -211,6 +211,12 @@ devant valoir la même chose que la variable d'environnement du même nom côté
 Vercel. Sans secret configuré, la route refuse tout le monde — une variable
 oubliée ne doit pas transformer un déclencheur en porte ouverte.
 
+Tant qu'ils manquent, le travail **s'arrête sans échouer**. Un travail horaire
+qui échoue enverrait vingt-quatre courriels d'échec par jour jusqu'à ce que
+quelqu'un cède et le coupe : c'est l'inverse de ce qu'on veut. La sauvegarde,
+elle, échoue bruyamment dans le même cas, et c'est voulu — une sauvegarde qui
+n'existe pas doit se voir.
+
 ### Admin (/admin)
 - Accès restreint : `user.email === "evantocquet@gmail.com"`
 - Éditeur liste champions (1 par ligne) → stocké en DB table SystemConfig

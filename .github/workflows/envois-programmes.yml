@@ -36,12 +36,26 @@ jobs:
       SITE: ${{ secrets.SITE_URL }}
       SECRET: ${{ secrets.RAPPEL_SECRET }}
     steps:
+      # Les secrets absents ne sont pas une panne : ce sont des secrets pas
+      # encore posés. Échouer ici enverrait un courriel d'échec toutes les
+      # heures, vingt-quatre par jour, jusqu'à ce que quelqu'un cède et coupe
+      # le travail — c'est-à-dire l'inverse de ce qu'on veut. On le dit une
+      # fois dans le journal, et on s'arrête là.
+      #
+      # La sauvegarde, elle, échoue bruyamment quand ses secrets manquent, et
+      # c'est volontaire : une sauvegarde qui n'existe pas doit se voir.
       - name: Vérifier les secrets
+        id: secrets
         run: |
-          test -n "$SITE"   || { echo "::error::Secret SITE_URL absent"; exit 1; }
-          test -n "$SECRET" || { echo "::error::Secret RAPPEL_SECRET absent"; exit 1; }
+          if [ -z "$SITE" ] || [ -z "$SECRET" ]; then
+            echo "::notice::SITE_URL ou RAPPEL_SECRET absent — aucun envoi."
+            echo "prets=non" >> "$GITHUB_OUTPUT"
+          else
+            echo "prets=oui" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Déclencher les envois
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -o pipefail
           reponse=$(mktemp)
@@ -69,6 +83,7 @@ jobs:
             || { echo "::error::Réponse inattendue"; exit 1; }
 
       - name: Bilan de la semaine
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -o pipefail
           reponse=$(mktemp)
