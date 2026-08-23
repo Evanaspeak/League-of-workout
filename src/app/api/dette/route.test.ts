@@ -1,7 +1,7 @@
 import { requete, corps, utilisateur } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => {
-  const paiement = { create: jest.fn() };
+  const paiement = { create: jest.fn(), findUnique: jest.fn() };
   const user = { update: jest.fn() };
   return {
     prisma: {
@@ -23,7 +23,8 @@ import { appliquerRatios, RATIOS_DEFAUT } from "@/lib/exercices";
 
 const session = getCurrentUser as jest.Mock;
 const user = prisma.user as unknown as { update: jest.Mock };
-const paiement = (prisma as unknown as { paiement: { create: jest.Mock } }).paiement;
+const paiement = (prisma as unknown as
+  { paiement: { create: jest.Mock; findUnique: jest.Mock } }).paiement;
 
 const joueur = (champs: Record<string, unknown> = {}) =>
   utilisateur({ exercices: ["boxe"], dettePointsDus: 100, rappelSeuilSec: 300, ...champs });
@@ -32,6 +33,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   appliquerRatios(RATIOS_DEFAUT);
   session.mockResolvedValue(joueur());
+  paiement.findUnique.mockResolvedValue(null);
   user.update.mockImplementation(async ({ data }: { data: { dettePointsDus: number } }) => ({
     dettePointsDus: data.dettePointsDus, rappelSeuilSec: 300, exercices: ["boxe"],
   }));
@@ -197,3 +199,67 @@ describe("trace du paiement", () => {
   });
 });
 
+
+/**
+ * Le jeton d'unicité des séances rejouées depuis la file hors ligne.
+ *
+ * Un téléphone qui retrouve le réseau réessaie tant qu'il n'a pas reçu de
+ * réponse — et une réponse perdue en chemin est indiscernable d'une requête
+ * jamais arrivée. Sans jeton, ce cas-là paie deux fois la même séance, ce qui
+ * efface une dette qu'on n'a pas faite.
+ */
+describe("le jeton d'un paiement rejoué", () => {
+  const payer = (corpsRequete: Record<string, unknown>) =>
+    PATCH(requete("/api/dette", { method: "PATCH", body: corpsRequete }));
+
+  it("est écrit avec le paiement", async () => {
+    await payer({ secondes: 60, jeton: "abc-123" });
+    expect(paiement.create.mock.calls[0][0].data.jeton).toBe("abc-123");
+  });
+
+  it("vaut null quand le paiement vient d'un écran en ligne", async () => {
+    // Poser un jeton à tout le monde n'ajouterait qu'une colonne à indexer.
+    await payer({ secondes: 60 });
+    expect(paiement.create.mock.calls[0][0].data.jeton).toBeNull();
+  });
+
+  it("n'applique pas deux fois le même paiement", async () => {
+    paiement.findUnique.mockResolvedValue({ userId: joueur().id });
+    const r = await payer({ tout: true, jeton: "deja-vu" });
+    expect(r.status).toBe(200);
+    expect(paiement.create).not.toHaveBeenCalled();
+    expect(user.update).not.toHaveBeenCalled();
+    // La réponse reste celle de l'état courant : le navigateur qui rejoue doit
+    // pouvoir se resynchroniser dessus.
+    expect((await corps(r)).points).toBe(100);
+  });
+
+  it("ignore un jeton qui appartient à quelqu'un d'autre", async () => {
+    // Il ne dit rien de ce compte-ci. Refuser sur cette base ferait perdre une
+    // séance réellement faite, sur une collision qui ne le concerne pas.
+    paiement.findUnique.mockResolvedValue({ userId: "un-autre-compte" });
+    await payer({ tout: true, jeton: "pas-le-mien" });
+    expect(paiement.create).toHaveBeenCalled();
+  });
+
+  it("rend l'état courant plutôt qu'une erreur si deux renvois se croisent", async () => {
+    // Deux envois partis en même temps passent tous deux le contrôle de
+    // lecture : c'est l'unicité en base qui tranche. Une erreur ici ferait
+    // réessayer la file indéfiniment sur un paiement pourtant enregistré.
+    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+      Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+    const r = await payer({ secondes: 60, jeton: "en-double" });
+    expect(r.status).toBe(200);
+    expect((await corps(r)).points).toBe(100);
+  });
+
+  it("ne masque pas une vraie panne de base", async () => {
+    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(new Error("base injoignable"));
+    await expect(payer({ secondes: 60, jeton: "x" })).rejects.toThrow("base injoignable");
+  });
+
+  it("tronque un jeton démesuré plutôt que de l'écrire tel quel", async () => {
+    await payer({ secondes: 60, jeton: "z".repeat(500) });
+    expect(paiement.create.mock.calls[0][0].data.jeton).toHaveLength(64);
+  });
+});

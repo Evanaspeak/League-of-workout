@@ -83,22 +83,59 @@ export async function PATCH(req: Request) {
     ? body.jour
     : jourLocal();
 
-  const maj = await prisma.$transaction(async (tx) => {
-    if (paye > 0) {
-      await tx.paiement.create({ data: { userId: user.id, points: paye, jour } });
-    }
-    return tx.user.update({
-      where: { id: user.id },
-      data: {
-        dettePointsDus: restant,
-        // Une dette éteinte n'a plus de date de début ; une dette entamée
-        // garde la sienne, sinon un paiement partiel remettrait le compteur de
-        // retard à zéro sans que rien n'ait été soldé.
-        ...(restant === 0 ? { detteDepuis: null } : {}),
-      },
-      select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+  /**
+   * Jeton d'un paiement rejoué depuis la file hors ligne.
+   *
+   * Un téléphone qui retrouve le réseau réessaie tant qu'il n'a pas reçu de
+   * réponse — et une réponse perdue en chemin est indiscernable d'une requête
+   * jamais arrivée. Sans jeton, ce cas-là paie deux fois la même séance, et
+   * c'est le cas normal dans un tunnel.
+   *
+   * Le contrôle se fait avant la transaction pour la réponse courante, et
+   * l'unicité en base la garantit pour de bon : deux renvois partis en même
+   * temps passeraient tous deux ce test.
+   */
+  const jeton = typeof body?.jeton === "string" && body.jeton.length > 0
+    ? body.jeton.slice(0, 64)
+    : null;
+  if (jeton) {
+    const deja = await prisma.paiement.findUnique({
+      where: { jeton },
+      select: { userId: true },
     });
-  });
+    // Le jeton d'un autre compte n'est pas une raison de refuser : il ne dit
+    // rien de celui-ci. C'est le sien, et lui seul, qui vaut « déjà payé ».
+    if (deja?.userId === user.id) return NextResponse.json(reponse(user));
+  }
+
+  let maj;
+  try {
+    maj = await prisma.$transaction(async (tx) => {
+      if (paye > 0) {
+        await tx.paiement.create({ data: { userId: user.id, points: paye, jour, jeton } });
+      }
+      return tx.user.update({
+        where: { id: user.id },
+        data: {
+          dettePointsDus: restant,
+          // Une dette éteinte n'a plus de date de début ; une dette entamée
+          // garde la sienne, sinon un paiement partiel remettrait le compteur de
+          // retard à zéro sans que rien n'ait été soldé.
+          ...(restant === 0 ? { detteDepuis: null } : {}),
+        },
+        select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+      });
+    });
+  } catch (e) {
+    // Deux renvois partis en même temps passent tous les deux le contrôle
+    // ci-dessus : c'est l'unicité en base qui tranche, et le perdant a déjà
+    // obtenu ce qu'il demandait. Une erreur ici ferait réessayer la file
+    // indéfiniment sur un paiement pourtant enregistré.
+    if (jeton && (e as { code?: string })?.code === "P2002") {
+      return NextResponse.json(reponse(user));
+    }
+    throw e;
+  }
   return NextResponse.json(reponse(maj));
 }
 

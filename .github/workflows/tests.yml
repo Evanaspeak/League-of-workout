@@ -100,17 +100,29 @@ jobs:
       # Et le résultat doit correspondre au schéma, sans quoi les migrations
       # construisent autre chose que ce que le code attend. Un diff vide est la
       # seule preuve qui vaille.
+      # Trois issues, et il faut les distinguer : identique, différent, ou le
+      # contrôle lui-même en panne. La première version écrivait
+      # `... --script | grep ... || true` : `--from-url` a été retiré de
+      # Prisma 7, la commande sortait en erreur, grep ne recevait rien, l'écart
+      # était vide et l'étape passait au vert. Un contrôle qui ne sait pas
+      # échouer ne contrôle rien — celui-ci n'a jamais rien vérifié.
+      #
+      # `--exit-code` sépare les trois cas : 0 identique, 2 différent, 1 panne.
       - name: Vérifier que la base correspond au schéma
         run: |
-          set -euo pipefail
-          ecart=$(npx prisma migrate diff \
-            --from-url "$DATABASE_URL" --to-schema ./prisma/schema.prisma --script \
-            | grep -v '^Loaded Prisma config' | grep -v '^\s*$' || true)
-          if [ -n "$ecart" ]; then
+          set -uo pipefail
+          sortie=$(npx prisma migrate diff \
+            --from-config-datasource --to-schema ./prisma/schema.prisma \
+            --script --exit-code 2>&1)
+          code=$?
+          if [ "$code" = "0" ]; then exit 0; fi
+          if [ "$code" = "2" ]; then
             echo "::error::La base montée par les migrations diffère du schéma."
-            echo "$ecart"
-            exit 1
+          else
+            echo "::error::Le contrôle de schéma n'a pas pu tourner (code $code)."
           fi
+          echo "$sortie"
+          exit 1
 
       - run: npm run build
 

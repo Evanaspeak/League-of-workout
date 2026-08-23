@@ -361,6 +361,20 @@ model Paiement {
   // veille ou le lendemain selon son fuseau.
   jour String
 
+  /**
+   * Jeton d'unicité, posé par le navigateur quand le paiement a été fait hors
+   * réseau et rejoué plus tard.
+   *
+   * Sans lui, un renvoi paie deux fois : la file d'attente réessaie tant
+   * qu'elle n'a pas reçu de réponse, et une réponse perdue en chemin est
+   * indiscernable d'une requête jamais arrivée. C'est le cas normal sur un
+   * téléphone qui retrouve le réseau dans un tunnel.
+   *
+   * Facultatif : un paiement fait en ligne n'en a pas besoin, et poser un
+   * jeton à tout le monde ne ferait qu'ajouter une colonne à indexer.
+   */
+  jeton String? @unique
+
   @@index([userId, jour])
 }
 
