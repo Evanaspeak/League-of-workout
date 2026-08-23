@@ -9,6 +9,8 @@ import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { notifierSysteme } from "@/lib/notifier";
 import { echauffementConseille } from "@/lib/echauffement";
+import { abonnerFile, enfiler, lireFile, viderFile } from "@/lib/fileHorsLigne";
+import { useValeurClient } from "@/lib/valeurClient";
 
 type Dette = {
   points: number;
@@ -69,6 +71,15 @@ export function CompteurDette({
   const surPagePubliqueRef = useRef(false);
   surPagePubliqueRef.current = estPagePublique(pathname);
 
+  /**
+   * Séances faites sans réseau et pas encore envoyées.
+   *
+   * Lu par abonnement plutôt que par état : la file s'écrit aussi depuis le
+   * renvoi automatique, qui ne passe pas par ce composant. Le serveur rend
+   * zéro — il ne voit pas le stockage du navigateur.
+   */
+  const enAttenteEnvoi = useValeurClient(() => lireFile().length, 0, abonnerFile);
+
   const charger = useCallback(async () => {
     try {
       const res = await fetch("/api/dette");
@@ -80,6 +91,22 @@ export function CompteurDette({
   useEffect(() => {
     if (!estPagePublique(pathname)) charger();
   }, [charger, pathname]);
+
+  /**
+   * Renvoi de ce qui attend : au chargement, et dès que le réseau revient.
+   *
+   * `online` n'est pas fiable seul — il se déclenche sur une connexion au
+   * routeur, pas sur un accès réel à Internet — mais il ne coûte rien et
+   * rattrape le cas courant. Le chargement s'occupe du reste : rouvrir
+   * l'application est le geste qu'on fait de toute façon.
+   */
+  useEffect(() => {
+    if (estPagePublique(pathname)) return;
+    const renvoyer = () => { viderFile().catch(() => {}); };
+    renvoyer();
+    window.addEventListener("online", renvoyer);
+    return () => window.removeEventListener("online", renvoyer);
+  }, [pathname]);
 
   // Une partie enregistrée ailleurs dans l'app fait remonter le compteur sans
   // recharger la page. Le retour sur l'onglet le resynchronise aussi, au cas
@@ -157,7 +184,17 @@ export function CompteurDette({
         }),
       });
       if (res.ok) setDette(await res.json());
-    } catch { /* on referme quand même, la dette sera relue au prochain chargement */ }
+    } catch {
+      /**
+       * Pas de réseau : la séance est mise de côté, pas perdue.
+       *
+       * L'échec était avalé en silence — la fenêtre se refermait et la dette
+       * restait entière. C'est la pire façon de se tromper : celui qui vient
+       * de faire ses pompes en conclut que l'application ne marche pas.
+       */
+      enfiler(toutFait ? { tout: true, jour: jourLocal() }
+                       : { secondes: secondesFaites, jour: jourLocal() });
+    }
     setChronoOuvert(false);
     setFini(false);
     notifieRef.current = false;
@@ -224,6 +261,14 @@ export function CompteurDette({
             </span>
           </div>
         ))}
+
+        {/* Ce qui attend d'être envoyé se dit sur la pastille : sans ça, la
+            dette paraît intacte après une séance, et on la refait. */}
+        {enAttenteEnvoi > 0 && (
+          <div style={{ fontSize: "0.62rem", color: "var(--steel)", marginTop: 5 }}>
+            {enAttenteEnvoi === 1 ? t.detteHorsLigneUne : t.detteHorsLignePlusieurs(enAttenteEnvoi)}
+          </div>
+        )}
 
         <div
           className="h-1 rounded-full overflow-hidden"

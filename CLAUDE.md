@@ -582,6 +582,74 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Les séances faites sans réseau (question 209)
+La dette se paie souvent là où le réseau n'est pas : une salle en sous-sol, un
+train, une chambre au fond d'un appartement. L'échec était avalé en silence —
+un `catch {}` autour de l'envoi, la fenêtre se refermait, la dette restait
+entière. C'est la pire façon de se tromper : celui qui vient de faire ses
+pompes voit sa dette intacte et conclut que l'application ne marche pas.
+
+Ce qui est mis de côté, c'est le **paiement**, pas la partie. Une partie a
+besoin du barème du serveur pour être chiffrée ; un paiement dit une chose
+complète et vérifiable : « j'ai fait tant de secondes d'effort, tel jour ».
+C'est aussi ce que la question demandait.
+
+`src/lib/fileHorsLigne.ts` garde la file dans le stockage local. Elle se vide
+au chargement d'un écran connecté et à l'événement `online` — qui n'est pas
+fiable seul, il se déclenche sur une connexion au routeur et pas sur un accès
+réel, mais il ne coûte rien et rattrape le cas courant. La pastille de dette
+annonce ce qui attend : sans ça, la dette paraît intacte après une séance et on
+la refait.
+
+**Le jeton est la pièce maîtresse.** La file réessaie tant qu'elle n'a pas reçu
+de réponse, et une réponse perdue en chemin est indiscernable d'une requête
+jamais arrivée — c'est le cas normal dans un tunnel. Sans jeton, ce cas paie
+deux fois la même séance, c'est-à-dire efface une dette qu'on n'a pas faite.
+`Paiement.jeton` est unique en base ; la route regarde avant d'écrire, et
+rattrape la violation d'unicité pour les deux renvois qui se croisent — une
+erreur ferait réessayer la file indéfiniment sur un paiement pourtant
+enregistré.
+
+Ce que la file jette et ce qu'elle garde, écrit une fois pour toutes :
+- **échec réseau** : tout est gardé, et on s'arrête là — inutile de brûler la
+  file entière quand le réseau est encore coupé ;
+- **401** : gardé. La session a expiré ; jeter serait perdre l'effort ;
+- **autre 4xx** : jeté. Le serveur n'en voudra jamais, et le garder bloquerait
+  toute la file derrière ;
+- **5xx** : gardé, c'est peut-être passager.
+
+Les envois partent **en série**. Le serveur calcule chaque paiement sur la
+dette du moment : deux envois simultanés liraient la même valeur et l'un des
+deux serait perdu.
+
+### Un contrôle d'intégration continue qui n'a jamais rien contrôlé
+Le garde posé en V235 — « la base montée par les migrations correspond-elle au
+schéma ? » — était écrit :
+
+```sh
+ecart=$(npx prisma migrate diff --from-url "$DATABASE_URL" … --script | grep … || true)
+```
+
+`--from-url` a été retiré de Prisma 7. La commande sortait donc en erreur sur
+la sortie d'erreur, `grep` ne recevait rien, `ecart` était vide, et l'étape
+passait au vert. **Quatre versions vertes sans que rien ne soit vérifié**, et
+rien ne pouvait le dire : une étape verte ressemble à une étape qui a
+travaillé.
+
+Deux corrections, et la seconde est la vraie :
+- l'option devient `--from-config-datasource` ;
+- `--exit-code` sépare les trois issues — 0 identique, 2 différent, 1 panne —
+  et le `|| true` disparaît. Un contrôle qui ne sait pas échouer ne contrôle
+  rien.
+
+Éprouvé dans les trois états : base amputée d'une colonne (échec, « diffère »),
+base conforme (succès), base injoignable (échec, « n'a pas pu tourner »).
+
+`src/controleSchema.test.ts` garde les trois choses qui l'ont fait mentir :
+l'étape existe et appelle bien la comparaison, elle emploie `--exit-code`, elle
+n'emploie pas `--from-url`, et elle n'avale pas son échec. Les trois sabotages
+sont attrapés.
+
 ### La lecture d'Apex, éprouvée sur de vrais pixels
 `groupesChiffres.test.ts` dessine des traits aux largeurs relevées à la main.
 C'est utile — on y écrit exactement le cas qu'on veut éprouver — mais ça ne
