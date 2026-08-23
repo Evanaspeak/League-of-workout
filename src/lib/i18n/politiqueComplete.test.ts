@@ -33,6 +33,7 @@ const HORS_POLITIQUE: Record<string, string> = {
   rappelSeuilPoints: "réglage de rappel (ancienne version)",
   rappelSeuilSec: "réglage de rappel",
   plafondQuotidien: "réglage d'avertissement de volume",
+  langue: "réglage d'affichage, rangé côté serveur pour écrire les notifications dans la bonne langue",
   dettePointsDus: "état de jeu calculé, décrit par « données de parties »",
   gainageMaxSec: "mesure de force, décrite par « nombre maximum de pompes »",
   pompesMaxLe: "date du test de force, décrite avec lui",
@@ -77,6 +78,10 @@ const ATTENDU: Record<string, RegExp> = {
   // Dire qu'on fait ses pompes genoux au sol frôle la santé sans en être :
   // la politique le décrit, et dit qu'aucune raison n'est demandée.
   variantePompes: /variante d'exécution des pompes/i,
+  // Le fuseau est une indication de lieu, grossière mais réelle : la politique
+  // affirmait « aucune donnée de localisation » et ne pouvait plus le dire tel
+  // quel. Elle décrit maintenant ce qui est gardé, et ce qui ne l'est pas.
+  fuseau: /fuseau horaire/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */

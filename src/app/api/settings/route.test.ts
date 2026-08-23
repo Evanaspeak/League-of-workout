@@ -156,6 +156,20 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update.mock.calls[0][0].data.variantePompes).toBeNull();
   });
 
+  it("retient la langue du compte", async () => {
+    // Le serveur n'a aucun autre moyen de savoir dans quelle langue écrire :
+    // le stockage du navigateur ne lui est pas visible.
+    const r = await put({ userPrefs: { langue: "ja" } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.langue).toBe("ja");
+  });
+
+  it("refuse une langue hors des six", async () => {
+    const r = await put({ userPrefs: { langue: "it" } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
   it("refuse une variante inconnue", async () => {
     const r = await put({ userPrefs: { variantePompes: "sur une main" } });
     expect(r.status).toBe(400);

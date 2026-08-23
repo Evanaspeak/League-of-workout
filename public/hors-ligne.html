@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hors ligne — Win or Workout</title>
+<!--
+  Cette page est servie par le service worker quand le réseau ne répond pas.
+  Elle ne dépend de rien : ni feuille de style, ni script, ni police. Une page
+  de secours qui charge des ressources n'est pas une page de secours — c'est
+  exactement au moment où rien ne se charge qu'on en a besoin.
+-->
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 24px; background: #0C0E11; color: #ECEFF4;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 30rem; text-align: center; }
+  h1 { font-size: 1.35rem; margin: 0 0 12px; color: #FFB454; }
+  p { margin: 0 0 10px; color: #98A2B0; font-size: 0.95rem; }
+  .en { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(152,162,176,0.2); }
+  button {
+    margin-top: 20px; padding: 11px 22px; min-height: 44px; border-radius: 8px;
+    border: 1px solid #FFB454; background: transparent; color: #FFB454;
+    font-size: 0.9rem; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pas de réseau</h1>
+  <p>L'application a besoin d'une connexion pour lire tes parties et ton compteur.</p>
+  <p>Ce que tu dois ne bouge pas pendant ce temps : rien n'est perdu.</p>
+  <div class="en" lang="en">
+    <h1>No connection</h1>
+    <p>The app needs a connection to read your matches and your counter.</p>
+    <p>What you owe does not move meanwhile: nothing is lost.</p>
+  </div>
+  <button onclick="location.reload()">Réessayer · Retry</button>
+</main>
+</body>
+</html>

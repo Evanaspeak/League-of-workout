@@ -1,0 +1,68 @@
+# Le rappel du matin.
+#
+# Une soirée qui finit à deux heures laisse une dette que personne ne paie
+# avant d'aller dormir, et le rappel de seuil est déjà parti la veille, au
+# milieu d'une partie. Celui-ci arrive le lendemain, à une heure où on peut
+# réellement faire quelque chose.
+#
+# Il tourne toutes les heures parce que les comptes ne sont pas tous dans le
+# même fuseau : c'est la route qui regarde, à chaque passage, chez qui il est
+# neuf heures. Un compte dont le fuseau est inconnu n'est jamais notifié —
+# envoyer « bonjour » à trois heures du matin est pire que ne rien envoyer.
+#
+# Deux secrets à poser dans le dépôt (Settings → Secrets → Actions) :
+#   SITE_URL       adresse publique du site (https://winorworkout.com)
+#   RAPPEL_SECRET  la même valeur que la variable d'environnement du même nom
+#                  côté Vercel. Sans elle, la route refuse tout le monde.
+name: Rappel du matin
+
+on:
+  schedule:
+    # À la minute 12 : les heures rondes sont encombrées et GitHub y décale
+    # les travaux, ce qui décalerait le rappel d'un temps imprévisible.
+    - cron: "12 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: rappel-matin
+  cancel-in-progress: false
+
+jobs:
+  rappeler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE: ${{ secrets.SITE_URL }}
+      SECRET: ${{ secrets.RAPPEL_SECRET }}
+    steps:
+      - name: Vérifier les secrets
+        run: |
+          test -n "$SITE"   || { echo "::error::Secret SITE_URL absent"; exit 1; }
+          test -n "$SECRET" || { echo "::error::Secret RAPPEL_SECRET absent"; exit 1; }
+
+      - name: Déclencher les rappels
+        run: |
+          set -o pipefail
+          reponse=$(mktemp)
+          code=$(curl -sS -o "$reponse" -w '%{http_code}' \
+            -X POST "$SITE/api/push/matin" \
+            -H "x-rappel-secret: $SECRET" \
+            --max-time 60) || code=000
+
+          echo "HTTP $code"
+          cat "$reponse"; echo
+
+          # 000 = curl n'a pas abouti. Le distinguer d'une réponse du serveur :
+          # confondre les deux rendait la branche « site injoignable »
+          # inatteignable dans la supervision, et l'erreur y a vécu longtemps.
+          if [ "$code" = "000" ]; then
+            echo "::error::Site injoignable"; exit 1
+          fi
+          if [ "$code" != "200" ]; then
+            echo "::error::La route a répondu $code"; exit 1
+          fi
+
+          # Zéro envoi n'est pas une erreur : à cette heure-ci, il n'y a
+          # peut-être personne au matin qui doive quelque chose.
+          jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
+            || { echo "::error::Réponse inattendue"; exit 1; }

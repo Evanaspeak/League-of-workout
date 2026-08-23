@@ -156,14 +156,61 @@ Règles :
   en allemand, les noms communs gardent leur majuscule.
 - Les erreurs des routes API se traduisent dans `src/lib/i18n/apiErrors.ts`,
   la clé étant le message français tel qu'il circule sur le réseau.
+- Ce qui part hors du navigateur — notification push, courriel — ne peut pas
+  passer par `useT` : il n'y a ni composant ni stockage local. La langue est
+  donc rangée sur le compte (`User.langue`, remontée par `LangueDuCompte`) et
+  les textes vivent dans `src/lib/i18n/notifications.ts`. Sans ça, le texte
+  écrit en dur partait en français à tout le monde, et rien ne le signalait :
+  celui qui écrit l'application la lit en français.
 - CGU et politique de confidentialité restent en français et en anglais ; un
   bandeau (`LangueDocument`) le dit aux quatre autres langues.
+
+### Rappel du matin
+Une soirée qui finit à deux heures laisse une dette que personne ne paie avant
+d'aller dormir, et le rappel de seuil est déjà parti la veille au milieu d'une
+partie. `.github/workflows/rappel-matin.yml` appelle `/api/push/matin` toutes
+les heures ; la route regarde chez qui il est neuf heures **localement**, à
+partir de `User.fuseau` remonté par `ContexteNavigateur`.
+
+Un compte sans fuseau connu n'est jamais notifié : envoyer « bonjour » à trois
+heures du matin est pire que ne rien envoyer, et `heureLocale()` rend `null`
+plutôt que de faire passer une heure UTC pour une heure locale.
+
+Deux secrets à poser dans le dépôt : `SITE_URL` et `RAPPEL_SECRET`, ce dernier
+devant valoir la même chose que la variable d'environnement du même nom côté
+Vercel. Sans secret configuré, la route refuse tout le monde — une variable
+oubliée ne doit pas transformer un déclencheur en porte ouverte.
 
 ### Admin (/admin)
 - Accès restreint : `user.email === "evantocquet@gmail.com"`
 - Éditeur liste champions (1 par ligne) → stocké en DB table SystemConfig
 - GET `/api/champions` retourne la liste DB ou la liste hardcodée par défaut
 - Le lien "Admin" apparaît dans la Nav uniquement pour cet email (via fetch `/api/auth/session`)
+
+### Installation sur téléphone (PWA)
+Le manifeste existait depuis longtemps ; l'application n'était pas installable
+pour autant. Chrome n'émet `beforeinstallprompt` que si un service worker
+actif sait répondre hors ligne — sans quoi l'invitation n'a aucun chemin sur
+Android, et personne ne va chercher « ajouter à l'écran d'accueil » dans un
+menu de navigateur.
+
+Ce qui a été posé :
+- `public/hors-ligne.html` — page de secours entièrement autonome, sans
+  feuille de style, sans police, sans script externe. Un test refuse tout
+  `src=`, `href=` ou `url(` : c'est au moment où plus rien ne se charge qu'on
+  en a besoin, et le défaut ne se voit jamais en développement.
+- `public/sw.js` — met cette seule page en cache, n'intercepte que les
+  navigations, et seulement quand elles échouent. **Aucun cache d'assets** :
+  sur une application qui se redéploie plusieurs fois par jour, un fragment
+  périmé servi à une page neuve donne un écran sans style dont le symptôme ne
+  ressemble jamais à sa cause.
+- `ServiceWorkerActif` l'enregistre au chargement, pour tout le monde. Il ne
+  l'était que par le réglage des notifications, c'est-à-dire pour la poignée
+  de gens qui les activent.
+- `InvitationInstallation` propose à la troisième visite, sur pointeur tactile
+  seulement, et une seule fois. Sur iPhone, Safari n'implémente pas l'invite :
+  on y décrit le geste, ce qui est la seule chose à faire — et c'est là que ça
+  compte le plus, puisque c'est la seule façon d'y recevoir une notification.
 
 ### App Desktop (Electron)
 - Build Windows NSIS via GitHub Actions (`workflow_dispatch` ou tag `desktop-v*`)
@@ -182,7 +229,7 @@ Règles :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-571 tests unitaires, 35 suites. Base et session doublées : aucune dépendance à
+944 tests unitaires, 71 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -207,10 +254,17 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 56 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 62 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
 puis les trois écrans connectés — tableau de bord, historique, réglages — dans
-les six langues, sur un compte qu'il ouvre lui-même.
+les six langues, sur un compte qu'il ouvre lui-même, et
+`e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
+de secours hors ligne.
+
+Le parcours complet a échoué en CI dès l'arrivée de la demande de
+consentement santé : elle est modale, elle recouvre la modale d'accueil, et
+rien ne se cliquait derrière. Une modale ajoutée se traverse dans
+`passerIntro`, avant les deux autres.
 
 ### Ce que les tests de langue attrapent
 - `src/lib/i18n/dictionaries.test.ts` — mêmes clés d'une langue à l'autre,

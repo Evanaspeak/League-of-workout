@@ -9,6 +9,8 @@ import { TitreAvecDette } from "@/components/TitreAvecDette";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
 import { InvitationInstallation } from "@/components/InvitationInstallation";
+import { ServiceWorkerActif } from "@/components/ServiceWorkerActif";
+import { ContexteNavigateur } from "@/components/ContexteNavigateur";
 import { MajDesktop } from "@/components/MajDesktop";
 import { DetectionSession } from "@/components/DetectionSession";
 import { PartieDetectee } from "@/components/PartieDetectee";
@@ -141,6 +143,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {/* Calcule ce que la partie en cours coûte, pour l'overlay. */}
             <DetteDirecte />
             <PartieApexLue />
+            {/* Porte les notifications et la page de secours hors ligne. */}
+            <ServiceWorkerActif />
+            {/* Fait connaître langue et fuseau au serveur, qui écrit les
+                notifications et choisit l'heure de les envoyer. */}
+            <ContexteNavigateur />
             {/* Propose l'écran d'accueil à la troisième visite, sur téléphone. */}
             <InvitationInstallation />
           </SessionProvider>

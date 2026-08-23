@@ -5,6 +5,8 @@ import { comptePublic } from "@/lib/compte";
 import { isExerciceId, toExerciceIds } from "@/lib/exercices";
 import { estAdmin } from "@/lib/admin";
 import { toVariante } from "@/lib/variantes";
+import { estLocale } from "@/lib/i18n/langues";
+import { estFuseauValide } from "@/lib/fuseau";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -60,6 +62,8 @@ export async function PUT(req: Request) {
       rappelSeuilSec?: number; plafondQuotidien?: number;
       pompesMax?: number; pompesMaxLe?: Date;
       variantePompes?: string | null;
+      langue?: string;
+      fuseau?: string;
     } = {};
 
     if (body.userPrefs.exercices !== undefined) {
@@ -96,6 +100,26 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Plafond quotidien invalide" }, { status: 400 });
       }
       data.plafondQuotidien = Math.round(plafond);
+    }
+
+    // Langue du compte. Elle ne sert à rien dans le navigateur, qui a déjà la
+    // sienne en stockage local : elle sert au serveur, qui écrit les
+    // notifications et n'a aucun autre moyen de savoir à qui il parle.
+    if (body.userPrefs.langue !== undefined) {
+      if (!estLocale(body.userPrefs.langue)) {
+        return NextResponse.json({ error: "Langue inconnue" }, { status: 400 });
+      }
+      data.langue = body.userPrefs.langue;
+    }
+
+    // Fuseau horaire, pour savoir quelle heure il est chez la personne. Le
+    // serveur ne connaît que l'UTC, et « le matin » en UTC est le milieu de
+    // la nuit pour une partie du monde.
+    if (body.userPrefs.fuseau !== undefined) {
+      if (!estFuseauValide(body.userPrefs.fuseau)) {
+        return NextResponse.json({ error: "Fuseau inconnu" }, { status: 400 });
+      }
+      data.fuseau = body.userPrefs.fuseau;
     }
 
     // Variante d'exécution des pompes. Elle ne touche à aucun calcul : elle
