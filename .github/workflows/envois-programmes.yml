@@ -11,6 +11,12 @@
 # neuf heures. Un compte dont le fuseau est inconnu n'est jamais notifié —
 # envoyer « bonjour » à trois heures du matin est pire que ne rien envoyer.
 #
+# Ce travail ne CRIE JAMAIS. Il tourne toutes les heures : un échec y vaut
+# vingt-quatre courriels par jour, tous identiques. Quand le site va mal, c'est
+# la supervision qui le dit, une fois, et c'est la seule à le dire — trois
+# travaux qui constatent la même panne écrivent trois fois la même chose. Ici,
+# on note et on passe.
+#
 # Deux secrets à poser dans le dépôt (Settings → Secrets → Actions) :
 #   SITE_URL       adresse publique du site (https://winorworkout.com)
 #   RAPPEL_SECRET  la même valeur que la variable d'environnement du même nom
@@ -70,17 +76,19 @@ jobs:
           # 000 = curl n'a pas abouti. Le distinguer d'une réponse du serveur :
           # confondre les deux rendait la branche « site injoignable »
           # inatteignable dans la supervision, et l'erreur y a vécu longtemps.
+          # Noté, pas crié : voir l'en-tête. La supervision, elle, verra la
+          # même panne et la signalera une fois.
           if [ "$code" = "000" ]; then
-            echo "::error::Site injoignable"; exit 1
+            echo "::warning::Site injoignable — aucun rappel envoyé."; exit 0
           fi
           if [ "$code" != "200" ]; then
-            echo "::error::La route a répondu $code"; exit 1
+            echo "::warning::La route a répondu $code — aucun rappel envoyé."; exit 0
           fi
 
           # Zéro envoi n'est pas une erreur : à cette heure-ci, il n'y a
           # peut-être personne au matin qui doive quelque chose.
           jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
-            || { echo "::error::Réponse inattendue"; exit 1; }
+            || echo "::warning::Réponse inattendue de la route."
 
       - name: Bilan de la semaine
         if: steps.secrets.outputs.prets == 'oui'
@@ -96,12 +104,12 @@ jobs:
           cat "$reponse"; echo
 
           if [ "$code" = "000" ]; then
-            echo "::error::Site injoignable"; exit 1
+            echo "::warning::Site injoignable — aucun bilan envoyé."; exit 0
           fi
           if [ "$code" != "200" ]; then
-            echo "::error::La route a répondu $code"; exit 1
+            echo "::warning::La route a répondu $code — aucun bilan envoyé."; exit 0
           fi
           # Le bilan ne part que le lundi, à neuf heures locales : vingt-trois
           # exécutions sur vingt-quatre n'envoient rien, et c'est normal.
           jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
-            || { echo "::error::Réponse inattendue"; exit 1; }
+            || echo "::warning::Réponse inattendue de la route."

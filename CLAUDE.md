@@ -213,9 +213,42 @@ oubliée ne doit pas transformer un déclencheur en porte ouverte.
 
 Tant qu'ils manquent, le travail **s'arrête sans échouer**. Un travail horaire
 qui échoue enverrait vingt-quatre courriels d'échec par jour jusqu'à ce que
-quelqu'un cède et le coupe : c'est l'inverse de ce qu'on veut. La sauvegarde,
-elle, échoue bruyamment dans le même cas, et c'est voulu — une sauvegarde qui
-n'existe pas doit se voir.
+quelqu'un cède et le coupe : c'est l'inverse de ce qu'on veut. Voir « Les
+courriels d'échec » plus haut : la sauvegarde suit la même règle depuis, et
+seule la supervision alerte.
+
+### Les courriels d'échec, et pourquoi il n'y en a presque plus
+Une nuit a produit **cinquante courriels d'échec quasi identiques** : un travail
+resté rouge vingt-cinq versions d'affilée, et deux exécutions par changement
+(poussée sur la branche, puis sur `main`). La conséquence n'est pas l'agacement,
+c'est qu'on finisse par filtrer l'alerte — et qu'on ne la lise plus le jour où
+elle compte.
+
+Quatre règles depuis :
+
+- **La supervision est la seule à crier.** Elle n'alerte qu'au *changement
+  d'état* : premier échec, puis rappel une fois par vingt-quatre heures tant que
+  la panne dure, puis à nouveau si le site retombe après être revenu. Une panne
+  d'une nuit passe de trente-deux courriels à un. L'état voyage d'une exécution
+  à l'autre par le cache GitHub, et la décision vit dans
+  `.github/alerte-etat.sh`, éprouvé par `src/alerteEtat.test.ts` — sabotage
+  compris : sans mémoire, les vingt-quatre cris reviennent.
+- **Les envois programmés ne crient jamais.** Ils tournent à l'heure : un échec
+  y vaut vingt-quatre courriels par jour, tous identiques. Ils notent en
+  `::warning::` et passent. C'est la supervision qui verra la même panne.
+- **La sauvegarde garde son échec bruyant**, parce qu'elle tourne une fois par
+  jour : un courriel quotidien se lit. En revanche, des secrets absents ne sont
+  plus un échec mais un avertissement — ce n'est pas une sauvegarde qui rate,
+  c'est une sauvegarde pas encore configurée, et le redire tous les jours ne
+  sert personne.
+- **Une exécution de tests par changement**, sur `main` et sur les demandes de
+  fusion seulement, avec `cancel-in-progress` : une poussée qui en suit une
+  autre de près annule la précédente, et une exécution annulée n'envoie rien.
+
+`src/alerteUnique.test.ts` refuse qu'un travail programmé se remette à crier :
+seule la supervision le peut, la sauvegarde figure en exception avec sa raison
+écrite, et les deux détections sont éprouvées sur un fichier fabriqué pour
+qu'elles ne puissent pas rendre « non » à tout.
 
 ### Admin (/admin)
 - Accès restreint : `user.email === "evantocquet@gmail.com"`
@@ -271,7 +304,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-990 tests unitaires, 75 suites. Base et session doublées : aucune dépendance à
+999 tests unitaires, 77 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.

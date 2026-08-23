@@ -42,17 +42,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Refuser de tourner sans secret
+      # Des secrets absents ne sont pas une sauvegarde qui échoue : c'est une
+      # sauvegarde qui n'a pas encore été configurée. La distinction compte,
+      # parce qu'échouer là-dessus envoie un courriel par jour pour redire une
+      # chose déjà connue — et une alerte qu'on reçoit tous les jours finit
+      # dans un filtre, avec les vraies.
+      #
+      # En revanche, une sauvegarde CONFIGURÉE qui échoue continue d'échouer
+      # bruyamment : une sauvegarde qui n'existe pas doit se voir.
+      - name: Vérifier les secrets
+        id: secrets
         run: |
-          set -euo pipefail
-          # Un travail qui « réussit » sans rien sauvegarder est pire que pas
-          # de travail du tout : il rassure.
-          test -n "$SOURCE" || { echo "::error::Secret DATABASE_URL absent"; exit 1; }
-          test -n "$PASSE"  || { echo "::error::Secret SAUVEGARDE_PASSPHRASE absent"; exit 1; }
+          set -uo pipefail
+          if [ -z "$SOURCE" ] || [ -z "$PASSE" ]; then
+            echo "::warning::DATABASE_URL ou SAUVEGARDE_PASSPHRASE absent — aucune sauvegarde. Rien n'est protégé tant qu'ils ne sont pas posés."
+            echo "prets=non" >> "$GITHUB_OUTPUT"
+          else
+            echo "prets=oui" >> "$GITHUB_OUTPUT"
+          fi
 
       # Les outils client doivent avoir la version du serveur : un pg_dump 14
       # refuse une base 16.
       - name: Installer PostgreSQL 16 client
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -euo pipefail
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
@@ -61,6 +73,7 @@ jobs:
           sudo apt-get install -y -qq postgresql-client-16
 
       - name: Exporter
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -euo pipefail
           mkdir -p /tmp/sauvegarde
@@ -72,12 +85,14 @@ jobs:
           ls -l /tmp/sauvegarde/base.dump
 
       - name: Restaurer dans une base neuve
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -euo pipefail
           pg_restore --dbname="$CIBLE" --no-owner --no-privileges \
             --exit-on-error /tmp/sauvegarde/base.dump
 
       - name: Comparer la source et la restauration, table par table
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -euo pipefail
           # Le comptage se fait sur les tables réellement présentes à la
@@ -104,6 +119,7 @@ jobs:
           test "$ecarts" -eq 0 || exit 1
 
       - name: Chiffrer
+        if: steps.secrets.outputs.prets == 'oui'
         run: |
           set -euo pipefail
           # La sauvegarde contient des adresses, des empreintes de mot de passe
@@ -115,6 +131,7 @@ jobs:
           rm -f /tmp/sauvegarde/base.dump
 
       - uses: actions/upload-artifact@v4
+        if: steps.secrets.outputs.prets == 'oui'
         with:
           name: base-${{ github.run_id }}
           path: /tmp/sauvegarde/base.dump.gpg
