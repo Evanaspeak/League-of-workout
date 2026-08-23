@@ -889,6 +889,9 @@ export default function SettingsPage() {
       {/* Modal de confirmation */}
       {showDeleteModal && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.supprimerDefinitivement}
           onClick={() => !deleting && setShowDeleteModal(false)}
           style={{
             position: "fixed", inset: 0, zIndex: 1000,
