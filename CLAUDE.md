@@ -582,6 +582,25 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Dépendances, au 23 août
+`npm audit` : **zéro vulnérabilité**, dans l'application comme dans
+l'application desktop.
+
+Mises à jour appliquées, toutes correctives ou mineures : `next` 16.3.1 →
+16.3.2, `eslint-config-next` 16.2.9 → 16.3.2, `react` et `react-dom` 19.2.4 →
+19.2.8, `@types/react-dom` 19.2.4 → 19.2.5. Types, tests unitaires,
+construction et les 74 parcours navigateur repassés après.
+
+Trois majeures **écartées volontairement**, chacune pour la même raison — un
+saut de version majeure se relit, il ne se prend pas de nuit :
+- `typescript` 5.9 → 7.0 ;
+- `eslint` 9 → 10 ;
+- `@types/node` 20 → 26, qui suivrait la version de Node du déploiement, pas
+  l'inverse.
+
+`next-auth` apparaît comme « en retard » sur 4.24.15 : c'est faux, le projet
+est sur la 5 en préversion et la 4 est l'ancienne branche stable.
+
 ### Les séances faites sans réseau (question 209)
 La dette se paie souvent là où le réseau n'est pas : une salle en sous-sol, un
 train, une chambre au fond d'un appartement. L'échec était avalé en silence —
