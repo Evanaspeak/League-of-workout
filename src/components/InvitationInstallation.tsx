@@ -20,6 +20,28 @@ type InviteInstallation = Event & {
 };
 
 /**
+ * L'invite du navigateur, attrapée avant que quiconque ne l'écoute.
+ *
+ * `beforeinstallprompt` n'est émis qu'une fois, quand le navigateur décide que
+ * l'application est installable, et ce moment ne se commande pas : il tombe
+ * souvent avant que le paquet JavaScript ne s'exécute. Un écouteur posé ici,
+ * même au chargement du module, arrive alors trop tard — et il n'y a pas de
+ * seconde émission. C'est un petit script de la page qui l'attrape, dans le
+ * `layout` ; on vient seulement chercher ce qu'il a gardé.
+ */
+const EVENEMENT_PRETE = "wow-invite-installation";
+
+/**
+ * Ce que le petit script de la page a retenu, s'il a eu quelque chose à
+ * retenir. L'écouteur ne peut pas vivre ici : au moment où ce module
+ * s'exécute, l'événement est souvent déjà passé.
+ */
+function inviteRetenue(): InviteInstallation | null {
+  if (typeof window === "undefined") return null;
+  return (window as Window & { __wowInvite?: InviteInstallation }).__wowInvite ?? null;
+}
+
+/**
  * Proposition d'installer l'application sur l'écran d'accueil.
  *
  * À la troisième visite seulement, sur téléphone seulement, et une seule fois
@@ -80,15 +102,20 @@ export function InvitationInstallation() {
     // iOS n'émettra jamais l'événement : on affiche le geste tout de suite.
     if (surIOS) { setVisible(true); return; }
 
-    const surInvite = (e: Event) => {
-      // Sans cela, Chrome affiche sa propre barre en bas de l'écran, et il y
-      // en aurait deux.
-      e.preventDefault();
-      setInvite(e as InviteInstallation);
+    // Déjà passé pendant le chargement : c'est le cas fréquent, et celui que
+    // l'ancienne version manquait entièrement.
+    const deja = inviteRetenue();
+    if (deja) {
+      setInvite(deja);
+      setVisible(true);
+      return;
+    }
+    const surInvite = () => {
+      setInvite(inviteRetenue());
       setVisible(true);
     };
-    window.addEventListener("beforeinstallprompt", surInvite);
-    return () => window.removeEventListener("beforeinstallprompt", surInvite);
+    window.addEventListener(EVENEMENT_PRETE, surInvite);
+    return () => window.removeEventListener(EVENEMENT_PRETE, surInvite);
   }, [pathname]);
 
   // Installée entre-temps depuis le menu du navigateur : l'invitation n'a plus

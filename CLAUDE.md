@@ -243,6 +243,12 @@ Ce qui a été posé :
 - `ServiceWorkerActif` l'enregistre au chargement, pour tout le monde. Il ne
   l'était que par le réglage des notifications, c'est-à-dire pour la poignée
   de gens qui les activent.
+- L'invite du navigateur est attrapée par un petit script du `layout`, dans la
+  page elle-même. `beforeinstallprompt` n'est émis qu'une fois, et ce moment ne
+  se commande pas : il tombe souvent avant que le paquet JavaScript ne
+  s'exécute. Un écouteur posé dans un composant, même au chargement de son
+  module, arrive alors trop tard, et il n'y a pas de seconde émission. Éprouvé
+  dans les deux sens : le test passe avec le script, échoue sans.
 - `InvitationInstallation` propose à la troisième visite, sur pointeur tactile
   seulement, et une seule fois. Sur iPhone, Safari n'implémente pas l'invite :
   on y décrit le geste, ce qui est la seule chose à faire — et c'est là que ça
@@ -290,7 +296,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 62 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 65 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
 puis les trois écrans connectés — tableau de bord, historique, réglages — dans
 les six langues, sur un compte qu'il ouvre lui-même, et

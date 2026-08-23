@@ -106,6 +106,27 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="fr" className={`h-full ${titrage.variable} ${barlow.variable} ${plexMono.variable}`}>
+      <head>
+        {/*
+          Attrape l'invite d'installation avant tout le reste.
+
+          Le navigateur n'émet `beforeinstallprompt` qu'une seule fois, et ce
+          moment ne se commande pas : il tombe souvent avant que le paquet
+          JavaScript ne s'exécute. Un écouteur posé dans un composant, même au
+          chargement de son module, arrive alors trop tard — et il n'y a pas de
+          seconde émission. Ces quelques lignes sont dans la page elle-même
+          parce que c'est le seul endroit qui soit assez tôt.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){window.addEventListener("beforeinstallprompt",function(e){`
+              // Sans cela, Chrome pose sa propre barre en bas de l'écran, et il
+              // y en aurait deux.
+              + `e.preventDefault();window.__wowInvite=e;`
+              + `window.dispatchEvent(new Event("wow-invite-installation"));});})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <RatiosExercicesProvider valeurs={ratios}>
         <LocaleProvider>
