@@ -1,4 +1,4 @@
-# Le rappel du matin.
+# Les envois programmés : rappel du matin, relance des absents.
 #
 # Une soirée qui finit à deux heures laisse une dette que personne ne paie
 # avant d'aller dormir, et le rappel de seuil est déjà parti la veille, au
@@ -14,7 +14,7 @@
 #   SITE_URL       adresse publique du site (https://winorworkout.com)
 #   RAPPEL_SECRET  la même valeur que la variable d'environnement du même nom
 #                  côté Vercel. Sans elle, la route refuse tout le monde.
-name: Rappel du matin
+name: Envois programmés
 
 on:
   schedule:
@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: rappel-matin
+  group: envois-programmes
   cancel-in-progress: false
 
 jobs:
@@ -40,12 +40,12 @@ jobs:
           test -n "$SITE"   || { echo "::error::Secret SITE_URL absent"; exit 1; }
           test -n "$SECRET" || { echo "::error::Secret RAPPEL_SECRET absent"; exit 1; }
 
-      - name: Déclencher les rappels
+      - name: Déclencher les envois
         run: |
           set -o pipefail
           reponse=$(mktemp)
           code=$(curl -sS -o "$reponse" -w '%{http_code}' \
-            -X POST "$SITE/api/push/matin" \
+            -X POST "$SITE/api/push/programme" \
             -H "x-rappel-secret: $SECRET" \
             --max-time 60) || code=000
 

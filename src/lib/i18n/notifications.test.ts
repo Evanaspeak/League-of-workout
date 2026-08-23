@@ -23,6 +23,9 @@ describe("textes de notification", () => {
         expect(t.titre.trim()).not.toBe("");
         expect(t.corps).toContain("5 min");
       }
+      const r = textesNotification(l).relance(21);
+      expect(r.titre).toContain("21");
+      expect(r.corps.trim()).not.toBe("");
       // Pas de longueur minimale : un titre chinois tient en trois caractères,
       // et un seuil en nombre de signes aurait refusé une traduction juste.
     }
@@ -35,6 +38,8 @@ describe("textes de notification", () => {
       const vus = LANGUES.map((l) => textesNotification(l)[cle]("5 min").corps);
       expect(new Set(vus).size).toBe(LANGUES.length);
     }
+    const relances = LANGUES.map((l) => textesNotification(l).relance(21).corps);
+    expect(new Set(relances).size).toBe(LANGUES.length);
   });
 
   it("ne disent pas la même chose le soir et le matin", () => {
@@ -50,8 +55,10 @@ describe("textes de notification", () => {
     // Le ton est celui du reste de l'application : direct, sans moquerie et
     // sans encouragement de façade.
     for (const l of LANGUES) {
-      const { titre, corps } = textesNotification(l).seuil("5 min");
-      expect(`${titre} ${corps}`).not.toMatch(/bravo|super|génial|well done|keep it up|加油|頑張/i);
+      const t = textesNotification(l);
+      const tout = [t.seuil("5 min"), t.matin("5 min"), t.relance(21)]
+        .map((n) => `${n.titre} ${n.corps}`).join(" ");
+      expect(tout).not.toMatch(/bravo|super|génial|well done|keep it up|加油|頑張/i);
     }
   });
 });

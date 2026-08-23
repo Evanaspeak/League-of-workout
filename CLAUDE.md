@@ -165,12 +165,22 @@ Règles :
 - CGU et politique de confidentialité restent en français et en anglais ; un
   bandeau (`LangueDocument`) le dit aux quatre autres langues.
 
-### Rappel du matin
-Une soirée qui finit à deux heures laisse une dette que personne ne paie avant
-d'aller dormir, et le rappel de seuil est déjà parti la veille au milieu d'une
-partie. `.github/workflows/rappel-matin.yml` appelle `/api/push/matin` toutes
+### Envois programmés
+`.github/workflows/envois-programmes.yml` appelle `/api/push/programme` toutes
 les heures ; la route regarde chez qui il est neuf heures **localement**, à
-partir de `User.fuseau` remonté par `ContexteNavigateur`.
+partir de `User.fuseau` remonté par `ContexteNavigateur`. Deux envois en
+sortent :
+
+- **Le rappel du matin.** Une soirée qui finit à deux heures laisse une dette
+  que personne ne paie avant d'aller dormir, et le rappel de seuil est déjà
+  parti la veille au milieu d'une partie.
+- **La relance des absents**, après deux semaines sans une partie. Une fois, et
+  une seule (`User.relanceLe`) : une application qui redit tous les jours « tu
+  nous manques » se fait couper, et elle l'a cherché. La date se pose même si
+  personne n'a reçu la notification — sans abonnement, réessayer chaque jour
+  ne changerait rien et referait le tour de la base. L'absence se mesure sur
+  `Game.createdAt` et non `Game.date` : une partie ajoutée à la main se date
+  dans le passé.
 
 Un compte sans fuseau connu n'est jamais notifié : envoyer « bonjour » à trois
 heures du matin est pire que ne rien envoyer, et `heureLocale()` rend `null`
@@ -229,7 +239,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-944 tests unitaires, 71 suites. Base et session doublées : aucune dépendance à
+955 tests unitaires, 72 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.

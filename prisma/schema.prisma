@@ -95,6 +95,12 @@ model User {
   // Nulle tant qu'aucun écran n'a eu l'occasion de la remonter.
   langue String?
 
+  // Date de la dernière relance envoyée après une absence. Sans elle, le
+  // travail horaire renverrait la même relance toutes les vingt-quatre heures
+  // à quelqu'un qui a précisément choisi de ne pas revenir — le moyen le plus
+  // sûr de faire couper les notifications, et de le mériter.
+  relanceLe DateTime?
+
   // Fuseau horaire du navigateur, au format IANA ("Europe/Paris").
   //
   // Le serveur ne connaît que l'heure UTC. Sans cette colonne, un rappel

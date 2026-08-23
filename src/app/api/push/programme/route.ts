@@ -3,16 +3,24 @@ import { prisma } from "@/lib/prisma";
 import { notifier } from "@/lib/push";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { heureLocale } from "@/lib/fuseau";
+import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { dureeEffort, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
 
 /**
- * Le rappel du matin.
+ * Les envois programmés : ce que l'application dit d'elle-même, sans que
+ * personne ait cliqué.
  *
- * Une soirée qui finit à deux heures laisse une dette que personne ne paie
- * avant d'aller dormir. Le rappel du seuil, lui, est déjà parti la veille au
- * milieu d'une partie. Celui-ci arrive le lendemain, à une heure où on peut
- * réellement faire quelque chose.
+ * Deux choses, aujourd'hui.
+ *
+ * Le rappel du matin. Une soirée qui finit à deux heures laisse une dette que
+ * personne ne paie avant d'aller dormir, et le rappel de seuil est déjà parti
+ * la veille au milieu d'une partie. Celui-ci arrive le lendemain, à une heure
+ * où on peut réellement faire quelque chose.
+ *
+ * La relance après deux semaines sans une partie. Une fois, et une seule :
+ * une application qui redit tous les jours « tu nous manques » se fait
+ * couper, et elle l'a cherché.
  *
  * Appelé toutes les heures depuis GitHub Actions : le service ne sait pas
  * quelle heure il est chez chacun, donc il regarde à chaque passage qui, à
@@ -69,5 +77,44 @@ export async function POST(req: Request) {
     if (partis > 0) envoyes += 1;
   }
 
-  return NextResponse.json({ examines: candidats.length, envoyes });
+  const relances = await relancerLesAbsents(maintenant);
+  return NextResponse.json({ examines: candidats.length, envoyes, relances });
+}
+
+/**
+ * La relance des absents.
+ *
+ * Elle part à la même heure locale que le rappel du matin, pour la même
+ * raison, et elle ne compte pas la dette : quelqu'un qui n'a pas joué depuis
+ * deux semaines n'a rien accumulé. Ce qu'on lui dit, c'est le nombre de jours.
+ */
+async function relancerLesAbsents(maintenant: Date): Promise<number> {
+  const comptes = await prisma.user.findMany({
+    where: { fuseau: { not: null } },
+    select: {
+      id: true, langue: true, fuseau: true, relanceLe: true,
+      // La date d'ENREGISTREMENT et non celle de la partie : une partie
+      // ajoutée à la main se date dans le passé, et l'absence en ressortirait
+      // plus longue qu'elle ne l'est.
+      games: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
+    },
+  });
+
+  let envoyees = 0;
+  for (const u of comptes) {
+    if (heureLocale(maintenant, u.fuseau) !== HEURE_RAPPEL) continue;
+    const dernierePartie = u.games[0]?.createdAt ?? null;
+    if (!relancer({ dernierePartie, derniereRelance: u.relanceLe }, maintenant)) continue;
+
+    const jours = Math.floor(
+      (maintenant.getTime() - dernierePartie!.getTime()) / (24 * 3600_000));
+    const { titre, corps } = textesNotification(u.langue).relance(jours);
+    const partis = await notifier(u.id, { titre, corps, tag: "wow-relance" }).catch(() => 0);
+    // La date se pose même si l'envoi n'a atteint personne : sans abonnement,
+    // réessayer chaque jour ne changerait rien et referait le tour de la base.
+    await prisma.user.update({ where: { id: u.id }, data: { relanceLe: maintenant } })
+      .catch(() => {});
+    if (partis > 0) envoyees += 1;
+  }
+  return envoyees;
 }

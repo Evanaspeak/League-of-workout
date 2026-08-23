@@ -17,6 +17,8 @@ type Textes = {
   seuil: (duree: string) => { titre: string; corps: string };
   /** Le lendemain matin, quand la soirée s'est terminée avec une dette. */
   matin: (duree: string) => { titre: string; corps: string };
+  /** Après deux semaines sans une partie. Une fois, et une seule. */
+  relance: (jours: number) => { titre: string; corps: string };
 };
 
 const TEXTES: Record<Locale, Textes> = {
@@ -29,6 +31,10 @@ const TEXTES: Record<Locale, Textes> = {
       titre: "La soirée d'hier attend",
       corps: `${d} laissées derrière toi. Ça ne s'efface pas tout seul.`,
     }),
+    relance: (j) => ({
+      titre: `${j} jours sans une partie`,
+      corps: "Soit tu as arrêté de perdre, soit tu as arrêté de compter.",
+    }),
   },
   en: {
     seuil: (d) => ({
@@ -38,6 +44,10 @@ const TEXTES: Record<Locale, Textes> = {
     matin: (d) => ({
       titre: "Last night is still there",
       corps: `${d} left behind. It does not clear itself.`,
+    }),
+    relance: (j) => ({
+      titre: `${j} days without a game`,
+      corps: "Either you stopped losing, or you stopped counting.",
     }),
   },
   es: {
@@ -49,6 +59,10 @@ const TEXTES: Record<Locale, Textes> = {
       titre: "Lo de anoche sigue ahí",
       corps: `${d} que dejaste atrás. No se borra solo.`,
     }),
+    relance: (j) => ({
+      titre: `${j} días sin una partida`,
+      corps: "O has dejado de perder, o has dejado de contarlo.",
+    }),
   },
   de: {
     seuil: (d) => ({
@@ -58,6 +72,10 @@ const TEXTES: Record<Locale, Textes> = {
     matin: (d) => ({
       titre: "Der gestrige Abend steht noch",
       corps: `${d} liegen geblieben. Von allein verschwindet das nicht.`,
+    }),
+    relance: (j) => ({
+      titre: `${j} Tage ohne eine Runde`,
+      corps: "Entweder hast du aufgehört zu verlieren, oder aufgehört zu zählen.",
     }),
   },
   zh: {
@@ -69,6 +87,10 @@ const TEXTES: Record<Locale, Textes> = {
       titre: "昨晚的还在",
       corps: `留下了 ${d}。它不会自己消失。`,
     }),
+    relance: (j) => ({
+      titre: `${j} 天没打一局`,
+      corps: "要么你不再输了，要么你不再记了。",
+    }),
   },
   ja: {
     seuil: (d) => ({
@@ -78,6 +100,10 @@ const TEXTES: Record<Locale, Textes> = {
     matin: (d) => ({
       titre: "昨夜の分が残っています",
       corps: `${d} 置いたままです。ひとりでに消えることはありません。`,
+    }),
+    relance: (j) => ({
+      titre: `${j} 日、一試合もなし`,
+      corps: "負けるのをやめたのか、数えるのをやめたのか。",
     }),
   },
 };
