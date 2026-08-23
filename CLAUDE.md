@@ -165,6 +165,18 @@ Règles :
 - CGU et politique de confidentialité restent en français et en anglais ; un
   bandeau (`LangueDocument`) le dit aux quatre autres langues.
 
+### Objectif de première semaine
+Ce que quelqu'un fait dans ses sept premiers jours décide s'il reviendra ; le
+reste du produit n'y peut plus grand-chose après. L'objectif est donc petit —
+cinq parties, ce qu'on enregistre en une soirée — et il ne demande aucun geste
+nouveau. Il disparaît au bout de sept jours, atteint ou non : un objectif raté
+qui reste affiché n'est plus un objectif, c'est un reproche.
+
+Il se calcule au serveur (`premiereSemaine()` dans `/api/dashboard`) parce que
+la date d'inscription n'est pas remise au navigateur, et n'a aucune raison de
+l'être pour ce seul usage. Une date illisible ne montre rien plutôt que de
+faire vivre l'objectif à vie.
+
 ### Envois programmés
 `.github/workflows/envois-programmes.yml` appelle `/api/push/programme` toutes
 les heures ; la route regarde chez qui il est neuf heures **localement**, à
@@ -239,7 +251,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-955 tests unitaires, 72 suites. Base et session doublées : aucune dépendance à
+964 tests unitaires, 73 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.

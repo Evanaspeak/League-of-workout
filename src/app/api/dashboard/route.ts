@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { pointsSur, veiller } from "@/lib/veille";
 import { defaitesDAffilee } from "@/lib/serieDeDefaites";
+import { premiereSemaine } from "@/lib/premiereSemaine";
 import { caloriesDePoints, minutesDeMarche } from "@/lib/calories";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -346,6 +347,12 @@ export async function GET(req: Request) {
     defaitesDAffilee: defaitesDAffilee(
       [...toutesLesGames].reverse().map((g) => ({ date: g.date, result: g.result })),
     ),
+    /**
+     * L'objectif de première semaine. Il se calcule ici parce que la date
+     * d'inscription n'est pas remise au navigateur, et qu'elle n'a aucune
+     * raison de l'être pour ce seul usage.
+     */
+    premiereSemaine: premiereSemaine(user.createdAt, toutesLesGames.length),
     veille: veiller(
       pointsSur(toutesLesGames, 1),
       pointsSur(toutesLesGames, 7),

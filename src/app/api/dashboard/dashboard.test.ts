@@ -173,3 +173,35 @@ describe("énergie dépensée", () => {
   });
 });
 
+
+/**
+ * L'objectif de première semaine.
+ *
+ * Il se calcule au serveur parce que la date d'inscription n'est pas remise
+ * au navigateur. Une erreur ici afficherait un objectif à quelqu'un qui est
+ * là depuis six mois — c'est-à-dire un reproche, pas un objectif.
+ */
+describe("objectif de première semaine", () => {
+  const inscritIlYA = (jours: number) =>
+    new Date(Date.now() - jours * 24 * 3600_000);
+
+  it("paraît pour un compte de quelques jours", async () => {
+    session.mockResolvedValue(utilisateur({ createdAt: inscritIlYA(2) }));
+    const d = await corps(await dash());
+    expect(d.premiereSemaine).toMatchObject({ visible: true, restantes: 4 });
+  });
+
+  it("ne paraît plus après sept jours", async () => {
+    session.mockResolvedValue(utilisateur({ createdAt: inscritIlYA(30) }));
+    const d = await corps(await dash());
+    expect((d.premiereSemaine as { visible: boolean }).visible).toBe(false);
+  });
+
+  it("disparaît une fois l'objectif atteint", async () => {
+    session.mockResolvedValue(utilisateur({ createdAt: inscritIlYA(1) }));
+    game.findMany.mockResolvedValue(
+      Array.from({ length: 5 }, (_, i) => partie({ id: `g${i}` })));
+    const d = await corps(await dash());
+    expect(d.premiereSemaine).toMatchObject({ visible: false, atteint: true });
+  });
+});
