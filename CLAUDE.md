@@ -265,7 +265,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-988 tests unitaires, 74 suites. Base et session doublées : aucune dépendance à
+990 tests unitaires, 75 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -312,6 +312,21 @@ rien ne se cliquait derrière. Une modale ajoutée se traverse dans
 - `e2e/langues.spec.ts` — aucun « undefined » à l'écran, aucun débordement
   horizontal (c'est ainsi qu'un mot allemand trop long se signale), `lang`
   posé sur la page, et six textes réellement différents.
+### Les fenêtres modales
+`src/modalesAnnoncees.test.ts` refuse tout recouvrement plein écran qui ne
+porte pas `role="dialog"` et `aria-modal`. Trois fenêtres étaient dans ce cas —
+accueil, décompte de dette, suppression de compte — et l'audit navigateur les
+avait toutes déclarées « rien à signaler » : il ne cherchait pas ce qui
+manquait. Le test, lui, est statique, donc il voit aussi les fenêtres qui ne
+sont pas ouvertes au moment où l'on regarde.
+
+Le motif se cherche sur un fichier dont les espaces ont été aplatis. La
+première version lisait le texte tel quel et ratait tous les styles écrits sur
+plusieurs lignes — dont `OnboardingModal`, c'est-à-dire précisément la fenêtre
+qui a motivé le test. Deux exemptions, chacune avec sa raison : la source de
+diffusion OBS (page entière, pas une fenêtre) et l'écran d'ouverture (il ne
+pose aucune question et disparaît seul).
+
 ### Code mort
 `src/codeMort.test.ts` refuse un fichier de `src/` que rien n'importe. Trois
 trouvailles à l'écriture : deux dictionnaires de langue survivant de six
