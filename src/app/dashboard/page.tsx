@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { SerieEtRetard } from "@/components/SerieEtRetard";
+import { Paliers } from "@/components/Paliers";
 import dynamic from "next/dynamic";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
@@ -499,6 +500,10 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {/* Ce qui a déjà été fait, à côté de ce qui reste dû : l'application ne
+          savait dire que la seconde moitié. */}
+      <Paliers />
 
       {/* La série ne paraît qu'une fois lancée, et le retard qu'une fois
           constitué : un écran qui annonce « 0 jour d'affilée » à un compte
