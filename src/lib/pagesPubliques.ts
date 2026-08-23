@@ -5,7 +5,7 @@
  */
 export const PAGES_PUBLIQUES = [
   "/", "/beta", "/login", "/waitlist", "/cgu", "/confidentialite",
-  "/telechargement", "/recuperation", "/connexion-app",
+  "/telechargement", "/recuperation", "/connexion-app", "/calculateur",
 ];
 
 /**
