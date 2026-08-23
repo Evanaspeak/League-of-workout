@@ -1,5 +1,7 @@
 export const exercices = {
   fr: {
+    materielRequis: "Matériel",
+    groupeNom: { haut: "Haut du corps", bas: "Bas du corps", tronc: "Tronc", cardio: "Cardio" },
     plancheNom: "Planche",
     tractionsNom: "Tractions",
     courseNom: "Course",
@@ -76,6 +78,8 @@ export const exercices = {
     rappelAutorisees: "Notifications activées",
   },
   en: {
+    materielRequis: "Equipment",
+    groupeNom: { haut: "Upper body", bas: "Lower body", tronc: "Core", cardio: "Cardio" },
     plancheNom: "Plank",
     tractionsNom: "Pull-ups",
     courseNom: "Running",
@@ -148,6 +152,8 @@ export const exercices = {
     rappelAutorisees: "Notifications enabled",
   },
   es: {
+    materielRequis: "Material",
+    groupeNom: { haut: "Tren superior", bas: "Tren inferior", tronc: "Tronco", cardio: "Cardio" },
     plancheNom: "Plancha",
     tractionsNom: "Dominadas",
     courseNom: "Carrera",
@@ -220,6 +226,8 @@ export const exercices = {
     rappelAutorisees: "Notificaciones activadas",
   },
   de: {
+    materielRequis: "Ausrüstung",
+    groupeNom: { haut: "Oberkörper", bas: "Unterkörper", tronc: "Rumpf", cardio: "Ausdauer" },
     plancheNom: "Unterarmstütz",
     tractionsNom: "Klimmzüge",
     courseNom: "Laufen",
@@ -292,6 +300,8 @@ export const exercices = {
     rappelAutorisees: "Benachrichtigungen aktiviert",
   },
   zh: {
+    materielRequis: "需器材",
+    groupeNom: { haut: "上半身", bas: "下半身", tronc: "核心", cardio: "有氧" },
     plancheNom: "平板支撑",
     tractionsNom: "引体向上",
     courseNom: "跑步",
@@ -364,6 +374,8 @@ export const exercices = {
     rappelAutorisees: "通知已开启",
   },
   ja: {
+    materielRequis: "器具が必要",
+    groupeNom: { haut: "上半身", bas: "下半身", tronc: "体幹", cardio: "有酸素" },
     plancheNom: "プランク",
     tractionsNom: "懸垂",
     courseNom: "ランニング",

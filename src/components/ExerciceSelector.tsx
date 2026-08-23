@@ -101,6 +101,29 @@ export function ExerciceSelector({
                   {descs[id]}
                 </span>
               )}
+              {/* Le groupe travaillé et le matériel nécessaire, dits avant le
+                  choix. Découvrir qu'on n'a pas de barre une fois la dette due
+                  est la pire façon de l'apprendre. */}
+              {!compact && (
+                <span style={{
+                  display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6,
+                }}>
+                  <span style={{
+                    fontSize: "0.68rem", padding: "2px 6px", borderRadius: 999,
+                    border: "1px solid var(--line)", color: "var(--faint)",
+                  }}>
+                    {t.groupeNom[EXERCICES[id].groupe]}
+                  </span>
+                  {EXERCICES[id].materiel && (
+                    <span style={{
+                      fontSize: "0.68rem", padding: "2px 6px", borderRadius: 999,
+                      border: "1px solid var(--amber)", color: "var(--amber)",
+                    }}>
+                      {t.materielRequis}
+                    </span>
+                  )}
+                </span>
+              )}
               <span className="mono-num" style={{
                 display: "block", fontSize: "0.78rem", color: "var(--amber)", marginTop: compact ? 2 : 8,
               }}>
