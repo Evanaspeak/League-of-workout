@@ -296,7 +296,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 65 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 64 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
 puis les trois écrans connectés — tableau de bord, historique, réglages — dans
 les six langues, sur un compte qu'il ouvre lui-même, et
