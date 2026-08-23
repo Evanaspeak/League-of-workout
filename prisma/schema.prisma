@@ -73,6 +73,12 @@ model User {
   // doit, jamais depuis quand.
   detteDepuis DateTime?
 
+  // Jeton de la source OBS : une adresse publique qui affiche la dette en
+  // direct, sans session. Nul tant qu'on ne l'a pas demandé, et régénérable —
+  // c'est la seule façon de révoquer un lien déjà collé dans un logiciel de
+  // diffusion.
+  jetonObs String? @unique
+
   // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
   // l'autre. `exercice` (singulier) est l'ancienne version, conservée en base

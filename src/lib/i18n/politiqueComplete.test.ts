@@ -68,6 +68,7 @@ const ATTENDU: Record<string, RegExp> = {
   // Date de début de la dette courante : elle sert au retard, et elle se
   // décrit avec l'historique des paiements plutôt que séparément.
   detteDepuis: /paiements de dette/i,
+  jetonObs: /compteur de stream/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */
