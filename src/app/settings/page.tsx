@@ -11,6 +11,7 @@ import {
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
+import { SimulateurDette } from "@/components/SimulateurDette";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageJeux } from "@/components/ReglageJeux";
 import { Icone } from "@/components/Icone";
@@ -502,6 +503,10 @@ export default function SettingsPage() {
       )}
 
       {/* ── Tes jeux : un bloc dépliable par jeu ────────────────────────── */}
+      {/* Comprendre le barème sans avoir à perdre une partie. Il vit dans
+          « Ton effort » : c'est là qu'on règle ce qui le fait varier. */}
+      {rubrique === "effort" && <SimulateurDette />}
+
       {rubrique === "jeux" && (
       <div className="lol-panel p-5 space-y-4">
         <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
