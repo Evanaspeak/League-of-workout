@@ -27,6 +27,10 @@ const PUBLIC_PREFIXES = [
   // Point d'entrée de la connexion demandée par l'application desktop : exiger
   // une session pour aller s'en créer une n'aurait pas de sens.
   "/connexion-app",
+  // Les pages du calculateur existent pour être trouvées par quelqu'un qui
+  // n'a pas de compte : une redirection vers la connexion les viderait de
+  // leur seul intérêt.
+  "/calculateur",
   "/api/auth",
   // Trois nombres de configuration, déjà présents dans le HTML de chaque page.
   // La page d'accueil les relit sans session : les protéger la casserait sans
