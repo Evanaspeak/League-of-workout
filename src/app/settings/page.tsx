@@ -13,6 +13,7 @@ import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
 import { SimulateurDette } from "@/components/SimulateurDette";
 import { SourceObs } from "@/components/SourceObs";
+import { JournalSynchro } from "@/components/JournalSynchro";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageJeux } from "@/components/ReglageJeux";
 import { Icone } from "@/components/Icone";
@@ -511,6 +512,11 @@ export default function SettingsPage() {
       {/* Le compteur pour le stream vit avec les jeux : c'est en jouant qu'on
           diffuse, et c'est là qu'on va le chercher. */}
       {rubrique === "jeux" && <SourceObs />}
+
+      {/* Pourquoi les parties n'arrivent pas : la boucle avalait toutes les
+          erreurs, et rien ne distinguait une panne de Riot d'une soirée sans
+          partie. */}
+      {rubrique === "jeux" && <JournalSynchro />}
 
       {rubrique === "jeux" && (
       <div className="lol-panel p-5 space-y-4">

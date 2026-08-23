@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { lireCode, noter } from "@/lib/journalSynchro";
 import {
   EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, toExerciceIds,
   type ExerciceId,
@@ -232,15 +233,33 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/riot/last-game");
       if (res.status === 409) { setPolling(false); return; }
       if (res.status === 400) {
+        noter({ resultat: "erreur", code: 400, detail: lireCode(400).detail });
         setSessionError("PUUID manquant. Configure ton Riot ID dans Réglages.");
         stopSession();
         return;
       }
-      if (!res.ok) { setPolling(false); return; }
+      /**
+       * Une erreur Riot laisse une trace.
+       *
+       * Elle disparaissait dans un `return` muet : rien ne distinguait « Riot
+       * est en panne » de « la clé est saturée » ou de « tu n'as pas encore
+       * joué ». Trois situations qui ne se corrigent pas de la même façon, et
+       * dont aucune n'était visible.
+       */
+      if (!res.ok) {
+        const { resultat, detail } = lireCode(res.status);
+        noter({ resultat, code: res.status, detail });
+        setPolling(false);
+        return;
+      }
       const riotData = await res.json();
 
       // Game identique au point de départ → encore rien de joué depuis la session.
-      if (riotData.matchId === baselineRef.current) { setPolling(false); return; }
+      if (riotData.matchId === baselineRef.current) {
+        noter({ resultat: "rien" });
+        setPolling(false);
+        return;
+      }
 
       const logRes = await fetch("/api/games", {
         method: "POST",
@@ -258,6 +277,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       });
       if (logRes.ok) {
         const { scoring } = await logRes.json();
+        noter({ resultat: "partie", detail: `${riotData.champion ?? "partie"} · ${riotData.result === "V" ? "victoire" : "défaite"}` });
         window.dispatchEvent(new Event("wow-dette-changee"));
         baselineRef.current = riotData.matchId;
         setSessionGames((prev) => [{
