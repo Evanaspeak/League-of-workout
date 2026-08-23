@@ -152,6 +152,11 @@ export async function POST(req: Request) {
     result: body.result === "V" ? "V" : "D",
     gainageSec: gainageEquivalent,
     partiesAvant,
+    // Le remake et la classée se décident dans le barème, jamais ici : une
+    // règle posée dans une seule des deux routes finit par ne valoir que
+    // pour l'une d'elles.
+    dureeSec: body.dureeSec != null ? Number(body.dureeSec) : null,
+    classee: typeof body.fileClassee === "boolean" ? body.fileClassee : null,
     roleWeights,
     levelConfigs,
     masteryConfig,

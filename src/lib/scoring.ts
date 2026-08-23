@@ -29,6 +29,13 @@ export type ScoringInput = {
   roleWeights: RoleWeights;
   levelConfigs: LevelCfg[];
   masteryConfig: MasteryCfg;
+  /**
+   * Durée de la partie, quand elle est connue. Sert à reconnaître un remake :
+   * une partie de quatre minutes n'a pas été jouée, elle a été annulée.
+   */
+  dureeSec?: number | null;
+  /** Partie classée : elle coûte plus cher, l'enjeu n'est pas le même. */
+  classee?: boolean | null;
 };
 
 export type ScoringResult = {
@@ -38,7 +45,42 @@ export type ScoringResult = {
   malus: number;
   surcharge: number;
   pompesFinales: number;
+  /** Vrai quand la partie a été annulée avant d'être jouée. */
+  remake?: boolean;
 };
+
+/**
+ * En deçà de cette durée, une partie n'a pas eu lieu.
+ *
+ * League annule une partie quand un joueur ne se connecte pas : elle se termine
+ * en trois ou quatre minutes, sans vainqueur et sans conséquence de classement.
+ * La compter comme une défaite fait payer un abandon qu'on n'a pas choisi, et
+ * c'est le genre d'injustice qui fait fermer l'application pour de bon.
+ *
+ * Cinq minutes plutôt que quatre : le seuil de Riot est à trois minutes pour le
+ * vote, mais l'écran de fin et le retour au lanceur prennent le reste, et la
+ * durée relevée varie selon la source.
+ */
+export const DUREE_REMAKE_SEC = 300;
+
+/** Une partie si courte qu'elle n'a pas été jouée. */
+export function estRemake(dureeSec: number | null | undefined): boolean {
+  const d = Number(dureeSec);
+  // Une durée absente n'est pas une durée nulle : la plupart des parties
+  // saisies à la main n'en portent pas, et les déclarer toutes annulées
+  // effacerait la dette de tout le monde.
+  if (!Number.isFinite(d) || d <= 0) return false;
+  return d < DUREE_REMAKE_SEC;
+}
+
+/**
+ * Ce qu'une partie classée coûte en plus.
+ *
+ * Choix de barème, pas de physique : une défaite en classée pèse davantage
+ * qu'une défaite en normale, et le produit doit le refléter. Un quart de plus
+ * se sent sans devenir dissuasif.
+ */
+export const MULT_CLASSEE = 1.25;
 
 export function getLevel(gainageSec: number, levelConfigs: LevelCfg[]): LevelCfg {
   const sorted = [...levelConfigs].sort((a, b) => a.seuilGainageSec - b.seuilGainageSec);
@@ -248,6 +290,21 @@ export function calcScore(input: ScoringInput): ScoringResult {
   const niveau = levelCfg.niveau;
   const multiplicateur = levelCfg.multiplicateur;
 
+  /**
+   * Le remake sort ici, avant tout calcul.
+   *
+   * Il vit dans la fonction de barème et non dans les routes : l'aperçu et
+   * l'enregistrement l'appellent tous les deux, et une règle posée dans une
+   * seule des deux routes finit par ne valoir que pour l'une d'elles. Cette
+   * divergence-là a déjà coûté une soirée.
+   */
+  if (estRemake(input.dureeSec)) {
+    return {
+      niveau, multiplicateur, scoreBase: 0, malus: 0, surcharge: 0,
+      pompesFinales: 0, remake: true,
+    };
+  }
+
   const raw = roleWeights.poidsMort * deaths - roleWeights.poidsKill * kills - roleWeights.poidsAssist * assists;
   const scoreBase = Math.round(Math.max(0, raw) * multiplicateur);
 
@@ -259,7 +316,10 @@ export function calcScore(input: ScoringInput): ScoringResult {
   }
 
   const baseForPompes = result === "V" ? scoreBase / 2 : scoreBase + malus;
-  const pompesFinales = Math.round(baseForPompes * (1 + surcharge));
+  // La classée majore le total, jamais le score de base : c'est l'enjeu de la
+  // partie qui pèse, pas la façon d'y jouer.
+  const enjeu = input.classee ? MULT_CLASSEE : 1;
+  const pompesFinales = Math.round(baseForPompes * (1 + surcharge) * enjeu);
 
-  return { niveau, multiplicateur, scoreBase, malus, surcharge, pompesFinales };
+  return { niveau, multiplicateur, scoreBase, malus, surcharge, pompesFinales, remake: false };
 }
