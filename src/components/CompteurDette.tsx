@@ -252,6 +252,9 @@ export function CompteurDette({
   function ModaleChrono() {
     return (
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.detteChronoTitre}
         style={{
           position: "fixed", inset: 0, zIndex: 9500,
           background: "rgba(6,8,10,0.88)", backdropFilter: "blur(6px)",

@@ -461,10 +461,17 @@ Trois gardes ajoutés, dans les deux scripts :
 - refus de publier un chiffre quand le plus grand élément est dans un
   `[role="dialog"]` (`performance.mjs`) ;
 - page marquée « NON MESURÉ » quand une modale la recouvre
-  (`accessibilite.mjs`). Ces deux derniers sont écrits mais **pas encore
-  éprouvés par sabotage** : la tentative avec un identifiant bidon n'a pas fait
-  réapparaître la modale, il reste donc à comprendre par quel chemin elle est
-  neutralisée avant de pouvoir dire que le garde mord.
+  (`accessibilite.mjs`) — **éprouvé** : avec un identifiant bidon, les écrans
+  connectés remontent « une modale recouvre la page — Bienvenue dans Win or
+  Workout », dans la langue de la passe.
+
+La première tentative de sabotage n'a rien produit, et c'était la trouvaille :
+`OnboardingModal` et le décompte de dette ne portaient pas `role="dialog"`. Le
+garde cherchait donc quelque chose qui n'existait pas — et surtout, un lecteur
+d'écran lisait ces fenêtres comme un morceau de page ordinaire, sans rien qui
+dise qu'il faut en sortir. Elles passaient à travers l'audit parce que l'audit
+ne cherchait pas ce qui manquait. Trois fenêtres corrigées : accueil, décompte
+de dette, suppression de compte.
 
 Une piste écartée en la mesurant : `ContexteNavigateur` écrivait en base à
 chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le

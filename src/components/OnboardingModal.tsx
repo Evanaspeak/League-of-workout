@@ -99,7 +99,15 @@ export function OnboardingModal() {
   const current = STEPS[step];
 
   return (
-    <div style={{
+    // Une modale sans `role="dialog"` n'est pas annoncée comme telle : un
+    // lecteur d'écran la lit comme un morceau de page ordinaire, et rien ne
+    // dit qu'il faut en sortir avant de continuer. Elle passait à travers
+    // l'audit parce que l'audit ne cherchait pas ce qui manquait.
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={current.title}
+      style={{
       position: "fixed",
       inset: 0,
       zIndex: 8000,
@@ -111,7 +119,8 @@ export function OnboardingModal() {
       padding: "1rem",
       opacity: closing ? 0 : 1,
       transition: "opacity 0.35s ease",
-    }}>
+    }}
+    >
       <div style={{
         position: "relative",
         width: "100%",
