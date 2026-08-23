@@ -1,5 +1,8 @@
 export const dashboard = {
   fr: {
+    veilleTitre: "Un mot sur le volume",
+    veilleJour: "Vous avez généré beaucoup d'effort aujourd'hui. Rien ne vous oblige à tout rendre le jour même : la dette attend, et la répartir sur plusieurs jours vaut mieux que de la solder d'un coup.",
+    veilleSemaine: "Le volume de cette semaine est élevé. Si vous ressentez une douleur qui dure, arrêtez l'exercice concerné et demandez l'avis d'un médecin.",
     serieLabel: "Série",
     serieJours: (n: number) => `${n} jour${n > 1 ? "s" : ""} d'affilée`,
     serieAucune: "Payez votre dette aujourd'hui pour la lancer.",
@@ -107,6 +110,9 @@ export const dashboard = {
     levelLabel: (n: number) => `Niveau ${n}`,
   },
   en: {
+    veilleTitre: "A word about volume",
+    veilleJour: "You have generated a lot of effort today. Nothing forces you to clear it the same day: the debt waits, and spreading it over several days beats clearing it in one go.",
+    veilleSemaine: "This week's volume is high. If you feel pain that lasts, stop that exercise and see a doctor.",
     serieLabel: "Streak",
     serieJours: (n: number) => `${n} day${n > 1 ? "s" : ""} in a row`,
     serieAucune: "Pay your debt today to start one.",
@@ -212,6 +218,9 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   es: {
+    veilleTitre: "Una palabra sobre el volumen",
+    veilleJour: "Hoy has generado mucho esfuerzo. Nada te obliga a saldarlo el mismo día: la deuda espera, y repartirla en varios días es mejor que liquidarla de una vez.",
+    veilleSemaine: "El volumen de esta semana es alto. Si sientes un dolor que persiste, deja ese ejercicio y consulta a un médico.",
     serieLabel: "Racha",
     serieJours: (n: number) => `${n} día${n > 1 ? "s" : ""} seguidos`,
     serieAucune: "Paga tu deuda hoy para empezar una.",
@@ -317,6 +326,9 @@ export const dashboard = {
     levelLabel: (n: number) => `Nivel ${n}`,
   },
   de: {
+    veilleTitre: "Ein Wort zum Umfang",
+    veilleJour: "Du hast heute viel Aufwand angesammelt. Nichts zwingt dich, alles am selben Tag abzuarbeiten: Die Schuld wartet, und sie über mehrere Tage zu verteilen ist besser, als sie auf einmal zu tilgen.",
+    veilleSemaine: "Der Umfang dieser Woche ist hoch. Wenn du anhaltende Schmerzen spürst, lass die betreffende Übung und geh zum Arzt.",
     serieLabel: "Serie",
     serieJours: (n: number) => `${n} Tag${n > 1 ? "e" : ""} in Folge`,
     serieAucune: "Zahle heute deine Schuld, um eine zu starten.",
@@ -422,6 +434,9 @@ export const dashboard = {
     levelLabel: (n: number) => `Level ${n}`,
   },
   zh: {
+    veilleTitre: "关于运动量的一句话",
+    veilleJour: "你今天累积了很多运动量。没有必要当天还清：欠账会等着，分几天完成比一次做完更好。",
+    veilleSemaine: "本周的运动量偏高。如果出现持续的疼痛，请停下相关项目并就医。",
     serieLabel: "连续天数",
     serieJours: (n: number) => `连续 ${n} 天`,
     serieAucune: "今天还清欠账即可开启连续记录。",
@@ -527,6 +542,9 @@ export const dashboard = {
     levelLabel: (n: number) => `等级 ${n}`,
   },
   ja: {
+    veilleTitre: "運動量について一言",
+    veilleJour: "今日はかなりの運動量になりました。その日のうちに返しきる必要はありません。負債は待ちますし、数日に分けたほうが一度に片づけるより良いです。",
+    veilleSemaine: "今週の運動量は多めです。続く痛みを感じたら、その種目はやめて医師に相談してください。",
     serieLabel: "連続日数",
     serieJours: (n: number) => `${n} 日連続`,
     serieAucune: "今日の負債を返すと連続日数が始まります。",

@@ -1,6 +1,9 @@
 /** Le panneau des mesures d'usage, côté administration. */
 export const adminMesures = {
   fr: {
+    veilleTitre: "Volume inhabituel",
+    veilleAide: (seuil: number) => `Comptes au-dessus de ${seuil} points d'effort sur sept jours. À regarder, pas à sanctionner.`,
+    veilleAucun: "Personne au-dessus du seuil cette semaine.",
     titre: "Ce que le produit fait vraiment",
     aide: "Le délai jusqu'à la première partie prédit mieux que tout si quelqu'un reste.",
     comptes: "Comptes",
@@ -15,6 +18,9 @@ export const adminMesures = {
     vide: "Aucun compte à mesurer pour l'instant.",
   },
   en: {
+    veilleTitre: "Unusual volume",
+    veilleAide: (seuil: number) => `Accounts above ${seuil} effort points over seven days. Worth a look, not a sanction.`,
+    veilleAucun: "Nobody above the threshold this week.",
     titre: "What the product actually does",
     aide: "Time to first match predicts whether someone stays better than anything else.",
     comptes: "Accounts",
@@ -29,6 +35,9 @@ export const adminMesures = {
     vide: "No account to measure yet.",
   },
   es: {
+    veilleTitre: "Volumen inusual",
+    veilleAide: (seuil: number) => `Cuentas por encima de ${seuil} puntos de esfuerzo en siete días. Para mirar, no para sancionar.`,
+    veilleAucun: "Nadie por encima del umbral esta semana.",
     titre: "Lo que el producto hace de verdad",
     aide: "El tiempo hasta la primera partida predice mejor que nada si alguien se queda.",
     comptes: "Cuentas",
@@ -43,6 +52,9 @@ export const adminMesures = {
     vide: "Todavía no hay cuentas que medir.",
   },
   de: {
+    veilleTitre: "Ungewöhnlicher Umfang",
+    veilleAide: (seuil: number) => `Konten über ${seuil} Aufwandspunkten in sieben Tagen. Zum Hinsehen, nicht zum Sanktionieren.`,
+    veilleAucun: "Diese Woche niemand über der Schwelle.",
     titre: "Was das Produkt wirklich bewirkt",
     aide: "Die Zeit bis zur ersten Partie sagt besser als alles andere voraus, ob jemand bleibt.",
     comptes: "Konten",
@@ -57,6 +69,9 @@ export const adminMesures = {
     vide: "Noch keine Konten zu messen.",
   },
   zh: {
+    veilleTitre: "异常运动量",
+    veilleAide: (seuil: number) => `七天内努力值超过 ${seuil} 的账号。用于关注，而非处罚。`,
+    veilleAucun: "本周没有账号超过阈值。",
     titre: "产品的真实表现",
     aide: "距离首场对局的时间，比任何指标都更能预测一个人会不会留下。",
     comptes: "账号",
@@ -71,6 +86,9 @@ export const adminMesures = {
     vide: "暂时没有可统计的账号。",
   },
   ja: {
+    veilleTitre: "通常より多い運動量",
+    veilleAide: (seuil: number) => `7日間で努力ポイントが ${seuil} を超えたアカウントです。処分ではなく、気にかけるためのものです。`,
+    veilleAucun: "今週、しきい値を超えたアカウントはありません。",
     titre: "この製品が実際にしていること",
     aide: "最初の試合までの時間は、その人が続けるかどうかを何よりよく示します。",
     comptes: "アカウント",

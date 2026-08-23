@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { pointsSur, veiller } from "@/lib/veille";
 import { caloriesDePoints, minutesDeMarche } from "@/lib/calories";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -328,6 +329,17 @@ export async function GET(req: Request) {
     dailyPompes,
     moyenneParSemaine,
     pointsAujourdhui,
+    /**
+     * Veille de volume, indépendante du plafond que la personne se fixe.
+     *
+     * Le plafond quotidien existe déjà, mais c'est elle qui le règle : quelqu'un
+     * qui se sert de l'application pour se punir ne le règle pas. Cette
+     * veille-ci ne se désactive donc pas, et ne bloque rien non plus.
+     */
+    veille: veiller(
+      pointsSur(toutesLesGames, 1),
+      pointsSur(toutesLesGames, 7),
+    ),
     plafondQuotidien: Math.max(0, user.plafondQuotidien ?? 0),
     mostPlayed,
     leastEfficient,
