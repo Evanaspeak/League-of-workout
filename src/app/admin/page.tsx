@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import AdminChampionEditor from "./AdminChampionEditor";
 import AdminUserList from "./AdminUserList";
 import AdminSignalements from "./AdminSignalements";
+import AdminMesures from "./AdminMesures";
 import AdminTools from "./AdminTools";
 import AdminSeuilDette from "./AdminSeuilDette";
 import AdminRatiosExercices from "./AdminRatiosExercices";
@@ -19,6 +20,7 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6">
       <AdminHeader email={user.email} />
+      <AdminMesures />
       <AdminUserList />
       <AdminSignalements />
       <AdminRatiosExercices />

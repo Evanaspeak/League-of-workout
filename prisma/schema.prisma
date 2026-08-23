@@ -153,7 +153,17 @@ model Game {
   id                  String   @id @default(cuid())
   userId              String
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /** Date de la PARTIE, éventuellement corrigée à la main après coup. */
   date                DateTime @default(now())
+  /**
+   * Date de l'ENREGISTREMENT, posée par le serveur et jamais modifiée.
+   *
+   * `date` ne peut pas servir à mesurer : une partie ajoutée à la main se
+   * date dans le passé, et le délai entre l'inscription et la première partie
+   * en ressortait négatif. Les deux dates disent deux choses différentes, et
+   * les confondre fausse toute mesure d'usage.
+   */
+  createdAt           DateTime @default(now())
   role                String // Top | Jungle | Mid | ADC | Support | ARAM | Arena
   champion            String?
   kills               Int
