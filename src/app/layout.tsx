@@ -3,21 +3,10 @@ import { Chakra_Petch, Barlow, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import { SplashScreen } from "@/components/SplashScreen";
-import { SessionGuard } from "@/components/SessionGuard";
-import { ConsentementSante } from "@/components/ConsentementSante";
-import { TitreAvecDette } from "@/components/TitreAvecDette";
-import { OnboardingModal } from "@/components/OnboardingModal";
 import { RailLateral } from "@/components/RailLateral";
-import { InvitationInstallation } from "@/components/InvitationInstallation";
 import { ServiceWorkerActif } from "@/components/ServiceWorkerActif";
-import { ContexteNavigateur } from "@/components/ContexteNavigateur";
-import { MajDesktop } from "@/components/MajDesktop";
-import { DetectionSession } from "@/components/DetectionSession";
-import { PartieDetectee } from "@/components/PartieDetectee";
-import { DetteDirecte } from "@/components/DetteDirecte";
-import { PartieApexLue } from "@/components/PartieApexLue";
-import { CadreDesktop } from "@/components/CadreDesktop";
-import { VisiteGuidee } from "@/components/VisiteGuidee";
+import { PontDesktop } from "@/components/PontDesktop";
+import { PontConnecte } from "@/components/PontConnecte";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
@@ -131,46 +120,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <RatiosExercicesProvider valeurs={ratios}>
         <LocaleProvider>
           <SessionProvider>
-            {/* Marque la racine quand on tourne dans l'application desktop :
-                c'est ce repère qui fait de la barre de navigation la barre de
-                titre de la fenêtre. */}
-            <CadreDesktop />
             <SplashScreen />
-            <SessionGuard />
-            {/* Le compteur de dette dans le titre de l'onglet : le rappel le
-                moins coûteux qui existe, et le seul visible pendant qu'on
-                joue. */}
-            <TitreAvecDette />
-            {/* Passe avant l'accueil et la visite : tant que la question du
-                consentement n'a pas de réponse, l'application détient des
-                données qu'elle n'a pas le droit de traiter. */}
-            <ConsentementSante />
-            <OnboardingModal />
-            {/* Prend le relais de la modale : elle explique le produit, la
-                visite montre où sont les choses. */}
-            <VisiteGuidee />
+            {/* Tout ce qui ne s'adresse qu'à un compte connecté, chargé
+                seulement hors des pages publiques. */}
+            <PontConnecte />
             <Nav />
             <main className="flex-1 px-4 py-6 max-w-6xl mx-auto w-full">
               {children}
             </main>
             <Footer />
             <RailLateral />
-            {/* Ne s'affiche que dans l'application desktop, mise à jour prête. */}
-            <MajDesktop />
-            {/* Écoute les jeux détectés par l'application desktop. */}
-            <DetectionSession />
-            {/* Enregistre les parties vues par l'application desktop. */}
-            <PartieDetectee />
-            {/* Calcule ce que la partie en cours coûte, pour l'overlay. */}
-            <DetteDirecte />
-            <PartieApexLue />
-            {/* Porte les notifications et la page de secours hors ligne. */}
+            {/* Tout ce qui ne sert que dans l'application Windows, chargé
+                seulement quand le pont existe. */}
+            <PontDesktop />
+            {/* Porte les notifications et la page de secours hors ligne :
+                pour tout le monde, connecté ou non. */}
             <ServiceWorkerActif />
-            {/* Fait connaître langue et fuseau au serveur, qui écrit les
-                notifications et choisit l'heure de les envoyer. */}
-            <ContexteNavigateur />
-            {/* Propose l'écran d'accueil à la troisième visite, sur téléphone. */}
-            <InvitationInstallation />
           </SessionProvider>
         </LocaleProvider>
         </RatiosExercicesProvider>
