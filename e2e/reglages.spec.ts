@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { purgerTentatives } from "./limiteur";
 
 /**
  * La section « Tes jeux », vue depuis un navigateur.
@@ -22,6 +23,7 @@ test("ouvrir un compte", async ({ browser }) => {
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
+  await purgerTentatives();
   await page.goto("/beta");
   await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
   await page.locator('input[type="email"]').first().fill(COMPTE.email);
