@@ -332,7 +332,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-1003 tests unitaires, 78 suites. Base et session doublées : aucune dépendance à
+1009 tests unitaires, 79 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -622,26 +622,42 @@ courriel d'échec. Y poser un `vercel.json` la met à l'écart :
 { "git": { "deploymentEnabled": false } }
 ```
 
-### Une base neuve ne se construit pas depuis `prisma/migrations`
-Le schéma d'origine a été poussé sur Neon avant que le dossier de migrations
-existe : aucune migration ne crée `User`, `Game` ni `Goal`. Sur une base vide,
-`prisma migrate deploy` échoue donc à la cinquième migration
-(`20260707140000_add_user_optional_fields`, « relation "User" does not exist »)
-et laisse une ligne en échec dans `_prisma_migrations` qui bloque tout le
-reste. Ça ne se voit pas en production, dont la base est antérieure — ça se
-voit le jour où l'on provisionne un environnement, une base de test, ou une
-reprise après sinistre.
+### Une base neuve se construit depuis `prisma/migrations`
+Elle ne le pouvait pas. Le schéma d'origine avait été poussé sur Neon avant que
+le dossier de migrations existe : aucune migration ne créait `User`, `Game` ni
+`Goal`, et sur une base vide `prisma migrate deploy` échouait à la cinquième en
+annonçant « relation "User" does not exist ». Ça ne se voyait pas en
+production, dont la base est antérieure. Ça se serait vu le jour d'une reprise
+après sinistre, c'est-à-dire le pire jour possible.
 
-Pour monter une base de travail (tests navigateur, essai local) :
+`20260101000000_socle` crée maintenant tout le schéma, **conditionnellement** :
+sur une base vide il la monte entière, sur la production il ne fait rien. Les
+trente-deux migrations qui suivent sont toutes écrites en `IF NOT EXISTS`, donc
+elles n'ont plus rien à faire après lui. Il se régénère, il ne s'écrit pas à la
+main :
 
 ```bash
-npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script \
-  | grep -v '^Loaded Prisma config' > /tmp/socle.sql
-psql -d wow -f /tmp/socle.sql
+npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script
 ```
+puis on rend chaque création conditionnelle, et chaque clé étrangère tolérante
+à sa propre présence (PostgreSQL n'a pas d'`ADD CONSTRAINT IF NOT EXISTS` : on
+rattrape `duplicate_object`).
 
-`prisma db push` ferait la même chose mais réclame un consentement explicite
-de l'utilisateur, et refuse de tourner sans lui.
+Éprouvé dans les deux sens, qui sont les deux seuls qui comptent : sur une base
+vide, les trente-trois migrations passent et le schéma obtenu est **identique**
+au schéma Prisma (diff vide) ; sur une base déjà à jour dont on retire la ligne
+du socle — ce qui reproduit exactement la production —, le socle s'applique
+sans rien changer.
+
+Deux gardes pour que ça le reste :
+- `src/migrationsRejouables.test.ts` refuse toute création, tout ajout de
+  colonne et toute clé étrangère écrits inconditionnellement. Éprouvé en
+  retirant un `IF NOT EXISTS`, puis en supprimant le socle.
+- La CI ne monte plus sa base par un diff du schéma mais par
+  `prisma migrate deploy`, puis vérifie que le résultat correspond au schéma.
+  Le raccourci précédent cachait le défaut au lieu de le signaler : les
+  parcours passaient au vert sur une base qu'aucune reprise n'aurait pu
+  reconstruire.
 
 Turbopack refuse d'analyser un chemin de fichier composé d'un paramètre ou
 d'un tableau étalé : il annonce « Dynamic filesystem access causes tracing of
