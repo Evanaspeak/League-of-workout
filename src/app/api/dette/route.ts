@@ -5,6 +5,7 @@ import {
   dureeEffort, exercicesEnTemps, repartirPoints, secondesParPoint, toExerciceIds,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
+import { jourLocal } from "@/lib/serie";
 
 /**
  * Dette en attente. Seuls les exercices comptés en temps s'y accumulent :
@@ -65,10 +66,38 @@ export async function PATCH(req: Request) {
     restant = Math.max(0, dus - Math.round(dus * partPayee));
   }
 
-  const maj = await prisma.user.update({
-    where: { id: user.id },
-    data: { dettePointsDus: restant },
-    select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+  const paye = Math.max(0, dus - restant);
+
+  /**
+   * Le paiement laisse une trace, et la date de début de dette se met à jour.
+   *
+   * Le compteur ne dit que l'état présent : sans historique, une série de
+   * jours consécutifs ne se calcule pas, et « en retard depuis trois jours »
+   * non plus. Ces deux-là ne sont pas rattrapables après coup.
+   *
+   * Le jour vient du navigateur : le jour UTC ferait basculer la série d'un
+   * jour sur l'autre selon le fuseau de la personne. À défaut, celui du
+   * serveur.
+   */
+  const jour = typeof body?.jour === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.jour)
+    ? body.jour
+    : jourLocal();
+
+  const maj = await prisma.$transaction(async (tx) => {
+    if (paye > 0) {
+      await tx.paiement.create({ data: { userId: user.id, points: paye, jour } });
+    }
+    return tx.user.update({
+      where: { id: user.id },
+      data: {
+        dettePointsDus: restant,
+        // Une dette éteinte n'a plus de date de début ; une dette entamée
+        // garde la sienne, sinon un paiement partiel remettrait le compteur de
+        // retard à zéro sans que rien n'ait été soldé.
+        ...(restant === 0 ? { detteDepuis: null } : {}),
+      },
+      select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+    });
   });
   return NextResponse.json(reponse(maj));
 }

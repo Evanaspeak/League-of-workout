@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { SerieEtRetard } from "@/components/SerieEtRetard";
 import dynamic from "next/dynamic";
 import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
@@ -498,6 +499,11 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {/* La série ne paraît qu'une fois lancée, et le retard qu'une fois
+          constitué : un écran qui annonce « 0 jour d'affilée » à un compte
+          neuf lui reproche quelque chose qu'il n'a pas encore pu faire. */}
+      <SerieEtRetard />
 
       {/* L'énergie dépensée n'apparaît qu'avec le consentement aux données de
           santé : sans le poids, il n'y a rien à estimer, et la politique de

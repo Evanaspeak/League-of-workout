@@ -1,6 +1,18 @@
 import { requete, corps, utilisateur } from "@/test/api";
 
-jest.mock("@/lib/prisma", () => ({ prisma: { user: { update: jest.fn() } } }));
+jest.mock("@/lib/prisma", () => {
+  const paiement = { create: jest.fn() };
+  const user = { update: jest.fn() };
+  return {
+    prisma: {
+      user, paiement,
+      // Le paiement et la mise à jour du compteur partent ensemble : l'un sans
+      // l'autre laisserait une série fausse ou une dette effacée sans trace.
+      $transaction: jest.fn(async (travail: (tx: unknown) => unknown) =>
+        travail({ user, paiement })),
+    },
+  };
+});
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
 
@@ -11,6 +23,7 @@ import { appliquerRatios, RATIOS_DEFAUT } from "@/lib/exercices";
 
 const session = getCurrentUser as jest.Mock;
 const user = prisma.user as unknown as { update: jest.Mock };
+const paiement = (prisma as unknown as { paiement: { create: jest.Mock } }).paiement;
 
 const joueur = (champs: Record<string, unknown> = {}) =>
   utilisateur({ exercices: ["boxe"], dettePointsDus: 100, rappelSeuilSec: 300, ...champs });
@@ -135,3 +148,52 @@ describe("PUT /api/dette", () => {
     expect(user.update).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Le paiement laisse une trace.
+ *
+ * Sans elle, une série de jours consécutifs ne se calcule pas — et elle ne se
+ * rattrape pas après coup : ce qui n'a pas été écrit ce jour-là est perdu.
+ */
+describe("trace du paiement", () => {
+  it("écrit un paiement avec les points réellement acquittés", async () => {
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true, jour: "2026-08-23" } }));
+    expect(paiement.create.mock.calls[0][0].data).toMatchObject({
+      points: 100, jour: "2026-08-23",
+    });
+  });
+
+  it("prend le jour du navigateur, et refuse un jour mal formé", async () => {
+    // Le jour UTC ferait basculer la série d'un jour sur l'autre selon le
+    // fuseau de la personne.
+    session.mockResolvedValue(joueur({ dettePointsDus: 50 }));
+    user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true, jour: "pas un jour" } }));
+    expect(paiement.create.mock.calls[0][0].data.jour).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it("n'écrit aucun paiement quand rien n'a été acquitté", async () => {
+    session.mockResolvedValue(joueur({ dettePointsDus: 0 }));
+    user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(paiement.create).not.toHaveBeenCalled();
+  });
+
+  it("efface la date de début quand la dette est soldée, la garde sinon", async () => {
+    // Un paiement partiel qui remettrait le compteur de retard à zéro
+    // empêcherait quiconque d'être jamais en retard.
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(user.update.mock.calls[0][0].data).toHaveProperty("detteDepuis", null);
+
+    jest.clearAllMocks();
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    user.update.mockResolvedValue({ dettePointsDus: 60, rappelSeuilSec: 300, exercices: ["boxe"] });
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { secondes: 10 } }));
+    expect(user.update.mock.calls[0][0].data).not.toHaveProperty("detteDepuis");
+  });
+});
+
