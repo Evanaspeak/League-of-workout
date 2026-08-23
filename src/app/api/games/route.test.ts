@@ -139,6 +139,44 @@ describe("POST /api/games", () => {
     expect(game.create.mock.calls[0][0].data.result).toBe("V");
   });
 
+  /**
+   * Le battle royale avec la boxe en exercice.
+   *
+   * La partie lue à l'écran d'Apex passe par la même route qu'une saisie à la
+   * main, mais elle est la seule qui n'ait ni rôle, ni champion, ni résultat
+   * — tout est déduit du classement. La pastille en jeu annonce ensuite ce que
+   * la partie coûte, et elle l'annonce dans l'unité de l'exercice choisi :
+   * « 30 s de boxe » et « 30 pompes » ne sont pas la même chose. Sans
+   * répartition dans la réponse, elle retombe sur le total en points, c'est-à-
+   * dire sur un nombre dans la mauvaise unité, sans que rien ne le signale.
+   */
+  it("rend la répartition en boxe pour une partie lue dans Apex", async () => {
+    const r = await post({ jeu: "Apex Legends", kills: 1, placement: 18, joueurs: 60, exercice: "boxe" });
+    const { repartition, scoring } = (await corps(r)) as
+      { repartition: Record<string, number>; scoring: { pompesFinales: number } };
+    expect(Object.keys(repartition)).toEqual(["boxe"]);
+    expect(repartition.boxe).toBe(scoring.pompesFinales);
+    expect(repartition.boxe).toBeGreaterThan(0);
+  });
+
+  it("partage la répartition d'une partie Apex entre les exercices retenus", async () => {
+    const r = await post({
+      jeu: "Apex Legends", kills: 1, placement: 18, joueurs: 60,
+      exercices: ["pompes", "boxe"],
+    });
+    const { repartition, scoring } = (await corps(r)) as
+      { repartition: Record<string, number>; scoring: { pompesFinales: number } };
+    expect(Object.keys(repartition).sort()).toEqual(["boxe", "pompes"]);
+    expect(repartition.pompes + repartition.boxe).toBe(scoring.pompesFinales);
+  });
+
+  it("ajoute au compteur la part de boxe d'une partie Apex", async () => {
+    // C'est la dette en attente que la pastille affiche pendant qu'on joue :
+    // une partie lue à l'écran doit l'alimenter comme une saisie à la main.
+    await post({ jeu: "Apex Legends", kills: 1, placement: 18, joueurs: 60, exercice: "boxe" });
+    expect(user.update.mock.calls[0][0].data.dettePointsDus.increment).toBeGreaterThan(0);
+  });
+
   it("fige la ventilation quand plusieurs exercices sont retenus", async () => {
     // L'historique doit rester fidèle même si la sélection change ensuite.
     await post(partie({ exercices: ["pompes", "boxe"] }));

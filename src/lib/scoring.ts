@@ -270,7 +270,20 @@ export function calcScoreBattleRoyale(input: ScoringBrInput): ScoringResult {
   const raw = roleWeights.poidsMort * mortsEquivalentes - roleWeights.poidsKill * Math.max(0, kills);
   const scoreBase = Math.round(Math.max(0, raw) * levelCfg.multiplicateur);
 
-  // Une victoire reste moitié moins chère, comme dans les autres jeux.
+  /**
+   * La première place est moitié moins chère — et, dans les faits, gratuite.
+   *
+   * Ce n'est pas la division qui la rend gratuite : à la première place,
+   * `position` vaut zéro, donc `mortsEquivalentes` aussi, donc `raw` est au
+   * mieux nul et le maximum le ramène à zéro. La moitié de zéro reste zéro.
+   * La règle « une victoire coûte moitié moins », vraie dans les autres jeux,
+   * ne peut donc jamais s'appliquer ici.
+   *
+   * Elle reste écrite quand même : un poids d'élimination négatif, que le
+   * panneau d'administration accepte, rendrait `raw` positif à la première
+   * place. C'est le seul chemin qui l'atteint, et il vaut mieux qu'il tombe
+   * sur la règle habituelle que sur le plein tarif.
+   */
   const pompesFinales = place === 1 ? Math.round(scoreBase / 2) : scoreBase;
 
   return {

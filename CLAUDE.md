@@ -582,6 +582,49 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### La lecture d'Apex, éprouvée sur de vrais pixels
+`groupesChiffres.test.ts` dessine des traits aux largeurs relevées à la main.
+C'est utile — on y écrit exactement le cas qu'on veut éprouver — mais ça ne
+prouve pas que les largeurs relevées soient les bonnes, ni que le seuil d'encre
+tienne devant une image réelle, avec son bruit, son anticrénelage et le fond du
+jeu qui bouge derrière.
+
+`desktop/src/lecture/capturesReelles.test.ts` lit trois bandes de 342 × 32
+pixels découpées dans trois captures 3440 × 1440, à l'endroit exact où la
+fonction va lire : cartouche complet, cartouche décalé d'une seconde (tout le
+bloc glisse de sept pixels), et cartouche absent. Pas les captures entières —
+cinq méga-octets chacune contre vingt kilo-octets pour la bande compressée — et
+le reste du cadre reconstitué est noir, puisque la fonction n'y regarde jamais.
+Format brut compressé plutôt que PNG : le décoder demanderait une bibliothèque,
+or la seule disponible ici l'est par transitivité, alors que `zlib` vient avec
+Node.
+
+Éprouvé en sabotant les trois constantes qui gouvernent le tri — seuil d'encre,
+largeur maximale d'un chiffre, écart entre deux chiffres d'un même nombre :
+chacune fait tomber le test.
+
+#### Une partie Apex avec la boxe
+La partie lue à l'écran passe par la même route qu'une saisie à la main, mais
+elle est la seule sans rôle, sans champion et sans résultat — tout est déduit
+du classement. La pastille en jeu annonce ensuite ce que la partie coûte, dans
+l'unité de l'exercice choisi : « 30 s de boxe » et « 30 pompes » ne sont pas la
+même chose. Sans répartition dans la réponse, elle retombe sur le total en
+points, c'est-à-dire sur un nombre dans la mauvaise unité, sans que rien ne le
+signale. Trois tests couvrent ce chemin : boxe seule, partage entre deux
+exercices, et alimentation du compteur de dette.
+
+#### « Une victoire coûte moitié moins » ne s'applique jamais en battle royale
+La règle est écrite dans `calcScoreBattleRoyale` et elle est inatteignable : à
+la première place, `position` vaut zéro, donc les morts équivalentes aussi,
+donc le score brut est au mieux nul et le maximum le ramène à zéro. La moitié
+de zéro reste zéro. Le barème n'est pas faux — gagner ne coûte rien, c'est ce
+qu'on veut — mais le code disait une chose qu'il ne faisait pas.
+
+La ligne reste, avec sa vraie raison : un poids d'élimination négatif, que le
+panneau d'administration accepte, rendrait le score brut positif à la première
+place. C'est le seul chemin qui l'atteint. Un test pin le comportement pour
+qu'on ne croie pas qu'un jour la règle a servi.
+
 ### L'audit d'accessibilité regardait neuf pages sur quinze
 Cinq pages publiques n'avaient jamais été auditées, et ce ne sont pas les moins
 exposées : la liste d'attente et le calculateur existent pour être trouvés par

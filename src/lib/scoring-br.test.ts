@@ -57,6 +57,16 @@ describe("le coût est monotone par rapport au classement", () => {
     }
   });
 
+  test("gagner ne coûte rien quel que soit le nombre d'éliminations", () => {
+    // La règle « une victoire coûte moitié moins » est écrite dans le barème
+    // et ne s'applique jamais : à la première place le score est déjà nul, et
+    // la moitié de zéro reste zéro. Ce test le dit, pour qu'on ne croie pas
+    // qu'un jour elle a servi.
+    for (const kills of [0, 1, 5, 30]) {
+      expect(cout(1, 60, kills)).toBe(0);
+    }
+  });
+
   test("le haut du classement est gratuit, le bas ne l'est jamais", () => {
     // Les toutes premières places arrondissent à zéro : la différence entre
     // premier et deuxième sur cent est trop fine pour valoir une pompe.
