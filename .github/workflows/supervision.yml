@@ -8,6 +8,18 @@
 # Ce travail échoue quand le site va mal, et GitHub envoie alors un courriel.
 # C'est une supervision pauvre, et c'est volontaire : elle ne coûte rien, ne
 # dépend d'aucun service tiers, et prévient la seule personne qui puisse agir.
+#
+# Elle ne crie qu'AU CHANGEMENT D'ÉTAT. Une sonde toutes les quinze minutes qui
+# échoue à chaque passage, c'est trente-deux courriels pour une panne d'une
+# nuit, et le trente et unième ne dit rien de plus que le premier. Le résultat
+# n'est pas l'agacement : c'est que l'alerte finisse dans un filtre, et qu'on
+# ne la lise plus le jour où elle compte. L'état précédent voyage donc d'une
+# exécution à l'autre par le cache, et la décision vit dans
+# `.github/alerte-etat.sh`, qui a ses propres tests.
+#
+# C'est aussi la SEULE source d'alerte parmi les travaux programmés. La
+# sauvegarde et les envois se taisent quand le site va mal : trois travaux qui
+# constatent la même panne écrivent trois fois la même chose.
 name: Supervision
 
 on:
@@ -29,10 +41,28 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ADRESSE: ${{ vars.URL_SUPERVISION || 'https://winorworkout.com' }}
+      ETAT: /tmp/etat-supervision
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Préparer le dossier d'état
+        run: mkdir -p "$ETAT"
+
+      # L'état de l'exécution précédente. Une clé unique par exécution, et un
+      # préfixe pour retrouver la plus récente : le cache de GitHub n'accepte
+      # pas qu'on réécrive une clé existante.
+      - name: Relire l'état précédent
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/etat-supervision
+          key: supervision-etat-${{ github.run_id }}
+          restore-keys: supervision-etat-
+
       - name: Interroger la sonde
+        id: sonde
         run: |
           set -uo pipefail
+          sain=non
 
           # La réponse se LIT, elle ne se cherche pas au motif.
           #
@@ -62,19 +92,47 @@ jobs:
               if [ "$(lire "$corps" '.reveil')" = "true" ]; then
                 echo "::warning::La base dormait, elle a mis $(lire "$corps" '.ms') ms à répondre."
               fi
-              echo "Site debout."
-              exit 0
+              sain=oui
+              break
             fi
             [ "$essai" -lt 3 ] && sleep 20
           done
 
+          if [ "$sain" = "oui" ]; then
+            motif="Site debout."
           # `curl` rend 000 quand il n'a même pas obtenu de réponse : ce n'est
           # pas la même panne qu'un 503, qui prouve au moins que le site tourne.
-          if [ "$code" = "000" ]; then
-            echo "::error::Le site ne répond pas du tout ($ADRESSE)."
+          elif [ "$code" = "000" ]; then
+            motif="Le site ne répond pas du tout ($ADRESSE)."
           elif [ "$(lire "$corps" '.base')" = "injoignable" ]; then
-            echo "::error::Le site répond mais la base est injoignable."
+            motif="Le site répond mais la base est injoignable."
           else
-            echo "::error::La sonde rend HTTP $code."
+            motif="La sonde rend HTTP $code."
           fi
-          exit 1
+
+          # La décision de crier ou de se taire, prise à part et testée à part.
+          sortie=$(sh .github/alerte-etat.sh "$sain" "$ETAT/supervision.env" "$(date +%s)")
+          verdict=$(printf '%s' "$sortie" | tail -1)
+          printf '%s' "$sortie" | grep -q '^revenu$' && echo "::notice::Le site est revenu."
+
+          echo "$motif"
+          if [ "$sain" = "oui" ]; then
+            exit 0
+          fi
+          if [ "$verdict" = "crier" ]; then
+            echo "::error::$motif"
+            exit 1
+          fi
+          # Panne déjà signalée : on la note sans réveiller personne une
+          # deuxième fois. Le rappel repart après vingt-quatre heures.
+          echo "::warning::$motif (déjà signalé, pas de nouvelle alerte)"
+          exit 0
+
+      # Toujours, y compris quand la sonde a échoué : sans cette sauvegarde,
+      # la panne suivante repasserait pour une première.
+      - name: Retenir l'état
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/etat-supervision
+          key: supervision-etat-${{ github.run_id }}

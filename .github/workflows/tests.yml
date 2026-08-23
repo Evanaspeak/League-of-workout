@@ -6,10 +6,25 @@
 # commande.
 name: Tests
 
+# Une exécution par changement, pas deux.
+#
+# Le travail se fait sur une branche puis se fusionne aussitôt dans `main` :
+# avec `branches: ["**"]`, chaque changement déclenchait deux exécutions, donc
+# deux courriels quand ça cassait. Vingt-cinq versions rouges d'affilée en ont
+# fait cinquante en une nuit. `main` et les demandes de fusion suffisent, et
+# `workflow_dispatch` reste là pour éprouver une branche à la main.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+# Une poussée qui en suit une autre de près annule la précédente : une
+# exécution annulée n'envoie pas de courriel, et le code qu'elle testait est
+# de toute façon contenu dans la suivante.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verifier:
