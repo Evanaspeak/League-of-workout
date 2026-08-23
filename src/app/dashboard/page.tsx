@@ -96,6 +96,7 @@ type DashData = {
   dailyPompes: { date: string; total: number }[];
   /** Effort accumulé aujourd'hui, et seuil au-delà duquel on prévient. */
   pointsAujourdhui?: number;
+  veille?: { pointsJour: number; pointsSemaine: number; alerte: "jour" | "semaine" | null };
   plafondQuotidien?: number;
   mostPlayed: ChampSummary | null;
   leastEfficient: ChampSummary | null;
@@ -500,6 +501,20 @@ export default function Dashboard() {
           />
         )}
       </div>
+
+      {/* Ce qu'on voit du volume, dit une fois et sans y revenir. Ça ne
+          bloque rien : le choix a été fait de laisser chacun libre de
+          continuer, ce qui suppose de dire ce qu'on voit. */}
+      {data.veille?.alerte && (
+        <div className="lol-panel p-4" style={{ borderColor: "var(--gold)" }}>
+          <div style={{ color: "var(--gold)", fontWeight: 600, marginBottom: 4 }}>
+            {t.veilleTitre}
+          </div>
+          <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.6 }}>
+            {data.veille.alerte === "jour" ? t.veilleJour : t.veilleSemaine}
+          </p>
+        </div>
+      )}
 
       {/* Ce qui a déjà été fait, à côté de ce qui reste dû : l'application ne
           savait dire que la seconde moitié. */}

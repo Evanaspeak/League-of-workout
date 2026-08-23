@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estAdmin } from "@/lib/admin";
 import { calculerMesures, type CompteMesure } from "@/lib/mesures";
+import { SEUIL_SEMAINE } from "@/lib/veille";
 
 /**
  * Ce que le produit fait vraiment, chiffré.
@@ -44,5 +45,31 @@ export async function GET() {
     };
   });
 
-  return NextResponse.json(calculerMesures(mesures));
+  /**
+   * Les comptes dont le volume sort de l'ordinaire.
+   *
+   * L'application réclame de l'effort après une défaite : elle peut servir à
+   * se punir. Le message de prévention part côté joueur ; celui-ci est le
+   * pendant discret, pour que quelqu'un puisse regarder. Aucun nom d'utilisateur
+   * n'est nécessaire pour décider s'il faut regarder — le pseudo suffit à
+   * retrouver le compte dans la liste voisine.
+   */
+  const semaine = new Date(Date.now() - 7 * 86_400_000);
+  const gros = await prisma.user.findMany({
+    where: { games: { some: { date: { gte: semaine } } } },
+    select: {
+      pseudo: true,
+      games: { where: { date: { gte: semaine } }, select: { pompesCalculees: true } },
+    },
+  });
+  const veille = gros
+    .map((u) => ({
+      pseudo: u.pseudo,
+      points: u.games.reduce((t, g) => t + Math.max(0, g.pompesCalculees), 0),
+    }))
+    .filter((u) => u.points >= SEUIL_SEMAINE)
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 20);
+
+  return NextResponse.json({ ...calculerMesures(mesures), veille, seuilSemaine: SEUIL_SEMAINE });
 }

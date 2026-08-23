@@ -18,6 +18,12 @@ beforeEach(() => {
   findMany.mockResolvedValue([]);
 });
 
+/** La route fait deux lectures : les comptes, puis la veille de volume. */
+const deuxLectures = (comptes: unknown[], veille: unknown[]) => {
+  findMany.mockReset();
+  findMany.mockResolvedValueOnce(comptes).mockResolvedValueOnce(veille);
+};
+
 describe("accès", () => {
   it("refuse sans session et hors administration", async () => {
     session.mockResolvedValue(null);
@@ -67,3 +73,37 @@ describe("lecture", () => {
     expect(m.delai).toMatchObject({ median: null });
   });
 });
+
+/**
+ * La veille de volume, côté administration.
+ *
+ * L'application réclame de l'effort après une défaite : elle peut servir à se
+ * punir. Le message de prévention part côté joueur ; celui-ci existe pour que
+ * quelqu'un puisse regarder.
+ */
+describe("veille de volume", () => {
+  it("ne retient que les comptes au-dessus du seuil", async () => {
+    deuxLectures([], [
+      { pseudo: "Beaucoup", games: [{ pompesCalculees: 4000 }, { pompesCalculees: 3000 }] },
+      { pseudo: "Normal", games: [{ pompesCalculees: 300 }] },
+    ]);
+    const r = await corps(await GET());
+    const veille = r.veille as { pseudo: string; points: number }[];
+    expect(veille).toHaveLength(1);
+    expect(veille[0]).toEqual({ pseudo: "Beaucoup", points: 7000 });
+  });
+
+  it("ne fait pas sortir l'adresse électronique", async () => {
+    // Le pseudo suffit à retrouver le compte dans la liste voisine.
+    deuxLectures([], [{ pseudo: "Beaucoup", games: [{ pompesCalculees: 9000 }] }]);
+    const texte = JSON.stringify(await corps(await GET()));
+    expect(texte).not.toMatch(/@/);
+    expect(JSON.stringify(findMany.mock.calls[1][0].select)).not.toMatch(/email/i);
+  });
+
+  it("rend une liste vide quand personne ne dépasse", async () => {
+    deuxLectures([], [{ pseudo: "Normal", games: [{ pompesCalculees: 100 }] }]);
+    expect((await corps(await GET())).veille).toEqual([]);
+  });
+});
+
