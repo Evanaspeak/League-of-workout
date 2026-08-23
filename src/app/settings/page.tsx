@@ -13,6 +13,7 @@ import {
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
 import { SimulateurDette } from "@/components/SimulateurDette";
+import { SuspensionExercice } from "@/components/SuspensionExercice";
 import { SourceObs } from "@/components/SourceObs";
 import { JournalSynchro } from "@/components/JournalSynchro";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
@@ -508,6 +509,10 @@ export default function SettingsPage() {
       {/* ── Tes jeux : un bloc dépliable par jeu ────────────────────────── */}
       {/* Comprendre le barème sans avoir à perdre une partie. Il vit dans
           « Ton effort » : c'est là qu'on règle ce qui le fait varier. */}
+      {/* Une gêne ne doit pas obliger à décocher un exercice et à perdre la
+          trace de ce qu'on faisait. */}
+      {rubrique === "effort" && <SuspensionExercice />}
+
       {rubrique === "effort" && <SimulateurDette />}
 
       {/* Le compteur pour le stream vit avec les jeux : c'est en jouant qu'on

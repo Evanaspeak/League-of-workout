@@ -69,6 +69,11 @@ const ATTENDU: Record<string, RegExp> = {
   // décrit avec l'historique des paiements plutôt que séparément.
   detteDepuis: /paiements de dette/i,
   jetonObs: /compteur de stream/i,
+  // Mettre un exercice de côté frôle la santé sans en être : on le décrit
+  // plutôt que de l'exempter, et la politique dit qu'aucune raison médicale
+  // n'est demandée.
+  exercicesSuspendus: /exercices mis de côté/i,
+  suspensionDepuis: /exercices mis de côté/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */
