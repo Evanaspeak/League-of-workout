@@ -87,6 +87,22 @@ model User {
   // Depuis quand, pour pouvoir le rappeler sans le réclamer.
   suspensionDepuis   DateTime?
 
+  // Langue choisie dans l'application ("fr", "en", "es", "de", "zh", "ja").
+  //
+  // Elle vivait uniquement dans le stockage du navigateur, ce que le serveur
+  // ne voit pas : les notifications push partaient donc en français pour tout
+  // le monde, y compris pour quelqu'un qui n'a jamais vu un écran français.
+  // Nulle tant qu'aucun écran n'a eu l'occasion de la remonter.
+  langue String?
+
+  // Fuseau horaire du navigateur, au format IANA ("Europe/Paris").
+  //
+  // Le serveur ne connaît que l'heure UTC. Sans cette colonne, un rappel
+  // envoyé « le matin » tombe à trois heures du matin pour une partie des
+  // comptes — c'est-à-dire l'inverse d'un service rendu. Nulle tant qu'aucun
+  // écran ne l'a remontée, et un rappel ne part jamais dans ce cas.
+  fuseau String?
+
   // Variante d'exécution déclarée pour les pompes : "genoux" ou rien.
   //
   // Elle ne change AUCUN calcul — des pompes genoux au sol coûtent le même

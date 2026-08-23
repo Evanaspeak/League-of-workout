@@ -29,8 +29,9 @@ export const confidentialite = {
         ["Lien du compteur de stream", "Créé par vous, si vous l'employez", "Afficher votre compteur dans un logiciel de diffusion ; il ne révèle ni votre nom ni vos parties"],
         ["Exercices mis de côté, et depuis quand", "Votre choix dans les réglages", "Répartir la dette sur les autres exercices ; aucune raison médicale ne vous est demandée ni conservée"],
         ["Variante d'exécution des pompes", "Votre choix dans les réglages", "Annoter votre historique ; elle ne change aucun calcul et aucune raison ne vous est demandée"],
+        ["Fuseau horaire de votre appareil", "Réglage de votre navigateur", "Savoir quelle heure il est chez vous, pour ne pas envoyer un rappel en pleine nuit"],
       ],
-      outro: "Le genre, l'âge, le poids et la taille, croisés avec l'activité physique enregistrée, constituent des données de santé au sens de l'article 9 du RGPD. Ils servent uniquement à fixer votre niveau de départ et à estimer l'énergie dépensée. Ils ne sont ni revendus, ni transmis à un tiers, ni utilisés à d'autres fins. Aucun moyen de paiement et aucune donnée de localisation ne sont collectés.",
+      outro: "Le genre, l'âge, le poids et la taille, croisés avec l'activité physique enregistrée, constituent des données de santé au sens de l'article 9 du RGPD. Ils servent uniquement à fixer votre niveau de départ et à estimer l'énergie dépensée. Ils ne sont ni revendus, ni transmis à un tiers, ni utilisés à d'autres fins. Aucun moyen de paiement n'est collecté. La seule indication de lieu conservée est le fuseau horaire de votre appareil, qui sert uniquement à choisir l'heure d'un rappel : ni adresse, ni position, ni ville.",
     },
     article3: {
       title: "3. Base légale",
@@ -128,8 +129,9 @@ export const confidentialite = {
         ["Stream counter link", "Created by you, if you use it", "Showing your counter in broadcasting software; it reveals neither your name nor your matches"],
         ["Exercises set aside, and since when", "Your choice in the settings", "Sending the debt to your other exercises; no medical reason is asked for or kept"],
         ["Push-up variant", "Your choice in the settings", "Annotating your history; it changes no calculation and no reason is asked of you"],
+        ["Your device's time zone", "Your browser's setting", "Knowing what time it is where you are, so a reminder never arrives in the middle of the night"],
       ],
-      outro: "Gender, age, weight and height, combined with the physical activity recorded, constitute health data within the meaning of Article 9 GDPR. They are used solely to set your starting level and to estimate the energy you spend. They are never sold, never passed to a third party, and never used for any other purpose. No payment information and no location data are collected.",
+      outro: "Gender, age, weight and height, combined with the physical activity recorded, constitute health data within the meaning of Article 9 GDPR. They are used solely to set your starting level and to estimate the energy you spend. They are never sold, never passed to a third party, and never used for any other purpose. No payment information is collected. The only indication of place we keep is your device's time zone, used solely to choose when a reminder is sent: no address, no position, no city.",
     },
     article3: {
       title: "3. Legal Basis",

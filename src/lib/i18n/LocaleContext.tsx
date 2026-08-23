@@ -1,28 +1,17 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useValeurClient } from "@/lib/valeurClient";
+import { estLocale, type Locale } from "./langues";
 
-export type Locale = "fr" | "en" | "es" | "de" | "zh" | "ja";
-
-/**
- * Toutes les langues proposées, dans l'ordre du sélecteur.
- *
- * Le français et l'anglais sont complets. Les quatre autres se remplissent
- * dictionnaire par dictionnaire : ce qui n'est pas encore traduit retombe sur
- * l'anglais, jamais sur du vide. Sans ce repli, ajouter une langue voudrait
- * dire traduire trente-deux fichiers d'un coup avant de pouvoir livrer quoi
- * que ce soit — et un seul oubli afficherait un trou.
- */
-export const LANGUES: Locale[] = ["fr", "en", "es", "de", "zh", "ja"];
+// La liste elle-même vit dans un module sans React : une route API qui valide
+// une langue n'a pas à tirer tout le contexte avec elle. Réexportée ici, où
+// une trentaine de composants la lisent déjà.
+export { LANGUES, estLocale, type Locale } from "./langues";
 
 /** Étiquette de langue pour les formats de date et de nombre. */
 const ETIQUETTES: Record<Locale, string> = {
   fr: "fr-FR", en: "en-US", es: "es-ES", de: "de-DE", zh: "zh-CN", ja: "ja-JP",
 };
-
-function estLocale(v: unknown): v is Locale {
-  return typeof v === "string" && (LANGUES as string[]).includes(v);
-}
 
 const STORAGE_KEY = "low_locale";
 

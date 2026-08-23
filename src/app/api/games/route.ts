@@ -11,6 +11,7 @@ import {
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { toVariante, varianteApplicable } from "@/lib/variantes";
+import { textesNotification } from "@/lib/i18n/notifications";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
@@ -279,7 +280,7 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
   try {
     const avant = await prisma.user.findUnique({
       where: { id: userId },
-      select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+      select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true, langue: true },
     });
     const maj = await prisma.user.update({
       where: { id: userId },
@@ -303,12 +304,13 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
         const avantSec = dureeEffort(Math.max(0, avant.dettePointsDus), exercices);
         const apresSec = dureeEffort(Math.max(0, maj.dettePointsDus), exercices);
         if (avantSec < seuil && apresSec >= seuil) {
+          // Dans la langue du compte : le texte était écrit en dur en
+          // français et partait tel quel à tout le monde, y compris à qui
+          // n'a jamais vu un écran français.
+          const { titre, corps } = textesNotification(avant.langue)
+            .seuil(formaterDuree(apresSec));
           // Sans await : une notification lente ne doit pas retarder la réponse.
-          notifier(userId, {
-            titre: "Tu as de quoi faire",
-            corps: `${formaterDuree(apresSec)} en attente. C'est le moment, entre deux parties.`,
-            tag: "wow-dette",
-          }).catch(() => {});
+          notifier(userId, { titre, corps, tag: "wow-dette" }).catch(() => {});
         }
       }
     }

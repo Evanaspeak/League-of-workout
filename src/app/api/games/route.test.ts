@@ -196,6 +196,47 @@ describe("POST /api/games", () => {
 });
 
 /**
+ * La langue de la notification.
+ *
+ * Le texte était écrit en dur en français et partait tel quel à tout le
+ * monde. Rien ne pouvait le signaler : la personne qui écrit l'application la
+ * lit en français, et une notification ne laisse pas de trace à relire.
+ */
+describe("langue de la notification de seuil", () => {
+  const franchirLeSeuil = async (langue: string | null) => {
+    user.findUnique.mockResolvedValue({
+      dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"], langue,
+    });
+    user.update.mockResolvedValue({ dettePointsDus: 400 });
+    await post(partie({ exercice: "boxe" }));
+    return (notifier as jest.Mock).mock.calls[0][1] as { titre: string; corps: string };
+  };
+
+  it("suit la langue rangée sur le compte", async () => {
+    const ja = await franchirLeSeuil("ja");
+    jest.clearAllMocks();
+    (prisma.roleWeight.findMany as jest.Mock).mockResolvedValue([
+      { role: "MID", poidsKill: 1, poidsMort: 2, poidsAssist: 0.5, maitriseActive: true },
+    ]);
+    (prisma.levelConfig.findMany as jest.Mock).mockResolvedValue(NIVEAUX);
+    (prisma.masteryConfig.findFirst as jest.Mock).mockResolvedValue({ surchargeMax: 0.5, partiesPourMax: 100 });
+    game.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "g1", ...data }));
+    session.mockResolvedValue(utilisateur({ pompesMax: 20 }));
+    bride.mockResolvedValue(false);
+    game.findMany.mockResolvedValue([]);
+    game.count.mockResolvedValue(0);
+    const fr = await franchirLeSeuil("fr");
+    expect(ja.titre).not.toBe(fr.titre);
+  });
+
+  it("retombe sur l'anglais quand le compte n'en déclare aucune", async () => {
+    const sans = await franchirLeSeuil(null);
+    // L'anglais et non le français : c'est déjà la règle du navigateur.
+    expect(sans.corps).toMatch(/waiting/i);
+  });
+});
+
+/**
  * L'annotation d'exécution recopiée du compte vers la partie.
  *
  * Elle ne touche à aucun chiffre — et c'est précisément ce qui la rend

@@ -122,3 +122,32 @@ test("ne propose rien sur un ordinateur", async ({ browser }) => {
   await expect(banniere(page)).toBeHidden();
   await ctx.close();
 });
+
+/**
+ * La page de secours hors ligne.
+ *
+ * Son intérêt n'est pas seulement de dire quelque chose de correct quand le
+ * réseau tombe : sans elle, Chrome ne considère pas l'application comme
+ * installable et n'émet jamais l'invitation d'installation. C'est donc elle
+ * qui ouvre le chemin Android, et rien dans le code applicatif ne le montre.
+ */
+test("sert la page de secours quand le réseau tombe", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+
+  // Le service worker doit être actif ET contrôler la page : tant qu'il ne
+  // contrôle rien, il ne verra passer aucune navigation.
+  await page.waitForFunction(
+    () => navigator.serviceWorker.controller !== null,
+    undefined,
+    { timeout: 20_000 },
+  );
+
+  await ctx.setOffline(true);
+  await page.goto("/history", { waitUntil: "domcontentloaded" }).catch(() => {});
+  await expect(page.locator("body")).toContainText(/Pas de réseau|No connection/);
+
+  await ctx.setOffline(false);
+  await ctx.close();
+});
