@@ -95,3 +95,68 @@ test("Score ne peut pas être négatif", () => {
   expect(result.scoreBase).toBe(0);
   expect(result.pompesFinales).toBe(0);
 });
+
+/**
+ * Le remake et la partie classée.
+ *
+ * Les deux règles vivent dans le barème et non dans les routes : l'aperçu et
+ * l'enregistrement l'appellent tous les deux, et une règle posée dans une
+ * seule des deux finit par ne valoir que pour l'une d'elles. Cette divergence
+ * a déjà coûté une soirée.
+ */
+describe("remake", () => {
+  const partie = (dureeSec: number | null | undefined) => calcScore({
+    kills: 0, deaths: 6, assists: 1, result: "D", gainageSec: 60,
+    partiesAvant: 0, roleWeights: JUNGLE_WEIGHTS, levelConfigs: DEFAULT_LEVEL_CONFIGS,
+    masteryConfig: DEFAULT_MASTERY, dureeSec,
+  });
+
+  it("ne coûte rien quand la partie a duré moins de cinq minutes", () => {
+    // Une partie annulée fait payer un abandon qu'on n'a pas choisi.
+    const r = partie(180);
+    expect(r.pompesFinales).toBe(0);
+    expect(r.remake).toBe(true);
+  });
+
+  it("coûte normalement au-delà du seuil", () => {
+    const r = partie(1800);
+    expect(r.pompesFinales).toBeGreaterThan(0);
+    expect(r.remake).toBe(false);
+  });
+
+  it("ne prend pas une durée absente pour une partie annulée", () => {
+    // La plupart des parties saisies à la main n'en portent pas : les déclarer
+    // toutes annulées effacerait la dette de tout le monde.
+    for (const sans of [null, undefined, 0, NaN]) {
+      expect(partie(sans as number).pompesFinales).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("partie classée", () => {
+  const partie = (classee: boolean) => calcScore({
+    kills: 2, deaths: 8, assists: 3, result: "D", gainageSec: 60,
+    partiesAvant: 0, roleWeights: JUNGLE_WEIGHTS, levelConfigs: DEFAULT_LEVEL_CONFIGS,
+    masteryConfig: DEFAULT_MASTERY, classee,
+  });
+
+  it("coûte plus cher qu'une normale, à statistiques identiques", () => {
+    expect(partie(true).pompesFinales).toBeGreaterThan(partie(false).pompesFinales);
+  });
+
+  it("majore le total et non le score de base", () => {
+    // C'est l'enjeu de la partie qui pèse, pas la façon d'y jouer : le score
+    // de base doit rester comparable d'une file à l'autre.
+    expect(partie(true).scoreBase).toBe(partie(false).scoreBase);
+  });
+
+  it("n'a aucun effet sur une partie annulée", () => {
+    const r = calcScore({
+      kills: 0, deaths: 3, assists: 0, result: "D", gainageSec: 60,
+      partiesAvant: 0, roleWeights: JUNGLE_WEIGHTS, levelConfigs: DEFAULT_LEVEL_CONFIGS,
+      masteryConfig: DEFAULT_MASTERY, dureeSec: 120, classee: true,
+    });
+    expect(r.pompesFinales).toBe(0);
+  });
+});
+

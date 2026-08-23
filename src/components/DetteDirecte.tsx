@@ -136,6 +136,10 @@ export function DetteDirecte() {
           deaths: score.deaths,
           assists: score.assists,
           result: "D",
+          // La classée coûte un quart de plus : sans ce drapeau, la pastille
+          // annoncerait le prix d'une normale pendant une partie classée, et
+          // l'écart se découvrirait à la fin.
+          fileClassee: contexteRef.current?.file?.classee ?? undefined,
         }),
       });
       if (!res.ok) return;
