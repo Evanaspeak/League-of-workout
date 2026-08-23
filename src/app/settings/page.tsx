@@ -23,22 +23,15 @@ import { ReglageApplication } from "@/components/ReglageApplication";
 import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
 import { useValeurClient } from "@/lib/valeurClient";
-import { oublierPremiereVisite } from "@/lib/premiereVisite";
-import { useIdCompte } from "@/lib/useIdCompte";
 import { getLevelParPompes } from "@/lib/scoring";
 import {
   EnteteRubrique, LigneRubrique, ouvrirRubrique, useRubrique,
 } from "@/components/ListeReglages";
 import type { NomIcone } from "@/components/Icone";
+import { ReglagesAvances, type LevelConfig } from "./ReglagesAvances";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type RoleWeight = { role: string; poidsMort: number; poidsKill: number; poidsAssist: number; maitriseActive: boolean };
-type LevelConfig = {
-  niveau: number; seuilGainageSec: number; seuilPompes?: number;
-  multiplicateur: number; malusDefaite: number;
-};
-type MasteryConfig = { surchargeMax: number; partiesPourMax: number };
 
 /**
  * Rubriques des réglages, dans l'ordre de la liste. L'identifiant est aussi le
@@ -60,9 +53,6 @@ export default function SettingsPage() {
   // Rubrique ouverte, lue dans l'adresse : le bouton « précédent » ramène à la
   // liste, et un lien peut viser une rubrique directement.
   const rubrique = useRubrique(RUBRIQUES) as Rubrique | null;
-  // Sert au bouton « rejouer l'intro » : les marques de première visite
-  // appartiennent au compte, pas au navigateur.
-  const uid = useIdCompte();
   // Résumés affichés à droite des lignes, pour éviter d'ouvrir juste pour voir.
   const [nbJeux, setNbJeux] = useState(0);
   const [version, setVersion] = useState<string | null>(null);
@@ -92,12 +82,15 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  // ── Beta panel ──
-  const [roleWeights, setRoleWeights] = useState<RoleWeight[]>([]);
+
+  /**
+   * Les paliers du barème, partagés avec la rubrique « Avancé ».
+   *
+   * La page les lit pour afficher le niveau du compte sur la ligne « Ton
+   * effort » ; le panneau avancé les modifie. Un état par côté ferait diverger
+   * les deux affichages dès la première correction.
+   */
   const [levelConfigs, setLevelConfigs] = useState<LevelConfig[]>([]);
-  const [masteryConfig, setMasteryConfig] = useState<MasteryConfig | null>(null);
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [savedSettings, setSavedSettings] = useState(false);
 
   // ── Exercice & rappel ──
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
@@ -131,9 +124,7 @@ export default function SettingsPage() {
       // Repli explicite : une réponse incomplète posait `undefined` dans ces
       // états, et la liste des rubriques — qui lit `levelConfigs.length` pour
       // afficher le niveau — emportait alors toute la page.
-      setRoleWeights(Array.isArray(s.roleWeights) ? s.roleWeights : []);
       setLevelConfigs(Array.isArray(s.levelConfigs) ? s.levelConfigs : []);
-      setMasteryConfig(s.masteryConfig ?? null);
       setExercicesSel(toExerciceIds(s.user?.exercices));
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
@@ -290,25 +281,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveSettings = async () => {
-    setSavingSettings(true);
-    await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roleWeights, levelConfigs, masteryConfig }),
-    });
-    setSavingSettings(false);
-    setSavedSettings(true);
-    setTimeout(() => setSavedSettings(false), 2000);
-  };
-
-  const updateRole = (role: string, field: keyof RoleWeight, value: string | boolean) => {
-    setRoleWeights((prev) => prev.map((r) => r.role === role ? { ...r, [field]: value } : r));
-  };
-
-  const updateLevel = (niveau: number, field: keyof LevelConfig, value: string) => {
-    setLevelConfigs((prev) => prev.map((l) => l.niveau === niveau ? { ...l, [field]: Number(value) } : l));
-  };
 
   // Niveau tiré du test de force : sert de résumé sur la ligne « Ton effort »,
   // pour ne pas avoir à ouvrir la rubrique juste pour le lire.
@@ -669,170 +641,13 @@ export default function SettingsPage() {
       )}
 
       {/* ── Panneau Beta (coefficients) ─────────────────────────────────── */}
-      {rubrique === "avance" && estAdmin && masteryConfig && (
-        <div>
-            <div className="lol-panel p-5 space-y-6">
-
-              <p style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.6 }}>
-                {t.betaExplication}
-              </p>
-
-              {/* Poids par rôle */}
-              <div className="space-y-3">
-                <h2 className="titre-section">{t.poidsParRole}</h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
-                        <th className="text-left py-2 pr-3">{t.role}</th>
-                        <th className="text-center py-2 px-2">{t.poidsMorts}</th>
-                        <th className="text-center py-2 px-2">{t.poidsKills}</th>
-                        <th className="text-center py-2 px-2">{t.poidsAssists}</th>
-                        <th className="text-center py-2 px-2">{t.maitrise}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {roleWeights.map((rw) => (
-                        <tr key={rw.role} style={{ borderTop: "1px solid rgba(152,162,176,0.1)" }}>
-                          <td className="py-2 pr-3 gold-text font-medium">{rw.role}</td>
-                          {(["poidsMort", "poidsKill", "poidsAssist"] as const).map((field) => (
-                            <td key={field} className="py-2 px-2 text-center">
-                              <input
-                                type="number" step="0.1" min="0"
-                                className="lol-input text-center w-20"
-                                value={rw[field]}
-                                onChange={(e) => updateRole(rw.role, field, e.target.value)}
-                              />
-                            </td>
-                          ))}
-                          <td className="py-2 px-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={rw.maitriseActive}
-                              onChange={(e) => updateRole(rw.role, "maitriseActive", e.target.checked)}
-                              className="w-4 h-4 accent-yellow-500"
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Niveaux */}
-              <div className="space-y-3">
-                <h2 className="titre-section">{t.niveauxGainage}</h2>
-                <p className="text-xs" style={{ color: "var(--faint)" }}>
-                  {t.niveauxExplication}
-                </p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
-                        <th className="text-left py-2 pr-3">{t.niveau}</th>
-                        <th className="text-center py-2 px-2">{t.seuilPompes}</th>
-                        <th className="text-center py-2 px-2">{t.multiplicateur}</th>
-                        <th className="text-center py-2 px-2">{t.malusDefaite}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {levelConfigs.map((lc) => (
-                        <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(152,162,176,0.1)" }}>
-                          <td className="py-2 pr-3 gold-text font-bold">{t.niveauAbrev(lc.niveau)}</td>
-                          <td className="py-2 px-2 text-center">
-                            <input
-                              type="number" min="1"
-                              className="lol-input text-center w-24"
-                              value={lc.niveau === 5 ? "∞" : lc.seuilPompes ?? ""}
-                              readOnly={lc.niveau === 5}
-                              style={lc.niveau === 5 ? { opacity: 0.5, cursor: "not-allowed" } : {}}
-                              onChange={(e) => lc.niveau !== 5 && updateLevel(lc.niveau, "seuilPompes", e.target.value)}
-                            />
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            <input
-                              type="number" step="0.01" min="0"
-                              className="lol-input text-center w-24"
-                              value={lc.multiplicateur}
-                              onChange={(e) => updateLevel(lc.niveau, "multiplicateur", e.target.value)}
-                            />
-                          </td>
-                          <td className="py-2 px-2 text-center">
-                            <input
-                              type="number" min="0"
-                              className="lol-input text-center w-20"
-                              value={lc.malusDefaite}
-                              onChange={(e) => updateLevel(lc.niveau, "malusDefaite", e.target.value)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Maîtrise */}
-              <div className="space-y-4">
-                <h2 className="titre-section">{t.parametresMaitrise}</h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
-                      {t.surchargeMax(Math.round(masteryConfig.surchargeMax * 100))}
-                    </label>
-                    <input
-                      type="number" step="0.01" min="0" max="2"
-                      className="lol-input"
-                      value={masteryConfig.surchargeMax}
-                      onChange={(e) => setMasteryConfig((m) => m ? { ...m, surchargeMax: Number(e.target.value) } : m)}
-                    />
-                    <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.surchargeMaxDetail}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.partiesPourMax}</label>
-                    <input
-                      type="number" min="1"
-                      className="lol-input"
-                      value={masteryConfig.partiesPourMax}
-                      onChange={(e) => setMasteryConfig((m) => m ? { ...m, partiesPourMax: Number(e.target.value) } : m)}
-                    />
-                    <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.partiesPourMaxDetail}</p>
-                  </div>
-                </div>
-              </div>
-
-              <button className="lol-btn w-full text-base" onClick={handleSaveSettings} disabled={savingSettings}>
-                {savingSettings ? t.enregistrementEnCours : savedSettings ? t.reglagesSauvegardes : t.sauvegarderReglages}
-              </button>
-
-              {/* Outils de test bêta */}
-              <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: "1rem" }}>
-                <p style={{ fontSize: "0.7rem", color: "var(--faint)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
-                  {t.outilsDeTest}
-                </p>
-                <button
-                  onClick={() => {
-                    oublierPremiereVisite(uid);
-                    window.location.href = "/dashboard";
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "0.55rem",
-                    background: "transparent",
-                    border: "1px dashed rgba(152,162,176,0.2)",
-                    borderRadius: 4,
-                    color: "var(--faint)",
-                    fontSize: "0.78rem",
-                    cursor: "pointer",
-                    letterSpacing: "0.06em",
-                  }}
-                >
-                  {t.rejouerIntro}
-                </button>
-              </div>
-            </div>
-        </div>
+      {/* Les paliers restent partagés : la page les lit pour afficher le
+          niveau du compte, et les modifier ici doit continuer de le mettre à
+          jour. Le reste — poids par rôle, maîtrise — ne servait qu'ici, et
+          était chargé pour tout le monde, y compris pour les comptes qui ne
+          verront jamais ce panneau. */}
+      {rubrique === "avance" && estAdmin && (
+        <ReglagesAvances niveaux={levelConfigs} setNiveaux={setLevelConfigs} />
       )}
 
       {/* ── Compte et données ──────────────────────────────────────────── */}
