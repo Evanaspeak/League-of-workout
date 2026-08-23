@@ -14,7 +14,30 @@ import { chromium } from "playwright";
 const BASE = process.argv[2] ?? "http://127.0.0.1:3311";
 const CHROMIUM = "/opt/pw-browsers/chromium";
 
-const PAGES = ["/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargement"];
+/**
+ * Les pages ouvertes à tous.
+ *
+ * Cinq manquaient à l'appel, et ce ne sont pas les moins exposées : la liste
+ * d'attente et le calculateur existent pour être trouvés par quelqu'un qui n'a
+ * pas de compte, la récupération sert à celui qui n'entre plus, et la connexion
+ * de l'application desktop est le premier écran qu'on y voit. Un audit qui ne
+ * regarde que les pages qu'on a sous la main n'audite que celles-là.
+ *
+ * `/calculateur/<jeu>` figure par un exemplaire : les seize pages sortent du
+ * même gabarit, et les auditer toutes ne dirait rien de plus.
+ */
+const PAGES = [
+  "/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargement",
+  "/waitlist", "/recuperation", "/recuperation/valider", "/calculateur",
+  "/calculateur/league-of-legends", "/connexion-app",
+];
+
+/**
+ * `/obs/<jeton>` reste dehors, et pour une raison, pas par oubli : c'est une
+ * source de diffusion lue par un logiciel de streaming, pas une page qu'on
+ * ouvre. Elle n'a ni navigation, ni formulaire, ni lecteur d'écran en face
+ * d'elle, et l'adresse elle-même est le laissez-passer.
+ */
 
 /**
  * L'audit ne tournait qu'en français, et le contraste comme le nom accessible

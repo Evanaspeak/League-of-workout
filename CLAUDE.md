@@ -582,6 +582,28 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### L'audit d'accessibilité regardait neuf pages sur quinze
+Cinq pages publiques n'avaient jamais été auditées, et ce ne sont pas les moins
+exposées : la liste d'attente et le calculateur existent pour être trouvés par
+quelqu'un qui n'a pas de compte, la récupération sert à celui qui n'entre plus,
+et la connexion de l'application desktop est le premier écran qu'on y voit. Un
+audit qui ne regarde que les pages qu'on a sous la main n'audite que celles-là.
+
+`scripts/accessibilite.mjs` en couvre quinze depuis — `/waitlist`,
+`/recuperation`, `/recuperation/valider`, `/calculateur`,
+`/calculateur/league-of-legends`, `/connexion-app` en plus des neuf d'avant —
+soit **90 passes** (quinze pages, six langues) au lieu de 54. **0 constat**,
+aucune page laissée de côté.
+
+`/calculateur/<jeu>` figure par un exemplaire : les seize pages sortent du même
+gabarit. `/obs/<jeton>` reste dehors avec sa raison écrite dans le script —
+c'est une source de diffusion lue par un logiciel de streaming, sans
+navigation, sans formulaire et sans lecteur d'écran en face d'elle.
+
+Zéro constat sur des pages jamais regardées demandait vérification : un
+contraste de 1,21 posé volontairement sur `/waitlist` est bien remonté, avec
+son ratio, sa taille et son texte. L'outil sait échouer.
+
 ### Ce que les pages publiques emportaient pour rien
 La mise en page racine montait vingt composants clients sur **chaque** page.
 Six ne peuvent rien faire sans l'application Windows (`window.electronLOL`),
