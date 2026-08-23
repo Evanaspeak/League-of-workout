@@ -12,6 +12,7 @@ import {
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
 import { SimulateurDette } from "@/components/SimulateurDette";
+import { SourceObs } from "@/components/SourceObs";
 import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageJeux } from "@/components/ReglageJeux";
 import { Icone } from "@/components/Icone";
@@ -506,6 +507,10 @@ export default function SettingsPage() {
       {/* Comprendre le barème sans avoir à perdre une partie. Il vit dans
           « Ton effort » : c'est là qu'on règle ce qui le fait varier. */}
       {rubrique === "effort" && <SimulateurDette />}
+
+      {/* Le compteur pour le stream vit avec les jeux : c'est en jouant qu'on
+          diffuse, et c'est là qu'on va le chercher. */}
+      {rubrique === "jeux" && <SourceObs />}
 
       {rubrique === "jeux" && (
       <div className="lol-panel p-5 space-y-4">

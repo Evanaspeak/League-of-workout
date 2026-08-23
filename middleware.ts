@@ -44,6 +44,10 @@ const PUBLIC_PREFIXES = [
   // connexion est le pire de tous, et c'est justement celui qu'une session
   // exigée rendrait impossible à remonter.
   "/api/signalement",
+  // La source de diffusion : un logiciel comme OBS n'a ni cookie ni session,
+  // et l'adresse elle-même est le laissez-passer.
+  "/obs",
+  "/api/obs/",
 ];
 
 export default auth((req) => {
