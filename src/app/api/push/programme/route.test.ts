@@ -1,6 +1,8 @@
 import { requete } from "@/test/api";
 
-jest.mock("@/lib/prisma", () => ({ prisma: { user: { findMany: jest.fn() } } }));
+jest.mock("@/lib/prisma", () => ({
+  prisma: { user: { findMany: jest.fn(), update: jest.fn() } },
+}));
 jest.mock("@/lib/push", () => ({ notifier: jest.fn().mockResolvedValue(1) }));
 jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
 
@@ -9,7 +11,20 @@ import { prisma } from "@/lib/prisma";
 import { notifier } from "@/lib/push";
 import { appliquerRatios, RATIOS_DEFAUT } from "@/lib/exercices";
 
-const user = prisma.user as unknown as { findMany: jest.Mock };
+const user = prisma.user as unknown as { findMany: jest.Mock; update: jest.Mock };
+
+/**
+ * La route interroge la base deux fois : une pour le rappel du matin, une pour
+ * la relance des absents. Les deux passent par `findMany` sur le même modèle,
+ * et une doublure unique servirait les mêmes lignes aux deux — la seconde
+ * requête recevrait alors des comptes sans leurs parties. On les distingue par
+ * ce qu'elles demandent, ce qui est aussi la seule façon de vérifier qu'elles
+ * demandent bien deux choses différentes.
+ */
+function repondre({ matin = [] as unknown[], absents = [] as unknown[] } = {}) {
+  user.findMany.mockImplementation(async (args: { select?: { games?: unknown } }) =>
+    args?.select?.games ? absents : matin);
+}
 const envoi = notifier as jest.Mock;
 
 const SECRET = "un-secret-de-test";
@@ -47,7 +62,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   appliquerRatios(RATIOS_DEFAUT);
   process.env.RAPPEL_SECRET = SECRET;
-  user.findMany.mockResolvedValue([compte()]);
+  repondre({ matin: [compte()] });
+  user.update.mockResolvedValue({});
   envoi.mockResolvedValue(1);
 });
 
@@ -77,20 +93,20 @@ describe("choix des comptes", () => {
   it("envoie à qui est au matin chez lui", async () => {
     const r = await appeler(SECRET);
     expect(envoi).toHaveBeenCalledTimes(1);
-    expect(await r.json()).toEqual({ examines: 1, envoyes: 1 });
+    expect(await r.json()).toEqual({ examines: 1, envoyes: 1, relances: 0 });
   });
 
   it("ne réveille personne ailleurs dans le monde", async () => {
     // C'est tout l'objet du fuseau : sans lui, « le matin » en UTC est le
     // milieu de la nuit pour une partie des comptes.
-    user.findMany.mockResolvedValue([compte({ fuseau: AILLEURS })]);
+    repondre({ matin: [compte({ fuseau: AILLEURS })] });
     await appeler(SECRET);
     expect(envoi).not.toHaveBeenCalled();
   });
 
   it("laisse tranquille une dette minuscule", async () => {
     // Une poignée de secondes d'effort ne justifie pas une notification.
-    user.findMany.mockResolvedValue([compte({ dettePointsDus: 1 })]);
+    repondre({ matin: [compte({ dettePointsDus: 1 })] });
     await appeler(SECRET);
     expect(envoi).not.toHaveBeenCalled();
     // Le seuil est bien celui qu'on croit : 1 point de boxe fait 7 s.
@@ -99,7 +115,7 @@ describe("choix des comptes", () => {
 
   it("ignore un compte dont aucun exercice ne s'accumule", async () => {
     // Les pompes se font dans la foulée : il n'y a rien en attente.
-    user.findMany.mockResolvedValue([compte({ exercices: ["pompes"] })]);
+    repondre({ matin: [compte({ exercices: ["pompes"] })] });
     await appeler(SECRET);
     expect(envoi).not.toHaveBeenCalled();
   });
@@ -110,15 +126,75 @@ describe("robustesse", () => {
     // Une boucle sur tous les comptes : le premier abonnement périmé les
     // arrêterait tous.
     envoi.mockRejectedValueOnce(new Error("abonnement mort")).mockResolvedValue(1);
-    user.findMany.mockResolvedValue([compte({ id: "u1" }), compte({ id: "u2" })]);
+    repondre({ matin: [compte({ id: "u1" }), compte({ id: "u2" })] });
     const r = await appeler(SECRET);
     expect(envoi).toHaveBeenCalledTimes(2);
     expect((await r.json()).envoyes).toBe(1);
   });
 
   it("écrit dans la langue du compte", async () => {
-    user.findMany.mockResolvedValue([compte({ langue: "ja" })]);
+    repondre({ matin: [compte({ langue: "ja" })] });
     await appeler(SECRET);
     expect(envoi.mock.calls[0][1].titre).toMatch(/[぀-ヿ一-鿿]/);
+  });
+});
+
+/**
+ * La relance des absents.
+ *
+ * Elle ne compte pas la dette : quelqu'un qui n'a pas joué depuis deux
+ * semaines n'a rien accumulé. Ce qu'on lui dit, c'est le nombre de jours.
+ */
+describe("relance des absents", () => {
+  const absent = (jours: number, champs: Record<string, unknown> = {}) => ({
+    id: "a1", langue: "fr", fuseau: AU_MATIN, relanceLe: null,
+    games: [{ createdAt: new Date(Date.now() - jours * 24 * 3600_000) }],
+    ...champs,
+  });
+
+  it("part après deux semaines sans une partie", async () => {
+    repondre({ absents: [absent(20)] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).relances).toBe(1);
+    expect(envoi.mock.calls[0][1].tag).toBe("wow-relance");
+    expect(envoi.mock.calls[0][1].titre).toContain("20");
+  });
+
+  it("se tait sur quelqu'un qui joue encore", async () => {
+    repondre({ absents: [absent(3)] });
+    await appeler(SECRET);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("ne redit rien à quelqu'un déjà relancé", async () => {
+    repondre({ absents: [absent(40, { relanceLe: new Date(Date.now() - 2 * 24 * 3600_000) })] });
+    await appeler(SECRET);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("ne relance pas un compte qui n'a jamais joué", async () => {
+    // Il n'est pas parti, il n'est jamais arrivé.
+    repondre({ absents: [absent(40, { games: [] })] });
+    await appeler(SECRET);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("marque la date même quand personne n'a reçu la notification", async () => {
+    // Sans abonnement, réessayer chaque jour ne changerait rien et referait
+    // le tour de la base toutes les vingt-quatre heures.
+    envoi.mockResolvedValue(0);
+    repondre({ absents: [absent(20)] });
+    await appeler(SECRET);
+    expect(user.update).toHaveBeenCalledTimes(1);
+    expect(user.update.mock.calls[0][0].where).toEqual({ id: "a1" });
+  });
+
+  it("lit la date d'enregistrement, pas celle de la partie", async () => {
+    // Une partie ajoutée à la main se date dans le passé : lire `date`
+    // ferait paraître absent quelqu'un qui vient de rattraper sa soirée.
+    await appeler(SECRET);
+    const requeteAbsents = user.findMany.mock.calls.find(
+      (c: [{ select?: { games?: unknown } }]) => c[0]?.select?.games);
+    expect(requeteAbsents[0].select.games.orderBy).toEqual({ createdAt: "desc" });
   });
 });
