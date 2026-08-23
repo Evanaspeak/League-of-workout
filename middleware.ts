@@ -36,6 +36,10 @@ const PUBLIC_PREFIXES = [
   // c'est l'authentification qui est tombée — c'est-à-dire le jour où elle
   // servirait.
   "/api/sante",
+  // Signaler un problème sans être connecté : un souci sur l'écran de
+  // connexion est le pire de tous, et c'est justement celui qu'une session
+  // exigée rendrait impossible à remonter.
+  "/api/signalement",
 ];
 
 export default auth((req) => {

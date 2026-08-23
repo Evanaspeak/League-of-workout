@@ -1,5 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { SignalerProbleme } from "@/components/SignalerProbleme";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { layout } from "@/lib/i18n/dictionaries/layout";
 import { Wordmark } from "./Wordmark";
@@ -35,6 +36,10 @@ export function Footer() {
           <a href="/cgu" style={linkStyle}>{t.footerCgu}</a>
           <a href="/confidentialite" style={linkStyle}>{t.footerConfidentialite}</a>
           <a href="/telechargement" style={linkStyle}>{t.footerTelecharger}</a>
+          {/* Au pied de chaque page, y compris publiques : un problème sur
+              l'écran de connexion est celui qu'on a le plus besoin de
+              connaître, et c'est le seul qu'une session exigée cacherait. */}
+          <SignalerProbleme />
         </div>
         <div style={{
           maxWidth: 640, margin: "0 auto", lineHeight: 1.6,

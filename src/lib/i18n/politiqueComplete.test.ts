@@ -60,6 +60,10 @@ const ATTENDU: Record<string, RegExp> = {
   // acceptée ou refusée, et l'article 7.1 impose de pouvoir la prouver.
   santeConsentiLe: /réponse au consentement santé/i,
   santeRefuseLe: /réponse au consentement santé/i,
+  // Une relation, mais qui pointe sur des données que la personne nous a
+  // données : le message et son contexte. Elle se décrit donc, elle ne
+  // s'exempte pas.
+  signalements: /signalement de problème/i,
 };
 
 /** Les champs du modèle User, lus dans le schéma. */

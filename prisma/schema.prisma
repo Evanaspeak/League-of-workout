@@ -64,6 +64,8 @@ model User {
   santeConsentiLe DateTime?
   santeRefuseLe   DateTime?
 
+  signalements Signalement[]
+
   // Exercices choisis pour payer sa dette (pompes | squats | boxe). Quand
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
   // l'autre. `exercice` (singulier) est l'ancienne version, conservée en base
@@ -257,6 +259,44 @@ model MasteryConfig {
 model SystemConfig {
   key   String @id
   value String // JSON
+}
+
+// ─── Signalements ───────────────────────────────────────────────────────────
+
+/**
+ * Un problème signalé depuis l'application.
+ *
+ * Jusqu'ici un bug se signalait par courriel, donc ne se signalait pas. Et le
+ * peu qui arrivait manquait de tout : quelle page, quelle version, quel
+ * navigateur, connecté ou non. On répondait par des questions.
+ *
+ * `userId` est facultatif — sans quoi un problème sur l'écran de connexion,
+ * c'est-à-dire le pire de tous, resterait le seul qu'on ne peut pas signaler.
+ */
+model Signalement {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /** Ce que la personne a écrit. */
+  message String
+
+  /** Page d'où le signalement part, sans paramètres de requête. */
+  page String
+
+  /**
+   * Contexte joint automatiquement, en JSON : version de l'application,
+   * bureau ou navigateur, langue, taille d'écran. Jamais l'adresse complète
+   * ni le contenu de la page — un signalement n'est pas une capture.
+   */
+  contexte String
+
+  /** ouvert | traite */
+  statut String @default("ouvert")
+
+  @@index([statut, createdAt])
 }
 
 // ─── Candidatures bêta ───────────────────────────────────────────────────────
