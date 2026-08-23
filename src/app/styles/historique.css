@@ -21,7 +21,14 @@
 
 .historique-tableau { display: none; }
 
-@media (min-width: 760px) {
+/* Le seuil est celui où le tableau TIENT, pas celui où il commencerait à
+   entrer. Il réclame 760 px de contenu, et la page lui en retire 32 de marges :
+   posé à 760, il paraissait dès 760 px de fenêtre et se remettait aussitôt à
+   défiler — entre 760 et 792, on retrouvait exactement le défaut qu'on venait
+   de corriger, dans une bande assez étroite pour ne jamais tomber dessus en
+   testant. 820 laisse de la marge pour une barre de défilement ou une marge
+   qui changerait. */
+@media (min-width: 820px) {
   .historique-cartes { display: none; }
   .historique-tableau { display: block; }
 }

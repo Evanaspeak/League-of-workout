@@ -582,6 +582,54 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### L'historique défilait encore, dans une bande de trente-deux pixels
+Le seuil posé en V232 était celui où le tableau **commence à entrer**, pas
+celui où il **tient** : il réclame 760 px et la page lui en retire 32 de
+marges. Entre 760 et 792 px de fenêtre, il paraissait donc et se remettait
+aussitôt à défiler — exactement le défaut qu'on venait de corriger, dans une
+bande assez étroite pour ne jamais tomber dessus en testant à la main. C'est
+aussi, précisément, la largeur d'une tablette en portrait. Le seuil passe à
+820 px.
+
+**Le test qui aurait dû l'attraper mesurait autre chose.** Le helper écrivait
+`largeur < 760 ? IPHONE : { viewport: { width: largeur } }`, et `IPHONE` impose
+son propre gabarit de 390 px : demander 768 rendait une page de 390. Les
+contrôles ajoutés autour du seuil mesuraient donc une largeur qu'ils n'avaient
+jamais demandée, et le premier sabotage est passé au vert. La largeur demandée
+est maintenant celle qu'on obtient ; le tactile reste réservé aux vraies
+largeurs de téléphone. Sabotage refait après correction : le test tombe.
+
+Trouvé par un balayage de douze pages sur cinq largeurs et deux langues,
+cherchant les conteneurs réellement défilants. Les trois autres constats —
+« texte coupé » sur le tableau de bord — étaient des **faux positifs** : ce
+sont les libellés `lecture-ecran` destinés aux lecteurs d'écran, larges d'un
+pixel avec `overflow: hidden`, donc débordants par construction. Il valait
+mieux le vérifier que « corriger ».
+
+### Découper les fichiers les plus longs
+`settings/page.tsx` faisait 960 lignes. La rubrique « Avancé » — les
+coefficients du barème — en occupait 166 sans rien partager avec le reste :
+elle ne s'affiche que pour un administrateur, et portait à elle seule cinq
+états dont personne d'autre ne se servait. Elle vit dans
+`src/app/settings/ReglagesAvances.tsx` ; la page tombe à 780 lignes.
+
+Les poids par rôle et les paramètres de maîtrise sont lus **par le panneau**
+plutôt que passés par la page : celle-ci les chargeait pour tout le monde, y
+compris pour les comptes qui ne verront jamais ce panneau. Les paliers, eux,
+restent partagés — la page les lit pour afficher le niveau du compte, et les
+modifier dans le panneau doit continuer de mettre ce niveau à jour. Un état par
+côté ferait diverger les deux affichages dès la première correction.
+
+Un remaniement qui ne doit rien changer à l'écran se prouve, il ne se relit
+pas : `scripts/comparer-rendu.mjs` capture avant, puis après. Vingt-quatre
+captures, une seule différence — `768_history`, c'est-à-dire le seuil corrigé
+juste au-dessus. `/settings` est identique au pixel aux trois largeurs.
+
+Les dictionnaires de langue restent longs (1516 lignes pour `landing.ts`) et le
+resteront : six langues d'un même écran dans un même fichier, c'est ce qui rend
+une clé manquante visible. Les découper par langue rendrait les tests de parité
+plus difficiles à écrire pour un gain nul.
+
 ### Audit SEO des pages publiques — treize constats, douze corrigés
 Le calculateur par jeu est le seul canal d'acquisition qui travaille sans qu'on
 s'en occupe. Ce sont exactement les pages où les défauts trouvés se payaient.

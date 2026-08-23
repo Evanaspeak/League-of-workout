@@ -14,12 +14,6 @@ import { purgerTentatives } from "./limiteur";
  * défaut n'était donc pas un défaut de mise en page, mais de choix de
  * présentation, et ça ne se voit qu'en regardant.
  */
-const IPHONE = {
-  viewport: { width: 390, height: 844 },
-  hasTouch: true,
-  isMobile: true,
-};
-
 test.describe.configure({ mode: "serial" });
 
 const marque = Date.now().toString(36);
@@ -89,7 +83,18 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
 async function historique(browser: Browser, largeur: number) {
   const ctx = await browser.newContext({
     storageState: etat,
-    ...(largeur < 760 ? IPHONE : { viewport: { width: largeur, height: 900 } }),
+    /**
+     * La largeur demandée est celle qu'on obtient.
+     *
+     * La version précédente écrivait `largeur < 760 ? IPHONE : …`, et IPHONE
+     * impose son propre gabarit de 390 px : demander 768 rendait donc une page
+     * de 390. Les contrôles ajoutés autour du seuil mesuraient une largeur
+     * qu'ils n'avaient jamais demandée — et le sabotage du seuil passait au
+     * vert. Le tactile se garde pour les vraies largeurs de téléphone, la
+     * largeur, elle, est toujours celle qu'on a dite.
+     */
+    viewport: { width: largeur, height: largeur < 500 ? 844 : 900 },
+    ...(largeur < 500 ? { hasTouch: true, isMobile: true } : {}),
   });
   const page = await ctx.newPage();
   await page.addInitScript((u) => {
@@ -155,6 +160,43 @@ test("toutes les commandes se touchent au doigt", async ({ browser }) => {
       })
       .filter((b) => b.l < 44 || b.h < 44));
   expect(petites).toEqual([]);
+  await ctx.close();
+});
+
+test("juste sous le seuil, ce sont encore des cartes qui ne défilent pas", async ({ browser }) => {
+  /**
+   * Le seuil doit être celui où le tableau TIENT, pas celui où il entre.
+   *
+   * Il réclame 760 px et la page lui retire 32 de marges : posé à 760, il
+   * paraissait dès 760 px de fenêtre et se remettait à défiler jusqu'à 792.
+   * Une bande de trente-deux pixels, assez étroite pour qu'on n'y tombe
+   * jamais en testant à la main — et c'est précisément la largeur d'une
+   * tablette en portrait.
+   */
+  for (const largeur of [768, 800, 819]) {
+    const { ctx, page } = await historique(browser, largeur);
+    await expect(page.locator(".historique-tableau"), String(largeur)).toBeHidden();
+    const quiDefile = await page.evaluate(() =>
+      [...document.querySelectorAll("*")]
+        .filter((e) => {
+          const o = getComputedStyle(e).overflowX;
+          return (o === "auto" || o === "scroll")
+            && e.scrollWidth > e.clientWidth + 1 && e.clientWidth > 0;
+        })
+        .map((e) => e.className?.toString?.() || e.tagName));
+    expect(quiDefile, String(largeur)).toEqual([]);
+    await ctx.close();
+  }
+});
+
+test("dès que le tableau tient, il ne défile pas non plus", async ({ browser }) => {
+  const { ctx, page } = await historique(browser, 820);
+  await expect(page.locator(".historique-tableau")).toBeVisible();
+  const defile = await page.evaluate(() => {
+    const t = document.querySelector(".historique-tableau");
+    return t ? t.scrollWidth > t.clientWidth + 1 : false;
+  });
+  expect(defile).toBe(false);
   await ctx.close();
 });
 
