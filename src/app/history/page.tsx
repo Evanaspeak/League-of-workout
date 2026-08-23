@@ -179,6 +179,40 @@ export default function HistoryPage() {
           + (afficherPlacement ? 1 : 0) // + résultat
         : 1) // durée, ou détail
     + 4; // niveau, dette, cumul, actions
+  /**
+   * Les lignes préparées une seule fois, pour les deux présentations.
+   *
+   * Le tableau sert sur grand écran ; sous 760 px, il forçait un défilement
+   * horizontal et on ne voyait jamais une activité entière — la date d'un
+   * côté, le résultat de l'autre, le KDA coupé au milieu. Les cartes montrent
+   * la même chose d'un seul tenant. Les deux lisent ce tableau-ci, pour qu'une
+   * correction faite d'un côté ne manque pas de l'autre.
+   */
+  const lignes = (() => {
+    // Cumul tenu SÉPARÉMENT par exercice : chaque ligne affiche le total de
+    // son propre exercice à cet instant. Mélanger des répétitions et des
+    // secondes n'aurait aucun sens.
+    const cumulMap = new Map<string, Record<string, number>>();
+    const running: Record<string, number> = {};
+    for (let i = filtered.length - 1; i >= 0; i--) {
+      const parts = ventilationDe(filtered[i]);
+      for (const [ex, pts] of Object.entries(parts)) {
+        running[ex] = (running[ex] ?? 0) + (pts ?? 0);
+      }
+      // On fige l'état des compteurs concernés par cette ligne.
+      const instantane: Record<string, number> = {};
+      for (const ex of Object.keys(parts)) instantane[ex] = running[ex];
+      cumulMap.set(filtered[i].id, instantane);
+    }
+    return filtered.map((g) => ({
+      g,
+      cumul: cumulMap.get(g.id) ?? {},
+      parts: Object.entries(ventilationDe(g))
+        .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 })),
+      type: typeDeLaLigne(g),
+    }));
+  })();
+
   // Ventilation du total affiché : une entrée par exercice réellement joué.
   const totauxParExo = filtered.reduce<Record<string, number>>((acc, g) => {
     for (const [ex, pts] of Object.entries(ventilationDe(g))) {
@@ -285,7 +319,125 @@ export default function HistoryPage() {
                         .catch(() => {});
                     }}
                   />
-                <div className="overflow-x-auto">
+                {/* Sur téléphone : une carte par activité, tout tient à
+                    l'écran. Le tableau ci-dessous ne s'affiche qu'à partir de
+                    760 px. Les deux sont rendus, et c'est la feuille de styles
+                    qui choisit : un basculement en JavaScript dépend de la
+                    largeur, que le serveur ne connaît pas, et la première
+                    peinture montrerait alors la mauvaise vue. */}
+                <div className="historique-cartes">
+                  {lignes.map(({ g, cumul, parts, type }) => {
+                    const depliee = ligneDepliee === g.id;
+                    return (
+                      <article key={g.id} className="carte-activite lol-panel">
+                        <div className="carte-activite-haut">
+                          {g.champion && <ChampionIcon name={g.champion} size={30} />}
+                          <div className="carte-activite-titre">
+                            <div className="carte-activite-nom">
+                              <span>{g.champion ?? nomDuJeu(g)}</span>
+                              {type === "temps"
+                                ? <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span>
+                                : <ResultatCell result={g.result} t={t} />}
+                            </div>
+
+                            {editingDateId === g.id ? (
+                              <div className="carte-activite-edition">
+                                <input
+                                  type="datetime-local"
+                                  className="lol-input"
+                                  max={maintenantLocal()}
+                                  value={editDateVal}
+                                  onChange={(e) => setEditDateVal(e.target.value)}
+                                />
+                                <button onClick={() => handleEditDate(g.id)} aria-label={t.editDateTitle} style={{ color: "#2FD98A" }}><Icone nom="coche" taille={15} /></button>
+                                <button onClick={() => setEditingDateId(null)} aria-label={t.detailToggleTitle} style={{ color: "#e05555" }}><Icone nom="croix" taille={15} /></button>
+                              </div>
+                            ) : (
+                              <div className="carte-activite-precisions">
+                                <span>
+                                  {[
+                                    afficherColonneJeu && g.champion ? nomDuJeu(g) : null,
+                                    g.role && g.role !== "—" ? g.role : null,
+                                    g.placement ? t.placementAffiche(g.placement, g.joueurs ?? 0) : null,
+                                    type !== "temps" && !g.placement && (g.kills > 0 || g.deaths > 0 || g.assists > 0)
+                                      ? `${g.kills}/${g.deaths}/${g.assists}` : null,
+                                    new Date(g.date).toLocaleDateString(dateLocale),
+                                  ].filter(Boolean).join(" · ")}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    const d = new Date(g.date);
+                                    const offset = d.getTimezoneOffset() * 60000;
+                                    setEditDateVal(new Date(d.getTime() - offset).toISOString().slice(0, 16));
+                                    setEditingDateId(g.id);
+                                  }}
+                                  title={t.editDateTitle}
+                                  aria-label={t.editDateTitle}
+                                  className="carte-activite-crayon"
+                                ><Icone nom="crayon" taille={13} /></button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="carte-activite-pied">
+                          <div className="carte-activite-cout">
+                            {parts.map((part) => (
+                              <div key={part.id}>
+                                <span className="gold-text" style={{ fontSize: "1.05rem" }}>
+                                  {formaterCompact(part.pts, part.id)}
+                                </span>
+                                <span style={{ marginLeft: 5, fontSize: "0.72rem", color: "var(--steel)" }}>
+                                  {minuscule(nomsExo[part.id])}
+                                </span>
+                                {part.id === "pompes" && g.variante === "genoux" && (
+                                  <span className="carte-activite-variante">{tExo.varianteBadge}</span>
+                                )}
+                                <span style={{ marginLeft: 8, fontSize: "0.72rem", color: "var(--faint)" }}>
+                                  {minuscule(t.tableCumul)} {formaterCompact(cumul[part.id] ?? 0, part.id)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="carte-activite-actions">
+                            <button
+                              onClick={() => setLigneDepliee(depliee ? null : g.id)}
+                              title={t.detailToggleTitle}
+                              aria-label={t.detailToggleTitle}
+                              aria-expanded={depliee}
+                              style={{ color: depliee ? "var(--amber)" : "rgba(152,162,176,0.6)" }}
+                            >{depliee ? "▲" : "▼"}</button>
+                            <button
+                              onClick={() => handleDelete(g.id)}
+                              disabled={deletingId === g.id}
+                              title={t.deleteGameTitle}
+                              aria-label={t.deleteGameTitle}
+                              style={{ color: "rgba(220,80,80,0.8)" }}
+                            >{deletingId === g.id ? "…" : <Icone nom="croix" taille={14} />}</button>
+                          </div>
+                        </div>
+
+                        {depliee && (
+                          <div className="carte-activite-detail">
+                            {type === "temps" ? (
+                              <span>{t.detailDuree} : <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
+                            ) : (
+                              <>
+                                <span>{t.detailScore} : <span className="mono-num" style={{ color: "var(--bone)" }}>{g.scoreCalcule}</span></span>
+                                <span>{t.detailMalus} : <span className="mono-num loss-text">+{g.malusCalcule}</span></span>
+                                <span>{t.detailMastery} : <span className="mono-num blue-text">+{Math.round(g.surchargeCalculee * 100)}%</span></span>
+                              </>
+                            )}
+                            <span>{t.tableLevel} : <span className="mono-num gold-text">{g.niveauCalcule}</span></span>
+                            {!afficherColonneJeu && <span>{t.tableJeu} : <span style={{ color: "var(--bone)" }}>{nomDuJeu(g)}</span></span>}
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+
+                <div className="historique-tableau overflow-x-auto">
                   {/* Un lecteur d'écran annonce « tableau » et le nombre de
                       colonnes ; sans nom, il ne dit pas de quoi il parle. Le nom
                       passe par `aria-label` et non par une balise `caption` :
@@ -318,27 +470,7 @@ export default function HistoryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {(() => {
-                        // Cumul tenu SÉPARÉMENT par exercice : chaque ligne affiche
-                        // le total de son propre exercice à cet instant. Mélanger des
-                        // répétitions et des secondes n'aurait aucun sens.
-                        const cumulMap = new Map<string, Record<string, number>>();
-                        const running: Record<string, number> = {};
-                        for (let i = filtered.length - 1; i >= 0; i--) {
-                          const parts = ventilationDe(filtered[i]);
-                          for (const [ex, pts] of Object.entries(parts)) {
-                            running[ex] = (running[ex] ?? 0) + (pts ?? 0);
-                          }
-                          // On fige l'état des compteurs concernés par cette ligne.
-                          const instantane: Record<string, number> = {};
-                          for (const ex of Object.keys(parts)) instantane[ex] = running[ex];
-                          cumulMap.set(filtered[i].id, instantane);
-                        }
-                        return filtered.map((g) => {
-                          const cumul = cumulMap.get(g.id) ?? {};
-                          const parts = Object.entries(ventilationDe(g))
-                            .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 }));
-                          const type = typeDeLaLigne(g);
+                      {lignes.map(({ g, cumul, parts, type }) => {
                           const depliee = ligneDepliee === g.id;
                           const fond = { background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" };
                           return (
@@ -549,8 +681,7 @@ export default function HistoryPage() {
                             )}
                             </Fragment>
                           );
-                        });
-                      })()}
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -125,6 +125,24 @@ desktop/              # App Electron Windows
   - Calendrier : date picker → détail horaire via `/api/dashboard/daily`
 
 ### Historique (history/page.tsx)
+
+**Sur téléphone, ce sont des cartes, pas un tableau.** Le tableau compte
+jusqu'à neuf colonnes et réclame 760 px ; en dessous il défilait
+horizontalement, et on ne voyait jamais une activité entière — la date d'un
+côté, le résultat de l'autre, le KDA coupé au milieu d'un chiffre. Les deux
+présentations sont rendues et c'est `historique.css` qui choisit : un
+basculement en JavaScript dépend de la largeur, que le rendu serveur ne
+connaît pas, et la première peinture montrerait la mauvaise vue. Les deux
+lisent le même tableau `lignes`, préparé une seule fois, pour qu'une
+correction faite d'un côté ne manque pas de l'autre.
+
+Ce défaut n'était attrapé par rien. Les tests de langue refusent qu'une PAGE
+déborde, et celle-ci ne débordait pas : c'est un conteneur intérieur qui
+défilait, ce qui est même la bonne façon de faire déborder un tableau.
+`e2e/historique.spec.ts` regarde maintenant les vrais conteneurs défilants —
+ceux dont `overflow-x` vaut `auto` ou `scroll` — et non tout élément dont le
+contenu dépasse : la première version signalait les libellés coupés par une
+ellipse, qui débordent par construction et ne se font jamais défiler.
 - Vue "Parties" : 20 dernières Riot + quick-add + ARAM du chaos manuel
 - Vue "Pompes" : tableau filtrable/triable avec édition de date inline (✎ → datetime-local)
 - Formulaire ajout manuel :
@@ -329,12 +347,13 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 64 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 69 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
 puis les trois écrans connectés — tableau de bord, historique, réglages — dans
 les six langues, sur un compte qu'il ouvre lui-même, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
-de secours hors ligne.
+de secours hors ligne, et `e2e/historique.spec.ts` regarde l'historique sur un
+écran de téléphone.
 
 Le parcours complet a échoué en CI dès l'arrivée de la demande de
 consentement santé : elle est modale, elle recouvre la modale d'accueil, et
