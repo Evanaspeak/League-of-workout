@@ -1,0 +1,124 @@
+# Sauvegarde de la base, et vérification qu'elle se restaure.
+#
+# Le plan gratuit Neon ne garantit aucune sauvegarde. Aujourd'hui, une fausse
+# manœuvre ou une suppression de projet efface tout sans recours, et une seule
+# personne a accès au compte.
+#
+# Ce qui compte ici n'est pas le fichier produit : c'est la restauration. Une
+# sauvegarde que personne n'a jamais restaurée n'est pas une sauvegarde, c'est
+# une croyance. Chaque exécution restaure donc le fichier dans un PostgreSQL
+# neuf et compare le nombre de lignes, table par table, avec la source. Sans
+# ce contrôle, on découvrirait le jour de l'accident que les dumps étaient
+# vides depuis six mois.
+name: Sauvegarde
+
+on:
+  schedule:
+    # 3 h 17 UTC : à l'écart des heures rondes, où tout le monde planifie.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  sauvegarder:
+    runs-on: ubuntu-latest
+    services:
+      restauration:
+        image: postgres:16
+        env:
+          POSTGRES_USER: verif
+          POSTGRES_PASSWORD: verif
+          POSTGRES_DB: verif
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SOURCE: ${{ secrets.DATABASE_URL }}
+      CIBLE: postgresql://verif:verif@localhost:5432/verif
+      PASSE: ${{ secrets.SAUVEGARDE_PASSPHRASE }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refuser de tourner sans secret
+        run: |
+          set -euo pipefail
+          # Un travail qui « réussit » sans rien sauvegarder est pire que pas
+          # de travail du tout : il rassure.
+          test -n "$SOURCE" || { echo "::error::Secret DATABASE_URL absent"; exit 1; }
+          test -n "$PASSE"  || { echo "::error::Secret SAUVEGARDE_PASSPHRASE absent"; exit 1; }
+
+      # Les outils client doivent avoir la version du serveur : un pg_dump 14
+      # refuse une base 16.
+      - name: Installer PostgreSQL 16 client
+        run: |
+          set -euo pipefail
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+          sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+
+      - name: Exporter
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sauvegarde
+          # Format « custom » : compressé, et restaurable table par table.
+          # `--no-owner` et `--no-privileges` : les rôles de Neon n'existent
+          # pas ailleurs, et une restauration doit pouvoir se faire n'importe où.
+          pg_dump --format=custom --no-owner --no-privileges \
+            --file=/tmp/sauvegarde/base.dump "$SOURCE"
+          ls -l /tmp/sauvegarde/base.dump
+
+      - name: Restaurer dans une base neuve
+        run: |
+          set -euo pipefail
+          pg_restore --dbname="$CIBLE" --no-owner --no-privileges \
+            --exit-on-error /tmp/sauvegarde/base.dump
+
+      - name: Comparer la source et la restauration, table par table
+        run: |
+          set -euo pipefail
+          # Le comptage se fait sur les tables réellement présentes à la
+          # source : coder la liste en dur la ferait diverger du schéma au
+          # premier modèle ajouté, sans que rien ne le signale.
+          psql "$SOURCE" -At -c "
+            SELECT tablename FROM pg_tables
+            WHERE schemaname = 'public' ORDER BY tablename;" > /tmp/tables.txt
+
+          test -s /tmp/tables.txt || { echo "::error::Aucune table à la source"; exit 1; }
+
+          ecarts=0
+          while read -r table; do
+            a=$(psql "$SOURCE" -At -c "SELECT count(*) FROM \"$table\";")
+            b=$(psql "$CIBLE"  -At -c "SELECT count(*) FROM \"$table\";")
+            if [ "$a" != "$b" ]; then
+              echo "::error::$table : $a ligne(s) à la source, $b après restauration"
+              ecarts=$((ecarts + 1))
+            else
+              echo "$table : $a"
+            fi
+          done < /tmp/tables.txt
+
+          test "$ecarts" -eq 0 || exit 1
+
+      - name: Chiffrer
+        run: |
+          set -euo pipefail
+          # La sauvegarde contient des adresses, des empreintes de mot de passe
+          # et des données de santé. Elle ne part pas en clair sur un stockage
+          # que d'autres personnes du dépôt peuvent télécharger.
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+            --passphrase "$PASSE" \
+            --output /tmp/sauvegarde/base.dump.gpg /tmp/sauvegarde/base.dump
+          rm -f /tmp/sauvegarde/base.dump
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: base-${{ github.run_id }}
+          path: /tmp/sauvegarde/base.dump.gpg
+          # Trois mois : au-delà, une sauvegarde d'un schéma qui a changé
+          # deux fois ne se restaure plus utilement.
+          retention-days: 90
+          if-no-files-found: error
