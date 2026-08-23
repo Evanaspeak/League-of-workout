@@ -100,6 +100,26 @@ test("propose à la troisième, avec le geste à faire", async ({ browser }) => 
   await ctx.close();
 });
 
+test("ne recouvre pas le compteur de dette", async ({ browser }) => {
+  // Le rail se replie en un bouton en bas à droite sous 1180 px, exactement là
+  // où la bannière se posait. Elle cachait donc ce que l'application a de plus
+  // important à montrer.
+  const { ctx, page } = await surIPhone(browser, { [CLE_VISITES]: "2" });
+  const banniere = page.getByRole("dialog", { name: /écran d.accueil/i });
+  await expect(banniere).toBeVisible();
+
+  const rail = page.locator(".rail-bascule").first();
+  if (await rail.count() > 0 && await rail.isVisible()) {
+    const a = await banniere.boundingBox();
+    const b = await rail.boundingBox();
+    const seChevauchent = !!a && !!b
+      && a.x < b.x + b.width && b.x < a.x + a.width
+      && a.y < b.y + b.height && b.y < a.y + a.height;
+    expect({ banniere: a, rail: b, seChevauchent }).toMatchObject({ seChevauchent: false });
+  }
+  await ctx.close();
+});
+
 test("ne repropose plus après un refus", async ({ browser }) => {
   const { ctx, page } = await surIPhone(browser, { [CLE_VISITES]: "9", [CLE_REFUS]: "1" });
   await expect(banniere(page)).toBeHidden();
