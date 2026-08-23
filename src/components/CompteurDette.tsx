@@ -8,6 +8,7 @@ import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { notifierSysteme } from "@/lib/notifier";
+import { echauffementConseille } from "@/lib/echauffement";
 
 type Dette = {
   points: number;
@@ -299,6 +300,19 @@ export function CompteurDette({
                   {t.forme[ligne.id]}
                 </p>
               ))}
+              {/* Un simple rappel, quand la séance est assez longue pour que
+                  ça compte. Pas d'étape à franchir, pas de minuteur imposé :
+                  une phrase, qui n'empêche personne de commencer tout de
+                  suite. Une obligation ferait fermer la fenêtre. */}
+              {echauffementConseille(totalRef.current) && (
+                <p style={{
+                  fontSize: "0.74rem", lineHeight: 1.5, margin: "8px 0 0",
+                  paddingTop: 8, borderTop: "1px solid var(--line)",
+                  color: "var(--amber)",
+                }}>
+                  {t.echauffement}
+                </p>
+              )}
               {/* La consigne de prudence accompagne la consigne d'exécution :
                   elle n'a aucun intérêt dans un article de CGU que personne
                   n'ouvre, et tout son intérêt ici. */}

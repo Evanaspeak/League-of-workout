@@ -10,6 +10,7 @@ import {
   dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
+import { toVariante, varianteApplicable } from "@/lib/variantes";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
@@ -108,6 +109,10 @@ export async function POST(req: Request) {
   // `exercice` reste le premier : il porte l'unité d'affichage par défaut.
   const exercice = selection[0];
 
+  // Annotation d'exécution recopiée du compte vers la partie. Elle tombe si
+  // les pompes ne sont pas de l'effort : elle ne qualifie qu'elles.
+  const variante = varianteApplicable(toVariante(user.variantePompes), selection);
+
   /** Ventilation à stocker — nulle quand un seul exercice est concerné. */
   const ventilation = (total: number) =>
     selection.length > 1 ? JSON.stringify(repartirPoints(total, selection)) : null;
@@ -139,6 +144,7 @@ export async function POST(req: Request) {
         pompesCalculees: scoringTemps.pointsFinaux,
         exercice,
         repartition: ventilation(scoringTemps.pointsFinaux),
+        variante,
         jeu,
         typeJeu,
         dureeSec,
@@ -229,6 +235,7 @@ export async function POST(req: Request) {
       // sélection change plus tard.
       exercice,
       repartition: ventilation(scoring.pompesFinales),
+      variante,
       jeu,
       typeJeu,
       placement,
