@@ -6,6 +6,9 @@ jest.mock("@/lib/prisma", () => ({
     user: { findUnique: jest.fn(), update: jest.fn() },
   },
 }));
+// La configuration de barème est semée par la route quand elle manque : ici
+// la base est doublée, il n'y a rien à semer.
+jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { PATCH, DELETE } from "./route";

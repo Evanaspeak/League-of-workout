@@ -9,6 +9,9 @@ jest.mock("@/lib/prisma", () => ({
     masteryConfig: { findFirst: jest.fn() },
   },
 }));
+// La configuration de barème est semée par la route quand elle manque : ici
+// la base est doublée, il n'y a rien à semer.
+jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/rate-limit", () => ({ isRateLimited: jest.fn(), recordAttempt: jest.fn() }));
 jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
@@ -127,6 +130,32 @@ describe("POST /api/games", () => {
     expect(data.typeJeu).toBe("temps");
     expect(data.dureeSec).toBe(3600);
     expect(data.pompesCalculees).toBeGreaterThan(0);
+  });
+
+  /**
+   * Une base neuve, où la configuration de barème n'existe pas encore.
+   *
+   * Elle n'était semée que par `/api/user` : quelqu'un qui enregistre une
+   * partie avant d'avoir ouvert un écran qui lit son compte tombait sur une
+   * erreur 500 — et pas une erreur propre, une pile d'appels. `getLevel` lit
+   * le dernier élément d'une liste triée ; sur une liste vide il rend
+   * `undefined`, et la lecture du seuil qui suit fait tomber la route.
+   *
+   * Trouvé par un test navigateur, en intégration continue, parce qu'un
+   * nouveau fichier de parcours est passé avant les autres dans l'ordre
+   * alphabétique et n'appelait pas `/api/user`. Le défaut existait depuis
+   * longtemps ; il fallait juste que quelque chose arrive dans le bon ordre.
+   */
+  it("sème la configuration quand elle manque", async () => {
+    await post(partie());
+    expect(jest.requireMock("@/lib/seed-defaults").seedDefaults).toHaveBeenCalled();
+  });
+
+  it("rend une erreur lisible plutôt qu'une pile d'appels sans les paliers", async () => {
+    (prisma.levelConfig.findMany as jest.Mock).mockResolvedValue([]);
+    const r = await post(partie());
+    expect(r.status).toBe(500);
+    expect((await corps(r)).error).toBe("Config manquante");
   });
 
   it("refuse un battle royale sans classement", async () => {

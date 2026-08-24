@@ -582,6 +582,40 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Sur une base neuve, la première partie enregistrée tombait
+Trouvé par l'intégration continue, et par accident : `e2e/bilan.spec.ts` passe
+avant les autres dans l'ordre alphabétique, et c'est le seul fichier de
+parcours dont l'ouverture de compte n'appelle pas `/api/user`. Il a donc été le
+premier à enregistrer une partie sur une base fraîchement montée.
+
+```
+TypeError: Cannot read properties of undefined (reading 'seuilGainageSec')
+```
+
+Deux défauts, tous deux anciens, qu'il fallait juste déclencher dans le bon
+ordre :
+
+- **La configuration de barème n'était semée que par `/api/user`.** Sur une base
+  neuve — un environnement qu'on monte, une base de test, une reprise après
+  sinistre — quelqu'un qui enregistre une partie avant d'avoir ouvert un écran
+  qui lit son compte tombait sur une 500. `/api/games` et `/api/games/preview`
+  sèment maintenant elles aussi ; l'appel est mémoïsé pour le processus, donc
+  après le premier il ne coûte qu'une promesse déjà résolue.
+- **Le contrôle « Config manquante » en oubliait un sur trois.** Il vérifiait
+  les poids de rôle et la maîtrise, pas les paliers. Or `getLevel` lit le
+  dernier élément d'une liste triée : sur une liste vide il rend `undefined`, et
+  la lecture du seuil qui suit fait tomber la route avec une pile d'appels au
+  lieu d'un message. Un contrôle qui en oublie un sur trois ne protège pas d'un
+  tiers moins — il ne protège pas du cas qui arrive.
+
+Vérifié pour de bon : base créée, migrations appliquées, compte ouvert, et la
+**toute première requête** du compte est l'enregistrement d'une partie. 200.
+Les deux gardes sont éprouvées par sabotage, chacune fait tomber son test.
+
+Ce qui vaut d'être retenu : ce n'est pas le nouveau test qui a créé le défaut,
+c'est lui qui l'a rendu atteignable. Un ordre d'exécution est une donnée
+d'entrée comme une autre, et l'alphabet en est une.
+
 ### Le bilan de saison était le seul écran au-dessus du seuil
 Mesuré le lendemain de sa mise en ligne : **3628 ms** sur téléphone bridé, le
 plus grand élément étant l'image du bilan. La chaîne était : télécharger le
