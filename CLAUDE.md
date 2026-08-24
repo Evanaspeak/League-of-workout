@@ -582,6 +582,62 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Le bilan de saison était le seul écran au-dessus du seuil
+Mesuré le lendemain de sa mise en ligne : **3628 ms** sur téléphone bridé, le
+plus grand élément étant l'image du bilan. La chaîne était : télécharger le
+JavaScript, hydrater, appeler `/api/bilan`, rendre la balise, et seulement là
+commencer à charger l'image. Quatre étapes en série pour une ressource qui ne
+dépend d'aucune d'elles.
+
+Il suffit de savoir **s'il y a des parties** pour poser la balise : un comptage
+sur un index, fait par la page serveur et passé au composant client. La balise
+part alors avec le HTML, et React — voyant une image dans le rendu serveur —
+émet lui-même l'indication de préchargement. **2100 ms**, c'est-à-dire l'instant
+exact où l'image finit d'arriver : le plancher de cette page. Les neuf écrans
+sont de nouveau sous le seuil.
+
+Trois choses que cette mesure a apprises, dont deux corrections de ma part :
+
+- **Une indication de préchargement écrite à la main ne servait à rien.** React
+  la produisait déjà. Ajoutée, mesurée, retirée — la mesure est identique au
+  pixel près avec et sans.
+- **`ReactDOM.preload()` appelé dans un composant serveur n'arrive pas dans
+  l'en-tête** : il passe par le flux de rendu et n'est appliqué qu'à
+  l'hydratation, c'est-à-dire précisément trop tard. Une balise `<link>` dans le
+  JSX, elle, part avec le HTML.
+- **Une explication qui n'est pas éprouvée n'est pas une explication.** J'ai
+  d'abord attribué le retard à React qui recréait la balise entre l'état
+  d'attente et l'état chargé, et j'ai écrit un test pour ça. Le sabotage l'a
+  démenti : les deux structures mesurent pareil. Le test a été remplacé par
+  celui qui discrimine vraiment — la balise et l'indication de préchargement
+  sont-elles dans le HTML de la réponse. Sabotage refait en faisant attendre
+  l'image : le test tombe **et** la mesure remonte à 3684 ms. Les deux
+  ensemble, sinon on ne prouve rien.
+
+### Le mode hors ligne, éprouvé dans un navigateur
+La file a ses tests unitaires — ce qu'elle garde, ce qu'elle jette, ce qu'elle
+renvoie. Ils ne disent rien de l'assemblage : que le composant appelle la mise
+en file quand l'envoi échoue, que la pastille annonce ce qui attend, et que le
+retour du réseau déclenche vraiment le renvoi. Trois branchements, et un
+branchement se vérifie en marchant dessus.
+
+`e2e/hors-ligne.spec.ts` suit une vraie soirée : une défaite qui crée une dette,
+le réseau coupé pendant la séance, le chrono terminé, puis le réseau qui
+revient. Plus le cas du tunnel — deux envois du même jeton — qui doit ne rien
+retirer la seconde fois.
+
+Deux sabotages, deux échecs : sans la mise en file, la première séance est
+perdue ; sans le contrôle du jeton, la dette est payée deux fois.
+
+La demande de consentement santé a encore bloqué le premier essai — elle est
+modale et recouvre la pastille de dette. C'est le troisième fichier de parcours
+qui tombe dessus. Elle se traverse par l'API dans l'ouverture de compte.
+
+**Le limiteur de la bêta a fini par mordre en local** : cent comptes, et chaque
+exécution de la suite en crée huit. En intégration continue la base est neuve à
+chaque fois, donc rien à signaler là-bas ; en local, il faut vider les comptes
+`@example.test` de temps en temps.
+
 ### L'historique défilait encore, dans une bande de trente-deux pixels
 Le seuil posé en V232 était celui où le tableau **commence à entrer**, pas
 celui où il **tient** : il réclame 760 px et la page lui en retire 32 de
