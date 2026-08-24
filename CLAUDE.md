@@ -332,7 +332,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-1009 tests unitaires, 79 suites. Base et session doublées : aucune dépendance à
+1124 tests unitaires, 91 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -357,10 +357,11 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 71 tests : `e2e/parcours.spec.ts` suit le chemin
-complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
-puis les trois écrans connectés — tableau de bord, historique, réglages — dans
-les six langues, sur un compte qu'il ouvre lui-même, et
+Au navigateur (`npm run e2e`), 142 tests : `e2e/parcours.spec.ts` suit le chemin
+complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
+tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
+écrans connectés — tableau de bord, historique, réglages, saison — dans les six
+langues et à trois largeurs, sur un compte qu'il ouvre lui-même, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
