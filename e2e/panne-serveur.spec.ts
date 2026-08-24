@@ -100,3 +100,36 @@ test("le bilan de saison le dit aussi", async ({ browser }) => {
   expect(await page.evaluate(() => document.body.innerText)).toContain("n'a pas pu être calculé");
   await ctx.close();
 });
+
+test("un historique vide dit où enregistrer une activité", async ({ browser }) => {
+  /**
+   * L'ajout d'activité vit dans le rail du tableau de bord, et nulle part
+   * dans l'historique. Quelqu'un qui vient chercher « où j'enregistre ma
+   * partie » à l'endroit le plus évident ne trouvait que « aucune game à
+   * afficher » : un écran vide qui ne dit pas quoi faire est un cul-de-sac.
+   *
+   * On ne déplace pas le bouton — c'est une décision de produit — on dit où
+   * il est.
+   */
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+  // Une réponse vide : le compte de ce fichier a une partie, on la retire.
+  await page.route("**/api/games", (r) => r.fulfill({
+    status: 200, contentType: "application/json", body: "[]",
+  }));
+  await page.goto("/history", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(1500);
+
+  const lien = page.getByRole("link", { name: /tableau de bord/i });
+  await expect(lien).toBeVisible();
+  expect(await lien.getAttribute("href")).toBe("/dashboard");
+  await ctx.close();
+});

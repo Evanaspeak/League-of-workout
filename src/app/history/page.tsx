@@ -1,5 +1,6 @@
 "use client";
 import { Icone } from "@/components/Icone";
+import Link from "next/link";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { CorrectionDates } from "@/components/CorrectionDates";
 import { Fragment, useEffect, useState } from "react";
@@ -327,6 +328,23 @@ export default function HistoryPage() {
                 // exactement à la question posée.
                 <div className="lol-panel p-8 text-center" data-visite="historique-table">
                   <p style={{ color: "var(--faint)" }}>{t.noGameToDisplay}</p>
+                  {/**
+                    * Un écran vide qui ne dit pas quoi faire est un cul-de-sac.
+                    *
+                    * L'ajout d'activité vit dans le rail du tableau de bord, et
+                    * nulle part ici : quelqu'un qui vient chercher « où
+                    * j'enregistre ma partie » à l'endroit le plus évident —
+                    * l'historique — ne trouvait que « aucune game à afficher ».
+                    * On ne déplace pas le bouton, on dit où il est.
+                    */}
+                  {games.length === 0 && (
+                    <p style={{ color: "var(--steel)", fontSize: "0.86rem", marginTop: 10 }}>
+                      {t.ouAjouter}{" "}
+                      <Link href="/dashboard" style={{ color: "var(--amber)", textDecoration: "underline" }}>
+                        {t.allerAuTableauDeBord}
+                      </Link>
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3" data-visite="historique-table">

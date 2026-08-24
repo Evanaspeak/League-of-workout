@@ -582,6 +582,20 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Un historique vide ne disait pas quoi faire
+L'ajout d'activité vit dans le rail du tableau de bord, et **nulle part dans
+l'historique** — `AjoutActivite` n'y est pas monté. Quelqu'un qui ouvre son
+compte neuf et va chercher « où j'enregistre ma partie » à l'endroit le plus
+évident ne trouvait que « Aucune game à afficher. »
+
+Ça compte plus qu'il n'y paraît en ce moment : sans la clé Riot de production,
+la saisie manuelle est **le seul** moyen d'employer le produit.
+
+Le bouton n'a pas bougé — le déplacer est une décision de produit, elle figure
+dans les questions. L'écran vide dit maintenant où il est, avec un lien. C'est
+la même règle que pour « Tes jeux » en V233 : une section qui n'offre pas ce
+qu'on y cherche doit au moins dire où c'est.
+
 ### Sans clé Riot, le journal accusait Riot
 La clé de production se demande à Riot et met plusieurs jours à arriver. C'est
 donc l'état du lancement, pas un cas de bord. Deux choses s'y disaient mal :
