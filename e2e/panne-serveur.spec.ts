@@ -172,3 +172,65 @@ test("quand la beta est pleine, on arrive sur la liste d'attente", async ({ brow
   await expect(page.getByText(/liste d.attente|waitlist/i).first()).toBeVisible();
   await ctx.close();
 });
+
+/**
+ * Un ajout depuis la liste Riot qui échoue le dit.
+ *
+ * La liste des vingt dernières parties propose un bouton par ligne. Un refus
+ * du serveur ne disait rien du tout : la ligne redevenait normale, on
+ * recliquait, sans savoir ce qui s'était passé. Et l'envoi n'était pas protégé
+ * — sans réseau, la ligne restait en « ajout… » pour toujours.
+ *
+ * La liste Riot est fabriquée ici : la clé de production n'est pas encore
+ * arrivée, et ce qu'on éprouve est la réaction de l'écran, pas Riot.
+ */
+test("un ajout Riot refusé le dit, sans faire disparaître la liste", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  await page.route("**/api/riot/match-history*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify([{
+        matchId: "EUW1_FAUX_1", champion: "Ahri", role: "MID",
+        kills: 2, deaths: 9, assists: 4, result: "D",
+        gameCreation: Date.now(), alreadyLogged: false,
+      }]),
+    }));
+  await page.route("**/api/games", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Erreur serveur" }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  expect(new URL(page.url()).pathname).toBe("/dashboard");
+  await page.locator('[data-visite="rail-bascule"]').click({ timeout: 2_000 }).catch(() => {});
+  await page.locator('[data-visite="rail-ajout"]').click();
+
+  const ligne = page.getByText("Ahri").first();
+  await ligne.waitFor({ timeout: 15_000 });
+  await page.getByRole("button", { name: /logger|log$/i }).first().click();
+
+  // Le message paraît, et la liste est toujours là : la signaler en réemployant
+  // l'erreur de chargement ferait disparaître les vingt parties d'un coup.
+  await expect(page.getByText(/erreur lors du log|error while logging/i))
+    .toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Ahri").first()).toBeVisible();
+  await ctx.close();
+});
