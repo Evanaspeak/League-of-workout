@@ -63,7 +63,7 @@ export const detection = {
   },
   de: {
     titre: "Spieleerkennung",
-    aide: "Die Anwendung merkt am Prozessverzeichnis, wenn ein Spiel startet — so wie es der Task-Manager tut. Ins Spiel selbst wird nichts eingeschleust.",
+    aide: "Die Anwendung merkt am Prozessverzeichnis, wenn ein Spiel startet, so wie es der Task-Manager tut. Ins Spiel selbst wird nichts eingeschleust.",
     jeuxTitre: "Zu beobachtende Spiele",
     jeuSurveille: "Start wird beobachtet",
     jeuIgnore: "Start wird ignoriert",

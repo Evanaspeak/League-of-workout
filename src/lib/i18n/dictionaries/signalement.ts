@@ -23,7 +23,7 @@ export const signalement = {
     non: "non",
     envoyer: "Envoyer",
     envoi: "Envoi…",
-    merci: "C'est parti. Merci — je regarde.",
+    merci: "C'est parti. Merci, je regarde.",
     trop: "Trop de signalements envoyés. Réessayez dans quelques minutes.",
     court: "Décrivez le problème en quelques mots.",
     echec: "L'envoi n'a pas abouti. Réessayez dans un instant.",

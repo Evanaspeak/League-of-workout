@@ -27,7 +27,7 @@ export const consentementSante = {
     lien: "Lire la politique de confidentialité",
 
     blocTitre: "Mesures physiques",
-    blocSousTitre: "Données de santé — vous pouvez les modifier ou les retirer à tout moment.",
+    blocSousTitre: "Données de santé : vous pouvez les modifier ou les retirer à tout moment.",
     consentiLe: (date: string) => `Accord donné le ${date}`,
     refuseLe: (date: string) => `Refusé le ${date}`,
     redemander: "Donner mon accord",
@@ -66,7 +66,7 @@ export const consentementSante = {
     lien: "Read the privacy policy",
 
     blocTitre: "Body measurements",
-    blocSousTitre: "Health data — you can change or withdraw it at any time.",
+    blocSousTitre: "Health data: you can change or withdraw it at any time.",
     consentiLe: (date: string) => `Consent given on ${date}`,
     refuseLe: (date: string) => `Declined on ${date}`,
     redemander: "Give my consent",
@@ -144,7 +144,7 @@ export const consentementSante = {
     lien: "Datenschutzerklärung lesen",
 
     blocTitre: "Körpermaße",
-    blocSousTitre: "Gesundheitsdaten — du kannst sie jederzeit ändern oder zurückziehen.",
+    blocSousTitre: "Gesundheitsdaten: du kannst sie jederzeit ändern oder zurückziehen.",
     consentiLe: (date: string) => `Einwilligung erteilt am ${date}`,
     refuseLe: (date: string) => `Abgelehnt am ${date}`,
     redemander: "Einwilligung erteilen",
@@ -183,7 +183,7 @@ export const consentementSante = {
     lien: "阅读隐私政策",
 
     blocTitre: "身体数据",
-    blocSousTitre: "健康数据 — 你可以随时修改或撤回。",
+    blocSousTitre: "健康数据：你可以随时修改或撤回。",
     consentiLe: (date: string) => `已于 ${date} 同意`,
     refuseLe: (date: string) => `已于 ${date} 拒绝`,
     redemander: "给予同意",
@@ -222,7 +222,7 @@ export const consentementSante = {
     lien: "プライバシーポリシーを読む",
 
     blocTitre: "身体データ",
-    blocSousTitre: "健康データ — いつでも変更・撤回できます。",
+    blocSousTitre: "健康データ：いつでも変更・撤回できます。",
     consentiLe: (date: string) => `${date} に同意`,
     refuseLe: (date: string) => `${date} に拒否`,
     redemander: "同意する",

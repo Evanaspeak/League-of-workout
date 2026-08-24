@@ -1,22 +1,13 @@
 "use client";
 import { useEffect } from "react";
-import { ventiler, type ExerciceId } from "@/lib/exercices";
+import { ventiler } from "@/lib/exercices";
 import { notifierSysteme } from "@/lib/notifier";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import type { ScoreDirect } from "@/types/electron";
 
 /** Rôle retenu quand le jeu ne le dit pas : celui de la dernière saisie. */
 export const ROLE_DEFAUT = "Jungle";
-
-/**
- * Noms tels qu'ils se lisent dans une phrase, pas dans un tableau : la boxe se
- * compte en temps, d'où « 4 min de boxe » là où les autres donnent « 12 pompes ».
- * Le français est celui des autres notifications, qui ne passent pas non plus
- * par les dictionnaires.
- */
-const NOMS: Record<ExerciceId, string> = {
-  pompes: "pompes", squats: "squats", boxe: "de boxe",
-  planche: "de planche", tractions: "tractions", course: "de course",
-};
 
 /**
  * Enregistre une partie de League à partir de ce que l'application desktop a vu,
@@ -31,6 +22,8 @@ const NOMS: Record<ExerciceId, string> = {
  * dernière saisie manuelle, faute de mieux.
  */
 export function PartieDetectee() {
+  const t = useT(enJeu);
+
   useEffect(() => {
     const pont = window.electronLOL;
     if (!pont?.onPartieTerminee) return;
@@ -80,13 +73,13 @@ export function PartieDetectee() {
         // Encore fallait-il le dire — jusqu'ici il fallait rouvrir la fenêtre
         // pour le savoir.
         const { repartition } = await res.json();
-        const quantite = ventiler(repartition ?? {}).map((v) => `${v.valeur} ${NOMS[v.id]}`).join(" · ");
-        if (quantite) notifierSysteme("Partie terminée", `${quantite} à faire.`, "wow-partie");
+        const quantite = ventiler(repartition ?? {}).map((v) => `${v.valeur} ${t.noms[v.id]}`).join(" · ");
+        if (quantite) notifierSysteme(t.partieTerminee, t.aFaire(quantite), "wow-partie");
       } catch {
         /* Le suivi de session reste le filet de sécurité. */
       }
     });
-  }, []);
+  }, [t]);
 
   return null;
 }

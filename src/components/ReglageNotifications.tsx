@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { notifications as dict } from "@/lib/i18n/dictionaries/notifications";
+import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 
 /**
  * Convertit la clé publique VAPID (base64 URL) en tampon binaire, seul format
@@ -25,6 +26,7 @@ type Etat = "chargement" | "indisponible" | "refuse" | "inactif" | "actif" | "de
  */
 export function ReglageNotifications() {
   const t = useT(dict);
+  const tJeu = useT(enJeu);
   const [etat, setEtat] = useState<Etat>("chargement");
   const [appareils, setAppareils] = useState(0);
   const [occupe, setOccupe] = useState(false);
@@ -143,7 +145,7 @@ export function ReglageNotifications() {
 
   /** Test local : l'application affiche la notification, rien ne transite. */
   const testerDesktop = () => {
-    window.electronLOL?.notifier?.("Win or Workout", "Voilà à quoi ressemble un rappel.");
+    window.electronLOL?.notifier?.(tJeu.essaiTitre, tJeu.essaiCorps);
     setMessage(t.desktopTestEnvoye);
   };
 
