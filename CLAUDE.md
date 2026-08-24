@@ -582,6 +582,28 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Trois défauts de « Ta saison », vus en la regardant sur un téléphone
+Publiée le soir, relue le lendemain matin sur une capture de 390 px. Rien
+n'était cassé au sens des tests ; tout se voyait à l'œil.
+
+- **La police à chasse fixe était posée sur toutes les valeurs.** Elle existe
+  pour aligner des chiffres entre eux, pas pour faire joli : « League of
+  Legends » et « 23 août » avaient l'air d'une machine à écrire, et surtout
+  elle les élargit. « Champion le plus joué » n'avait plus la place de
+  s'écrire. Elle ne sert plus qu'aux nombres nus.
+- **« 40 % » creusait un trou.** L'espace fine insécable que le français impose
+  devant le signe occupe une chasse entière en police à chasse fixe. Le
+  pourcentage passe maintenant par `Intl` — qui connaît la règle de chaque
+  langue, là où un « % » recollé à la main en aurait une seule — et sort de la
+  chasse fixe.
+- **« 21 + 2 min 20 » passait à la ligne entre « min » et « 20 ».** Une valeur
+  longue rétrécit plutôt que de se couper au milieu d'une unité.
+
+Le bouton du rail latéral recouvre encore, selon l'endroit où l'on s'arrête de
+défiler, une étiquette de carte ou une croix de suppression dans l'historique.
+C'est constaté, capture à l'appui, et **laissé tel quel** : le déplacer est une
+décision de produit qui figure dans les questions.
+
 ### La langue n'était pas déclarée dans la politique
 Elle figurait dans les exemptions de `politiqueComplete.test.ts` comme
 « réglage d'affichage ». C'en est un dans le navigateur, où il ne nous regarde

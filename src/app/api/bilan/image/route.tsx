@@ -54,6 +54,10 @@ function carte(
       .format(new Date(Date.UTC(a, m - 1, d)));
   };
   const nombre = (n: number) => new Intl.NumberFormat(etiquette).format(n);
+  // Le français veut une espace fine insécable avant le « % », l'anglais
+  // aucune. `Intl` connaît la règle de chaque langue ; nous, non.
+  const pourcent = (n: number) =>
+    new Intl.NumberFormat(etiquette, { style: "percent" }).format(n / 100);
 
   return (
     <div
@@ -74,7 +78,7 @@ function carte(
 
       <div style={{ display: "flex", gap: 76 }}>
         <Chiffre valeur={nombre(bilan.parties)} legende={mots.parties} />
-        <Chiffre valeur={bilan.winrate === null ? "—" : `${nombre(bilan.winrate)} %`}
+        <Chiffre valeur={bilan.winrate === null ? "—" : pourcent(bilan.winrate)}
                  legende={mots.victoires} />
         <Chiffre valeur={effortPaye} legende={mots.paye} />
         <Chiffre valeur={nombre(bilan.meilleureSerie)} legende={mots.serie} />
