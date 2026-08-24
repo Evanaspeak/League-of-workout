@@ -603,6 +603,12 @@ se contredisent.
 Le message réemploie `erreurSauvegarde`, déjà traduit dans les six langues :
 une clé de plus pour dire la même chose n'aurait rien ajouté.
 
+Le **test de force** est passé par le même chemin, et c'était le plus urgent :
+il ne disait rien de son échec, alors que c'est lui qui fixe le niveau, donc
+toute la dette. Et l'enregistrement du profil a gagné son `try` : sans lui,
+une coupure réseau laissait « Enregistrement… » à l'écran pour toujours,
+puisque la ligne qui l'efface n'était jamais atteinte.
+
 `e2e/reglages.spec.ts` détourne le `PUT` en 500, coche la boxe, et vérifie
 trois choses : le message paraît, et le serveur n'a rien retenu. Sabotage fait,
 le retour en arrière retiré : le test tombe.

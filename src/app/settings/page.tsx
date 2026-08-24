@@ -197,16 +197,22 @@ export default function SettingsPage() {
     return ok;
   };
 
+  /**
+   * Le test de force, qui fixe le niveau — donc tout le reste.
+   *
+   * Il ne disait rien de son échec : la fenêtre se refermait, le chiffre
+   * n'était pas posé, et personne ne savait pourquoi. C'est le réglage dont
+   * une perte coûte le plus cher, puisque toute la dette en découle.
+   */
   const handleSavePompesMax = async (valeur: number) => {
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
-    });
-    if (res.ok) {
-      setPompesMax(valeur);
-      setPompesMaxLe(new Date().toISOString());
-    }
+    const avantMax = pompesMax;
+    const avantLe = pompesMaxLe;
+    setPompesMax(valeur);
+    setPompesMaxLe(new Date().toISOString());
+    await enregistrerReglage(
+      { pompesMax: valeur },
+      () => { setPompesMax(avantMax); setPompesMaxLe(avantLe); },
+    );
   };
 
   const handleSaveExo = async (nextExercices: ExerciceId[], nextSeuil: number) => {
@@ -266,11 +272,21 @@ export default function SettingsPage() {
     setSavingProfile(true);
     setSavedProfile(false);
     setProfileError("");
-    const res = await fetch("/api/user", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profileForm),
-    });
+    // Sans ce `try`, une coupure réseau laissait « Enregistrement… » à
+    // l'écran pour toujours : la promesse partait en erreur et la ligne qui
+    // l'efface n'était jamais atteinte.
+    let res: Response;
+    try {
+      res = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileForm),
+      });
+    } catch {
+      setSavingProfile(false);
+      setProfileError(t.erreurSauvegarde);
+      return;
+    }
     setSavingProfile(false);
     if (res.ok) {
       setSavedProfile(true);
