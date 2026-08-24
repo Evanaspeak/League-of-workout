@@ -14,10 +14,27 @@ import { passerIntro } from "./intro";
 
 /** Compte tiré au sort : la suite peut tourner deux fois de suite. */
 const marque = Date.now().toString(36);
-const COMPTE = {
-  pseudo: `Test${marque}`,
-  email: `test-${marque}@example.test`,
-};
+
+/**
+ * Les deux écrans sur lesquels le parcours est joué en entier.
+ *
+ * Il ne l'était que sur un écran de poste. Or le rail — d'où part l'ajout
+ * d'une partie — se replie derrière un bouton en dessous d'une certaine
+ * largeur, et le chrono de dette s'ouvre dans une fenêtre qui doit tenir sur
+ * 390 px. Le code du test prévoyait le cas étroit depuis le début, et rien ne
+ * l'exerçait : la branche existait pour rassurer, pas pour prouver.
+ *
+ * L'application se pose sur l'écran d'accueil d'un téléphone, envoie des
+ * notifications et affiche une pastille en jeu. Le téléphone n'est pas un cas
+ * limite, c'est un des deux cas.
+ */
+const ECRANS = [
+  { nom: "poste", contexte: {} },
+  {
+    nom: "téléphone",
+    contexte: { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: false },
+  },
+] as const;
 
 /**
  * Écarte ce qui recouvre l'écran au premier chargement : l'écran d'accueil
@@ -47,10 +64,15 @@ test.describe.configure({ mode: "serial" });
  * revient sur le site, il ne garde pas un onglet ouvert pour la vie.
  */
 let etat: import("@playwright/test").BrowserContextOptions["storageState"];
+/** Le compte de l'écran en cours. Chaque écran ouvre le sien. */
+let COMPTE = { pseudo: "", email: "" };
 
 /** Ouvre une page qui reprend la session de l'étape précédente. */
-async function ouvrir(browser: Browser): Promise<Page> {
-  const contexte = await browser.newContext(etat ? { storageState: etat } : {});
+async function ouvrir(
+  browser: Browser,
+  options: import("@playwright/test").BrowserContextOptions,
+): Promise<Page> {
+  const contexte = await browser.newContext({ ...options, ...(etat ? { storageState: etat } : {}) });
   const page = await contexte.newPage();
   await ecarterLesVoiles(page);
   return page;
@@ -62,10 +84,22 @@ async function fermer(page: Page): Promise<void> {
   await page.context().close();
 }
 
-test.describe("parcours complet", () => {
+for (const ecran of ECRANS) {
+test.describe(`parcours complet · ${ecran.nom}`, () => {
+
+  test.beforeAll(() => {
+    // Chaque écran repart d'un compte neuf : réutiliser celui du précédent
+    // ferait passer les étapes 2 à 6 sur une base déjà remplie, et le parcours
+    // ne serait plus un parcours.
+    etat = undefined;
+    COMPTE = {
+      pseudo: `Test${marque}${ecran.nom === "poste" ? "P" : "T"}`,
+      email: `test-${marque}-${ecran.nom === "poste" ? "p" : "t"}@example.test`,
+    };
+  });
 
   test("1 · obtenir un accès sur /beta et se connecter avec son code", async ({ browser }) => {
-    const page = await ouvrir(browser);
+    const page = await ouvrir(browser, ecran.contexte);
     // C'est le chemin réellement ouvert pour un nouveau venu : le formulaire
     // e-mail de /login est réservé aux invités, et il le dit maintenant.
     await purgerTentatives();
@@ -98,7 +132,7 @@ test.describe("parcours complet", () => {
   });
 
   test("2 · choisir la boxe, pour que la dette s'accumule", async ({ browser }) => {
-    const page = await ouvrir(browser);
+    const page = await ouvrir(browser, ecran.contexte);
     // Un compte neuf n'a que les pompes, qui se font dans la foulée et
     // n'entrent jamais au compteur. Sans cette étape, il n'y a rien à payer.
     await page.goto("/settings");
@@ -118,7 +152,7 @@ test.describe("parcours complet", () => {
   });
 
   test("3 · enregistrer une défaite", async ({ browser }) => {
-    const page = await ouvrir(browser);
+    const page = await ouvrir(browser, ecran.contexte);
     await page.goto("/dashboard");
     await passerIntro(page);
     // Le rail se replie derrière un bouton sur les écrans étroits ; sur un
@@ -144,7 +178,7 @@ test.describe("parcours complet", () => {
   });
 
   test("4 · la défaite a créé une dette", async ({ browser }) => {
-    const page = await ouvrir(browser);
+    const page = await ouvrir(browser, ecran.contexte);
     const dette = await lireDette(page);
     expect(dette.points).toBeGreaterThan(0);
     expect(dette.dureeSec).toBeGreaterThan(0);
@@ -152,11 +186,18 @@ test.describe("parcours complet", () => {
   });
 
   test("5 · le chrono crédite ce qui a réellement été fait", async ({ browser }) => {
-    const page = await ouvrir(browser);
+    const page = await ouvrir(browser, ecran.contexte);
     await page.goto("/dashboard");
     await passerIntro(page);
 
     const avant = await lireDette(page);
+    // Sous 1180 px, la pastille de dette vit dans le rail replié : elle est
+    // dans la page mais cachée, et il faut déplier le rail pour l'atteindre —
+    // exactement ce que fait l'étape 3 pour l'ajout. C'est ce que ce parcours
+    // sur téléphone a mis au jour : le compteur de dette y demande une touche
+    // de plus, et personne ne l'avait jamais joué à cette largeur.
+    await page.locator('[data-visite="rail-bascule"]')
+      .click({ timeout: 2_000 }).catch(() => {});
     const pastille = page.locator('[data-visite="dette"]');
     await pastille.waitFor({ timeout: 15_000 });
     await expect(pastille).toContainText(/\d/);
@@ -179,13 +220,14 @@ test.describe("parcours complet", () => {
   });
 
   test("6 · la partie figure dans l'historique", async ({ browser }) => {
-    const page = await ouvrir(browser);
+    const page = await ouvrir(browser, ecran.contexte);
     await page.goto("/history");
     await expect(page.locator('[data-visite="historique-table"], table').first())
       .toBeVisible({ timeout: 20_000 });
     await fermer(page);
   });
 });
+}
 
 /** Nombre de parties enregistrées, vu du serveur. */
 async function compterParties(page: Page): Promise<number> {
