@@ -46,6 +46,11 @@ test("ouvrir un compte avec une partie", async ({ browser }) => {
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
   uid = (await (await page.request.get("/api/user")).json()).id as string;
+  // La demande de consentement santé est modale et recouvre le rail : sans
+  // réponse, aucun clic ne passe. C'est le cinquième fichier de parcours qui
+  // tombe dessus. Elle se traverse par l'API, comme partout ailleurs.
+  const consenti = await page.request.post("/api/consentement", { data: { accepte: true } });
+  expect(consenti.status(), await consenti.text()).toBe(200);
   const r = await page.request.post("/api/games", {
     data: { jeu: "League of Legends", role: "Mid", champion: "Ahri",
             kills: 1, deaths: 8, assists: 2, result: "D", exercice: "pompes" },
@@ -203,7 +208,7 @@ test("un ajout Riot refusé le dit, sans faire disparaître la liste", async ({ 
       body: JSON.stringify([{
         matchId: "EUW1_FAUX_1", champion: "Ahri", role: "MID",
         kills: 2, deaths: 9, assists: 4, result: "D",
-        gameCreation: Date.now(), alreadyLogged: false,
+        date: new Date().toISOString(), alreadyLogged: false,
       }]),
     }));
   await page.route("**/api/games", async (route) => {
@@ -225,11 +230,13 @@ test("un ajout Riot refusé le dit, sans faire disparaître la liste", async ({ 
 
   const ligne = page.getByText("Ahri").first();
   await ligne.waitFor({ timeout: 15_000 });
-  await page.getByRole("button", { name: /logger|log$/i }).first().click();
+  await page.getByRole("button", { name: /^ajouter$|^add$/i }).first().click();
 
   // Le message paraît, et la liste est toujours là : la signaler en réemployant
   // l'erreur de chargement ferait disparaître les vingt parties d'un coup.
-  await expect(page.getByText(/erreur lors du log|error while logging/i))
+  // Le message est celui que la route a rendu, traduit : le repli
+  // « erreur lors du log » ne sert que si la réponse n'en porte aucun.
+  await expect(page.getByText(/erreur serveur|server error|erreur lors du log|error while logging/i).first())
     .toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("Ahri").first()).toBeVisible();
   await ctx.close();

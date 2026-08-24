@@ -626,6 +626,26 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### Un ajout depuis la liste Riot disait son échec à personne
+La liste des vingt dernières parties propose un bouton par ligne. Un refus du
+serveur ne produisait rien : la ligne redevenait normale, on recliquait sans
+savoir ce qui s'était passé. Et l'envoi n'était pas protégé — sans réseau, la
+promesse partait en erreur, `setAddingId(null)` n'était jamais atteint, et la
+ligne restait en « ajout… » pour toujours.
+
+L'erreur a son propre état. `matchError` **remplace** la liste : le réemployer
+ferait disparaître les vingt parties d'un coup, et on ne saurait plus laquelle
+on essayait d'ajouter.
+
+`e2e/panne-serveur.spec.ts` fabrique la liste Riot — la clé de production n'est
+pas arrivée, et ce qu'on éprouve est la réaction de l'écran, pas Riot — puis
+détourne le `POST` en 500. Sabotage fait : « element(s) not found ».
+
+Deux pièges au passage, tous deux déjà écrits ici : la modale de consentement
+santé recouvrait le rail (cinquième fichier de parcours à tomber dessus), et le
+message affiché est celui que la route rend, traduit — le repli local ne sert
+que si la réponse n'en porte aucun.
+
 ### Un serveur qui répond mal effaçait la séance qu'on venait de faire
 `cloturer()` dans `CompteurDette` enveloppait son envoi dans un `try/catch`, et
 le `catch` ne rattrape que l'absence de réseau. Une réponse **500**, ou une
