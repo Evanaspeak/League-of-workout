@@ -33,7 +33,6 @@ const HORS_POLITIQUE: Record<string, string> = {
   rappelSeuilPoints: "réglage de rappel (ancienne version)",
   rappelSeuilSec: "réglage de rappel",
   plafondQuotidien: "réglage d'avertissement de volume",
-  langue: "réglage d'affichage, rangé côté serveur pour écrire les notifications dans la bonne langue",
   relanceLe: "date d'un envoi que nous avons fait, pas une donnée fournie",
 
   dettePointsDus: "état de jeu calculé, décrit par « données de parties »",
@@ -83,6 +82,15 @@ const ATTENDU: Record<string, RegExp> = {
   // Le fuseau est une indication de lieu, grossière mais réelle : la politique
   // affirmait « aucune donnée de localisation » et ne pouvait plus le dire tel
   // quel. Elle décrit maintenant ce qui est gardé, et ce qui ne l'est pas.
+  /**
+   * La langue était exemptée comme « réglage d'affichage ».
+   *
+   * C'en est un dans le navigateur, où il ne nous regarde pas. Rangée sur le
+   * compte, elle sert à écrire hors de l'Application — notification, courriel —
+   * et elle dit quelque chose de la personne. Elle se décrit donc, comme le
+   * fuseau qui l'a précédée sur le même raisonnement.
+   */
+  langue: /langue choisie/i,
   fuseau: /fuseau horaire/i,
   // Le bilan est le seul envoi récurrent : la politique dit qu'il existe, et
   // qu'il s'arrête. Un envoi récurrent qu'on ne peut pas éteindre n'aurait

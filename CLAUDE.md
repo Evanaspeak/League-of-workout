@@ -582,6 +582,17 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### La langue n'était pas déclarée dans la politique
+Elle figurait dans les exemptions de `politiqueComplete.test.ts` comme
+« réglage d'affichage ». C'en est un dans le navigateur, où il ne nous regarde
+pas. Rangée sur le compte — ce qu'on a fait pour écrire les notifications dans
+la bonne langue — elle sert **hors** de l'Application, et elle dit quelque chose
+de la personne. Elle se décrit donc, exactement comme le fuseau qui l'avait
+précédée sur le même raisonnement.
+
+L'exemption est retirée : le test exige maintenant sa présence dans la
+politique. Éprouvé en retirant la ligne.
+
 ### L'export de données oubliait la moitié de ce qu'on garde
 Le droit à la portabilité couvre tout ce que l'application sait de quelqu'un.
 L'export rendait le compte, les préférences et les parties. Il ne rendait pas
