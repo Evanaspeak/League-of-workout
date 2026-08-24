@@ -19,6 +19,7 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const { execFile } = require("child_process");
+const { issueDeFinDePartie } = require("./issueLocale");
 
 const PERIODE_MS = 4000;
 const DELAI_REQUETE_MS = 3000;
@@ -102,10 +103,17 @@ function demander(ids, chemin) {
 }
 
 /**
+ * Phases pendant lesquelles le lanceur publie son écran de fin. Elles se
+ * suivent : on interroge dès la première et on s'arrête à la première réponse
+ * lisible, plutôt que d'attendre la dernière.
+ */
+/**
  * Rôles tels que les nomme le client, traduits dans ceux de l'application.
  * « utility » désigne le support, et « bottom » l'ADC : les noms internes de
  * Riot ne sont pas ceux qu'affiche le jeu.
  */
+const PHASES_FIN = new Set(["WaitingForStats", "PreEndOfGame", "EndOfGame"]);
+
 const ROLES = {
   top: "Top",
   jungle: "Jungle",
@@ -138,6 +146,8 @@ function roleDuMode(queue) {
 function surveillerClient(signaler) {
   let phasePrecedente = null;
   let arrete = false;
+  /** L'écran de fin ne se lit qu'une fois par partie. */
+  let issueLue = false;
 
   const tour = async () => {
     if (arrete) return;
@@ -159,6 +169,25 @@ function surveillerClient(signaler) {
     if (phase !== phasePrecedente) {
       phasePrecedente = phase;
       signaler({ type: "phase", phase });
+    }
+
+    // L'écran de fin : la seule source d'issue qui parle encore quand l'API de
+    // partie s'est tue. Elle n'est pas documentée par Riot, donc son absence
+    // n'empêche rien : c'est un complément, jamais une condition.
+    if (PHASES_FIN.has(phase)) {
+      if (!issueLue) {
+        const bloc = await demander(ids, "/lol-end-of-game/v1/eog-stats-block");
+        const issue = issueDeFinDePartie(bloc);
+        // Un « inconnu » ne se publie pas : l'écran n'est peut-être pas encore
+        // rempli, et le tour suivant retentera. Un remake, lui, est une
+        // réponse — elle dit que la partie ne compte pas.
+        if (issue.resultat !== null || issue.motif === "remake") {
+          issueLue = true;
+          signaler({ type: "issue", ...issue });
+        }
+      }
+    } else {
+      issueLue = false;
     }
 
     const queue = session.gameData?.queue;
