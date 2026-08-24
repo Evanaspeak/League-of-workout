@@ -79,6 +79,60 @@ test("l'image sort en PNG, avec la session", async ({ browser }) => {
   await ctx.close();
 });
 
+test("l'image est demandée dès le HTML, pas après l'hydratation", async ({ browser }) => {
+  /**
+   * C'est ce qui sépare 3628 ms de 2100 ms sur téléphone bridé.
+   *
+   * La page est cliente : la balise n'existait qu'après le téléchargement du
+   * JavaScript, l'hydratation et un aller-retour vers `/api/bilan`. Quatre
+   * étapes en série pour une ressource qui ne dépend d'aucune d'elles — et
+   * c'est le plus grand élément de la page.
+   *
+   * Deux choses la font partir tôt, et toutes deux vivent dans le HTML de la
+   * réponse : la balise elle-même, et un `preload` que la page serveur pose
+   * quand le compte a des parties. On les lit donc dans le HTML brut : une
+   * fois la page hydratée, les deux existent de toute façon.
+   */
+  const ctx = await browser.newContext({ storageState: etat });
+  const html = await (await ctx.request.get("/bilan")).text();
+
+  expect(html, "la balise doit être dans la réponse du serveur")
+    .toContain('src="/api/bilan/image"');
+  expect(html, "le préchargement doit partir avec le HTML")
+    .toMatch(/<link[^>]+rel="preload"[^>]+\/api\/bilan\/image/);
+  await ctx.close();
+});
+
+test("un compte sans partie ne précharge pas d'image", async ({ browser }) => {
+  // La dessiner pour un bilan vide serait la payer pour rien, côté serveur
+  // comme côté réseau. Un comptage sur un index, lui, ne coûte rien.
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+  });
+  await purgerTentatives();
+  const neuf = `Vide${Date.now().toString(36)}`;
+  await page.goto("/beta");
+  await page.getByPlaceholder(/pseudo/i).first().fill(neuf);
+  await page.locator('input[type="email"]').first().fill(`${neuf.toLowerCase()}@example.test`);
+  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
+  const bloc = page.locator(".mono-num").first();
+  await bloc.waitFor({ timeout: 20_000 });
+  const code = (await bloc.innerText()).trim();
+  await page.goto("/login");
+  await page.getByPlaceholder(/ton pseudo|your username/i).fill(neuf);
+  await page.getByPlaceholder(/ton code|your code/i).fill(code);
+  await Promise.all([
+    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
+  ]);
+
+  const html = await (await ctx.request.get("/bilan")).text();
+  expect(html).not.toMatch(/<link[^>]+rel="preload"[^>]+\/api\/bilan\/image/);
+  await ctx.close();
+});
+
 test("l'image ne sort pas sans session", async ({ browser }) => {
   // C'est une donnée de compte, même si elle est faite pour être montrée.
   const ctx = await browser.newContext();

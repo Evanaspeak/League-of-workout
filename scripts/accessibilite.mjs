@@ -56,7 +56,7 @@ const aTester = langueDemandee ? [langueDemandee] : LANGUES;
  * Pages qui demandent un compte. Le jeton se dépose dans un fichier par
  * l'appelant : le script ne sait pas en fabriquer, et n'a pas à savoir.
  */
-const PAGES_CONNECTEES = ["/dashboard", "/history", "/settings"];
+const PAGES_CONNECTEES = ["/dashboard", "/history", "/settings", "/bilan"];
 const JETON = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf8").trim() : null;
 
 /**
