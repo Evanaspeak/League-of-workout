@@ -41,13 +41,26 @@ describe("lecture d'un code HTTP", () => {
 
   it("dit que la clé du serveur est en cause, pas le compte", () => {
     for (const code of [401, 403]) {
-      expect(lireCode(code).detail).toMatch(/de votre côté/i);
+      expect(lireCode(code).motif).toBe("cleRefusee");
     }
   });
 
-  it("ne laisse aucun code sans explication", () => {
+  it("distingue « nous ne sommes pas prêts » de « Riot ne répond pas »", () => {
+    /**
+     * Sans clé de production, la route rend 503 et non 500. Le journal disait
+     * « Riot ne répond pas », ce qui est faux — et c'est la situation du
+     * lancement : on aurait imputé à Riot une case vide de notre côté,
+     * pendant des jours.
+     */
+    expect(lireCode(503).motif).toBe("indisponible");
+    expect(lireCode(500).motif).toBe("riotMuet");
+    expect(lireCode(502).motif).toBe("riotMuet");
+  });
+
+  it("ne laisse aucun code sans motif", () => {
     for (const code of [400, 401, 403, 404, 418, 429, 500, 503]) {
-      expect(lireCode(code).detail.length).toBeGreaterThan(10);
+      expect(typeof lireCode(code).motif).toBe("string");
+      expect(lireCode(code).motif.length).toBeGreaterThan(3);
     }
   });
 });

@@ -9,6 +9,16 @@ export const journalSynchro = {
     erreur: "Erreur",
     refus: "Refusé",
     vider: "Vider le journal",
+    /** Ce qu'un code de réponse veut dire, pour qui n'écrit pas de logiciel. */
+    motifs: {
+      saturee: "Trop de synchronisations, ou clé saturée. Ça repart tout seul.",
+      compteMalRenseigne: "Compte Riot mal renseigné. À corriger dans les réglages.",
+      cleRefusee: "La clé Riot du serveur est refusée. Rien à faire de ton côté.",
+      indisponible: "Le suivi Riot n'est pas encore en service. Rien à faire de ton côté.",
+      riotMuet: "Riot ne répond pas. Ça arrive, et ça repart.",
+      aucunePartie: "Riot ne trouve aucune partie récente.",
+      inattendu: "Réponse inattendue.",
+    } as Record<string, string>,
     ilYA: (texte: string) => `il y a ${texte}`,
   },
   en: {
@@ -20,6 +30,16 @@ export const journalSynchro = {
     erreur: "Error",
     refus: "Refused",
     vider: "Clear the log",
+    /** Ce qu'un code de réponse veut dire, pour qui n'écrit pas de logiciel. */
+    motifs: {
+      saturee: "Too many syncs, or the key is saturated. It clears up on its own.",
+      compteMalRenseigne: "Riot account is not set up correctly. Fix it in the settings.",
+      cleRefusee: "The server's Riot key is refused. Nothing to do on your side.",
+      indisponible: "Riot tracking is not live yet. Nothing to do on your side.",
+      riotMuet: "Riot is not answering. It happens, and it comes back.",
+      aucunePartie: "Riot finds no recent match.",
+      inattendu: "Unexpected response.",
+    } as Record<string, string>,
     ilYA: (texte: string) => `${texte} ago`,
   },
   es: {
@@ -31,6 +51,16 @@ export const journalSynchro = {
     erreur: "Error",
     refus: "Rechazado",
     vider: "Vaciar el registro",
+    /** Ce qu'un code de réponse veut dire, pour qui n'écrit pas de logiciel. */
+    motifs: {
+      saturee: "Demasiadas sincronizaciones, o la clave está saturada. Se arregla solo.",
+      compteMalRenseigne: "La cuenta de Riot no está bien puesta. Corrígela en los ajustes.",
+      cleRefusee: "La clave Riot del servidor ha sido rechazada. No hay nada que hacer por tu parte.",
+      indisponible: "El seguimiento de Riot todavía no está activo. No hay nada que hacer por tu parte.",
+      riotMuet: "Riot no responde. Pasa, y vuelve.",
+      aucunePartie: "Riot no encuentra ninguna partida reciente.",
+      inattendu: "Respuesta inesperada.",
+    } as Record<string, string>,
     ilYA: (texte: string) => `hace ${texte}`,
   },
   de: {
@@ -42,6 +72,16 @@ export const journalSynchro = {
     erreur: "Fehler",
     refus: "Abgelehnt",
     vider: "Protokoll leeren",
+    /** Ce qu'un code de réponse veut dire, pour qui n'écrit pas de logiciel. */
+    motifs: {
+      saturee: "Zu viele Abfragen, oder der Schlüssel ist ausgelastet. Das gibt sich von selbst.",
+      compteMalRenseigne: "Riot-Konto ist nicht richtig eingetragen. In den Einstellungen korrigieren.",
+      cleRefusee: "Der Riot-Schlüssel des Servers wird abgelehnt. Auf deiner Seite ist nichts zu tun.",
+      indisponible: "Die Riot-Anbindung läuft noch nicht. Auf deiner Seite ist nichts zu tun.",
+      riotMuet: "Riot antwortet nicht. Kommt vor, und kommt wieder.",
+      aucunePartie: "Riot findet keine aktuelle Partie.",
+      inattendu: "Unerwartete Antwort.",
+    } as Record<string, string>,
     ilYA: (texte: string) => `vor ${texte}`,
   },
   zh: {
@@ -53,6 +93,16 @@ export const journalSynchro = {
     erreur: "错误",
     refus: "已拒绝",
     vider: "清空记录",
+    /** Ce qu'un code de réponse veut dire, pour qui n'écrit pas de logiciel. */
+    motifs: {
+      saturee: "同步太频繁，或者密钥用满了。过一会儿会自己好。",
+      compteMalRenseigne: "Riot 账号没填对，去设置里改一下。",
+      cleRefusee: "服务器的 Riot 密钥被拒绝了。你这边不用做什么。",
+      indisponible: "Riot 数据同步还没启用。你这边不用做什么。",
+      riotMuet: "Riot 没有响应。偶尔会这样，一会儿就好。",
+      aucunePartie: "Riot 没找到最近的对局。",
+      inattendu: "返回了预料之外的结果。",
+    } as Record<string, string>,
     ilYA: (texte: string) => `${texte}前`,
   },
   ja: {
@@ -64,6 +114,16 @@ export const journalSynchro = {
     erreur: "エラー",
     refus: "拒否されました",
     vider: "記録を消去",
+    /** Ce qu'un code de réponse veut dire, pour qui n'écrit pas de logiciel. */
+    motifs: {
+      saturee: "同期が多すぎるか、キーが上限です。しばらくすると戻ります。",
+      compteMalRenseigne: "Riot アカウントの設定が正しくありません。設定で直してください。",
+      cleRefusee: "サーバーの Riot キーが拒否されました。あなた側ですることはありません。",
+      indisponible: "Riot 連携はまだ稼働していません。あなた側ですることはありません。",
+      riotMuet: "Riot が応答しません。よくあることで、また戻ります。",
+      aucunePartie: "Riot に最近の試合が見つかりません。",
+      inattendu: "予期しない応答です。",
+    } as Record<string, string>,
     ilYA: (texte: string) => `${texte}前`,
   },
 };
