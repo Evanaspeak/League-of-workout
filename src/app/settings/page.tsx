@@ -105,6 +105,7 @@ export default function SettingsPage() {
   const [bilanActif, setBilanActif] = useState(true);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
+  const [erreurExo, setErreurExo] = useState(false);
 
   // ── Test de pompes maximales (fixe le niveau) ──
   const [pompesMax, setPompesMax] = useState(0);
@@ -150,6 +151,52 @@ export default function SettingsPage() {
    * Enregistre le résultat du test de force. La date de passage est posée par
    * le serveur, pas ici — sinon un test périmé pourrait passer pour récent.
    */
+  /**
+   * Enregistre un réglage, et dit quand ça n'a pas marché.
+   *
+   * Les cinq réglages de cette page posaient la nouvelle valeur à l'écran
+   * AVANT de l'envoyer, et ne faisaient rien du refus : l'écran affichait donc
+   * un réglage que le serveur n'avait pas. On s'en apercevait au rechargement
+   * suivant, sans savoir pourquoi — et sur cette page, un exercice ou un
+   * plafond mal enregistré change ce qu'on doit.
+   *
+   * Le `fetch` n'était pas protégé non plus : sans réseau, la promesse partait
+   * en erreur, `setSavingExo(false)` n'était jamais atteint, et
+   * « Enregistrement… » restait à l'écran pour toujours.
+   *
+   * `revenir` remet la valeur d'avant. Un réglage que le serveur n'a pas pris
+   * doit disparaître de l'écran, sans quoi le message d'erreur et ce qu'on
+   * voit se contredisent.
+   */
+  const enregistrerReglage = async (
+    userPrefs: Record<string, unknown>,
+    revenir: () => void,
+  ): Promise<boolean> => {
+    setSavingExo(true);
+    setSavedExo(false);
+    setErreurExo(false);
+    let ok = false;
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userPrefs }),
+      });
+      ok = res.ok;
+    } catch {
+      ok = false;
+    }
+    setSavingExo(false);
+    if (ok) {
+      setSavedExo(true);
+      setTimeout(() => setSavedExo(false), 2000);
+    } else {
+      revenir();
+      setErreurExo(true);
+    }
+    return ok;
+  };
+
   const handleSavePompesMax = async (valeur: number) => {
     const res = await fetch("/api/settings", {
       method: "PUT",
@@ -163,22 +210,14 @@ export default function SettingsPage() {
   };
 
   const handleSaveExo = async (nextExercices: ExerciceId[], nextSeuil: number) => {
+    const avantExercices = exercicesSel;
+    const avantSeuil = rappelSeuil;
     setExercicesSel(nextExercices);
     setRappelSeuil(nextSeuil);
-    setSavingExo(true);
-    setSavedExo(false);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userPrefs: { exercices: nextExercices, rappelSeuilPoints: nextSeuil },
-      }),
-    });
-    setSavingExo(false);
-    if (res.ok) {
-      setSavedExo(true);
-      setTimeout(() => setSavedExo(false), 2000);
-    }
+    await enregistrerReglage(
+      { exercices: nextExercices, rappelSeuilPoints: nextSeuil },
+      () => { setExercicesSel(avantExercices); setRappelSeuil(avantSeuil); },
+    );
   };
 
   /**
@@ -188,19 +227,9 @@ export default function SettingsPage() {
    * annotation. C'est tout l'intérêt, on veut pouvoir relire d'où on part.
    */
   const handleSaveVariante = async (prochaine: string | null) => {
+    const avant = variante;
     setVariante(prochaine);
-    setSavingExo(true);
-    setSavedExo(false);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { variantePompes: prochaine } }),
-    });
-    setSavingExo(false);
-    if (res.ok) {
-      setSavedExo(true);
-      setTimeout(() => setSavedExo(false), 2000);
-    }
+    await enregistrerReglage({ variantePompes: prochaine }, () => setVariante(avant));
   };
 
   /**
@@ -211,55 +240,26 @@ export default function SettingsPage() {
    * servait.
    */
   const handleSaveBilan = async (actif: boolean) => {
+    const avant = bilanActif;
     setBilanActif(actif);
-    setSavingExo(true);
-    setSavedExo(false);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { bilanActif: actif } }),
-    });
-    setSavingExo(false);
-    if (res.ok) {
-      setSavedExo(true);
-      setTimeout(() => setSavedExo(false), 2000);
-    }
+    await enregistrerReglage({ bilanActif: actif }, () => setBilanActif(avant));
   };
 
   /** Enregistre l'avertissement de volume quotidien, en points d'effort. */
   const handleSavePlafond = async (nextPlafond: number) => {
+    const avant = plafond;
     setPlafond(nextPlafond);
-    setSavingExo(true);
-    setSavedExo(false);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { plafondQuotidien: nextPlafond } }),
-    });
-    setSavingExo(false);
-    if (res.ok) {
-      setSavedExo(true);
-      setTimeout(() => setSavedExo(false), 2000);
-    }
+    await enregistrerReglage({ plafondQuotidien: nextPlafond }, () => setPlafond(avant));
   };
 
   /** Enregistre le seuil du compteur de boxe, en secondes d'effort. */
   const handleSaveSeuilSec = async (nextSeuilSec: number) => {
+    const avant = seuilSec;
     setSeuilSec(nextSeuilSec);
-    setSavingExo(true);
-    setSavedExo(false);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { rappelSeuilSec: nextSeuilSec } }),
-    });
-    setSavingExo(false);
-    if (res.ok) {
-      setSavedExo(true);
-      setTimeout(() => setSavedExo(false), 2000);
-      // La pastille relit son seuil sans recharger la page.
-      window.dispatchEvent(new Event("wow-dette-changee"));
-    }
+    const ok = await enregistrerReglage(
+      { rappelSeuilSec: nextSeuilSec }, () => setSeuilSec(avant));
+    // La pastille relit son seuil sans recharger la page.
+    if (ok) window.dispatchEvent(new Event("wow-dette-changee"));
   };
 
   const handleSaveProfile = async () => {
@@ -405,6 +405,11 @@ export default function SettingsPage() {
             <span className="text-xs" style={{ color: "var(--faint)" }}>…</span>
           ) : savedExo ? (
             <span className="win-text"><Icone nom="coche" taille={14} titre={t.enregistre} /></span>
+          ) : erreurExo ? (
+            // Un réglage refusé se dit. Sans ça, l'écran montre une valeur que
+            // le serveur n'a pas, et le rechargement suivant la reprend sans
+            // explication.
+            <span className="loss-text text-xs" role="status">{t.erreurSauvegarde}</span>
           ) : null}
         </div>
         <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
