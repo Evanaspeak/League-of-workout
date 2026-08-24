@@ -582,6 +582,50 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Campagne du 24 août — les dix pages sous le seuil, et le fondu qui coûtait deux secondes
+Dix pages mesurées sur téléphone bridé (4G moyenne, processeur quatre fois plus
+lent). Neuf dans le seuil, une au-dessus : la page d'accueil, à 3200 ms.
+
+Ce qui a été confirmé au passage : **le tableau de bord est passé de 3456 ms à
+1136 ms** — le premier écran rendu au serveur (V236) a fait ce qu'on en
+attendait —, et « Ta saison » tient à 1052 ms (V245).
+
+| écran | LCP téléphone bridé | plus grand élément |
+|---|---|---|
+| `/history` | 940 ms | mention Riot, en pied |
+| `/settings` | 944 ms | mention Riot, en pied |
+| `/bilan` | 1052 ms | mention Riot, en pied |
+| `/telechargement` | 1128 ms | le paragraphe SmartScreen |
+| `/cgu` | 1136 ms | le premier paragraphe |
+| `/dashboard` | 1136 ms | le rappel du test de force |
+| `/confidentialite` | 1200 ms | le titre |
+| `/calculateur` | 1644 ms | le titre |
+| `/beta` | 1696 ms | « Un pseudo suffit » |
+| `/` | **3200 ms** | le sous-titre du héros |
+
+**La cause n'était ni le poids ni le réseau.** `/calculateur` transfère 454 ko
+contre 399 pour l'accueil, et paraît en 1644 ms. C'était le fondu d'entrée :
+`.hero-rise` animait `opacity` de 0 à 1, et un élément à `opacity: 0` n'existe
+pas pour le navigateur — il ne peut pas être élu plus grand élément affiché. Le
+sous-titre, qui l'est, n'était compté qu'une fois le fondu joué.
+
+Mesuré des deux côtés, trois exécutions chacun, sur la même page et la même
+construction : **3396 ms avec le fondu, 1416 ms sans** (`prefers-reduced-motion`,
+que la feuille traite déjà en supprimant l'animation). Le fondu est parti, le
+mouvement est resté — le texte monte à sa place au lieu d'apparaître. Nouvelle
+mesure : **1440 ms**, et les dix pages sont dans le seuil.
+
+`src/heroSansFondu.test.ts` refuse le retour de `opacity` dans `heroRise`, et
+vérifie deux choses de plus, sans quoi il ne prouverait rien : que l'animation
+anime encore quelque chose, et que son découpage par accolades lit bien la
+règle demandée — éprouvé sur `fadeIn`, dont on sait qu'elle fond. Sabotage fait :
+le fondu remis, le test tombe.
+
+Deux corrections de texte au passage : « les graphiques ci-dessous » et « une
+seule partie suffit pour que les graphiques du bas se remplissent » désignaient
+des graphiques qui sont **au-dessus** de ces panneaux. Le tableau de bord rend
+`GraphiquesGlobaux` avant `PremiersPas`.
+
 ### Le tableau de bord renvoyait vers l'historique, qui renvoie au tableau de bord
 Deux textes d'un compte vide envoyaient enregistrer sa première partie sur
 `/history` : l'étape 3 des « Premiers pas » et le panneau « Aucune game

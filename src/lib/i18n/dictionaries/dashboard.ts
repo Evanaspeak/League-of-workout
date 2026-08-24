@@ -684,7 +684,7 @@ export const dashboard = {
     calendar: "カレンダー",
     noGameThisDay: "この日の試合はありません。",
     noGameLogged: "まだ試合の記録がありません",
-    premierAjoutAide: "一試合あれば、下のグラフが埋まりはじめます。",
+    premierAjoutAide: "一試合あれば、グラフが埋まりはじめます。",
     cancel: "キャンセル",
     start: "開始 ▶",
     tooltipPompesLabel: (v: number) => `腕立て ${v} 回`,

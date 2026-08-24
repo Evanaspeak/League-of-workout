@@ -27,10 +27,25 @@
 }
 .page-enter { animation: pageEnter 0.32s cubic-bezier(0.22, 1, 0.36, 1); }
 
-/* Stagger du hero au chargement (landing) */
+/* Stagger du hero au chargement (landing).
+
+   Le fondu est parti, le mouvement est resté — et ce n'est pas une question
+   de goût.
+
+   Un élément à `opacity: 0` n'existe pas pour le navigateur : il ne peut pas
+   être élu plus grand élément affiché. Le sous-titre du héros, qui l'est,
+   n'était donc compté qu'une fois le fondu joué. Mesuré sur téléphone bridé,
+   la même page rendait **3396 ms** avec le fondu et **1416 ms** sans, trois
+   exécutions chacune : deux secondes de contenu invisible sur la seule page
+   qui a trois secondes pour convaincre. C'était le seul des dix écrans
+   au-dessus du seuil, et la cause n'était ni le poids ni le réseau —
+   `/calculateur`, plus lourd, paraissait en 1644 ms.
+
+   Le texte est donc visible dès la première peinture et monte à sa place au
+   lieu d'apparaître. `src/heroSansFondu.test.ts` refuse le retour du fondu. */
 @keyframes heroRise {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { transform: translateY(22px); }
+  to   { transform: translateY(0); }
 }
 .hero-rise { animation: heroRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
