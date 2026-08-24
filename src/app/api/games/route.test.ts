@@ -243,6 +243,25 @@ describe("POST /api/games", () => {
     });
   });
 
+  /**
+   * Un rôle inconnu accusait le serveur.
+   *
+   * « MID » au lieu de « Mid » rendait « Config manquante » en 500, ce qui
+   * envoie chercher une panne de base alors que tout est en place. Trouvé en
+   * se servant du produit, précisément parce que le message m'a fait douter
+   * de la base.
+   */
+  it("refuse un rôle inconnu sans accuser la configuration", async () => {
+    const r = await post({
+      // Le double doublé de `RoleWeight` ne connaît que « MID ».
+      jeu: "League of Legends", role: "Mid", champion: "Ahri",
+      kills: 2, deaths: 9, assists: 4, result: "D",
+    });
+    expect(r.status).toBe(400);
+    expect(await corps(r)).toEqual({ error: "Rôle inconnu" });
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
   it("déduit la victoire du classement en battle royale", async () => {
     await post({ jeu: "Apex Legends", kills: 5, placement: 1, joueurs: 60 });
     expect(game.create.mock.calls[0][0].data.result).toBe("V");

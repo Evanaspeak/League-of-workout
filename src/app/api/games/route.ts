@@ -101,6 +101,24 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }
 
+  /**
+   * Un rôle inconnu n'est pas une configuration manquante.
+   *
+   * Les deux cas tombaient dans le même message, et il accusait le mauvais
+   * coupable : « Config manquante », en 500, pour un simple « MID » au lieu de
+   * « Mid ». Le message envoyait chercher une panne de serveur alors que la
+   * base était parfaitement semée — trouvé en s'en servant, précisément parce
+   * qu'il m'a fait douter de la base.
+   *
+   * La distinction est celle de toute la nuit : ce qui manque de notre côté
+   * est un 500, ce qu'on nous a mal donné est un 400 qui le dit.
+   */
+  if (typeJeu === "parties" && ponderations.length === 0) {
+    return NextResponse.json({ error: "Config manquante" }, { status: 500 });
+  }
+  if (typeJeu === "parties" && capacites.roles && !roleWeights) {
+    return NextResponse.json({ error: "Rôle inconnu" }, { status: 400 });
+  }
   if (typeJeu === "parties" && (!roleWeights || !masteryConfig)) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }

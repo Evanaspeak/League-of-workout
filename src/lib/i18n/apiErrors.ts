@@ -179,6 +179,10 @@ const ERROR_MAP: Record<string, Traductions> = {
     de: "Das Ergebnis dieser Partie ließ sich nicht lesen",
     zh: "无法读取这局对局的结果", ja: "この試合の結果を読み取れませんでした",
   },
+  "Rôle inconnu": {
+    en: "Unknown role", es: "Rol desconocido", de: "Unbekannte Rolle",
+    zh: "位置不正确", ja: "不明なロールです",
+  },
   "Résultat invalide": {
     en: "Invalid result", es: "Resultado no válido", de: "Ungültiges Ergebnis",
     zh: "结果不正确", ja: "結果が正しくありません",
