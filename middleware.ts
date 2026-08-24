@@ -114,6 +114,11 @@ export const config = {
     // y compris /api/admin/users/x.png, qui atteint bien son handler. Les
     // contrôles en place dans chaque handler rattrapaient le coup ; la
     // convention « les pages sont protégées par le middleware » était fausse.
-    "/((?!_next/static|_next/image|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|api/pwa-icon|opengraph-image|icon$|apple-icon$|icons/|images/|videos/).*)",
+    // `_vercel/` : le script de mesure d'audience. Il partait vers /login comme
+    // une page protégée, et le navigateur refusait alors de l'exécuter — « MIME
+    // type text/html is not executable ». La mesure ne remontait donc rien, et
+    // rien ne le signalait : une page de connexion rendue en 200 ressemble à un
+    // script qui s'est chargé. Trouvé en regardant la console pendant un test.
+    "/((?!_next/static|_next/image|_vercel/|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|api/pwa-icon|opengraph-image|icon$|apple-icon$|icons/|images/|videos/).*)",
   ],
 };
