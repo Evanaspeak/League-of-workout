@@ -96,8 +96,23 @@ describe("PATCH /api/dette", () => {
     expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(0);
   });
 
-  it("ne crédite rien pour un temps nul ou absurde", async () => {
-    await patch({ secondes: -500 });
+  it("ne crédite rien pour un temps absurde, et le dit", async () => {
+    /**
+     * Le refus a remplacé le silence.
+     *
+     * La route ramenait une durée négative à zéro et rendait 200 : rien
+     * n'était crédité, ce qui était sûr, mais l'appelant ne savait pas que sa
+     * valeur n'avait pas été comprise. La file hors ligne, elle, aurait
+     * réessayé indéfiniment. Un 4xx la fait renoncer sur cette entrée-là.
+     */
+    const r = await patch({ secondes: -500 });
+    expect(r.status).toBe(400);
+    expect(user.update).not.toHaveBeenCalled();
+  });
+
+  it("accepte un temps nul : c'est un abandon immédiat, pas une erreur", async () => {
+    const r = await patch({ secondes: 0 });
+    expect(r.status).toBe(200);
     expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(100);
   });
 
@@ -107,11 +122,15 @@ describe("PATCH /api/dette", () => {
     expect(user.update.mock.calls[0][0].where).toEqual({ id: "u42" });
   });
 
-  it("survit à un corps illisible", async () => {
+  it("survit à un corps illisible, et le refuse", async () => {
+    // Elle ne doit pas tomber ; elle ne doit pas non plus faire comme si la
+    // demande avait été comprise. Un corps qu'on ne sait pas lire ne dit ni
+    // « tout est fait » ni « voilà combien ».
     const r = await PATCH(new Request("http://localhost/api/dette", {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: "{cassé",
     }));
-    expect(r.status).toBe(200);
+    expect(r.status).toBe(400);
+    expect(user.update).not.toHaveBeenCalled();
   });
 });
 
@@ -261,5 +280,37 @@ describe("le jeton d'un paiement rejoué", () => {
   it("tronque un jeton démesuré plutôt que de l'écrire tel quel", async () => {
     await payer({ secondes: 60, jeton: "z".repeat(500) });
     expect(paiement.create.mock.calls[0][0].data.jeton).toHaveLength(64);
+  });
+});
+
+/**
+ * Une durée impossible ne vaut pas « tout est fait ».
+ *
+ * `Number(x) || 0` acceptait `1e308` : la proportion payée était plafonnée à
+ * un, et la dette entière disparaissait. Quarante-sept points effacés par une
+ * valeur que personne ne peut avoir faite.
+ */
+describe("les bornes du paiement partiel", () => {
+  const payer = (corpsRequete: Record<string, unknown>) =>
+    PATCH(requete("/api/dette", { method: "PATCH", body: corpsRequete }));
+
+  it("refuse une durée qui n'en est pas une", async () => {
+    for (const aberrant of [1e308, -500, "abc", {}, NaN]) {
+      const r = await payer({ secondes: aberrant });
+      expect(r.status).toBe(400);
+    }
+    expect(user.update).not.toHaveBeenCalled();
+  });
+
+  it("accepte encore d'avoir fait plus que ce qui était dû", async () => {
+    // Dix minutes faites sur cinq dues : c'est le cas légitime, et le
+    // plafonnement à cent pour cent reste là pour lui.
+    const r = await payer({ secondes: 3600 });
+    expect(r.status).toBe(200);
+    expect((await corps(r)).points).toBe(0);
+  });
+
+  it("laisse « tout est fait » explicite passer sans durée", async () => {
+    expect((await payer({ tout: true })).status).toBe(200);
   });
 });
