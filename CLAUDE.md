@@ -582,6 +582,27 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Le parcours complet, joué aussi sur un téléphone
+`e2e/parcours.spec.ts` — entrer, enregistrer une défaite, payer sa dette —
+tournait sur un écran de poste, et seulement là. Or le rail, d'où partent
+l'ajout d'une partie **et** le compteur de dette, se replie derrière un bouton
+sous 1180 px. Le fichier prévoyait ce cas depuis le début, dans une ligne
+tolérante (`.click().catch(() => {})`) : la branche existait pour rassurer, pas
+pour prouver. L'application se pose sur l'écran d'accueil d'un téléphone,
+envoie des notifications et affiche une pastille en jeu — le téléphone n'est
+pas un cas limite, c'est un des deux cas.
+
+Le parcours se joue maintenant deux fois, sur deux comptes distincts : poste et
+390 px tactile. La passe téléphone a échoué du premier coup, à l'étape 5 : la
+pastille de dette est « présente mais cachée » tant que le rail n'est pas
+déplié, et seule l'étape 3 pensait à le déplier. C'est la preuve que la seconde
+passe emprunte bien un autre chemin — sans elle, le test aurait continué de
+passer sur une moitié du produit.
+
+Ce que ça dit du produit, en revanche, ne se corrige pas ici : sur téléphone,
+voir ce qu'on doit demande une touche de plus. Déplacer ce bouton est un
+arbitrage, il figure dans les questions.
+
 ### Sans script, la page d'accueil se réduisait au premier écran
 Les dix-neuf sections sous le héros — l'historique, la bande des jeux, la foire
 aux questions, le pied de page — sont bien dans le HTML rendu par le serveur.
