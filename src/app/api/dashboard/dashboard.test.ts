@@ -103,6 +103,19 @@ describe("GET /api/dashboard/daily", () => {
     expect(game.findMany).not.toHaveBeenCalled();
   });
 
+  it("refuse une date bien formée qui n'existe pas", async () => {
+    /**
+     * La forme ne suffit pas : « 9999-99-99 » la respecte et n'est pas une
+     * date. `new Date` rendait alors une date invalide, qui traversait jusqu'à
+     * la base et faisait tomber la route avec une erreur 500 — sur une adresse
+     * que le navigateur construit lui-même depuis le calendrier.
+     */
+    for (const q of ["?date=9999-99-99", "?date=2026-13-01", "?date=2026-02-30"]) {
+      expect({ q, statut: (await jour(q)).status }).toEqual({ q, statut: 400 });
+    }
+    expect(game.findMany).not.toHaveBeenCalled();
+  });
+
   it("borne la requête à la journée demandée, et au demandeur", async () => {
     session.mockResolvedValue(utilisateur({ id: "u42" }));
     await jour("?date=2026-08-19");
