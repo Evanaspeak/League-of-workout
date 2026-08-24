@@ -583,6 +583,43 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Les réglages affichaient ce que le serveur n'avait pas gardé
+Les cinq réglages de « Ton effort » — exercices, variante de pompes, bilan
+hebdomadaire, plafond quotidien, seuil du compteur — posaient la nouvelle
+valeur à l'écran **avant** de l'envoyer, et ne faisaient rien du refus. L'écran
+montrait donc un réglage que le serveur n'avait pas ; on s'en apercevait au
+rechargement suivant, sans savoir pourquoi. Sur cette page-là, ça compte : un
+exercice ou un plafond mal enregistré change ce qu'on doit.
+
+Le `fetch` n'était pas protégé non plus. Sans réseau, la promesse partait en
+erreur, `setSavingExo(false)` n'était jamais atteint, et « Enregistrement… »
+restait à l'écran pour toujours.
+
+Un seul assistant (`enregistrerReglage`) porte les trois choses qui manquaient :
+le `try/catch`, le message d'échec, et le retour à la valeur d'avant. Ce
+dernier n'est pas un ornement — sans lui, le message d'erreur et ce qu'on voit
+se contredisent.
+
+Le message réemploie `erreurSauvegarde`, déjà traduit dans les six langues :
+une clé de plus pour dire la même chose n'aurait rien ajouté.
+
+`e2e/reglages.spec.ts` détourne le `PUT` en 500, coche la boxe, et vérifie
+trois choses : le message paraît, et le serveur n'a rien retenu. Sabotage fait,
+le retour en arrière retiré : le test tombe.
+
+Deux pièges retrouvés en l'écrivant, tous deux déjà écrits ici :
+- **la modale de consentement santé** recouvre la page et rien ne se clique
+  derrière. C'est le quatrième fichier de parcours qui tombe dessus ; il la
+  traverse maintenant par l'API à l'ouverture du compte ;
+- **la rubrique repliée** : `?rubrique=effort` ne suffit pas à faire paraître
+  la liste des exercices, il faut ouvrir « Ton effort ». Le parcours complet le
+  savait déjà.
+
+Et une fausse piste, écartée en la mesurant : le premier échec touchait le test
+des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
+sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
+base fraîchement montée, pas une régression — la même famille que V246.
+
 ### Un serveur qui répond mal effaçait la séance qu'on venait de faire
 `cloturer()` dans `CompteurDette` enveloppait son envoi dans un `try/catch`, et
 le `catch` ne rattrape que l'absence de réseau. Une réponse **500**, ou une
