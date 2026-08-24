@@ -1,3 +1,5 @@
+import type { MotifSynchro } from "@/lib/journalSynchro";
+
 /** Le journal des synchronisations Riot, dans les réglages. */
 export const journalSynchro = {
   fr: {
@@ -17,8 +19,9 @@ export const journalSynchro = {
       indisponible: "Le suivi Riot n'est pas encore en service. Rien à faire de ton côté.",
       riotMuet: "Riot ne répond pas. Ça arrive, et ça repart.",
       aucunePartie: "Riot ne trouve aucune partie récente.",
+      resultatIllisible: "Partie annulée, ou résultat contradictoire chez Riot. Rien n'est enregistré : mieux vaut ça qu'une défaite inventée.",
       inattendu: "Réponse inattendue.",
-    } as Record<string, string>,
+    } satisfies Record<MotifSynchro, string>,
     ilYA: (texte: string) => `il y a ${texte}`,
   },
   en: {
@@ -38,8 +41,9 @@ export const journalSynchro = {
       indisponible: "Riot tracking is not live yet. Nothing to do on your side.",
       riotMuet: "Riot is not answering. It happens, and it comes back.",
       aucunePartie: "Riot finds no recent match.",
+      resultatIllisible: "Remade game, or contradictory result from Riot. Nothing is recorded: better that than an invented loss.",
       inattendu: "Unexpected response.",
-    } as Record<string, string>,
+    } satisfies Record<MotifSynchro, string>,
     ilYA: (texte: string) => `${texte} ago`,
   },
   es: {
@@ -59,8 +63,9 @@ export const journalSynchro = {
       indisponible: "El seguimiento de Riot todavía no está activo. No hay nada que hacer por tu parte.",
       riotMuet: "Riot no responde. Pasa, y vuelve.",
       aucunePartie: "Riot no encuentra ninguna partida reciente.",
+      resultatIllisible: "Partida anulada, o resultado contradictorio en Riot. No se registra nada: mejor eso que una derrota inventada.",
       inattendu: "Respuesta inesperada.",
-    } as Record<string, string>,
+    } satisfies Record<MotifSynchro, string>,
     ilYA: (texte: string) => `hace ${texte}`,
   },
   de: {
@@ -80,8 +85,9 @@ export const journalSynchro = {
       indisponible: "Die Riot-Anbindung läuft noch nicht. Auf deiner Seite ist nichts zu tun.",
       riotMuet: "Riot antwortet nicht. Kommt vor, und kommt wieder.",
       aucunePartie: "Riot findet keine aktuelle Partie.",
+      resultatIllisible: "Abgebrochene Partie, oder widersprüchliches Ergebnis bei Riot. Es wird nichts erfasst: besser das als eine erfundene Niederlage.",
       inattendu: "Unerwartete Antwort.",
-    } as Record<string, string>,
+    } satisfies Record<MotifSynchro, string>,
     ilYA: (texte: string) => `vor ${texte}`,
   },
   zh: {
@@ -101,8 +107,9 @@ export const journalSynchro = {
       indisponible: "Riot 数据同步还没启用。你这边不用做什么。",
       riotMuet: "Riot 没有响应。偶尔会这样，一会儿就好。",
       aucunePartie: "Riot 没找到最近的对局。",
+      resultatIllisible: "对局被重开，或 Riot 的结果自相矛盾。不做任何记录：这好过凭空判一场败局。",
       inattendu: "返回了预料之外的结果。",
-    } as Record<string, string>,
+    } satisfies Record<MotifSynchro, string>,
     ilYA: (texte: string) => `${texte}前`,
   },
   ja: {
@@ -122,8 +129,9 @@ export const journalSynchro = {
       indisponible: "Riot 連携はまだ稼働していません。あなた側ですることはありません。",
       riotMuet: "Riot が応答しません。よくあることで、また戻ります。",
       aucunePartie: "Riot に最近の試合が見つかりません。",
+      resultatIllisible: "リメイク、または Riot 側の結果が食い違っています。記録はしません。架空の敗北を作るよりましです。",
       inattendu: "予期しない応答です。",
-    } as Record<string, string>,
+    } satisfies Record<MotifSynchro, string>,
     ilYA: (texte: string) => `${texte}前`,
   },
 };

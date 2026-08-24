@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { lireResultat, type MotifSansResultat } from "@/lib/riotResultat";
 import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
@@ -18,7 +19,13 @@ type CachedMatch = {
   kills: number;
   deaths: number;
   assists: number;
-  result: string;
+  /**
+   * `null` quand le résultat ne se lit pas : remake, ou deux sources qui se
+   * contredisent. Ce n'est pas une défaite, et la partie ne doit pas
+   * s'ajouter dans cet état.
+   */
+  resultat: "V" | "D" | null;
+  motif?: MotifSansResultat;
   date: string;
 };
 const matchCache = new Map<string, CachedMatch>();
@@ -141,7 +148,11 @@ export async function GET() {
             kills: (participant.kills as number) ?? 0,
             deaths: (participant.deaths as number) ?? 0,
             assists: (participant.assists as number) ?? 0,
-            result: participant.win ? "V" : "D",
+            // Le résultat se lit par recoupement, et peut ne pas se lire du
+            // tout : un remake n'est pas une défaite, et deux sources qui se
+            // contredisent ne se tranchent pas au hasard. Voir
+            // `src/lib/riotResultat.ts`.
+            ...lireResultat(match.info, participant),
             date: new Date(ts).toISOString(),
           });
         } catch {
@@ -158,7 +169,8 @@ export async function GET() {
     const alreadyLogged = loggedMap.has(id);
     if (!c) {
       return { matchId: id, champion: "?", role: "?", kills: 0, deaths: 0, assists: 0,
-        result: "?", date: new Date().toISOString(), alreadyLogged, pompesCalculees: null, exercice: null, indisponible: true };
+        result: "?", motifResultat: null, date: new Date().toISOString(),
+        alreadyLogged, pompesCalculees: null, exercice: null, indisponible: true };
     }
     return {
       matchId: id,
@@ -167,14 +179,18 @@ export async function GET() {
       kills: c.kills,
       deaths: c.deaths,
       assists: c.assists,
-      result: c.result,
+      result: c.resultat ?? "?",
+      // Une partie dont le résultat ne se lit pas se présente comme
+      // inajoutable, au même titre qu'une partie que Riot n'a pas rendue :
+      // l'ajouter demanderait de choisir un camp au hasard.
+      motifResultat: c.motif ?? null,
       date: c.date,
       alreadyLogged,
       pompesCalculees: alreadyLogged ? loggedMap.get(id)?.pompesCalculees ?? null : null,
       // Exercice réellement enregistré pour cette partie, pour l'afficher dans
       // sa propre unité plutôt que dans l'exercice courant.
       exercice: alreadyLogged ? loggedMap.get(id)?.exercice ?? null : null,
-      indisponible: false,
+      indisponible: c.resultat === null,
     };
   });
 

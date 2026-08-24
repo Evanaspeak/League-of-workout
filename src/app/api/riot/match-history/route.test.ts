@@ -136,3 +136,67 @@ describe("GET /api/riot/match-history", () => {
     expect(appels.length).toBe(avant);
   });
 });
+
+/**
+ * Le résultat de la partie, lu sans supposition.
+ *
+ * `participant.win ? "V" : "D"` faisait d'un champ absent, d'un remake ou de
+ * deux sources contradictoires une **défaite**. Une victoire enregistrée en
+ * défaite crée une dette non méritée, et rien ne le signalait.
+ *
+ * La règle de lecture vit dans `src/lib/riotResultat.ts` et a ses propres
+ * tests. Ici on éprouve le branchement : la route s'en sert, et une partie
+ * dont le résultat ne se lit pas ne se propose pas à l'ajout.
+ */
+describe("GET /api/riot/match-history · le résultat", () => {
+  /** Rejoue la route avec un match fabriqué. */
+  const avecMatch = async (info: Record<string, unknown>) => {
+    // `clearAllMocks` du beforeEach efface aussi les valeurs de retour du
+    // budget de la clé Riot : sans ça la route refuse en 429 avant d'appeler
+    // quoi que ce soit, et le test mesure le limiteur au lieu du résultat.
+    (prisma.loginAttempt.count as jest.Mock).mockResolvedValue(0);
+    (prisma.loginAttempt.createMany as jest.Mock).mockResolvedValue({});
+    (prisma.loginAttempt.deleteMany as jest.Mock).mockResolvedValue({});
+    (prisma.loginAttempt.findMany as jest.Mock).mockResolvedValue([]);
+    global.fetch = jest.fn(async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.includes("/ids?")) return reponse([`EUW1_${Math.random()}`]);
+      return reponse({ info: {
+        gameEndTimestamp: Date.parse("2026-08-19T21:30:00Z"),
+        participants: [{ puuid: PUUID, championName: "Ahri", kills: 2, deaths: 9,
+                         assists: 4, teamPosition: "MIDDLE", teamId: 100, ...info.participant as object }],
+        ...info,
+      } });
+    }) as unknown as typeof fetch;
+    const r = await GET();
+    const lu = await corps(r);
+    // Le test doit tomber sur un refus, pas sur un `undefined` illisible.
+    expect({ status: r.status, lu }).toMatchObject({ status: 200 });
+    return (lu as unknown as unknown[])[0];
+  };
+
+  const EQUIPES = [{ teamId: 100, win: true }, { teamId: 200, win: false }];
+
+  it("rend la victoire quand les deux sources s'accordent", async () => {
+    const m = await avecMatch({ teams: EQUIPES, participant: { win: true } });
+    expect(m).toMatchObject({ result: "V", indisponible: false });
+  });
+
+  it("ne rend plus une défaite quand le participant n'a pas de résultat", async () => {
+    const m = await avecMatch({ teams: EQUIPES, participant: {} });
+    expect(m).toMatchObject({ result: "V" });
+  });
+
+  it("marque le remake inajoutable au lieu de le compter en défaite", async () => {
+    const m = await avecMatch({
+      teams: [{ teamId: 100, win: false }, { teamId: 200, win: false }],
+      participant: { win: false, gameEndedInEarlySurrender: true },
+    });
+    expect(m).toMatchObject({ result: "?", motifResultat: "remake", indisponible: true });
+  });
+
+  it("marque inajoutable un match dont les deux sources se contredisent", async () => {
+    const m = await avecMatch({ teams: EQUIPES, participant: { win: false } });
+    expect(m).toMatchObject({ result: "?", motifResultat: "desaccord", indisponible: true });
+  });
+});

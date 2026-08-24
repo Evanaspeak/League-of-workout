@@ -626,6 +626,52 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### Une victoire sur trois s'enregistrait en défaite
+Signalé par le propriétaire du produit, et la cause tenait en une ligne de
+`/api/games` :
+
+```ts
+: (body.result === "V" ? "V" : "D");
+```
+
+**Tout ce qui n'est pas exactement `"V"` devient une défaite.** Un champ
+absent, une casse différente, un `undefined` remonté par Riot : la partie
+s'enregistre du mauvais côté, sans un mot. C'est `Number(x) || 0` à nouveau —
+confondre « absent » et « aberrant » — sauf qu'ici la confusion se paie en
+dette non méritée, et qu'aucun écran ne la signale.
+
+Le résultat se **refuse** désormais quand il n'est ni `"V"` ni `"D"`.
+
+En amont, les deux routes Riot lisaient `participant.win ? "V" : "D"`, ce qui
+cache trois façons de se tromper. `src/lib/riotResultat.ts` les traite :
+
+- **le champ manquant** se rattrape sur `teams[].win`, et réciproquement ;
+- **le remake** n'est ni victoire ni défaite. Riot met `win: false` aux dix
+  joueurs d'une partie annulée : la compter en défaite crée une dette pour un
+  match que personne n'a joué. Il se lit **en premier**, parce que les deux
+  sources s'y accordent parfaitement et que le contrôle de désaccord y est
+  aveugle ;
+- **le désaccord** entre les deux sources ne se tranche pas. Deviner du côté
+  « défaite » est précisément le pari coûteux.
+
+Un résultat illisible n'est donc plus une défaite mais un refus : la partie se
+présente inajoutable dans la liste, avec son motif (« partie annulée » plutôt
+qu'« indisponible », qui ferait chercher une panne inexistante), et
+`/api/riot/last-game` rend **422**. Pas 409 : dans cette route le 409 dit déjà
+« déjà enregistrée », et deux sens sur un même code rendraient le journal de
+synchronisation incapable de les distinguer.
+
+Deux pièges rencontrés en l'éprouvant :
+- **un sabotage qui ne sabote pas.** Les trois premières substitutions passaient
+  par `perl -0pi -e` avec des motifs pleins de parenthèses et d'accolades : rien
+  n'était remplacé, les tests passaient au vert, et j'ai failli conclure que le
+  module tenait. Le sabotage vérifie maintenant que l'empreinte du fichier a
+  changé avant de lancer les tests. Quatre sabotages, quatre échecs.
+- **`as Record<string, string>` sur la table des motifs du journal.** Elle
+  acceptait n'importe quelle clé, donc un motif ajouté sans libellé s'affichait
+  comme une case vide. `satisfies Record<MotifSynchro, string>` le refuse à la
+  compilation — éprouvé en retirant un libellé.
+
 ### Un ajout depuis la liste Riot disait son échec à personne
 La liste des vingt dernières parties propose un bouton par ligne. Un refus du
 serveur ne produisait rien : la ligne redevenait normale, on recliquait sans
