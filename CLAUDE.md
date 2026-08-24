@@ -582,6 +582,37 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Sans script, la page d'accueil se réduisait au premier écran
+Les dix-neuf sections sous le héros — l'historique, la bande des jeux, la foire
+aux questions, le pied de page — sont bien dans le HTML rendu par le serveur.
+C'est la feuille de style qui les pose à `opacity: 0` via `.reveal`, et seul
+l'IntersectionObserver installé après l'hydratation les rend visibles. Coupez le
+script, ou laissez une extension le bloquer : la page de vente n'a plus rien
+sous le titre, et rien ne le signale. Mesuré avant correction, en descendant
+toute la page : **19 sections sur 19 invisibles**.
+
+`@media (scripting: none)` les rend visibles, et rien d'autre. C'est volontaire :
+la règle est nette, elle n'introduit aucun scintillement et n'invente pas une
+seconde mécanique de révélation. Un paquet JavaScript qui n'arrive pas est un
+autre problème — commun à tout ce que l'application fait après montage, pas
+propre à cette page.
+
+`e2e/seo.spec.ts` descend la page sans script et compte ce qui est resté caché.
+Il compte aussi le total : sans ce garde, la disparition de la classe ferait
+passer un test qui ne prouve plus rien. Sabotage fait, la règle vidée : 19.
+
+### Un outil de mesure qui jetait ce qu'il venait de relever
+`performance.mjs` relevait le nom du plus grand élément **et** le drapeau « dans
+une modale » sur la passe poste, puis n'en gardait que le temps :
+`const m = { lcp, cls }`. Deux conséquences. Le rapport annonçait « plus grand
+(non relevé) » sur toutes les pages — la moitié du diagnostic, perdue à la
+ligne suivante. Et le garde des modales testait `m.modale`, qui valait toujours
+`undefined` : il ne pouvait se déclencher que par la passe téléphone.
+
+C'est exactement le piège déjà écrit plus haut — « un contrôle qu'on ajoute se
+pose partout où la mesure se fait » — et il s'est reproduit dans le fichier qui
+le décrit.
+
 ### Campagne du 24 août — les dix pages sous le seuil, et le fondu qui coûtait deux secondes
 Dix pages mesurées sur téléphone bridé (4G moyenne, processeur quatre fois plus
 lent). Neuf dans le seuil, une au-dessus : la page d'accueil, à 3200 ms.

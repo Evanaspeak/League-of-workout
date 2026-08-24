@@ -60,6 +60,24 @@
   transform: none;
 }
 
+/* Sans script, tout ça ne se révèle jamais.
+
+   Les dix-neuf sections sous le héros — l'historique, les jeux, la foire aux
+   questions, le pied de page — sont bien dans le HTML rendu par le serveur.
+   C'est la feuille de style qui les pose à `opacity: 0`, et seul
+   l'IntersectionObserver installé après l'hydratation les rend visibles.
+   Navigateur qui a coupé le script, extension qui le bloque : la page
+   d'accueil se réduisait au premier écran, sans que rien ne le signale.
+   Mesuré : 19 sections sur 19 invisibles après avoir descendu toute la page.
+
+   `scripting: none` ne vaut que pour ce cas-là, et c'est voulu : il est net,
+   il n'introduit aucun scintillement, et il n'invente pas une seconde
+   mécanique de révélation. Un paquet JavaScript qui n'arrive pas est un autre
+   problème, commun à tout ce que l'application fait après montage. */
+@media (scripting: none) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
 @keyframes sheen {
   from { left: -80%; }
   to   { left: 130%; }
