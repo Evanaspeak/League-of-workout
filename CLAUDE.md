@@ -582,6 +582,44 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Quarante-sept messages d'erreur partaient en français
+Les routes écrivent leurs messages en dur, et la clé de traduction EST le
+message français — c'est un choix assumé, celui qui circule sur le réseau. Le
+prix, c'est qu'un message ajouté sans sa traduction ne casse rien, ne fait
+échouer aucun test, et sort en français chez quelqu'un qui n'a jamais vu un
+écran français.
+
+Recensement : **47 messages distincts sur 69** étaient dans ce cas. Et parmi
+eux, celui-ci :
+
+> Clé API Riot manquante (RIOT_API_KEY dans .env)
+
+C'est ce qu'aurait vu **tout le monde** en essayant de relier son compte Riot
+tant que la clé de production n'est pas arrivée — en français quelle que soit
+la langue de l'écran, nommant un fichier qu'on ne verra jamais, et donnant à un
+défaut de configuration de notre côté l'allure d'une panne du sien. Il dit
+maintenant ce qui est vrai et ce qu'on peut faire : le suivi Riot est
+indisponible, le reste marche, les parties s'enregistrent à la main.
+
+Les quarante-sept sont traduits dans les cinq autres langues.
+
+`src/lib/i18n/apiErrorsComplets.test.ts` garde la table : tout message
+`error: "…"` rendu par une route doit y figurer, ou être exempté **avec sa
+raison écrite**. Neuf exemptions, toutes des routes qu'aucun écran
+d'utilisateur n'atteint — administration, amorçage, source de diffusion.
+
+Deux pièges rencontrés en l'écrivant :
+- **Déduire « traduit » du résultat.** Le premier jet regardait si la
+  traduction anglaise diffère du français. « Unauthorized » s'écrit pareil dans
+  les deux : le message se retrouvait rangé parmi les oubliés. La question se
+  pose sur la présence dans la table, d'où `aUneTraduction()`.
+- **Exiger que chaque langue diffère du français.** Même cause : une règle qui
+  l'imposerait forcerait à inventer une différence. Ce qui est exigé, c'est
+  qu'aucune langue ne rende du vide.
+
+Trois sabotages, trois échecs : un message neuf sans traduction, une exemption
+qui ne désigne plus rien, et un motif de recensement qui ne trouve plus rien.
+
 ### Sur une base neuve, la première partie enregistrée tombait
 Trouvé par l'intégration continue, et par accident : `e2e/bilan.spec.ts` passe
 avant les autres dans l'ordre alphabétique, et c'est le seul fichier de
