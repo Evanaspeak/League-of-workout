@@ -582,6 +582,36 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Une panne serveur ressemblait à une page lente — ou pire, à un compte vide
+Trouvé en coupant les réponses à la main, écran par écran. Deux comportements,
+et le second est le plus grave de la nuit :
+
+- **Le tableau de bord gardait son squelette pour toujours.** Une panne
+  ressemblait exactement à une page qui met du temps : on attend, on recharge,
+  on attend encore. Rien ne disait qu'il n'y avait plus rien à attendre.
+- **L'historique annonçait « aucune game à afficher ».** Il affirmait quelque
+  chose de **faux** sur les données de la personne. Quelqu'un dont la requête
+  échoue en conclut que son historique a été effacé — sur une application qui
+  n'existe que pour garder cet historique.
+
+Les deux disent maintenant ce qui s'est passé, et disent que **rien n'est
+perdu** : c'est la seule phrase qui compte quand on croit avoir perdu ses
+données. Un bouton « Réessayer » à côté, qui recharge sans quitter la page.
+
+`e2e/panne-serveur.spec.ts` coupe les trois routes une par une. Le test de
+l'historique vérifie les deux choses : que le message d'échec est là, **et**
+que celui qui affirme le contraire n'y est pas. Éprouvé en ravalant l'échec :
+le test tombe.
+
+#### La suite navigateur butait sur le plafond de la bêta
+Cent comptes — c'est le produit, pas un réglage de test — et chaque exécution
+en ouvre une dizaine. Au bout d'une douzaine d'exécutions locales, l'ouverture
+de compte se met à échouer, et la panne ne ressemble pas à sa cause : c'est le
+fichier passé en premier dans l'ordre alphabétique qui tombe, quel qu'il soit.
+La préparation globale efface donc les comptes `@example.test` — domaine
+réservé aux exemples par la RFC 2606, qu'aucun compte réel ne peut porter. En
+intégration continue la base est neuve, ça n'y change rien.
+
 ### « 2026-02-30 » montrait la journée du 2 mars
 Suite du passage en revue, côté lecture cette fois. Une seule route cédait, et
 c'est celle que le **calendrier du tableau de bord appelle lui-même** :

@@ -149,6 +149,14 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const tJeux = useT(jeuxDict);
   const dateLocale = useDateLocale();
   const [data, setData] = useState<DashData | null>(null);
+  /**
+   * Les statistiques n'ont pas pu être chargées.
+   *
+   * Sans cet état, une réponse en erreur laissait le squelette à l'écran pour
+   * toujours : une panne serveur ressemblait exactement à une page qui met du
+   * temps. On attend, on recharge, on attend encore. Le dire coûte une ligne.
+   */
+  const [chargementRate, setChargementRate] = useState(false);
   /** Modale ouverte depuis le rail latéral. */
   const [modale, setModale] = useState<"session" | "ajout" | null>(null);
   const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
@@ -227,13 +235,16 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         // Session invalide (ex. cookie d'une ancienne base) → retour au login.
         if (res.status === 401 && typeof window !== "undefined") {
           window.location.href = "/login";
+          return;
         }
+        setChargementRate(true);
         return;
       }
       const d = await res.json();
+      setChargementRate(false);
       setData(d);
       setExercicesSel(toExerciceIds(d?.exercices));
-    });
+    }).catch(() => setChargementRate(true));
   };
 
   // Charge au montage puis à chaque changement de périmètre consulté.
@@ -360,8 +371,23 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
       <div className="space-y-6">
         <DesktopAuthHandler />
         {premierEcran}
-        <span className="lecture-ecran" role="status">{t.loading}</span>
-        <Squelette />
+        {chargementRate ? (
+          <div className="lol-panel p-8 text-center">
+            <p style={{ color: "var(--loss)" }}>{t.chargementRate}</p>
+            <button
+              type="button"
+              className="lol-btn mt-4"
+              onClick={() => { setChargementRate(false); loadDash(); }}
+            >
+              {t.reessayer}
+            </button>
+          </div>
+        ) : (
+          <>
+            <span className="lecture-ecran" role="status">{t.loading}</span>
+            <Squelette />
+          </>
+        )}
       </div>
     );
   }

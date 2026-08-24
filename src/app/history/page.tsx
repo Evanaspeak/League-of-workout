@@ -84,6 +84,16 @@ export default function HistoryPage() {
   // ── Lignes de dette ──
   const [games, setGames] = useState<Game[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
+  /**
+   * La liste n'a pas pu être chargée.
+   *
+   * Distinct de « la liste est vide » : l'échec était avalé, et l'écran
+   * annonçait « aucune game à afficher » à quelqu'un dont la requête venait
+   * d'échouer. Il n'y a pas pire message — il affirme quelque chose de faux
+   * sur les données de la personne, et lui fait croire que son historique a
+   * disparu.
+   */
+  const [chargementRate, setChargementRate] = useState(false);
   const [filterRole, setFilterRole] = useState("Tous");
   const [filterResult, setFilterResult] = useState("Tous");
   const [filtreJeu, setFiltreJeu] = useState<string | null>(null);
@@ -99,9 +109,12 @@ export default function HistoryPage() {
   // ─── Chargement initial (games + parties Riot) ───────────────────────────
   useEffect(() => {
     fetch("/api/games")
-      .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setGames(data); })
-      .catch(() => {})
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data) => {
+        if (!Array.isArray(data)) throw new Error("réponse inattendue");
+        setGames(data);
+      })
+      .catch(() => setChargementRate(true))
       .finally(() => setLoadingGames(false));
   }, []);
 
@@ -295,7 +308,18 @@ export default function HistoryPage() {
                 </div>
               </div>
 
-              {filtered.length === 0 ? (
+              {chargementRate ? (
+                <div className="lol-panel p-8 text-center" data-visite="historique-table">
+                  <p style={{ color: "var(--loss)" }}>{t.chargementRate}</p>
+                  <button
+                    type="button"
+                    className="lol-btn mt-4"
+                    onClick={() => window.location.reload()}
+                  >
+                    {t.reessayer}
+                  </button>
+                </div>
+              ) : filtered.length === 0 ? (
                 // L'ancre de la visite guidée vit aussi ici : un compte neuf
                 // n'a aucune ligne, et l'étape qui montre « où retrouver tes
                 // activités » restait alors sans cible — écran figé le temps du
