@@ -16,6 +16,7 @@ import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { seedDefaults } from "@/lib/seed-defaults";
+import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -145,8 +146,16 @@ export async function POST(req: Request) {
     selection.length > 1 ? JSON.stringify(repartirPoints(total, selection)) : null;
 
   if (typeJeu === "temps") {
-    const dureeSec = Math.max(0, Math.round(Number(body.dureeSec) || 0));
-    if (dureeSec <= 0) {
+    /**
+     * Une durée bornée, et refusée si elle ne l'est pas.
+     *
+     * `999999999` au lieu de `999` produisait 5 555 556 points de dette en une
+     * requête. Ce n'est pas un abus, c'est un zéro de trop dans un champ — et
+     * la personne se retrouvait avec une dette qu'elle ne pourrait jamais
+     * payer, sur un produit dont c'est précisément le sujet.
+     */
+    const dureeSec = entierBorne(body.dureeSec, DUREE_MAX_SEC, 1);
+    if (dureeSec === null) {
       return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
     }
     const scoringTemps = calcScoreTemps({ dureeSec, gainageSec: gainageEquivalent, levelConfigs });
@@ -201,17 +210,44 @@ export async function POST(req: Request) {
   // Un battle royale compte ses éliminations, mais ni morts ni assists.
   // Sur Rocket League, `kills` porte les buts et `assists` les passes : les
   // trois statistiques sont positives, aucune ne creuse la dette.
-  const kills = capacites.kda || capacites.br || capacites.rl ? Number(body.kills) || 0 : 0;
-  const deaths = capacites.kda ? Number(body.deaths) || 0 : 0;
-  const assists = capacites.kda || capacites.rl ? Number(body.assists) || 0 : 0;
-  const arrets = capacites.rl ? Math.max(0, Number(body.arrets) || 0) : null;
+  /**
+   * Le KDA passe par les mêmes bornes.
+   *
+   * `Number(body.deaths) || 0` laissait passer `1e308` jusqu'à la base, qui
+   * répondait par une erreur 500 sans rien expliquer. Une valeur présente mais
+   * hors bornes est maintenant refusée par un message ; une valeur absente
+   * reste zéro. Ce sont deux choses différentes, et les confondre revenait à
+   * enregistrer une partie que personne n'a jouée.
+   */
+  for (const brut of [body.kills, body.deaths, body.assists, body.arrets]) {
+    const absent = brut === null || brut === undefined || brut === "";
+    if (!absent && entierBorne(brut, KDA_MAX) === null) {
+      return NextResponse.json({ error: "Valeur hors bornes" }, { status: 400 });
+    }
+  }
+  const lu = (champ: unknown, actif: boolean) => (actif ? entierBorne(champ, KDA_MAX) ?? 0 : 0);
+  const kills = lu(body.kills, capacites.kda || capacites.br || capacites.rl);
+  const deaths = lu(body.deaths, capacites.kda);
+  const assists = lu(body.assists, capacites.kda || capacites.rl);
+  const arrets = capacites.rl ? entierBorne(body.arrets, KDA_MAX) ?? 0 : null;
   const champion = capacites.champions && body.champion ? String(body.champion) : null;
 
   // Battle royale : la place finale remplace le compteur de morts, et la
   // victoire se déduit du classement plutôt que d'un bouton.
-  const placement = capacites.br ? Math.max(1, Math.round(Number(body.placement) || 0)) : null;
-  const joueurs = capacites.br ? Math.max(2, Math.round(Number(body.joueurs) || capacites.joueurs)) : null;
-  if (capacites.br && !Number(body.placement)) {
+  // Un classement au-delà du nombre de joueurs n'est pas une partie : c'est
+  // une faute de frappe, et le barème la traiterait comme la dernière place.
+  /**
+   * Le classement se refuse, il ne se rattrape pas.
+   *
+   * `Math.max(1, …)` ramenait un `-3` à la première place, c'est-à-dire à une
+   * partie gratuite : la saisie aberrante était **récompensée**. Une place hors
+   * bornes est maintenant un refus, comme une place absente.
+   */
+  const placement = capacites.br ? entierBorne(body.placement, JOUEURS_MAX, 1) : null;
+  const joueurs = capacites.br
+    ? Math.max(2, entierBorne(body.joueurs, JOUEURS_MAX, 2) ?? capacites.joueurs)
+    : null;
+  if (capacites.br && placement === null) {
     return NextResponse.json({ error: "Classement invalide" }, { status: 400 });
   }
   const resultat = capacites.br

@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { seedDefaults } from "@/lib/seed-defaults";
+import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
 export async function POST(req: Request) {
@@ -80,7 +81,9 @@ export async function POST(req: Request) {
 
   // Session au temps : la dette dépend de la durée, pas d'un résultat.
   if (typeJeu === "temps") {
-    const dureeSec = Math.max(0, Math.round(Number(body.dureeSec) || 0));
+    // Mêmes bornes que l'enregistrement : un aperçu qui annonce cinq millions
+    // de pompes prépare une partie qui les enregistrera.
+    const dureeSec = entierBorne(body.dureeSec, DUREE_MAX_SEC, 1) ?? 0;
     if (dureeSec <= 0) {
       return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
     }
@@ -104,13 +107,13 @@ export async function POST(req: Request) {
   // Mêmes règles que l'enregistrement, pour que l'aperçu annonce exactement le
   // chiffre qui sera écrit.
   if (capacites.br) {
-    const placement = Math.max(1, Math.round(Number(body.placement) || 0));
-    const joueurs = Math.max(2, Math.round(Number(body.joueurs) || capacites.joueurs));
+    const placement = Math.max(1, entierBorne(body.placement, JOUEURS_MAX) ?? 0);
+    const joueurs = Math.max(2, entierBorne(body.joueurs, JOUEURS_MAX) ?? capacites.joueurs);
     if (!Number(body.placement)) {
       return NextResponse.json({ error: "Classement invalide" }, { status: 400 });
     }
     const scoringBr = calcScoreBattleRoyale({
-      placement, joueurs, kills: Number(body.kills) || 0, gainageSec: gainageEquivalent, roleWeights, levelConfigs,
+      placement, joueurs, kills: entierBorne(body.kills, KDA_MAX) ?? 0, gainageSec: gainageEquivalent, roleWeights, levelConfigs,
     });
     return NextResponse.json({
       scoring: scoringBr,
@@ -127,9 +130,9 @@ export async function POST(req: Request) {
   // Rocket League : trois statistiques positives, aucune qui pénalise.
   if (capacites.rl) {
     const scoringRl = calcScoreRocketLeague({
-      buts: Number(body.kills) || 0,
+      buts: entierBorne(body.kills, KDA_MAX) ?? 0,
       arrets: Number(body.arrets) || 0,
-      passes: Number(body.assists) || 0,
+      passes: entierBorne(body.assists, KDA_MAX) ?? 0,
       result: body.result === "V" ? "V" : "D",
       gainageSec: gainageEquivalent, roleWeights, levelConfigs,
     });
@@ -157,9 +160,9 @@ export async function POST(req: Request) {
    * réellement dues. Un test compare désormais les deux routes.
    */
   const scoring = calcScore({
-    kills: capacites.kda ? Number(body.kills) || 0 : 0,
-    deaths: capacites.kda ? Number(body.deaths) || 0 : 0,
-    assists: capacites.kda ? Number(body.assists) || 0 : 0,
+    kills: capacites.kda ? entierBorne(body.kills, KDA_MAX) ?? 0 : 0,
+    deaths: capacites.kda ? entierBorne(body.deaths, KDA_MAX) ?? 0 : 0,
+    assists: capacites.kda ? entierBorne(body.assists, KDA_MAX) ?? 0 : 0,
     result: body.result === "V" ? "V" : "D",
     gainageSec: gainageEquivalent,
     partiesAvant,
