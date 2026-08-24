@@ -583,6 +583,25 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Un serveur qui répond mal effaçait la séance qu'on venait de faire
+`cloturer()` dans `CompteurDette` enveloppait son envoi dans un `try/catch`, et
+le `catch` ne rattrape que l'absence de réseau. Une réponse **500**, ou une
+session expirée, traversaient le `if (res.ok)` sans rien faire : la fenêtre se
+refermait, la dette restait entière, et l'effort disparaissait sans un mot.
+
+C'est exactement le défaut que la file hors ligne (V240) existe pour empêcher,
+laissé ouvert sur le seul chemin où le serveur est joignable — donc le plus
+fréquent. Celui qui vient de faire ses pompes en conclut que l'application ne
+marche pas.
+
+Mêmes règles que la file : 401 et 5xx repartent en file, le reste non — un 4xx
+ne passera jamais, et le garder bloquerait la file derrière lui.
+
+`e2e/hors-ligne.spec.ts` a un cinquième test, et **le réseau y reste branché** :
+c'est ce qui le distingue du premier. Seul le `PATCH` est détourné en 500.
+Sabotage fait, la correction retirée : « un 500 ne doit pas faire disparaître la
+séance — Received length: 0 ».
+
 ### La liste d'attente n'était atteignable par aucun chemin
 `/waitlist` existe : une page, un dictionnaire dans les six langues, un texte
 qui explique que les cent places sont prises et qu'une vague suivante est
