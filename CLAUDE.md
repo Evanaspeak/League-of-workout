@@ -626,6 +626,26 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### « Config manquante » pour une faute de casse
+Trouvé en montant le compte d'audit des scripts de mesure : l'enregistrement
+d'une partie rendait **500 « Config manquante »** alors que la base était
+parfaitement semée — sept pondérations de rôle, cinq paliers, une maîtrise,
+vérifiés à la main.
+
+La cause : `ponderations.find((r) => r.role === body.role)`. J'envoyais
+« MID » ; la table contient « Mid ». Un rôle introuvable et une configuration
+absente tombaient dans le même message, et il accusait le mauvais coupable —
+il m'a fait douter de la base et vérifier son contenu avant de comprendre.
+
+Les deux cas se distinguent maintenant, et c'est la règle de toute la nuit :
+**ce qui manque de notre côté est un 500, ce qu'on nous a mal donné est un 400
+qui le dit.** « Rôle inconnu », traduit dans les six langues.
+
+Le test avait son propre piège : le double de `RoleWeight` dans le fichier de
+test ne connaît que « MID », donc c'est « Mid » qui y joue le rôle inconnu. Un
+test écrit sans regarder son double aurait éprouvé le contraire de ce qu'il
+annonce.
+
 ### Ce qui restait muet quand le serveur refusait
 Recensement des `if (res.ok)` sans branche d'échec, à la suite des corrections
 précédentes. Trois trouvailles, et deux fausses pistes qu'il valait mieux
