@@ -1,6 +1,7 @@
 export const adminUserList = {
   fr: {
     loading: "Chargement...",
+    actionEchouee: "L'action n'a pas abouti. Rien n'a changé.",
     title: (n: number) => `BÊTA-TESTEURS (${n})`,
     searchPlaceholder: "Rechercher par pseudo ou email…",
     noResults: "Aucun résultat.",
@@ -65,6 +66,7 @@ export const adminUserList = {
   },
   en: {
     loading: "Loading...",
+    actionEchouee: "The action did not go through. Nothing changed.",
     title: (n: number) => `BETA TESTERS (${n})`,
     searchPlaceholder: "Search by username or email…",
     noResults: "No results.",
@@ -129,6 +131,7 @@ export const adminUserList = {
   },
   es: {
     loading: "Cargando…",
+    actionEchouee: "La acción no se ha completado. No ha cambiado nada.",
     title: (n: number) => `BETA TESTERS (${n})`,
     searchPlaceholder: "Buscar por nick o correo…",
     noResults: "Ningún resultado.",
@@ -193,6 +196,7 @@ export const adminUserList = {
   },
   de: {
     loading: "Wird geladen…",
+    actionEchouee: "Die Aktion ist nicht durchgegangen. Nichts hat sich geändert.",
     title: (n: number) => `BETATESTER (${n})`,
     searchPlaceholder: "Nach Nickname oder E-Mail suchen…",
     noResults: "Kein Treffer.",
@@ -257,6 +261,7 @@ export const adminUserList = {
   },
   zh: {
     loading: "加载中…",
+    actionEchouee: "操作没有完成，什么都没有改变。",
     title: (n: number) => `内测用户（${n}）`,
     searchPlaceholder: "按昵称或邮箱搜索…",
     noResults: "没有结果。",
@@ -321,6 +326,7 @@ export const adminUserList = {
   },
   ja: {
     loading: "読み込み中…",
+    actionEchouee: "操作は完了しませんでした。何も変わっていません。",
     title: (n: number) => `ベータテスター（${n}）`,
     searchPlaceholder: "ニックネームかメールで検索…",
     noResults: "該当なし。",

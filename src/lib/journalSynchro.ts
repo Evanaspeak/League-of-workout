@@ -54,6 +54,7 @@ export function ajouter(journal: Entree[], entree: Entree): Entree[] {
  */
 export type MotifSynchro =
   | "saturee" | "compteMalRenseigne" | "cleRefusee" | "indisponible"
+  | "resultatIllisible"
   | "riotMuet" | "aucunePartie" | "inattendu";
 
 export function lireCode(code: number): { resultat: Resultat; motif: MotifSynchro } {
@@ -61,6 +62,14 @@ export function lireCode(code: number): { resultat: Resultat; motif: MotifSynchr
   if (code === 400) return { resultat: "erreur", motif: "compteMalRenseigne" };
   if (code === 401 || code === 403) return { resultat: "erreur", motif: "cleRefusee" };
   if (code === 404) return { resultat: "rien", motif: "aucunePartie" };
+  /**
+   * 422 : la partie est là, son résultat ne se lit pas.
+   *
+   * Un remake, ou deux sources Riot qui se contredisent. Ce n'est ni une
+   * panne ni une absence de partie : c'est un refus délibéré d'enregistrer
+   * plutôt que de deviner du côté « défaite », qui coûte une dette.
+   */
+  if (code === 422) return { resultat: "refus", motif: "resultatIllisible" };
   /**
    * 503 : c'est NOUS qui ne sommes pas prêts, pas Riot.
    *

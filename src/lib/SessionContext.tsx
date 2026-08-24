@@ -301,6 +301,19 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
           setRappelActif(true);
           notifier(total);
         }
+      } else {
+        /**
+         * L'enregistrement refusé ne disait rien.
+         *
+         * La partie était bien lue chez Riot, et le `POST` échouait sans
+         * laisser de trace : le journal restait vide, la partie n'entrait
+         * jamais, et la relecture suivante recommençait à l'identique. Ça
+         * compte davantage depuis que la route REFUSE un résultat qu'elle ne
+         * sait pas lire — un remake, ou deux sources Riot contradictoires :
+         * ce refus est légitime, et il doit se voir.
+         */
+        const { resultat, motif } = lireCode(logRes.status);
+        noter({ resultat, code: logRes.status, motif });
       }
     } catch { /* retry next poll */ }
     setPolling(false);

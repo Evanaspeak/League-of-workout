@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { lireResultat } from "@/lib/riotResultat";
 import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
@@ -105,6 +106,25 @@ export async function GET(req: Request) {
 
   const role = detectRole(match.info, participant);
 
+  /**
+   * Un résultat illisible n'est pas une défaite.
+   *
+   * C'est le chemin que la session automatique emprunte après chaque partie :
+   * une supposition ici s'enregistre toute seule, et se paie en dette. Un
+   * remake, ou deux sources qui se contredisent, valent mieux d'être refusés
+   * que d'être devinés.
+   */
+  const lu = lireResultat(match.info, participant);
+  if (lu.resultat === null) {
+    return NextResponse.json(
+      { error: "Résultat de la partie illisible", motif: lu.motif },
+      // 422 et non 409 : dans cette route le 409 dit déjà « cette partie est
+      // déjà enregistrée ». Deux sens sur un même code rendraient le journal
+      // de synchronisation incapable de les distinguer.
+      { status: 422 },
+    );
+  }
+
   return NextResponse.json({
     matchId: ids[0],
     champion: participant.championName,
@@ -112,7 +132,7 @@ export async function GET(req: Request) {
     kills: participant.kills,
     deaths: participant.deaths,
     assists: participant.assists,
-    result: participant.win ? "V" : "D",
+    result: lu.resultat,
     queueId,
   });
 }

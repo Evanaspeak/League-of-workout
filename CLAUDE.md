@@ -626,6 +626,148 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### Ce qui restait muet quand le serveur refusait
+Recensement des `if (res.ok)` sans branche d'échec, à la suite des corrections
+précédentes. Trois trouvailles, et deux fausses pistes qu'il valait mieux
+vérifier que « corriger ».
+
+- **Les trois commandes du panneau d'administration** — réinitialiser un mot de
+  passe, refaire jouer l'intro, supprimer un compte — n'avaient ni `try` ni
+  branche d'échec. Un refus ne produisait rien, on recliquait sans savoir ; et
+  sans réseau l'indicateur d'attente ne s'effaçait jamais. Un seul assistant
+  (`commande`) porte les trois choses qui manquaient.
+- **L'enregistrement automatique d'une partie Riot** ne notait rien quand le
+  `POST` échouait : le journal restait vide, la partie n'entrait jamais, et la
+  relecture suivante recommençait à l'identique. Ça compte davantage depuis que
+  la route **refuse** un résultat illisible : ce refus est légitime, et il doit
+  se voir. Il passe maintenant par `lireCode`, comme les erreurs de lecture.
+- **La suppression de compte** laissait « Suppression en cours… » à l'écran
+  pour toujours si l'action serveur partait en erreur. La personne croit que
+  son compte s'efface, et il n'en est rien. Au succès l'action redirige, donc
+  le `finally` ne s'exécute jamais — et c'est très bien : le bouton n'a pas
+  besoin de revenir sur une page qu'on quitte.
+
+Les deux fausses pistes : `SessionContext` a déjà son `try/catch` et sa branche
+d'échec sur le chrono, et l'export de données est un `<a href>` — un 500 y
+montre la page d'erreur du navigateur, ce qui est visible. Rien à corriger dans
+les deux cas.
+
+### La sauvegarde n'avait jamais produit de sauvegarde
+Les secrets posés, le travail déclenché à la main tombe sur :
+
+```
+pg_dump: error: aborting because of server version mismatch
+pg_dump: detail: server version: 18.6 ; pg_dump version: 16.15
+```
+
+Neon est passé en PostgreSQL 18. Le workflow installait
+`postgresql-client-16` et montait un conteneur de vérification en
+`postgres:16` — trois numéros écrits à la main, dont deux ont vieilli.
+L'intention, elle, était juste, et écrite en commentaire depuis le premier
+jour : « les outils client doivent avoir la version du serveur ».
+
+Le numéro se **demande au serveur** maintenant : `SHOW server_version_num`,
+divisé par dix mille pour la majeure — un `cut -c1-2` se tromperait le jour
+d'une version à trois chiffres. `psql` traverse les versions sans se plaindre,
+seul `pg_dump` refuse : celui préinstallé sur le runner suffit à lire la
+version avant d'installer le bon client.
+
+Le conteneur de restauration, lui, est figé : un service GitHub se déclare
+statiquement. Il est donc comparé à la source, et **refuse bruyamment** en
+disant quel nombre changer, plutôt que de produire un dump que la vérification
+ne saurait pas restaurer.
+
+**Et le vert ne disait rien.** Une exécution qui saute tout faute de secrets et
+une exécution qui sauvegarde puis restaure rendaient exactement la même
+pastille. C'est ainsi que la sauvegarde a pu ne rien produire pendant des
+semaines sans que personne ne le remarque : il n'y avait rien à remarquer. Un
+résumé d'exécution le dit maintenant — « Sauvegarde produite », avec le
+comptage table par table, ou « Aucune sauvegarde » et ce qui manque. Sans
+courriel : l'absence de secrets reste un avertissement, jamais un échec, parce
+qu'un échec quotidien se filtre et ne se lit plus le jour où il compte.
+
+`src/sauvegardeVersion.test.ts` garde les quatre choses qui l'ont rendue
+muette. Quatre sabotages, quatre échecs.
+
+### Quatre routes dispensées de session étaient injoignables
+Deux listes indépendantes gouvernent l'accès : `SANS_SESSION` dans
+`src/porteRoutes.test.ts`, qui dit quelles routes n'exigent pas de session, et
+`PUBLIC_PREFIXES` dans `middleware.ts`, qui dit lesquelles traversent le
+middleware. **Rien ne les reliait**, et elles ont divergé.
+
+`push/programme`, `mail/hebdo`, `init` et `champions` étaient explicitement
+dispensées — chacune avec sa raison écrite, et pour `champions` un commentaire
+affirmant que « le middleware la couvre déjà ». Il ne la couvrait pas : les
+quatre partaient en **307 vers `/login`** avant d'atteindre leur propre
+contrôle.
+
+Le prix a été payé en silence pendant des semaines. Le rappel du matin, le
+bilan hebdomadaire et la relance des absents **n'ont jamais été envoyés**, et
+le travail programmé rendait du vert : par conception il note un code inattendu
+en avertissement plutôt que d'échouer, pour ne pas noyer l'alerte sous
+vingt-quatre courriels par jour. C'est le bon choix, et c'est aussi ce qui a
+rendu la panne invisible.
+
+Trouvé en déclenchant le workflow à la main après la pose des secrets, et en
+lisant son journal au lieu de son pastille verte.
+
+`porteRoutes.test.ts` relie maintenant les deux listes : toute route de
+`SANS_SESSION` doit correspondre à un préfixe public. Le test compte aussi les
+préfixes trouvés — une liste vide ferait passer le test en ne regardant rien,
+ce qui est exactement la forme d'erreur qu'on corrige. Trois sabotages, trois
+échecs, chacun nommant la route bloquée.
+
+Vérifié sur le serveur : les quatre atteignent leur handler (405 pour les deux
+qui n'acceptent pas POST, **401** pour les deux déclencheurs, c'est-à-dire leur
+contrôle de `RAPPEL_SECRET` qui répond), et `/api/dashboard` continue de
+rediriger — le témoin.
+
+### Une victoire sur trois s'enregistrait en défaite
+Signalé par le propriétaire du produit, et la cause tenait en une ligne de
+`/api/games` :
+
+```ts
+: (body.result === "V" ? "V" : "D");
+```
+
+**Tout ce qui n'est pas exactement `"V"` devient une défaite.** Un champ
+absent, une casse différente, un `undefined` remonté par Riot : la partie
+s'enregistre du mauvais côté, sans un mot. C'est `Number(x) || 0` à nouveau —
+confondre « absent » et « aberrant » — sauf qu'ici la confusion se paie en
+dette non méritée, et qu'aucun écran ne la signale.
+
+Le résultat se **refuse** désormais quand il n'est ni `"V"` ni `"D"`.
+
+En amont, les deux routes Riot lisaient `participant.win ? "V" : "D"`, ce qui
+cache trois façons de se tromper. `src/lib/riotResultat.ts` les traite :
+
+- **le champ manquant** se rattrape sur `teams[].win`, et réciproquement ;
+- **le remake** n'est ni victoire ni défaite. Riot met `win: false` aux dix
+  joueurs d'une partie annulée : la compter en défaite crée une dette pour un
+  match que personne n'a joué. Il se lit **en premier**, parce que les deux
+  sources s'y accordent parfaitement et que le contrôle de désaccord y est
+  aveugle ;
+- **le désaccord** entre les deux sources ne se tranche pas. Deviner du côté
+  « défaite » est précisément le pari coûteux.
+
+Un résultat illisible n'est donc plus une défaite mais un refus : la partie se
+présente inajoutable dans la liste, avec son motif (« partie annulée » plutôt
+qu'« indisponible », qui ferait chercher une panne inexistante), et
+`/api/riot/last-game` rend **422**. Pas 409 : dans cette route le 409 dit déjà
+« déjà enregistrée », et deux sens sur un même code rendraient le journal de
+synchronisation incapable de les distinguer.
+
+Deux pièges rencontrés en l'éprouvant :
+- **un sabotage qui ne sabote pas.** Les trois premières substitutions passaient
+  par `perl -0pi -e` avec des motifs pleins de parenthèses et d'accolades : rien
+  n'était remplacé, les tests passaient au vert, et j'ai failli conclure que le
+  module tenait. Le sabotage vérifie maintenant que l'empreinte du fichier a
+  changé avant de lancer les tests. Quatre sabotages, quatre échecs.
+- **`as Record<string, string>` sur la table des motifs du journal.** Elle
+  acceptait n'importe quelle clé, donc un motif ajouté sans libellé s'affichait
+  comme une case vide. `satisfies Record<MotifSynchro, string>` le refuse à la
+  compilation — éprouvé en retirant un libellé.
+
 ### Un ajout depuis la liste Riot disait son échec à personne
 La liste des vingt dernières parties propose un bouton par ligne. Un refus du
 serveur ne produisait rien : la ligne redevenait normale, on recliquait sans

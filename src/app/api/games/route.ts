@@ -250,9 +250,27 @@ export async function POST(req: Request) {
   if (capacites.br && placement === null) {
     return NextResponse.json({ error: "Classement invalide" }, { status: 400 });
   }
-  const resultat = capacites.br
-    ? (placement === 1 ? "V" : "D")
-    : (body.result === "V" ? "V" : "D");
+  /**
+   * Le résultat se refuse, il ne se suppose pas.
+   *
+   * `body.result === "V" ? "V" : "D"` faisait d'un champ absent, d'une casse
+   * différente ou d'un `undefined` remonté par Riot une **défaite**, sans un
+   * mot. C'est la même faute que `Number(x) || 0` : confondre « absent » et
+   * « aberrant ». Sauf qu'ici elle se paie en dette non méritée, et qu'elle
+   * n'était visible nulle part — la partie s'enregistrait, simplement du
+   * mauvais côté.
+   *
+   * En battle royale le résultat se déduit du classement, qui est déjà
+   * contrôlé au-dessus : rien à valider de plus.
+   */
+  let resultat: "V" | "D";
+  if (capacites.br) {
+    resultat = placement === 1 ? "V" : "D";
+  } else if (body.result === "V" || body.result === "D") {
+    resultat = body.result;
+  } else {
+    return NextResponse.json({ error: "Résultat invalide" }, { status: 400 });
+  }
 
   const scoring = capacites.br && placement !== null && joueurs !== null
     ? calcScoreBattleRoyale({ placement, joueurs, kills, gainageSec: gainageEquivalent, roleWeights, levelConfigs })

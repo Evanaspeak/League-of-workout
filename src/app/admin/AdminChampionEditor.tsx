@@ -29,19 +29,27 @@ export default function AdminChampionEditor() {
     setSaving(true);
     setMsg(null);
     const champions = text.split("\n").map((s) => s.trim()).filter(Boolean);
-    const res = await fetch("/api/admin/config/champions", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ champions }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (res.ok) {
-      invaliderChampions();
-      setMsg({ type: "ok", text: t.saved(data.count) });
-      setIsDefault(false);
-    } else {
-      setMsg({ type: "err", text: translateApiError(data.error, locale) ?? t.error });
+    // Sans ce `try`, une coupure réseau laissait « Enregistrement… » à
+    // l'écran pour toujours : la promesse partait en erreur et la ligne qui
+    // l'efface n'était jamais atteinte.
+    try {
+      const res = await fetch("/api/admin/config/champions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ champions }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        invaliderChampions();
+        setMsg({ type: "ok", text: t.saved(data.count) });
+        setIsDefault(false);
+      } else {
+        setMsg({ type: "err", text: translateApiError(data.error, locale) ?? t.error });
+      }
+    } catch {
+      setMsg({ type: "err", text: t.error });
+    } finally {
+      setSaving(false);
     }
   };
 

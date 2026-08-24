@@ -209,6 +209,40 @@ describe("POST /api/games", () => {
     expect(r.status).toBe(400);
   });
 
+  /**
+   * Le résultat se refuse, il ne se suppose pas.
+   *
+   * `body.result === "V" ? "V" : "D"` faisait d'un champ absent, d'une casse
+   * différente ou d'un `undefined` remonté par Riot une défaite silencieuse.
+   * Une victoire enregistrée en défaite crée une dette non méritée, et rien
+   * ne le signalait : la partie s'enregistrait, simplement du mauvais côté.
+   */
+  describe("le résultat", () => {
+    it.each([
+      ["absent", undefined],
+      ["en minuscule", "v"],
+      ["écrit en toutes lettres", "Victoire"],
+      ["booléen", true],
+      ["nul", null],
+    ])("refuse un résultat %s au lieu de le compter comme une défaite", async (_cas, valeur) => {
+      const r = await post({
+        jeu: "League of Legends", role: "MID", champion: "Ahri",
+        kills: 2, deaths: 9, assists: 4, result: valeur,
+      });
+      expect(r.status).toBe(400);
+      expect(game.create).not.toHaveBeenCalled();
+    });
+
+    it.each(["V", "D"])("accepte « %s »", async (valeur) => {
+      const r = await post({
+        jeu: "League of Legends", role: "MID", champion: "Ahri",
+        kills: 2, deaths: 9, assists: 4, result: valeur,
+      });
+      expect(r.status).toBe(200);
+      expect(game.create.mock.calls[0][0].data.result).toBe(valeur);
+    });
+  });
+
   it("déduit la victoire du classement en battle royale", async () => {
     await post({ jeu: "Apex Legends", kills: 5, placement: 1, joueurs: 60 });
     expect(game.create.mock.calls[0][0].data.result).toBe("V");

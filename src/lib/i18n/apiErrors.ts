@@ -173,6 +173,16 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Invalid placement", es: "Puesto no válido", de: "Ungültige Platzierung",
     zh: "名次不正确", ja: "順位が正しくありません",
   },
+  "Résultat de la partie illisible": {
+    en: "The result of this game could not be read",
+    es: "No se ha podido leer el resultado de esta partida",
+    de: "Das Ergebnis dieser Partie ließ sich nicht lesen",
+    zh: "无法读取这局对局的结果", ja: "この試合の結果を読み取れませんでした",
+  },
+  "Résultat invalide": {
+    en: "Invalid result", es: "Resultado no válido", de: "Ungültiges Ergebnis",
+    zh: "结果不正确", ja: "結果が正しくありません",
+  },
   "Durée invalide": {
     en: "Invalid duration", es: "Duración no válida", de: "Ungültige Dauer",
     zh: "时长不正确", ja: "時間が正しくありません",

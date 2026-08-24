@@ -48,6 +48,26 @@ const PUBLIC_PREFIXES = [
   // et l'adresse elle-même est le laissez-passer.
   "/obs",
   "/api/obs/",
+  // Les deux déclencheurs programmés, appelés par GitHub Actions. Ils n'ont
+  // ni cookie ni session : leur laissez-passer est RAPPEL_SECRET, contrôlé
+  // dans la route elle-même.
+  //
+  // Ils étaient absents de cette liste, donc redirigés vers /login en 307
+  // avant même d'atteindre leur contrôle. Le rappel du matin, le bilan
+  // hebdomadaire et la relance des absents n'étaient jamais partis, et rien
+  // ne le disait : le travail programmé note un code inattendu en
+  // avertissement et rend la main, par conception, pour ne pas envoyer
+  // vingt-quatre courriels d'échec par jour.
+  "/api/push/programme",
+  "/api/mail/hebdo",
+  // L'amorçage de la configuration, avant qu'il existe le moindre compte.
+  // Exiger une session pour créer les données dont dépend la première
+  // session n'a pas de sens ; c'est INIT_SECRET qui la garde.
+  "/api/init",
+  // La liste des champions : rien de nominatif, et un commentaire de
+  // `porteRoutes.test.ts` affirmait déjà que « le middleware la couvre » —
+  // il ne la couvrait pas.
+  "/api/champions",
 ];
 
 export default auth((req) => {

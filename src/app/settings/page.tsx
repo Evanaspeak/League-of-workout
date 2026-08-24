@@ -81,6 +81,7 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [erreurSuppression, setErreurSuppression] = useState(false);
 
 
   /**
@@ -759,6 +760,13 @@ export default function SettingsPage() {
               onChange={(e) => setDeleteConfirm(e.target.value)}
               style={{ marginBottom: "1rem" }}
             />
+            {erreurSuppression && (
+              <p className="loss-text" role="status" style={{
+                fontSize: "0.82rem", marginBottom: "0.8rem", lineHeight: 1.5,
+              }}>
+                {t.erreurSauvegarde}
+              </p>
+            )}
             <div style={{ display: "flex", gap: "0.6rem" }}>
               <button
                 onClick={() => setShowDeleteModal(false)}
@@ -774,7 +782,28 @@ export default function SettingsPage() {
                 {t.annuler}
               </button>
               <button
-                onClick={async () => { setDeleting(true); await deleteAccount(); }}
+                /**
+                 * La suppression qui échoue laissait le bouton tourner.
+                 *
+                 * `deleteAccount` est une action serveur : si la base ne
+                 * répond pas, la promesse part en erreur et « Suppression en
+                 * cours… » reste à l'écran pour toujours. La personne croit
+                 * que son compte s'efface, et il n'en est rien.
+                 *
+                 * Au succès, l'action redirige : le `finally` ne s'exécute
+                 * alors jamais, et c'est très bien — le bouton n'a pas besoin
+                 * de revenir sur une page qu'on quitte.
+                 */
+                onClick={async () => {
+                  setDeleting(true);
+                  setErreurSuppression(false);
+                  try {
+                    await deleteAccount();
+                  } catch {
+                    setErreurSuppression(true);
+                    setDeleting(false);
+                  }
+                }}
                 disabled={deleteConfirm !== t.confirmMot || deleting}
                 style={{
                   flex: 1, padding: "0.55rem",

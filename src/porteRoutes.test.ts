@@ -103,6 +103,43 @@ describe("porte des routes d'API", () => {
     expect(toutes.map((r) => r.nom)).toContain("dashboard");
   });
 
+  /**
+   * Une route dispensée de session doit être JOIGNABLE.
+   *
+   * Deux listes indépendantes gouvernent l'accès : `SANS_SESSION` ci-dessus,
+   * qui dit quelles routes n'exigent pas de session, et `PUBLIC_PREFIXES`
+   * dans `middleware.ts`, qui dit lesquelles traversent le middleware. Rien
+   * ne les reliait, et elles ont divergé : quatre routes explicitement
+   * dispensées ici étaient redirigées vers `/login` en 307 avant d'atteindre
+   * leur propre contrôle.
+   *
+   * Le prix a été payé en silence. Le rappel du matin, le bilan hebdomadaire
+   * et la relance des absents n'ont jamais été envoyés, et les travaux
+   * programmés rendaient du vert : par conception ils notent un code
+   * inattendu en avertissement plutôt que d'échouer, pour ne pas noyer
+   * l'alerte. Un commentaire de cette même liste affirmait même que « le
+   * middleware la couvre déjà » à propos d'une route qu'il ne couvrait pas.
+   */
+  it("celles qui s'en dispensent traversent le middleware", () => {
+    const middleware = fs.readFileSync(
+      path.join(__dirname, "..", "middleware.ts"), "utf8");
+    const bloc = middleware.slice(
+      middleware.indexOf("const PUBLIC_PREFIXES"),
+      middleware.indexOf("];", middleware.indexOf("const PUBLIC_PREFIXES")));
+    const prefixes = [...bloc.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    // Sans ce contrôle, une liste vide ferait passer le test en ne regardant
+    // rien : c'est exactement la forme d'erreur qu'on corrige ici.
+    expect(prefixes.length).toBeGreaterThan(10);
+
+    const bloquees = Object.keys(SANS_SESSION)
+      // Un segment dynamique se satisfait de son préfixe : `/api/obs/`
+      // couvre `/api/obs/[jeton]`.
+      .map((nom) => `/api/${nom.replace(/\/\[.*$/, "/")}`)
+      .filter((chemin) => !prefixes.some((p) => chemin.startsWith(p)))
+      .sort();
+    expect(bloquees).toEqual([]);
+  });
+
   it("chacune exige une session, ou dit pourquoi elle s'en dispense", () => {
     const ouvertes = toutes
       .filter((r) => !/getCurrentUser/.test(r.texte))

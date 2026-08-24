@@ -73,6 +73,16 @@ export default function AdminUserList() {
   const [rearmeEnCours, setRearmeEnCours] = useState<string | null>(null);
   const [rearme, setRearme] = useState<Record<string, boolean>>({});
   const [newPasswords, setNewPasswords] = useState<Record<string, string>>({});
+  /**
+   * L'action qui n'a pas abouti.
+   *
+   * Les trois commandes de cette liste — réinitialiser un mot de passe,
+   * refaire jouer l'intro, supprimer un compte — n'avaient pas de branche
+   * d'échec : un refus du serveur ne produisait rien, on recliquait sans
+   * savoir. Et l'envoi n'était pas protégé : sans réseau, la promesse partait
+   * en erreur et l'indicateur d'attente ne s'effaçait jamais.
+   */
+  const [erreurAction, setErreurAction] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -91,12 +101,31 @@ export default function AdminUserList() {
     (u.email ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  /**
+   * Une commande de la liste, avec ce qui manquait aux trois : le `try`, le
+   * message d'échec, et la garantie que l'indicateur d'attente s'efface.
+   */
+  async function commande(marquer: (v: string | null) => void, id: string,
+                          faire: () => Promise<boolean>) {
+    marquer(id);
+    setErreurAction("");
+    try {
+      if (!(await faire())) setErreurAction(t.actionEchouee);
+    } catch {
+      setErreurAction(t.actionEchouee);
+    } finally {
+      marquer(null);
+    }
+  }
+
   async function resetPassword(id: string) {
-    setResettingPwd(id);
-    const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: "POST" });
-    const data = await res.json();
-    if (res.ok) setNewPasswords(prev => ({ ...prev, [id]: data.password }));
-    setResettingPwd(null);
+    await commande(setResettingPwd, id, async () => {
+      const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: "POST" });
+      if (!res.ok) return false;
+      const data = await res.json();
+      setNewPasswords(prev => ({ ...prev, [id]: data.password }));
+      return true;
+    });
   }
 
   /**
@@ -107,21 +136,36 @@ export default function AdminUserList() {
    * ses appareils à la fois.
    */
   async function rejouerIntro(id: string) {
-    setRearmeEnCours(id);
-    const res = await fetch(`/api/admin/users/${id}/intro`, { method: "POST" });
-    if (res.ok) setRearme((p) => ({ ...p, [id]: true }));
-    setRearmeEnCours(null);
+    await commande(setRearmeEnCours, id, async () => {
+      const res = await fetch(`/api/admin/users/${id}/intro`, { method: "POST" });
+      if (!res.ok) return false;
+      setRearme((p) => ({ ...p, [id]: true }));
+      return true;
+    });
   }
 
   async function deleteUser(id: string) {
-    setDeleting(id);
-    const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
-    if (res.ok) { setUsers(prev => prev.filter(u => u.id !== id)); setExpanded(null); }
-    setDeleting(null);
+    await commande(setDeleting, id, async () => {
+      const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      if (!res.ok) return false;
+      setUsers(prev => prev.filter(u => u.id !== id));
+      setExpanded(null);
+      return true;
+    });
     setConfirmDelete(null);
   }
 
   if (loading) return <div style={{ color: "var(--faint)", padding: 16 }}>{t.loading}</div>;
+
+  /** Le bandeau d'échec, affiché au-dessus de la liste. */
+  const bandeauErreur = erreurAction ? (
+    <div className="loss-text" role="status" style={{
+      background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+      borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: "0.86rem",
+    }}>
+      {erreurAction}
+    </div>
+  ) : null;
 
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
@@ -130,6 +174,8 @@ export default function AdminUserList() {
           {t.title(users.length)}
         </h2>
       </div>
+
+      {bandeauErreur}
 
       <input
         value={search}

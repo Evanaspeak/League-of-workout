@@ -34,6 +34,13 @@ type MatchEntry = {
   pompesCalculees: number | null;
   exercice?: ExerciceId | null;
   indisponible?: boolean;
+  /**
+   * Pourquoi le résultat ne se lit pas, quand c'est le cas. « Indisponible »
+   * dirait que Riot n'a pas répondu ; ici il a répondu, et c'est le résultat
+   * qui manque. Un remake est fréquent en LoL : le nommer évite de chercher
+   * une panne qui n'existe pas.
+   */
+  motifResultat?: "remake" | "desaccord" | "inconnu" | null;
 };
 
 type Scoring = {
@@ -809,7 +816,13 @@ export function AjoutActivite({
 
                   <div className="ml-auto flex items-center gap-3 shrink-0">
                     {m.indisponible ? (
-                      <span className="text-xs px-3 py-1 rounded" style={{ color: "var(--faint)" }}>{t.unavailable}</span>
+                      <span className="text-xs px-3 py-1 rounded" style={{ color: "var(--faint)" }}>
+                        {m.motifResultat === "remake"
+                          ? t.remake
+                          : m.motifResultat
+                          ? t.resultatIncertain
+                          : t.unavailable}
+                      </span>
                     ) : m.alreadyLogged ? (
                       <>
                         <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice))}</span>
