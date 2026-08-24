@@ -582,6 +582,37 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Le tableau de bord renvoyait vers l'historique, qui renvoie au tableau de bord
+Deux textes d'un compte vide envoyaient enregistrer sa première partie sur
+`/history` : l'étape 3 des « Premiers pas » et le panneau « Aucune game
+loggée ». Or `AjoutActivite` n'est monté nulle part ailleurs que dans la
+fenêtre du tableau de bord. Depuis que l'historique vide dit à son tour où se
+trouve l'ajout, les deux écrans se renvoyaient l'un à l'autre, et le compte
+neuf tournait en rond sur la seule action qui compte.
+
+Les deux textes déclenchent maintenant le geste au lieu de nommer une page :
+`PremiersPas` reçoit un `onAjouter` du tableau de bord, qui seul possède
+`setModale`, et le panneau porte un bouton. Une étape qui décrit un geste doit
+l'ouvrir ; indiquer une adresse où il n'existe pas est pire que de se taire.
+
+`e2e/premier-ecran.spec.ts` clique les deux et attend la fenêtre. Redevenus des
+liens vers `/history`, ils partent sur l'autre page et ne trouvent rien —
+**éprouvé dans les deux sens, séparément pour chacun des deux**. `passerIntro`
+a quitté `e2e/parcours.spec.ts` pour `e2e/intro.ts` : deux fichiers de parcours
+en ont besoin, et une spécification n'en importe pas une autre.
+
+Le même test tourne une seconde fois en 390 px. C'est là que ça compte : le
+bouton du rail ne se présente pas de la même façon sur un petit écran, et sans
+clé Riot de production la saisie à la main est le seul moyen d'employer le
+produit. Un compte neuf sur téléphone pouvait n'avoir aucune commande d'ajout
+sous les yeux.
+
+En passant, le bandeau vert « partie enregistrée » ne s'effaçait jamais en
+fenêtre : `openAddForm` le remettait à zéro, et il n'est pas appelé quand le
+formulaire s'ouvre déjà déplié. Il restait donc affiché pendant la saisie de la
+partie suivante et, si celle-ci échouait, cohabitait avec l'erreur rouge. Il
+s'efface maintenant au début de chaque envoi.
+
 ### Un historique vide ne disait pas quoi faire
 L'ajout d'activité vit dans le rail du tableau de bord, et **nulle part dans
 l'historique** — `AjoutActivite` n'y est pas monté. Quelqu'un qui ouvre son

@@ -248,6 +248,15 @@ export function AjoutActivite({
   const handleAddLog = async () => {
     setAddLogging(true);
     setAddError("");
+    // La confirmation de l'envoi PRÉCÉDENT s'efface ici.
+    //
+    // Elle n'était remise à zéro que par `openAddForm`, qui n'est jamais
+    // appelé en fenêtre — c'est-à-dire dans le seul chemin qu'un compte neuf
+    // emprunte. Le bandeau vert « partie enregistrée » restait donc affiché
+    // pendant la saisie de la suivante, et si celle-ci échouait, il cohabitait
+    // avec le message d'erreur rouge : deux verdicts contradictoires sur le
+    // même formulaire.
+    setAddLogged(false);
 
     // Une seule ligne, quels que soient les exercices : la dette se partage
     // entre eux, la partie reste une partie.

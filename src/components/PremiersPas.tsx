@@ -17,7 +17,20 @@ import { calculerPublic } from "@/lib/calculateurPublic";
  * comme un exemple. Elle n'écrit rien : montrer de fausses données comme si
  * elles étaient les siennes vaut moins que de ne rien montrer.
  */
-export function PremiersPas({ pompesMax }: { pompesMax: number }) {
+export function PremiersPas({ pompesMax, onAjouter }: {
+  pompesMax: number;
+  /**
+   * Ouvre l'ajout d'une partie, ici même.
+   *
+   * L'étape 3 renvoyait vers `/history`, qui ne porte aucun formulaire
+   * d'ajout — le seul est dans une fenêtre du tableau de bord. Et depuis que
+   * l'historique dit à son tour « c'est depuis le tableau de bord qu'on
+   * enregistre une activité », les deux écrans se renvoyaient l'un à l'autre.
+   * Une étape qui décrit un geste doit déclencher ce geste, pas indiquer une
+   * page où il n'existe pas.
+   */
+  onAjouter: () => void;
+}) {
   const t = useT(dict);
 
   const exemple = useMemo(() => calculerPublic({
@@ -30,7 +43,14 @@ export function PremiersPas({ pompesMax }: { pompesMax: number }) {
     kills: 2, deaths: 9, assists: 4,
   }), [pompesMax]);
 
-  const etape = (numero: number, titre: string, aide: string, vers: string, lien: string) => (
+  // Une étape mène soit à une page, soit à un geste sur celle-ci. Le bouton
+  // reprend l'apparence du lien : c'est la même promesse pour qui lit, et la
+  // différence ne regarde que le navigateur.
+  const styleTitre = { fontWeight: 600, textDecoration: "underline" } as const;
+  const etape = (
+    numero: number, titre: string, aide: string,
+    cible: string | (() => void), lien: string,
+  ) => (
     <div style={{ display: "flex", gap: 12, alignItems: "baseline" }}>
       <span style={{
         fontFamily: "ui-monospace, monospace", color: "var(--gold)",
@@ -39,9 +59,23 @@ export function PremiersPas({ pompesMax }: { pompesMax: number }) {
         {numero}
       </span>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Link href={vers} style={{ fontWeight: 600, textDecoration: "underline" }}>
-          {titre}
-        </Link>
+        {typeof cible === "string" ? (
+          <Link href={cible} style={styleTitre}>{titre}</Link>
+        ) : (
+          <button
+            type="button"
+            onClick={cible}
+            style={{
+              ...styleTitre, background: "none", border: "none", padding: 0,
+              textAlign: "left", color: "inherit", cursor: "pointer",
+              // `font: "inherit"` écraserait la graisse posée juste au-dessus :
+              // la forme courte remet tout à zéro.
+              fontFamily: "inherit", fontSize: "inherit",
+            }}
+          >
+            {titre}
+          </button>
+        )}
         <span className="text-xs" style={{ color: "var(--steel)" }}>{aide}</span>
         <span className="text-xs" style={{ color: "var(--faint)" }}>{lien}</span>
       </div>
@@ -88,7 +122,7 @@ export function PremiersPas({ pompesMax }: { pompesMax: number }) {
         </span>
         {etape(1, t.etape1, t.etape1Aide, "/settings?rubrique=effort", t.versReglages)}
         {etape(2, t.etape2, t.etape2Aide, "/settings?rubrique=jeux", t.versReglages)}
-        {etape(3, t.etape3, t.etape3Aide, "/history", t.versHistorique)}
+        {etape(3, t.etape3, t.etape3Aide, onAjouter, t.versAjout)}
       </div>
     </div>
   );
