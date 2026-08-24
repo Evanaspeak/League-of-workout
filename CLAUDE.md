@@ -582,6 +582,29 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Le compteur de dette s'effaçait sur une durée impossible
+Suite du même passage en revue, sur les autres routes qui écrivent. Tout le
+reste tient — réglages, compte, suspension, signalement, consentement refusent
+proprement ce qui n'a pas de sens. Une seule cédait :
+
+`PATCH /api/dette` avec `secondes: 1e308` rendait **200** et effaçait la dette
+entière. La proportion payée est plafonnée à cent pour cent, et
+`Number(x) || 0` acceptait la valeur : quarante-sept points effacés par une
+durée que personne ne peut avoir faite. Vérifié avant et après, sur une vraie
+dette.
+
+Le plafonnement reste : dix minutes faites sur cinq minutes dues, c'est le cas
+légitime. Ce qui est refusé, c'est ce qui n'est pas une durée.
+
+Deux comportements ont changé au passage, et c'est voulu :
+- une durée négative rendait 200 sans rien créditer. Sûr, mais muet : l'appelant
+  ne savait pas que sa valeur n'avait pas été comprise, et **la file hors ligne
+  aurait réessayé indéfiniment**. Un 4xx la fait renoncer sur cette entrée-là ;
+- un corps illisible passait pour « zéro seconde ». Il ne dit ni « tout est
+  fait » ni « voilà combien » : il se refuse.
+
+Zéro seconde reste accepté : c'est un abandon immédiat, pas une erreur.
+
 ### Une faute de frappe pouvait créer une dette impossible à payer
 Essayé bêtement, en envoyant des valeurs absurdes aux routes de partie. Trois
 trouvailles, dont deux sérieuses :

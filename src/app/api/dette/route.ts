@@ -6,6 +6,7 @@ import {
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { jourLocal } from "@/lib/serie";
+import { DUREE_MAX_SEC, entierBorne } from "@/lib/bornesSaisie";
 
 /**
  * Dette en attente. Seuls les exercices comptés en temps s'y accumulent :
@@ -59,7 +60,19 @@ export async function PATCH(req: Request) {
 
   let restant = 0;
   if (!body?.tout) {
-    const secondesFaites = Math.max(0, Math.round(Number(body?.secondes) || 0));
+    /**
+     * Une durée impossible ne vaut pas « tout est fait ».
+     *
+     * `Number(x) || 0` acceptait `1e308`, la proportion payée était plafonnée
+     * à un, et la dette entière disparaissait — 47 points effacés par une
+     * valeur que personne ne peut avoir faite. Le plafonnement reste pour le
+     * cas légitime (dix minutes faites sur cinq minutes dues) ; ce qui est
+     * refusé, c'est ce qui n'est pas une durée.
+     */
+    const secondesFaites = entierBorne(body?.secondes, DUREE_MAX_SEC);
+    if (secondesFaites === null) {
+      return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
+    }
     const totalSec = dureeEffort(dus, exercices);
     // Un arrêt en cours de route ne paie que le temps réellement effectué.
     const partPayee = totalSec > 0 ? Math.min(1, secondesFaites / totalSec) : 1;
