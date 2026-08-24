@@ -133,3 +133,42 @@ test("un historique vide dit où enregistrer une activité", async ({ browser })
   expect(await lien.getAttribute("href")).toBe("/dashboard");
   await ctx.close();
 });
+
+/**
+ * La beta pleine emmène sur la liste d'attente.
+ *
+ * Le plafond est à cent comptes — c'est le produit, pas un réglage. Au cent
+ * unième, `/api/beta-access` répond 403, et la page d'inscription affichait un
+ * cadre rouge sous un bouton devenu inutile : rien de ce que la personne
+ * tapera ne fera passer ce formulaire. Pendant ce temps `/waitlist`, écrite et
+ * traduite en six langues, n'était atteignable par aucun chemin du produit —
+ * ni lien, ni redirection, ni menu.
+ *
+ * Le 403 se simule : remplir la base de cent comptes pour éprouver une
+ * redirection coûterait cent inscriptions et ne prouverait rien de plus. Ce
+ * qui a changé est la réaction de l'écran, et c'est elle qu'on éprouve.
+ */
+test("quand la beta est pleine, on arrive sur la liste d'attente", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+  });
+  await purgerTentatives();
+
+  await page.route("**/api/beta-access", (route) =>
+    route.fulfill({
+      status: 403,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Beta complète : les 100 places sont prises." }),
+    }));
+
+  await page.goto("/beta");
+  await page.getByPlaceholder(/pseudo/i).first().fill("Cent-et-unieme");
+  await page.locator('input[type="email"]').first().fill("cent-un@example.test");
+  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
+
+  await page.waitForURL(/\/waitlist$/, { timeout: 15_000 });
+  await expect(page.getByText(/liste d.attente|waitlist/i).first()).toBeVisible();
+  await ctx.close();
+});

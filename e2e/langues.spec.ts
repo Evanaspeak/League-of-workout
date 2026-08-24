@@ -25,6 +25,10 @@ import { LANGUES } from "../src/lib/i18n/LocaleContext";
 const PAGES = [
   "/", "/beta", "/login", "/telechargement", "/recuperation",
   "/calculateur", "/calculateur/league-of-legends", "/cgu", "/confidentialite",
+  // La liste d'attente y entre en même temps qu'elle devient atteignable.
+  // C'est une page qu'on ne voit qu'une fois, au pire moment, et son texte est
+  // le plus long des six langues confondues.
+  "/waitlist",
 ];
 
 /** Ouvre une page dans une langue donnée, écrans d'accueil écartés. */
@@ -42,6 +46,53 @@ async function ouvrirEn(page: Page, langue: string, chemin: string) {
   await page.waitForTimeout(800);
 }
 
+
+/**
+ * Aucune page ne doit défiler horizontalement, à aucune des largeurs qui
+ * comptent.
+ *
+ * C'est ainsi qu'un mot allemand trop long se signale — et il ne se signalait
+ * pas : le contrôle ne tournait qu'à 1280 px, où tout tient. Il ne mordait
+ * donc jamais là où il sert. On repasse au téléphone courant et au plus
+ * étroit qu'on rencontre encore, sans recharger la page : c'est la mise en
+ * page qu'on éprouve, pas le rendu serveur.
+ *
+ * Et le rapport nomme le coupable. « La page déborde » ne se corrige pas ;
+ * « ce libellé finit à 412 px » se corrige.
+ */
+async function refuserDebordement(page: Page, contexte: Record<string, string>) {
+  for (const largeur of [1280, 390, 320]) {
+    if (largeur !== 1280) {
+      await page.setViewportSize({ width: largeur, height: 844 });
+      // Les graphiques se redessinent à la redimension : sans ce délai on
+      // mesure la mise en page d'avant.
+      await page.waitForTimeout(450);
+    }
+    const trop = await page.evaluate(() => {
+      const doc = document.documentElement;
+      if (doc.scrollWidth <= doc.clientWidth + 1) return null;
+      let pire: { droite: number; quoi: string; texte: string } | null = null;
+      for (const el of document.querySelectorAll("body *")) {
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.right <= doc.clientWidth + 1) continue;
+        // On veut la feuille qui déborde, pas la chaîne de ses ancêtres.
+        if (el.querySelector("*")) continue;
+        if (!pire || r.right > pire.droite) {
+          pire = {
+            droite: Math.round(r.right),
+            quoi: `${el.tagName.toLowerCase()}.${String(el.className).split(/\s+/)[0]}`,
+            texte: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40),
+          };
+        }
+      }
+      return { largeurPage: doc.scrollWidth, pire };
+    });
+    expect({ ...contexte, largeur, trop }).toEqual({ ...contexte, largeur, trop: null });
+  }
+  // La suite se lit à la largeur d'origine.
+  await page.setViewportSize({ width: 1280, height: 720 });
+}
+
 for (const langue of LANGUES) {
   test.describe(`langue ${langue}`, () => {
     for (const chemin of PAGES) {
@@ -54,11 +105,7 @@ for (const langue of LANGUES) {
         expect({ chemin, langue, texte: texte.match(/\bundefined\b|\[object Object\]/g) ?? [] })
           .toEqual({ chemin, langue, texte: [] });
 
-        // Aucune page ne doit défiler horizontalement : c'est ainsi qu'un mot
-        // allemand trop long se signale.
-        const deborde = await page.evaluate(() =>
-          document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
-        expect({ chemin, langue, deborde }).toEqual({ chemin, langue, deborde: false });
+        await refuserDebordement(page, { chemin, langue });
 
         // La page dit bien dans quelle langue elle est : sans quoi un lecteur
         // d'écran la prononcerait avec le mauvais accent.
@@ -154,13 +201,20 @@ test.describe("écrans connectés", () => {
         // Les graphiques arrivent à part : on leur laisse le temps de se poser.
         await page.waitForTimeout(1200);
 
+        // On est bien où l'on croit être. Une session absente ou périmée
+        // renvoie sur la connexion, qui n'a ni graphique ni carte : le test
+        // passerait sur une page qu'il ne mesure pas, et le dirait vert. C'est
+        // le premier piège écrit pour les scripts de mesure, et il valait
+        // aussi ici — il a suffi de lancer un seul de ces tests à part pour
+        // que la préparation ne tourne pas et que la page devienne /login.
+        expect({ chemin, langue, arrivee: new URL(page.url()).pathname })
+          .toEqual({ chemin, langue, arrivee: chemin });
+
         const texte = await page.evaluate(() => document.body.innerText);
         expect({ chemin, langue, trous: texte.match(/\bundefined\b|\[object Object\]/g) ?? [] })
           .toEqual({ chemin, langue, trous: [] });
 
-        const deborde = await page.evaluate(() =>
-          document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
-        expect({ chemin, langue, deborde }).toEqual({ chemin, langue, deborde: false });
+        await refuserDebordement(page, { chemin, langue });
 
         expect(await page.evaluate(() => document.documentElement.lang)).toBe(langue);
         await ctx.close();

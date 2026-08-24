@@ -332,7 +332,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-1009 tests unitaires, 79 suites. Base et session doublées : aucune dépendance à
+1124 tests unitaires, 91 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -357,10 +357,11 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 71 tests : `e2e/parcours.spec.ts` suit le chemin
-complet d'un compte neuf, `e2e/langues.spec.ts` ouvre les cinq pages publiques
-puis les trois écrans connectés — tableau de bord, historique, réglages — dans
-les six langues, sur un compte qu'il ouvre lui-même, et
+Au navigateur (`npm run e2e`), 142 tests : `e2e/parcours.spec.ts` suit le chemin
+complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
+tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
+écrans connectés — tableau de bord, historique, réglages, saison — dans les six
+langues et à trois largeurs, sur un compte qu'il ouvre lui-même, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
@@ -581,6 +582,78 @@ Une piste écartée en la mesurant : `ContexteNavigateur` écrivait en base à
 chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
+
+### La liste d'attente n'était atteignable par aucun chemin
+`/waitlist` existe : une page, un dictionnaire dans les six langues, un texte
+qui explique que les cent places sont prises et qu'une vague suivante est
+prévue. **Rien n'y menait.** Ni lien, ni redirection, ni menu — `grep` sur
+`src/` ne la trouve que dans les listes de pages publiques.
+
+Et au moment précis où elle sert, la page d'inscription affichait un cadre
+rouge « Beta complète : les 100 places sont prises. » sous un bouton devenu
+inutile : rien de ce que la personne tapera ne fera passer ce formulaire. Ça
+compte maintenant plus que jamais — le lancement vise cent personnes, donc le
+plafond sera atteint.
+
+`/beta` redirige désormais sur le 403, qui est le seul de cette route. Le code
+d'état plutôt que le texte : un message se retraduit sans prévenir, un code
+d'état non.
+
+Le 403 se simule dans `e2e/panne-serveur.spec.ts` plutôt que de remplir la base
+de cent comptes : ce qui a changé est la réaction de l'écran, et c'est elle
+qu'on éprouve.
+
+`src/pagesOrphelines.test.ts` refuse désormais une page vers laquelle rien ne
+navigue. Rien ne pouvait le signaler avant : TypeScript ne se plaint pas d'une
+page que personne n'ouvre, et `codeMort.test.ts` exempte justement les fichiers
+que Next.js charge par convention de nom — une page est toujours « importée »,
+par le routeur.
+
+**La première version ne prouvait rien.** Elle cherchait le chemin n'importe où
+dans le code, et `/waitlist` passait pour joignable parce qu'elle figure dans la
+liste des pages publiques et dans celle de la barre de navigation : deux listes
+d'appartenance, aucun chemin. Le sabotage — retirer la redirection — laissait le
+test au vert. Il ne retient plus que ce qui emmène quelque part : un `href`, un
+`router.push`, un `redirect`. Sabotage refait, il tombe.
+
+Quatre exemptions, chacune avec sa raison écrite : la racine, la page de retour
+de l'application de bureau, la page atteinte par le lien du courriel de
+récupération, et l'adresse OBS qu'on recopie à la main.
+
+La page elle-même a changé de sortie. Son bouton menait à `/login`, ce qui
+n'aide personne : on arrive là justement parce qu'on ne peut pas ouvrir de
+compte. Elle propose maintenant le **calculateur**, qui est public et répond à
+la question qui a amené la personne — ce que coûte une défaite. Une page qui
+ferme une porte doit en ouvrir une autre, sinon elle n'est qu'un mur.
+
+### Le contrôle de débordement ne mordait pas là où il sert
+`e2e/langues.spec.ts` refuse qu'une page défile horizontalement — c'est ainsi
+qu'un mot allemand trop long se signale. Il tournait à 1280 px, la largeur par
+défaut du projet Playwright, où tout tient. Le contrôle existait donc partout
+et ne pouvait rien attraper.
+
+Il repasse maintenant à **390 et 320 px**, sans recharger la page : c'est la
+mise en page qu'on éprouve, pas le rendu serveur. Un seul assistant
+(`refuserDebordement`) sert aux pages publiques et aux écrans connectés — le
+second n'en avait pas du tout, et c'est là que les graphiques et les cartes de
+« Ta saison » ont le plus de raisons de déborder.
+
+Le rapport nomme l'élément fautif, la feuille et non ses ancêtres : « la page
+déborde » ne se corrige pas, « ce libellé finit à 412 px » se corrige.
+
+Éprouvé par sabotage : un `min-width: 500px` posé sur `.titre-page`, et le test
+rend « h1.titre-page « CONDITIONS GÉNÉRALES D'UTILISATION », finit à 516 px,
+fenêtre de 390 ». Au passage, la question s'est posée de savoir si
+`body { overflow-x: clip }` ne rendait pas le contrôle sourd : non,
+`documentElement.scrollWidth` grandit quand même. Le `clip` empêche de faire
+défiler, pas de mesurer.
+
+**Et le sabotage a trouvé autre chose.** Lancé sur un seul test des écrans
+connectés, il est passé au vert — parce que la préparation de session est un
+`test` à part, écarté par le filtre : la page mesurée était `/login`, qui n'a ni
+graphique ni carte. Le premier piège écrit pour les scripts de mesure, « mesurer
+la mauvaise page », valait donc aussi ici. Ces tests vérifient maintenant où ils
+ont atterri.
 
 ### Le parcours complet, joué aussi sur un téléphone
 `e2e/parcours.spec.ts` — entrer, enregistrer une défaite, payer sa dette —

@@ -40,9 +40,26 @@ export default function WaitlistPage() {
         <p style={{ fontSize: "0.84rem", color: "var(--muted)", lineHeight: 1.7, marginBottom: "1.75rem" }}>
           {t.body}
         </p>
-        <Link href="/login" className="lol-btn" style={{ display: "inline-block" }}>
-          {t.retour}
-        </Link>
+        {/* Le calculateur plutôt que rien.
+            Le bouton menait à `/login`, ce qui n'aide personne : on arrive ici
+            justement parce qu'on ne peut pas ouvrir de compte. Le calculateur,
+            lui, est public et répond à la question qui a amené la personne —
+            ce que coûte une défaite. Une page qui ferme une porte doit en
+            ouvrir une autre, sinon elle n'est qu'un mur. */}
+        <p style={{
+          fontSize: "0.82rem", color: "var(--steel)", lineHeight: 1.6,
+          marginBottom: "1.1rem",
+        }}>
+          {t.calculateurInvite}
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+          <Link href="/calculateur" className="lol-btn" style={{ display: "inline-block" }}>
+            {t.calculateurLien}
+          </Link>
+          <Link href="/" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
+            {t.retour}
+          </Link>
+        </div>
       </div>
     </div>
   );
