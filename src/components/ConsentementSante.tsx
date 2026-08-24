@@ -26,6 +26,7 @@ export function ConsentementSante() {
   const [etat, setEtat] = useState<Etat | null>(null);
   const [aDesDonnees, setADesDonnees] = useState(false);
   const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState(false);
 
   const publique = estPagePublique(chemin);
 
@@ -49,6 +50,7 @@ export function ConsentementSante() {
 
   const repondre = async (accepte: boolean) => {
     setEnvoi(true);
+    setErreur(false);
     try {
       const r = await fetch("/api/consentement", {
         method: "POST",
@@ -57,9 +59,13 @@ export function ConsentementSante() {
       });
       // Une réponse perdue ne doit pas faire disparaître la question : sans
       // trace en base, on la reposera à la prochaine ouverture.
-      if (r.ok) setEtat(accepte ? "accepte" : "refuse");
+      if (r.ok) { setEtat(accepte ? "accepte" : "refuse"); return; }
+      setErreur(true);
     } catch {
-      /* la question reste posée */
+      // Cette fenêtre ne se ferme pas : un échec muet enferme la personne dans
+      // l'application, sans rien à cliquer qui la fasse avancer. La question
+      // reste posée, mais elle dit maintenant pourquoi.
+      setErreur(true);
     } finally {
       setEnvoi(false);
     }
@@ -78,6 +84,10 @@ export function ConsentementSante() {
         </div>
 
         <p style={{ color: "var(--muted)" }}>{t.siRefus}</p>
+
+        {erreur && (
+          <p role="alert" style={{ color: "var(--loss)", fontSize: "0.85rem" }}>{t.erreurEnvoi}</p>
+        )}
 
         <div className="flex flex-wrap gap-3" style={{ marginTop: 4 }}>
           <button

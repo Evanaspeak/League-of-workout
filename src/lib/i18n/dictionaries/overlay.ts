@@ -32,6 +32,7 @@ export const overlay = {
     jeuAffiche: "Pastille affichée",
     jeuMasque: "Pastille masquée",
     versionAncienne: "Mets l'application à jour pour régler l'overlay jeu par jeu. En attendant, le réglage ci-dessous vaut pour tous les jeux.",
+    erreurReglage: "L'application n'a pas retenu ce réglage. Réessaie.",
   },
   en: {
     titre: "In-game overlay",
@@ -62,6 +63,7 @@ export const overlay = {
     jeuAffiche: "Panel shown",
     jeuMasque: "Panel hidden",
     versionAncienne: "Update the app to set the overlay per game. Until then, the setting below applies to every game.",
+    erreurReglage: "The app did not keep that setting. Try again.",
   },
   es: {
     titre: "Superposición en juego",
@@ -92,6 +94,7 @@ export const overlay = {
     jeuAffiche: "Recuadro visible",
     jeuMasque: "Recuadro oculto",
     versionAncienne: "Actualiza la aplicación para ajustar la superposición juego por juego. Mientras tanto, el ajuste de abajo vale para todos.",
+    erreurReglage: "La aplicación no ha guardado ese ajuste. Inténtalo de nuevo.",
   },
   de: {
     titre: "Overlay im Spiel",
@@ -122,6 +125,7 @@ export const overlay = {
     jeuAffiche: "Feld sichtbar",
     jeuMasque: "Feld ausgeblendet",
     versionAncienne: "Aktualisiere die Anwendung, um das Overlay pro Spiel einzustellen. Bis dahin gilt die Einstellung unten für alle Spiele.",
+    erreurReglage: "Die App hat diese Einstellung nicht gespeichert. Versuch es noch mal.",
   },
   zh: {
     titre: "游戏内叠加层",
@@ -152,6 +156,7 @@ export const overlay = {
     jeuAffiche: "显示小窗",
     jeuMasque: "隐藏小窗",
     versionAncienne: "把应用更新一下，才能逐个游戏设置叠加层。在那之前，下面这个设置对所有游戏生效。",
+    erreurReglage: "应用没有保存这项设置，请再试一次。",
   },
   ja: {
     titre: "ゲーム内オーバーレイ",
@@ -182,5 +187,6 @@ export const overlay = {
     jeuAffiche: "パネルを表示",
     jeuMasque: "パネルを非表示",
     versionAncienne: "タイトルごとにオーバーレイを設定するには、アプリを更新してください。それまでは、下の設定がすべてのタイトルに適用されます。",
+    erreurReglage: "アプリがこの設定を保存できませんでした。もう一度お試しください。",
   },
 };

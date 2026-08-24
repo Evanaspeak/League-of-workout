@@ -183,6 +183,114 @@ Ce qui n'a **pas** été fait, et pourquoi : les parties déjà enregistrées à
 en défaites ne sont pas corrigées. Les reprendre demande de décider ce qu'on
 fait de la dette déjà payée dessus, et ça ne se décide pas seul.
 
+### La correction éprouvée dans un navigateur, pont Electron simulé
+Les tests unitaires disent ce que les deux lectures rendent. Ils ne disent rien
+de l'assemblage : que le composant appelle bien la route quand l'issue est
+lue, qu'il n'appelle rien quand elle ne l'est pas, et qu'il le dise. Un
+branchement se vérifie en marchant dessus.
+
+`e2e/detection-partie.spec.ts` pose un faux `window.electronLOL` par
+`addInitScript` — ce qui est aussi l'ordre réel, le préchargement passant avant
+le rendu — puis déclenche trois fins de partie : une victoire lue, une issue
+illisible, un remake. Il regarde ce qui est écrit en base ET ce qui est dit à
+l'écran : sans le second, une partie qui disparaît en silence passerait le
+test.
+
+Le champion sert de signature. Compter ne suffit pas : un total inchangé peut
+cacher une partie écrite et une autre perdue.
+
+Trois sabotages, trois échecs. Et une leçon sur l'outil : **en mode série,
+Playwright saute ce qui suit un échec**. Le premier sabotage a fait tomber le
+troisième test, donc le quatrième n'a jamais tourné — et j'ai d'abord conclu
+qu'il ne mordait pas. Un test « passé » et un test « sauté » se ressemblent
+dans un résumé ; il faut lire le compte, pas la couleur. Chaque branche a donc
+été sabotée séparément.
+
+Trois pièges rencontrés en l'écrivant, dont deux nouveaux :
+- **Un serveur qui sert un `.next` reconstruit sous lui.** Le bouton
+  d'inscription restait désactivé, la capture montrait pourtant le champ
+  rempli. Sans hydratation, la page garde l'état rendu au serveur — et
+  l'hydratation ne se faisait pas parce qu'un fragment JavaScript répondait
+  500. C'est le pendant du piège déjà écrit (« ne jamais reconstruire pendant
+  qu'un test tourne ») : il faut aussi relancer le serveur APRÈS avoir
+  reconstruit.
+- **Sonder dans la mauvaise langue.** Le script de diagnostic ouvrait la page
+  sans fixer la locale, donc en anglais : `getByPlaceholder(/pseudo/i)` ne
+  trouvait rien et j'ai cru la page cassée. La configuration Playwright fixe
+  `fr-FR` ; un outil de diagnostic écrit à côté ne l'a pas.
+- **La modale de consentement santé**, sixième fichier de parcours à tomber
+  dessus. `e2e/compte.ts` porte l'ouverture de compte de ce fichier,
+  consentement compris.
+
+Ce que je m'étais raconté, et qui était faux : j'ai d'abord attribué le bouton
+désactivé à une saisie arrivée avant l'hydratation, et écrit une reprise de
+saisie pour ça. Elle n'a rien changé — normal, il n'y avait aucun JavaScript
+du tout. Les huit autres fichiers de parcours n'ont donc PAS été convertis :
+la duplication est réelle, mais le défaut qui aurait justifié d'y toucher
+n'existait pas. Un remaniement de huit fichiers qui passent, sur une raison
+qu'on n'a pas vérifiée, se paie plus cher qu'il ne rapporte.
+
+### Le script de mesure d'audience n'a jamais été chargé
+Trouvé en regardant la console du navigateur pendant le test ci-dessus :
+`/_vercel/insights/script.js` partait en 307 vers `/login` comme une page
+protégée, et le navigateur refusait alors de l'exécuter (« MIME type text/html
+is not executable »). Le matcher du middleware excluait `_next/static` mais pas
+`_vercel/`.
+
+Rien ne pouvait le signaler : une page de connexion rendue en 200 ressemble, du
+point de vue du serveur, à un script qui s'est bien chargé. Seul le navigateur
+sait qu'il a refusé de l'exécuter.
+
+### Cinq comparaisons d'origine par préfixe, dans l'application de bureau
+Trouvé en relisant `desktop/`, qui a reçu bien moins d'attention que `src/`.
+Cinq endroits demandaient « est-ce bien chez nous ? » ainsi :
+
+```js
+url.startsWith(BACKEND_URL)
+```
+
+C'est faux, et d'une façon qui ne se voit pas à la lecture :
+`"https://winorworkout.com.exemple-mechant.tld/".startsWith("https://winorworkout.com")`
+vaut **vrai**. Un domaine qui suffixe le nôtre passait donc pour le nôtre —
+dans la fenêtre sans barre d'adresse ni bouton retour, devant le gestionnaire
+de fenêtres surgissantes, et devant le filtre de permissions qui accorde les
+notifications.
+
+Ce n'est pas exploitable seul : il faut d'abord que l'application navigue vers
+une adresse choisie par un tiers. Mais ces cinq lignes sont écrites POUR être
+cette frontière, et une frontière qui ne tient que si personne n'essaie n'en
+est pas une.
+
+`desktop/src/origine.js` compare les origines entières — protocole, hôte, port
+— et refuse ce qui n'a pas d'origine comparable (`about:`, `javascript:`). Au
+passage, `startsWith("/api")` acceptait aussi `/apiculture` : les chemins se
+comparent par segments.
+
+Un garde structurel refuse le retour du motif dans `desktop/src`, avec un
+contrôle de non-vacuité — sans lui, un dossier renommé rendrait le test vert
+sur zéro fichier lu. Sabotage fait : une comparaison remise, le test tombe.
+
+### Deux écrans de plus qui affichaient ce qui n'avait pas été enregistré
+Même défaut que « Ton effort », trouvé en relisant tous les `catch` de
+l'interface. Chacun portait sa raison écrite, ce qui est la bonne discipline —
+mais deux de ces raisons étaient fausses.
+
+**« Tes jeux ».** Le commentaire annonçait « l'état précédent reste affiché ».
+C'était l'inverse : la nouvelle valeur était posée AVANT l'appel, donc c'est
+elle qui restait. L'écran montrait un réglage que l'application n'avait pas, et
+on s'en apercevait au rechargement suivant sans savoir pourquoi. Retour en
+arrière et message, comme ailleurs.
+
+**Le consentement santé.** Un échec d'envoi ne disait rien du tout. Or cette
+fenêtre-là ne se ferme pas : la personne clique « J'accepte », le bouton
+redevient cliquable, rien ne bouge, et il n'y a aucun autre chemin. Un échec
+muet y enferme dans l'application. La question reste posée, mais elle dit
+maintenant pourquoi.
+
+Ce que ça apprend sur les commentaires : un `catch` qui décrit ce qu'il fait
+est une bonne chose, et une mauvaise dès qu'il décrit ce qu'il ne fait pas. Il
+se relit alors comme une garantie, et on cesse de vérifier.
+
 ### « Tes jeux » depuis un navigateur
 La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
 exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection

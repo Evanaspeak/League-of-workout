@@ -22,6 +22,7 @@ const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures, i
 const lecteur = require("./lecture/lecteurApex");
 const { surveillerClient } = require("./lcu");
 const { creerAttenteFin } = require("./attenteIssue");
+const { memeOrigine, cheminDe, dansLaSection } = require("./origine");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 // `crypto` global d'Electron est celui du navigateur : ni randomBytes, ni
@@ -857,7 +858,7 @@ async function createWindow() {
     // La fenêtre n'a ni barre d'adresse, ni bouton retour, ni menu : une
     // navigation hors du domaine y serait un aller sans retour, sous l'identité
     // de l'application. On la renvoie au navigateur système.
-    if (!url.startsWith(BACKEND_URL) && !url.startsWith("data:")) {
+    if (!memeOrigine(url, BACKEND_URL) && !url.startsWith("data:")) {
       event.preventDefault();
       ouvrirDehors(url);
     }
@@ -865,7 +866,7 @@ async function createWindow() {
 
   // Même chose pour les popups OAuth (window.open).
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (isOAuthUrl(url) || !url.startsWith(BACKEND_URL)) {
+    if (isOAuthUrl(url) || !memeOrigine(url, BACKEND_URL)) {
       ouvrirDehors(url);
       return { action: "deny" };
     }
@@ -1021,12 +1022,12 @@ function openAuthPopup() {
 
   // Dès que l'OAuth est terminé, Auth.js redirige vers "/" : on transfère le cookie
   authPopup.webContents.on("did-navigate", async (_event, url) => {
-    const path = url.split("?")[0];
+    const chemin = cheminDe(url);
     const isDashboard =
-      url.startsWith(BACKEND_URL) &&
-      !path.startsWith(BACKEND_URL + "/login") &&
-      !path.startsWith(BACKEND_URL + "/api") &&
-      !path.startsWith(BACKEND_URL + "/waitlist");
+      memeOrigine(url, BACKEND_URL) &&
+      !dansLaSection(chemin, "/login") &&
+      !dansLaSection(chemin, "/api") &&
+      !dansLaSection(chemin, "/waitlist");
     if (isDashboard) {
       try {
         const popupCookies = await authPopup.webContents.session.cookies.get({
@@ -1216,7 +1217,7 @@ app.whenReady().then(() => {
   electronSession.defaultSession.setPermissionRequestHandler(
     (contenu, permission, accorder) => {
       const origine = contenu?.getURL?.() ?? "";
-      accorder(PERMISSIONS_OUVERTES.has(permission) && origine.startsWith(BACKEND_URL));
+      accorder(PERMISSIONS_OUVERTES.has(permission) && memeOrigine(origine, BACKEND_URL));
     },
   );
 
