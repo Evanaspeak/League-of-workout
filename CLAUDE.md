@@ -626,6 +626,39 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### Quatre routes dispensées de session étaient injoignables
+Deux listes indépendantes gouvernent l'accès : `SANS_SESSION` dans
+`src/porteRoutes.test.ts`, qui dit quelles routes n'exigent pas de session, et
+`PUBLIC_PREFIXES` dans `middleware.ts`, qui dit lesquelles traversent le
+middleware. **Rien ne les reliait**, et elles ont divergé.
+
+`push/programme`, `mail/hebdo`, `init` et `champions` étaient explicitement
+dispensées — chacune avec sa raison écrite, et pour `champions` un commentaire
+affirmant que « le middleware la couvre déjà ». Il ne la couvrait pas : les
+quatre partaient en **307 vers `/login`** avant d'atteindre leur propre
+contrôle.
+
+Le prix a été payé en silence pendant des semaines. Le rappel du matin, le
+bilan hebdomadaire et la relance des absents **n'ont jamais été envoyés**, et
+le travail programmé rendait du vert : par conception il note un code inattendu
+en avertissement plutôt que d'échouer, pour ne pas noyer l'alerte sous
+vingt-quatre courriels par jour. C'est le bon choix, et c'est aussi ce qui a
+rendu la panne invisible.
+
+Trouvé en déclenchant le workflow à la main après la pose des secrets, et en
+lisant son journal au lieu de son pastille verte.
+
+`porteRoutes.test.ts` relie maintenant les deux listes : toute route de
+`SANS_SESSION` doit correspondre à un préfixe public. Le test compte aussi les
+préfixes trouvés — une liste vide ferait passer le test en ne regardant rien,
+ce qui est exactement la forme d'erreur qu'on corrige. Trois sabotages, trois
+échecs, chacun nommant la route bloquée.
+
+Vérifié sur le serveur : les quatre atteignent leur handler (405 pour les deux
+qui n'acceptent pas POST, **401** pour les deux déclencheurs, c'est-à-dire leur
+contrôle de `RAPPEL_SECRET` qui répond), et `/api/dashboard` continue de
+rediriger — le témoin.
+
 ### Une victoire sur trois s'enregistrait en défaite
 Signalé par le propriétaire du produit, et la cause tenait en une ligne de
 `/api/games` :
