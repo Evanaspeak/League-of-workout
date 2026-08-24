@@ -626,6 +626,43 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### La sauvegarde n'avait jamais produit de sauvegarde
+Les secrets posés, le travail déclenché à la main tombe sur :
+
+```
+pg_dump: error: aborting because of server version mismatch
+pg_dump: detail: server version: 18.6 ; pg_dump version: 16.15
+```
+
+Neon est passé en PostgreSQL 18. Le workflow installait
+`postgresql-client-16` et montait un conteneur de vérification en
+`postgres:16` — trois numéros écrits à la main, dont deux ont vieilli.
+L'intention, elle, était juste, et écrite en commentaire depuis le premier
+jour : « les outils client doivent avoir la version du serveur ».
+
+Le numéro se **demande au serveur** maintenant : `SHOW server_version_num`,
+divisé par dix mille pour la majeure — un `cut -c1-2` se tromperait le jour
+d'une version à trois chiffres. `psql` traverse les versions sans se plaindre,
+seul `pg_dump` refuse : celui préinstallé sur le runner suffit à lire la
+version avant d'installer le bon client.
+
+Le conteneur de restauration, lui, est figé : un service GitHub se déclare
+statiquement. Il est donc comparé à la source, et **refuse bruyamment** en
+disant quel nombre changer, plutôt que de produire un dump que la vérification
+ne saurait pas restaurer.
+
+**Et le vert ne disait rien.** Une exécution qui saute tout faute de secrets et
+une exécution qui sauvegarde puis restaure rendaient exactement la même
+pastille. C'est ainsi que la sauvegarde a pu ne rien produire pendant des
+semaines sans que personne ne le remarque : il n'y avait rien à remarquer. Un
+résumé d'exécution le dit maintenant — « Sauvegarde produite », avec le
+comptage table par table, ou « Aucune sauvegarde » et ce qui manque. Sans
+courriel : l'absence de secrets reste un avertissement, jamais un échec, parce
+qu'un échec quotidien se filtre et ne se lit plus le jour où il compte.
+
+`src/sauvegardeVersion.test.ts` garde les quatre choses qui l'ont rendue
+muette. Quatre sabotages, quatre échecs.
+
 ### Quatre routes dispensées de session étaient injoignables
 Deux listes indépendantes gouvernent l'accès : `SANS_SESSION` dans
 `src/porteRoutes.test.ts`, qui dit quelles routes n'exigent pas de session, et

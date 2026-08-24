@@ -23,7 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     services:
       restauration:
-        image: postgres:16
+        # La version doit être au moins celle du serveur source : un
+        # `pg_restore` d'un dump 18 dans un serveur 16 échoue. Un service ne
+        # peut pas lire une variable de job, d'où le nombre écrit ici — et
+        # l'étape « Vérifier les versions » qui refuse bruyamment le jour où
+        # Neon prend de l'avance, en disant quel nombre changer.
+        image: postgres:18
         env:
           POSTGRES_USER: verif
           POSTGRES_PASSWORD: verif
@@ -61,16 +66,56 @@ jobs:
             echo "prets=oui" >> "$GITHUB_OUTPUT"
           fi
 
-      # Les outils client doivent avoir la version du serveur : un pg_dump 14
-      # refuse une base 16.
-      - name: Installer PostgreSQL 16 client
+      # Les outils client doivent avoir la version du serveur : un pg_dump 16
+      # refuse une base 18, et c'est exactement ce qui s'est produit le jour
+      # où Neon est passé en 18. Le numéro n'est donc plus écrit à la main :
+      # il se demande au serveur.
+      #
+      # `psql` traverse les versions sans se plaindre — seul `pg_dump` refuse.
+      # Celui préinstallé sur le runner suffit donc à lire la version avant
+      # d'installer le bon client.
+      - name: Lire la version du serveur
+        id: version
         if: steps.secrets.outputs.prets == 'oui'
+        run: |
+          set -euo pipefail
+          # `server_version_num` vaut 180006 pour PostgreSQL 18.6. La division
+          # donne la majeure quel que soit le nombre de chiffres, là où un
+          # `cut -c1-2` se tromperait le jour d'une version à trois chiffres.
+          brut=$(psql "$SOURCE" -At -c "SHOW server_version_num")
+          case "$brut" in
+            ''|*[!0-9]*) echo "::error::Version du serveur illisible : « $brut »"; exit 1 ;;
+          esac
+          majeur=$(( brut / 10000 ))
+          echo "Serveur PostgreSQL $majeur"
+          echo "majeur=$majeur" >> "$GITHUB_OUTPUT"
+
+      # Le conteneur de restauration, lui, est figé dans `services` : il ne
+      # peut pas suivre. On refuse donc bruyamment plutôt que de produire un
+      # dump que la vérification ne saura pas restaurer.
+      - name: Vérifier que la restauration saura relire ce dump
+        if: steps.secrets.outputs.prets == 'oui'
+        env:
+          MAJEUR: ${{ steps.version.outputs.majeur }}
+          RESTAURATION: "18"
+        run: |
+          set -euo pipefail
+          if [ "$MAJEUR" -gt "$RESTAURATION" ]; then
+            echo "::error::Le serveur est en PostgreSQL $MAJEUR et le conteneur de restauration en $RESTAURATION. Mettre « image: postgres:$MAJEUR » dans ce fichier."
+            exit 1
+          fi
+
+      - name: Installer le client PostgreSQL de la version du serveur
+        if: steps.secrets.outputs.prets == 'oui'
+        env:
+          MAJEUR: ${{ steps.version.outputs.majeur }}
         run: |
           set -euo pipefail
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
           sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-16
+          sudo apt-get install -y -qq "postgresql-client-$MAJEUR"
+          pg_dump --version
 
       - name: Exporter
         if: steps.secrets.outputs.prets == 'oui'
@@ -112,7 +157,7 @@ jobs:
               echo "::error::$table : $a ligne(s) à la source, $b après restauration"
               ecarts=$((ecarts + 1))
             else
-              echo "$table : $a"
+              echo "$table : $a" | tee -a /tmp/comptes.txt
             fi
           done < /tmp/tables.txt
 
@@ -139,3 +184,41 @@ jobs:
           # deux fois ne se restaure plus utilement.
           retention-days: 90
           if-no-files-found: error
+
+      # Le vert ne disait pas ce qui s'était passé.
+      #
+      # Une exécution qui saute tout faute de secrets et une exécution qui
+      # sauvegarde et restaure rendaient exactement la même pastille verte.
+      # C'est ainsi que la sauvegarde a pu ne rien produire pendant des
+      # semaines sans que personne ne le remarque : il n'y avait rien à
+      # remarquer.
+      #
+      # L'absence de secrets ne doit pas être un échec — un échec quotidien
+      # se filtre, et on ne le lit plus le jour où il compte. Mais elle doit
+      # se VOIR. Le résumé s'affiche sur la page de l'exécution, sans envoyer
+      # le moindre courriel.
+      - name: Dire ce qui a été fait
+        if: always()
+        env:
+          PRETS: ${{ steps.secrets.outputs.prets }}
+        run: |
+          set -uo pipefail
+          if [ "$PRETS" = "oui" ]; then
+            {
+              echo "## Sauvegarde produite"
+              echo
+              echo "Base exportée, restaurée dans un PostgreSQL neuf, et comparée table par table."
+              echo
+              echo "| table | lignes |"
+              echo "|---|---|"
+              # Le comptage vient de l'étape de comparaison, qui l'a déjà écrit.
+              sed -n 's/^\(.*\) : \([0-9]\+\)$/| \1 | \2 |/p' /tmp/comptes.txt 2>/dev/null || true
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## Aucune sauvegarde"
+              echo
+              echo "\`DATABASE_URL\` ou \`SAUVEGARDE_PASSPHRASE\` manque dans les secrets du dépôt."
+              echo "**Rien n'est protégé tant qu'ils ne sont pas posés.**"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
