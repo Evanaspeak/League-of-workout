@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { descriptionsExercices, nomsExercices } from "@/lib/nomsExercices";
-import { logout, deleteAccount } from "@/lib/actions";
+import { logout } from "@/lib/actions";
 import { useT, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
@@ -783,22 +783,37 @@ export default function SettingsPage() {
               </button>
               <button
                 /**
-                 * La suppression qui échoue laissait le bouton tourner.
+                 * La suppression passe par une route, pas par une action.
                  *
-                 * `deleteAccount` est une action serveur : si la base ne
-                 * répond pas, la promesse part en erreur et « Suppression en
-                 * cours… » reste à l'écran pour toujours. La personne croit
-                 * que son compte s'efface, et il n'en est rien.
+                 * Elle passait par l'action serveur `deleteAccount`, et si la
+                 * base ne répondait pas, « Suppression… » restait à l'écran
+                 * pour toujours : la personne croyait que son compte
+                 * s'effaçait, et il n'en était rien.
                  *
-                 * Au succès, l'action redirige : le `finally` ne s'exécute
-                 * alors jamais, et c'est très bien — le bouton n'a pas besoin
-                 * de revenir sur une page qu'on quitte.
+                 * Un `try/catch` autour de l'appel n'y changeait rien, et
+                 * c'est la mesure qui l'a montré : le client Next ne rejette
+                 * pas la promesse quand l'action répond mal, il remonte
+                 * l'erreur à la page. Le `await` ne rend jamais la main, donc
+                 * ni le `catch` ni le `finally` ne sont atteints.
+                 *
+                 * Une route ordinaire répond ce qu'elle a fait, et l'écran
+                 * sait le lire. La déconnexion reste une action : elle n'écrit
+                 * rien en base, et elle redirige.
                  */
                 onClick={async () => {
                   setDeleting(true);
                   setErreurSuppression(false);
                   try {
-                    await deleteAccount();
+                    const res = await fetch("/api/user", { method: "DELETE" });
+                    if (!res.ok) {
+                      setErreurSuppression(true);
+                      setDeleting(false);
+                      return;
+                    }
+                    // La déconnexion n'écrit rien en base : elle ne peut pas
+                    // échouer pour la raison qui vient d'être traitée, et elle
+                    // redirige, donc rien ne revient ici.
+                    await logout();
                   } catch {
                     setErreurSuppression(true);
                     setDeleting(false);

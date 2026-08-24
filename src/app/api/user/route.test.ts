@@ -2,14 +2,14 @@ import { requete, corps, utilisateur, admin } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    user: { update: jest.fn(), findFirst: jest.fn() },
+    user: { update: jest.fn(), findFirst: jest.fn(), delete: jest.fn() },
     goal: { upsert: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 
-import { GET, PUT } from "./route";
+import { GET, PUT, DELETE } from "./route";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 
@@ -97,5 +97,31 @@ describe("PUT /api/user", () => {
     const r = await put({ objectifTotalPompes: 1500.7 });
     expect(r.status).toBe(200);
     expect(goal.upsert.mock.calls[0][0].update.objectifTotalPompes).toBe(1501);
+  });
+});
+
+/**
+ * La suppression de son propre compte.
+ *
+ * Elle passait par une action serveur, et c'est ce qui la rendait muette : le
+ * client Next ne rejette pas la promesse quand l'action répond mal, il remonte
+ * l'erreur à la page. Le `await` ne rendait jamais la main, et l'écran restait
+ * bloqué sur « Suppression… » — mesuré au navigateur avant de déplacer.
+ */
+describe("DELETE /api/user", () => {
+  it("refuse sans session", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue(null);
+    const r = await DELETE();
+    expect(r.status).toBe(401);
+    expect(prisma.user.delete).not.toHaveBeenCalled();
+  });
+
+  it("n'efface que le compte du demandeur", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue(utilisateur({ id: "moi" }));
+    (prisma.user.delete as jest.Mock).mockResolvedValue({});
+    const r = await DELETE();
+    expect(r.status).toBe(200);
+    expect(await corps(r)).toEqual({ supprime: true });
+    expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: "moi" } });
   });
 });

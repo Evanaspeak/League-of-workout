@@ -16,6 +16,29 @@ export async function GET() {
   return NextResponse.json({ ...comptePublic(user), estAdmin: estAdmin(user.email) });
 }
 
+/**
+ * La suppression de son propre compte.
+ *
+ * Elle passait par une action serveur, et c'est ce qui la rendait muette : le
+ * client Next ne rejette pas la promesse quand l'action répond mal. Il remonte
+ * l'erreur à la page — mesuré : le `await` ne rend jamais la main, le bouton
+ * reste sur « Suppression… », et la personne croit que son compte s'efface.
+ * Un `try/catch` autour de l'appel n'y change rien, il n'est jamais atteint.
+ *
+ * Une route ordinaire répond ce qu'elle a fait, et l'écran sait le lire. La
+ * déconnexion reste une action serveur : elle n'écrit rien en base et ne peut
+ * donc pas échouer pour la raison qui nous occupe.
+ */
+export async function DELETE() {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  // Les comptes OAuth, sessions, parties, paiements et objectifs partent en
+  // cascade ; les signalements passent à `SetNull`, ce qui est voulu — un
+  // rapport de bug survit anonyme.
+  await prisma.user.delete({ where: { id: user.id } });
+  return NextResponse.json({ supprime: true });
+}
+
 export async function PUT(req: Request) {
   const body = await req.json();
   const user = await getCurrentUser();
