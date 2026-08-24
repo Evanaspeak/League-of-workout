@@ -39,9 +39,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Région inconnue" }, { status: 400 });
   }
 
+  /**
+   * Sans clé, on le dit à la personne — pas au développeur.
+   *
+   * Le message était « Clé API Riot manquante (RIOT_API_KEY dans .env) », en
+   * français quelle que soit la langue de l'écran, et il partait tel quel à
+   * l'utilisateur. Il ne lui dit rien de ce qu'il peut faire, il nomme un
+   * fichier qu'il ne verra jamais, et il donne à un défaut de configuration
+   * l'allure d'une panne de son côté.
+   *
+   * C'est le cas au lancement, pas un cas de bord : la clé de production se
+   * demande à Riot et met plusieurs jours à arriver.
+   */
   const apiKey = process.env.RIOT_API_KEY?.trim();
   if (!apiKey) {
-    return NextResponse.json({ error: "Clé API Riot manquante" }, { status: 500 });
+    return NextResponse.json({ error: "Le suivi Riot est indisponible pour le moment. Le reste de l'application fonctionne : tes parties s'enregistrent à la main." }, { status: 500 });
   }
 
   const [gameName, tagLine] = riotId.split("#");

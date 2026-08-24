@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 
   const apiKey = process.env.RIOT_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "Clé API Riot manquante (RIOT_API_KEY dans .env)" }, { status: 500 });
+    return NextResponse.json({ error: "Le suivi Riot est indisponible pour le moment. Le reste de l'application fonctionne : tes parties s'enregistrent à la main." }, { status: 500 });
   }
 
   const routing = routageDe(user.riotRegion);
