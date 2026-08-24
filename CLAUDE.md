@@ -582,6 +582,36 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Une faute de frappe pouvait créer une dette impossible à payer
+Essayé bêtement, en envoyant des valeurs absurdes aux routes de partie. Trois
+trouvailles, dont deux sérieuses :
+
+- **`999999999` secondes de Minecraft au lieu de `999` : 5 555 556 points de
+  dette, en une requête, acceptés.** Ce n'est pas un abus, c'est un zéro de
+  trop dans un champ — et la personne se retrouve avec une dette qu'elle ne
+  pourra jamais payer, sur un produit dont c'est précisément le sujet.
+- **`deaths: 1e308` : erreur 500.** La valeur traversait jusqu'à la base, qui
+  répondait par une pile d'appels sans rien expliquer.
+- **Un classement de `-3` en battle royale devenait la première place**, donc
+  une partie gratuite : `Math.max(1, …)` **récompensait** la saisie aberrante.
+
+`src/lib/bornesSaisie.ts` porte les bornes, larges à dessein — il s'agit
+d'attraper l'impossible, pas de discuter l'exploit. Trente-six heures de jeu
+d'affilée passent ; onze jours non. Mille éliminations passent ; un milliard
+non.
+
+Deux principes qui valent au-delà de ce cas :
+- **« Absent » et « aberrant » sont deux choses différentes.** `Number(x) || 0`
+  les confondait : une valeur impossible devenait un zéro, et la partie
+  s'enregistrait quand même. Une valeur absente reste zéro ; une valeur
+  présente et hors bornes est refusée par un message.
+- **Ne pas rattraper une saisie fausse.** Ramener `-3` à `1` semble aimable ; en
+  pratique ça invente une partie que personne n'a jouée, et ici ça l'offrait.
+
+`Number([])` vaut zéro et `Number({})` vaut `NaN` : la conversion implicite de
+JavaScript accepte des choses qui ne sont pas des nombres et en tire parfois un
+chiffre. `entierBorne` ne convertit que ce qui prétend en être un.
+
 ### Trois défauts de « Ta saison », vus en la regardant sur un téléphone
 Publiée le soir, relue le lendemain matin sur une capture de 390 px. Rien
 n'était cassé au sens des tests ; tout se voyait à l'œil.

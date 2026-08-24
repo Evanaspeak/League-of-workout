@@ -158,6 +158,52 @@ describe("POST /api/games", () => {
     expect((await corps(r)).error).toBe("Config manquante");
   });
 
+  /**
+   * Les bornes de saisie.
+   *
+   * Sans elles, `999999999` secondes de Minecraft au lieu de `999` produisait
+   * 5 555 556 points de dette en une requête. Ce n'est pas un abus, c'est un
+   * zéro de trop dans un champ — et la personne se retrouvait avec une dette
+   * qu'elle ne pourrait jamais payer, sur un produit dont c'est le sujet.
+   */
+  it("refuse une durée de session déraisonnable", async () => {
+    const r = await post({ jeu: "Minecraft", typeJeu: "temps", dureeSec: 999_999_999 });
+    expect(r.status).toBe(400);
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
+  it("accepte une longue soirée, jusqu'à trente-six heures", async () => {
+    // Il s'agit d'attraper l'impossible, pas de discuter l'exploit.
+    expect((await post({ jeu: "Minecraft", typeJeu: "temps", dureeSec: 24 * 3600 })).status).toBe(200);
+  });
+
+  it("refuse un KDA hors bornes plutôt que de tomber", async () => {
+    // `Number(body.deaths) || 0` laissait passer 1e308 jusqu'à la base, qui
+    // répondait par une erreur 500 sans rien expliquer.
+    for (const aberrant of [1e308, 1_000_000_000, -5]) {
+      const r = await post(partie({ deaths: aberrant }));
+      expect(r.status).toBe(400);
+    }
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
+  it("laisse un KDA absent valoir zéro", async () => {
+    // « absent » et « aberrant » sont deux choses différentes.
+    const r = await post({ jeu: "League of Legends", role: "MID", champion: "Ahri", result: "D" });
+    expect(r.status).toBe(200);
+    expect(game.create.mock.calls[0][0].data.kills).toBe(0);
+  });
+
+  it("refuse un classement aberrant plutôt que d'en faire une victoire", async () => {
+    // `Math.max(1, …)` ramenait un « -3 » à la première place, c'est-à-dire à
+    // une partie gratuite : la saisie aberrante était récompensée.
+    for (const aberrant of [-3, 0, 100000, "abc"]) {
+      const r = await post({ jeu: "Apex Legends", kills: 0, placement: aberrant, joueurs: 60 });
+      expect(r.status).toBe(400);
+    }
+    expect(game.create).not.toHaveBeenCalled();
+  });
+
   it("refuse un battle royale sans classement", async () => {
     const r = await post({ jeu: "Apex Legends", kills: 3 });
     expect(r.status).toBe(400);
