@@ -27,6 +27,7 @@ jest.mock("@/lib/prisma", () => ({
     loginAttempt: { deleteMany: jest.fn(), count: jest.fn(), create: jest.fn() },
   },
 }));
+jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn().mockResolvedValue({}) }));
 

@@ -7,6 +7,7 @@ import {
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
+import { seedDefaults } from "@/lib/seed-defaults";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
 export async function POST(req: Request) {
@@ -21,6 +22,10 @@ export async function POST(req: Request) {
   // Ce que le jeu permet de renseigner : un CS n'a ni lane ni champion.
   const capacites = capacitesDuJeu(jeu, body.typeJeu);
 
+  // Même raison que dans l'enregistrement : sur une base neuve, l'aperçu est
+  // souvent la première route touchée, puisqu'il part à la frappe.
+  await seedDefaults();
+
   const [ponderations, levelConfigs, masteryConfig] = await Promise.all([
     prisma.roleWeight.findMany(),
     prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
@@ -32,6 +37,12 @@ export async function POST(req: Request) {
   const roleWeights = capacites.roles
     ? (ponderations.find((r) => r.role === body.role) ?? null)
     : profilNeutre(ponderations);
+
+  // Sans paliers, `getLevel` rend `undefined` et la route tombe avec une pile
+  // d'appels au lieu d'un message.
+  if (levelConfigs.length === 0) {
+    return NextResponse.json({ error: "Config manquante" }, { status: 500 });
+  }
 
   if (typeJeu === "parties" && (!roleWeights || !masteryConfig)) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });

@@ -8,6 +8,9 @@ jest.mock("@/lib/prisma", () => ({
     masteryConfig: { findFirst: jest.fn() },
   },
 }));
+// La configuration de barème est semée par la route quand elle manque : ici
+// la base est doublée, il n'y a rien à semer.
+jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { POST } from "./route";

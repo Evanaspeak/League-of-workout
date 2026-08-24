@@ -15,6 +15,7 @@ import { textesNotification } from "@/lib/i18n/notifications";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { seedDefaults } from "@/lib/seed-defaults";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -62,6 +63,18 @@ export async function POST(req: Request) {
   // Ce que le jeu permet de renseigner : un CS n'a ni lane ni champion.
   const capacites = capacitesDuJeu(jeu, body.typeJeu);
 
+  /**
+   * La configuration de barème est posée si elle manque.
+   *
+   * Elle n'était semée que par `/api/user`, ce qui suppose que cette route-là
+   * soit appelée en premier. Sur une base neuve — un environnement qu'on monte,
+   * une reprise après sinistre — quelqu'un qui enregistre une partie avant
+   * d'avoir ouvert un écran qui lit son compte tombait sur une erreur 500.
+   * L'appel est mémoïsé pour le processus : après le premier, il ne coûte plus
+   * qu'une promesse déjà résolue.
+   */
+  await seedDefaults();
+
   const [ponderations, levelConfigs, masteryConfig] = await Promise.all([
     prisma.roleWeight.findMany(),
     prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
@@ -73,6 +86,19 @@ export async function POST(req: Request) {
   const roleWeights = capacites.roles
     ? (ponderations.find((r) => r.role === body.role) ?? null)
     : profilNeutre(ponderations);
+
+  /**
+   * Les paliers manquaient à ce contrôle.
+   *
+   * `getLevel` lit le dernier élément d'une liste triée : sur une liste vide,
+   * il rend `undefined`, et l'accès au seuil suivant faisait tomber la route
+   * avec une pile d'appels au lieu d'un message. Un contrôle qui en oublie un
+   * sur trois ne protège pas d'un tiers moins, il ne protège pas du cas qui
+   * arrive — celui de la base neuve.
+   */
+  if (levelConfigs.length === 0) {
+    return NextResponse.json({ error: "Config manquante" }, { status: 500 });
+  }
 
   if (typeJeu === "parties" && (!roleWeights || !masteryConfig)) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
