@@ -626,6 +626,32 @@ des jeux, pas le mien. Rejoué sans la modification, il passait ; rejoué avec,
 sur une base déjà chaude, il passait aussi. C'était un premier appel sur une
 base fraîchement montée, pas une régression — la même famille que V246.
 
+### Ce qui restait muet quand le serveur refusait
+Recensement des `if (res.ok)` sans branche d'échec, à la suite des corrections
+précédentes. Trois trouvailles, et deux fausses pistes qu'il valait mieux
+vérifier que « corriger ».
+
+- **Les trois commandes du panneau d'administration** — réinitialiser un mot de
+  passe, refaire jouer l'intro, supprimer un compte — n'avaient ni `try` ni
+  branche d'échec. Un refus ne produisait rien, on recliquait sans savoir ; et
+  sans réseau l'indicateur d'attente ne s'effaçait jamais. Un seul assistant
+  (`commande`) porte les trois choses qui manquaient.
+- **L'enregistrement automatique d'une partie Riot** ne notait rien quand le
+  `POST` échouait : le journal restait vide, la partie n'entrait jamais, et la
+  relecture suivante recommençait à l'identique. Ça compte davantage depuis que
+  la route **refuse** un résultat illisible : ce refus est légitime, et il doit
+  se voir. Il passe maintenant par `lireCode`, comme les erreurs de lecture.
+- **La suppression de compte** laissait « Suppression en cours… » à l'écran
+  pour toujours si l'action serveur partait en erreur. La personne croit que
+  son compte s'efface, et il n'en est rien. Au succès l'action redirige, donc
+  le `finally` ne s'exécute jamais — et c'est très bien : le bouton n'a pas
+  besoin de revenir sur une page qu'on quitte.
+
+Les deux fausses pistes : `SessionContext` a déjà son `try/catch` et sa branche
+d'échec sur le chrono, et l'export de données est un `<a href>` — un 500 y
+montre la page d'erreur du navigateur, ce qui est visible. Rien à corriger dans
+les deux cas.
+
 ### La sauvegarde n'avait jamais produit de sauvegarde
 Les secrets posés, le travail déclenché à la main tombe sur :
 
