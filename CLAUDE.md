@@ -641,11 +641,27 @@ vérifier que « corriger ».
   relecture suivante recommençait à l'identique. Ça compte davantage depuis que
   la route **refuse** un résultat illisible : ce refus est légitime, et il doit
   se voir. Il passe maintenant par `lireCode`, comme les erreurs de lecture.
-- **La suppression de compte** laissait « Suppression en cours… » à l'écran
-  pour toujours si l'action serveur partait en erreur. La personne croit que
-  son compte s'efface, et il n'en est rien. Au succès l'action redirige, donc
-  le `finally` ne s'exécute jamais — et c'est très bien : le bouton n'a pas
-  besoin de revenir sur une page qu'on quitte.
+- **La suppression de compte** laissait « Suppression… » à l'écran pour
+  toujours quand la base ne répondait pas. La personne croit que son compte
+  s'efface, et il n'en est rien.
+
+  **Ma première correction ne corrigeait rien**, et c'est la mesure qui l'a
+  montré. J'avais posé un `try/catch` autour de `deleteAccount()`, en supposant
+  que l'action serveur rejetterait. Éprouvé au navigateur en détournant l'appel
+  en 500 : l'action est bien interceptée, mais le client Next **ne rejette pas
+  la promesse** — il remonte l'erreur à la page (`PAGEERROR`), le `await` ne
+  rend jamais la main, et le bouton affiche toujours « Suppression… ». Ni le
+  `catch` ni le `finally` ne sont atteints.
+
+  La suppression est donc devenue une route ordinaire, `DELETE /api/user`, qui
+  répond ce qu'elle a fait et que l'écran sait lire. La déconnexion reste une
+  action : elle n'écrit rien en base, donc elle ne peut pas échouer pour la
+  raison qui nous occupe. `deleteAccount` a quitté `src/lib/actions.ts` —
+  laisser le chemin cassé en place, c'est inviter à le reprendre.
+
+  À retenir : **une action serveur n'est pas un `fetch` avec une autre
+  syntaxe.** Son échec ne se rattrape pas au point d'appel. Tout ce dont
+  l'écran doit pouvoir dire « ça n'a pas marché » passe par une route.
 
 Les deux fausses pistes : `SessionContext` a déjà son `try/catch` et sa branche
 d'échec sur le chrono, et l'export de données est un `<a href>` — un 500 y

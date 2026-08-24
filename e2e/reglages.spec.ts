@@ -139,3 +139,62 @@ test("un réglage que le serveur refuse revient en arrière, et le dit", async (
   expect(apres?.user?.exercices ?? []).not.toContain("boxe");
   await ctx.close();
 });
+
+/**
+ * Une suppression de compte qui échoue ne laisse pas le bouton tourner.
+ *
+ * `deleteAccount` est une action serveur : si la base ne répond pas, la
+ * promesse part en erreur et « Suppression en cours… » reste à l'écran pour
+ * toujours. La personne croit que son compte s'efface, et il n'en est rien.
+ *
+ * L'action se détourne par son en-tête `Next-Action`, que Next pose sur
+ * l'appel : c'est ce qui la distingue d'une navigation ordinaire vers la même
+ * adresse.
+ */
+test("une suppression de compte qui échoue le dit, au lieu de tourner sans fin", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  await page.route("**/api/user", async (route) => {
+    if (route.request().method() === "DELETE") {
+      await route.fulfill({
+        status: 500, contentType: "application/json",
+        body: JSON.stringify({ error: "Erreur serveur" }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/settings", { waitUntil: "networkidle" });
+  expect(new URL(page.url()).pathname).toBe("/settings");
+  await page.getByRole("button", { name: /données|data/i }).first().click();
+  await page.waitForTimeout(500);
+
+  await page.getByRole("button", { name: /supprimer mon compte|delete my account/i })
+    .first().click();
+  const fenetre = page.getByRole("dialog");
+  await expect(fenetre).toBeVisible();
+  await fenetre.getByRole("textbox").fill("SUPPRIMER");
+  await fenetre.getByRole("button", { name: /supprimer définitivement|delete permanently/i })
+    .click();
+
+  // Le message paraît, et le compte est toujours là : c'est le serveur qui
+  // tranche, pas l'écran.
+  await expect(page.getByText(/erreur lors de la sauvegarde|error while saving/i))
+    .toBeVisible({ timeout: 15_000 });
+  // Et le bouton est revenu : il ne tourne pas dans le vide.
+  await expect(fenetre.getByRole("button", { name: /supprimer définitivement|delete permanently/i }))
+    .toBeEnabled();
+  const moi = await page.request.get("/api/user");
+  expect(moi.ok()).toBeTruthy();
+  await ctx.close();
+});
