@@ -92,7 +92,11 @@ export function LigneRubrique({
         </span>
       </span>
       {valeur && (
-        <span className="mono-num" style={{
+        /* La chasse fixe aligne des chiffres entre eux ; ces résumés n'en sont
+           pas tous. « test à faire » et « 3 jeux » y prenaient l'allure d'une
+           machine à écrire, sans rien y gagner. Elle ne sert plus qu'aux
+           résumés qui sont vraiment des nombres. */
+        <span className={/^[\d.,\s]+$/.test(valeur) ? "mono-num" : undefined} style={{
           fontSize: "0.78rem", color: "var(--muted)",
           whiteSpace: "nowrap", textAlign: "right",
         }}>
