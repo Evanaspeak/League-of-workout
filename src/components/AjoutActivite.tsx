@@ -87,6 +87,14 @@ export function AjoutActivite({
   const [matches, setMatches] = useState<MatchEntry[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [matchError, setMatchError] = useState("");
+  /**
+   * Échec de l'ajout d'une partie Riot depuis la liste.
+   *
+   * Séparé de `matchError`, qui REMPLACE la liste : signaler un ajout raté en
+   * le réemployant ferait disparaître les vingt parties d'un coup, et on ne
+   * saurait plus laquelle on essayait d'ajouter.
+   */
+  const [erreurAjoutRiot, setErreurAjoutRiot] = useState("");
   const [addingId, setAddingId] = useState<string | null>(null);
 
 
@@ -159,24 +167,37 @@ export function AjoutActivite({
   // ─── Quick-add from Riot history ─────────────────────────────────────────
   const handleQuickAdd = async (m: MatchEntry) => {
     setAddingId(m.matchId);
-    const res = await fetch("/api/games", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        role: m.role, champion: m.champion,
-        kills: m.kills, deaths: m.deaths, assists: m.assists,
-        result: m.result, source: "riot_api", riotMatchId: m.matchId,
-      }),
-    });
-    if (res.ok) {
-      const { game, scoring } = await res.json();
-      setMatches((prev) => prev.map((x) =>
-        x.matchId === m.matchId
-          ? { ...x, alreadyLogged: true, pompesCalculees: scoring.pompesFinales, exercice: toExerciceId(game?.exercice) }
-          : x
-      ));
-      onAjout();
-      window.dispatchEvent(new Event("wow-dette-changee"));
+    setErreurAjoutRiot("");
+    // Sans ce `try`, une coupure réseau laissait la ligne en « ajout… » pour
+    // toujours : la promesse partait en erreur et `setAddingId(null)` n'était
+    // jamais atteint. Et un refus du serveur ne disait rien du tout — la
+    // ligne redevenait normale, on recliquait, sans savoir ce qui s'était
+    // passé.
+    try {
+      const res = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: m.role, champion: m.champion,
+          kills: m.kills, deaths: m.deaths, assists: m.assists,
+          result: m.result, source: "riot_api", riotMatchId: m.matchId,
+        }),
+      });
+      if (res.ok) {
+        const { game, scoring } = await res.json();
+        setMatches((prev) => prev.map((x) =>
+          x.matchId === m.matchId
+            ? { ...x, alreadyLogged: true, pompesCalculees: scoring.pompesFinales, exercice: toExerciceId(game?.exercice) }
+            : x
+        ));
+        onAjout();
+        window.dispatchEvent(new Event("wow-dette-changee"));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setErreurAjoutRiot(err.error ? translateApiError(err.error, locale) : t.logError);
+      }
+    } catch {
+      setErreurAjoutRiot(t.logError);
     }
     setAddingId(null);
   };
@@ -749,6 +770,14 @@ export function AjoutActivite({
               <p className="text-xs" style={{ color: "var(--faint)" }}>
                 {t.last20Games}
               </p>
+              {erreurAjoutRiot && (
+                <div className="text-center p-3 rounded loss-text" role="status" style={{
+                  background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+                  fontSize: "0.86rem",
+                }}>
+                  {erreurAjoutRiot}
+                </div>
+              )}
               {matches.map((m, i) => (
                 <div
                   key={m.matchId}
