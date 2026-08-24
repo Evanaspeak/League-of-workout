@@ -219,9 +219,16 @@ Trois pièges rencontrés en l'écrivant, dont deux nouveaux :
   trouvait rien et j'ai cru la page cassée. La configuration Playwright fixe
   `fr-FR` ; un outil de diagnostic écrit à côté ne l'a pas.
 - **La modale de consentement santé**, sixième fichier de parcours à tomber
-  dessus. `e2e/compte.ts` porte maintenant l'ouverture de compte pour tout le
-  monde, consentement compris : cinq fichiers recopiaient les mêmes vingt
-  lignes, et le même défaut avec.
+  dessus. `e2e/compte.ts` porte l'ouverture de compte de ce fichier,
+  consentement compris.
+
+Ce que je m'étais raconté, et qui était faux : j'ai d'abord attribué le bouton
+désactivé à une saisie arrivée avant l'hydratation, et écrit une reprise de
+saisie pour ça. Elle n'a rien changé — normal, il n'y avait aucun JavaScript
+du tout. Les huit autres fichiers de parcours n'ont donc PAS été convertis :
+la duplication est réelle, mais le défaut qui aurait justifié d'y toucher
+n'existait pas. Un remaniement de huit fichiers qui passent, sur une raison
+qu'on n'a pas vérifiée, se paie plus cher qu'il ne rapporte.
 
 ### Le script de mesure d'audience n'a jamais été chargé
 Trouvé en regardant la console du navigateur pendant le test ci-dessus :

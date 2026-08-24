@@ -4,12 +4,15 @@ import { purgerTentatives } from "./limiteur";
 /**
  * Ouvre un compte neuf et rend son état de session.
  *
- * Cinq fichiers de parcours recopiaient les mêmes vingt lignes, et le même
- * défaut avec : `fill()` arrivée AVANT l'hydratation pose la valeur dans le
- * DOM sans que React la voie. Le bouton reste alors désactivé pour toujours,
- * et l'échec ne ressemble pas à sa cause — « element is not enabled » sur un
- * champ pourtant rempli, visible dans la capture. La saisie est donc reprise
- * tant que le bouton ne s'active pas.
+ * Les huit autres fichiers de parcours recopient les mêmes vingt lignes. Ils
+ * n'ont pas été convertis, et la raison est écrite dans CLAUDE.md : le défaut
+ * qui aurait justifié d'y toucher n'existait pas.
+ *
+ * La saisie est reprise tant que le bouton ne s'active pas. C'est une
+ * précaution, pas la correction d'un défaut constaté : quand le bouton reste
+ * désactivé, c'est en général qu'il n'y a pas de JavaScript du tout, et
+ * reprendre la saisie n'y peut rien. La reprise ne coûte qu'un tour de boucle
+ * dans le cas normal.
  */
 export async function ouvrirCompte(
   browser: Browser,
