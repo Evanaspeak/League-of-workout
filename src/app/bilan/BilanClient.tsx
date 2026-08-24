@@ -27,7 +27,22 @@ type Bilan = {
   repartitionPayee: Record<string, number>;
 };
 
+/**
+ * Une case du bilan : une légende, une valeur.
+ *
+ * La police à chasse fixe ne sert qu'aux valeurs qui sont **des nombres**.
+ * Posée sur toutes, elle donnait « League of Legends » et « 23 août » à la
+ * machine à écrire, et surtout elle les élargit : « 21 + 2 min 20 » passait à
+ * la ligne au milieu, et « Champion le plus joué » n'avait plus la place de
+ * s'écrire. La chasse fixe existe pour aligner des chiffres entre eux, pas
+ * pour faire joli.
+ */
 function Case({ legende, valeur }: { legende: string; valeur: string }) {
+  // Un nombre nu, et rien d'autre. « 40 % » en est un aussi, mais l'espace
+  // fine que le français impose devant le signe occupe une chasse entière en
+  // police à chasse fixe : le trou se voit à l'écran. Ces cases ne sont pas
+  // une colonne de chiffres à aligner, elles n'y perdent rien.
+  const chiffree = /^[\d.,]+$/.test(valeur);
   return (
     <div className="lol-panel" style={{ padding: "14px 16px" }}>
       <div style={{
@@ -36,8 +51,13 @@ function Case({ legende, valeur }: { legende: string; valeur: string }) {
       }}>
         {legende}
       </div>
-      <div className="mono-num" style={{
-        fontSize: "1.6rem", fontWeight: 700, color: "var(--amber)", marginTop: 4, lineHeight: 1.1,
+      <div className={chiffree ? "mono-num" : undefined} style={{
+        // Une valeur longue rétrécit plutôt que de passer à la ligne au
+        // milieu : « 21 + 2 min 20 » se coupait entre « min » et « 20 ».
+        fontSize: valeur.length > 12 ? "1.2rem" : "1.6rem",
+        fontWeight: 700, color: "var(--amber)", marginTop: 4, lineHeight: 1.15,
+        // Une valeur qui déborde se coupe au mot, jamais au milieu.
+        overflowWrap: "anywhere",
       }}>
         {valeur}
       </div>
@@ -64,6 +84,14 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
   // écrite à la main se trompe de langue tôt ou tard.
   const etiquette = etiquetteLocale(locale.locale);
   const nombre = (n: number) => new Intl.NumberFormat(etiquette).format(n);
+  /**
+   * Le pourcentage passe par `Intl`, pas par un « % » recollé à la main.
+   * Le français exige une espace fine insécable avant le signe, l'anglais n'en
+   * veut aucune : écrit à la main, on a l'un des deux faux, et en chasse fixe
+   * l'espace ordinaire creuse un trou visible.
+   */
+  const pourcent = (n: number) =>
+    new Intl.NumberFormat(etiquette, { style: "percent" }).format(n / 100);
   const date = (jour: string) => {
     const [a, m, j] = jour.split("-").map(Number);
     return new Intl.DateTimeFormat(etiquette, { day: "numeric", month: "long" })
@@ -164,7 +192,7 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
         }}>
           <Case legende={t.parties} valeur={nombre(bilan.parties)} />
           <Case legende={t.victoires}
-                valeur={bilan.winrate === null ? t.aucun : `${nombre(bilan.winrate)} %`} />
+                valeur={bilan.winrate === null ? t.aucun : pourcent(bilan.winrate)} />
           <Case legende={t.paye} valeur={effortPaye} />
           <Case legende={t.serie} valeur={nombre(bilan.meilleureSerie)} />
           <Case legende={t.joursActifs} valeur={nombre(bilan.joursActifs)} />
