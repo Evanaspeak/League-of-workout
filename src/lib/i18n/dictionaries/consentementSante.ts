@@ -24,6 +24,7 @@ export const consentementSante = {
     accepter: "J'accepte",
     refuser: "Je refuse et j'efface",
     enCours: "Enregistrement…",
+    erreurEnvoi: "Ta réponse n'a pas pu être enregistrée. Vérifie ta connexion et réessaie.",
     lien: "Lire la politique de confidentialité",
 
     blocTitre: "Mesures physiques",
@@ -63,6 +64,7 @@ export const consentementSante = {
     accepter: "I agree",
     refuser: "Decline and erase",
     enCours: "Saving…",
+    erreurEnvoi: "Your answer could not be saved. Check your connection and try again.",
     lien: "Read the privacy policy",
 
     blocTitre: "Body measurements",
@@ -102,6 +104,7 @@ export const consentementSante = {
     accepter: "Acepto",
     refuser: "Rechazo y borro",
     enCours: "Guardando…",
+    erreurEnvoi: "No se ha podido guardar tu respuesta. Comprueba la conexión e inténtalo de nuevo.",
     lien: "Leer la política de privacidad",
 
     blocTitre: "Medidas corporales",
@@ -141,6 +144,7 @@ export const consentementSante = {
     accepter: "Ich stimme zu",
     refuser: "Ablehnen und löschen",
     enCours: "Wird gespeichert…",
+    erreurEnvoi: "Deine Antwort konnte nicht gespeichert werden. Prüf die Verbindung und versuch es noch mal.",
     lien: "Datenschutzerklärung lesen",
 
     blocTitre: "Körpermaße",
@@ -180,6 +184,7 @@ export const consentementSante = {
     accepter: "我同意",
     refuser: "拒绝并删除",
     enCours: "正在保存…",
+    erreurEnvoi: "无法保存你的选择。请检查网络后再试一次。",
     lien: "阅读隐私政策",
 
     blocTitre: "身体数据",
@@ -219,6 +224,7 @@ export const consentementSante = {
     accepter: "同意する",
     refuser: "拒否して削除する",
     enCours: "保存中…",
+    erreurEnvoi: "回答を保存できませんでした。通信状況を確認して、もう一度お試しください。",
     lien: "プライバシーポリシーを読む",
 
     blocTitre: "身体データ",

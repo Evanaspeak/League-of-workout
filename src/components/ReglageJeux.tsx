@@ -44,6 +44,17 @@ export function ReglageJeux() {
   const [detection, setDetection] = useState<ConfigDetection | null>(null);
   const [ouvert, setOuvert] = useState<string | null>(JEU_RIOT);
   /**
+   * L'application n'a pas retenu le dernier réglage.
+   *
+   * L'écran posait la nouvelle valeur AVANT de la faire enregistrer, et ne
+   * faisait rien de l'échec : le commentaire promettait que « l'état précédent
+   * reste affiché », ce qui était faux — c'est justement le nouvel état qui
+   * restait. On voyait donc un réglage que l'application n'avait pas, et on
+   * s'en apercevait au rechargement suivant, sans savoir pourquoi. Même défaut
+   * que celui corrigé sur « Ton effort », au même moment.
+   */
+  const [erreur, setErreur] = useState(false);
+  /**
    * Vrai quand l'application tourne mais ne connaît pas encore le réglage par
    * jeu : la page est servie depuis le site, elle peut donc être en avance sur
    * la version installée. Lu sans effet — c'est une valeur du navigateur, pas
@@ -73,31 +84,45 @@ export function ReglageJeux() {
 
   const ecrire = async (jeu: string, patch: Partial<OverlayJeu>) => {
     // On affiche tout de suite, puis on retient ce que l'application a
-    // réellement enregistré.
+    // réellement enregistré. Le retour en arrière n'est pas un ornement :
+    // sans lui, le message d'échec et ce qu'on voit se contredisent.
+    const avant = jeux;
     setJeux((prec) => (prec
       ? { ...prec, config: { ...prec.config, [jeu]: { ...prec.config[jeu], ...patch } as OverlayJeu } }
       : prec));
     try {
       setJeux(await window.electronLOL!.overlayJeuEcrire!(jeu, patch));
-    } catch { /* l'état précédent reste affiché */ }
+      setErreur(false);
+    } catch {
+      setJeux(avant);
+      setErreur(true);
+    }
   };
 
   const basculerSurveillance = async (jeu: string) => {
     if (!detection) return;
+    const avant = detection;
     const surveilles = detection.surveilles.includes(jeu)
       ? detection.surveilles.filter((j) => j !== jeu)
       : [...detection.surveilles, jeu];
     setDetection({ ...detection, surveilles });
     try {
       setDetection(await window.electronLOL!.detectionEcrire!({ surveilles }));
-    } catch { /* l'état précédent reste affiché */ }
+      setErreur(false);
+    } catch {
+      setDetection(avant);
+      setErreur(true);
+    }
   };
 
   const placer = async (jeu: string, actif: boolean) => {
     try {
       await window.electronLOL!.overlayPlacement!(actif, jeu);
       setJeux(await window.electronLOL!.overlayJeuxLire!());
-    } catch { /* inchangé */ }
+      setErreur(false);
+    } catch {
+      setErreur(true);
+    }
   };
 
   // Quitter la page en plein placement laisserait la pastille attrapable, sans
@@ -117,6 +142,12 @@ export function ReglageJeux() {
       {tropAncienne && (
         <p className="text-xs" style={{ color: "var(--amber)", lineHeight: 1.6 }}>
           {t.versionAncienne}
+        </p>
+      )}
+
+      {erreur && (
+        <p className="text-xs" role="status" style={{ color: "var(--loss)", lineHeight: 1.6 }}>
+          {t.erreurReglage}
         </p>
       )}
 

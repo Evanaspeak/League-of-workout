@@ -263,6 +263,27 @@ Un garde structurel refuse le retour du motif dans `desktop/src`, avec un
 contrôle de non-vacuité — sans lui, un dossier renommé rendrait le test vert
 sur zéro fichier lu. Sabotage fait : une comparaison remise, le test tombe.
 
+### Deux écrans de plus qui affichaient ce qui n'avait pas été enregistré
+Même défaut que « Ton effort », trouvé en relisant tous les `catch` de
+l'interface. Chacun portait sa raison écrite, ce qui est la bonne discipline —
+mais deux de ces raisons étaient fausses.
+
+**« Tes jeux ».** Le commentaire annonçait « l'état précédent reste affiché ».
+C'était l'inverse : la nouvelle valeur était posée AVANT l'appel, donc c'est
+elle qui restait. L'écran montrait un réglage que l'application n'avait pas, et
+on s'en apercevait au rechargement suivant sans savoir pourquoi. Retour en
+arrière et message, comme ailleurs.
+
+**Le consentement santé.** Un échec d'envoi ne disait rien du tout. Or cette
+fenêtre-là ne se ferme pas : la personne clique « J'accepte », le bouton
+redevient cliquable, rien ne bouge, et il n'y a aucun autre chemin. Un échec
+muet y enferme dans l'application. La question reste posée, mais elle dit
+maintenant pourquoi.
+
+Ce que ça apprend sur les commentaires : un `catch` qui décrit ce qu'il fait
+est une bonne chose, et une mauvaise dès qu'il décrit ce qu'il ne fait pas. Il
+se relit alors comme une garantie, et on cesse de vérifier.
+
 ### « Tes jeux » depuis un navigateur
 La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
 exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection
