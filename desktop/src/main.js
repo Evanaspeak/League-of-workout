@@ -21,6 +21,7 @@ const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
 const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures, imageEcran, estNoir } = require("./capture");
 const lecteur = require("./lecture/lecteurApex");
 const { surveillerClient } = require("./lcu");
+const { creerAttenteFin } = require("./attenteIssue");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 // `crypto` global d'Electron est celui du navigateur : ni randomBytes, ni
@@ -171,6 +172,16 @@ let stopClient = null;
  * l'enregistrement — le rôle était deviné, la file ignorée.
  */
 let contextePartie = { file: null, role: null };
+/**
+ * Une fin de partie dont l'issue n'a pas pu être lue attend l'écran de fin du
+ * lanceur, qui la publie quelques secondes plus tard. Voir `attenteIssue.js` :
+ * la partie part toujours, avec l'issue si elle arrive, sans elle sinon.
+ */
+const attenteFin = creerAttenteFin({
+  envoyer: (event) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("lol:event", event);
+  },
+});
 /** Vrai seulement si l'icône existe réellement pour rouvrir la fenêtre. */
 let trayPret = false;
 /** Vrai à partir du moment où l'on quitte pour de bon. */
@@ -892,9 +903,13 @@ async function createWindow() {
       return;
     }
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send("lol:event",
-        event.type === "game-ended" ? { ...event, contexte: contextePartie } : event);
+    if (event.type === "game-ended") {
+      // Le contexte est joint MAINTENANT : l'envoi peut être retardé de
+      // trente secondes, et une sélection de champion entamée entre-temps
+      // rattacherait la partie au rôle de la suivante.
+      attenteFin.finDePartie({ ...event, contexte: contextePartie });
+    } else if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("lol:event", event);
     }
 
     // L'overlay apparaît de lui-même au début d'une partie et se retire à la
@@ -1435,6 +1450,12 @@ app.whenReady().then(() => {
       contextePartie = { file: e.file, role: e.role };
       return;
     }
+    // L'écran de fin du lanceur : la seconde source d'issue, celle qui parle
+    // quand l'API de partie s'est déjà tue.
+    if (e.type === "issue") {
+      attenteFin.issue(e);
+      return;
+    }
     // La recherche de partie qui démarre est le premier moment où l'on sait
     // qu'une partie se prépare — bien avant que le jeu ne se lance.
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -1484,6 +1505,9 @@ app.on("before-quit", (event) => {
     // Le moteur de lecture tient un fil de travail : sans arrêt explicite, le
     // processus survit à la fenêtre et l'application ne se ferme jamais.
     lecteur.fermer();
+    // Ce qui attendait l'écran de fin part avant qu'on éteigne : sinon la
+    // dernière partie de la soirée est celle qu'on perd.
+    attenteFin.arreter();
     if (stopWatcher) stopWatcher();
     if (stopOverlay) stopOverlay();
     if (stopJeux) stopJeux();

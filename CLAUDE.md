@@ -124,6 +124,65 @@ desktop/              # App Electron Windows
 - Graphique période avec toggle **Moyenne/Total** + onglets : Heure | Jour | Mois | **Calendrier**
   - Calendrier : date picker → détail horaire via `/api/dashboard/daily`
 
+### L'autre moitié du défaut : la détection locale inventait la défaite
+Suite de « Une victoire sur trois s'enregistrait en défaite », plus bas : la
+route corrigée n'était que la moitié du chemin. Sans clé Riot de production,
+c'est la détection locale qui enregistre les parties, et elle portait le même
+défaut, écrit en toutes lettres :
+
+```ts
+result: resultat ?? "D",   // « sans événement de fin lisible, on retient la défaite »
+```
+
+Cette lecture est une **course** : l'API de partie (port 2999) ne
+publie l'événement `GameEnd` que dans les dernières secondes, puis se tait dès
+l'écran de fin. Elle était interrogée toutes les cinq secondes. Quand aucun
+relevé ne tombait dans cette fenêtre, l'issue manquait — et toutes les courses
+perdues tombaient du même côté. Une défaite prise pour une défaite ne se voit
+pas ; une victoire prise pour une défaite fait payer une dette qu'on ne doit
+pas, sans rien qui l'explique.
+
+Quatre corrections, de la plus profonde à la plus visible :
+
+- **L'issue ne s'invente plus.** Sans lecture, la partie n'est pas enregistrée
+  et une notification le dit. Ne rien écrire vaut mieux qu'écrire faux : c'est
+  la règle déjà posée pour les saisies aberrantes (« ne pas rattraper une
+  saisie fausse »), appliquée à une lecture au lieu d'une frappe.
+- **Une issue lue ne se reperd plus.** `dernier = releve` écrasait le relevé
+  précédent en entier : un seul relevé sans l'événement suffisait à effacer la
+  lecture d'avant. `fusionnerReleve` garde l'issue une fois vue.
+- **Deux secondes au lieu de cinq**, ce qui divise la fenêtre manquée par deux
+  et demi pour une requête locale qui ne coûte rien.
+- **Une seconde source.** Le lanceur publie son écran de fin
+  (`/lol-end-of-game/v1/eog-stats-block`) quelques secondes APRÈS que l'API de
+  partie s'est tue. `attenteIssue` retient donc trente secondes une fin de
+  partie sans issue, le temps qu'il parle.
+
+`issueLocale.js` porte les deux lectures. Elle ne conclut sur l'écran de fin que
+si ses deux sources s'accordent (`teams[].isWinningTeam` et `localPlayer.stats.WIN`) :
+cette API n'est pas documentée, sa forme change d'une version à l'autre, et deux
+sources qui se contredisent sont un signe que la forme a bougé, pas une occasion
+de choisir la plus flatteuse. Un remake est lu comme un remake, en premier —
+les deux sources s'accordent dessus, donc le contrôle de désaccord ne le
+verrait jamais.
+
+Deux pièges qui ont chacun leur test :
+- **`Boolean("0")` vaut vrai.** Le lanceur écrit ses drapeaux tantôt en
+  booléen, tantôt en 0/1, tantôt en `"0"`. Une conversion à la légère faisait
+  passer une défaite pour une victoire.
+- **Une attente qui n'échoit pas perd la partie pour de bon.** `attenteIssue`
+  garantit deux choses et rien d'autre : la partie part toujours, et jamais
+  deux fois. Le contexte de file et de rôle est joint au moment de la fin, pas
+  au moment de l'envoi : trente secondes plus tard, une sélection de champion
+  entamée entre-temps rattacherait la partie au rôle de la suivante.
+
+Sept sabotages, sept échecs — dont « tout ce qui n'est pas Win redevient une
+défaite », qui est exactement le défaut d'origine.
+
+Ce qui n'a **pas** été fait, et pourquoi : les parties déjà enregistrées à tort
+en défaites ne sont pas corrigées. Les reprendre demande de décider ce qu'on
+fait de la dette déjà payée dessus, et ça ne se décide pas seul.
+
 ### « Tes jeux » depuis un navigateur
 La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
 exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection

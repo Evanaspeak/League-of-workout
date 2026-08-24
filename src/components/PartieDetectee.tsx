@@ -28,10 +28,27 @@ export function PartieDetectee() {
     const pont = window.electronLOL;
     if (!pont?.onPartieTerminee) return;
 
-    return pont.onPartieTerminee(async ({ score, resultat, dureeSec, contexte }) => {
+    return pont.onPartieTerminee(async ({ score, resultat, motifSansResultat, dureeSec, contexte }) => {
       // Sans score, il n'y a rien à enregistrer : mieux vaut ne rien écrire
       // qu'inventer une partie à zéro partout.
       if (!score) return;
+
+      // L'issue ne s'invente pas. Elle se lit dans l'événement de fin de l'API
+      // de partie, et cette lecture est une course : l'événement n'est publié
+      // que dans les dernières secondes, et l'API se tait dès l'écran de fin.
+      // Le repli précédent — « sans lecture, on retient la défaite » — faisait
+      // tomber toutes les courses perdues du même côté : une défaite prise
+      // pour une défaite ne se voit pas, une victoire prise pour une défaite
+      // fait payer une dette qu'on ne doit pas, sans rien qui l'explique.
+      // On préfère donc ne pas enregistrer, et le dire.
+      if (resultat !== "V" && resultat !== "D") {
+        // Une partie annulée n'est ni une victoire ni une défaite, et elle n'a
+        // pas à être enregistrée : le lanceur l'a dit, il n'y a rien à
+        // signaler. Le silence est la bonne réponse, pas un oubli.
+        if (motifSansResultat === "remake") return;
+        notifierSysteme(t.issueIllisible, t.issueIllisibleCorps, "wow-partie");
+        return;
+      }
 
       // Le rôle vient du lanceur quand il a pu être lu — c'est la seule source
       // exacte. Sinon la dernière saisie manuelle, puis une valeur de repli.
@@ -51,10 +68,7 @@ export function PartieDetectee() {
             kills: score.kills,
             deaths: score.deaths,
             assists: score.assists,
-            // Sans événement de fin lisible, on retient la défaite : c'est le
-            // cas coûteux, et se tromper en sa défaveur vaut mieux que de
-            // laisser croire à une victoire.
-            result: resultat ?? "D",
+            result: resultat,
             dureeSec,
             // Type de file, quand le lanceur a pu le dire : « Classée Solo/Duo »,
             // « ARAM »… Il distingue des parties que le KDA seul confond.

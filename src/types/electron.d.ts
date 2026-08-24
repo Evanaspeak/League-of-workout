@@ -111,6 +111,8 @@ declare global {
       onPartieTerminee?: (
         callback: (p: {
           score?: ScoreDirect | null; resultat?: "V" | "D" | null; dureeSec?: number;
+          /** Pourquoi l'issue manque, quand le lanceur a su le dire (0.9.6+). */
+          motifSansResultat?: "remake" | "desaccord" | "inconnu" | null;
           contexte?: ContextePartie | null;
         }) => void
       ) => () => void;

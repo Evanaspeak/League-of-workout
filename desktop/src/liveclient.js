@@ -8,9 +8,15 @@
 // On en déduit les événements "début" et "fin" de partie en temps réel.
 
 const https = require("https");
+const { issueDeLEvenement, fusionnerReleve } = require("./issueLocale");
 
 const LIVE_CLIENT_URL = "https://127.0.0.1:2999/liveclientdata/allgamedata";
-const POLL_INTERVAL_MS = 5000;
+// La fin de partie est une course : l'événement « GameEnd » n'est publié que
+// dans les dernières secondes, et l'API se tait dès l'écran de fin. À cinq
+// secondes d'intervalle, il arrivait qu'aucun relevé ne tombe dans cette
+// fenêtre — et l'issue était alors perdue. Deux secondes divisent la fenêtre
+// manquée par deux et demi, pour une requête locale qui ne coûte rien.
+const POLL_INTERVAL_MS = 2000;
 const REQUEST_TIMEOUT_MS = 3000;
 
 // Le certificat de l'API locale est auto-signé : on désactive la vérification
@@ -53,20 +59,6 @@ function fetchGameData() {
  * versions récentes, `summonerName` avant. On accepte les deux, sinon le KDA
  * disparaît au prochain patch.
  */
-/**
- * Issue de la partie, lue dans le journal d'événements du jeu.
- *
- * L'API locale publie un événement « GameEnd » portant le résultat. C'est la
- * seule source disponible sans clé développeur Riot — et elle suffit.
- */
-function issueDeLaPartie(data) {
-  const evenements = data?.events?.Events;
-  if (!Array.isArray(evenements)) return null;
-  const fin = evenements.find((e) => e?.EventName === "GameEnd");
-  if (!fin?.Result) return null;
-  return String(fin.Result).toLowerCase().startsWith("win") ? "V" : "D";
-}
-
 function scoreDuJoueur(data) {
   const moi = data?.activePlayer;
   const nom = moi?.riotIdGameName ?? moi?.summonerName ?? null;
@@ -120,11 +112,12 @@ function startLiveClientWatcher(emit) {
     const releve = {
       dureeSec: Math.max(0, Math.round(Number(data?.gameData?.gameTime) || 0)),
       score: scoreDuJoueur(data),
-      resultat: issueDeLaPartie(data),
+      resultat: issueDeLEvenement(data).resultat,
     };
     // Conservé pour la fin de partie : l'issue n'apparaît que sur les derniers
-    // relevés, et l'API se tait dès l'écran de fin.
-    if (releve.score) dernier = releve;
+    // relevés, et l'API se tait dès l'écran de fin. La règle de conservation
+    // vit dans `issueLocale`, avec ses tests.
+    dernier = fusionnerReleve(dernier, releve);
     emit({ type: "game-data", ...releve });
   };
 
