@@ -582,6 +582,27 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### « 2026-02-30 » montrait la journée du 2 mars
+Suite du passage en revue, côté lecture cette fois. Une seule route cédait, et
+c'est celle que le **calendrier du tableau de bord appelle lui-même** :
+`/api/dashboard/daily`.
+
+Elle vérifiait la forme — `\d{4}-\d{2}-\d{2}` — et pas la date :
+- « 9999-99-99 » respecte la forme, donne une date invalide, traversait jusqu'à
+  la base et faisait tomber la route avec une **erreur 500** ;
+- « 2026-02-30 » n'est même pas rejeté par `Date` selon la plateforme : il
+  glisse au 2 mars. La journée montrée n'était alors pas celle demandée, et
+  rien ne le disait.
+
+Le contrôle porte maintenant sur **l'aller-retour** : on réécrit la date et on
+la compare à celle demandée. Ça attrape les deux cas d'un coup. `toISOString`
+lève sur une date invalide : on regarde d'abord qu'elle en est une, sinon le
+contrôle devient lui-même la panne.
+
+Tout le reste tient : filtres inconnus, limites négatives ou démesurées,
+paramètres injectés — les autres routes de lecture rendent une réponse vide ou
+ignorent le paramètre, aucune ne tombe.
+
 ### Le compteur de dette s'effaçait sur une durée impossible
 Suite du même passage en revue, sur les autres routes qui écrivent. Tout le
 reste tient — réglages, compte, suspension, signalement, consentement refusent
