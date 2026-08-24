@@ -180,7 +180,17 @@ await page.goto(BASE + CHEMIN, { waitUntil: "networkidle" });
 }
 await page.waitForTimeout(2000);
 // Le LCP se lit AVANT tout défilement : ensuite, il élirait un élément du bas.
-const lcp = (await page.evaluate(() => window.__mesures)).lcp;
+//
+// Et il se lit ENTIER. Seul `lcp` était retenu ici : le nom du plus grand
+// élément et le drapeau « dans une modale » étaient relevés par la sonde, puis
+// jetés. Le rapport annonçait donc « plus grand (non relevé) » sur toutes les
+// pages, sur la passe poste — et surtout le garde des modales, plus bas,
+// testait `m.modale`, qui valait toujours `undefined` : il ne pouvait se
+// déclencher que par la passe téléphone. C'est le piège déjà écrit dans
+// CLAUDE.md — un contrôle ajouté à un seul des deux endroits où la mesure se
+// fait.
+const avantDefilement = await page.evaluate(() => window.__mesures);
+const lcp = avantDefilement.lcp;
 
 // Le CLS, lui, réclame le défilement : les sections du bas peuvent déplacer
 // la mise en page au moment où elles entrent à l'écran.
@@ -188,7 +198,9 @@ await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 await page.waitForTimeout(2500);
 await page.evaluate(() => window.scrollTo(0, 0));
 await page.waitForTimeout(800);
-const m = { lcp, cls: (await page.evaluate(() => window.__mesures)).cls };
+// Le CLS, lui, se lit APRÈS : c'est la seule valeur qui se met à jour au
+// défilement. Tout le reste vient d'avant.
+const m = { ...avantDefilement, lcp, cls: (await page.evaluate(() => window.__mesures)).cls };
 const nav = await page.evaluate(() => {
   const n = performance.getEntriesByType("navigation")[0];
   return n ? { dom: n.domContentLoadedEventEnd, charge: n.loadEventEnd } : null;
