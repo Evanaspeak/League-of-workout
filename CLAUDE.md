@@ -663,10 +663,15 @@ vérifier que « corriger ».
   syntaxe.** Son échec ne se rattrape pas au point d'appel. Tout ce dont
   l'écran doit pouvoir dire « ça n'a pas marché » passe par une route.
 
-Les deux fausses pistes : `SessionContext` a déjà son `try/catch` et sa branche
-d'échec sur le chrono, et l'export de données est un `<a href>` — un 500 y
-montre la page d'erreur du navigateur, ce qui est visible. Rien à corriger dans
-les deux cas.
+Les fausses pistes, vérifiées et laissées telles quelles : `SessionContext` a
+déjà son `try/catch` et sa branche d'échec sur le chrono ; l'export de données
+est un `<a href>`, et un 500 y montre la page d'erreur du navigateur, ce qui
+est visible ; `CompteRiot` traite déjà ses deux appels, avec `finally`.
+
+Le recensement des `catch` vides s'arrête là. Ceux qui restent sont des appels
+au pont Electron, qui remettent l'état précédent avec leur raison écrite : un
+réglage qui n'a pas pris n'affiche pas une valeur qu'il n'a pas. Ce n'est pas
+le défaut qu'on chasse.
 
 ### La sauvegarde n'avait jamais produit de sauvegarde
 Les secrets posés, le travail déclenché à la main tombe sur :
