@@ -13,7 +13,19 @@ import { LANGUES } from "../src/lib/i18n/LocaleContext";
  * la langue. Ce fichier refait ce passage à chaque poussée.
  */
 
-const PAGES = ["/", "/beta", "/login", "/telechargement", "/recuperation"];
+/**
+ * Les pages ouvertes à tous.
+ *
+ * Quatre manquaient, et ce sont celles qu'on trouve par une recherche ou qu'on
+ * lit avant de s'engager : le calculateur, une de ses pages par jeu, les CGU et
+ * la politique de confidentialité. Un mot allemand trop long dans un texte
+ * juridique ne casse rien de visible, mais il pousse la page hors de l'écran —
+ * et c'est ce qu'on regarde ici.
+ */
+const PAGES = [
+  "/", "/beta", "/login", "/telechargement", "/recuperation",
+  "/calculateur", "/calculateur/league-of-legends", "/cgu", "/confidentialite",
+];
 
 /** Ouvre une page dans une langue donnée, écrans d'accueil écartés. */
 async function ouvrirEn(page: Page, langue: string, chemin: string) {
@@ -131,7 +143,10 @@ test.describe("écrans connectés", () => {
   });
 
   for (const langue of LANGUES) {
-    for (const chemin of ["/dashboard", "/history", "/settings"]) {
+    // « Ta saison » s'y ajoute : c'est le seul écran dont le plus grand
+    // élément est une image, et son texte tient dans huit petites cartes où
+    // un mot allemand a toute la place de déborder.
+    for (const chemin of ["/dashboard", "/history", "/settings", "/bilan"]) {
       test(`${langue} · ${chemin}`, async ({ browser }) => {
         const ctx = await browser.newContext({ storageState: etat });
         const page = await ctx.newPage();

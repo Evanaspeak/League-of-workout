@@ -582,6 +582,35 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### L'export de données oubliait la moitié de ce qu'on garde
+Le droit à la portabilité couvre tout ce que l'application sait de quelqu'un.
+L'export rendait le compte, les préférences et les parties. Il ne rendait pas
+**les séances payées** — c'est-à-dire ce que la personne a réellement fait, jour
+par jour. Les parties disent ce qu'elle a joué ; les paiements disent ce qu'elle
+a fait, et c'est la moitié qu'elle a envie de reprendre.
+
+Manquaient aussi : ce qu'elle nous a écrit par un signalement, la trace de son
+consentement aux données de santé — c'est à nous de prouver qu'il a été donné
+(article 7.1), il est normal qu'elle reçoive la même preuve —, sa langue, son
+fuseau, sa variante d'exécution, ses exercices mis de côté et son abonnement au
+bilan hebdomadaire.
+
+Ce qui reste dehors, avec sa raison : le jeton de la source de diffusion. C'est
+bien une donnée du compte, mais c'est aussi un laissez-passer, et dans un
+fichier qu'on s'envoie par courriel ça devient une clé qui traîne.
+
+La suppression, elle, était déjà complète : toutes les relations vers `User`
+sont en `Cascade`, sauf les signalements en `SetNull` — ce qui est le bon choix,
+le rapport de bug survit anonyme.
+
+### Les six langues, sur quatre écrans de plus
+`e2e/langues.spec.ts` ouvrait cinq pages publiques et trois écrans connectés.
+Manquaient le calculateur, une de ses pages par jeu, les CGU, la politique de
+confidentialité, et « Ta saison ». Les deux pages juridiques sont celles où un
+mot allemand trop long ne casse rien de visible tout en poussant la page hors
+de l'écran ; « Ta saison » est le seul écran dont le texte tient dans huit
+petites cartes. **80 passes au lieu de 54.**
+
 ### Ce que l'application dit pendant qu'on joue
 Trois endroits l'écrivaient en français, en dur, dans le composant : la
 pastille en jeu après une partie d'Apex, la notification système après une
