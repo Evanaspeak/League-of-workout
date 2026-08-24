@@ -166,3 +166,53 @@ test("un renvoi en double ne paie pas deux fois", async ({ browser }) => {
   expect(second.points).toBe(premier.points);
   await ctx.close();
 });
+
+/**
+ * Le serveur répond, mais mal : la séance est gardée aussi.
+ *
+ * Le `catch` du composant ne rattrape que l'absence de réseau. Une réponse 500
+ * ou une session expirée traversaient le `if (res.ok)` sans rien faire : la
+ * fenêtre se refermait, la dette restait entière, et la séance qu'on venait de
+ * faire disparaissait sans un mot. C'est le défaut même que la file existe
+ * pour empêcher, laissé ouvert sur le seul chemin où le serveur est joignable.
+ *
+ * Le réseau reste branché ici : c'est ce qui distingue ce test du premier.
+ */
+test("quand le serveur répond 500, la séance est gardée aussi", async ({ browser }) => {
+  const { ctx, page } = await ouvrir(browser);
+
+  // Une dette neuve : les tests précédents ont soldé la première.
+  const partie = await page.request.post("/api/games", {
+    data: { jeu: "League of Legends", role: "Mid", champion: "Ahri",
+            kills: 1, deaths: 11, assists: 2, result: "D", exercice: "boxe" },
+  });
+  expect(partie.status(), await partie.text()).toBe(200);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+  await page.evaluate(() => localStorage.removeItem("low_file_paiements"));
+
+  // Seul l'acquittement tombe en panne. La lecture continue de répondre, sans
+  // quoi la pastille n'aurait rien à ouvrir.
+  await page.route("**/api/dette", async (route) => {
+    if (route.request().method() === "PATCH") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Erreur serveur" }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.getByRole("button", { name: /lancer le chrono|en attente/i }).first()
+    .or(page.locator(".pastille-dette")).first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("button", { name: /plus tard|j'ai fini/i }).first().click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+
+  const file = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("low_file_paiements") ?? "[]"));
+  expect(file, "un 500 ne doit pas faire disparaître la séance").toHaveLength(1);
+  await ctx.close();
+});

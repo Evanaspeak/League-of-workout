@@ -183,7 +183,25 @@ export function CompteurDette({
           jour: jourLocal(),
         }),
       });
-      if (res.ok) setDette(await res.json());
+      if (res.ok) {
+        setDette(await res.json());
+      } else if (res.status >= 500 || res.status === 401) {
+        /**
+         * Le serveur a répondu, mal.
+         *
+         * Le `catch` ne rattrape que l'absence de réseau : une réponse 500 ou
+         * une session expirée passaient donc par `if (res.ok)` sans rien
+         * faire, la fenêtre se refermait, et la séance qu'on venait de faire
+         * disparaissait sans un mot. C'est exactement le défaut que la file
+         * hors ligne existe pour empêcher, laissé ouvert sur le seul chemin
+         * où le serveur est joignable.
+         *
+         * Mêmes règles que la file : 401 et 5xx se rejouent, le reste non —
+         * un 4xx ne passera jamais, et le garder bloquerait la file derrière.
+         */
+        enfiler(toutFait ? { tout: true, jour: jourLocal() }
+                         : { secondes: secondesFaites, jour: jourLocal() });
+      }
     } catch {
       /**
        * Pas de réseau : la séance est mise de côté, pas perdue.
