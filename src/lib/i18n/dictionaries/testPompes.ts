@@ -43,7 +43,7 @@ export const testPompes = {
   },
   de: {
     titre: "Krafttest",
-    aide: "Eine einzige Zahl setzt dein Level: wie viele Liegestütze du am Stück schaffst, ohne Pause. Je mehr, desto mehr verlangt die App: genau das hält die Anstrengung auf deinem Maß. Einmal im Monat wiederholen — Kraft ändert sich nicht über Nacht.",
+    aide: "Eine einzige Zahl setzt dein Level: wie viele Liegestütze du am Stück schaffst, ohne Pause. Je mehr, desto mehr verlangt die App: genau das hält die Anstrengung auf deinem Maß. Einmal im Monat wiederholen: Kraft ändert sich nicht über Nacht.",
     resume: (niveau: number, mult: number) => `Liegestütze am Stück, also Level ${niveau}, Schuld ×${mult}`,
     perime: "Dein Test ist über einen Monat alt. Mach ihn neu, damit die Schuld zu deinem echten Stand passt.",
     jamaisFait: "Du hast den Test noch nicht gemacht. Solange er fehlt, bleibst du auf Level 1.",

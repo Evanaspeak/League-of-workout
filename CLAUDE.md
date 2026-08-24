@@ -582,6 +582,41 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Ce que l'application dit pendant qu'on joue
+Trois endroits l'écrivaient en français, en dur, dans le composant : la
+pastille en jeu après une partie d'Apex, la notification système après une
+partie de League, et la notification d'essai des réglages. Ils échappaient à la
+règle « aucun texte dans un composant » parce qu'ils ne s'affichent pas dans
+une page — mais quelqu'un qui lit l'application en allemand recevait bien du
+français en jeu, c'est-à-dire au seul moment où il ne peut pas aller chercher
+ailleurs.
+
+`src/lib/i18n/dictionaries/enJeu.ts` les porte, dans les six langues, y compris
+les noms d'exercices tels qu'ils se lisent dans une phrase — la boxe se compte
+en temps, d'où « 4 min de boxe » là où les autres donnent « 12 pompes ».
+
+### Le tiret cadratin, et le test qui le refuse
+Consigne du propriétaire du produit, et elle a sa raison : le tiret cadratin en
+incise est la ponctuation par laquelle un texte écrit par une machine se
+reconnaît en un coup d'œil. Sur un produit dont la voix est l'argument
+principal, ça se paie tout de suite.
+
+Quatre incises avaient survécu dans les dictionnaires — consentement santé (en
+cinq langues), remerciement d'un signalement, aide de la détection en allemand,
+aide du test de force en allemand. Elles sont devenues des deux-points ou des
+virgules.
+
+`src/lib/i18n/tiretsCadratins.test.ts` le tient. Deux usages restent permis, et
+ce ne sont pas des incises : le tiret **seul**, qui tient lieu de « pas de
+valeur » dans une carte de statistique — c'est une convention typographique,
+pas une phrase — et le tiret double chinois « —— », qui est un signe de
+ponctuation à part entière du chinois. Le refuser reviendrait à imposer la
+typographie française à une langue qui a la sienne.
+
+La consigne ne vaut que pour ce que l'utilisateur lit. Les commentaires de code
+s'en servent librement, ce fichier compris : personne ne les lit dans
+l'application.
+
 ### Quarante-sept messages d'erreur partaient en français
 Les routes écrivent leurs messages en dur, et la clé de traduction EST le
 message français — c'est un choix assumé, celui qui circule sur le réseau. Le

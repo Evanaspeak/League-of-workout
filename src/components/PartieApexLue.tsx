@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { ventiler } from "@/lib/exercices";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 
 /**
  * Enregistre la partie qu'on vient de lire à l'écran d'Apex.
@@ -14,6 +16,7 @@ import { ventiler } from "@/lib/exercices";
  * corrige dans l'historique, où la date et les chiffres sont déjà modifiables.
  */
 export function PartieApexLue() {
+  const t = useT(enJeu);
   /**
    * Dernière partie enregistrée, pour ne pas la compter deux fois.
    *
@@ -35,7 +38,7 @@ export function PartieApexLue() {
       // Deux minutes : plus court qu'une partie d'Apex, plus long que le temps
       // d'affichage de l'écran de fin.
       if (avant && avant.cle === cle && Date.now() - avant.quand < 120_000) {
-        return dire("Partie déjà enregistrée", false);
+        return dire(t.dejaEnregistree, false);
       }
 
       try {
@@ -51,7 +54,7 @@ export function PartieApexLue() {
         });
         if (!res.ok) {
           const erreur = await res.json().catch(() => null);
-          return dire(`Refusé : ${erreur?.error ?? res.status}`, false);
+          return dire(t.refuse(String(erreur?.error ?? res.status)), false);
         }
         derniereRef.current = { cle, quand: Date.now() };
 
@@ -63,16 +66,16 @@ export function PartieApexLue() {
           || String(Number(scoring?.pompesFinales) || 0);
         // Le doute de la lecture se dit : si les modes ne se sont pas accordés,
         // le chiffre mérite d'être vérifié dans l'historique.
-        const doute = lu.accord < lu.essais || !lu.elimSures ? ", à vérifier" : "";
+        const doute = lu.accord < lu.essais || !lu.elimSures ? t.aVerifier : "";
         dire(`#${lu.classement} · ${lu.eliminations} élim · ${du}${doute}`, true);
 
         // Le compteur de dette et l'historique se rafraîchissent.
         window.dispatchEvent(new Event("wow-dette-changee"));
       } catch {
-        dire("Enregistrement impossible — hors ligne ?", false);
+        dire(t.horsLigne, false);
       }
     });
-  }, []);
+  }, [t]);
 
   return null;
 }
