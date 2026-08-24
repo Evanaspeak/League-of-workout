@@ -25,6 +25,22 @@ export default async function preparer() {
   try {
     await client.connect();
     await client.query('DELETE FROM "LoginAttempt"');
+    /**
+     * Les comptes des exécutions précédentes s'en vont aussi.
+     *
+     * La bêta est plafonnée à cent comptes — c'est le produit, pas un réglage
+     * de test — et chaque exécution de la suite en ouvre une dizaine. Au bout
+     * d'une douzaine d'exécutions, l'ouverture de compte se met à échouer, et
+     * la panne ne ressemble pas à sa cause : c'est le fichier passé en premier
+     * dans l'ordre alphabétique qui tombe, quel qu'il soit.
+     *
+     * En intégration continue la base est neuve à chaque fois, donc ceci n'y
+     * change rien. C'est pour la machine de quelqu'un.
+     *
+     * Le filtre porte sur le domaine `example.test`, réservé aux exemples par
+     * la RFC 2606 : aucun compte réel ne peut en porter un.
+     */
+    await client.query(`DELETE FROM "User" WHERE email LIKE '%@example.test'`);
   } catch (e) {
     console.warn("[e2e] tentatives non purgées :", (e as Error)?.message);
   } finally {
