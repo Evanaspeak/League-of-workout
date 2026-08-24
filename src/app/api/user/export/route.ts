@@ -7,19 +7,40 @@ import { getCurrentUser } from "@/lib/auth-helpers";
  * portabilité. Le format est du JSON lisible : quelqu'un doit pouvoir ouvrir
  * le fichier et comprendre ce qu'on garde sur lui sans outil particulier.
  *
- * Rien de ce qui relève du secret ne sort d'ici — ni empreinte de mot de
- * passe, ni jeton de session, ni clé d'abonnement aux notifications.
+ * Rien de ce qui relève du secret ne sort d'ici : ni empreinte de mot de
+ * passe, ni jeton de session, ni clé d'abonnement aux notifications, ni jeton
+ * de la source de diffusion. Ce dernier est bien une donnée du compte, mais
+ * c'est aussi un laissez-passer : le mettre dans un fichier qu'on s'envoie par
+ * courriel en ferait une clé qui traîne.
  */
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const [games, goal, abonnements] = await Promise.all([
+  const [games, goal, abonnements, paiements, signalements] = await Promise.all([
     prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
     prisma.pushSubscription.findMany({
       where: { userId: user.id },
       select: { createdAt: true },
+    }),
+    /**
+     * Les séances payées manquaient à cet export.
+     *
+     * C'est pourtant la moitié de ce que l'application sait de quelqu'un — et
+     * la moitié qu'il a envie de reprendre. Les parties disent ce qu'il a joué,
+     * les paiements disent ce qu'il a FAIT.
+     */
+    prisma.paiement.findMany({
+      where: { userId: user.id },
+      orderBy: { jour: "asc" },
+      select: { jour: true, points: true, createdAt: true },
+    }),
+    // Ce qu'il nous a écrit lui appartient aussi.
+    prisma.signalement.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true, message: true, page: true, statut: true },
     }),
   ]);
 
@@ -37,6 +58,16 @@ export async function GET() {
       poids: user.poids,
       taille: user.taille,
       heuresDeSportParSemaine: user.sportsHoursPerWeek,
+      langue: user.langue,
+      fuseau: user.fuseau,
+      /**
+       * La trace du consentement aux données de santé.
+       *
+       * C'est à nous de prouver qu'il a été donné (article 7.1) ; il est
+       * normal que la personne reçoive la même preuve.
+       */
+      santeConsentiLe: user.santeConsentiLe,
+      santeRefuseLe: user.santeRefuseLe,
     },
     preferences: {
       exercices: user.exercices,
@@ -45,8 +76,13 @@ export async function GET() {
       seuilRappelBoxeSec: user.rappelSeuilSec,
       plafondQuotidienPoints: user.plafondQuotidien,
       objectifTotalPoints: goal?.objectifTotalPompes ?? null,
+      variantePompes: user.variantePompes,
+      exercicesSuspendus: user.exercicesSuspendus,
+      suspensionDepuis: user.suspensionDepuis,
+      bilanHebdomadaire: user.bilanActif,
     },
     detteEnAttentePoints: user.dettePointsDus,
+    detteDepuis: user.detteDepuis,
     // On ne sort que la date d'inscription de chaque appareil : les clés
     // permettraient de lui envoyer des notifications.
     appareilsNotifies: abonnements.map((a) => ({ ajouteLe: a.createdAt })),
@@ -70,6 +106,18 @@ export async function GET() {
       exercice: g.exercice,
       repartition: g.repartition,
       source: g.source,
+    })),
+    /** Chaque séance faite, jour par jour. */
+    seances: paiements.map((p) => ({
+      jour: p.jour,
+      pointsAcquittes: p.points,
+      enregistreLe: p.createdAt,
+    })),
+    signalements: signalements.map((r) => ({
+      envoyeLe: r.createdAt,
+      page: r.page,
+      message: r.message,
+      statut: r.statut,
     })),
   };
 
