@@ -582,6 +582,25 @@ chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
 
+### Sans clé Riot, le journal accusait Riot
+La clé de production se demande à Riot et met plusieurs jours à arriver. C'est
+donc l'état du lancement, pas un cas de bord. Deux choses s'y disaient mal :
+
+- **Le message.** « Clé API Riot manquante (RIOT_API_KEY dans .env) », en
+  français quelle que soit la langue, nommant un fichier que personne ne verra.
+  Corrigé plus haut ; il dit maintenant ce qui est vrai et ce qu'on peut faire.
+- **Le code de réponse.** La route rendait 500, et le journal de
+  synchronisation traduit tout 5xx par « Riot ne répond pas ». C'est faux : ce
+  n'est pas Riot qui est muet, c'est nous qui ne sommes pas prêts. Pendant tous
+  les jours qui séparent le lancement de l'arrivée de la clé, on aurait imputé
+  à Riot une case vide de notre côté. **503**, et le journal a son propre motif.
+
+**Le journal parlait français à tout le monde.** `lireCode` rendait des phrases
+écrites en dur dans un module sans React. Elle rend maintenant une **clé**, et
+la traduction se fait à l'affichage. Les entrées déjà rangées dans le navigateur
+ne portent qu'une phrase française : on la garde à défaut de motif, plutôt que
+de leur vider la colonne.
+
 ### Une panne serveur ressemblait à une page lente — ou pire, à un compte vide
 Trouvé en coupant les réponses à la main, écran par écran. Deux comportements,
 et le second est le plus grave de la nuit :

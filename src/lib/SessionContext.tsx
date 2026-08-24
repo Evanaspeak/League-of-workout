@@ -233,7 +233,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/riot/last-game");
       if (res.status === 409) { setPolling(false); return; }
       if (res.status === 400) {
-        noter({ resultat: "erreur", code: 400, detail: lireCode(400).detail });
+        noter({ resultat: "erreur", code: 400, motif: lireCode(400).motif });
         setSessionError("PUUID manquant. Configure ton Riot ID dans Réglages.");
         stopSession();
         return;
@@ -247,8 +247,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
        * dont aucune n'était visible.
        */
       if (!res.ok) {
-        const { resultat, detail } = lireCode(res.status);
-        noter({ resultat, code: res.status, detail });
+        const { resultat, motif } = lireCode(res.status);
+        noter({ resultat, code: res.status, motif });
         setPolling(false);
         return;
       }

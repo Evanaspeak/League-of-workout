@@ -63,7 +63,11 @@ export function JournalSynchro() {
                   {nom(e.resultat)}
                 </span>
                 <span style={{ color: "var(--muted)", flex: "1 1 auto" }}>
-                  {e.detail ?? ""}
+                  {/* Le motif est traduit ici, où le dictionnaire existe. Les
+                      entrées écrites avant que le journal ne soit traduit ne
+                      portent qu'une phrase française : on la garde plutôt que
+                      de leur vider la colonne. */}
+                  {(e.motif && t.motifs[e.motif]) ?? e.detail ?? ""}
                 </span>
                 <span style={{ color: "var(--faint)", flex: "0 0 auto", fontSize: "0.72rem" }}>
                   {relatif(e.quand)}

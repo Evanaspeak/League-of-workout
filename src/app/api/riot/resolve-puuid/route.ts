@@ -53,7 +53,10 @@ export async function POST(req: Request) {
    */
   const apiKey = process.env.RIOT_API_KEY?.trim();
   if (!apiKey) {
-    return NextResponse.json({ error: "Le suivi Riot est indisponible pour le moment. Le reste de l'application fonctionne : tes parties s'enregistrent à la main." }, { status: 500 });
+    // 503 et non 500 : ce n'est pas Riot qui est muet, c'est nous qui ne
+    // sommes pas prêts. Le journal de synchronisation distingue les deux, et
+    // sans ça il aurait imputé à Riot une case vide de notre côté.
+    return NextResponse.json({ error: "Le suivi Riot est indisponible pour le moment. Le reste de l'application fonctionne : tes parties s'enregistrent à la main." }, { status: 503 });
   }
 
   const [gameName, tagLine] = riotId.split("#");

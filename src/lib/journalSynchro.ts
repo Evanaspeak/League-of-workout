@@ -21,7 +21,13 @@ export type Entree = {
   resultat: Resultat;
   /** Code HTTP quand il y en a un. */
   code?: number;
-  /** Ce qu'on peut en dire, court. */
+  /** Ce qu'on peut en dire, sous forme de clé de traduction. */
+  motif?: MotifSynchro;
+  /**
+   * Ancienne phrase française, écrite en dur avant que le journal ne soit
+   * traduit. Les entrées déjà rangées dans le navigateur la portent encore :
+   * on la lit à défaut de motif, plutôt que de vider leur colonne.
+   */
   detail?: string;
 };
 
@@ -38,26 +44,33 @@ export function ajouter(journal: Entree[], entree: Entree): Entree[] {
 /**
  * Ce qu'un code HTTP veut dire pour la personne qui attend ses parties.
  *
- * Le code seul ne dit rien à qui n'écrit pas de logiciel. Et les trois cas se
+ * Le code seul ne dit rien à qui n'écrit pas de logiciel. Et les cas se
  * corrigent différemment : attendre, changer un réglage, ou ne rien faire.
+ *
+ * La fonction rend une **clé**, pas une phrase. Les phrases étaient écrites
+ * ici, en français, dans un module sans React : quelqu'un qui lit
+ * l'application en allemand voyait son journal en français. La traduction se
+ * fait à l'affichage, où le dictionnaire est disponible.
  */
-export function lireCode(code: number): { resultat: Resultat; detail: string } {
-  if (code === 429) {
-    return { resultat: "refus", detail: "Trop de synchronisations, ou clé saturée. Ça repart tout seul." };
-  }
-  if (code === 400) {
-    return { resultat: "erreur", detail: "Compte Riot mal renseigné. À corriger dans les réglages." };
-  }
-  if (code === 401 || code === 403) {
-    return { resultat: "erreur", detail: "La clé Riot du serveur est refusée. Rien à faire de votre côté." };
-  }
-  if (code === 404) {
-    return { resultat: "rien", detail: "Riot ne trouve aucune partie récente." };
-  }
-  if (code >= 500) {
-    return { resultat: "erreur", detail: "Riot ne répond pas. Ça arrive, et ça repart." };
-  }
-  return { resultat: "erreur", detail: `Réponse inattendue (${code}).` };
+export type MotifSynchro =
+  | "saturee" | "compteMalRenseigne" | "cleRefusee" | "indisponible"
+  | "riotMuet" | "aucunePartie" | "inattendu";
+
+export function lireCode(code: number): { resultat: Resultat; motif: MotifSynchro } {
+  if (code === 429) return { resultat: "refus", motif: "saturee" };
+  if (code === 400) return { resultat: "erreur", motif: "compteMalRenseigne" };
+  if (code === 401 || code === 403) return { resultat: "erreur", motif: "cleRefusee" };
+  if (code === 404) return { resultat: "rien", motif: "aucunePartie" };
+  /**
+   * 503 : c'est NOUS qui ne sommes pas prêts, pas Riot.
+   *
+   * Sans clé de production, la route rendait 500, et le journal annonçait
+   * « Riot ne répond pas ». C'est faux, et c'est la situation du lancement :
+   * on aurait imputé à Riot une case vide de notre côté, pendant des jours.
+   */
+  if (code === 503) return { resultat: "erreur", motif: "indisponible" };
+  if (code >= 500) return { resultat: "erreur", motif: "riotMuet" };
+  return { resultat: "erreur", motif: "inattendu" };
 }
 
 /** Lit le journal du navigateur, sans jamais lever. */

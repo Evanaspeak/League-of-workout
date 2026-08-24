@@ -82,8 +82,14 @@ describe("GET /api/riot/match-history", () => {
   });
 
   it("signale l'absence de clé sans appeler Riot", async () => {
+    /**
+     * 503 et non 500 : ce n'est pas Riot qui est muet, c'est nous qui ne
+     * sommes pas prêts. Le journal de synchronisation distingue les deux ;
+     * sans ça il aurait annoncé « Riot ne répond pas » pendant tous les jours
+     * qui séparent le lancement de l'arrivée de la clé de production.
+     */
     delete process.env.RIOT_API_KEY;
-    expect((await GET()).status).toBe(500);
+    expect((await GET()).status).toBe(503);
     expect(appels).toHaveLength(0);
   });
 
