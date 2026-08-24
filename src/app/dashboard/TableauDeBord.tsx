@@ -1034,7 +1034,9 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
       {/* Un compte neuf voit une démonstration chiffrée plutôt qu'un message
           qui le renvoie ailleurs : c'est la seule question qu'on se pose à ce
           moment-là, et elle mérite un nombre. */}
-      {data.totalGames === 0 && <PremiersPas pompesMax={data.pompesMax ?? 0} />}
+      {data.totalGames === 0 && (
+        <PremiersPas pompesMax={data.pompesMax ?? 0} onAjouter={() => setModale("ajout")} />
+      )}
 
       {data.totalGames === 0 && (
         <div className="lol-panel p-8 text-center space-y-2">
@@ -1042,9 +1044,14 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             <span aria-hidden style={{ width: 10, height: 34, background: "var(--ember)", transform: "skewX(-18deg)", borderRadius: 2, display: "inline-block" }} />
           </div>
           <p className="gold-text font-semibold">{t.noGameLogged}</p>
-          <p className="text-sm" style={{ color: "var(--faint)" }}>
-            {t.goToHistoryStart} <strong>{t.historyLabel}</strong> {t.goToHistoryEnd}
-          </p>
+          <p className="text-sm" style={{ color: "var(--faint)" }}>{t.premierAjoutAide}</p>
+          {/* Le panneau renvoyait vers l'historique, qui ne porte aucun
+              formulaire d'ajout : le seul est la fenêtre ouverte ici. Un
+              écran vide doit offrir le geste qui le remplit, pas l'adresse
+              d'un autre écran qui ne l'offre pas non plus. */}
+          <button type="button" className="lol-btn" onClick={() => setModale("ajout")}>
+            {t.railAjoutTitre}
+          </button>
         </div>
       )}
 

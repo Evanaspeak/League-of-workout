@@ -22,7 +22,7 @@ export const premiersPas = {
     etape3: "Enregistrer votre première partie",
     etape3Aide: "C'est à partir de là que les graphiques ci-dessous commencent à dire quelque chose.",
     versReglages: "Réglages",
-    versHistorique: "Historique",
+    versAjout: "Sur cette page",
   },
   en: {
     titre: "First steps",
@@ -40,7 +40,7 @@ export const premiersPas = {
     etape3: "Record your first match",
     etape3Aide: "From there, the charts below start meaning something.",
     versReglages: "Settings",
-    versHistorique: "History",
+    versAjout: "On this page",
   },
   es: {
     titre: "Primeros pasos",
@@ -58,7 +58,7 @@ export const premiersPas = {
     etape3: "Registrar tu primera partida",
     etape3Aide: "A partir de ahí, los gráficos de abajo empiezan a decir algo.",
     versReglages: "Ajustes",
-    versHistorique: "Historial",
+    versAjout: "En esta página",
   },
   de: {
     titre: "Erste Schritte",
@@ -76,7 +76,7 @@ export const premiersPas = {
     etape3: "Deine erste Partie erfassen",
     etape3Aide: "Ab da sagen die Diagramme unten etwas aus.",
     versReglages: "Einstellungen",
-    versHistorique: "Verlauf",
+    versAjout: "Auf dieser Seite",
   },
   zh: {
     titre: "开始上手",
@@ -94,7 +94,7 @@ export const premiersPas = {
     etape3: "记录第一场对局",
     etape3Aide: "从那时起，下方的图表才开始有意义。",
     versReglages: "设置",
-    versHistorique: "历史",
+    versAjout: "就在本页",
   },
   ja: {
     titre: "はじめの一歩",
@@ -112,6 +112,6 @@ export const premiersPas = {
     etape3: "最初の試合を記録する",
     etape3Aide: "そこから、下のグラフが意味を持ちはじめます。",
     versReglages: "設定",
-    versHistorique: "履歴",
+    versAjout: "このページで",
   },
 };

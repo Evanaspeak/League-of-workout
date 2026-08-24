@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
+import { passerIntro } from "./intro";
 
 /**
  * Le premier écran du tableau de bord part dans le HTML de la réponse.
@@ -67,5 +68,71 @@ test("le rappel disparaît quand le test est fait, sans attendre l'API", async (
 
   const html = await (await ctx.request.get("/dashboard")).text();
   expect(html).not.toContain("Un seul chiffre fixe ton niveau");
+  await ctx.close();
+});
+
+/**
+ * Les deux panneaux d'un compte vide mènent au geste, pas à une autre page.
+ *
+ * L'étape 3 des premiers pas et le panneau « aucune partie » renvoyaient tous
+ * deux vers `/history`, qui ne porte aucun formulaire d'ajout : le seul est la
+ * fenêtre du tableau de bord. Depuis que l'historique dit à son tour que
+ * l'enregistrement se fait au tableau de bord, les deux écrans se renvoyaient
+ * l'un à l'autre et le compte neuf tournait en rond.
+ *
+ * Le test clique et attend la fenêtre : redevenu un lien vers `/history`, il
+ * partirait sur l'autre page et ne trouverait rien.
+ */
+test("un compte vide peut enregistrer sa première partie depuis le tableau de bord", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.goto("/dashboard");
+  await passerIntro(page);
+
+  for (const declencheur of [
+    page.getByRole("button", { name: /enregistrer votre première partie/i }),
+    page.getByRole("button", { name: /^ajouter une partie$/i }).last(),
+  ]) {
+    await declencheur.click();
+    const fenetre = page.getByRole("dialog");
+    await expect(fenetre).toBeVisible();
+    await expect(fenetre).toContainText(/ajouter une partie/i);
+    // On repart de l'écran vide pour éprouver le second déclencheur.
+    await page.keyboard.press("Escape");
+    await expect(fenetre).toBeHidden();
+  }
+
+  expect(page.url()).toContain("/dashboard");
+  await ctx.close();
+});
+
+/**
+ * Le même écran vide sur un téléphone.
+ *
+ * Le bouton d'ajout vit dans le rail latéral, qui ne se déplie pas de la même
+ * façon sur un petit écran : un compte neuf pouvait n'avoir aucune commande
+ * d'ajout visible, alors que la saisie manuelle est le seul moyen d'employer
+ * le produit sans clé Riot. Les deux déclencheurs des panneaux vides valent
+ * donc autant que le rail, et c'est à cette largeur que ça compte.
+ */
+test("les deux déclencheurs valent aussi sur un téléphone", async ({ browser }) => {
+  const ctx = await browser.newContext({
+    storageState: etat, viewport: { width: 390, height: 844 }, hasTouch: true,
+  });
+  const page = await ctx.newPage();
+  await page.goto("/dashboard");
+  await passerIntro(page);
+
+  for (const declencheur of [
+    page.getByRole("button", { name: /enregistrer votre première partie/i }),
+    page.getByRole("button", { name: /^ajouter une partie$/i }).last(),
+  ]) {
+    await expect(declencheur).toBeVisible();
+    await declencheur.click();
+    const fenetre = page.getByRole("dialog");
+    await expect(fenetre).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(fenetre).toBeHidden();
+  }
   await ctx.close();
 });
