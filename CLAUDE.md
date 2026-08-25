@@ -874,6 +874,56 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Le jeton de la source OBS partait à chaque chargement de page
+`comptePublic` retire l'empreinte du mot de passe et rend le reste par
+diffusion. Son commentaire annonçait « le seul endroit qui décide de ce qui
+part » : c'était une liste de refus d'un seul nom, donc elle ne décidait rien —
+toute colonne ajoutée au compte sortait par défaut, sans que personne n'ait eu
+à en juger.
+
+`jetonObs` est arrivé ainsi. C'est un laissez-passer : l'adresse `/obs/<jeton>`
+montre la dette en direct **sans session**, et régénérer le jeton est la seule
+façon de révoquer un lien déjà collé dans un logiciel de diffusion. Il partait
+dans la réponse de `/api/user`, que la navigation lit à **chaque chargement de
+page** — donc dans le cache du navigateur, dans l'onglet réseau des outils de
+développement, et à l'écran de quiconque regarde une diffusion pendant qu'ils
+sont ouverts. Sur un produit dont la fonction est de s'afficher en direct, ce
+n'est pas une hypothèse d'école. Aucun écran ne le lisait : il se demande par
+`/api/obs`, qui existe pour ça.
+
+`sessionEpoch` est parti avec, pour une autre raison : ce n'est pas un secret,
+c'est de la mécanique interne que le navigateur ne lit nulle part. Un compte
+public qui publie les rouages invite à construire dessus.
+
+La liste reste une liste de refus — énumérer les quarante colonnes que les
+réglages affichent ferait diverger les deux listes à la première ajoutée. Ce
+qui manquait, c'est le recensement : `src/lib/compte.test.ts` lit le modèle
+`User` du schéma et exige que **chaque colonne** soit rangée d'un côté ou de
+l'autre, les refus portant leur raison. C'est le motif de `porteRoutes.test.ts`
+appliqué aux colonnes — regarder la source plutôt que la liste qu'on tient à la
+main. Il compte aussi les colonnes lues : un modèle renommé rendrait le test
+vert sur zéro colonne, ce qui est exactement la forme d'erreur qu'on corrige.
+
+Trois sabotages, trois échecs : `jetonObs` remis dans ce qui sort, une colonne
+nouvelle ajoutée au schéma sans classement, une classification qui ne désigne
+plus rien.
+
+**Et le test a trouvé une troisième colonne pendant que je l'écrivais** :
+`sessionEpoch`, que j'avais rangée dans les refus sans vérifier qu'elle en
+sortait. Elle n'en sortait pas.
+
+### Le retrait de dette n'avait pas de test à lui
+Il est éprouvé par les routes qui l'appellent, ce qui ne dit rien de ce qui
+fait sa raison d'être : la **forme** de la requête. `decrement` et une
+soustraction rendent le même chiffre tant que personne d'autre n'écrit — c'est
+seulement quand une partie s'enregistre pendant le paiement que les deux
+divergent, et ce cas ne se joue pas dans un test de route. `src/lib/dette.test.ts`
+regarde donc les écritures envoyées à la base, pas le nombre rendu.
+
+Trois sabotages, trois échecs : le décrément remplacé par une écriture en
+valeur absolue, la date de début qui survit à une dette soldée, et une dette
+négative rendue telle quelle à l'écran.
+
 ### `onError` sur une image ne suffit pas
 Le bilan de saison montre une image dessinée au serveur. Quand elle ne se
 dessine pas, la page affichait l'icône de fichier cassé du navigateur, et le
