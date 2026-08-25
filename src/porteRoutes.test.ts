@@ -158,6 +158,29 @@ describe("porte des routes d'API", () => {
     expect(sansVerrou).toEqual([]);
   });
 
+  it("toute route d'administration vérifie l'administrateur", () => {
+    // Une session suffit à atteindre les routes d'admin : c'est `estAdmin` qui
+    // les garde, et lui seul. Les tests par route le vérifient un par un, ce
+    // qui est bon — mais ils ne disent rien de la route qu'on ajoutera demain,
+    // et une route d'admin ouverte à tout compte connecté est le pire des
+    // accidents : elle réinitialise des mots de passe et lit tous les comptes.
+    const admin = toutes.filter((r) => r.nom === "admin" || r.nom.startsWith("admin/"));
+    // Sans ce contrôle, un dossier renommé rendrait le test vert sur zéro route.
+    expect(admin.length).toBeGreaterThan(5);
+
+    const sansGarde = admin.filter((r) => !/estAdmin\s*\(/.test(r.texte)).map((r) => r.nom);
+    expect(sansGarde).toEqual([]);
+  });
+
+  it("le contrôle d'administrateur ne se recopie pas à la main", () => {
+    // Une adresse écrite en dur dans une route est un second endroit à changer
+    // le jour où la liste bouge, et celui qu'on oublie.
+    const enDur = toutes
+      .filter((r) => /@[a-z0-9.-]+\.[a-z]{2,}"/.test(r.texte.replace(/^\s*(\/\/|\*).*$/gm, "")))
+      .map((r) => r.nom);
+    expect(enDur).toEqual([]);
+  });
+
   it("chaque dispense porte une raison écrite, et concerne une route réelle", () => {
     const noms = new Set(toutes.map((r) => r.nom));
     for (const [nom, raison] of Object.entries(SANS_SESSION)) {
