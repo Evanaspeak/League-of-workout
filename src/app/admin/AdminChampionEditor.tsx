@@ -56,12 +56,20 @@ export default function AdminChampionEditor() {
   const reset = async () => {
     setSaving(true);
     setMsg(null);
-    await fetch("/api/admin/config/champions", { method: "DELETE" });
-    invaliderChampions();
-    setText(CHAMPIONS.join("\n"));
-    setIsDefault(true);
-    setSaving(false);
-    setMsg({ type: "ok", text: t.resetDone });
+    // La réponse était ignorée : « remis par défaut » s'affichait même quand
+    // rien n'avait été remis.
+    try {
+      const res = await fetch("/api/admin/config/champions", { method: "DELETE" });
+      if (!res.ok) { setMsg({ type: "err", text: t.error }); return; }
+      invaliderChampions();
+      setText(CHAMPIONS.join("\n"));
+      setIsDefault(true);
+      setMsg({ type: "ok", text: t.resetDone });
+    } catch {
+      setMsg({ type: "err", text: t.error });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const count = text.split("\n").map((s) => s.trim()).filter(Boolean).length;
