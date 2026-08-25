@@ -591,7 +591,16 @@ function lireRaccourcis() {
   return raccourcisActifs;
 }
 
+/**
+ * Rendu pour les tests : le placement est de l'arithmétique pure, et c'est la
+ * seule chose de ce module qui puisse rendre la pastille INVISIBLE — posée hors
+ * de tout affichage, sans moyen de la récupérer autrement qu'en éditant un
+ * fichier de réglages.
+ */
+const _placement = { positionDuCoin, dansLEcran, LARGEUR, HAUTEUR, MARGE };
+
 module.exports = {
+  _placement,
   initOverlay, afficher, masquer, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
   definirReleveApex,

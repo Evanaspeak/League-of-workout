@@ -615,6 +615,22 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le placement de la pastille, la seule chose qui puisse la rendre invisible
+`overlay.js` fait six cents lignes et n'avait aucun test. La plus grande partie
+tient à Electron et ne s'éprouve qu'avec une fenêtre ; le placement, lui, est
+de l'arithmétique pure — et c'est précisément la partie qui peut poser la
+pastille hors de tout affichage, sans moyen de la récupérer autrement qu'en
+éditant un fichier de réglages.
+
+Le module `electron` se double par `jest.mock(..., { virtual: true })`, la
+taille de l'écran est une variable du test. Huit cas, trois sabotages, trois
+échecs : le plancher à zéro retiré, le coin par défaut basculé à gauche, le
+retour dans l'écran supprimé en hauteur.
+
+Rien de cassé trouvé : les quatre coins, le repli sur « haut-droite » quand le
+réglage manque, et le retour dans l'écran tiennent tous. C'est un test de
+non-régression sur du code correct, ce qui est le bon moment pour l'écrire.
+
 ### Allonger un texte l'a fait paraître deux secondes et demie plus tard
 Le bandeau du tableau de bord vit dans le rendu principal, qui attend la
 réponse de `/api/dashboard`. Il ne dépend pourtant d'aucune donnée : c'est du
