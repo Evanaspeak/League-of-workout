@@ -615,6 +615,28 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le chemin principal perdait encore une partie en silence
+Dernier trou de la série, et le plus mal placé : `if (!res.ok) return;` dans la
+détection de partie. L'issue était lue, la partie complète, et le serveur la
+refusait — session expirée, valeur hors bornes, configuration absente — sans
+que rien ne le dise. La soirée ne comptait pas, et personne ne savait pourquoi.
+
+Le `catch` invoquait « le suivi de session reste le filet de sécurité ». C'est
+faux depuis que la clé Riot n'est pas arrivée : ce chemin-ci est le seul. Un
+commentaire qui décrit une garantie disparue est pire qu'un commentaire absent,
+parce qu'on cesse de vérifier.
+
+Les deux le disent maintenant, avec le motif rendu par la route. Sabotage fait,
+le refus remis en silence : le test tombe.
+
+Et une leçon d'outillage, retombée dedans **trois fois cette nuit** : après un
+`npx next build`, il faut relancer le serveur. Sans ça, `next start` sert un
+`.next` remplacé sous lui, les fragments JavaScript répondent 500, la page ne
+s'hydrate pas — et TOUTE la suite échoue sur « l'ouverture de compte », ce qui
+ne ressemble en rien à sa cause. Le piège était déjà écrit ici ; il l'était à
+l'envers (« ne jamais reconstruire pendant qu'un test tourne »), et c'est
+l'autre moitié qui mord.
+
 ### Le rôle deviné était une constante, alors que la personne en a un
 Sans rôle au contexte, la détection retombait sur « le dernier rôle saisi à la
 main », puis sur `"Jungle"`. Or quelqu'un qui ne joue qu'avec la détection
