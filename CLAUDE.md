@@ -595,6 +595,24 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'historique annonçait des suppressions qui n'avaient pas eu lieu
+Le pire de la série, parce qu'il touche une action destructrice. `handleDelete`
+retirait la ligne de l'écran **quelle que soit** la réponse du serveur, et
+prévenait le compteur de dette de se rafraîchir dans la foulée. Une suppression
+refusée paraissait donc réussie : la partie revenait au rechargement suivant,
+sans que rien ne l'explique, et la dette n'avait pas bougé.
+
+`handleEditDate` faisait la même chose avec la date : l'écran montrait la
+nouvelle, la base gardait l'ancienne. C'est précisément le cas que la route a
+appris à refuser cette nuit (« 2026-02-30 » ne montre plus le 2 mars) — le
+refus était donc invisible.
+
+Ni l'un ni l'autre n'avait de `try` : sans réseau, la ligne restait en
+« suppression… » pour toujours.
+
+La ligne ne quitte l'écran que si elle a quitté la base. Sabotage fait, le
+contrôle retiré : le test tombe.
+
 ### L'action la plus utilisée de l'application n'avait pas de `try`
 `handleAddLog` — enregistrer une partie à la main — envoyait son `fetch` sans
 rien autour. Sans réseau, la promesse part en erreur, `setAddLogging(false)`
