@@ -69,6 +69,17 @@ export function JournalSynchro() {
                       de leur vider la colonne. */}
                   {(e.motif && t.motifs[e.motif]) ?? e.detail ?? ""}
                 </span>
+                {/* Le nombre de répétitions se lit sans traduction, mais il se
+                    formate : « 1 234 » en français, « 1,234 » en anglais. */}
+                {(e.repetitions ?? 1) > 1 && (
+                  <span
+                    className="mono-num"
+                    aria-label={t.repetitions(e.repetitions!)}
+                    style={{ color: "var(--faint)", flex: "0 0 auto", fontSize: "0.72rem" }}
+                  >
+                    ×{new Intl.NumberFormat(etiquette).format(e.repetitions!)}
+                  </span>
+                )}
                 <span style={{ color: "var(--faint)", flex: "0 0 auto", fontSize: "0.72rem" }}>
                   {relatif(e.quand)}
                 </span>

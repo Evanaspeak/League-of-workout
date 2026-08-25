@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<title>Overlay · Win or Workout</title>
+<title data-texte="overlayTitre">Overlay · Win or Workout</title>
 <style>
   /* Le fond de la page doit rester réellement transparent : c'est lui qu'on
      voit « à travers » l'overlay. Seule la pastille est peinte. */
@@ -185,14 +185,14 @@
       <!-- Deux nombres plutôt qu'un : à mi-partie l'issue n'est pas connue, et
            une victoire ne coûte pas la même chose qu'une défaite. Annoncer un
            seul chiffre reviendrait à parier à la place du joueur. -->
-      <div class="ligne" id="ligne-gagne"><span>Si gagné</span><b class="gagne" id="dette-v">–</b></div>
-      <div class="ligne" id="ligne-perdu"><span>Si perdu</span><b class="dette" id="dette-d">–</b></div>
-      <div class="ligne" id="ligne-attente" style="display:none"><span>En attente</span><b class="dette" id="dette-due">–</b></div>
+      <div class="ligne" id="ligne-gagne"><span data-texte="overlaySiGagne">Si gagné</span><b class="gagne" id="dette-v">–</b></div>
+      <div class="ligne" id="ligne-perdu"><span data-texte="overlaySiPerdu">Si perdu</span><b class="dette" id="dette-d">–</b></div>
+      <div class="ligne" id="ligne-attente" style="display:none"><span data-texte="overlayEnAttente">En attente</span><b class="dette" id="dette-due">–</b></div>
     </div>
 
     <div class="capture" id="capture"></div>
 
-    <div class="consigne">Traîne-moi où tu veux, puis « Terminer ».</div>
+    <div class="consigne" data-texte="overlayConsigne">Traîne-moi où tu veux, puis « Terminer ».</div>
   </div>
 
 <script>
@@ -205,6 +205,35 @@
   // partie : le répéter n'apprenait rien. Le cumul de la soirée, lui, n'existe
   // nulle part ailleurs — et il ne compte que le temps réellement joué, jamais
   // les menus ni les files d'attente.
+  /**
+   * Les mots de la pastille.
+   *
+   * Le HTML porte le français : c'est ce qui s'affiche si le canal ne dit
+   * jamais rien, et c'est un repli tenable — la pastille reste lisible. Les
+   * valeurs reçues le remplacent dès le premier envoi, qui précède le premier
+   * état, pour qu'elle ne se réécrive pas sous les yeux du joueur.
+   */
+  let T = {};
+  for (const el of document.querySelectorAll("[data-texte]")) {
+    T[el.dataset.texte] = el.textContent;
+  }
+  T.overlayJoue = document.getElementById("sous-compteur").textContent;
+  T.overlayJeuOuvert = "jeu ouvert ce soir, menus compris";
+  T.overlayPasDePartie = document.getElementById("jeu").textContent;
+  T.overlayPartieEnCours = "partie en cours";
+  T.overlayEscouade = "Escouade";
+
+  window.overlayLOW?.onTextes?.((recus) => {
+    if (!recus) return;
+    T = { ...T, ...recus };
+    for (const el of document.querySelectorAll("[data-texte]")) {
+      const valeur = T[el.dataset.texte];
+      if (valeur) el.textContent = valeur;
+    }
+    // Ce qui n'est pas dans le HTML se réécrit au prochain état ; celui-ci
+    // arrive dans la foulée, et de toute façon toutes les deux secondes.
+  });
+
   const compteur = document.getElementById("compteur");
   const jeu = document.getElementById("jeu");
   const sousCompteur = document.getElementById("sous-compteur");
@@ -260,7 +289,7 @@
       if (typeof etat.sessionSec === "number") sessionSec = etat.sessionSec;
       afficherTemps();
 
-      jeu.textContent = enPartie ? (etat.jeu || "partie en cours") : "pas de partie";
+      jeu.textContent = enPartie ? (etat.jeu || T.overlayPartieEnCours) : T.overlayPasDePartie;
       jeu.className = enPartie ? "jeu actif" : "jeu";
 
       /**
@@ -284,15 +313,13 @@
       for (const l of [ligneGagne, lignePerdu]) {
         l.style.display = avecReleve ? "flex" : "none";
       }
-      sousCompteur.textContent = avecReleve
-        ? "joué ce soir, hors menus"
-        : "jeu ouvert ce soir, menus compris";
+      sousCompteur.textContent = avecReleve ? T.overlayJoue : T.overlayJeuOuvert;
 
       const s = etat.score;
       if (apex) {
         // Le cartouche compte l'escouade entière : le libellé le dit, sinon
         // on prend les frags des coéquipiers pour les siens.
-        kdaTitre.textContent = "Escouade";
+        kdaTitre.textContent = T.overlayEscouade;
         kda.style.opacity = "1";
         if (apex.attente) {
           /**

@@ -124,223 +124,6 @@ desktop/              # App Electron Windows
 - Graphique période avec toggle **Moyenne/Total** + onglets : Heure | Jour | Mois | **Calendrier**
   - Calendrier : date picker → détail horaire via `/api/dashboard/daily`
 
-### L'autre moitié du défaut : la détection locale inventait la défaite
-Suite de « Une victoire sur trois s'enregistrait en défaite », plus bas : la
-route corrigée n'était que la moitié du chemin. Sans clé Riot de production,
-c'est la détection locale qui enregistre les parties, et elle portait le même
-défaut, écrit en toutes lettres :
-
-```ts
-result: resultat ?? "D",   // « sans événement de fin lisible, on retient la défaite »
-```
-
-Cette lecture est une **course** : l'API de partie (port 2999) ne
-publie l'événement `GameEnd` que dans les dernières secondes, puis se tait dès
-l'écran de fin. Elle était interrogée toutes les cinq secondes. Quand aucun
-relevé ne tombait dans cette fenêtre, l'issue manquait — et toutes les courses
-perdues tombaient du même côté. Une défaite prise pour une défaite ne se voit
-pas ; une victoire prise pour une défaite fait payer une dette qu'on ne doit
-pas, sans rien qui l'explique.
-
-Quatre corrections, de la plus profonde à la plus visible :
-
-- **L'issue ne s'invente plus.** Sans lecture, la partie n'est pas enregistrée
-  et une notification le dit. Ne rien écrire vaut mieux qu'écrire faux : c'est
-  la règle déjà posée pour les saisies aberrantes (« ne pas rattraper une
-  saisie fausse »), appliquée à une lecture au lieu d'une frappe.
-- **Une issue lue ne se reperd plus.** `dernier = releve` écrasait le relevé
-  précédent en entier : un seul relevé sans l'événement suffisait à effacer la
-  lecture d'avant. `fusionnerReleve` garde l'issue une fois vue.
-- **Deux secondes au lieu de cinq**, ce qui divise la fenêtre manquée par deux
-  et demi pour une requête locale qui ne coûte rien.
-- **Une seconde source.** Le lanceur publie son écran de fin
-  (`/lol-end-of-game/v1/eog-stats-block`) quelques secondes APRÈS que l'API de
-  partie s'est tue. `attenteIssue` retient donc trente secondes une fin de
-  partie sans issue, le temps qu'il parle.
-
-`issueLocale.js` porte les deux lectures. Elle ne conclut sur l'écran de fin que
-si ses deux sources s'accordent (`teams[].isWinningTeam` et `localPlayer.stats.WIN`) :
-cette API n'est pas documentée, sa forme change d'une version à l'autre, et deux
-sources qui se contredisent sont un signe que la forme a bougé, pas une occasion
-de choisir la plus flatteuse. Un remake est lu comme un remake, en premier —
-les deux sources s'accordent dessus, donc le contrôle de désaccord ne le
-verrait jamais.
-
-Deux pièges qui ont chacun leur test :
-- **`Boolean("0")` vaut vrai.** Le lanceur écrit ses drapeaux tantôt en
-  booléen, tantôt en 0/1, tantôt en `"0"`. Une conversion à la légère faisait
-  passer une défaite pour une victoire.
-- **Une attente qui n'échoit pas perd la partie pour de bon.** `attenteIssue`
-  garantit deux choses et rien d'autre : la partie part toujours, et jamais
-  deux fois. Le contexte de file et de rôle est joint au moment de la fin, pas
-  au moment de l'envoi : trente secondes plus tard, une sélection de champion
-  entamée entre-temps rattacherait la partie au rôle de la suivante.
-
-Sept sabotages, sept échecs — dont « tout ce qui n'est pas Win redevient une
-défaite », qui est exactement le défaut d'origine.
-
-Ce qui n'a **pas** été fait, et pourquoi : les parties déjà enregistrées à tort
-en défaites ne sont pas corrigées. Les reprendre demande de décider ce qu'on
-fait de la dette déjà payée dessus, et ça ne se décide pas seul.
-
-### La correction éprouvée dans un navigateur, pont Electron simulé
-Les tests unitaires disent ce que les deux lectures rendent. Ils ne disent rien
-de l'assemblage : que le composant appelle bien la route quand l'issue est
-lue, qu'il n'appelle rien quand elle ne l'est pas, et qu'il le dise. Un
-branchement se vérifie en marchant dessus.
-
-`e2e/detection-partie.spec.ts` pose un faux `window.electronLOL` par
-`addInitScript` — ce qui est aussi l'ordre réel, le préchargement passant avant
-le rendu — puis déclenche trois fins de partie : une victoire lue, une issue
-illisible, un remake. Il regarde ce qui est écrit en base ET ce qui est dit à
-l'écran : sans le second, une partie qui disparaît en silence passerait le
-test.
-
-Le champion sert de signature. Compter ne suffit pas : un total inchangé peut
-cacher une partie écrite et une autre perdue.
-
-Trois sabotages, trois échecs. Et une leçon sur l'outil : **en mode série,
-Playwright saute ce qui suit un échec**. Le premier sabotage a fait tomber le
-troisième test, donc le quatrième n'a jamais tourné — et j'ai d'abord conclu
-qu'il ne mordait pas. Un test « passé » et un test « sauté » se ressemblent
-dans un résumé ; il faut lire le compte, pas la couleur. Chaque branche a donc
-été sabotée séparément.
-
-Trois pièges rencontrés en l'écrivant, dont deux nouveaux :
-- **Un serveur qui sert un `.next` reconstruit sous lui.** Le bouton
-  d'inscription restait désactivé, la capture montrait pourtant le champ
-  rempli. Sans hydratation, la page garde l'état rendu au serveur — et
-  l'hydratation ne se faisait pas parce qu'un fragment JavaScript répondait
-  500. C'est le pendant du piège déjà écrit (« ne jamais reconstruire pendant
-  qu'un test tourne ») : il faut aussi relancer le serveur APRÈS avoir
-  reconstruit.
-- **Sonder dans la mauvaise langue.** Le script de diagnostic ouvrait la page
-  sans fixer la locale, donc en anglais : `getByPlaceholder(/pseudo/i)` ne
-  trouvait rien et j'ai cru la page cassée. La configuration Playwright fixe
-  `fr-FR` ; un outil de diagnostic écrit à côté ne l'a pas.
-- **La modale de consentement santé**, sixième fichier de parcours à tomber
-  dessus. `e2e/compte.ts` porte l'ouverture de compte de ce fichier,
-  consentement compris.
-
-Ce que je m'étais raconté, et qui était faux : j'ai d'abord attribué le bouton
-désactivé à une saisie arrivée avant l'hydratation, et écrit une reprise de
-saisie pour ça. Elle n'a rien changé — normal, il n'y avait aucun JavaScript
-du tout. Les huit autres fichiers de parcours n'ont donc PAS été convertis :
-la duplication est réelle, mais le défaut qui aurait justifié d'y toucher
-n'existait pas. Un remaniement de huit fichiers qui passent, sur une raison
-qu'on n'a pas vérifiée, se paie plus cher qu'il ne rapporte.
-
-### Le script de mesure d'audience n'a jamais été chargé
-Trouvé en regardant la console du navigateur pendant le test ci-dessus :
-`/_vercel/insights/script.js` partait en 307 vers `/login` comme une page
-protégée, et le navigateur refusait alors de l'exécuter (« MIME type text/html
-is not executable »). Le matcher du middleware excluait `_next/static` mais pas
-`_vercel/`.
-
-Rien ne pouvait le signaler : une page de connexion rendue en 200 ressemble, du
-point de vue du serveur, à un script qui s'est bien chargé. Seul le navigateur
-sait qu'il a refusé de l'exécuter.
-
-### Cinq comparaisons d'origine par préfixe, dans l'application de bureau
-Trouvé en relisant `desktop/`, qui a reçu bien moins d'attention que `src/`.
-Cinq endroits demandaient « est-ce bien chez nous ? » ainsi :
-
-```js
-url.startsWith(BACKEND_URL)
-```
-
-C'est faux, et d'une façon qui ne se voit pas à la lecture :
-`"https://winorworkout.com.exemple-mechant.tld/".startsWith("https://winorworkout.com")`
-vaut **vrai**. Un domaine qui suffixe le nôtre passait donc pour le nôtre —
-dans la fenêtre sans barre d'adresse ni bouton retour, devant le gestionnaire
-de fenêtres surgissantes, et devant le filtre de permissions qui accorde les
-notifications.
-
-Ce n'est pas exploitable seul : il faut d'abord que l'application navigue vers
-une adresse choisie par un tiers. Mais ces cinq lignes sont écrites POUR être
-cette frontière, et une frontière qui ne tient que si personne n'essaie n'en
-est pas une.
-
-`desktop/src/origine.js` compare les origines entières — protocole, hôte, port
-— et refuse ce qui n'a pas d'origine comparable (`about:`, `javascript:`). Au
-passage, `startsWith("/api")` acceptait aussi `/apiculture` : les chemins se
-comparent par segments.
-
-Un garde structurel refuse le retour du motif dans `desktop/src`, avec un
-contrôle de non-vacuité — sans lui, un dossier renommé rendrait le test vert
-sur zéro fichier lu. Sabotage fait : une comparaison remise, le test tombe.
-
-### Deux écrans de plus qui affichaient ce qui n'avait pas été enregistré
-Même défaut que « Ton effort », trouvé en relisant tous les `catch` de
-l'interface. Chacun portait sa raison écrite, ce qui est la bonne discipline —
-mais deux de ces raisons étaient fausses.
-
-**« Tes jeux ».** Le commentaire annonçait « l'état précédent reste affiché ».
-C'était l'inverse : la nouvelle valeur était posée AVANT l'appel, donc c'est
-elle qui restait. L'écran montrait un réglage que l'application n'avait pas, et
-on s'en apercevait au rechargement suivant sans savoir pourquoi. Retour en
-arrière et message, comme ailleurs.
-
-**Le consentement santé.** Un échec d'envoi ne disait rien du tout. Or cette
-fenêtre-là ne se ferme pas : la personne clique « J'accepte », le bouton
-redevient cliquable, rien ne bouge, et il n'y a aucun autre chemin. Un échec
-muet y enferme dans l'application. La question reste posée, mais elle dit
-maintenant pourquoi.
-
-Ce que ça apprend sur les commentaires : un `catch` qui décrit ce qu'il fait
-est une bonne chose, et une mauvaise dès qu'il décrit ce qu'il ne fait pas. Il
-se relit alors comme une garantie, et on cesse de vérifier.
-
-### Les deux corrections de réglages, éprouvées au navigateur
-Un message d'erreur qu'on ajoute se vérifie en le faisant paraître, pas en le
-relisant. Deux tests, deux sabotages, et trois pièges rencontrés en les
-écrivant — dont deux déjà écrits ici, et un nouveau.
-
-- **Le consentement refusé** (`e2e/panne-serveur.spec.ts`) : le `POST` est
-  détourné en 500, le message doit paraître ET la fenêtre rester ouverte. Sans
-  le second contrôle, un écran qui se ferme sur un échec passerait.
-- **Le réglage de jeu refusé** (`e2e/reglages.spec.ts`) : pont Electron simulé,
-  `overlayJeuEcrire` qui rejette. Le message doit paraître ET le bouton
-  revenir à `aria-pressed="true"`. Sans le second contrôle, un message affiché
-  sous un réglage faux passerait, c'est-à-dire exactement l'état d'avant.
-
-Les pièges :
-- **`getByRole("alert")` ne prouve rien tout seul.** Le premier sabotage est
-  passé au vert : d'autres éléments de la page portent ce rôle. C'est le texte
-  qu'il faut chercher, dans un élément qui l'annonce.
-- **Un nom accessible contient celui de ses enfants.** L'en-tête dépliable du
-  jeu s'appelle « League of Legends Pastille affichée », parce que le libellé
-  d'état est dedans. `.first()` renvoyait donc l'en-tête, qui ne porte pas
-  `aria-pressed`. Les noms se cherchent ancrés.
-- **Le pont simulé doit porter tout ce que la rubrique lit.** Il en manquait
-  cinq méthodes : la rubrique ne se rendait pas du tout, le bouton cherché
-  n'existait pas, et l'échec ne ressemblait pas à sa cause.
-- Et, une fois de plus : **`-g` écarte le test qui ouvre le compte**, donc la
-  page mesurée était `/login`. C'est écrit plus haut depuis les tests de
-  langue ; ça se retombe dedans.
-
-### La seule porte de secours promettait un courriel qui ne partait pas
-`sendResetLink` commence par `if (!resend) return;` — sans clé configurée,
-elle rend la main sans rien envoyer. La route, elle, répondait `{ ok: true }`
-dans tous les cas, pour la bonne raison qu'une réponse différente permettrait
-d'énumérer les comptes.
-
-Résultat : sur un déploiement où la variable manque, quelqu'un qui a perdu son
-code demande un lien, lit « c'est envoyé », et attend indéfiniment. C'est la
-**seule** façon de rentrer, et l'attente ressemble exactement à un courriel en
-retard.
-
-Le dire ne casse pas la réponse générique : « le courriel n'est pas configuré »
-est une propriété du déploiement, pas de l'adresse saisie. Le contrôle passe
-donc avant toute lecture en base **et** avant le décompte des tentatives — une
-variable oubliée n'a pas à consommer le budget de quelqu'un. Deux tests, deux
-sabotages : le contrôle retiré, puis le contrôle déplacé après le décompte.
-
-Un piège au passage, qui vaut pour toutes les doublures de module :
-`jest.mock("@/lib/email", …)` **remplace le module entier**. La fonction
-ajoutée n'y figurait pas, donc l'appel rendait `undefined`, donc la route
-tombait en 500 — et six tests sans rapport se sont mis à échouer d'un coup.
-
 ### « Tes jeux » depuis un navigateur
 La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
 exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection
@@ -799,6 +582,285 @@ Une piste écartée en la mesurant : `ContexteNavigateur` écrivait en base à
 chaque chargement de page. Gaspillage réel, corrigé, et **sans effet sur le
 temps d'affichage** — mesuré avant et après. Une requête de moins, pas une page
 plus rapide.
+
+## Journal des corrections
+
+Ce qui suit n'est pas de la documentation d'API : c'est ce qui a cassé, ce qui
+l'a causé, et ce qui l'empêche de recommencer. Douze cents lignes vivaient sous
+« Scripts de mesure », qui ne les annonçait pas — on ne trouvait une entrée
+qu'en la cherchant au mot près.
+
+**Où écrire une entrée nouvelle** : ici, juste en dessous, avant les autres.
+Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
+aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
+correction va ici.
+
+### L'application de bureau parlait français à tout le monde
+Le site a six langues et des tests qui les tiennent. La coquille Electron, elle,
+n'en avait qu'une, et rien ne le signalait : trente-sept textes écrits en dur en
+français, dans les endroits qu'on remarque le moins et qui comptent le plus.
+
+- **La pastille en jeu.** C'est la surface la plus vue de l'application : elle
+  est à l'écran pendant qu'on joue. « Si gagné », « Si perdu », « joué ce soir,
+  hors menus » y étaient figés.
+- **Le menu près de l'horloge.** Le seul écran qui subsiste quand la fenêtre est
+  fermée.
+- **Les trois écrans de connexion** (`data:text/html`), y compris
+  `<html lang="fr">` — la page se déclarait française quoi qu'il arrive.
+- **Deux notifications système** et le titre de la fenêtre d'authentification.
+
+`desktop/src/langue.js` choisit parmi les six, `desktop/src/textes.js` les
+porte. La langue vient du stockage de la fenêtre (`low_locale`), relue à chaque
+page rendue — les écrans de secours sont des pages `data:` sans stockage à
+elles, mais la dernière page vue était la nôtre. À défaut, la langue du
+système ; à défaut encore, **l'anglais**. Jamais le français : c'est la langue
+de celui qui écrit l'application, en faire le repli revient à ne jamais voir le
+défaut.
+
+Trois choses apprises en le faisant :
+
+- **Un commentaire qui promet ce que le code ne fait pas.** J'avais écrit que
+  la langue du menu était « passée en fonction, donc elle peut changer sans
+  redémarrage », alors que `textes()` était appelée une seule fois à
+  l'ouverture. Elle l'est maintenant à chaque construction du menu, et
+  `initTray` rend `{ arreter, rafraichir }` — l'icône est posée au démarrage,
+  avant que la fenêtre ait chargé la moindre page, donc avant qu'on sache quoi
+  que ce soit de la langue.
+- **Les mots avant l'état.** La pastille reçoit ses textes sur un canal à part,
+  poussé avant le premier état : dans l'autre ordre, elle se peint une fois
+  avec ses valeurs par défaut puis se réécrit sous les yeux du joueur.
+- **Le HTML garde le français comme repli.** Si le canal ne dit jamais rien, la
+  pastille reste lisible. Un repli vide serait pire que la mauvaise langue.
+
+**Et le test qui manquait, trouvé par accident.** Une restauration maladroite a
+effacé les dix clés de la pastille des six langues — et toute la suite est
+restée verte. Le test de clés mortes refuse une clé *déclarée que personne
+n'emploie* ; il ne dit rien d'une clé *employée que personne ne déclare*. Or
+c'est celle-là qui se voit : « undefined » écrit en travers de la pastille,
+pendant une partie. Le contrôle manquant lit maintenant les `T.xxx`, les
+`data-texte` et les `textes(...).xxx` de tout le dossier, HTML compris, et
+exige que chacun existe. Sabotage refait sur le cas exact : il tombe.
+
+Six sabotages au total, six échecs : `lang="fr"` de retour, un libellé de menu
+réécrit en dur, un écran appelé sans langue, une clé manquante en allemand, une
+valeur vide, une clé employée sans être déclarée.
+
+### La seule porte de secours promettait un courriel qui ne partait pas
+`sendResetLink` commence par `if (!resend) return;` — sans clé configurée,
+elle rend la main sans rien envoyer. La route, elle, répondait `{ ok: true }`
+dans tous les cas, pour la bonne raison qu'une réponse différente permettrait
+d'énumérer les comptes.
+
+Résultat : sur un déploiement où la variable manque, quelqu'un qui a perdu son
+code demande un lien, lit « c'est envoyé », et attend indéfiniment. C'est la
+**seule** façon de rentrer, et l'attente ressemble exactement à un courriel en
+retard.
+
+Le dire ne casse pas la réponse générique : « le courriel n'est pas configuré »
+est une propriété du déploiement, pas de l'adresse saisie. Le contrôle passe
+donc avant toute lecture en base **et** avant le décompte des tentatives — une
+variable oubliée n'a pas à consommer le budget de quelqu'un. Deux tests, deux
+sabotages : le contrôle retiré, puis le contrôle déplacé après le décompte.
+
+Un piège au passage, qui vaut pour toutes les doublures de module :
+`jest.mock("@/lib/email", …)` **remplace le module entier**. La fonction
+ajoutée n'y figurait pas, donc l'appel rendait `undefined`, donc la route
+tombait en 500 — et six tests sans rapport se sont mis à échouer d'un coup.
+
+### Les deux corrections de réglages, éprouvées au navigateur
+Un message d'erreur qu'on ajoute se vérifie en le faisant paraître, pas en le
+relisant. Deux tests, deux sabotages, et trois pièges rencontrés en les
+écrivant — dont deux déjà écrits ici, et un nouveau.
+
+- **Le consentement refusé** (`e2e/panne-serveur.spec.ts`) : le `POST` est
+  détourné en 500, le message doit paraître ET la fenêtre rester ouverte. Sans
+  le second contrôle, un écran qui se ferme sur un échec passerait.
+- **Le réglage de jeu refusé** (`e2e/reglages.spec.ts`) : pont Electron simulé,
+  `overlayJeuEcrire` qui rejette. Le message doit paraître ET le bouton
+  revenir à `aria-pressed="true"`. Sans le second contrôle, un message affiché
+  sous un réglage faux passerait, c'est-à-dire exactement l'état d'avant.
+
+Les pièges :
+- **`getByRole("alert")` ne prouve rien tout seul.** Le premier sabotage est
+  passé au vert : d'autres éléments de la page portent ce rôle. C'est le texte
+  qu'il faut chercher, dans un élément qui l'annonce.
+- **Un nom accessible contient celui de ses enfants.** L'en-tête dépliable du
+  jeu s'appelle « League of Legends Pastille affichée », parce que le libellé
+  d'état est dedans. `.first()` renvoyait donc l'en-tête, qui ne porte pas
+  `aria-pressed`. Les noms se cherchent ancrés.
+- **Le pont simulé doit porter tout ce que la rubrique lit.** Il en manquait
+  cinq méthodes : la rubrique ne se rendait pas du tout, le bouton cherché
+  n'existait pas, et l'échec ne ressemblait pas à sa cause.
+- Et, une fois de plus : **`-g` écarte le test qui ouvre le compte**, donc la
+  page mesurée était `/login`. C'est écrit plus haut depuis les tests de
+  langue ; ça se retombe dedans.
+
+### Deux écrans de plus qui affichaient ce qui n'avait pas été enregistré
+Même défaut que « Ton effort », trouvé en relisant tous les `catch` de
+l'interface. Chacun portait sa raison écrite, ce qui est la bonne discipline —
+mais deux de ces raisons étaient fausses.
+
+**« Tes jeux ».** Le commentaire annonçait « l'état précédent reste affiché ».
+C'était l'inverse : la nouvelle valeur était posée AVANT l'appel, donc c'est
+elle qui restait. L'écran montrait un réglage que l'application n'avait pas, et
+on s'en apercevait au rechargement suivant sans savoir pourquoi. Retour en
+arrière et message, comme ailleurs.
+
+**Le consentement santé.** Un échec d'envoi ne disait rien du tout. Or cette
+fenêtre-là ne se ferme pas : la personne clique « J'accepte », le bouton
+redevient cliquable, rien ne bouge, et il n'y a aucun autre chemin. Un échec
+muet y enferme dans l'application. La question reste posée, mais elle dit
+maintenant pourquoi.
+
+Ce que ça apprend sur les commentaires : un `catch` qui décrit ce qu'il fait
+est une bonne chose, et une mauvaise dès qu'il décrit ce qu'il ne fait pas. Il
+se relit alors comme une garantie, et on cesse de vérifier.
+
+### Cinq comparaisons d'origine par préfixe, dans l'application de bureau
+Trouvé en relisant `desktop/`, qui a reçu bien moins d'attention que `src/`.
+Cinq endroits demandaient « est-ce bien chez nous ? » ainsi :
+
+```js
+url.startsWith(BACKEND_URL)
+```
+
+C'est faux, et d'une façon qui ne se voit pas à la lecture :
+`"https://winorworkout.com.exemple-mechant.tld/".startsWith("https://winorworkout.com")`
+vaut **vrai**. Un domaine qui suffixe le nôtre passait donc pour le nôtre —
+dans la fenêtre sans barre d'adresse ni bouton retour, devant le gestionnaire
+de fenêtres surgissantes, et devant le filtre de permissions qui accorde les
+notifications.
+
+Ce n'est pas exploitable seul : il faut d'abord que l'application navigue vers
+une adresse choisie par un tiers. Mais ces cinq lignes sont écrites POUR être
+cette frontière, et une frontière qui ne tient que si personne n'essaie n'en
+est pas une.
+
+`desktop/src/origine.js` compare les origines entières — protocole, hôte, port
+— et refuse ce qui n'a pas d'origine comparable (`about:`, `javascript:`). Au
+passage, `startsWith("/api")` acceptait aussi `/apiculture` : les chemins se
+comparent par segments.
+
+Un garde structurel refuse le retour du motif dans `desktop/src`, avec un
+contrôle de non-vacuité — sans lui, un dossier renommé rendrait le test vert
+sur zéro fichier lu. Sabotage fait : une comparaison remise, le test tombe.
+
+### Le script de mesure d'audience n'a jamais été chargé
+Trouvé en regardant la console du navigateur pendant le test ci-dessus :
+`/_vercel/insights/script.js` partait en 307 vers `/login` comme une page
+protégée, et le navigateur refusait alors de l'exécuter (« MIME type text/html
+is not executable »). Le matcher du middleware excluait `_next/static` mais pas
+`_vercel/`.
+
+Rien ne pouvait le signaler : une page de connexion rendue en 200 ressemble, du
+point de vue du serveur, à un script qui s'est bien chargé. Seul le navigateur
+sait qu'il a refusé de l'exécuter.
+
+### La correction éprouvée dans un navigateur, pont Electron simulé
+Les tests unitaires disent ce que les deux lectures rendent. Ils ne disent rien
+de l'assemblage : que le composant appelle bien la route quand l'issue est
+lue, qu'il n'appelle rien quand elle ne l'est pas, et qu'il le dise. Un
+branchement se vérifie en marchant dessus.
+
+`e2e/detection-partie.spec.ts` pose un faux `window.electronLOL` par
+`addInitScript` — ce qui est aussi l'ordre réel, le préchargement passant avant
+le rendu — puis déclenche trois fins de partie : une victoire lue, une issue
+illisible, un remake. Il regarde ce qui est écrit en base ET ce qui est dit à
+l'écran : sans le second, une partie qui disparaît en silence passerait le
+test.
+
+Le champion sert de signature. Compter ne suffit pas : un total inchangé peut
+cacher une partie écrite et une autre perdue.
+
+Trois sabotages, trois échecs. Et une leçon sur l'outil : **en mode série,
+Playwright saute ce qui suit un échec**. Le premier sabotage a fait tomber le
+troisième test, donc le quatrième n'a jamais tourné — et j'ai d'abord conclu
+qu'il ne mordait pas. Un test « passé » et un test « sauté » se ressemblent
+dans un résumé ; il faut lire le compte, pas la couleur. Chaque branche a donc
+été sabotée séparément.
+
+Trois pièges rencontrés en l'écrivant, dont deux nouveaux :
+- **Un serveur qui sert un `.next` reconstruit sous lui.** Le bouton
+  d'inscription restait désactivé, la capture montrait pourtant le champ
+  rempli. Sans hydratation, la page garde l'état rendu au serveur — et
+  l'hydratation ne se faisait pas parce qu'un fragment JavaScript répondait
+  500. C'est le pendant du piège déjà écrit (« ne jamais reconstruire pendant
+  qu'un test tourne ») : il faut aussi relancer le serveur APRÈS avoir
+  reconstruit.
+- **Sonder dans la mauvaise langue.** Le script de diagnostic ouvrait la page
+  sans fixer la locale, donc en anglais : `getByPlaceholder(/pseudo/i)` ne
+  trouvait rien et j'ai cru la page cassée. La configuration Playwright fixe
+  `fr-FR` ; un outil de diagnostic écrit à côté ne l'a pas.
+- **La modale de consentement santé**, sixième fichier de parcours à tomber
+  dessus. `e2e/compte.ts` porte l'ouverture de compte de ce fichier,
+  consentement compris.
+
+Ce que je m'étais raconté, et qui était faux : j'ai d'abord attribué le bouton
+désactivé à une saisie arrivée avant l'hydratation, et écrit une reprise de
+saisie pour ça. Elle n'a rien changé — normal, il n'y avait aucun JavaScript
+du tout. Les huit autres fichiers de parcours n'ont donc PAS été convertis :
+la duplication est réelle, mais le défaut qui aurait justifié d'y toucher
+n'existait pas. Un remaniement de huit fichiers qui passent, sur une raison
+qu'on n'a pas vérifiée, se paie plus cher qu'il ne rapporte.
+
+### L'autre moitié du défaut : la détection locale inventait la défaite
+Suite de « Une victoire sur trois s'enregistrait en défaite », plus bas : la
+route corrigée n'était que la moitié du chemin. Sans clé Riot de production,
+c'est la détection locale qui enregistre les parties, et elle portait le même
+défaut, écrit en toutes lettres :
+
+```ts
+result: resultat ?? "D",   // « sans événement de fin lisible, on retient la défaite »
+```
+
+Cette lecture est une **course** : l'API de partie (port 2999) ne
+publie l'événement `GameEnd` que dans les dernières secondes, puis se tait dès
+l'écran de fin. Elle était interrogée toutes les cinq secondes. Quand aucun
+relevé ne tombait dans cette fenêtre, l'issue manquait — et toutes les courses
+perdues tombaient du même côté. Une défaite prise pour une défaite ne se voit
+pas ; une victoire prise pour une défaite fait payer une dette qu'on ne doit
+pas, sans rien qui l'explique.
+
+Quatre corrections, de la plus profonde à la plus visible :
+
+- **L'issue ne s'invente plus.** Sans lecture, la partie n'est pas enregistrée
+  et une notification le dit. Ne rien écrire vaut mieux qu'écrire faux : c'est
+  la règle déjà posée pour les saisies aberrantes (« ne pas rattraper une
+  saisie fausse »), appliquée à une lecture au lieu d'une frappe.
+- **Une issue lue ne se reperd plus.** `dernier = releve` écrasait le relevé
+  précédent en entier : un seul relevé sans l'événement suffisait à effacer la
+  lecture d'avant. `fusionnerReleve` garde l'issue une fois vue.
+- **Deux secondes au lieu de cinq**, ce qui divise la fenêtre manquée par deux
+  et demi pour une requête locale qui ne coûte rien.
+- **Une seconde source.** Le lanceur publie son écran de fin
+  (`/lol-end-of-game/v1/eog-stats-block`) quelques secondes APRÈS que l'API de
+  partie s'est tue. `attenteIssue` retient donc trente secondes une fin de
+  partie sans issue, le temps qu'il parle.
+
+`issueLocale.js` porte les deux lectures. Elle ne conclut sur l'écran de fin que
+si ses deux sources s'accordent (`teams[].isWinningTeam` et `localPlayer.stats.WIN`) :
+cette API n'est pas documentée, sa forme change d'une version à l'autre, et deux
+sources qui se contredisent sont un signe que la forme a bougé, pas une occasion
+de choisir la plus flatteuse. Un remake est lu comme un remake, en premier —
+les deux sources s'accordent dessus, donc le contrôle de désaccord ne le
+verrait jamais.
+
+Deux pièges qui ont chacun leur test :
+- **`Boolean("0")` vaut vrai.** Le lanceur écrit ses drapeaux tantôt en
+  booléen, tantôt en 0/1, tantôt en `"0"`. Une conversion à la légère faisait
+  passer une défaite pour une victoire.
+- **Une attente qui n'échoit pas perd la partie pour de bon.** `attenteIssue`
+  garantit deux choses et rien d'autre : la partie part toujours, et jamais
+  deux fois. Le contexte de file et de rôle est joint au moment de la fin, pas
+  au moment de l'envoi : trente secondes plus tard, une sélection de champion
+  entamée entre-temps rattacherait la partie au rôle de la suivante.
+
+Sept sabotages, sept échecs — dont « tout ce qui n'est pas Win redevient une
+défaite », qui est exactement le défaut d'origine.
+
+Ce qui n'a **pas** été fait, et pourquoi : les parties déjà enregistrées à tort
+en défaites ne sont pas corrigées. Les reprendre demande de décider ce qu'on
+fait de la dette déjà payée dessus, et ça ne se décide pas seul.
 
 ### Les réglages affichaient ce que le serveur n'avait pas gardé
 Les cinq réglages de « Ton effort » — exercices, variante de pompes, bilan

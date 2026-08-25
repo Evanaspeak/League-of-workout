@@ -12,6 +12,7 @@
 
 const { app, Tray, Menu, nativeImage, Notification } = require("electron");
 const path = require("path");
+const { textes } = require("./textes");
 
 let tray = null;
 let previenuUneFois = false;
@@ -24,28 +25,41 @@ let previenuUneFois = false;
  * @param {() => void} actions.quitter  Arrête réellement l'application.
  * @param {() => boolean} actions.overlayActif Lit le réglage de l'overlay.
  * @param {(actif: boolean) => void} actions.setOverlayActif
+ * @param {string | (() => string)} actions.langue
+ *   La langue du menu. Une fonction plutôt qu'une valeur : l'icône est posée
+ *   au démarrage, avant que la fenêtre ait chargé la moindre page, donc avant
+ *   qu'on sache quoi que ce soit de la langue choisie.
+ * @returns {{ arreter: () => void, rafraichir: () => void }}
+ *   `rafraichir` reconstruit le menu, une fois la langue apprise.
  */
 function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOverlay, raccourci,
                    capturer, raccourciCapture, ouvrirCaptures, lireEcran,
-                   releveActif, setReleveActif }) {
+                   releveActif, setReleveActif, langue }) {
+  // Le menu est le seul écran qui subsiste quand la fenêtre est fermée. Il
+  // s'écrivait en français pour tout le monde ; c'est la langue de la personne
+  // qui le lit qui décide, comme partout ailleurs.
+  //
+  // Elle se relit à CHAQUE construction du menu, et non une fois à
+  // l'ouverture : l'icône est posée au démarrage, avant que la fenêtre ait
+  // chargé la moindre page, donc avant qu'on sache quoi que ce soit de la
+  // langue choisie.
+  const lireLangue = () => (typeof langue === "function" ? langue() : langue);
   const image = nativeImage.createFromPath(path.join(__dirname, "..", "build", "tray.png"));
   tray = new Tray(image);
   tray.setToolTip("Win or Workout");
 
-  const construireMenu = () => Menu.buildFromTemplate([
-    { label: "Ouvrir Win or Workout", click: ouvrir },
+  const construireMenu = () => { const T = textes(lireLangue()); return Menu.buildFromTemplate([
+    { label: T.trayOuvrir, click: ouvrir },
     { type: "separator" },
     {
       // Un raccourci global peut être capté par une autre application, ou
       // simplement jamais livré si le jeu tourne avec des privilèges plus
       // élevés que les nôtres. Ce menu, lui, répond toujours.
-      label: raccourci
-        ? `Afficher / masquer l'overlay\t${raccourci}`
-        : "Afficher / masquer l'overlay",
+      label: raccourci ? `${T.trayBascule}\t${raccourci}` : T.trayBascule,
       click: basculerOverlay,
     },
     {
-      label: "Overlay en jeu",
+      label: T.trayOverlay,
       type: "checkbox",
       checked: overlayActif(),
       click: (item) => {
@@ -64,19 +78,17 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOver
      * c'est le chemin de secours, et le seul dont on soit sûr.
      */
     ...(capturer ? [{
-      label: raccourciCapture
-        ? `Capturer l'écran\t${raccourciCapture}`
-        : "Capturer l'écran",
+      label: raccourciCapture ? `${T.trayCapturer}\t${raccourciCapture}` : T.trayCapturer,
       click: capturer,
     }] : []),
-    ...(ouvrirCaptures ? [{ label: "Ouvrir le dossier des captures", click: ouvrirCaptures }] : []),
+    ...(ouvrirCaptures ? [{ label: T.trayDossierCaptures, click: ouvrirCaptures }] : []),
     /**
      * Lecture des chiffres d'Apex, déclenchée à la main.
      *
      * Le résultat s'affiche dans l'overlay : c'est le seul endroit visible
      * quand un jeu tourne, Windows taisant ses notifications à ce moment-là.
      */
-    ...(lireEcran ? [{ label: "Lire les chiffres à l'écran", click: lireEcran }] : []),
+    ...(lireEcran ? [{ label: T.trayLireEcran, click: lireEcran }] : []),
     /**
      * La lecture en boucle pendant la partie, qui fait vivre la pastille.
      *
@@ -84,23 +96,30 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOver
      * principe, mais c'est au joueur d'en juger sur sa machine.
      */
     ...(releveActif ? [{
-      label: "Lire l'écran pendant la partie",
+      label: T.trayLirePendant,
       type: "checkbox",
       checked: releveActif(),
       click: (item) => { setReleveActif(item.checked); tray.setContextMenu(construireMenu()); },
     }] : []),
     { type: "separator" },
-    { label: "Quitter", click: quitter },
-  ]);
+    { label: T.trayQuitter, click: quitter },
+  ]); };
 
   tray.setContextMenu(construireMenu());
   // Sur Windows, le double-clic sur l'icône est le geste attendu pour rouvrir.
   tray.on("double-click", ouvrir);
 
-  return () => {
+  /** Le menu est reconstruit : appelée quand la langue vient d'être apprise. */
+  const rafraichir = () => {
+    if (tray && !tray.isDestroyed()) tray.setContextMenu(construireMenu());
+  };
+
+  const arreter = () => {
     if (tray && !tray.isDestroyed()) tray.destroy();
     tray = null;
   };
+
+  return { arreter, rafraichir };
 }
 
 /**
@@ -108,12 +127,13 @@ function initTray({ ouvrir, quitter, overlayActif, setOverlayActif, basculerOver
  * Sans ça, fermer la fenêtre donnerait l'impression d'avoir quitté, et on
  * retomberait sur le processus fantôme qu'on cherche justement à éviter.
  */
-function signalerVeille() {
+function signalerVeille(langue) {
   if (previenuUneFois || !Notification.isSupported()) return;
   previenuUneFois = true;
+  const T = textes(langue);
   new Notification({
-    title: "Win or Workout continue en arrière-plan",
-    body: "Tes parties restent détectées. Clique sur l'icône près de l'horloge pour rouvrir, ou « Quitter » pour arrêter.",
+    title: T.veilleTitre,
+    body: T.veilleCorps,
     icon: path.join(__dirname, "..", "build", "icon.png"),
   }).show();
 }

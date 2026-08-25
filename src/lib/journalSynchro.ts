@@ -29,6 +29,15 @@ export type Entree = {
    * on la lit à défaut de motif, plutôt que de vider leur colonne.
    */
   detail?: string;
+  /**
+   * Combien de fois de suite la même chose s'est produite.
+   *
+   * Sans clé Riot de production, la boucle rend le même refus toutes les deux
+   * minutes : le journal devenait vingt lignes identiques, c'est-à-dire vingt
+   * fois rien. Or ce qui se diagnostique, c'est « depuis quand » et « combien
+   * de fois », pas la vingtième copie. Absent vaut « une fois ».
+   */
+  repetitions?: number;
 };
 
 /** Au-delà, on ne diagnostique plus rien : on fait défiler. */
@@ -36,9 +45,31 @@ export const MAX_ENTREES = 20;
 
 export const CLE = "low_journal_synchro";
 
-/** Ajoute une entrée en tête, et oublie les plus vieilles. */
+/**
+ * Ajoute une entrée en tête, et oublie les plus vieilles.
+ *
+ * Une entrée identique à celle du dessus ne s'empile pas : elle incrémente son
+ * compteur et rafraîchit son instant. « Identique » se juge sur ce qui
+ * explique — résultat, code, motif, détail —, jamais sur l'instant, sinon rien
+ * ne serait jamais identique.
+ */
 export function ajouter(journal: Entree[], entree: Entree): Entree[] {
+  const tete = journal[0];
+  if (tete && memeCause(tete, entree)) {
+    const fusionnee: Entree = {
+      ...entree,
+      repetitions: (tete.repetitions ?? 1) + 1,
+    };
+    return [fusionnee, ...journal.slice(1)];
+  }
   return [entree, ...journal].slice(0, MAX_ENTREES);
+}
+
+function memeCause(a: Entree, b: Entree): boolean {
+  return a.resultat === b.resultat
+    && a.code === b.code
+    && a.motif === b.motif
+    && a.detail === b.detail;
 }
 
 /**

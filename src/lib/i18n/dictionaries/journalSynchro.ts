@@ -3,6 +3,7 @@ import type { MotifSynchro } from "@/lib/journalSynchro";
 /** Le journal des synchronisations Riot, dans les réglages. */
 export const journalSynchro = {
   fr: {
+    repetitions: (n: number) => `${n} fois de suite`,
     titre: "Synchronisation Riot",
     aide: "Ce que les dernières interrogations ont donné. Gardé dans ce navigateur, jamais envoyé.",
     aucun: "Aucune synchronisation depuis l'ouverture de ce navigateur.",
@@ -25,6 +26,7 @@ export const journalSynchro = {
     ilYA: (texte: string) => `il y a ${texte}`,
   },
   en: {
+    repetitions: (n: number) => `${n} times in a row`,
     titre: "Riot sync",
     aide: "What the last checks returned. Kept in this browser, never sent.",
     aucun: "No sync since this browser was opened.",
@@ -47,6 +49,7 @@ export const journalSynchro = {
     ilYA: (texte: string) => `${texte} ago`,
   },
   es: {
+    repetitions: (n: number) => `${n} veces seguidas`,
     titre: "Sincronización con Riot",
     aide: "Lo que han devuelto las últimas consultas. Se guarda en este navegador, nunca se envía.",
     aucun: "Ninguna sincronización desde que se abrió este navegador.",
@@ -69,6 +72,7 @@ export const journalSynchro = {
     ilYA: (texte: string) => `hace ${texte}`,
   },
   de: {
+    repetitions: (n: number) => `${n} Mal hintereinander`,
     titre: "Riot-Abgleich",
     aide: "Was die letzten Abfragen ergeben haben. Bleibt in diesem Browser, wird nie gesendet.",
     aucun: "Kein Abgleich, seit dieser Browser geöffnet wurde.",
@@ -91,6 +95,7 @@ export const journalSynchro = {
     ilYA: (texte: string) => `vor ${texte}`,
   },
   zh: {
+    repetitions: (n: number) => `连续 ${n} 次`,
     titre: "Riot 同步",
     aide: "最近几次查询的结果。仅保存在此浏览器中，绝不上传。",
     aucun: "自本浏览器打开以来尚无同步记录。",
@@ -113,6 +118,7 @@ export const journalSynchro = {
     ilYA: (texte: string) => `${texte}前`,
   },
   ja: {
+    repetitions: (n: number) => `${n} 回連続`,
     titre: "Riot との同期",
     aide: "直近の問い合わせ結果です。このブラウザに保存され、送信されることはありません。",
     aucun: "このブラウザを開いてから同期はありません。",

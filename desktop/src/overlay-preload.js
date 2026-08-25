@@ -9,6 +9,12 @@ contextBridge.exposeInMainWorld("overlayLOW", {
     ipcRenderer.on("overlay:etat", handler);
     return () => ipcRenderer.removeListener("overlay:etat", handler);
   },
+  /** Les mots de la pastille, dans la langue du compte. */
+  onTextes: (callback) => {
+    const handler = (_event, T) => callback(T);
+    ipcRenderer.on("overlay:textes", handler);
+    return () => ipcRenderer.removeListener("overlay:textes", handler);
+  },
   /** Mode placement : la pastille se laisse attraper à la souris. */
   onPlacement: (callback) => {
     const handler = (_event, actif) => callback(Boolean(actif));

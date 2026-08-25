@@ -23,6 +23,8 @@ const lecteur = require("./lecture/lecteurApex");
 const { surveillerClient } = require("./lcu");
 const { creerAttenteFin } = require("./attenteIssue");
 const { memeOrigine, cheminDe, dansLaSection } = require("./origine");
+const { choisirLangue } = require("./langue");
+const { textes } = require("./textes");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
 // `crypto` global d'Electron est celui du navigateur : ni randomBytes, ni
@@ -81,7 +83,7 @@ function abandonnerAttente() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   // Ne rien faire si la connexion a fini par aboutir et qu'on est ailleurs.
   if (!mainWindow.webContents.getURL().startsWith("data:text/html")) return;
-  mainWindow.loadURL(ATTENTE_EXPIREE_HTML);
+  mainWindow.loadURL(ATTENTE_EXPIREE_HTML(langueCourante));
 }
 
 /** Vrai si cet aléa est bien celui que nous attendons, et qu'il vaut encore. */
@@ -172,6 +174,36 @@ let stopClient = null;
  * rôle attribué. L'API de partie ne les donne pas, et ils manquaient donc à
  * l'enregistrement — le rôle était deviné, la file ignorée.
  */
+/**
+ * La langue dans laquelle la coquille s'exprime.
+ *
+ * Le site range la sienne dans le stockage du navigateur ; la coquille, elle,
+ * écrivait tout en français. On lit donc ce que la fenêtre sait, quand elle
+ * sait quelque chose, et on retombe sur la langue du système — puis sur
+ * l'anglais. Jamais sur le français : c'est la langue de celui qui écrit
+ * l'application, en faire le repli revient à ne jamais voir le défaut.
+ */
+let langueCourante = choisirLangue(app.getLocale());
+
+/** Va chercher la langue choisie dans la fenêtre, si elle en a une. */
+async function rafraichirLangue() {
+  if (!mainWindow || mainWindow.isDestroyed()) return langueCourante;
+  try {
+    const lue = await mainWindow.webContents.executeJavaScript(
+      "localStorage.getItem('low_locale')",
+    );
+    if (typeof lue === "string" && lue) {
+      langueCourante = choisirLangue(lue, app.getLocale());
+      // La pastille est à l'écran pendant qu'on joue : elle doit apprendre la
+      // langue en même temps que le reste, pas au prochain démarrage.
+      overlay.definirLangue(langueCourante);
+    }
+  } catch {
+    /* la fenêtre n'a pas encore de page, ou l'accès au stockage est refusé */
+  }
+  return langueCourante;
+}
+
 let contextePartie = { file: null, role: null };
 /**
  * Une fin de partie dont l'issue n'a pas pu être lue attend l'écran de fin du
@@ -192,8 +224,8 @@ let nettoyageLance = false;
 
 // ── Page d'attente (affichée dans Electron pendant que Chrome gère l'OAuth) ─
 
-const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
+const WAITING_HTML = (langue) => { const T = textes(langue); return `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html lang="${langue}"><head><meta charset="utf-8"><title>Win or Workout</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0C0E11; color: #FFB454; font-family: 'Segoe UI', sans-serif;
@@ -219,28 +251,28 @@ const WAITING_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTY
          style="vertical-align:-3px;margin-right:8px">
       <rect x="4.5" y="10.5" width="15" height="10" rx="2"></rect>
       <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"></path>
-    </svg>Authentification en cours <span class="dots"><span>.</span><span>.</span><span>.</span></span></h2>
-  <p>Terminez la connexion dans votre navigateur web.</p>
+    </svg>${T.attenteTitre} <span class="dots"><span>.</span><span>.</span><span>.</span></span></h2>
+  <p>${T.attenteCorps}</p>
   <p style="font-size:12px;margin-top:8px;color:rgba(236,239,244,.3)">
-    Cette fenêtre se met à jour automatiquement une fois connecté.
+    ${T.attenteAuto}
   </p>
   <!-- Sans cette porte de sortie, le moindre grain de sable — onglet fermé,
        mauvais navigateur par défaut, retour perdu en route — laissait la
        fenêtre tourner indéfiniment, sans rien à faire d'autre que quitter. -->
   <div id="secours" style="display:none;margin-top:26px;text-align:center">
-    <p style="font-size:12px;color:rgba(236,239,244,.4);margin-bottom:12px">Rien ne se passe ?</p>
-    <button onclick="window.electronLOL &amp;&amp; window.electronLOL.openGoogleLogin()">Rouvrir le navigateur</button>
-    <button class="discret" onclick="window.electronLOL &amp;&amp; window.electronLOL.retourConnexion()">Revenir à la connexion</button>
+    <p style="font-size:12px;color:rgba(236,239,244,.4);margin-bottom:12px">${T.attenteRien}</p>
+    <button onclick="window.electronLOL &amp;&amp; window.electronLOL.openGoogleLogin()">${T.attenteRouvrir}</button>
+    <button class="discret" onclick="window.electronLOL &amp;&amp; window.electronLOL.retourConnexion()">${T.attenteRetour}</button>
   </div>
   <script>setTimeout(function(){document.getElementById('secours').style.display='block'},20000)</script>
-</body></html>`)}`;
+</body></html>`)}`; };
 
 // Le canal de connexion est un port unique sur la machine : si une autre
 // instance — ou l'ancienne application — le détient déjà, c'est elle qui reçoit
 // la session. La fenêtre attendait alors indéfiniment une connexion partie
 // ailleurs, sans rien afficher. Le dire est le minimum.
-const ERREUR_PORT_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
+const ERREUR_PORT_HTML = (langue) => { const T = textes(langue); return `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html lang="${langue}"><head><meta charset="utf-8"><title>Win or Workout</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0C0E11; color: #ECEFF4; font-family: 'Segoe UI', sans-serif;
@@ -251,18 +283,15 @@ const ERREUR_PORT_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!D
 </style></head>
 <body>
   ${BANDE_DEPLACEMENT}
-  <h2>CONNEXION IMPOSSIBLE</h2>
-  <p>Une autre application Win or Workout est déjà ouverte sur cet ordinateur :
-     probablement une ancienne version.</p>
-  <p style="color:rgba(236,239,244,.35);font-size:13px">
-     Fermez-la complètement, puis relancez celle-ci. Sans cela, c'est elle qui
-     reçoit la connexion.</p>
-</body></html>`)}`;
+  <h2>${T.portTitre}</h2>
+  <p>${T.portCorps}</p>
+  <p style="color:rgba(236,239,244,.35);font-size:13px">${T.portConseil}</p>
+</body></html>`)}`; };
 
 // Le délai d'attente est écoulé. Mieux vaut une fin nette, avec de quoi
 // recommencer, qu'une animation qui tourne pour l'éternité.
-const ATTENTE_EXPIREE_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><title>Win or Workout</title>
+const ATTENTE_EXPIREE_HTML = (langue) => { const T = textes(langue); return `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html lang="${langue}"><head><meta charset="utf-8"><title>Win or Workout</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0C0E11; color: #ECEFF4; font-family: 'Segoe UI', sans-serif;
@@ -278,14 +307,13 @@ const ATTENTE_EXPIREE_HTML = `data:text/html;charset=utf-8,${encodeURIComponent(
 </style></head>
 <body>
   ${BANDE_DEPLACEMENT}
-  <h2>CONNEXION NON TERMINÉE</h2>
-  <p>Le navigateur n'a pas rendu la connexion à l'application. Soit elle n'a pas
-     été menée à son terme, soit le retour s'est perdu en chemin.</p>
+  <h2>${T.expireeTitre}</h2>
+  <p>${T.expireeCorps}</p>
   <div>
-    <button onclick="window.electronLOL &amp;&amp; window.electronLOL.openGoogleLogin()">Réessayer</button>
-    <button class="discret" onclick="window.electronLOL &amp;&amp; window.electronLOL.retourConnexion()">Autre méthode</button>
+    <button onclick="window.electronLOL &amp;&amp; window.electronLOL.openGoogleLogin()">${T.expireeReessayer}</button>
+    <button class="discret" onclick="window.electronLOL &amp;&amp; window.electronLOL.retourConnexion()">${T.expireeAutre}</button>
   </div>
-</body></html>`)}`;
+</body></html>`)}`; };
 
 // ── Serveur local d'auth (port 3099) ────────────────────────────────────────
 // Chrome (après OAuth) poste le JWT ici pour qu'Electron puisse l'utiliser.
@@ -839,11 +867,18 @@ async function createWindow() {
     shell.openExternal(adresse.toString());
   }
 
+  // La langue se relit à chaque page rendue : les écrans de secours sont des
+  // pages `data:`, sans stockage à elles. Quand l'un d'eux s'affiche, la
+  // dernière page vue était la nôtre, et c'est d'elle que vient la langue.
+  mainWindow.webContents.on("did-finish-load", () => {
+    void rafraichirLangue().then(() => stopTray?.rafraichir?.());
+  });
+
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (isOAuthUrl(url)) {
       event.preventDefault();
       if (!canalPret) {
-        mainWindow.loadURL(ERREUR_PORT_HTML);
+        mainWindow.loadURL(ERREUR_PORT_HTML(langueCourante));
         return;
       }
       // On renvoie vers notre propre page de connexion plutôt que vers l'URL
@@ -852,7 +887,7 @@ async function createWindow() {
       // navigateur, pour un chemin de repli qui redevient identique à l'autre.
       const nonce = ouvrirAttenteAuth();
       shell.openExternal(`${BACKEND_URL}/connexion-app?p=google&n=${encodeURIComponent(nonce)}`);
-      mainWindow.loadURL(WAITING_HTML);
+      mainWindow.loadURL(WAITING_HTML(langueCourante));
       return;
     }
     // La fenêtre n'a ni barre d'adresse, ni bouton retour, ni menu : une
@@ -955,7 +990,7 @@ async function createWindow() {
     }
     event.preventDefault();
     mainWindow.hide();
-    signalerVeille();
+    signalerVeille(langueCourante);
   });
 
   mainWindow.on("closed", () => {
@@ -1007,7 +1042,7 @@ function openAuthPopup() {
   authPopup = new BrowserWindow({
     width: 520,
     height: 720,
-    title: "Connexion – Win or Workout",
+    title: textes(langueCourante).titreFenetreConnexion,
     backgroundColor: "#0C0E11",
     parent: mainWindow ?? undefined,
     webPreferences: {
@@ -1065,7 +1100,7 @@ function openAuthPopup() {
 ipcMain.on("open-google-login", () => {
   // Inutile d'envoyer quelqu'un s'authentifier si le retour est capté ailleurs.
   if (!canalPret) {
-    if (mainWindow) mainWindow.loadURL(ERREUR_PORT_HTML);
+    if (mainWindow) mainWindow.loadURL(ERREUR_PORT_HTML(langueCourante));
     return;
   }
   // On ouvre la page qui part D'ELLE-MÊME chez Google. Auparavant on ouvrait la
@@ -1076,7 +1111,7 @@ ipcMain.on("open-google-login", () => {
   // et pas à une page ouverte au hasard.
   const nonce = ouvrirAttenteAuth();
   shell.openExternal(`${BACKEND_URL}/connexion-app?p=google&n=${encodeURIComponent(nonce)}`);
-  if (mainWindow) mainWindow.loadURL(WAITING_HTML);
+  if (mainWindow) mainWindow.loadURL(WAITING_HTML(langueCourante));
 });
 
 // Discord fonctionne bien dans un popup Electron natif.
@@ -1227,6 +1262,7 @@ app.whenReady().then(() => {
   // Aucun jeu ne tourne encore : la pastille prend les réglages par défaut,
   // et se replacera au premier jeu détecté.
   stopOverlay = overlay.initOverlay(overlayDuJeu(null));
+  overlay.definirLangue(langueCourante);
 
   /**
    * Raccourci de capture d'écran.
@@ -1241,19 +1277,24 @@ app.whenReady().then(() => {
    * dossier vide.
    */
   const signalerCapture = ({ chemin, raison }) => {
+    const T = textes(langueCourante);
+    // `raison` est une clé rendue par le module de capture, qui n'a pas de
+    // langue. Une clé inconnue retombe sur « raison inconnue » plutôt que de
+    // s'afficher telle quelle.
+    const pourquoi = (raison && T[raison]) || T.captureRaisonInconnue;
     // L'overlay d'abord : dès qu'un jeu tourne, Windows active tout seul
     // l'Assistant de concentration — règle « Quand je joue à un jeu » —, et les
     // notifications ne s'affichent plus. On appuyait sur la touche sans rien
     // voir, donc sans savoir si le raccourci nous appartenait.
     overlay.signalerCapture({
       ok: Boolean(chemin),
-      texte: chemin ? `Capture : ${path.basename(chemin)}` : `Échec : ${raison || "raison inconnue"}`,
+      texte: chemin ? `${T.capturePrefixe} : ${path.basename(chemin)}` : `${T.captureEchec} : ${pourquoi}`,
     });
     // La notification reste, pour les captures prises hors jeu.
     if (!Notification.isSupported()) return;
     new Notification({
-      title: chemin ? "Capture enregistrée" : "Capture impossible",
-      body: chemin ? path.basename(chemin) : String(raison || "raison inconnue"),
+      title: chemin ? T.captureFaite : T.captureRatee,
+      body: chemin ? path.basename(chemin) : pourquoi,
       icon: path.join(__dirname, "..", "build", "icon.png"),
     }).show();
   };
@@ -1308,13 +1349,13 @@ app.whenReady().then(() => {
         return overlay.definirReleveApex({ attente: "pas d'image" });
       }
       if (estNoir(image)) {
-        return overlay.definirReleveApex({ attente: "écran noir" });
+        return overlay.definirReleveApex({ attente: textes(langueCourante).apexEcranNoir });
       }
       const c = await lecteur.lireCartouche(image);
       if (c === null) {
         // Dans les menus, au largage et tant que l'escouade n'a rien fait, le
         // cartouche n'existe pas : ne rien lire y est l'état normal.
-        return overlay.definirReleveApex({ attente: "rien à lire" });
+        return overlay.definirReleveApex({ attente: textes(langueCourante).apexRienALire });
       }
       // Les éliminations peuvent manquer là où les dégâts sont là : le
       // cartouche ne dessine que ses cases non nulles. On garde alors les
@@ -1334,10 +1375,10 @@ app.whenReady().then(() => {
       if (lecteur.panne()) {
         reglerReleve(false);
         overlay.definirReleveApex({ attente: "lecture indisponible" });
-        overlay.signalerCapture({ ok: false, texte: "Lecture d'écran indisponible" });
+        overlay.signalerCapture({ ok: false, texte: textes(langueCourante).apexLectureIndispo });
         console.warn("[WOW] Lecture d'écran désactivée :", lecteur.panne());
       } else {
-        overlay.definirReleveApex({ attente: "lecture en échec" });
+        overlay.definirReleveApex({ attente: textes(langueCourante).apexLectureEchec });
         console.warn("[WOW] Relevé raté :", err?.message ?? err);
       }
     }
@@ -1363,7 +1404,7 @@ app.whenReady().then(() => {
     if (!image || image.isEmpty() || estNoir(image)) {
       return overlay.signalerCapture({
         ok: false,
-        texte: "Écran noir — Apex en plein écran exclusif ?",
+        texte: textes(langueCourante).apexApexPleinEcran,
       });
     }
     try {
@@ -1419,6 +1460,9 @@ app.whenReady().then(() => {
   createWindow();
   try {
     stopTray = initTray({
+      // Passée en fonction : le menu se reconstruit à chaque ouverture, et la
+      // langue peut avoir changé entre-temps sans que l'application redémarre.
+      langue: () => langueCourante,
       ouvrir: ouvrirFenetre,
       quitter: () => app.quit(),
       basculerOverlay: overlay.basculer,
@@ -1513,7 +1557,7 @@ app.on("before-quit", (event) => {
     if (stopOverlay) stopOverlay();
     if (stopJeux) stopJeux();
     if (stopClient) stopClient();
-    if (stopTray) stopTray();
+    if (stopTray) stopTray.arreter();
     app.quit();
   });
 });
