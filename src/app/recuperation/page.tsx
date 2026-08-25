@@ -5,6 +5,7 @@ import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { recuperation } from "@/lib/i18n/dictionaries/recuperation";
 import { Wordmark } from "@/components/Wordmark";
+import { SignalerProbleme } from "@/components/SignalerProbleme";
 
 const FIELD_STYLE = {
   width: "100%",
@@ -147,6 +148,15 @@ export default function RecuperationPage() {
             <div style={{ marginTop: 28, padding: "16px 18px", borderRadius: 10, border: "1px solid var(--line)", background: "var(--carbon)" }}>
               <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--bone)", marginBottom: 4 }}>{t.noEmailTitle}</p>
               <p style={{ fontSize: "0.8rem", color: "var(--faint)", lineHeight: 1.6 }}>{t.noEmailBody}</p>
+              {/* Le texte disait « contacte-nous » sans dire comment. Quelqu'un
+                  qui lit cette phrase ne peut pas se connecter : il n'a donc
+                  accès à aucun formulaire de l'application, et le bouton du
+                  pied de page ne se devine pas depuis ici. On ouvre le geste au
+                  lieu de le nommer. La route accepte les envois sans session,
+                  bridée par adresse réseau. */}
+              <div style={{ marginTop: 12 }}>
+                <SignalerProbleme />
+              </div>
             </div>
 
             <p style={{ marginTop: 24, textAlign: "center" }}>
