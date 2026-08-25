@@ -945,6 +945,25 @@ employé a-t-il cette version »).
 
 Deux sabotages, deux échecs.
 
+**Et une sauvegarde, vraie, vérifiée.** Le travail relancé à la main sur V296
+passe toutes ses étapes : export (41 325 octets), restauration dans un
+PostgreSQL 18 neuf, comparaison table par table, chiffrement AES256, dépôt de
+l'archive pour quatre-vingt-dix jours.
+
+| table | lignes | | table | lignes |
+|---|---|---|---|---|
+| Account | 4 | | Paiement | 0 |
+| BetaApplication | 5 | | PushSubscription | 1 |
+| Game | 75 | | RoleWeight | 7 |
+| Goal | 4 | | Session | 0 |
+| LevelConfig | 5 | | Signalement | 0 |
+| LoginAttempt | 18 | | SystemConfig | 2 |
+| MasteryConfig | 1 | | User | 4 |
+| VerificationToken | 0 | | _prisma_migrations | 33 |
+
+Aucun écart entre la source et la restauration. C'est la première sauvegarde de
+ce projet dont on sache qu'elle se restaure.
+
 ### Le stockage du navigateur n'était gardé nulle part
 `localStorage` n'est pas une propriété qu'on lit : c'est un **accesseur**, et
 il lève quand le navigateur est réglé pour bloquer les données de site. Pas
