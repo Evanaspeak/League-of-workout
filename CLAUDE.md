@@ -595,6 +595,23 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La surveillance du lanceur non plus
+Même traitement, et le même défaut d'empilement : un tour y fait jusqu'à trois
+requêtes de trois secondes d'expiration, sur une période de quatre. **Vingt-
+quatre requêtes en vol** sans verrou. C'est la boucle qui porte la seconde
+source d'issue, celle qui existe précisément pour que les victoires cessent
+d'être enregistrées en défaites : la laisser sans test n'était plus tenable.
+
+Un des trois sabotages est passé au vert, et c'est la trouvaille : mon test
+« retente au tour suivant » **comptait** les publications sans regarder ce
+qu'elles disaient. Avec le garde retiré, un « inconnu » partait au premier
+tour, `issueLue` passait à vrai, et le compte restait à un. Il vérifie
+maintenant le contenu. Sabotage refait : il tombe.
+
+C'est la deuxième fois cette nuit qu'un test compte au lieu de regarder — la
+première, c'était l'historique du remake, où le champion sert désormais de
+signature. Un total inchangé peut cacher une chose écrite et une autre perdue.
+
 ### La boucle qui détecte les parties n'avait aucun test
 Elle ne s'éprouvait qu'en lançant League, c'est-à-dire jamais ici. Le lecteur
 et la période s'injectent maintenant (`options.lire`, `options.periodeMs`), avec

@@ -143,18 +143,45 @@ function roleDuMode(queue) {
  *   - `{ type: "contexte", file, role }` quand la file ou le rôle sont connus.
  * @returns {() => void} Arrête la surveillance.
  */
-function surveillerClient(signaler) {
+function surveillerClient(signaler, options = {}) {
+  // Le demandeur, les identifiants et la période s'injectent : sans ça, cette
+  // boucle ne s'éprouve qu'avec le client League ouvert. Les valeurs par
+  // défaut sont celles de production, et aucun appelant n'a changé.
+  const demanderA = options.demander ?? demander;
+  const identifiantsDe = options.identifiants ?? obtenirIdentifiants;
+  const periodeMs = options.periodeMs ?? PERIODE_MS;
   let phasePrecedente = null;
   let arrete = false;
   /** L'écran de fin ne se lit qu'une fois par partie. */
   let issueLue = false;
 
+  /**
+   * Un tour à la fois, comme pour la boucle de partie.
+   *
+   * Un tour fait jusqu'à trois requêtes (session, sélection de champion, écran
+   * de fin), chacune avec trois secondes d'expiration, sur une période de
+   * quatre. Un lanceur qui répond lentement ferait donc s'empiler les tours,
+   * et l'écran de fin serait demandé plusieurs fois de suite pour la même
+   * partie.
+   */
+  let enCours = false;
+
   const tour = async () => {
+    if (arrete || enCours) return;
+    enCours = true;
+    try {
+      await unTour();
+    } finally {
+      enCours = false;
+    }
+  };
+
+  const unTour = async () => {
     if (arrete) return;
-    const ids = await obtenirIdentifiants();
+    const ids = await identifiantsDe();
     if (!ids) return;
 
-    const session = await demander(ids, "/lol-gameflow/v1/session");
+    const session = await demanderA(ids, "/lol-gameflow/v1/session");
     if (!session) {
       // Identifiants périmés : le client a été relancé, on les redemandera.
       identifiants = null;
@@ -176,7 +203,7 @@ function surveillerClient(signaler) {
     // n'empêche rien : c'est un complément, jamais une condition.
     if (PHASES_FIN.has(phase)) {
       if (!issueLue) {
-        const bloc = await demander(ids, "/lol-end-of-game/v1/eog-stats-block");
+        const bloc = await demanderA(ids, "/lol-end-of-game/v1/eog-stats-block");
         const issue = issueDeFinDePartie(bloc);
         // Un « inconnu » ne se publie pas : l'écran n'est peut-être pas encore
         // rempli, et le tour suivant retentera. Un remake, lui, est une
@@ -197,7 +224,7 @@ function surveillerClient(signaler) {
     // qui en attribuent un.
     let role = roleDuMode(queue);
     if (!role) {
-      const selection = await demander(ids, "/lol-champ-select/v1/session");
+      const selection = await demanderA(ids, "/lol-champ-select/v1/session");
       const moi = selection?.myTeam?.find(
         (j) => j?.cellId === selection?.localPlayerCellId,
       );
@@ -219,7 +246,7 @@ function surveillerClient(signaler) {
   };
 
   tour();
-  const minuteur = setInterval(tour, PERIODE_MS);
+  const minuteur = setInterval(tour, periodeMs);
   return () => { arrete = true; clearInterval(minuteur); };
 }
 
