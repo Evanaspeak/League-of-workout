@@ -616,6 +616,16 @@ fait, le contrôle après montage retiré : le test tombe.
 Le bouton disparaît avec l'image, parce qu'il ouvrirait la même erreur, en
 pleine page cette fois.
 
+`ChampionIcon` avait exactement le même repli sur `onError` seul, et l'a reçu
+aussi : les icônes viennent d'un domaine tiers, une coupure chez eux laissait
+un carré vide sans rien pour dire de quel champion il s'agissait. **Mais le
+test qui l'accompagne ne prouve que la moitié** : une interception réseau tombe
+forcément après l'hydratation, donc le repli ordinaire est éprouvé et le cas
+d'avant hydratation ne l'est pas. Sabotage fait, le contrôle au montage retiré :
+le test passe quand même. Il est gardé pour ce qu'il couvre — rien ne couvrait
+ce repli — et le commentaire dit ce qu'il ne couvre pas. Un test dont on croit
+qu'il prouve autre chose que ce qu'il prouve est pire qu'aucun test.
+
 Et, une fois de plus : la modale de consentement santé recouvrait la page.
 Septième fichier de parcours à tomber dessus.
 
