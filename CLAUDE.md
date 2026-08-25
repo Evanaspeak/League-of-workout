@@ -595,6 +595,40 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### `onError` sur une image ne suffit pas
+Le bilan de saison montre une image dessinée au serveur. Quand elle ne se
+dessine pas, la page affichait l'icône de fichier cassé du navigateur, et le
+bouton « ouvrir l'image » emmenait sur une page d'erreur brute. Or ce qui a
+échoué n'est pas le bilan : les chiffres sont là, juste à côté. C'est la seule
+phrase qui compte.
+
+Le repli a d'abord été posé sur `onError`, et **il ne se déclenchait jamais** —
+trouvé par le test, pas par la relecture. L'image part avec le HTML et peut
+échouer AVANT l'hydratation ; React n'attache son écouteur qu'après, et
+l'erreur passe alors sans témoin. C'est la même famille que le script attrapé
+dans le `layout` pour `beforeinstallprompt` : un événement qui ne se répète pas
+et qui tombe avant que le paquet JavaScript ne s'exécute.
+
+Une image déjà terminée le dit : `complete` vaut vrai et `naturalWidth` vaut
+zéro. On regarde donc à la première occasion, **en plus** d'écouter. Sabotage
+fait, le contrôle après montage retiré : le test tombe.
+
+Le bouton disparaît avec l'image, parce qu'il ouvrirait la même erreur, en
+pleine page cette fois.
+
+`ChampionIcon` avait exactement le même repli sur `onError` seul, et l'a reçu
+aussi : les icônes viennent d'un domaine tiers, une coupure chez eux laissait
+un carré vide sans rien pour dire de quel champion il s'agissait. **Mais le
+test qui l'accompagne ne prouve que la moitié** : une interception réseau tombe
+forcément après l'hydratation, donc le repli ordinaire est éprouvé et le cas
+d'avant hydratation ne l'est pas. Sabotage fait, le contrôle au montage retiré :
+le test passe quand même. Il est gardé pour ce qu'il couvre — rien ne couvrait
+ce repli — et le commentaire dit ce qu'il ne couvre pas. Un test dont on croit
+qu'il prouve autre chose que ce qu'il prouve est pire qu'aucun test.
+
+Et, une fois de plus : la modale de consentement santé recouvrait la page.
+Septième fichier de parcours à tomber dessus.
+
 ### Décocher un jeu en pleine partie laissait la pastille à l'écran
 Troisième boucle sans test, et celle-ci cachait un vrai défaut : quand la liste
 des jeux surveillés se vide, l'état interne était remis à zéro **sans rien

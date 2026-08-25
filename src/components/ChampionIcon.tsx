@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Certains champions ont un ID Data Dragon différent de leur nom affiché.
 const CHAMPION_MAP: Record<string, string> = {
@@ -57,6 +57,24 @@ export function ChampionIcon({ name, size = 38 }: Props) {
   const [echouePour, setEchouePour] = useState<string | null>(null);
   const failed = echouePour === name;
 
+  /**
+   * `onError` ne suffit pas.
+   *
+   * L'image est servie par un domaine tiers et part avec le HTML : elle peut
+   * échouer AVANT l'hydratation, et React n'attache son écouteur qu'après. Le
+   * repli — la première lettre du champion dans un carré — ne s'affichait alors
+   * jamais, et la place restait vide. Trouvé sur l'image du bilan, où le même
+   * défaut se voyait mieux.
+   *
+   * Une image déjà terminée le dit : `complete` vaut vrai et `naturalWidth`
+   * vaut zéro.
+   */
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = imageRef.current;
+    if (img && img.complete && img.naturalWidth === 0 && name) setEchouePour(name);
+  });
+
   // La source ne dépend plus que du nom : elle se calcule au rendu, sans
   // effet ni second rendu pour rien.
   const src = name
@@ -82,6 +100,7 @@ export function ChampionIcon({ name, size = 38 }: Props) {
 
   return (
     <img
+      ref={imageRef}
       src={src}
       alt={name}
       width={size}

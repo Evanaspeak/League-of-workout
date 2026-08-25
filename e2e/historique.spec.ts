@@ -208,3 +208,43 @@ test("sur un écran large : le tableau reprend sa place", async ({ browser }) =>
   await expect(page.locator(".carte-activite").first()).toBeHidden();
   await ctx.close();
 });
+
+test("une icône de champion qui ne charge pas laisse la lettre, pas un trou", async ({ browser }) => {
+  // Les icônes viennent d'un domaine tiers (Data Dragon) : une coupure chez
+  // eux, un bloqueur, un patch qui déplace un fichier, et elles manquent.
+  //
+  // Ce que ce test couvre, et ce qu'il ne couvre pas : il éprouve le repli
+  // ORDINAIRE, celui d'une image qui échoue après l'hydratation. C'est le cas
+  // courant, et rien ne le couvrait.
+  //
+  // Il ne prouve PAS le contrôle ajouté au montage (`complete` et
+  // `naturalWidth`), qui vise l'échec survenu AVANT l'hydratation : ici
+  // l'interception réseau tombe forcément après. Sabotage fait, ce contrôle
+  // retiré : le test passe quand même. Le cas d'avant hydratation n'est
+  // éprouvé que sur l'image du bilan, où elle part avec le HTML.
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  await page.route("https://ddragon.leagueoflegends.com/**", (route) =>
+    route.fulfill({ status: 404, body: "" }));
+
+  await page.goto("/history", { waitUntil: "networkidle" });
+  await page.waitForTimeout(1500);
+
+  // Plus aucune image de champion à l'écran, et la lettre est là à la place.
+  await expect(page.locator('img[src*="ddragon"]')).toHaveCount(0);
+  // Les deux présentations sont rendues, et c'est la feuille de style qui
+  // choisit : sans filtre de visibilité, `.first()` tombe sur la carte que
+  // l'écran de poste masque.
+  await expect(page.getByText("A", { exact: true }).locator("visible=true").first())
+    .toBeVisible();
+  await ctx.close();
+});

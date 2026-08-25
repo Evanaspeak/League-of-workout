@@ -140,3 +140,30 @@ test("l'image ne sort pas sans session", async ({ browser }) => {
   expect(r.status()).not.toBe(200);
   await ctx.close();
 });
+
+test("une image qui ne se dessine pas le dit, au lieu d'une icône cassée", async ({ browser }) => {
+  // Ce qui a échoué n'est pas le bilan : les chiffres sont là, à côté. La page
+  // montrait l'icône de fichier cassé du navigateur, et le bouton « ouvrir »
+  // emmenait sur une page d'erreur brute.
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+  });
+
+  // La modale de consentement santé recouvre la page et rien ne se lit
+  // derrière. Septième fichier de parcours à tomber dessus ; elle se traverse
+  // par l'API, comme dans les six autres.
+  await ctx.request.post("/api/consentement", { data: { accepte: true } });
+
+  await page.route("**/api/bilan/image", (route) => route.fulfill({ status: 500, body: "boum" }));
+  await page.goto("/bilan", { waitUntil: "networkidle" });
+  expect(new URL(page.url()).pathname).toBe("/bilan");
+
+  await expect(page.getByText(/n.a pas pu être dessinée|could not be drawn/i))
+    .toBeVisible({ timeout: 15_000 });
+  // Et le bouton a disparu avec elle : il ouvrirait la même erreur, en pleine
+  // page cette fois.
+  await expect(page.getByRole("link", { name: /ouvrir|open/i })).toHaveCount(0);
+  await ctx.close();
+});
