@@ -205,12 +205,14 @@ export default function SettingsPage() {
    * n'était pas posé, et personne ne savait pourquoi. C'est le réglage dont
    * une perte coûte le plus cher, puisque toute la dette en découle.
    */
-  const handleSavePompesMax = async (valeur: number) => {
+  const handleSavePompesMax = async (valeur: number): Promise<boolean> => {
     const avantMax = pompesMax;
     const avantLe = pompesMaxLe;
     setPompesMax(valeur);
     setPompesMaxLe(new Date().toISOString());
-    await enregistrerReglage(
+    // Le résultat remonte au panneau, qui garde la saisie quand elle n'est pas
+    // partie : refermer sur un échec efface ce qu'on vient de taper.
+    return enregistrerReglage(
       { pompesMax: valeur },
       () => { setPompesMax(avantMax); setPompesMaxLe(avantLe); },
     );

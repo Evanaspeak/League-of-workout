@@ -280,14 +280,21 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   // statistiques : une seule réponse, et rien ne bouge après coup.
 
 
-  const handleSavePompesMax = async (valeur: number) => {
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
-    });
-    if (res.ok) {
+  const handleSavePompesMax = async (valeur: number): Promise<boolean> => {
+    // L'échec était avalé : le panneau se fermait, la saisie s'effaçait, et
+    // rien n'était enregistré. C'est ce test qui fixe le niveau, donc toute la
+    // dette. Le résultat remonte maintenant à l'écran, qui garde la saisie.
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
+      });
+      if (!res.ok) return false;
       setTestLocal({ max: valeur, le: new Date().toISOString() });
+      return true;
+    } catch {
+      return false;
     }
   };
 

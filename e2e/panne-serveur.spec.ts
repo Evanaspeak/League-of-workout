@@ -330,3 +330,41 @@ test("sans réseau, l'enregistrement d'une partie rend la main et le dit", async
   await expect(envoyer).toBeEnabled();
   await ctx.close();
 });
+
+test("un test de force refusé garde la saisie et le dit", async ({ browser }) => {
+  // C'est ce test qui fixe le niveau, donc toute la dette. Sur le tableau de
+  // bord, l'échec était avalé : le panneau se fermait, la saisie s'effaçait, et
+  // rien n'était enregistré.
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() === "PUT") {
+      return route.fulfill({ status: 500, contentType: "application/json", body: "{}" });
+    }
+    await route.continue();
+  });
+
+  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: /faire le test|refaire le test|take the test|retake/i })
+    .first().click();
+
+  const champ = page.getByRole("spinbutton").first();
+  await champ.fill("30");
+  await page.getByRole("button", { name: /^enregistrer$|^save$/i }).first().click();
+
+  await expect(page.getByRole("alert").filter({ hasText: /n.a pas été enregistré|was not saved/i }))
+    .toBeVisible({ timeout: 10_000 });
+  // Et la saisie est toujours là : refermer sur un échec efface ce qu'on vient
+  // de taper, et il faut alors refaire le test pour de vrai.
+  await expect(champ).toHaveValue("30");
+  await ctx.close();
+});

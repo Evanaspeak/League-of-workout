@@ -23,7 +23,15 @@ export function TestPompes({
   pompesMax: number;
   faitLe: string | null;
   niveaux: LevelCfg[];
-  onEnregistre: (valeur: number) => Promise<void>;
+  /**
+   * Enregistre le test. Rend `false` quand le serveur n'en a pas voulu.
+   *
+   * Elle rendait `void`, donc l'écran fermait le panneau et vidait la saisie
+   * quoi qu'il arrive. Sur le tableau de bord, où l'appelant avalait l'échec,
+   * on saisissait son chiffre, le panneau se refermait, et rien n'était
+   * enregistré. C'est ce test qui fixe le niveau, donc toute la dette.
+   */
+  onEnregistre: (valeur: number) => Promise<boolean>;
   /**
    * Le test est présenté seul, dans son propre encadré — sur le tableau de
    * bord. Il n'a alors pas de section au-dessus dont il faudrait se séparer
@@ -35,6 +43,7 @@ export function TestPompes({
   const [saisie, setSaisie] = useState("");
   const [ouvert, setOuvert] = useState(false);
   const [occupe, setOccupe] = useState(false);
+  const [echec, setEchec] = useState(false);
 
   const aFaire = testAFaire(pompesMax, faitLe);
   const niveau = niveaux.length > 0 ? getLevelParPompes(pompesMax, niveaux) : null;
@@ -44,8 +53,17 @@ export function TestPompes({
   const enregistrer = async () => {
     if (!valide) return;
     setOccupe(true);
-    await onEnregistre(Math.round(valeur));
+    setEchec(false);
+    let ok = false;
+    try {
+      ok = await onEnregistre(Math.round(valeur));
+    } catch {
+      ok = false;
+    }
     setOccupe(false);
+    // Le panneau ne se ferme et la saisie ne s'efface que si le chiffre est
+    // parti : sinon on efface ce qu'on vient de taper sans l'avoir enregistré.
+    if (!ok) { setEchec(true); return; }
     setOuvert(false);
     setSaisie("");
   };
@@ -118,6 +136,10 @@ export function TestPompes({
             <p className="text-xs" style={{ color: "var(--amber)" }}>
               {t.apercu(apercu.niveau, apercu.multiplicateur)}
             </p>
+          )}
+
+          {echec && (
+            <p role="alert" className="text-xs" style={{ color: "var(--loss)" }}>{t.echec}</p>
           )}
 
           <div className="flex gap-2">

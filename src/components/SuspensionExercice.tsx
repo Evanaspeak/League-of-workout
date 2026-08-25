@@ -35,11 +35,19 @@ export function SuspensionExercice({ surChangement }: { surChangement?: () => vo
 
   const agir = async (methode: "POST" | "DELETE", exercice: ExerciceId) => {
     setErreur(null);
-    const r = await fetch("/api/suspension", {
-      method: methode,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ exercice }),
-    });
+    // Sans `try`, une coupure réseau ne produit rien du tout : ni changement,
+    // ni message. On reclique en croyant avoir mal visé.
+    let r: Response;
+    try {
+      r = await fetch("/api/suspension", {
+        method: methode,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exercice }),
+      });
+    } catch {
+      setErreur(t.echecReseau);
+      return;
+    }
     if (!r.ok) {
       // Le seul refus qu'on sache nommer est celui du dernier exercice : le
       // reste ne se produit qu'en cas de panne, et un message inventé pour
