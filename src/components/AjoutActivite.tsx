@@ -288,28 +288,38 @@ export function AjoutActivite({
 
     // Une seule ligne, quels que soient les exercices : la dette se partage
     // entre eux, la partie reste une partie.
-    const res = await fetch("/api/games", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...corpsAjout(exercicesAjout.length === 1 ? exercicesAjout[0] : null),
-        source: "manuel",
-      }),
-    });
+    //
+    // Le `try` n'est pas un ornement : sans lui, une coupure réseau fait
+    // rejeter la promesse, la ligne qui rend la main au bouton n'est jamais
+    // atteinte, et « Enregistrement… » reste à l'écran pour toujours. C'est
+    // l'action la plus utilisée de l'application.
+    try {
+      const res = await fetch("/api/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...corpsAjout(exercicesAjout.length === 1 ? exercicesAjout[0] : null),
+          source: "manuel",
+        }),
+      });
 
-    if (res.ok) {
-      onAjout();
-      window.dispatchEvent(new Event("wow-dette-changee"));
-      setPreview(null);
-      setAddLogged(true);
-      setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
-      setPlacement("");
-      setArrets("");
-    } else {
-      const err = await res.json().catch(() => ({}));
-      setAddError(err.error ? translateApiError(err.error, locale) : t.logError);
+      if (res.ok) {
+        onAjout();
+        window.dispatchEvent(new Event("wow-dette-changee"));
+        setPreview(null);
+        setAddLogged(true);
+        setAddForm((f) => ({ ...f, champion: "", kills: "", deaths: "", assists: "", result: "D" }));
+        setPlacement("");
+        setArrets("");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setAddError(err.error ? translateApiError(err.error, locale) : t.logError);
+      }
+    } catch {
+      setAddError(t.logError);
+    } finally {
+      setAddLogging(false);
     }
-    setAddLogging(false);
   };
 
 
@@ -317,25 +327,33 @@ export function AjoutActivite({
   const handleRiotFetch = async () => {
     setRiotLoading(true);
     setRiotError("");
-    const res = await fetch("/api/riot/last-game");
-    if (res.ok) {
-      const data = await res.json();
-      setAddForm((f) => ({
-        ...f,
-        role: data.role,
-        champion: data.champion,
-        kills: String(data.kills),
-        deaths: String(data.deaths),
-        assists: String(data.assists),
-        result: data.result,
-      }));
-      setPreview(null);
-      setShowAddForm(true);
-    } else {
-      const err = await res.json();
-      setRiotError(err.error ? translateApiError(err.error, locale) : t.riotApiError);
+    // Même règle que l'enregistrement : sans `try`, l'indicateur d'attente ne
+    // s'efface jamais. Et la réponse d'erreur se lit avec un repli — une page
+    // d'erreur en HTML ferait tomber `json()` au lieu d'afficher le message.
+    try {
+      const res = await fetch("/api/riot/last-game");
+      if (res.ok) {
+        const data = await res.json();
+        setAddForm((f) => ({
+          ...f,
+          role: data.role,
+          champion: data.champion,
+          kills: String(data.kills),
+          deaths: String(data.deaths),
+          assists: String(data.assists),
+          result: data.result,
+        }));
+        setPreview(null);
+        setShowAddForm(true);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setRiotError(err.error ? translateApiError(err.error, locale) : t.riotApiError);
+      }
+    } catch {
+      setRiotError(t.riotApiError);
+    } finally {
+      setRiotLoading(false);
     }
-    setRiotLoading(false);
   };
 
 
