@@ -1,6 +1,7 @@
 /** Le lien de la source de diffusion, dans les réglages. */
 export const sourceObs = {
   fr: {
+    echec: "L'opération n'a pas abouti. Réessaie.",
     titre: "Compteur pour le stream",
     aide: "Une adresse à coller dans une source navigateur d'OBS. Elle affiche ce que vous devez, sur fond transparent.",
     creer: "Créer le lien",
@@ -13,6 +14,7 @@ export const sourceObs = {
     aucun: "Aucun lien pour l'instant.",
   },
   en: {
+    echec: "That did not go through. Try again.",
     titre: "Stream counter",
     aide: "An address to paste into an OBS browser source. It shows what you owe, on a transparent background.",
     creer: "Create the link",
@@ -25,6 +27,7 @@ export const sourceObs = {
     aucun: "No link yet.",
   },
   es: {
+    echec: "La operación no se ha completado. Inténtalo de nuevo.",
     titre: "Contador para el directo",
     aide: "Una dirección para pegar en una fuente de navegador de OBS. Muestra lo que debes, sobre fondo transparente.",
     creer: "Crear el enlace",
@@ -37,6 +40,7 @@ export const sourceObs = {
     aucun: "Todavía no hay enlace.",
   },
   de: {
+    echec: "Das hat nicht geklappt. Versuch es noch mal.",
     titre: "Zähler für den Stream",
     aide: "Eine Adresse für eine Browserquelle in OBS. Sie zeigt deine Schuld auf transparentem Hintergrund.",
     creer: "Link erstellen",
@@ -49,6 +53,7 @@ export const sourceObs = {
     aucun: "Noch kein Link.",
   },
   zh: {
+    echec: "操作没有完成，请再试一次。",
     titre: "直播计数器",
     aide: "把这个地址粘贴到 OBS 的浏览器源。它会在透明背景上显示你欠下的量。",
     creer: "创建链接",
@@ -61,6 +66,7 @@ export const sourceObs = {
     aucun: "暂无链接。",
   },
   ja: {
+    echec: "処理が完了しませんでした。もう一度お試しください。",
     titre: "配信用カウンター",
     aide: "OBS のブラウザソースに貼り付けるアドレスです。透明な背景に、あなたの負債を表示します。",
     creer: "リンクを作成",

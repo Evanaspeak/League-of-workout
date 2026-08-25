@@ -12,6 +12,7 @@ import { sourceObs as dict } from "@/lib/i18n/dictionaries/sourceObs";
  */
 export function SourceObs() {
   const t = useT(dict);
+  const [echec, setEchec] = useState(false);
   const [jeton, setJeton] = useState<string | null | undefined>(undefined);
   const [copie, setCopie] = useState(false);
 
@@ -27,8 +28,16 @@ export function SourceObs() {
     : "";
 
   const agir = async (methode: "POST" | "DELETE") => {
-    const r = await fetch("/api/obs", { method: methode });
-    if (r.ok) setJeton((await r.json()).jeton);
+    setEchec(false);
+    // Sans message, un refus ne produit rien : le bouton a l'air de ne pas
+    // marcher, et on reclique.
+    try {
+      const r = await fetch("/api/obs", { method: methode });
+      if (!r.ok) { setEchec(true); return; }
+      setJeton((await r.json()).jeton);
+    } catch {
+      setEchec(true);
+    }
   };
 
   const copier = async () => {
@@ -46,6 +55,7 @@ export function SourceObs() {
       <div>
         <h2 className="titre-section">{t.titre}</h2>
         <p className="text-xs mt-1" style={{ color: "var(--steel)" }}>{t.aide}</p>
+        {echec && <p role="alert" className="text-xs mt-1" style={{ color: "var(--loss)" }}>{t.echec}</p>}
       </div>
 
       {jeton ? (

@@ -40,11 +40,15 @@ export default function AdminSignalements() {
 
   const basculer = async (l: Signalement) => {
     const statut = l.statut === "ouvert" ? "traite" : "ouvert";
-    await fetch("/api/admin/signalements", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: l.id, statut }),
-    });
+    // `relire()` seul suffit à masquer l'échec : la liste revient telle
+    // qu'elle était, et on croit avoir mal cliqué.
+    try {
+      await fetch("/api/admin/signalements", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: l.id, statut }),
+      });
+    } catch { /* la relecture ci-dessous montrera l'état réel */ }
     await relire();
   };
 

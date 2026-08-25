@@ -86,6 +86,8 @@ export async function POST(request: Request) {
     // jamais ouvrir. On l'inscrit donc explicitement.
     await autoriserAdresse(email);
 
+    // Même raison qu'à l'inscription : sans objectif par défaut, la barre de
+    // progression ne s'affiche pas, et c'est tout. Le compte, lui, existe.
     await prisma.goal
       .create({ data: { userId: user.id, objectifTotalPompes: 1000 } })
       .catch(() => {});

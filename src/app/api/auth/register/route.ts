@@ -70,6 +70,10 @@ export async function POST(request: Request) {
       },
     });
 
+    // L'objectif par défaut n'est pas une condition d'existence du compte :
+    // sans lui, la barre de progression ne s'affiche pas, et c'est tout. Faire
+    // échouer l'inscription pour ça reviendrait à refuser un compte parce
+    // qu'une décoration manque.
     await prisma.goal
       .create({ data: { userId: user.id, objectifTotalPompes: 1000 } })
       .catch(() => {});

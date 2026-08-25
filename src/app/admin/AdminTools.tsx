@@ -28,25 +28,37 @@ export default function AdminTools() {
     if (!input.trim()) return;
     setSaving(true);
     setMsg(null);
-    const res = await fetch("/api/admin/whitelist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: input.trim() }),
-    });
-    const d = await res.json();
-    if (d.emails) { setEmails(d.emails); setInput(""); setMsg({ texte: t.added, ok: true }); }
-    else setMsg({ texte: translateApiError(d.error, locale) || t.error, ok: false });
-    setSaving(false);
+    try {
+      const res = await fetch("/api/admin/whitelist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: input.trim() }),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (d.emails) { setEmails(d.emails); setInput(""); setMsg({ texte: t.added, ok: true }); }
+      else setMsg({ texte: translateApiError(d.error, locale) || t.error, ok: false });
+    } catch {
+      setMsg({ texte: t.error, ok: false });
+    } finally {
+      setSaving(false);
+    }
     setTimeout(() => setMsg(null), 3000);
   }
 
   async function remove(email: string) {
-    await fetch("/api/admin/whitelist", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    setEmails(prev => prev.filter(e => e !== email));
+    // L'adresse ne quitte la liste que si elle a quitté la base : sinon on
+    // croit avoir retiré un accès qui tient toujours.
+    try {
+      const res = await fetch("/api/admin/whitelist", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) { setMsg({ texte: t.error, ok: false }); return; }
+      setEmails(prev => prev.filter(e => e !== email));
+    } catch {
+      setMsg({ texte: t.error, ok: false });
+    }
   }
 
   return (
