@@ -248,6 +248,15 @@ devant valoir la même chose que la variable d'environnement du même nom côté
 Vercel. Sans secret configuré, la route refuse tout le monde — une variable
 oubliée ne doit pas transformer un déclencheur en porte ouverte.
 
+**Ils sont posés, et ça se vérifie dans le journal, pas sur la pastille.** Le
+25 août à 04h02, les deux déclencheurs répondent 200 :
+`{"examines":0,"envoyes":0,"relances":0}` pour le rappel du matin,
+`{"examines":1,"envoyes":0}` pour le bilan. Zéro envoi est le résultat normal à
+cette heure-là et un mardi. Un 401 dirait que le secret ne correspond pas à
+celui de Vercel ; un `::warning::` dirait qu'il manque. C'est la seule façon de
+le savoir : par conception ce travail rend du vert quoi qu'il arrive, pour ne
+pas envoyer vingt-quatre courriels d'échec par jour.
+
 Tant qu'ils manquent, le travail **s'arrête sans échouer**. Un travail horaire
 qui échoue enverrait vingt-quatre courriels d'échec par jour jusqu'à ce que
 quelqu'un cède et le coupe : c'est l'inverse de ce qu'on veut. Voir « Les
@@ -900,31 +909,84 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
-### Constaté, pas corrigé : le stockage local n'est gardé nulle part
-Recensé le 25 août au matin, et **laissé en l'état** : 49 accès à
-`localStorage` ou `sessionStorage` ne sont pas enveloppés dans un `try`, dans
-25 fichiers. Un navigateur réglé pour bloquer les données de site fait lever
-l'accès lui-même — pas l'écriture, l'accès — avec une `SecurityError`.
+### La sauvegarde échouait encore, avec exactement la même ligne d'erreur
+Trouvée en lisant le journal d'un travail programmé plutôt que sa pastille —
+la même méthode qui a montré, dix minutes plus tôt, que les secrets d'envoi
+étaient bien posés. Deux exécutions rouges d'affilée, dont celle de 03h58 ce
+matin, sur :
 
-Ce que ça coûte là où c'est le plus grave : `LoginButtons`, `SessionGuard` et
-`OnboardingModal` sont sur le chemin critique. Une exception y casse l'écran de
-connexion en entier, pour quelqu'un qui n'a aucun recours et aucune raison de
-faire le lien avec un réglage de son navigateur.
+```
+pg_dump: error: aborting because of server version mismatch
+pg_dump: detail: server version: 18.6 ; pg_dump version: 16.15
+```
 
-C'est rare : il faut avoir explicitement bloqué les données de site. La
-navigation privée moderne, elle, ne lève pas — elle oublie, ce qui est déjà
-traité partout où la valeur est facultative.
+C'est mot pour mot l'erreur déjà corrigée plus bas. La correction précédente
+était pourtant juste : le numéro se demande au serveur (`SHOW
+server_version_num` rend 18), et `postgresql-client-18` est bel et bien
+installé — le journal le montre.
 
-**Pourquoi ce n'est pas corrigé cette nuit.** La bonne forme est un petit
-module (`lire`, `ecrire`, `effacer`, et leurs équivalents de session) et le
-remplacement des 49 appels. C'est mécanique, donc ça se fait vite et ça se
-relit mal : quarante-neuf substitutions dans vingt-cinq composants, à quatre
-heures du matin, sans le temps de rejouer la suite navigateur entière derrière.
-Une correction mécanique qu'on ne peut pas éprouver en entier coûte plus cher
-que le défaut qu'elle vise. Un garde structurel refusant tout `localStorage.`
-direct hors du module va avec, et se pose en même temps ou pas du tout.
+**Ce n'est pas le paquet, c'est le PATH.** L'image du runner place
+`/usr/lib/postgresql/16/bin` devant, donc `pg_dump` reste en 16.15 quoi qu'on
+installe. Le répertoire du client demandé passe maintenant en tête par
+`$GITHUB_PATH`.
 
-À prendre en premier sur une fenêtre qui a la place.
+Et surtout : **l'étape imprimait déjà `pg_dump (PostgreSQL) 16.15` sous un
+serveur 18, à chaque exécution, depuis le premier jour.** La preuve du défaut
+était dans le journal, et le journal ne se lit pas. La ligne compare
+maintenant, et sort en erreur quand les deux numéros diffèrent. Un contrôle qui
+affiche sans comparer ne contrôle rien : c'est le même défaut que le
+`|| true` du contrôle de schéma, sous une autre forme.
+
+À retenir sur le test qui l'accompagnait : `src/sauvegardeVersion.test.ts`
+exigeait trois choses, toutes vraies, pendant que la sauvegarde échouait. Un
+test peut être entièrement satisfait et complètement à côté — il éprouvait
+l'intention (« demander la version au serveur ») et pas le résultat (« l'outil
+employé a-t-il cette version »).
+
+Deux sabotages, deux échecs.
+
+### Le stockage du navigateur n'était gardé nulle part
+`localStorage` n'est pas une propriété qu'on lit : c'est un **accesseur**, et
+il lève quand le navigateur est réglé pour bloquer les données de site. Pas
+l'écriture — l'accès. Soixante et un appels de l'application le faisaient à nu,
+dans dix-neuf fichiers, dont `LoginButtons`, `SessionGuard` et
+`OnboardingModal` : une exception y casse l'écran de connexion en entier, pour
+quelqu'un qui n'a aucun recours et aucune raison de faire le lien avec un
+réglage de son navigateur.
+
+C'est rare — il faut avoir explicitement bloqué les données de site ; la
+navigation privée moderne, elle, oublie sans lever. Mais le coût, quand ça
+arrive, est total et muet.
+
+`src/lib/stockage.ts` traite le cas une fois : `lire`, `ecrire`, `effacer`,
+leurs équivalents de session, et deux variantes JSON. Une valeur absente et un
+stockage indisponible s'y traitent pareil — l'application n'a rien à faire de
+la distinction, dans les deux cas elle ne sait pas et elle doit continuer.
+
+Trois choses apprises en l'écrivant, toutes par sabotage :
+
+- **Deux de mes gardes ne gardaient rien.** J'avais mis un `try` autour de
+  l'accesseur DANS le module, en plus de celui de chaque fonction publique. Le
+  retirer laissait la suite verte : le second rattrapait déjà tout. Une ligne
+  qui ne fait pas tomber un test quand on l'enlève ne tient rien, et elle se
+  relit comme une garantie. Elle est partie ; chacune de celles qui restent
+  fait tomber son test.
+- **Le garde de rendu serveur, lui, reste sans être prouvé**, et c'est écrit
+  dans le commentaire du test : le `catch` rattraperait la `ReferenceError`,
+  donc le test ne peut pas les distinguer. Il est là pour ne pas faire du
+  chemin normal du serveur une exception levée à chaque rendu, pas pour la
+  correction du résultat.
+- **Deux suites doublaient `globalThis.localStorage`.** Le module lit
+  `window.localStorage` : leur doublure n'était plus lue du tout, et
+  `journalSynchro` gardait en prime un `if (typeof localStorage === "undefined")`
+  devenu faux. Onze tests sont tombés d'un coup, ce qui est la bonne nouvelle —
+  une doublure posée à côté fait éprouver un stockage vide en croyant éprouver
+  le sien.
+
+`src/stockageGarde.test.ts` refuse tout accès direct hors du module, et vérifie
+que le module, lui, y touche vraiment : sans ce second contrôle, le motif
+pourrait disparaître partout, y compris là où il doit être, et le test
+resterait vert en ne gardant plus rien.
 
 ### Une partie que rien n'avait pu lire disparaissait sans un mot
 La correction de l'issue illisible s'arrêtait un cran trop bas.

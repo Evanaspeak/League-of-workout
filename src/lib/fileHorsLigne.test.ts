@@ -22,13 +22,26 @@ function stockageFactice() {
 
 const reponse = (status: number) => ({ ok: status >= 200 && status < 300, status });
 
+/**
+ * Le stockage se pose sur `window`, pas sur `globalThis`.
+ *
+ * Le module passe par `src/lib/stockage.ts`, qui lit `window.localStorage` :
+ * c'est l'accesseur qui lève quand le navigateur bloque les données de site,
+ * et c'est donc lui qu'il faut traverser. Une doublure posée à côté ne serait
+ * jamais lue, et la suite éprouverait un stockage vide en croyant éprouver le
+ * sien.
+ */
+function poserStockage(valeur: unknown) {
+  globalThis.window = {
+    dispatchEvent: jest.fn(),
+    localStorage: valeur,
+    // `dispatchEvent` sert à rafraîchir la pastille ; il n'est pas éprouvé ici.
+  } as unknown as Window & typeof globalThis;
+}
+
 beforeEach(() => {
-  Object.defineProperty(globalThis, "localStorage", {
-    value: stockageFactice(), configurable: true, writable: true,
-  });
+  poserStockage(stockageFactice());
   globalThis.fetch = jest.fn();
-  // `dispatchEvent` sert à rafraîchir la pastille ; il n'est pas éprouvé ici.
-  globalThis.window = { dispatchEvent: jest.fn() } as unknown as Window & typeof globalThis;
 });
 
 describe("mettre de côté", () => {
@@ -59,15 +72,12 @@ describe("mettre de côté", () => {
   });
 
   test("un stockage qui refuse d'écrire ne fait pas tomber l'application", () => {
-    Object.defineProperty(globalThis, "localStorage", {
-      value: { getItem: () => null, setItem: () => { throw new Error("refusé"); } },
-      configurable: true, writable: true,
-    });
+    poserStockage({ getItem: () => null, setItem: () => { throw new Error("refusé"); } });
     expect(() => enfiler({ secondes: 60, jour: "2026-08-23" })).not.toThrow();
   });
 
   test("un contenu illisible se lit comme une file vide", () => {
-    localStorage.setItem(CLE, "{ceci n'est pas du JSON");
+    window.localStorage.setItem(CLE, "{ceci n'est pas du JSON");
     expect(lireFile()).toEqual([]);
   });
 });

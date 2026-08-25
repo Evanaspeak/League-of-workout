@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { ecrireSession, lire, lireSession } from "@/lib/stockage";
 
 export function SessionGuard() {
   const path = usePathname();
@@ -21,13 +22,13 @@ export function SessionGuard() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("li") === "1") {
       // Première arrivée après connexion → marque la session navigateur comme active
-      sessionStorage.setItem("low_alive", "1");
+      ecrireSession("low_alive", "1");
 
       // Les connexions OAuth repartent par une redirection : impossible de
       // demander un cookie volatile depuis la page de connexion, qu'on a déjà
       // quittée. On le fait ici, au premier atterrissage, sinon la case
       // décochée ne changerait rien pour Google et Discord.
-      if (localStorage.getItem("low_rm") === "false") {
+      if (lire("low_rm") === "false") {
         fetch("/api/auth/session-volatile", { method: "POST" }).catch(() => {});
       }
 
@@ -38,11 +39,11 @@ export function SessionGuard() {
     }
 
     // Si "Rester connecté" est actif (ou jamais configuré), pas de déconnexion auto
-    const rm = localStorage.getItem("low_rm");
+    const rm = lire("low_rm");
     if (rm !== "false") return;
 
     // "Rester connecté" désactivé : la session n'est valide que tant que l'onglet reste ouvert
-    const alive = sessionStorage.getItem("low_alive");
+    const alive = lireSession("low_alive");
     if (alive) return;
 
     // sessionStorage vide = le navigateur a été fermé et rouvert → déconnexion

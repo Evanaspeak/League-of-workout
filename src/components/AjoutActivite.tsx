@@ -18,6 +18,7 @@ import { JeuSelector } from "@/components/JeuSelector";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
+import { ecrire, lire } from "@/lib/stockage";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export function AjoutActivite({
   const champList = useChampions();
   const [exercicesAjout, setExercicesAjout] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
   const [showAddForm, setShowAddForm] = useState(enModale);
-  const roleMemorise = useValeurClient(() => localStorage.getItem("lastRole") ?? "Jungle", "Jungle");
+  const roleMemorise = useValeurClient(() => lire("lastRole") ?? "Jungle", "Jungle");
   const [addForm, setAddForm] = useState({
     role: "", champion: "", kills: "", deaths: "", assists: "", result: "D",
   });
@@ -130,7 +131,7 @@ export function AjoutActivite({
   // Taille d'équipe du mode joué (1 = solo, 4 = squad). Mémorisée d'une partie
   // sur l'autre : on ne change pas de mode à chaque game. Relue du navigateur
   // plutôt que posée dans un effet, qui imposait un second rendu du formulaire.
-  const modeMemorise = useValeurClient(() => Number(localStorage.getItem("lastModeBr")) || 1, 1);
+  const modeMemorise = useValeurClient(() => Number(lire("lastModeBr")) || 1, 1);
   const [modeChoisi, setModeChoisi] = useState<number | null>(null);
   const tailleEquipe = modeChoisi ?? modeMemorise;
   const setTailleEquipe = setModeChoisi;
@@ -264,7 +265,7 @@ export function AjoutActivite({
   });
 
   const openAddForm = (role?: string) => {
-    const savedRole = localStorage.getItem("lastRole") ?? "Jungle";
+    const savedRole = lire("lastRole") ?? "Jungle";
     setAddForm((f) => ({ ...f, role: role ?? savedRole }));
     setPreview(null);
     setAddLogged(false);
@@ -495,7 +496,7 @@ export function AjoutActivite({
                   <select className="lol-select w-full" value={roleActif}
                     onChange={(e) => {
                       setAddForm((f) => ({ ...f, role: e.target.value }));
-                      localStorage.setItem("lastRole", e.target.value);
+                      ecrire("lastRole", e.target.value);
                      
                     }}>
                     {ROLES_FORM.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -529,7 +530,7 @@ export function AjoutActivite({
                           aria-pressed={actif}
                           onClick={() => {
                             setTailleEquipe(taille);
-                            localStorage.setItem("lastModeBr", String(taille));
+                            ecrire("lastModeBr", String(taille));
                            
                           }}
                           style={{

@@ -18,6 +18,7 @@
  * réponse, et une réponse perdue en chemin est indiscernable d'une requête
  * jamais arrivée.
  */
+import { ecrire, lire } from "./stockage";
 
 const CLE = "low_file_paiements";
 
@@ -56,7 +57,7 @@ function prevenir() {
  */
 export function lireFile(): PaiementEnAttente[] {
   try {
-    const brut = localStorage.getItem(CLE);
+    const brut = lire(CLE);
     if (!brut) return [];
     const lu = JSON.parse(brut);
     return Array.isArray(lu) ? lu.filter((e) => e && typeof e.jeton === "string") : [];
@@ -65,9 +66,9 @@ export function lireFile(): PaiementEnAttente[] {
   }
 }
 
-function ecrire(file: PaiementEnAttente[]) {
+function ecrireFile(file: PaiementEnAttente[]) {
   try {
-    localStorage.setItem(CLE, JSON.stringify(file.slice(-MAX)));
+    ecrire(CLE, JSON.stringify(file.slice(-MAX)));
   } catch {
     /* stockage refusé : la file ne survivra pas au rechargement, tant pis */
   }
@@ -88,12 +89,12 @@ function nouveauJeton(): string {
 /** Met une séance de côté. Rend son jeton. */
 export function enfiler(entree: Omit<PaiementEnAttente, "jeton" | "quand">): string {
   const jeton = nouveauJeton();
-  ecrire([...lireFile(), { ...entree, jeton, quand: Date.now() }]);
+  ecrireFile([...lireFile(), { ...entree, jeton, quand: Date.now() }]);
   return jeton;
 }
 
 function retirer(jeton: string) {
-  ecrire(lireFile().filter((e) => e.jeton !== jeton));
+  ecrireFile(lireFile().filter((e) => e.jeton !== jeton));
 }
 
 /**

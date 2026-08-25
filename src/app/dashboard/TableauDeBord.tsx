@@ -63,6 +63,7 @@ const GraphiquesGlobaux = dynamic(
   { ssr: false, loading: () => <PlaceGraphique double /> },
 );
 import { Squelette } from "@/components/dashboard/Squelette";
+import { ecrire, lire } from "@/lib/stockage";
 
 /**
  * `jour` (0 = dimanche) et `mois` (0 = janvier) viennent du serveur ; `label`
@@ -174,11 +175,11 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const [filtreJeu, setFiltreJeu] = useState<string | null>(null);
   // Jeu de la prochaine session, mémorisé d'une fois sur l'autre.
   const [jeuChoisi, setJeuChoisi] = useState<string>(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("lastJeu") ?? JEU_DEFAUT;
+    if (typeof window !== "undefined") return lire("lastJeu") ?? JEU_DEFAUT;
     return JEU_DEFAUT;
   });
   const [typeJeuChoisi, setTypeJeuChoisi] = useState<TypeJeu>(() => {
-    if (typeof window !== "undefined") return typeDuJeu(localStorage.getItem("lastJeu") ?? JEU_DEFAUT);
+    if (typeof window !== "undefined") return typeDuJeu(lire("lastJeu") ?? JEU_DEFAUT);
     return "parties";
   });
   const [arretEnCours, setArretEnCours] = useState(false);
@@ -314,7 +315,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     pompesMax > 0 && niveaux.length > 0 ? getLevelParPompes(pompesMax, niveaux).niveau : 1;
 
   const handleDemarrerSession = async () => {
-    localStorage.setItem("lastJeu", jeuChoisi);
+    ecrire("lastJeu", jeuChoisi);
     // La fenêtre reste ouverte : elle bascule sur l'état de la session qui vient
     // de démarrer, ce qui confirme le lancement sans clic supplémentaire.
     // Le choix fait ici devient la préférence, pour l'ARAM du chaos comme pour

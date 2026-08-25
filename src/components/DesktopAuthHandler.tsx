@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { effacer, lire } from "@/lib/stockage";
 
 /**
  * Un seul transfert par chargement de page.
@@ -23,8 +24,8 @@ export function DesktopAuthHandler() {
     // Ne s'exécute pas dans l'app Electron elle-même.
     if (window.electronLOL?.isDesktop) return;
     // Ne s'exécute que si Electron a ouvert Chrome avec ?_desktop=1 ET son aléa.
-    if (!localStorage.getItem("low_desktop_handoff")) return;
-    const nonce = localStorage.getItem("low_desktop_nonce");
+    if (!lire("low_desktop_handoff")) return;
+    const nonce = lire("low_desktop_nonce");
     if (!nonce) return;
     if (transfertLance) return;
     transfertLance = true;
@@ -33,8 +34,8 @@ export function DesktopAuthHandler() {
     // pendant que l'application restait déconnectée, sans rien pour le dire.
     // On le nomme, sinon la panne est indiscernable d'une réussite.
     const oublier = () => {
-      localStorage.removeItem("low_desktop_handoff");
-      localStorage.removeItem("low_desktop_nonce");
+      effacer("low_desktop_handoff");
+      effacer("low_desktop_nonce");
     };
     const echouer = (raison: string) => {
       oublier();

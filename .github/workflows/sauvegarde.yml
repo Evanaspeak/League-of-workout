@@ -115,7 +115,25 @@ jobs:
           sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           sudo apt-get update -qq
           sudo apt-get install -y -qq "postgresql-client-$MAJEUR"
-          pg_dump --version
+
+          # Installer le bon paquet ne suffit pas : l'image du runner met déjà
+          # `/usr/lib/postgresql/16/bin` devant dans le PATH, donc `pg_dump`
+          # restait en 16.15 et refusait un serveur 18. Le paquet 18 était bien
+          # posé, et la sauvegarde échouait quand même — c'est le PATH qu'il
+          # fallait regarder, pas la liste des paquets.
+          echo "/usr/lib/postgresql/$MAJEUR/bin" >> "$GITHUB_PATH"
+          export PATH="/usr/lib/postgresql/$MAJEUR/bin:$PATH"
+
+          # Et on VÉRIFIE, au lieu d'afficher. L'étape imprimait déjà
+          # « pg_dump (PostgreSQL) 16.15 » sous un serveur 18 : la preuve du
+          # défaut était dans le journal depuis le premier jour, et personne ne
+          # lit un journal vert. Un contrôle qui n'échoue pas ne contrôle rien.
+          vue=$(pg_dump --version | grep -oE '[0-9]+' | head -1)
+          echo "pg_dump vu : $vue, serveur : $MAJEUR"
+          if [ "$vue" != "$MAJEUR" ]; then
+            echo "::error::pg_dump est en $vue alors que le serveur est en $MAJEUR. Le paquet postgresql-client-$MAJEUR est posé mais le PATH pointe ailleurs."
+            exit 1
+          fi
 
       - name: Exporter
         if: steps.secrets.outputs.prets == 'oui'

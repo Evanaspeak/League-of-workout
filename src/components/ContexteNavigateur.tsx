@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { ecrireSession, lireSession } from "@/lib/stockage";
 
 /**
  * Remonte vers le compte les deux choses que seul le navigateur connaît : la
@@ -50,7 +51,7 @@ export function ContexteNavigateur() {
     // une requête de moins, pas une page plus rapide, et il ne faut pas se
     // raconter le contraire.
     try {
-      if (sessionStorage.getItem(CLE_ENVOYE) === cle) { envoye.current = cle; return; }
+      if (lireSession(CLE_ENVOYE) === cle) { envoye.current = cle; return; }
     } catch { /* stockage refusé : on écrira, ce qui reste correct */ }
     envoye.current = cle;
 
@@ -65,7 +66,7 @@ export function ContexteNavigateur() {
         }),
       }).then((r) => {
         if (!r.ok) throw new Error(String(r.status));
-        try { sessionStorage.setItem(CLE_ENVOYE, cle); } catch { /* sans mémoire */ }
+        try { ecrireSession(CLE_ENVOYE, cle); } catch { /* sans mémoire */ }
       }).catch(() => {
         // Hors ligne, ou session expirée : on retentera au prochain changement.
         envoye.current = null;

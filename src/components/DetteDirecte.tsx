@@ -5,6 +5,7 @@ import {
 } from "@/lib/exercices";
 import { ROLE_DEFAUT } from "@/components/PartieDetectee";
 import type { ContextePartie, ScoreDirect } from "@/types/electron";
+import { lire } from "@/lib/stockage";
 
 /**
  * Ce que la partie en cours est en train de coûter, poussé vers l'overlay.
@@ -121,10 +122,7 @@ export function DetteDirecte() {
   }, [chargerAttente]);
 
   const calculer = useCallback(async (score: ScoreDirect) => {
-    const role =
-      contexteRef.current?.role
-      || (typeof localStorage !== "undefined" && localStorage.getItem("lastRole"))
-      || ROLE_DEFAUT;
+    const role = contexteRef.current?.role || lire("lastRole") || ROLE_DEFAUT;
 
     try {
       // Un seul aller-retour : l'aperçu en défaite rapporte le score de base, le

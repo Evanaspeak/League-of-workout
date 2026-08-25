@@ -11,6 +11,7 @@
  * l'application, un compte tout neuf n'avait donc droit à rien : ni accueil,
  * ni visite. C'est précisément le moment où l'on en a le plus besoin.
  */
+import { effacer, effacerSession } from "./stockage";
 
 /** Suffixe du compte, ou rien tant qu'on ne le connaît pas encore. */
 function pour(cle: string, uid: string | null | undefined): string {
@@ -35,11 +36,11 @@ export function cleVisite(uid: string | null | undefined): string {
 export function oublierPremiereVisite(uid?: string | null): void {
   if (typeof window === "undefined") return;
   // Écran d'ouverture : session, pas local.
-  sessionStorage.removeItem("splash");
-  localStorage.removeItem("low_onboarded");
-  localStorage.removeItem("low_visite");
+  effacerSession("splash");
+  effacer("low_onboarded");
+  effacer("low_visite");
   if (uid) {
-    localStorage.removeItem(cleOnboarding(uid));
-    localStorage.removeItem(cleVisite(uid));
+    effacer(cleOnboarding(uid));
+    effacer(cleVisite(uid));
   }
 }

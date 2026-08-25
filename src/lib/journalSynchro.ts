@@ -12,6 +12,7 @@
  * écrire une ligne en base toutes les deux minutes par personne connectée,
  * pour une information dont plus personne n'a besoin le lendemain.
  */
+import { ecrire, lire } from "./stockage";
 
 export type Resultat = "partie" | "rien" | "erreur" | "refus";
 
@@ -115,9 +116,12 @@ export function lireCode(code: number): { resultat: Resultat; motif: MotifSynchr
 
 /** Lit le journal du navigateur, sans jamais lever. */
 export function charger(): Entree[] {
-  if (typeof localStorage === "undefined") return [];
+  // Plus de garde `typeof localStorage` ici : la disponibilité du stockage est
+  // le travail de `src/lib/stockage.ts`, qui rend `null` quand il n'y a rien à
+  // ouvrir. Le garde était devenu faux — il regardait un objet global que le
+  // module ne lit plus.
   try {
-    const brut = localStorage.getItem(CLE);
+    const brut = lire(CLE);
     if (!brut) return [];
     const lu = JSON.parse(brut);
     if (!Array.isArray(lu)) return [];
@@ -133,9 +137,8 @@ export function charger(): Entree[] {
 
 /** Écrit le journal, sans jamais lever non plus. */
 export function enregistrer(journal: Entree[]): void {
-  if (typeof localStorage === "undefined") return;
   try {
-    localStorage.setItem(CLE, JSON.stringify(journal.slice(0, MAX_ENTREES)));
+    ecrire(CLE, JSON.stringify(journal.slice(0, MAX_ENTREES)));
   } catch {
     // Stockage plein ou refusé : le journal est un confort, pas une donnée.
   }

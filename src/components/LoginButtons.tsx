@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { loginButtons as loginButtonsDict } from "@/lib/i18n/dictionaries/loginButtons";
 import { translateApiError } from "@/lib/i18n/apiErrors";
+import { ecrire, ecrireSession, lire } from "@/lib/stockage";
 
 type Tab = "code" | "google" | "discord" | "email";
 type Mode = "login" | "register";
@@ -50,7 +51,7 @@ export function LoginButtons() {
   // Deux valeurs que seul le navigateur connaît : le pont de l'application
   // desktop, et le dernier choix de « rester connecté ».
   const isDesktop = useValeurClient(() => !!window.electronLOL?.isDesktop, false);
-  const memoriseStocke = useValeurClient(() => localStorage.getItem("low_rm") !== "false", true);
+  const memoriseStocke = useValeurClient(() => lire("low_rm") !== "false", true);
   // Tant que rien n'a été coché ici, c'est le choix précédent qui vaut.
   const [memoriseChoisi, setMemoriseChoisi] = useState<boolean | null>(null);
   const rememberMe = memoriseChoisi ?? memoriseStocke;
@@ -90,9 +91,9 @@ export function LoginButtons() {
   };
 
   const saveRm = () => {
-    localStorage.setItem("low_rm", rememberMe ? "true" : "false");
+    ecrire("low_rm", rememberMe ? "true" : "false");
     if (!rememberMe) {
-      sessionStorage.setItem("low_alive", "1");
+      ecrireSession("low_alive", "1");
     }
   };
 

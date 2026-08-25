@@ -7,6 +7,7 @@ import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/
 import { cleOnboarding } from "@/lib/premiereVisite";
 import { useIdCompte } from "@/lib/useIdCompte";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { ecrire, lire, lireSession } from "@/lib/stockage";
 
 /* Icônes stroke SVG des étapes d'onboarding */
 function StepIcon({ name }: { name: string }) {
@@ -63,14 +64,14 @@ export function OnboardingModal() {
     // Tant qu'on ignore à qui l'on s'adresse, on ne décide pas : la marque est
     // désormais celle du COMPTE, pas celle du navigateur.
     if (uid === undefined) return;
-    if (localStorage.getItem(cleOnboarding(uid))) return;
+    if (lire(cleOnboarding(uid))) return;
     // On attendait 2 800 ms dans tous les cas, pour laisser passer l'écran
     // d'ouverture. Or celui-ci ne joue qu'une fois par onglet : le reste du
     // temps on faisait patienter devant un tableau de bord déjà là, et
     // d'autant plus longtemps que la page était lourde à peindre — le délai
     // court à partir du montage. Quand il n'y a rien à laisser passer, on
     // n'attend que le temps de l'apparition.
-    const splashJoue = sessionStorage.getItem("splash") === null;
+    const splashJoue = lireSession("splash") === null;
     const timer = setTimeout(() => setVisible(true), splashJoue ? 2800 : 400);
     return () => clearTimeout(timer);
   }, [path, uid]);
@@ -78,7 +79,7 @@ export function OnboardingModal() {
   const close = () => {
     setClosing(true);
     setTimeout(() => {
-      localStorage.setItem(cleOnboarding(uid), "1");
+      ecrire(cleOnboarding(uid), "1");
       // La visite guidée prend le relais. Sans ce signal, elle ne réexaminait
       // la situation qu'au prochain changement de page ou de compte : on
       // restait donc plusieurs secondes devant un tableau de bord muet, la

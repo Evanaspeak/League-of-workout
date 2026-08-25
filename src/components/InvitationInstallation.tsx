@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { installation } from "@/lib/i18n/dictionaries/installation";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { ecrire, ecrireSession, lire, lireSession } from "@/lib/stockage";
 import {
   CLE_REFUS, CLE_SESSION, CLE_VISITES, compterVisite, dejaInstallee, estIOS,
   estTelephone, proposerInstallation, visitesLues,
@@ -63,7 +64,7 @@ export function InvitationInstallation() {
 
   const refuser = useCallback(() => {
     setVisible(false);
-    try { localStorage.setItem(CLE_REFUS, "1"); } catch { /* navigation privée */ }
+    try { ecrire(CLE_REFUS, "1"); } catch { /* navigation privée */ }
   }, []);
 
   useEffect(() => {
@@ -74,17 +75,17 @@ export function InvitationInstallation() {
     let visites = 0;
     let refuse = false;
     try {
-      const stocke = localStorage.getItem(CLE_VISITES);
+      const stocke = lire(CLE_VISITES);
       // Une visite se compte à l'ouverture, pas à chaque page : les écrans
       // suivants se contentent de relire.
-      if (sessionStorage.getItem(CLE_SESSION) === "1") {
+      if (lireSession(CLE_SESSION) === "1") {
         visites = visitesLues(stocke);
       } else {
         visites = compterVisite(stocke);
-        localStorage.setItem(CLE_VISITES, String(visites));
-        sessionStorage.setItem(CLE_SESSION, "1");
+        ecrire(CLE_VISITES, String(visites));
+        ecrireSession(CLE_SESSION, "1");
       }
-      refuse = localStorage.getItem(CLE_REFUS) === "1";
+      refuse = lire(CLE_REFUS) === "1";
     } catch {
       // Navigation privée ou stockage bloqué : on ne propose rien plutôt que
       // de reproposer à chaque page, faute de pouvoir retenir un refus.
@@ -135,7 +136,7 @@ export function InvitationInstallation() {
       await invite.prompt();
       const { outcome } = await invite.userChoice;
       // Un refus dans la boîte du navigateur vaut refus : on ne repassera pas.
-      if (outcome === "dismissed") localStorage.setItem(CLE_REFUS, "1");
+      if (outcome === "dismissed") ecrire(CLE_REFUS, "1");
     } catch { /* l'invite a expiré, on n'insiste pas */ }
   };
 

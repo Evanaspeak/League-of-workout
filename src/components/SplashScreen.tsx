@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useValeurClient } from "@/lib/valeurClient";
+import { ecrireSession, lireSession } from "@/lib/stockage";
 
 export function SplashScreen() {
   // Déjà vu pendant cette session : lu plutôt que déduit dans un effet, sinon
   // l'écran s'affiche le temps d'un rendu avant d'être retiré.
-  const dejaVu = useValeurClient(() => sessionStorage.getItem("splash") !== null, false);
+  const dejaVu = useValeurClient(() => lireSession("splash") !== null, false);
   // Deux temps : l'estompage, puis le retrait une fois la transition finie.
   const [estompe, setEstompe] = useState(false);
   const [parti, setParti] = useState(false);
@@ -19,7 +20,7 @@ export function SplashScreen() {
     // l'écran d'ouverture disparaissait dans la milliseconde. Personne ne l'a
     // jamais vu, pas même sur une session vierge.
     const t2 = setTimeout(() => {
-      sessionStorage.setItem("splash", "1");
+      ecrireSession("splash", "1");
       setParti(true);
     }, 2200);
     return () => { clearTimeout(t1); clearTimeout(t2); };

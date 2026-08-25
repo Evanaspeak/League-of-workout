@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useMemo } from "react";
 import { useValeurClient } from "@/lib/valeurClient";
 import { estLocale, etiquetteLocale, type Locale } from "./langues";
+import { ecrire, lire } from "@/lib/stockage";
 
 // La liste elle-même vit dans un module sans React : une route API qui valide
 // une langue n'a pas à tirer tout le contexte avec elle. Réexportée ici, où
@@ -29,7 +30,7 @@ function abonner(onChange: () => void) {
  * française, y compris des anglophones qui n'avaient rien demandé.
  */
 function lireLangue(): Locale {
-  const stocke = localStorage.getItem(STORAGE_KEY);
+  const stocke = lire(STORAGE_KEY);
   if (estLocale(stocke)) return stocke;
   // `navigator.language` rend « fr-BE », « zh-Hant-TW », « pt-BR »… Seule la
   // première étiquette nous intéresse, et ce qu'on ne connaît pas devient de
@@ -53,7 +54,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const valeur = useMemo<Ctx>(() => ({
     locale,
     setLocale: (l: Locale) => {
-      localStorage.setItem(STORAGE_KEY, l);
+      ecrire(STORAGE_KEY, l);
       for (const prevenir of abonnes) prevenir();
     },
   }), [locale]);

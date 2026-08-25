@@ -7,6 +7,7 @@ import {
 } from "@/lib/exercices";
 import { JEU_DEFAUT, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 import { notifierSysteme } from "@/lib/notifier";
+import { ecrire, effacer, lire } from "./stockage";
 
 const POLL_MS = 2 * 60 * 1000;
 /** Le chrono d'une session au temps rafraîchit son affichage à la seconde. */
@@ -151,7 +152,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setChronoSec(0);
     setTypeSession("parties");
     typeSessionRef.current = "parties";
-    if (typeof window !== "undefined") localStorage.removeItem(CHRONO_STORAGE_KEY);
+    if (typeof window !== "undefined") effacer(CHRONO_STORAGE_KEY);
   }, []);
 
   /**
@@ -379,7 +380,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       chronoDebutRef.current = debut;
       if (typeof window !== "undefined") {
         const sauvegarde: ChronoSauvegarde = { jeu, debut, niveau };
-        localStorage.setItem(CHRONO_STORAGE_KEY, JSON.stringify(sauvegarde));
+        ecrire(CHRONO_STORAGE_KEY, JSON.stringify(sauvegarde));
       }
       lancerTickChrono();
       return;
@@ -422,15 +423,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // heures de Minecraft disparaîtraient sur un F5 malheureux.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const brut = localStorage.getItem(CHRONO_STORAGE_KEY);
+    const brut = lire(CHRONO_STORAGE_KEY);
     if (!brut) return;
 
     let sauvegarde: ChronoSauvegarde;
-    try { sauvegarde = JSON.parse(brut); } catch { localStorage.removeItem(CHRONO_STORAGE_KEY); return; }
+    try { sauvegarde = JSON.parse(brut); } catch { effacer(CHRONO_STORAGE_KEY); return; }
     const debut = Number(sauvegarde?.debut);
     // Au-delà de 12 h, c'est un chrono oublié plutôt qu'une session en cours.
     if (!debut || Date.now() - debut > 12 * 3600 * 1000) {
-      localStorage.removeItem(CHRONO_STORAGE_KEY);
+      effacer(CHRONO_STORAGE_KEY);
       return;
     }
 

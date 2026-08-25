@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
 import { Wordmark } from "@/components/Wordmark";
+import { ecrire, effacer } from "@/lib/stockage";
 
 /**
  * Arme le transfert, puis part chez le fournisseur.
@@ -30,9 +31,9 @@ export function ConnexionAppClient({
 
   useEffect(() => {
     if (!nonce) return;
-    localStorage.setItem("low_desktop_handoff", "1");
-    localStorage.setItem("low_desktop_nonce", nonce);
-    localStorage.removeItem("low_desktop_arme");
+    ecrire("low_desktop_handoff", "1");
+    ecrire("low_desktop_nonce", nonce);
+    effacer("low_desktop_arme");
 
     let vivant = true;
     // On ouvre le tour AVANT de partir, et dans sa propre requête. C'est lui

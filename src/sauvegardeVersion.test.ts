@@ -51,6 +51,32 @@ describe("la sauvegarde", () => {
     expect(YAML).toMatch(/::error::.*conteneur de restauration/);
   });
 
+  /**
+   * Poser le bon paquet ne suffit pas.
+   *
+   * L'image du runner met `/usr/lib/postgresql/16/bin` devant dans le PATH :
+   * `postgresql-client-18` était bien installé, et `pg_dump` restait en 16.15.
+   * La sauvegarde échouait donc exactement comme avant la correction
+   * précédente, avec la même ligne d'erreur, alors que tout ce que ce test
+   * exigeait était vrai.
+   *
+   * Le journal l'écrivait, d'ailleurs : « pg_dump (PostgreSQL) 16.15 » sous un
+   * serveur 18, imprimé à chaque exécution. Personne ne lit un journal. Un
+   * contrôle qui affiche sans comparer ne contrôle rien.
+   */
+  it("met le client installé devant dans le PATH", () => {
+    expect(YAML).toContain('echo "/usr/lib/postgresql/$MAJEUR/bin" >> "$GITHUB_PATH"');
+  });
+
+  it("compare la version de pg_dump au lieu de l'afficher", () => {
+    const bloc = YAML.slice(
+      YAML.indexOf("Installer le client PostgreSQL"), YAML.indexOf("- name: Exporter"));
+    expect(bloc).toMatch(/pg_dump --version/);
+    // C'est la comparaison qui compte, pas l'affichage.
+    expect(bloc).toMatch(/if \[ "\$vue" != "\$MAJEUR" \]/);
+    expect(bloc).toMatch(/exit 1/);
+  });
+
   it("dit ce qu'elle a fait, même quand elle n'a rien fait", () => {
     expect(YAML).toContain("GITHUB_STEP_SUMMARY");
     expect(YAML).toContain("Aucune sauvegarde");
