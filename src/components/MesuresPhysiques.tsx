@@ -58,13 +58,23 @@ export function MesuresPhysiques() {
 
   const consentir = async (accepte: boolean) => {
     if (!accepte && !window.confirm(t.retirerConfirme)) return;
-    await fetch("/api/consentement", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accepte }),
-    });
-    if (!accepte) setForm(VIDE);
-    await relire();
+    setErreur(null);
+    try {
+      const r = await fetch("/api/consentement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accepte }),
+      });
+      // La réponse était ignorée. Un retrait de consentement qui échoue vidait
+      // pourtant le formulaire : on annonçait l'effacement de données que le
+      // serveur avait gardées. Sur des données de santé, c'est la promesse
+      // qu'on ne peut pas se permettre de tenir à moitié.
+      if (!r.ok) { setErreur(t.echec); return; }
+      if (!accepte) setForm(VIDE);
+      await relire();
+    } catch {
+      setErreur(t.echec);
+    }
   };
 
   const enregistrer = async () => {

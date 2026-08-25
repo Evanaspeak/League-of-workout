@@ -595,6 +595,33 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le test de force, refermé sur un échec qu'il n'annonçait pas
+`TestPompes.onEnregistre` rendait `void` : le panneau se fermait et la saisie
+s'effaçait **quoi qu'il arrive**. Sur le tableau de bord, où l'appelant avalait
+l'échec, on tapait son chiffre, le panneau se refermait, et rien n'était
+enregistré. C'est ce test qui fixe le niveau, donc le multiplicateur, donc
+toute la dette.
+
+La fonction rend maintenant un booléen, et le panneau ne se referme que si le
+chiffre est parti. Les deux appelants en profitent : celui des réglages
+annonçait déjà l'échec ailleurs sur la page, mais effaçait quand même la
+saisie — il fallait refaire le test pour de vrai.
+
+Trois autres appels sans `try` corrigés dans la même passe :
+- le **retrait du consentement santé** ignorait la réponse et vidait le
+  formulaire : on annonçait l'effacement de données que le serveur avait
+  gardées. Sur des données de santé, c'est la promesse qu'on ne peut pas tenir
+  à moitié ;
+- la **mise de côté d'un exercice** ne produisait rien du tout sans réseau : ni
+  changement, ni message ;
+- l'**enregistrement d'une partie**, déjà décrit plus haut.
+
+Le recensement se fait par un petit script qui cherche un `await fetch` sans
+`try` englobant dans les composants. Il rend dix-huit candidats, dont la moitié
+sont de faux positifs — un `.catch()` en bout de chaîne, un assistant commun
+qui porte déjà le `try`. Les lire un par un reste plus rapide que de les
+chercher à la main.
+
 ### L'historique annonçait des suppressions qui n'avaient pas eu lieu
 Le pire de la série, parce qu'il touche une action destructrice. `handleDelete`
 retirait la ligne de l'écran **quelle que soit** la réponse du serveur, et
