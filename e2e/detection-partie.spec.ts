@@ -98,6 +98,13 @@ test("une issue illisible n'enregistre rien, et le dit", async ({ browser }) => 
     { timeout: 15_000 },
   ).not.toHaveLength(0);
 
+  // Et le message porte les chiffres : sans eux, « ajoute la partie à la main »
+  // demande de se rappeler un KDA qu'on vient de quitter.
+  const dit = (await page.evaluate(() => (window as unknown as { __dits: string[] }).__dits)).join(" ");
+  expect(dit).toContain("Ahri");
+  expect(dit).toContain("8/3/11");
+  expect(dit).toContain("30 min");
+
   // Et surtout : rien n'a été écrit. C'est le défaut d'origine.
   expect((await nombreDeParties(ctx)).length).toBe(avant);
   await ctx.close();
