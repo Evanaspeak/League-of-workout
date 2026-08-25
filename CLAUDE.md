@@ -559,7 +559,13 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 - **Tuer le serveur avec `pkill -f`.** Le motif `next start -p 3311` figure
   aussi dans la ligne de commande du shell qui lance la commande : `pkill` tue
   le shell, le serveur survit, et le `next start` suivant échoue sur
-  EADDRINUSE dans un journal que personne ne lit. Huit tests navigateur ont
+  EADDRINUSE dans un journal que personne ne lit. **Retombé dedans le 25 août,
+  sur `playwright` cette fois** : un travail de fond dont le script contient
+  `npx playwright test` porte ce mot dans sa propre ligne de commande, donc
+  `pkill -f playwright` posé au début du même travail le tue lui-même. Sortie
+  144, aucun journal, pas même le fichier que le script devait écrire — la
+  panne ne ressemble à rien. La règle vaut pour tout motif, pas seulement pour
+  celui du serveur. Huit tests navigateur ont
   ainsi échoué sur un `.next` d'avant la reconstruction, et le diagnostic est
   parti vers une feuille de style absente qui n'a jamais existé. Trouver le
   processus (`ps -eo pid,args | grep next-server`) et le tuer par son numéro.
