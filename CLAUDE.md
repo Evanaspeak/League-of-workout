@@ -595,6 +595,26 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le lanceur pouvait répondre avant qu'on ait posé la question
+Relecture de la correction de la nuit, comme on relit le travail d'un autre.
+`attenteIssue` retient une fin de partie sans issue, le temps que le lanceur
+publie son écran de fin. C'est le cas courant : l'API de partie se tait quand
+le jeu se ferme, le lanceur bascule peu après.
+
+Rien ne garantit cet ordre. Si le lanceur bascule pendant que le jeu s'attarde,
+l'issue arrivait **sans partie à compléter** et se perdait pour de bon : la
+partie repartait ensuite sans résultat, donc n'était pas enregistrée, et la
+notification annonçait une lecture impossible alors que la réponse était
+arrivée trente secondes plus tôt.
+
+Une issue reçue sans rien qui attende est donc gardée une minute. Trois règles,
+trois tests, trois sabotages :
+- elle s'applique à la première fin de partie qui suit ;
+- elle est **consommée** : la resservir prêterait à la partie suivante un
+  résultat qui n'est pas le sien, c'est-à-dire le même défaut à l'envers ;
+- elle se périme : une réponse d'il y a dix minutes ne parle pas de la partie
+  qui vient de finir.
+
 ### L'application de bureau parlait français à tout le monde
 Le site a six langues et des tests qui les tiennent. La coquille Electron, elle,
 n'en avait qu'une, et rien ne le signalait : trente-sept textes écrits en dur en
