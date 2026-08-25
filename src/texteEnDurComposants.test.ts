@@ -1,0 +1,92 @@
+import fs from "node:fs";
+import path from "node:path";
+
+/**
+ * « Aucun texte dans un composant » est la règle numéro un du projet, et rien
+ * ne la tenait.
+ *
+ * `langueEnDur.test.ts` refuse qu'un composant COMPARE `locale` à une langue —
+ * c'est le raccourci qui avait laissé un écran en anglais pour quatre langues.
+ * Il ne dit rien d'une phrase française écrite directement dans le JSX, qui est
+ * la façon la plus simple d'arriver au même résultat.
+ *
+ * Le même garde, posé sur la coquille Electron la même nuit, y a trouvé cinq
+ * textes vivants. Ici il ne trouve rien : la discipline tient. C'est
+ * exactement le moment de la figer.
+ *
+ * Ce qui est cherché : une chaîne littérale contenant une lettre accentuée
+ * française. C'est grossier, et c'est ce qui le rend utile — une phrase
+ * française sans accent existe, mais elle est rare, et le coût d'un contrôle
+ * plus fin serait de ne plus rien attraper du tout.
+ */
+
+const DOSSIER = path.join(process.cwd(), "src", "components");
+
+/**
+ * Deux exemptions, chacune avec sa raison. Au-delà, il faudrait se demander si
+ * le garde sert encore.
+ */
+const EXEMPTS = new Set([
+  // Les noms de langue s'écrivent dans leur propre langue : « Français » n'est
+  // pas du français imposé, c'est le nom du choix qu'on propose.
+  "LanguageSwitcher.tsx",
+  // Le bandeau qui annonce, dans les quatre langues concernées, qu'un document
+  // juridique n'existe qu'en français et en anglais. Il est multilingue par
+  // construction.
+  "LangueDocument.tsx",
+]);
+
+/** Le texte d'un fichier, commentaires retirés. */
+function sansCommentaires(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((l) => !/^\s*\/\//.test(l))
+    .map((l) => l.replace(/\s\/\/.*$/, ""))
+    .join("\n");
+}
+
+function fichiers(dossier: string): string[] {
+  const trouves: string[] = [];
+  for (const e of fs.readdirSync(dossier, { withFileTypes: true })) {
+    const complet = path.join(dossier, e.name);
+    if (e.isDirectory()) trouves.push(...fichiers(complet));
+    else if (e.name.endsWith(".tsx") && !e.name.includes(".test.")) trouves.push(complet);
+  }
+  return trouves;
+}
+
+describe("aucun texte français en dur dans un composant", () => {
+  const tous = fichiers(DOSSIER);
+
+  it("lit bien des composants", () => {
+    // Sans ce contrôle, un dossier renommé rendrait le test vert sur zéro
+    // fichier lu — la forme d'erreur qu'on cherche précisément à éviter.
+    expect(tous.length).toBeGreaterThan(30);
+  });
+
+  it("n'en trouve aucun", () => {
+    const fautifs: string[] = [];
+    for (const complet of tous) {
+      const nom = path.basename(complet);
+      if (EXEMPTS.has(nom)) continue;
+      const texte = sansCommentaires(fs.readFileSync(complet, "utf8"));
+      for (const m of texte.matchAll(/"([^"\n]*[éèêàçûôîïœ][^"\n]*)"/g)) {
+        fautifs.push(`${nom} : ${m[1]}`);
+      }
+      for (const m of texte.matchAll(/'([^'\n]*[éèêàçûôîïœ][^'\n]*)'/g)) {
+        fautifs.push(`${nom} : ${m[1]}`);
+      }
+    }
+    expect(fautifs).toEqual([]);
+  });
+
+  it("chaque exemption désigne un fichier qui existe encore", () => {
+    // Une exemption qui survit au fichier qu'elle couvrait finit par en couvrir
+    // un autre, portant le même nom et rien à voir.
+    for (const nom of EXEMPTS) {
+      expect({ nom, existe: tous.some((f) => path.basename(f) === nom) })
+        .toEqual({ nom, existe: true });
+    }
+  });
+});
