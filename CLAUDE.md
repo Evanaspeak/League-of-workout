@@ -894,6 +894,32 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Une partie que rien n'avait pu lire disparaissait sans un mot
+La correction de l'issue illisible s'arrêtait un cran trop bas.
+`PartieDetectee` commence par :
+
+```ts
+if (!score) return;
+```
+
+Ne rien écrire est le bon choix — inventer une partie à zéro partout serait
+pire. Se taire ne l'est pas : la partie a été jouée, elle n'entre pas, et
+personne ne l'apprend. C'est mot pour mot le défaut corrigé trois lignes plus
+bas pour l'issue.
+
+Et le cas est atteignable, ce que j'ai vérifié avant d'y toucher : la boucle
+passe « en partie » dès sa première lecture réussie, et `fusionnerReleve` ne
+garde un relevé que s'il porte un score. Un joueur que l'API locale ne sait pas
+identifier dans sa propre partie sort donc de la boucle avec `partie: null`.
+
+Deux clés de plus dans les six langues, distinctes de l'issue illisible : les
+deux cas ne se ressemblent pas. Pour l'issue, on a les chiffres et on les
+donne ; ici on n'a rien, et le message ne peut que demander de saisir la
+partie. Réemployer le même texte aurait produit une phrase commençant par un
+point, ce qui est le signe qu'on force deux cas dans un moule.
+
+Le pont Electron simulé d'`e2e/detection-partie.spec.ts` a un septième cas.
+
 ### Le middleware comparait les chemins par lettres, comme le desktop
 Même défaut que les cinq comparaisons d'origine corrigées dans `desktop/`, un
 étage plus haut : `PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))`.
