@@ -9,7 +9,15 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/lib/rate-limit", () => ({
   isRateLimited: jest.fn(), recordAttempt: jest.fn(), getClientIp: () => "203.0.113.7",
 }));
-jest.mock("@/lib/email", () => ({ sendResetLink: jest.fn().mockResolvedValue(undefined) }));
+// La doublure remplace le module entier : tout ce que les routes en lisent
+// doit y figurer, sinon l'appel rend `undefined` et la route tombe en 500 sans
+// que le message dise pourquoi.
+const courrielConfigure = jest.fn(() => true);
+jest.mock("@/lib/email", () => ({
+  sendResetLink: jest.fn().mockResolvedValue(undefined),
+  courrielConfigure: () => courrielConfigure(),
+  SITE_URL: "https://exemple.test",
+}));
 
 import { POST as demander } from "./forgot-code/route";
 import { POST as valider } from "./reset-code/route";
@@ -46,6 +54,26 @@ beforeEach(() => {
  * seule demande, et des sessions qui survivaient à la reprise en main.
  */
 describe("POST /api/auth/forgot-code", () => {
+  it("dit que la récupération est indisponible quand le courriel n'est pas configuré", async () => {
+    // C'est la seule façon de rentrer quand on a perdu son code. Sans clé
+    // configurée, la route répondait « c'est parti » et rien ne partait : une
+    // attente sans fin, sur un déploiement qui a simplement oublié une
+    // variable.
+    courrielConfigure.mockReturnValueOnce(false);
+    const r = await dmd({ email: "joueur@example.com" });
+    expect(r.status).toBe(503);
+    expect((await corps(r) as { error: string }).error).toMatch(/pas disponible/);
+  });
+
+  it("ne lit rien en base et ne compte aucune tentative quand le courriel manque", async () => {
+    // Le contrôle ne dépend d'aucun compte : il n'apprend donc rien sur
+    // l'adresse saisie, et il n'a pas à consommer le budget de quelqu'un.
+    courrielConfigure.mockReturnValueOnce(false);
+    await dmd({ email: "joueur@example.com" });
+    expect(user.findUnique).not.toHaveBeenCalled();
+    expect(bride).not.toHaveBeenCalled();
+  });
+
   it("répond pareil que l'adresse existe ou non", async () => {
     // Une réponse différente permettrait d'énumérer les comptes.
     const connue = await dmd({ email: "joueur@example.com" });
