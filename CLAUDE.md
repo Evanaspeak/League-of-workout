@@ -595,6 +595,20 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La page d'accueil sous-vendait ce qui marche déjà
+« Suivi automatique des parties League dès que Riot nous ouvre l'API. » C'était
+vrai le jour où la phrase a été écrite, et faux depuis que l'application
+Windows détecte les parties par l'API locale du jeu, sans aucune clé. Quelqu'un
+qui lit la page d'accueil en conclut que la détection automatique n'existe pas
+encore, alors qu'elle est le seul chemin automatique disponible aujourd'hui.
+
+C'est la page qui amène les gens, et la phrase parle de la fonctionnalité qui
+vient d'être réparée trois fois cette nuit. Corrigée dans les six langues.
+
+Ce que ça apprend : une phrase honnête au moment où on l'écrit devient
+malhonnête quand le produit avance. Elle vieillit d'autant plus vite qu'elle
+décrit ce qui manque, parce que c'est précisément ce sur quoi on travaille.
+
 ### Le test de force, refermé sur un échec qu'il n'annonçait pas
 `TestPompes.onEnregistre` rendait `void` : le panneau se fermait et la saisie
 s'effaçait **quoi qu'il arrive**. Sur le tableau de bord, où l'appelant avalait
