@@ -595,6 +595,25 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Décocher un jeu en pleine partie laissait la pastille à l'écran
+Troisième boucle sans test, et celle-ci cachait un vrai défaut : quand la liste
+des jeux surveillés se vide, l'état interne était remis à zéro **sans rien
+signaler**. Personne n'apprenait que le jeu s'était arrêté. La pastille restait
+donc à l'écran, par-dessus le jeu, jusqu'à ce qu'on recoche la case puis referme
+le jeu pour de bon.
+
+Ce n'est pas un cas tordu : décocher un jeu pendant qu'on y joue est exactement
+ce qu'on fait quand la pastille gêne.
+
+Elle repart maintenant en annonçant l'arrêt de ce qui tournait. Trois sabotages,
+trois échecs — dont le chevauchement, **vingt-trois requêtes en vol** sans
+verrou, et la comparaison de noms d'exécutables qui doit rester insensible à la
+casse et accepter les deux binaires d'Apex.
+
+Les trois boucles de détection ont désormais le même verrou et le même mode
+d'injection. Ce n'est pas une coïncidence : elles ont toutes été écrites sur le
+même modèle, donc elles portaient toutes le même défaut.
+
 ### La surveillance du lanceur non plus
 Même traitement, et le même défaut d'empilement : un tour y fait jusqu'à trois
 requêtes de trois secondes d'expiration, sur une période de quatre. **Vingt-
