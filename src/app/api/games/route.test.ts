@@ -3,7 +3,7 @@ import { requete, corps, utilisateur } from "@/test/api";
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     game: { findMany: jest.fn(), create: jest.fn(), count: jest.fn() },
-    user: { findUnique: jest.fn(), update: jest.fn() },
+    user: { findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     roleWeight: { findMany: jest.fn() },
     levelConfig: { findMany: jest.fn() },
     masteryConfig: { findFirst: jest.fn() },
@@ -26,7 +26,7 @@ import { notifier } from "@/lib/push";
 const session = getCurrentUser as jest.Mock;
 const bride = isRateLimited as jest.Mock;
 const game = prisma.game as unknown as { findMany: jest.Mock; create: jest.Mock; count: jest.Mock };
-const user = prisma.user as unknown as { findUnique: jest.Mock; update: jest.Mock };
+const user = prisma.user as unknown as { findUnique: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
 
 /** Configuration de scoring minimale mais cohérente, comme en base. */
 const NIVEAUX = [1, 2, 3, 4, 5].map((niveau) => ({
@@ -48,6 +48,7 @@ beforeEach(() => {
   game.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "g1", ...data }));
   user.findUnique.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
   user.update.mockResolvedValue({ dettePointsDus: 40 });
+  user.updateMany.mockResolvedValue({ count: 1 });
   (prisma.roleWeight.findMany as jest.Mock).mockResolvedValue([
     { role: "MID", poidsKill: 1, poidsMort: 2, poidsAssist: 0.5, maitriseActive: true },
   ]);
@@ -358,6 +359,45 @@ describe("POST /api/games", () => {
     const r = await post(partie({ exercice: "boxe" }));
     expect(r.status).toBe(200);
     expect((await corps(r)).dettePointsDus).toBeNull();
+  });
+
+  /**
+   * La date de début de dette se pose à la base, pas d'après la lecture d'avant.
+   *
+   * Entre la lecture et l'écriture, un paiement peut éteindre la dette et
+   * effacer sa date. On écrivait alors une dette positive SANS date de début,
+   * c'est-à-dire une dette qui n'est jamais en retard — `etatRetard` rend
+   * « pas en retard » dès que la date manque, quel que soit le montant. Et
+   * l'état ne se réparait qu'une fois la dette soldée puis recréée.
+   */
+  describe("la date de début de dette", () => {
+    it("se pose sous condition, à la base", async () => {
+      await post(partie({ exercice: "boxe" }));
+      const appel = user.updateMany.mock.calls[0][0];
+      // La condition est dans le `where` : c'est la base qui tranche, au
+      // moment de l'écriture, pas nous d'après une lecture déjà périmée.
+      expect(appel.where).toMatchObject({ detteDepuis: null, dettePointsDus: { gt: 0 } });
+      expect(appel.data.detteDepuis).toBeInstanceOf(Date);
+    });
+
+    it("ne figure pas dans l'écriture qui incrémente", async () => {
+      // Posée là, elle serait décidée d'après la lecture d'avant : c'est
+      // exactement le défaut qu'on corrige.
+      await post(partie({ exercice: "boxe" }));
+      expect(user.update.mock.calls[0][0].data).not.toHaveProperty("detteDepuis");
+    });
+
+    it("ne coûte pas la notification de seuil quand elle échoue", async () => {
+      // Le décompte est déjà écrit : une date qui ne se pose pas ne doit pas
+      // faire disparaître ce qui suit.
+      user.findUnique.mockResolvedValue({ dettePointsDus: 10, rappelSeuilSec: 300, exercices: ["boxe"] });
+      user.update.mockResolvedValue({ dettePointsDus: 100 });
+      user.updateMany.mockRejectedValue(new Error("base injoignable"));
+      const r = await post(partie({ exercice: "boxe" }));
+      expect(r.status).toBe(200);
+      expect((await corps(r)).dettePointsDus).toBe(100);
+      expect(notifier).toHaveBeenCalled();
+    });
   });
 });
 

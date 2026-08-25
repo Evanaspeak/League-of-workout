@@ -382,16 +382,34 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
     });
     const maj = await prisma.user.update({
       where: { id: userId },
-      data: {
-        dettePointsDus: { increment: points },
-        // La dette qui NAÎT pose sa date de début ; une dette déjà en cours
-        // garde la sienne. Sans cette distinction, chaque nouvelle partie
-        // remettrait le compteur de retard à zéro, et personne ne serait
-        // jamais en retard.
-        ...((avant?.dettePointsDus ?? 0) <= 0 ? { detteDepuis: new Date() } : {}),
-      },
+      data: { dettePointsDus: { increment: points } },
       select: { dettePointsDus: true },
     });
+
+    // La dette qui NAÎT pose sa date de début ; une dette déjà en cours garde
+    // la sienne. Sans cette distinction, chaque nouvelle partie remettrait le
+    // compteur de retard à zéro, et personne ne serait jamais en retard.
+    //
+    // La condition est posée à la BASE, pas déduite de la lecture d'avant :
+    // entre les deux, un paiement peut éteindre la dette et effacer la date.
+    // On écrivait alors une dette positive sans date de début, c'est-à-dire
+    // une dette qui n'est jamais en retard, et qui ne le redeviendra qu'une
+    // fois soldée puis recréée. Le même défaut que le retrait de dette écrasé
+    // par une écriture en valeur absolue, à l'envers.
+    //
+    // `updateMany` est le seul moyen de poser une condition sur autre chose
+    // que la clé : `update` ne prend qu'un identifiant unique. Écrit ainsi, il
+    // rattrape aussi les comptes déjà dans cet état.
+    //
+    // Son échec ne coûte rien d'autre qu'elle-même : le décompte est déjà
+    // écrit, et la notification de seuil qui suit ne doit pas se perdre parce
+    // qu'une date n'a pas pu se poser. Le tour suivant repassera dessus.
+    try {
+      await prisma.user.updateMany({
+        where: { id: userId, detteDepuis: null, dettePointsDus: { gt: 0 } },
+        data: { detteDepuis: new Date() },
+      });
+    } catch { /* la date se rattrapera à la partie suivante */ }
 
     // La notification part au franchissement du seuil, jamais à chaque partie :
     // prévenir dix fois dans la soirée ferait couper les notifications.

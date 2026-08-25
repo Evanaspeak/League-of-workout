@@ -874,6 +874,35 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Une dette pouvait naître sans jamais pouvoir être en retard
+Le pendant du retrait de dette corrigé plus haut, dans l'autre sens. Le montant
+s'incrémentait bien de façon atomique — c'est la date de début qui était
+décidée d'après une lecture faite juste avant :
+
+```ts
+...((avant?.dettePointsDus ?? 0) <= 0 ? { detteDepuis: new Date() } : {}),
+```
+
+Entre cette lecture et l'écriture, un paiement peut éteindre la dette et
+effacer sa date. La condition lit alors « la dette était positive », donc ne
+pose pas de date, et on écrit une **dette positive sans date de début**.
+`etatRetard` rend « pas en retard » dès que la date manque, quel que soit le
+montant : la dette existe, elle se paie, elle s'affiche, et elle ne devient
+jamais en retard. L'état ne se répare qu'une fois la dette soldée puis
+recréée, ce qui peut ne jamais arriver.
+
+La condition est posée à la base maintenant, par un `updateMany` conditionnel —
+`update` ne prend qu'un identifiant unique, c'est le seul moyen de poser une
+condition sur autre chose que la clé. Écrit ainsi, il rattrape aussi les
+comptes déjà dans cet état, sans reprise de données.
+
+Son échec ne coûte que lui-même : le décompte est déjà écrit, et la
+notification de seuil qui suit ne doit pas se perdre parce qu'une date n'a pas
+pu se poser. Trois sabotages, trois échecs — dont celui-là, qui est passé au
+rouge parce que le doublure de base ne connaissait pas encore `updateMany` :
+la première version de la correction faisait perdre la notification, et le
+test l'a dit avant moi.
+
 ### Le jeton de la source OBS partait à chaque chargement de page
 `comptePublic` retire l'empreinte du mot de passe et rend le reste par
 diffusion. Son commentaire annonçait « le seul endroit qui décide de ce qui
