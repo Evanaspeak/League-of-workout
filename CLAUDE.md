@@ -894,6 +894,37 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Le middleware comparait les chemins par lettres, comme le desktop
+Même défaut que les cinq comparaisons d'origine corrigées dans `desktop/`, un
+étage plus haut : `PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))`.
+`/beta` couvre alors `/betamachin`, `/api/sante` couvre `/api/santeprivee`, et
+`/obs` couvre `/obsolete`.
+
+Rien de tel n'existe aujourd'hui, et c'est exactement ce qui rend la faute
+gênante : elle est invisible, et elle ne dépend que du nom qu'on donnera à la
+prochaine route. `/api/beta` couvrait `/api/beta-access` — ce qui était voulu,
+mais par coïncidence de nommage plutôt que par décision ; la route est nommée
+en entier maintenant.
+
+La comparaison se fait par segments. Un préfixe terminé par `/` ne couvre que
+ses enfants, ce qui distingue `/api/obs/<jeton>`, lu par un logiciel de
+diffusion sans cookie, de `/api/obs`, qui rend et régénère le jeton et exige
+une session — la distinction existait déjà, portée par un espoir sur
+`startsWith`.
+
+**Et la liste a déménagé.** Elle vivait dans `middleware.ts` ;
+`src/porteRoutes.test.ts` la relisait au texte et réimplémentait la
+comparaison de son côté. Deux exemplaires d'une règle finissent toujours par
+diverger, et c'est précisément la divergence entre ces deux listes qui avait
+laissé quatre routes dispensées de session partir en 307 vers `/login` pendant
+des semaines. `src/lib/routesPubliques.ts` porte la liste ET la règle ; le test
+l'importe, donc il éprouve ce qui tourne.
+
+Quatre sabotages, quatre échecs : la comparaison par lettres remise,
+`/api/obs` ouvert en entier, un préfixe qui rend tout public, et la route de
+diffusion retirée de la liste — attrapée par le test de la porte, pas par
+celui de la règle.
+
 ### Le paiement qui perd la course annonçait une dette déjà payée
 Deux renvois du même paiement partis en même temps passent tous les deux le
 contrôle de jeton : c'est l'unicité en base qui tranche, et le perdant reçoit

@@ -15,6 +15,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { estCheminPublic, PREFIXES_PUBLICS } from "@/lib/routesPubliques";
 
 const RACINE = path.join(process.cwd(), "src", "app", "api");
 
@@ -121,21 +122,18 @@ describe("porte des routes d'API", () => {
    * middleware la couvre déjà » à propos d'une route qu'il ne couvrait pas.
    */
   it("celles qui s'en dispensent traversent le middleware", () => {
-    const middleware = fs.readFileSync(
-      path.join(__dirname, "..", "middleware.ts"), "utf8");
-    const bloc = middleware.slice(
-      middleware.indexOf("const PUBLIC_PREFIXES"),
-      middleware.indexOf("];", middleware.indexOf("const PUBLIC_PREFIXES")));
-    const prefixes = [...bloc.matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    // La règle est IMPORTÉE, pas relue au texte et réimplémentée ici. Deux
+    // exemplaires d'une comparaison finissent par diverger, et c'est
+    // précisément la divergence qu'on éprouve.
     // Sans ce contrôle, une liste vide ferait passer le test en ne regardant
     // rien : c'est exactement la forme d'erreur qu'on corrige ici.
-    expect(prefixes.length).toBeGreaterThan(10);
+    expect(PREFIXES_PUBLICS.length).toBeGreaterThan(10);
 
     const bloquees = Object.keys(SANS_SESSION)
-      // Un segment dynamique se satisfait de son préfixe : `/api/obs/`
-      // couvre `/api/obs/[jeton]`.
-      .map((nom) => `/api/${nom.replace(/\/\[.*$/, "/")}`)
-      .filter((chemin) => !prefixes.some((p) => chemin.startsWith(p)))
+      // Un segment dynamique se remplace par une valeur quelconque :
+      // `/api/obs/[jeton]` se demande à `/api/obs/xxx`.
+      .map((nom) => `/api/${nom.replace(/\[[^\]]+\]/g, "xxx")}`)
+      .filter((chemin) => !estCheminPublic(chemin))
       .sort();
     expect(bloquees).toEqual([]);
   });
