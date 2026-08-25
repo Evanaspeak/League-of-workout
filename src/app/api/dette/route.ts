@@ -146,7 +146,16 @@ export async function PATCH(req: Request) {
     // obtenu ce qu'il demandait. Une erreur ici ferait réessayer la file
     // indéfiniment sur un paiement pourtant enregistré.
     if (jeton && (e as { code?: string })?.code === "P2002") {
-      return NextResponse.json(reponse(user));
+      // La dette se relit : celle portée par `user` date du début de la
+      // requête, donc d'AVANT le paiement jumeau qui vient de passer. La
+      // rendre telle quelle annoncerait à l'écran une dette qu'on vient de
+      // solder, c'est-à-dire exactement ce que la file hors ligne existe pour
+      // éviter — la personne refait sa séance.
+      const frais = await prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+        select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+      });
+      return NextResponse.json(reponse(frais));
     }
     throw e;
   }

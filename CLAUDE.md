@@ -894,6 +894,23 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Le paiement qui perd la course annonçait une dette déjà payée
+Deux renvois du même paiement partis en même temps passent tous les deux le
+contrôle de jeton : c'est l'unicité en base qui tranche, et le perdant reçoit
+un 200 plutôt qu'une erreur, sinon la file hors ligne réessaierait
+indéfiniment sur un paiement pourtant enregistré. Ça, c'était juste.
+
+Ce qui ne l'était pas : la réponse rendait le compte lu au **début** de la
+requête, donc la dette d'AVANT le paiement jumeau. L'écran annonçait donc une
+dette qu'on venait de solder, ce qui est précisément ce que la file hors ligne
+existe pour éviter : celui qui vient de faire sa séance la voit intacte et la
+refait.
+
+La dette se relit maintenant sur cette branche. Le test qui couvrait déjà le
+croisement ne pouvait pas l'attraper : sa doublure rendait la même valeur des
+deux côtés, donc l'assertion passait quelle que soit la source. Un test qui ne
+distingue pas les deux réponses possibles n'éprouve pas le choix entre elles.
+
 ### Deux amorçages simultanés se heurtaient sur une clé primaire
 `seedDefaults` est gardé par une promesse mémorisée au niveau du module, ce
 qui suffit pour un processus. Sur une base neuve, plusieurs requêtes arrivent
