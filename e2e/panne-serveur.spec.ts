@@ -286,3 +286,47 @@ test("un consentement refusé le dit, au lieu d'enfermer dans la fenêtre", asyn
   await expect(accepter).toBeVisible();
   await ctx.close();
 });
+
+test("sans réseau, l'enregistrement d'une partie rend la main et le dit", async ({ browser }) => {
+  // C'est l'action la plus utilisée de l'application, et elle n'avait pas de
+  // `try` : une coupure réseau faisait rejeter la promesse, la ligne qui rend
+  // la main au bouton n'était jamais atteinte, et « Enregistrement… » restait
+  // à l'écran pour toujours.
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  await page.locator('[data-visite="rail-bascule"]').click({ timeout: 2_000 }).catch(() => {});
+  await page.locator('[data-visite="rail-ajout"]').click();
+
+  // Le formulaire est ouvert : on coupe seulement l'envoi, pas le chargement.
+  await page.route("**/api/games", async (route) => {
+    if (route.request().method() === "POST") return route.abort("failed");
+    await route.continue();
+  });
+
+  // Les identifiants plutôt que les rôles : c'est ce que fait le parcours
+  // complet, et ces champs n'ont pas de nom accessible stable.
+  await page.locator("#ajout-kills").waitFor({ timeout: 15_000 });
+  await page.locator("#ajout-kills").fill("2");
+  await page.locator("#ajout-deaths").fill("9");
+  await page.locator("#ajout-assists").fill("4");
+
+  const envoyer = page.getByRole("button", { name: /logger cette game|log this game/i });
+  await envoyer.scrollIntoViewIfNeeded();
+  await envoyer.click();
+
+  // Le message paraît, et le bouton est revenu : il ne tourne pas dans le vide.
+  await expect(page.getByText(/erreur lors du log|error while logging/i).first())
+    .toBeVisible({ timeout: 15_000 });
+  await expect(envoyer).toBeEnabled();
+  await ctx.close();
+});

@@ -595,6 +595,22 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'action la plus utilisée de l'application n'avait pas de `try`
+`handleAddLog` — enregistrer une partie à la main — envoyait son `fetch` sans
+rien autour. Sans réseau, la promesse part en erreur, `setAddLogging(false)`
+n'est jamais atteint, et « Enregistrement… » reste à l'écran pour toujours.
+C'est le chemin que tout le monde emprunte, et le seul qui compte tant que la
+clé Riot n'est pas arrivée.
+
+`handleRiotFetch` avait le même défaut, plus un second : `await res.json()` sur
+la réponse d'erreur, sans repli. Une page d'erreur en HTML — ce que rend un
+serveur qui tombe avant d'atteindre la route — faisait tomber la lecture au
+lieu d'afficher le message.
+
+`e2e/panne-serveur.spec.ts` coupe l'envoi seulement, pas le chargement : le
+formulaire doit s'ouvrir normalement, puis l'échec doit se dire ET le bouton
+revenir. Sabotage fait, le `catch` retiré : le test tombe.
+
 ### « Aucun texte dans un composant » : la règle, et le test qui manquait
 C'est la règle numéro un du projet, et rien ne la tenait. `langueEnDur.test.ts`
 refuse qu'un composant COMPARE `locale` à une langue ; il ne dit rien d'une
