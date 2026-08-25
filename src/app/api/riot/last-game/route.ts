@@ -6,28 +6,12 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
 import { COUT, messageRefus, reserverRiot } from "@/lib/riotBudget";
 import { refusRiot } from "@/lib/riotStatut";
+import { riotFetch } from "@/lib/riotFetch";
 
 export const dynamic = "force-dynamic";
 
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// fetch Riot avec retry sur 429 (rate limit) et 5xx, en respectant Retry-After.
-async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Response> {
-  let res: Response = new Response(null, { status: 500 });
-  for (let attempt = 0; attempt < tries; attempt++) {
-    res = await fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
-    if (res.status === 429 || res.status >= 500) {
-      if (attempt < tries - 1) {
-        const retryAfter = Number(res.headers.get("Retry-After")) || (attempt + 1);
-        await sleep(retryAfter * 1000);
-        continue;
-      }
-    }
-    return res;
-  }
-  return res;
-}
 
 export async function GET(req: Request) {
   const user = await getCurrentUser();

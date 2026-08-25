@@ -6,11 +6,14 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
 import { COUT, messageRefus, rendreAuBudget, reserverRiot } from "@/lib/riotBudget";
 import { refusRiot } from "@/lib/riotStatut";
+import { riotFetch } from "@/lib/riotFetch";
+
+/** Espacement entre deux paquets de requêtes, pour ne pas saturer la clé. */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const dynamic = "force-dynamic";
 
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // Données de match déjà traitées, gardées en mémoire pour éviter de
 // re-frapper l'API Riot à chaque visite de la page (cause des 429).
@@ -31,23 +34,6 @@ type CachedMatch = {
 };
 const matchCache = new Map<string, CachedMatch>();
 
-// fetch Riot avec gestion du rate limit (429) et des erreurs serveur (5xx).
-// On respecte le header Retry-After quand il est présent.
-async function riotFetch(url: string, apiKey: string, tries = 4): Promise<Response> {
-  let res: Response = new Response(null, { status: 500 });
-  for (let attempt = 0; attempt < tries; attempt++) {
-    res = await fetch(url, { headers: { "X-Riot-Token": apiKey }, cache: "no-store" });
-    if (res.status === 429 || res.status >= 500) {
-      if (attempt < tries - 1) {
-        const retryAfter = Number(res.headers.get("Retry-After")) || (attempt + 1);
-        await sleep(retryAfter * 1000);
-        continue;
-      }
-    }
-    return res;
-  }
-  return res;
-}
 
 export async function GET() {
   const user = await getCurrentUser();
