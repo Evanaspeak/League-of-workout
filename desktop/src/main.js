@@ -1277,19 +1277,24 @@ app.whenReady().then(() => {
    * dossier vide.
    */
   const signalerCapture = ({ chemin, raison }) => {
+    const T = textes(langueCourante);
+    // `raison` est une clé rendue par le module de capture, qui n'a pas de
+    // langue. Une clé inconnue retombe sur « raison inconnue » plutôt que de
+    // s'afficher telle quelle.
+    const pourquoi = (raison && T[raison]) || T.captureRaisonInconnue;
     // L'overlay d'abord : dès qu'un jeu tourne, Windows active tout seul
     // l'Assistant de concentration — règle « Quand je joue à un jeu » —, et les
     // notifications ne s'affichent plus. On appuyait sur la touche sans rien
     // voir, donc sans savoir si le raccourci nous appartenait.
     overlay.signalerCapture({
       ok: Boolean(chemin),
-      texte: chemin ? `Capture : ${path.basename(chemin)}` : `Échec : ${raison || "raison inconnue"}`,
+      texte: chemin ? `${T.capturePrefixe} : ${path.basename(chemin)}` : `${T.captureEchec} : ${pourquoi}`,
     });
     // La notification reste, pour les captures prises hors jeu.
     if (!Notification.isSupported()) return;
     new Notification({
-      title: chemin ? textes(langueCourante).captureFaite : textes(langueCourante).captureRatee,
-      body: chemin ? path.basename(chemin) : String(raison || textes(langueCourante).captureRaisonInconnue),
+      title: chemin ? T.captureFaite : T.captureRatee,
+      body: chemin ? path.basename(chemin) : pourquoi,
       icon: path.join(__dirname, "..", "build", "icon.png"),
     }).show();
   };
@@ -1344,13 +1349,13 @@ app.whenReady().then(() => {
         return overlay.definirReleveApex({ attente: "pas d'image" });
       }
       if (estNoir(image)) {
-        return overlay.definirReleveApex({ attente: "écran noir" });
+        return overlay.definirReleveApex({ attente: textes(langueCourante).apexEcranNoir });
       }
       const c = await lecteur.lireCartouche(image);
       if (c === null) {
         // Dans les menus, au largage et tant que l'escouade n'a rien fait, le
         // cartouche n'existe pas : ne rien lire y est l'état normal.
-        return overlay.definirReleveApex({ attente: "rien à lire" });
+        return overlay.definirReleveApex({ attente: textes(langueCourante).apexRienALire });
       }
       // Les éliminations peuvent manquer là où les dégâts sont là : le
       // cartouche ne dessine que ses cases non nulles. On garde alors les
@@ -1370,10 +1375,10 @@ app.whenReady().then(() => {
       if (lecteur.panne()) {
         reglerReleve(false);
         overlay.definirReleveApex({ attente: "lecture indisponible" });
-        overlay.signalerCapture({ ok: false, texte: "Lecture d'écran indisponible" });
+        overlay.signalerCapture({ ok: false, texte: textes(langueCourante).apexLectureIndispo });
         console.warn("[WOW] Lecture d'écran désactivée :", lecteur.panne());
       } else {
-        overlay.definirReleveApex({ attente: "lecture en échec" });
+        overlay.definirReleveApex({ attente: textes(langueCourante).apexLectureEchec });
         console.warn("[WOW] Relevé raté :", err?.message ?? err);
       }
     }
@@ -1399,7 +1404,7 @@ app.whenReady().then(() => {
     if (!image || image.isEmpty() || estNoir(image)) {
       return overlay.signalerCapture({
         ok: false,
-        texte: "Écran noir — Apex en plein écran exclusif ?",
+        texte: textes(langueCourante).apexApexPleinEcran,
       });
     }
     try {

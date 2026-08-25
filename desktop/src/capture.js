@@ -102,9 +102,9 @@ function estNoir(image) {
  */
 async function capturer(etiquette = "ecran") {
   const image = await imageEcran();
-  if (!image || image.isEmpty()) return { chemin: null, raison: "aucune image" };
+  if (!image || image.isEmpty()) return { chemin: null, raison: "raisonAucuneImage" };
   if (estNoir(image)) {
-    return { chemin: null, raison: "écran noir — le jeu est probablement en plein écran exclusif" };
+    return { chemin: null, raison: "raisonEcranNoir" };
   }
 
   const nom = `${horodatage()}_${etiquette}.jpg`;
@@ -128,13 +128,16 @@ let raccourciActif = null;
  * Installe le raccourci de capture.
  *
  * @param {(resultat: { chemin: string|null, raison: string|null }) => void} signaler
+ *   `raison` est une CLÉ de traduction, pas une phrase : ce module n'a ni
+ *   langue ni dictionnaire, et la phrase se choisit à l'affichage. Même règle
+ *   que le journal de synchronisation côté site.
  *   Appelé après chaque capture, pour en informer le joueur : sans retour, on
  *   ne sait pas si l'on a appuyé sur la bonne touche.
  */
 function initCapture(signaler) {
   for (const combinaison of CANDIDATS) {
     const pris = globalShortcut.register(combinaison, () => {
-      capturer("apex").then(signaler).catch(() => signaler({ chemin: null, raison: "échec de la capture" }));
+      capturer("apex").then(signaler).catch(() => signaler({ chemin: null, raison: "raisonEchecCapture" }));
     });
     if (pris) {
       raccourciActif = combinaison;

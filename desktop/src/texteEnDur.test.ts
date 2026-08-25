@@ -68,6 +68,27 @@ describe("la coquille ne parle plus français à tout le monde", () => {
     expect((tray.match(/label:/g) ?? []).length).toBeGreaterThan(5);
   });
 
+  it("ne laisse plus aucune phrase accentuée dans les sources de la coquille", () => {
+    // Le contrôle le plus grossier, et celui qui a trouvé le plus : les textes
+    // de la pastille Apex et les motifs d'échec de capture. Une chaîne
+    // accentuée dans du code qui n'a pas de dictionnaire, c'est du français
+    // imposé — sauf s'il s'agit d'un nom propre, auquel cas il s'exempte ici
+    // avec sa raison.
+    const EXEMPTIONS: string[] = [];
+    const fichiers = ["main.js", "tray.js", "capture.js", "overlay.js", "lcu.js", "liveclient.js"];
+    const fautifs: string[] = [];
+    for (const nom of fichiers) {
+      for (const ligne of sansCommentaires(lire(nom)).split("\n")) {
+        // Les traces de console s'adressent à qui développe, pas à qui joue.
+        if (/console\.(log|warn|error)/.test(ligne)) continue;
+        for (const m of ligne.matchAll(/"([^"]*[éèêàçûôîïœ][^"]*)"/gi)) {
+          if (!EXEMPTIONS.includes(m[1])) fautifs.push(`${nom} : ${m[1]}`);
+        }
+      }
+    }
+    expect(fautifs).toEqual([]);
+  });
+
   it("ne laisse aucun texte de notification écrit en dur", () => {
     // « Win or Workout » est le nom du produit : il ne se traduit pas.
     const textes = sansCommentaires(`${main}\n${tray}`)
