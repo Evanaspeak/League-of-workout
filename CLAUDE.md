@@ -615,6 +615,26 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le rôle deviné était une constante, alors que la personne en a un
+Sans rôle au contexte, la détection retombait sur « le dernier rôle saisi à la
+main », puis sur `"Jungle"`. Or quelqu'un qui ne joue qu'avec la détection
+automatique ne saisit jamais rien à la main : il obtenait donc « Jungle » à
+chaque partie, quel que soit son rôle.
+
+Ce n'est pas anodin. Un support compté comme jungler paie ses morts trois
+points au lieu de deux et deux dixièmes, et ses assists lui rapportent un au
+lieu d'un et six dixièmes. C'est la même famille que l'issue inventée, en
+moins spectaculaire.
+
+Le lanceur donne le rôle sur les files qui en attribuent un. Il est maintenant
+retenu, et sert de repli pour celles où il ne le dira pas. Ça ne coûte rien :
+aucune requête de plus, et le repli devient personnel au lieu d'être arbitraire.
+
+Ce qui reste en attente : le tout premier compte, qui n'a encore aucun rôle
+connu. Refuser d'enregistrer comme on le fait pour l'issue ferait perdre la
+partie pour un détail de pondération ; c'est un arbitrage, il figure dans les
+questions.
+
 ### La page d'accueil sous-vendait ce qui marche déjà
 « Suivi automatique des parties League dès que Riot nous ouvre l'API. » C'était
 vrai le jour où la phrase a été écrite, et faux depuis que l'application

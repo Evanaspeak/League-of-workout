@@ -60,11 +60,22 @@ export function PartieDetectee() {
       }
 
       // Le rôle vient du lanceur quand il a pu être lu — c'est la seule source
-      // exacte. Sinon la dernière saisie manuelle, puis une valeur de repli.
+      // exacte. Sinon le dernier rôle connu, puis une valeur de repli.
+      //
+      // « Dernier rôle connu » n'était alimenté que par la saisie manuelle :
+      // quelqu'un qui ne joue qu'avec la détection automatique retombait donc
+      // toujours sur la constante. Or le rôle pèse sur le calcul — un support
+      // compté comme jungler paie ses morts trois points au lieu de deux et
+      // deux dixièmes, et ses assists lui rapportent moins. Le lanceur donne le
+      // rôle sur les files qui en attribuent un : on le retient pour les
+      // parties où il ne le dira pas.
       const role =
         contexte?.role
         || (typeof localStorage !== "undefined" && localStorage.getItem("lastRole"))
         || ROLE_DEFAUT;
+      if (contexte?.role && typeof localStorage !== "undefined") {
+        try { localStorage.setItem("lastRole", contexte.role); } catch { /* stockage refusé */ }
+      }
       try {
         const res = await fetch("/api/games", {
           method: "POST",
