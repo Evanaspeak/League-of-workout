@@ -957,6 +957,12 @@ Quatre sabotages, quatre échecs : la comparaison par lettres remise,
 diffusion retirée de la liste — attrapée par le test de la porte, pas par
 celui de la règle.
 
+Et vérifié qu'il ne change rien à ce qui existe : les deux règles, l'ancienne
+et la nouvelle, ont été passées sur **les soixante-six chemins réels** du
+dossier `src/app` (pages et routes, segments dynamiques remplacés). Aucune
+bascule, dans aucun sens. Le resserrement ne ferme la porte qu'à des noms qui
+n'existent pas encore, ce qui est exactement le propos.
+
 Vérifié sur le serveur, parce qu'une porte se pousse : `/dashboard`,
 `/settings`, `/history`, `/api/games`, `/api/user` **et `/api/obs`** répondent
 307 vers `/login` ; les dix pages publiques répondent 200 ; `/api/obs/<jeton>`,
