@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT, useLocale, etiquetteLocale } from "@/lib/i18n/LocaleContext";
 import { bilanSaison as dictBilan } from "@/lib/i18n/dictionaries/bilanSaison";
 import { JOURS_SAISON } from "@/lib/bilanSaison";
@@ -70,6 +70,30 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
   const locale = useLocale();
   const [bilan, setBilan] = useState<Bilan | null>(null);
   const [erreur, setErreur] = useState(false);
+  /**
+   * L'image ne s'est pas dessinée.
+   *
+   * Sans ce cas, la page montrait l'icône de fichier cassé du navigateur, et
+   * le bouton « ouvrir » emmenait sur une page d'erreur brute. Or ce qui a
+   * échoué n'est pas le bilan : les chiffres sont là, à côté. C'est la seule
+   * phrase qui compte ici.
+   */
+  const [imageKO, setImageKO] = useState(false);
+  /**
+   * `onError` ne suffit pas.
+   *
+   * L'image part avec le HTML et peut échouer AVANT l'hydratation : React
+   * n'attache son écouteur qu'après, et l'erreur est alors passée sans témoin.
+   * Le repli ne s'affichait jamais — le test l'a trouvé, pas la relecture.
+   *
+   * Une image déjà terminée le dit : `complete` est vrai et `naturalWidth`
+   * vaut zéro. On regarde donc à la première occasion, en plus d'écouter.
+   */
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = imageRef.current;
+    if (img && img.complete && img.naturalWidth === 0) setImageKO(true);
+  });
 
   useEffect(() => {
     let vivant = true;
@@ -121,23 +145,35 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
           compte, même si elle est faite pour être montrée. `<img>` plutôt que
           `next/image` — la source est générée à chaque appel et n'a rien à
           faire dans un cache d'images. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/api/bilan/image"
-        alt={t.imageAlt}
-        width={1200}
-        height={630}
-        style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
-      />
-      <a
-        className="lol-btn"
-        href="/api/bilan/image"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ display: "inline-block" }}
-      >
-        {t.ouvrir}
-      </a>
+      {imageKO ? (
+        <p role="status" style={{ color: "var(--loss)", fontSize: "0.85rem", margin: 0 }}>
+          {t.imageErreur}
+        </p>
+      ) : (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={imageRef}
+            src="/api/bilan/image"
+            alt={t.imageAlt}
+            width={1200}
+            height={630}
+            onError={() => setImageKO(true)}
+            style={{ width: "100%", height: "auto", borderRadius: 8, display: "block" }}
+          />
+          {/* Le bouton disparaît avec l'image : il ouvrirait la même erreur,
+              en pleine page cette fois. */}
+          <a
+            className="lol-btn"
+            href="/api/bilan/image"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-block" }}
+          >
+            {t.ouvrir}
+          </a>
+        </>
+      )}
     </div>
   );
 
