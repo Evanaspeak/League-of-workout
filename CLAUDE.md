@@ -595,6 +595,56 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'application de bureau parlait français à tout le monde
+Le site a six langues et des tests qui les tiennent. La coquille Electron, elle,
+n'en avait qu'une, et rien ne le signalait : trente-sept textes écrits en dur en
+français, dans les endroits qu'on remarque le moins et qui comptent le plus.
+
+- **La pastille en jeu.** C'est la surface la plus vue de l'application : elle
+  est à l'écran pendant qu'on joue. « Si gagné », « Si perdu », « joué ce soir,
+  hors menus » y étaient figés.
+- **Le menu près de l'horloge.** Le seul écran qui subsiste quand la fenêtre est
+  fermée.
+- **Les trois écrans de connexion** (`data:text/html`), y compris
+  `<html lang="fr">` — la page se déclarait française quoi qu'il arrive.
+- **Deux notifications système** et le titre de la fenêtre d'authentification.
+
+`desktop/src/langue.js` choisit parmi les six, `desktop/src/textes.js` les
+porte. La langue vient du stockage de la fenêtre (`low_locale`), relue à chaque
+page rendue — les écrans de secours sont des pages `data:` sans stockage à
+elles, mais la dernière page vue était la nôtre. À défaut, la langue du
+système ; à défaut encore, **l'anglais**. Jamais le français : c'est la langue
+de celui qui écrit l'application, en faire le repli revient à ne jamais voir le
+défaut.
+
+Trois choses apprises en le faisant :
+
+- **Un commentaire qui promet ce que le code ne fait pas.** J'avais écrit que
+  la langue du menu était « passée en fonction, donc elle peut changer sans
+  redémarrage », alors que `textes()` était appelée une seule fois à
+  l'ouverture. Elle l'est maintenant à chaque construction du menu, et
+  `initTray` rend `{ arreter, rafraichir }` — l'icône est posée au démarrage,
+  avant que la fenêtre ait chargé la moindre page, donc avant qu'on sache quoi
+  que ce soit de la langue.
+- **Les mots avant l'état.** La pastille reçoit ses textes sur un canal à part,
+  poussé avant le premier état : dans l'autre ordre, elle se peint une fois
+  avec ses valeurs par défaut puis se réécrit sous les yeux du joueur.
+- **Le HTML garde le français comme repli.** Si le canal ne dit jamais rien, la
+  pastille reste lisible. Un repli vide serait pire que la mauvaise langue.
+
+**Et le test qui manquait, trouvé par accident.** Une restauration maladroite a
+effacé les dix clés de la pastille des six langues — et toute la suite est
+restée verte. Le test de clés mortes refuse une clé *déclarée que personne
+n'emploie* ; il ne dit rien d'une clé *employée que personne ne déclare*. Or
+c'est celle-là qui se voit : « undefined » écrit en travers de la pastille,
+pendant une partie. Le contrôle manquant lit maintenant les `T.xxx`, les
+`data-texte` et les `textes(...).xxx` de tout le dossier, HTML compris, et
+exige que chacun existe. Sabotage refait sur le cas exact : il tombe.
+
+Six sabotages au total, six échecs : `lang="fr"` de retour, un libellé de menu
+réécrit en dur, un écran appelé sans langue, une clé manquante en allemand, une
+valeur vide, une clé employée sans être déclarée.
+
 ### La seule porte de secours promettait un courriel qui ne partait pas
 `sendResetLink` commence par `if (!resend) return;` — sans clé configurée,
 elle rend la main sans rien envoyer. La route, elle, répondait `{ ok: true }`

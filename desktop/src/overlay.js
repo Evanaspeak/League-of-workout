@@ -17,6 +17,7 @@
 
 const { BrowserWindow, screen, globalShortcut } = require("electron");
 const path = require("path");
+const { textes } = require("./textes");
 
 /**
  * Jeux qui exposent une partie en cours à qui sait la lire.
@@ -236,6 +237,9 @@ function creerOverlay() {
   // « pas de partie » jusqu'au prochain événement.
   fenetre.webContents.on("did-finish-load", () => {
     if (fenetre && !fenetre.isDestroyed()) {
+      // Les mots d'abord : sinon la pastille se peint une fois avec ses
+      // valeurs par défaut, puis se réécrit sous les yeux du joueur.
+      envoyerTextes();
       fenetre.webContents.send("overlay:etat", dernierEtat);
       fenetre.webContents.send("overlay:placement", enPlacement);
     }
@@ -496,6 +500,27 @@ function surveiller() {
  * qui bouge — renvoyait le chrono à « --:-- ». Il ne montait jamais plus de
  * quelques secondes.
  */
+/**
+ * Les mots de la pastille, poussés séparément de l'état.
+ *
+ * La pastille est la surface la plus vue de l'application de bureau : elle est
+ * à l'écran pendant qu'on joue. Elle était écrite en français en dur, dans son
+ * HTML. Le texte voyage donc maintenant avec la langue, comme partout ailleurs
+ * où l'on sort de React.
+ */
+let langueOverlay = "en";
+
+function definirLangue(langue) {
+  langueOverlay = langue;
+  envoyerTextes();
+}
+
+function envoyerTextes() {
+  if (fenetre && !fenetre.isDestroyed()) {
+    fenetre.webContents.send("overlay:textes", textes(langueOverlay));
+  }
+}
+
 function envoyerEtat(etat) {
   dernierEtat = { ...dernierEtat, ...etat };
   if (debutSansReleve !== null) {
@@ -573,4 +598,5 @@ module.exports = {
   protegerDeLaCapture,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
   definirPlacement, lirePlacement, appliquerConfig,
+  definirLangue,
 };
