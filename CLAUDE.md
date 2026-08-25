@@ -595,6 +595,29 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Aucun texte dans un composant » : la règle, et le test qui manquait
+C'est la règle numéro un du projet, et rien ne la tenait. `langueEnDur.test.ts`
+refuse qu'un composant COMPARE `locale` à une langue ; il ne dit rien d'une
+phrase française écrite directement dans le JSX, qui est la façon la plus
+simple d'arriver au même résultat.
+
+Le même garde, posé la même nuit sur la coquille Electron, y a trouvé cinq
+textes vivants. Sur `src/components`, il ne trouve **rien** : la discipline
+tient. C'est exactement le moment de la figer, pendant que la liste des
+exemptions est courte.
+
+Deux exemptions, chacune avec sa raison : les noms de langue du sélecteur
+(« Français » n'est pas du français imposé, c'est le nom du choix qu'on
+propose) et le bandeau qui annonce dans quatre langues qu'un document juridique
+n'existe qu'en français et en anglais. Une troisième exemption devrait faire
+se demander si le garde sert encore.
+
+Ce que le garde ne couvre pas, et pourquoi : les métadonnées SEO des pages
+(`title`, `description`) restent en français. Next.js les rend par route, et la
+langue de l'application vit dans le stockage du navigateur : une seule version
+peut donc partir. Ça se règle en mettant la langue dans l'adresse, ce qui est
+une décision de produit déjà en attente.
+
 ### Les routes d'administration, gardées par un test plutôt que par la discipline
 Les dix routes sous `api/admin` appellent toutes `estAdmin`, et chacune a son
 test. C'est bon, et c'est l'angle mort de tous les tests écrits à la main : ils
