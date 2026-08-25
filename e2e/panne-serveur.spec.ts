@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
+import { ouvrirCompte } from "./compte";
 
 /**
  * Ce que l'écran dit quand le serveur répond mal.
@@ -239,5 +240,49 @@ test("un ajout Riot refusé le dit, sans faire disparaître la liste", async ({ 
   await expect(page.getByText(/erreur serveur|server error|erreur lors du log|error while logging/i).first())
     .toBeVisible({ timeout: 10_000 });
   await expect(page.getByText("Ahri").first()).toBeVisible();
+  await ctx.close();
+});
+
+test("un consentement refusé le dit, au lieu d'enfermer dans la fenêtre", async ({ browser }) => {
+  // Cette fenêtre-là ne se ferme pas : sans message, la personne clique
+  // « J'accepte », le bouton redevient cliquable, rien ne bouge, et il n'y a
+  // aucun autre chemin. C'est le seul écran où un échec muet enferme.
+  //
+  // Le compte est neuf et n'a pas encore répondu : c'est la seule façon de
+  // faire paraître la fenêtre. `ouvrirCompte` ne pose donc pas le
+  // consentement.
+  const { etat: neuf } = await ouvrirCompte(browser, "Cons", { consentement: false });
+  const ctx = await browser.newContext({ storageState: neuf });
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+  });
+
+  await page.route("**/api/consentement", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Erreur serveur" }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/dashboard");
+  const accepter = page.getByRole("button", { name: /^j.accepte$|^i agree$/i }).first();
+  await accepter.waitFor({ timeout: 20_000 });
+  await accepter.click();
+
+  // Le rôle seul ne prouve rien : d'autres éléments de la page le portent, et
+  // le sabotage passait au vert. C'est le texte qu'on cherche, dans un
+  // élément qui l'annonce.
+  await expect(page.getByRole("alert").filter({ hasText: /n.a pas pu être enregistrée|could not be saved/i }))
+    .toBeVisible({ timeout: 10_000 });
+  // Et la fenêtre est toujours là : la question n'a pas été prise pour
+  // répondue. Sans ce second contrôle, un écran qui se ferme sur un échec
+  // passerait le premier.
+  await expect(accepter).toBeVisible();
   await ctx.close();
 });
