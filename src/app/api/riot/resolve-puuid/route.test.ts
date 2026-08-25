@@ -70,6 +70,37 @@ describe("POST /api/riot/resolve-puuid", () => {
     expect(appels).toHaveLength(0);
   });
 
+  /**
+   * La route rendait le code de Riot tel quel, avec le message
+   * « Joueur introuvable (401) ». Deux choses fausses d'un coup : on accusait
+   * le pseudo de la personne au moment même où elle le tape pour la première
+   * fois, et on rendait un 401, que le reste de l'application lit comme
+   * « ta session a expiré ». Une clé de développement Riot expire toutes les
+   * vingt-quatre heures : ce n'est pas un cas rare.
+   */
+  it("ne fait pas passer une clé refusée pour un pseudo faux", async () => {
+    for (const code of [401, 403]) {
+      global.fetch = jest.fn(async () => new Response("{}", { status: code })) as unknown as typeof fetch;
+      const r = await resoudre({ riotId: "Joueur#EUW", region: "EUW1" });
+      expect(r.status).toBe(403);
+      const corps = await r.json();
+      expect(corps.error).toContain("clé");
+      expect(corps.error).not.toContain("introuvable");
+    }
+  });
+
+  it("dit « introuvable » quand Riot ne connaît vraiment pas ce joueur", async () => {
+    global.fetch = jest.fn(async () => new Response("{}", { status: 404 })) as unknown as typeof fetch;
+    const r = await resoudre({ riotId: "Joueur#EUW", region: "EUW1" });
+    expect(r.status).toBe(404);
+    expect((await r.json()).error).toContain("introuvable");
+  });
+
+  it("range une panne de chez eux en 502, pas en 500", async () => {
+    global.fetch = jest.fn(async () => new Response("{}", { status: 500 })) as unknown as typeof fetch;
+    expect((await resoudre({ riotId: "Joueur#EUW", region: "EUW1" })).status).toBe(502);
+  });
+
   it("n'écrit le PUUID que sur le compte du demandeur", async () => {
     session.mockResolvedValue(utilisateur({ id: "u42" }));
     await resoudre({ riotId: "Joueur#EUW", region: "EUW1" });

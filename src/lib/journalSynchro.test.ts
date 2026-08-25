@@ -82,9 +82,25 @@ describe("lecture d'un code HTTP", () => {
   });
 
   it("dit que la clé du serveur est en cause, pas le compte", () => {
-    for (const code of [401, 403]) {
-      expect(lireCode(code).motif).toBe("cleRefusee");
-    }
+    expect(lireCode(403).motif).toBe("cleRefusee");
+  });
+
+  it("ne confond plus une session expirée avec une clé refusée", () => {
+    /**
+     * 401 est le code de NOTRE porte. Les routes Riot renvoyaient en plus le
+     * code de Riot tel quel, donc un 401 pouvait aussi vouloir dire « Riot a
+     * refusé notre clé » : le journal annonçait « clé refusée » à quelqu'un
+     * dont la session venait d'expirer, c'est-à-dire lui disait qu'il n'avait
+     * rien à faire alors qu'il lui suffisait de se reconnecter.
+     */
+    expect(lireCode(401).motif).toBe("sessionExpiree");
+    expect(lireCode(401).resultat).toBe("erreur");
+  });
+
+  it("range ce que Riot rend d'anormal du côté de Riot", () => {
+    // 502 : les routes traduisent en 502 tout ce qui vient de chez eux et
+    // qu'on ne sait pas nommer. Un 500 laisserait croire que c'est nous.
+    expect(lireCode(502).motif).toBe("riotMuet");
   });
 
   it("distingue « nous ne sommes pas prêts » de « Riot ne répond pas »", () => {

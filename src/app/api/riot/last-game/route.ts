@@ -5,6 +5,7 @@ import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
 import { COUT, messageRefus, reserverRiot } from "@/lib/riotBudget";
+import { refusRiot } from "@/lib/riotStatut";
 
 export const dynamic = "force-dynamic";
 
@@ -67,8 +68,10 @@ export async function GET(req: Request) {
     apiKey
   );
   if (!idsRes.ok) {
-    const err = await idsRes.json().catch(() => ({}));
-    return NextResponse.json({ error: `Erreur Riot API: ${idsRes.status}`, details: err }, { status: idsRes.status });
+    // Le code de Riot ne repart pas tel quel : son 401 veut dire « clé
+    // refuseRiotLue », le nôtre veut dire « pas de session ». Voir `riotStatut`.
+    const refuseRiotLu = refusRiot(idsRes.status, "Aucune game trouvée.");
+    return NextResponse.json({ error: refuseRiotLu.message }, { status: refuseRiotLu.statut });
   }
 
   const ids: string[] = await idsRes.json();
@@ -93,7 +96,8 @@ export async function GET(req: Request) {
     apiKey
   );
   if (!matchRes.ok) {
-    return NextResponse.json({ error: `Erreur Riot API: ${matchRes.status}` }, { status: matchRes.status });
+    const refuseRiotLu = refusRiot(matchRes.status, "Cette partie n'est plus disponible chez Riot.");
+    return NextResponse.json({ error: refuseRiotLu.message }, { status: refuseRiotLu.statut });
   }
 
   const match = await matchRes.json();
@@ -111,7 +115,7 @@ export async function GET(req: Request) {
    *
    * C'est le chemin que la session automatique emprunte après chaque partie :
    * une supposition ici s'enregistre toute seule, et se paie en dette. Un
-   * remake, ou deux sources qui se contredisent, valent mieux d'être refusés
+   * remake, ou deux sources qui se contredisent, valent mieux d'être refuseRiotLus
    * que d'être devinés.
    */
   const lu = lireResultat(match.info, participant);

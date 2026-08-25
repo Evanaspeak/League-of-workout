@@ -5,6 +5,7 @@ import { detectRole } from "@/lib/riot-role";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { routageDe, validerPuuid } from "@/lib/riot-champs";
 import { COUT, messageRefus, rendreAuBudget, reserverRiot } from "@/lib/riotBudget";
+import { refusRiot } from "@/lib/riotStatut";
 
 export const dynamic = "force-dynamic";
 
@@ -95,8 +96,10 @@ export async function GET() {
   depense += 1;
   if (!idsRes.ok) {
     await rendreAuBudget(COUT.historique, depense);
-    const err = await idsRes.json().catch(() => ({}));
-    return NextResponse.json({ error: `Erreur Riot API: ${idsRes.status}`, details: err }, { status: idsRes.status });
+    // Le code de Riot ne repart pas tel quel : son 401 veut dire « clé
+    // refusée », le nôtre veut dire « pas de session ». Voir `riotStatut`.
+    const refuseRiotLu = refusRiot(idsRes.status, "Aucune partie trouvée chez Riot.");
+    return NextResponse.json({ error: refuseRiotLu.message }, { status: refuseRiotLu.statut });
   }
 
   const ids: string[] = await idsRes.json();
