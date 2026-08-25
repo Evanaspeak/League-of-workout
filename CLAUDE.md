@@ -894,6 +894,29 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Deux amorçages simultanés se heurtaient sur une clé primaire
+`seedDefaults` est gardé par une promesse mémorisée au niveau du module, ce
+qui suffit pour un processus. Sur une base neuve, plusieurs requêtes arrivent
+ensemble : un démarrage à froid en sert souvent une poignée d'un coup, et
+chaque instance a sa propre mémoire. Les trois comptages rendaient alors zéro
+partout, les trois semis partaient en même temps, et le second tombait sur une
+violation de clé primaire — `role` et `niveau` sont des identifiants, pas des
+colonnes ordinaires.
+
+Le prix se paie au pire moment : une erreur 500 au premier chargement d'un
+environnement qu'on vient de monter, là où l'on ne sait pas encore ce qui est
+censé marcher. C'est la même famille que « sur une base neuve, la première
+partie enregistrée tombait », plus bas : le chemin de la base vide est celui
+qu'on n'emprunte jamais, sauf le jour d'une reprise après sinistre.
+
+`skipDuplicates` fait de la course une non-affaire. L'identifiant de la
+maîtrise s'écrit maintenant en clair : `createMany` ne peut ignorer un doublon
+que s'il sait sur quoi porte l'unicité.
+
+Trois sabotages, trois échecs — dont l'oubli de l'échec mémorisé, qui n'avait
+pas de test et qui condamnerait le processus entier à ne plus jamais semer
+après une coupure passagère.
+
 ### Le pseudo du bilan hebdomadaire était échappé deux fois
 Trouvé en relisant `src/lib/email.ts`, qui n'avait aucun test à lui. Le pseudo
 était échappé, puis le titre qui le porte l'était à son tour :

@@ -30,15 +30,36 @@ async function semer() {
     prisma.masteryConfig.count(),
   ]);
 
+  /**
+   * Les trois écritures sont idempotentes, et pas seulement gardées par le
+   * comptage qui précède.
+   *
+   * Sur une base neuve, plusieurs requêtes arrivent ensemble : un démarrage à
+   * froid en sert souvent une poignée d'un coup, et le garde de processus ne
+   * vaut que pour SON processus. Les trois comptages rendaient alors zéro
+   * partout, les trois semis partaient en même temps, et le second tombait sur
+   * une violation de clé primaire — `role` et `niveau` sont des identifiants.
+   * La requête rendait 500, sur le premier chargement d'un environnement qu'on
+   * vient de monter, c'est-à-dire au moment le plus déroutant possible.
+   *
+   * `skipDuplicates` fait de la course une non-affaire : celui qui arrive
+   * second n'écrit rien et ne dit rien.
+   */
   if (roleCount === 0) {
-    await prisma.roleWeight.createMany({ data: ROLES_DEFAUT });
+    await prisma.roleWeight.createMany({ data: ROLES_DEFAUT, skipDuplicates: true });
   }
 
   if (levelCount === 0) {
-    await prisma.levelConfig.createMany({ data: NIVEAUX_DEFAUT });
+    await prisma.levelConfig.createMany({ data: NIVEAUX_DEFAUT, skipDuplicates: true });
   }
 
   if (masteryCount === 0) {
-    await prisma.masteryConfig.create({ data: MAITRISE_DEFAUT });
+    // L'identifiant est écrit en clair : `createMany` ne peut ignorer un
+    // doublon que s'il sait sur quoi porte l'unicité, et la valeur par défaut
+    // du schéma vaut 1.
+    await prisma.masteryConfig.createMany({
+      data: [{ id: 1, ...MAITRISE_DEFAUT }],
+      skipDuplicates: true,
+    });
   }
 }
