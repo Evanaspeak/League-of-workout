@@ -72,21 +72,43 @@ function processusEnCours() {
  * @param {(evenement: { type: "jeu-demarre" | "jeu-arrete", jeu: string }) => void} signaler
  * @returns {() => void} Arrête la surveillance.
  */
-function surveillerJeux(listerJeux, signaler) {
+function surveillerJeux(listerJeux, signaler, options = {}) {
+  // Le lecteur de processus et la période s'injectent : sans ça, cette boucle
+  // ne s'éprouve qu'avec un jeu ouvert sous Windows. Valeurs de production par
+  // défaut, aucun appelant changé.
+  const lireProcessus = options.lireProcessus ?? processusEnCours;
+  const periodeMs = options.periodeMs ?? PERIODE_MS;
   // Jeux vus tourner au tour précédent : c'est la transition qui nous intéresse,
   // pas l'état. Sans ça, on signalerait un démarrage toutes les dix secondes.
   let actifs = new Set();
   let arrete = false;
 
+  /** Un tour à la fois : `tasklist` peut prendre plus longtemps qu'un tour. */
+  let enTour = false;
+
   const tour = async () => {
+    if (arrete || enTour) return;
+    enTour = true;
+    try {
+      await unTour();
+    } finally {
+      enTour = false;
+    }
+  };
+
+  const unTour = async () => {
     if (arrete) return;
     const surveilles = listerJeux();
     if (surveilles.length === 0) {
+      // Décocher le dernier jeu pendant qu'on y joue vidait l'état SANS rien
+      // dire : personne n'apprenait que le jeu s'était arrêté, et la pastille
+      // restait à l'écran jusqu'à ce qu'on recoche puis referme le jeu.
+      for (const jeu of actifs) signaler({ type: "jeu-arrete", jeu });
       actifs = new Set();
       return;
     }
 
-    const enCours = await processusEnCours();
+    const enCours = await lireProcessus();
     const maintenant = new Set();
     for (const jeu of surveilles) {
       const exes = EXECUTABLES[jeu];
@@ -104,7 +126,7 @@ function surveillerJeux(listerJeux, signaler) {
   };
 
   tour();
-  const minuteur = setInterval(tour, PERIODE_MS);
+  const minuteur = setInterval(tour, periodeMs);
 
   return () => {
     arrete = true;
