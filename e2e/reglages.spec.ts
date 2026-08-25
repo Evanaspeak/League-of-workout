@@ -198,3 +198,71 @@ test("une suppression de compte qui échoue le dit, au lieu de tourner sans fin"
   expect(moi.ok()).toBeTruthy();
   await ctx.close();
 });
+
+test("un réglage de jeu que l'application refuse revient en arrière, et le dit", async ({ browser }) => {
+  // « Tes jeux » posait la nouvelle valeur AVANT de la faire enregistrer, et ne
+  // faisait rien de l'échec. Le commentaire du `catch` annonçait pourtant que
+  // « l'état précédent reste affiché » : c'était l'inverse.
+  //
+  // Le pont Electron se simule, comme dans e2e/detection-partie.spec.ts : ce
+  // qu'on éprouve est la réaction de l'écran, pas Electron.
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+    const etatJeux = {
+      jeux: ["League of Legends"],
+      coins: ["haut-gauche"],
+      raccourcis: { bascule: null, coin: null },
+      placement: false,
+      config: { "League of Legends": { actif: true, coin: "haut-gauche", position: null } },
+    };
+    // Le pont porte tout ce que les composants de réglages lisent : il en manque
+    // un, et c'est toute la rubrique qui ne se rend pas — le bouton cherché
+    // n'existe alors pas, et l'échec ne ressemble pas à sa cause.
+    (window as unknown as { electronLOL?: unknown }).electronLOL = {
+      isDesktop: true,
+      version: async () => "0.9.6",
+      overlayJeuxLire: async () => etatJeux,
+      overlayActif: async () => ({ actif: true }),
+      overlayCoinLire: async () => ({ coin: "haut-gauche", placement: false }),
+      demarrageLire: async () => ({ actif: false }),
+      majEtat: async () => ({ statut: "a-jour", version: "0.9.6", erreur: null, progression: 0 }),
+      onMajEtat: () => () => {},
+      detectionLire: async () => ({
+        disponible: ["League of Legends"], surveilles: [],
+        actions: { session: true, overlay: true, fenetre: false },
+      }),
+      // Le refus : c'est tout ce que le test fabrique.
+      overlayJeuEcrire: async () => { throw new Error("refus"); },
+      detectionEcrire: async () => { throw new Error("refus"); },
+    };
+  }, uid);
+
+  await page.goto("/settings#jeux", { waitUntil: "networkidle" });
+  // Le bouton porte l'état COURANT : « Pastille affichée » quand elle l'est.
+  // Le cliquer demande donc de la masquer.
+  //
+  // Le nom est ancré : l'en-tête dépliable du jeu contient le même libellé, et
+  // son nom accessible vaut « League of Legends Pastille affichée ». Sans
+  // ancres, `.first()` renvoyait l'en-tête, qui ne porte pas `aria-pressed`.
+  const bascule = page.getByRole("button", { name: /^pastille affichée$|^panel shown$/i }).first();
+  await bascule.waitFor({ timeout: 20_000 });
+  await expect(bascule).toHaveAttribute("aria-pressed", "true");
+  await bascule.click();
+
+  await expect(page.getByText(/n.a pas retenu ce réglage|did not keep that setting/i))
+    .toBeVisible({ timeout: 10_000 });
+
+  // Et surtout : l'écran est revenu à ce que l'application a vraiment. Sans ce
+  // second contrôle, un message affiché sous un réglage faux passerait — c'est
+  // exactement l'état d'avant la correction.
+  await expect(page.getByRole("button", { name: /^pastille affichée$|^panel shown$/i }).first())
+    .toHaveAttribute("aria-pressed", "true");
+  await ctx.close();
+});

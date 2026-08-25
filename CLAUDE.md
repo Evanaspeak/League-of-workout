@@ -291,6 +291,34 @@ Ce que ça apprend sur les commentaires : un `catch` qui décrit ce qu'il fait
 est une bonne chose, et une mauvaise dès qu'il décrit ce qu'il ne fait pas. Il
 se relit alors comme une garantie, et on cesse de vérifier.
 
+### Les deux corrections de réglages, éprouvées au navigateur
+Un message d'erreur qu'on ajoute se vérifie en le faisant paraître, pas en le
+relisant. Deux tests, deux sabotages, et trois pièges rencontrés en les
+écrivant — dont deux déjà écrits ici, et un nouveau.
+
+- **Le consentement refusé** (`e2e/panne-serveur.spec.ts`) : le `POST` est
+  détourné en 500, le message doit paraître ET la fenêtre rester ouverte. Sans
+  le second contrôle, un écran qui se ferme sur un échec passerait.
+- **Le réglage de jeu refusé** (`e2e/reglages.spec.ts`) : pont Electron simulé,
+  `overlayJeuEcrire` qui rejette. Le message doit paraître ET le bouton
+  revenir à `aria-pressed="true"`. Sans le second contrôle, un message affiché
+  sous un réglage faux passerait, c'est-à-dire exactement l'état d'avant.
+
+Les pièges :
+- **`getByRole("alert")` ne prouve rien tout seul.** Le premier sabotage est
+  passé au vert : d'autres éléments de la page portent ce rôle. C'est le texte
+  qu'il faut chercher, dans un élément qui l'annonce.
+- **Un nom accessible contient celui de ses enfants.** L'en-tête dépliable du
+  jeu s'appelle « League of Legends Pastille affichée », parce que le libellé
+  d'état est dedans. `.first()` renvoyait donc l'en-tête, qui ne porte pas
+  `aria-pressed`. Les noms se cherchent ancrés.
+- **Le pont simulé doit porter tout ce que la rubrique lit.** Il en manquait
+  cinq méthodes : la rubrique ne se rendait pas du tout, le bouton cherché
+  n'existait pas, et l'échec ne ressemblait pas à sa cause.
+- Et, une fois de plus : **`-g` écarte le test qui ouvre le compte**, donc la
+  page mesurée était `/login`. C'est écrit plus haut depuis les tests de
+  langue ; ça se retombe dedans.
+
 ### « Tes jeux » depuis un navigateur
 La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
 exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection
