@@ -9,6 +9,9 @@ export async function GET() {
       const list = JSON.parse(config.value);
       if (Array.isArray(list) && list.length > 0) return NextResponse.json(list);
     }
-  } catch {}
+  } catch {
+    // Une valeur illisible en base ne doit pas priver tout le monde de la
+    // liste : on retombe sur celle livrée avec l'application, qui est bonne.
+  }
   return NextResponse.json(CHAMPIONS);
 }

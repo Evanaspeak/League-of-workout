@@ -16,7 +16,12 @@ export async function GET() {
   try {
     const config = await prisma.systemConfig.findUnique({ where: { key: "champions" } });
     if (config) return NextResponse.json({ champions: JSON.parse(config.value), isDefault: false });
-  } catch {}
+  } catch {
+    // Une valeur illisible se présente comme une absence de valeur : le panneau
+    // montre alors la liste par défaut, ce qui est aussi ce qu'il montrerait
+    // après une remise à zéro. Il n'y a rien de mieux à faire ici, et le
+    // panneau reste utilisable.
+  }
   return NextResponse.json({ champions: CHAMPIONS, isDefault: true });
 }
 
