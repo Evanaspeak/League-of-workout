@@ -615,6 +615,52 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Allonger un texte l'a fait paraître deux secondes et demie plus tard
+Le bandeau du tableau de bord vit dans le rendu principal, qui attend la
+réponse de `/api/dashboard`. Il ne dépend pourtant d'aucune donnée : c'est du
+texte fixe.
+
+Tant qu'il était court, ça ne se voyait pas — le plus grand élément de la page
+était le rappel du test de force, rendu au serveur, à 1108 ms. En allongeant le
+texte pour dire que l'application Windows détecte déjà les parties, il est
+devenu le plus grand élément, et la mesure est passée à **3540 ms**, au-dessus
+du seuil.
+
+La mesure a donc attrapé une régression que je venais d'introduire, et pour une
+raison qui n'avait rien à voir avec le poids : un élément qui arrive tard
+devient un problème le jour où il devient le plus grand.
+
+Déplacé dans le premier écran, il part avec le HTML : **1148 ms**. Et c'est
+mieux ainsi de toute façon — ce bandeau explique ce qu'il faut faire en
+attendant Riot, et il l'expliquait après tout le reste.
+
+### Toute requête en base part filtrée sur le compte
+C'est la règle qui protège vraiment les comptes entre eux, et la seule dont
+l'oubli est immédiatement grave : une route qui lit `Game` sans `userId` rend
+l'historique de quelqu'un d'autre. Les tests par route la vérifiaient une par
+une ; rien ne la tenait pour la route qu'on ajouterait demain.
+
+`src/filtreParCompte.test.ts` regarde le dossier `src/app/api` plutôt que les
+fichiers connus. Le contrôle est un motif, donc grossier : il lit les quatre
+cents caractères de part et d'autre de chaque appel. Ça attrape le `where` de
+l'appel lui-même, et aussi le cas légitime où les identifiants viennent d'une
+requête filtrée juste au-dessus — c'est ce que font `games/dates` et `push`,
+qui refiltrent une liste venue du navigateur avant d'écrire.
+
+Six dispenses, chacune avec sa raison : l'administration (qui agit sur les
+autres comptes par définition), l'inscription et la récupération (qui n'ont
+pas encore de session), la source de diffusion (dont le jeton fait office de
+filtre), et les deux envois programmés (qui parcourent tous les comptes). Une
+septième devrait faire se demander si le garde sert encore.
+
+Deux sabotages, deux échecs : une route fabriquée qui lit toutes les parties,
+et le dossier renommé — le second parce qu'un contrôle qui ne lit rien passe
+au vert.
+
+Aucun appel nu trouvé sur les quarante-huit routes existantes. Comme pour le
+garde des textes en dur, c'est le bon moment pour figer une discipline qui
+tient.
+
 ### Payer sa dette effaçait la partie qui venait d'arriver
 `PATCH /api/dette` lisait la dette, calculait ce qui reste, puis **réécrivait
 cette valeur absolue** dans une transaction. Entre la lecture et l'écriture, il

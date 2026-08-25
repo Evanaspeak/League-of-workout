@@ -354,6 +354,34 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const premierEcran = (
     <>
       <h1 className="titre-page">{t.pageTitle}</h1>
+
+      {/* Bannière bêta : la synchronisation depuis le site attend Riot.
+
+          Elle vit dans le PREMIER écran, et non dans le rendu principal : elle
+          ne dépend d'aucune donnée, et elle y attendait pourtant la réponse de
+          l'API. Sur téléphone bridé, elle est devenue le plus grand élément de
+          la page le jour où son texte s'est allongé, et le faisait paraître à
+          3540 ms contre 1108 avant. Rendue avec le HTML, elle est là tout de
+          suite — et elle explique justement ce qu'il faut faire en attendant. */}
+      <div style={{
+        padding: "12px 16px",
+        borderRadius: 8,
+        background: "rgba(110,155,255,0.06)",
+        border: "1px solid rgba(110,155,255,0.25)",
+        display: "flex",
+        gap: 12,
+        alignItems: "flex-start",
+      }}>
+        <Icone nom="recharger" taille={17} couleur="#6E9BFF" style={{ marginTop: 1 }} />
+        <div>
+          <p style={{ fontSize: "0.82rem", color: "#6E9BFF", fontWeight: 600, marginBottom: 4 }}>
+            {t.syncBannerTitle}
+          </p>
+          <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.6 }}>
+            {t.syncBannerBody}
+          </p>
+        </div>
+      </div>
       {/* Le rappel du test de force. Il ne vivait que dans les réglages et
           dans la modale de session : deux endroits où l'on ne va pas de
           soi-même, pour un chiffre qui fixe le multiplicateur appliqué à TOUTE
@@ -494,26 +522,6 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
       <DesktopAuthHandler />
       {premierEcran}
 
-      {/* Bannière bêta — synchronisation en attente */}
-      <div style={{
-        padding: "12px 16px",
-        borderRadius: 8,
-        background: "rgba(110,155,255,0.06)",
-        border: "1px solid rgba(110,155,255,0.25)",
-        display: "flex",
-        gap: 12,
-        alignItems: "flex-start",
-      }}>
-        <Icone nom="recharger" taille={17} couleur="#6E9BFF" style={{ marginTop: 1 }} />
-        <div>
-          <p style={{ fontSize: "0.82rem", color: "#6E9BFF", fontWeight: 600, marginBottom: 4 }}>
-            {t.syncBannerTitle}
-          </p>
-          <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.6 }}>
-            {t.syncBannerBody}
-          </p>
-        </div>
-      </div>
 
       {/* Avertissement de volume quotidien. Ce n'est pas un blocage : la dette
           reste due, on signale seulement qu'on a dépassé ce qu'on s'était fixé
