@@ -894,6 +894,34 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Le pseudo du bilan hebdomadaire était échappé deux fois
+Trouvé en relisant `src/lib/email.ts`, qui n'avait aucun test à lui. Le pseudo
+était échappé, puis le titre qui le porte l'était à son tour :
+
+```ts
+const nom = echapper(pseudo);
+… ${echapper(t.titre(nom))}
+```
+
+« A & B » devenait donc « A &amp;amp; B », c'est-à-dire « A &amp; B » à l'écran.
+Le jeu de caractères autorisé pour un pseudo — lettres, chiffres, espace,
+`_ . -` — n'en contient aucun aujourd'hui, ce qui rendait le défaut invisible.
+C'est précisément ce qui le rendait gênant : le commentaire au-dessus
+d'`echapper` dit que la fonction existe « pour le jour où un autre chemin
+d'écriture oubliera la règle », et ce jour-là elle aurait affiché de la
+ferraille au lieu du pseudo. Un filet qu'on ne peut pas éprouver parce que rien
+ne l'atteint doit au moins être juste.
+
+`src/lib/email.test.ts` couvre les deux courriels, avec le vrai dictionnaire
+plutôt qu'une doublure — une doublure de dictionnaire dérive du jour où une clé
+s'ajoute. Un piège à noter : `Resend` s'instancie au chargement du module à
+partir de la variable d'environnement, donc la clé doit être posée **avant**
+l'import, sinon les deux fonctions rendent la main sans rien envoyer et tous
+les tests passent en ne mesurant rien.
+
+Trois sabotages, trois échecs : le double échappement remis, l'échappement du
+bilan retiré, celui du lien de récupération retiré.
+
 ### Une dette pouvait naître sans jamais pouvoir être en retard
 Le pendant du retrait de dette corrigé plus haut, dans l'autre sens. Le montant
 s'incrémentait bien de façon atomique — c'est la date de début qui était
