@@ -909,6 +909,42 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### La sauvegarde échouait encore, avec exactement la même ligne d'erreur
+Trouvée en lisant le journal d'un travail programmé plutôt que sa pastille —
+la même méthode qui a montré, dix minutes plus tôt, que les secrets d'envoi
+étaient bien posés. Deux exécutions rouges d'affilée, dont celle de 03h58 ce
+matin, sur :
+
+```
+pg_dump: error: aborting because of server version mismatch
+pg_dump: detail: server version: 18.6 ; pg_dump version: 16.15
+```
+
+C'est mot pour mot l'erreur déjà corrigée plus bas. La correction précédente
+était pourtant juste : le numéro se demande au serveur (`SHOW
+server_version_num` rend 18), et `postgresql-client-18` est bel et bien
+installé — le journal le montre.
+
+**Ce n'est pas le paquet, c'est le PATH.** L'image du runner place
+`/usr/lib/postgresql/16/bin` devant, donc `pg_dump` reste en 16.15 quoi qu'on
+installe. Le répertoire du client demandé passe maintenant en tête par
+`$GITHUB_PATH`.
+
+Et surtout : **l'étape imprimait déjà `pg_dump (PostgreSQL) 16.15` sous un
+serveur 18, à chaque exécution, depuis le premier jour.** La preuve du défaut
+était dans le journal, et le journal ne se lit pas. La ligne compare
+maintenant, et sort en erreur quand les deux numéros diffèrent. Un contrôle qui
+affiche sans comparer ne contrôle rien : c'est le même défaut que le
+`|| true` du contrôle de schéma, sous une autre forme.
+
+À retenir sur le test qui l'accompagnait : `src/sauvegardeVersion.test.ts`
+exigeait trois choses, toutes vraies, pendant que la sauvegarde échouait. Un
+test peut être entièrement satisfait et complètement à côté — il éprouvait
+l'intention (« demander la version au serveur ») et pas le résultat (« l'outil
+employé a-t-il cette version »).
+
+Deux sabotages, deux échecs.
+
 ### Le stockage du navigateur n'était gardé nulle part
 `localStorage` n'est pas une propriété qu'on lit : c'est un **accesseur**, et
 il lève quand le navigateur est réglé pour bloquer les données de site. Pas
