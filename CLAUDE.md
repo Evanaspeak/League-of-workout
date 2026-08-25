@@ -595,6 +595,18 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les routes d'administration, gardées par un test plutôt que par la discipline
+Les dix routes sous `api/admin` appellent toutes `estAdmin`, et chacune a son
+test. C'est bon, et c'est l'angle mort de tous les tests écrits à la main : ils
+ne disent rien de la route qu'on ajoutera demain. Or une route d'admin ouverte
+à n'importe quel compte connecté est le pire des accidents — elle réinitialise
+des mots de passe et lit tous les comptes.
+
+`porteRoutes.test.ts` exige donc `estAdmin` sur toute route du dossier, avec le
+contrôle de non-vacuité habituel. Et un second garde refuse une adresse
+électronique écrite en dur dans une route : c'est le second endroit à changer
+le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
+
 ### `onError` sur une image ne suffit pas
 Le bilan de saison montre une image dessinée au serveur. Quand elle ne se
 dessine pas, la page affichait l'icône de fichier cassé du navigateur, et le
