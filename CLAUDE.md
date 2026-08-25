@@ -925,6 +925,13 @@ Quatre sabotages, quatre échecs : la comparaison par lettres remise,
 diffusion retirée de la liste — attrapée par le test de la porte, pas par
 celui de la règle.
 
+Vérifié sur le serveur, parce qu'une porte se pousse : `/dashboard`,
+`/settings`, `/history`, `/api/games`, `/api/user` **et `/api/obs`** répondent
+307 vers `/login` ; les dix pages publiques répondent 200 ; `/api/obs/<jeton>`,
+`/api/sante`, `/api/champions` et `/api/exercices/ratios` atteignent leur
+handler. Et les trois adresses qui passaient par coïncidence de lettres —
+`/betamachin`, `/api/santeprivee`, `/obsolete` — sont maintenant redirigées.
+
 ### Le paiement qui perd la course annonçait une dette déjà payée
 Deux renvois du même paiement partis en même temps passent tous les deux le
 contrôle de jeton : c'est l'unicité en base qui tranche, et le perdant reçoit
