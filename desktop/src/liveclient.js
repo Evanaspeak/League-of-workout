@@ -81,7 +81,12 @@ function scoreDuJoueur(data) {
 // Démarre la boucle de surveillance. `emit(event)` est appelé à chaque
 // changement d'état avec { type: "game-started" | "game-ended", at: number },
 // et à chaque relevé avec { type: "game-data", ... } pendant la partie.
-function startLiveClientWatcher(emit) {
+function startLiveClientWatcher(emit, options = {}) {
+  // Le lecteur et la période s'injectent : sans ça, la boucle ne s'éprouve
+  // qu'en lançant League. Les valeurs par défaut sont celles de production, et
+  // aucun appelant n'a changé.
+  const lire = options.lire ?? fetchGameData;
+  const periodeMs = options.periodeMs ?? POLL_INTERVAL_MS;
   let inGame = false;
   /**
    * Dernier relevé de la partie en cours.
@@ -91,8 +96,29 @@ function startLiveClientWatcher(emit) {
    */
   let dernier = null;
 
+  /**
+   * Un tour à la fois.
+   *
+   * La scrutation est passée de cinq à deux secondes pour ne plus manquer
+   * l'événement de fin ; le délai d'expiration d'une requête, lui, est de
+   * trois. Sans ce verrou, un client qui répond lentement fait s'empiler les
+   * tours, et l'ordre des relevés n'est plus garanti — c'est-à-dire que le
+   * dernier relevé gardé peut ne pas être le dernier vu.
+   */
+  let enCours = false;
+
   const tick = async () => {
-    const data = await fetchGameData();
+    if (enCours) return;
+    enCours = true;
+    try {
+      await tour();
+    } finally {
+      enCours = false;
+    }
+  };
+
+  const tour = async () => {
+    const data = await lire();
     const available = !!data;
 
     if (available && !inGame) {
@@ -121,7 +147,7 @@ function startLiveClientWatcher(emit) {
     emit({ type: "game-data", ...releve });
   };
 
-  const timer = setInterval(tick, POLL_INTERVAL_MS);
+  const timer = setInterval(tick, periodeMs);
   tick(); // premier check immédiat
   return () => clearInterval(timer);
 }
