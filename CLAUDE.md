@@ -605,6 +605,13 @@ encore, alors qu'elle est le seul chemin automatique disponible aujourd'hui.
 C'est la page qui amène les gens, et la phrase parle de la fonctionnalité qui
 vient d'être réparée trois fois cette nuit. Corrigée dans les six langues.
 
+Le bandeau du tableau de bord disait la même chose : « en attente de
+l'autorisation de Riot Games pour synchroniser tes parties de League
+automatiquement ». Quelqu'un qui le lit ajoute ses parties à la main sans
+savoir que l'application le fait déjà. Il distingue maintenant les deux
+chemins : la synchronisation depuis le site attend Riot, l'application Windows
+n'attend rien.
+
 Ce que ça apprend : une phrase honnête au moment où on l'écrit devient
 malhonnête quand le produit avance. Elle vieillit d'autant plus vite qu'elle
 décrit ce qui manque, parce que c'est précisément ce sur quoi on travaille.
