@@ -319,6 +319,28 @@ Les pièges :
   page mesurée était `/login`. C'est écrit plus haut depuis les tests de
   langue ; ça se retombe dedans.
 
+### La seule porte de secours promettait un courriel qui ne partait pas
+`sendResetLink` commence par `if (!resend) return;` — sans clé configurée,
+elle rend la main sans rien envoyer. La route, elle, répondait `{ ok: true }`
+dans tous les cas, pour la bonne raison qu'une réponse différente permettrait
+d'énumérer les comptes.
+
+Résultat : sur un déploiement où la variable manque, quelqu'un qui a perdu son
+code demande un lien, lit « c'est envoyé », et attend indéfiniment. C'est la
+**seule** façon de rentrer, et l'attente ressemble exactement à un courriel en
+retard.
+
+Le dire ne casse pas la réponse générique : « le courriel n'est pas configuré »
+est une propriété du déploiement, pas de l'adresse saisie. Le contrôle passe
+donc avant toute lecture en base **et** avant le décompte des tentatives — une
+variable oubliée n'a pas à consommer le budget de quelqu'un. Deux tests, deux
+sabotages : le contrôle retiré, puis le contrôle déplacé après le décompte.
+
+Un piège au passage, qui vaut pour toutes les doublures de module :
+`jest.mock("@/lib/email", …)` **remplace le module entier**. La fonction
+ajoutée n'y figurait pas, donc l'appel rendait `undefined`, donc la route
+tombait en 500 — et six tests sans rapport se sont mis à échouer d'un coup.
+
 ### « Tes jeux » depuis un navigateur
 La section annonce « chaque jeu a ses réglages » et n'en montre qu'un. C'est
 exact : sans l'application Windows, il n'y a ni pastille en jeu ni détection

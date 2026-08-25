@@ -4,6 +4,23 @@ import type { Bilan } from "./bilanHebdo";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Win or Workout <noreply@winorworkout.com>";
+
+/**
+ * Le courriel peut-il partir ?
+ *
+ * Sans clé configurée, `sendResetLink` rendait la main sans rien envoyer, et
+ * la route de récupération répondait quand même « c'est parti ». La seule
+ * façon de sortir d'un compte dont on a perdu le code menait alors à une
+ * attente sans fin, et rien ne le signalait — une variable oubliée au
+ * déploiement ressemble exactement à un courriel en retard.
+ *
+ * Le dire ne révèle rien d'un compte : c'est une propriété du déploiement, pas
+ * de l'adresse qu'on a saisie. La réponse générique qui empêche l'énumération
+ * reste donc entière.
+ */
+export function courrielConfigure(): boolean {
+  return resend !== null;
+}
 const SITE = process.env.AUTH_URL?.replace(/\/$/, "") || "https://winorworkout.com";
 
 /**

@@ -33,6 +33,13 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Missing fields", es: "Faltan campos", de: "Fehlende Felder",
     zh: "有必填项没填", ja: "未入力の項目があります",
   },
+  "La récupération par courriel n'est pas disponible pour le moment.": {
+    en: "Email recovery is unavailable right now.",
+    es: "La recuperación por correo no está disponible por ahora.",
+    de: "Die Wiederherstellung per E-Mail ist gerade nicht verfügbar.",
+    zh: "邮件找回功能暂时不可用。",
+    ja: "メールでの復旧は現在ご利用いただけません。",
+  },
   "Email invalide": {
     en: "Invalid email", es: "Correo no válido", de: "Ungültige E-Mail",
     zh: "邮箱格式不对", ja: "メールアドレスが正しくありません",

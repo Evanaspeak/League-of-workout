@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
-import { sendResetLink, SITE_URL } from "@/lib/email";
+import { sendResetLink, SITE_URL, courrielConfigure } from "@/lib/email";
 import { normaliserEmail } from "@/lib/identite";
 import { empreinte, PREFIXE_RESET, VALIDITE_MS } from "@/lib/recuperation";
 
@@ -14,6 +14,21 @@ export async function POST(request: Request) {
 
     if (!email) {
       return NextResponse.json({ error: "Email invalide" }, { status: 400 });
+    }
+
+    // Sans courriel configuré, la demande ne peut pas aboutir : le dire vaut
+    // mieux que de promettre un envoi qui n'aura pas lieu, sur la seule façon
+    // de rentrer quand on a perdu son code.
+    //
+    // Le contrôle passe avant toute lecture en base et avant le décompte des
+    // tentatives : il ne dépend d'aucun compte, donc il n'apprend rien sur
+    // l'adresse saisie, et une variable oubliée au déploiement n'a pas à
+    // consommer le budget de quelqu'un.
+    if (!courrielConfigure()) {
+      return NextResponse.json(
+        { error: "La récupération par courriel n'est pas disponible pour le moment." },
+        { status: 503 },
+      );
     }
 
     // Double limite : par IP (anti-flood) et par email (anti-harcèlement d'un compte précis).
