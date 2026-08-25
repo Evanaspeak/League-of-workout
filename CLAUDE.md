@@ -98,7 +98,16 @@ prisma/
   schema.prisma       # Modèles DB
   migrations/
     20260629000000_create_system_config/migration.sql  # Crée table SystemConfig
-desktop/              # App Electron Windows
+desktop/src/          # App Electron Windows
+  main.js             # Fenêtre, canal d'authentification local, raccourcis
+  liveclient.js       # API de partie (port 2999) : début, fin, relevés
+  lcu.js              # Lanceur League : phase, file, rôle, écran de fin
+  issueLocale.js      # Les deux lectures d'issue, et la règle commune
+  attenteIssue.js     # Retient une fin de partie sans issue, le temps du lanceur
+  jeuxProcessus.js    # Détection des autres jeux par la liste des processus
+  overlay.js / overlay.html  # La pastille en jeu
+  origine.js          # « Est-ce bien chez nous ? », comparé par origine entière
+  langue.js / textes.js      # Les six langues de la coquille
 .github/workflows/desktop-build.yml  # CI build .exe → GitHub Release
 ```
 
