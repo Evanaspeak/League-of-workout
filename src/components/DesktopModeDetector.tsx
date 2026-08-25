@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { ecrire, effacer } from "@/lib/stockage";
 
 /**
  * Détecte l'ouverture faite par l'application desktop et mémorise le transfert
@@ -19,15 +20,15 @@ export function DesktopModeDetector() {
     // Pas d'aléa, pas de transfert : un drapeau posé par un tiers ne mène nulle
     // part, et c'est exactement ce qu'on veut.
     if (!nonce) return;
-    localStorage.setItem("low_desktop_handoff", "1");
-    localStorage.setItem("low_desktop_nonce", nonce);
+    ecrire("low_desktop_handoff", "1");
+    ecrire("low_desktop_nonce", nonce);
     // Le tour est ouvert côté serveur : il ferme la session en cours et date la
     // demande. Le transfert ne portera que sur une session ouverte APRÈS lui —
     // sans cette borne, arriver ici en étant déjà connecté suffisait à expédier
     // cette session-là vers l'application, sans que personne ne se soit
     // authentifié. L'horodatage vivait ici, dans le navigateur ; il vit
     // désormais là où on le relira, ce qui évite de comparer deux horloges.
-    localStorage.removeItem("low_desktop_arme");
+    effacer("low_desktop_arme");
     fetch("/api/auth/desktop-round", { method: "POST" }).catch(() => {});
   }, []);
   return null;

@@ -5,6 +5,7 @@ import { notifierSysteme } from "@/lib/notifier";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import type { ScoreDirect } from "@/types/electron";
+import { ecrire, lire } from "@/lib/stockage";
 
 /** Rôle retenu quand le jeu ne le dit pas : celui de la dernière saisie. */
 export const ROLE_DEFAUT = "Jungle";
@@ -80,13 +81,11 @@ export function PartieDetectee() {
       // deux dixièmes, et ses assists lui rapportent moins. Le lanceur donne le
       // rôle sur les files qui en attribuent un : on le retient pour les
       // parties où il ne le dira pas.
-      const role =
-        contexte?.role
-        || (typeof localStorage !== "undefined" && localStorage.getItem("lastRole"))
-        || ROLE_DEFAUT;
-      if (contexte?.role && typeof localStorage !== "undefined") {
-        try { localStorage.setItem("lastRole", contexte.role); } catch { /* stockage refusé */ }
-      }
+      // `lire` et `ecrire` rendent déjà `null` et `false` quand le stockage
+      // est indisponible : le garde `typeof localStorage` qui était ici
+      // regardait un objet global que le module ne lit plus.
+      const role = contexte?.role || lire("lastRole") || ROLE_DEFAUT;
+      if (contexte?.role) ecrire("lastRole", contexte.role);
       try {
         const res = await fetch("/api/games", {
           method: "POST",

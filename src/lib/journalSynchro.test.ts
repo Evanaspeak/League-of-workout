@@ -7,14 +7,20 @@ const entree = (quand: number): Entree => ({ quand, resultat: "rien" });
 const distincte = (quand: number): Entree => ({ quand, resultat: "erreur", code: 400 + quand });
 
 /**
- * Un stockage local minimal.
+ * Un stockage local minimal, posé sur `window`.
  *
- * Les tests tournent dans Node, où `localStorage` n'existe pas. Charger jsdom
- * pour un objet à quatre méthodes coûterait plus cher que de l'écrire, et le
- * module ne se sert de rien d'autre.
+ * Les tests tournent dans Node, où `window` n'existe pas. Charger jsdom pour
+ * un objet à quatre méthodes coûterait plus cher que de l'écrire, et le module
+ * ne se sert de rien d'autre.
+ *
+ * Sur `window` et pas sur `globalThis` : le module passe par
+ * `src/lib/stockage.ts`, qui lit `window.localStorage` — c'est cet accesseur
+ * qui lève quand le navigateur bloque les données de site. Une doublure posée
+ * à côté ne serait jamais lue, et la suite éprouverait un stockage vide en
+ * croyant éprouver le sien.
  */
 const memoire = new Map<string, string>();
-(globalThis as unknown as { localStorage: Storage }).localStorage = {
+const stockage = {
   getItem: (c: string) => memoire.get(c) ?? null,
   setItem: (c: string, v: string) => { memoire.set(c, String(v)); },
   removeItem: (c: string) => { memoire.delete(c); },
@@ -22,6 +28,9 @@ const memoire = new Map<string, string>();
   key: (i: number) => [...memoire.keys()][i] ?? null,
   get length() { return memoire.size; },
 } as Storage;
+(globalThis as unknown as { window: { localStorage: Storage } }).window = {
+  localStorage: stockage,
+};
 
 describe("journal", () => {
   it("met la plus récente en tête et borne la longueur", () => {
@@ -99,7 +108,7 @@ describe("lecture d'un code HTTP", () => {
 });
 
 describe("stockage", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => stockage.clear());
 
   it("fait le tour complet", () => {
     enregistrer([entree(1), entree(2)]);
@@ -109,13 +118,13 @@ describe("stockage", () => {
   it("rend une liste vide plutôt que de lever sur du contenu abîmé", () => {
     // Un journal illisible ne doit pas empêcher la page de s'afficher.
     for (const brut of ["{ceci n'est pas du JSON", '"une chaîne"', "42", "null"]) {
-      localStorage.setItem(CLE, brut);
+      stockage.setItem(CLE, brut);
       expect(charger()).toEqual([]);
     }
   });
 
   it("jette les entrées mal formées sans emporter les bonnes", () => {
-    localStorage.setItem(CLE, JSON.stringify([
+    stockage.setItem(CLE, JSON.stringify([
       entree(3), { quand: "hier" }, null, { resultat: "rien" }, entree(1),
     ]));
     expect(charger()).toHaveLength(2);

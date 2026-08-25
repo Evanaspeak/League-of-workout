@@ -7,6 +7,7 @@ import { estPagePublique } from "@/lib/pagesPubliques";
 import { Icone } from "@/components/Icone";
 import { cleOnboarding, cleVisite } from "@/lib/premiereVisite";
 import { useIdCompte } from "@/lib/useIdCompte";
+import { ecrire, lire } from "@/lib/stockage";
 
 /**
  * Visite guidée de la première connexion.
@@ -139,17 +140,17 @@ export function VisiteGuidee() {
   useEffect(() => {
     if (estPagePublique(chemin)) return;
     if (uid === undefined) return;
-    if (localStorage.getItem(cleVisite(uid))) return;
+    if (lire(cleVisite(uid))) return;
     // La visite prend la suite de l'accueil : tant qu'il n'a pas été vu, il n'y
     // a rien à guider.
-    if (!localStorage.getItem(cleOnboarding(uid))) return;
+    if (!lire(cleOnboarding(uid))) return;
     // Assez pour laisser la modale finir de s'effacer, pas plus.
     const minuteur = setTimeout(() => setActive(true), 250);
     return () => clearTimeout(minuteur);
   }, [chemin, uid, relance]);
 
   const cloturer = useCallback(() => {
-    localStorage.setItem(cleVisite(uid), "1");
+    ecrire(cleVisite(uid), "1");
     setActive(false);
     setCadre(null);
   }, [uid]);

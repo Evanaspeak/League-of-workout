@@ -900,31 +900,48 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
-### Constaté, pas corrigé : le stockage local n'est gardé nulle part
-Recensé le 25 août au matin, et **laissé en l'état** : 49 accès à
-`localStorage` ou `sessionStorage` ne sont pas enveloppés dans un `try`, dans
-25 fichiers. Un navigateur réglé pour bloquer les données de site fait lever
-l'accès lui-même — pas l'écriture, l'accès — avec une `SecurityError`.
+### Le stockage du navigateur n'était gardé nulle part
+`localStorage` n'est pas une propriété qu'on lit : c'est un **accesseur**, et
+il lève quand le navigateur est réglé pour bloquer les données de site. Pas
+l'écriture — l'accès. Soixante et un appels de l'application le faisaient à nu,
+dans dix-neuf fichiers, dont `LoginButtons`, `SessionGuard` et
+`OnboardingModal` : une exception y casse l'écran de connexion en entier, pour
+quelqu'un qui n'a aucun recours et aucune raison de faire le lien avec un
+réglage de son navigateur.
 
-Ce que ça coûte là où c'est le plus grave : `LoginButtons`, `SessionGuard` et
-`OnboardingModal` sont sur le chemin critique. Une exception y casse l'écran de
-connexion en entier, pour quelqu'un qui n'a aucun recours et aucune raison de
-faire le lien avec un réglage de son navigateur.
+C'est rare — il faut avoir explicitement bloqué les données de site ; la
+navigation privée moderne, elle, oublie sans lever. Mais le coût, quand ça
+arrive, est total et muet.
 
-C'est rare : il faut avoir explicitement bloqué les données de site. La
-navigation privée moderne, elle, ne lève pas — elle oublie, ce qui est déjà
-traité partout où la valeur est facultative.
+`src/lib/stockage.ts` traite le cas une fois : `lire`, `ecrire`, `effacer`,
+leurs équivalents de session, et deux variantes JSON. Une valeur absente et un
+stockage indisponible s'y traitent pareil — l'application n'a rien à faire de
+la distinction, dans les deux cas elle ne sait pas et elle doit continuer.
 
-**Pourquoi ce n'est pas corrigé cette nuit.** La bonne forme est un petit
-module (`lire`, `ecrire`, `effacer`, et leurs équivalents de session) et le
-remplacement des 49 appels. C'est mécanique, donc ça se fait vite et ça se
-relit mal : quarante-neuf substitutions dans vingt-cinq composants, à quatre
-heures du matin, sans le temps de rejouer la suite navigateur entière derrière.
-Une correction mécanique qu'on ne peut pas éprouver en entier coûte plus cher
-que le défaut qu'elle vise. Un garde structurel refusant tout `localStorage.`
-direct hors du module va avec, et se pose en même temps ou pas du tout.
+Trois choses apprises en l'écrivant, toutes par sabotage :
 
-À prendre en premier sur une fenêtre qui a la place.
+- **Deux de mes gardes ne gardaient rien.** J'avais mis un `try` autour de
+  l'accesseur DANS le module, en plus de celui de chaque fonction publique. Le
+  retirer laissait la suite verte : le second rattrapait déjà tout. Une ligne
+  qui ne fait pas tomber un test quand on l'enlève ne tient rien, et elle se
+  relit comme une garantie. Elle est partie ; chacune de celles qui restent
+  fait tomber son test.
+- **Le garde de rendu serveur, lui, reste sans être prouvé**, et c'est écrit
+  dans le commentaire du test : le `catch` rattraperait la `ReferenceError`,
+  donc le test ne peut pas les distinguer. Il est là pour ne pas faire du
+  chemin normal du serveur une exception levée à chaque rendu, pas pour la
+  correction du résultat.
+- **Deux suites doublaient `globalThis.localStorage`.** Le module lit
+  `window.localStorage` : leur doublure n'était plus lue du tout, et
+  `journalSynchro` gardait en prime un `if (typeof localStorage === "undefined")`
+  devenu faux. Onze tests sont tombés d'un coup, ce qui est la bonne nouvelle —
+  une doublure posée à côté fait éprouver un stockage vide en croyant éprouver
+  le sien.
+
+`src/stockageGarde.test.ts` refuse tout accès direct hors du module, et vérifie
+que le module, lui, y touche vraiment : sans ce second contrôle, le motif
+pourrait disparaître partout, y compris là où il doit être, et le test
+resterait vert en ne gardant plus rien.
 
 ### Une partie que rien n'avait pu lire disparaissait sans un mot
 La correction de l'issue illisible s'arrêtait un cran trop bas.
