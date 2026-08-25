@@ -46,7 +46,16 @@ export function PartieDetectee() {
         // pas à être enregistrée : le lanceur l'a dit, il n'y a rien à
         // signaler. Le silence est la bonne réponse, pas un oubli.
         if (motifSansResultat === "remake") return;
-        notifierSysteme(t.issueIllisible, t.issueIllisibleCorps, "wow-partie");
+        // Les chiffres partent avec le message : sans eux, « ajoute la partie
+        // à la main » demande de se rappeler un KDA qu'on vient de quitter.
+        // On les a sous la main, c'est le moment de les donner.
+        const minutes = Math.max(1, Math.round((dureeSec ?? 0) / 60));
+        const details = [
+          score.champion,
+          `${score.kills}/${score.deaths}/${score.assists}`,
+          `${minutes} min`,
+        ].filter(Boolean).join(" · ");
+        notifierSysteme(t.issueIllisible, t.issueIllisibleCorps(details), "wow-partie");
         return;
       }
 
