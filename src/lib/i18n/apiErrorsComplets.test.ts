@@ -63,6 +63,38 @@ function messagesDesRoutes(): Map<string, Set<string>> {
     }
   };
   parcourir(RACINE);
+
+  /**
+   * Les messages que les routes ne portent plus elles-mêmes.
+   *
+   * `riotStatut.ts` est né d'un remaniement : les trois routes Riot rendaient
+   * le code et le message de Riot tels quels, elles passent maintenant par un
+   * seul traducteur. Le recensement, lui, ne lit que `src/app/api` — les six
+   * messages sont donc sortis de son champ en même temps qu'ils sortaient des
+   * routes, et le test a continué de passer sur un trou qu'il venait de
+   * creuser. Un recensement qui ne suit pas le code qu'on déplace ne recense
+   * plus rien.
+   *
+   * La liste est explicite, pas devinée : un module qui écrit des messages
+   * pour des routes s'ajoute ici, avec le motif qui les y trouve.
+   */
+  const PRODUCTEURS: { chemin: string; motif: RegExp }[] = [
+    { chemin: join(__dirname, "..", "riotStatut.ts"), motif: /message:\s*"((?:[^"\\]|\\.)+)"/g },
+  ];
+  for (const { chemin, motif } of PRODUCTEURS) {
+    const source = readFileSync(chemin, "utf8");
+    let vus = 0;
+    for (const m of source.matchAll(motif)) {
+      const message = m[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+      if (!trouves.has(message)) trouves.set(message, new Set());
+      trouves.get(message)!.add(chemin.slice(chemin.indexOf("lib/")));
+      vus += 1;
+    }
+    // Un producteur déclaré qui ne rend plus rien est une liste qui a vieilli,
+    // et le test redeviendrait vert en ne lisant que les routes.
+    if (vus === 0) throw new Error(`Aucun message trouvé dans ${chemin}`);
+  }
+
   return trouves;
 }
 

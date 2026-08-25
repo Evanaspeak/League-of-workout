@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { REGIONS_RIOT, routageDe, validerRiotId } from "@/lib/riot-champs";
+import { refusRiot } from "@/lib/riotStatut";
 
 export async function POST(req: Request) {
   // La session se vérifie AVANT de parler à Riot. Elle ne l'était qu'après,
@@ -68,7 +69,12 @@ export async function POST(req: Request) {
   );
 
   if (!res.ok) {
-    return NextResponse.json({ error: `Joueur introuvable (${res.status})` }, { status: res.status });
+    // « Joueur introuvable (401) » accusait le pseudo de la personne au moment
+    // même où elle le tape pour la première fois, alors que c'est notre clé que
+    // Riot venait de refuser. Une clé de développement expire toutes les
+    // vingt-quatre heures : ce n'est pas un cas rare.
+    const refuseRiotLu = refusRiot(res.status, "Joueur introuvable. Vérifie le pseudo, le tag et la région.");
+    return NextResponse.json({ error: refuseRiotLu.message }, { status: refuseRiotLu.statut });
   }
 
   const data = await res.json();

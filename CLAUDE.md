@@ -909,6 +909,45 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Riot refusait notre clé, et l'application accusait le pseudo du joueur
+Les trois routes Riot rendaient le code de Riot **tel quel** :
+
+```ts
+return NextResponse.json({ … }, { status: idsRes.status });
+```
+
+Deux conséquences, et la seconde est la pire.
+
+D'abord, **401 change de sens en chemin**. Partout ailleurs il veut dire « pas
+de session » ; ici il pouvait aussi vouloir dire « Riot a refusé notre clé ».
+Le journal de synchronisation annonçait donc « clé refusée, rien à faire de ton
+côté » à quelqu'un dont la session venait simplement d'expirer, c'est-à-dire
+lui disait de ne rien faire alors qu'il lui suffisait de se reconnecter.
+
+Ensuite, `resolve-puuid` répondait **« Joueur introuvable (401) »**. La
+personne qui relie son compte lit que SON pseudo est faux, au moment précis où
+elle le tape pour la première fois. C'est notre configuration qui est en cause,
+et le message accuse la sienne. Une clé de développement Riot expire toutes les
+vingt-quatre heures : ce n'est pas un cas de bord, c'est le cas quotidien tant
+que la clé de production n'est pas arrivée.
+
+`src/lib/riotStatut.ts` traduit : 403 pour « notre clé est refusée », 404 avec
+les mots de la route appelante — une partie absente et un joueur inconnu ne se
+corrigent pas pareil —, 429 tel quel, 502 pour tout le reste, parce qu'un 500
+laisserait croire que la panne est la nôtre. Et 401 redevient un code à un seul
+sens ; le journal distingue désormais « session expirée » de « clé refusée ».
+
+**Et le remaniement a creusé un trou dans le recensement, qui est resté vert.**
+`apiErrorsComplets.test.ts` ne lit que `src/app/api` : les six messages sont
+sortis de son champ en même temps qu'ils sortaient des routes. Ils seraient
+partis en français à tout le monde, exactement le défaut que ce test existe
+pour empêcher, et il n'aurait rien dit. Il lit maintenant aussi les modules
+déclarés qui écrivent des messages pour des routes, et refuse un producteur
+déclaré qui ne rend plus rien — sans quoi la liste vieillit et le test
+redevient vert en ne lisant que les routes.
+
+Cinq sabotages, cinq échecs.
+
 ### La sauvegarde échouait encore, avec exactement la même ligne d'erreur
 Trouvée en lisant le journal d'un travail programmé plutôt que sa pastille —
 la même méthode qui a montré, dix minutes plus tôt, que les secrets d'envoi

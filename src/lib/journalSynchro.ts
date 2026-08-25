@@ -85,14 +85,25 @@ function memeCause(a: Entree, b: Entree): boolean {
  * fait à l'affichage, où le dictionnaire est disponible.
  */
 export type MotifSynchro =
-  | "saturee" | "compteMalRenseigne" | "cleRefusee" | "indisponible"
+  | "saturee" | "compteMalRenseigne" | "cleRefusee" | "sessionExpiree" | "indisponible"
   | "resultatIllisible"
   | "riotMuet" | "aucunePartie" | "inattendu";
 
 export function lireCode(code: number): { resultat: Resultat; motif: MotifSynchro } {
   if (code === 429) return { resultat: "refus", motif: "saturee" };
   if (code === 400) return { resultat: "erreur", motif: "compteMalRenseigne" };
-  if (code === 401 || code === 403) return { resultat: "erreur", motif: "cleRefusee" };
+  /**
+   * 401 et 403 ne disent pas la même chose, et ils le disaient.
+   *
+   * 401 est le code de NOTRE porte : « pas de session ». Les routes Riot
+   * renvoyaient en plus le code de Riot tel quel, donc un 401 pouvait aussi
+   * vouloir dire « Riot a refusé notre clé » — et le journal annonçait « clé
+   * refusée » à quelqu'un dont la session venait simplement d'expirer. Les
+   * routes traduisent maintenant (`src/lib/riotStatut.ts`) : 403 pour la clé,
+   * 401 pour la session, un sens par code.
+   */
+  if (code === 401) return { resultat: "erreur", motif: "sessionExpiree" };
+  if (code === 403) return { resultat: "erreur", motif: "cleRefusee" };
   if (code === 404) return { resultat: "rien", motif: "aucunePartie" };
   /**
    * 422 : la partie est là, son résultat ne se lit pas.
