@@ -66,7 +66,7 @@ async function nombreDeParties(ctx: import("@playwright/test").BrowserContext) {
   expect(res.status()).toBe(200);
   const corps = await res.json();
   const liste = Array.isArray(corps) ? corps : (corps.games ?? []);
-  return liste as Array<{ result: string; champion: string | null }>;
+  return liste as Array<{ result: string; champion: string | null; role: string | null }>;
 }
 
 test("ouvrir un compte", async ({ browser }) => {
@@ -127,5 +127,35 @@ test("un remake n'enregistre rien, et ne dit rien", async ({ browser }) => {
   const apres = await nombreDeParties(ctx);
   expect(apres.map((g) => g.champion)).not.toContain("Zed");
   expect(apres.length).toBe(avant);
+  await ctx.close();
+});
+
+test("le rôle donné par le lanceur est retenu pour les parties suivantes", async ({ browser }) => {
+  // Le repli n'était alimenté que par la saisie manuelle : quelqu'un qui ne
+  // joue qu'avec la détection automatique retombait toujours sur la constante,
+  // quel que soit son rôle. Or un support compté comme jungler paie ses morts
+  // trois points au lieu de deux et deux dixièmes.
+  const { ctx, page } = await ouvrirSurLApplication(browser);
+
+  await page.evaluate((p) =>
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p),
+    { ...partie("V"), contexte: { file: { nom: "Classée Solo/Duo", classee: true }, role: "Support" } });
+
+  await expect.poll(
+    () => page.evaluate(() => { try { return localStorage.getItem("lastRole"); } catch { return null; } }),
+    { timeout: 15_000 },
+  ).toBe("Support");
+
+  // Et la partie suivante, sans rôle au contexte, l'emploie.
+  await page.evaluate((p) =>
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p),
+    { ...partie("D"), contexte: null,
+      score: { kills: 1, deaths: 9, assists: 14, cs: 20, champion: "Lulu" } });
+
+  await expect.poll(async () => {
+    const parties = await nombreDeParties(ctx);
+    return parties.find((g) => g.champion === "Lulu")?.role ?? null;
+  }, { timeout: 20_000 }).toBe("Support");
+
   await ctx.close();
 });
