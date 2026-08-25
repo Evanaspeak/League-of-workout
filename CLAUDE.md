@@ -595,6 +595,26 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La boucle qui détecte les parties n'avait aucun test
+Elle ne s'éprouvait qu'en lançant League, c'est-à-dire jamais ici. Le lecteur
+et la période s'injectent maintenant (`options.lire`, `options.periodeMs`), avec
+les valeurs de production par défaut : aucun appelant n'a changé, et la boucle
+se joue en quarante millisecondes.
+
+Ce que ça a immédiatement trouvé : **le passage de cinq à deux secondes que je
+venais de faire créait un chevauchement**. Le délai d'expiration d'une requête
+est de trois secondes ; sans verrou, un client qui répond lentement fait
+s'empiler les tours, et l'ordre des relevés n'est plus garanti — c'est-à-dire
+que le dernier relevé gardé peut ne pas être le dernier vu. Le test le mesure :
+**vingt-neuf requêtes en vol** sans le verrou, une seule avec.
+
+Trois sabotages, et le troisième a appris autre chose : retirer le
+`clearInterval` de l'arrêt ne fait pas tomber le test, il fait **pendre jest**.
+L'assertion échoue bien, mais le minuteur reste ouvert et le processus ne rend
+jamais la main. Un test qui prouve son point en pendant est un mauvais signal
+en intégration continue : ici il ne pend que sous sabotage, et c'est acceptable,
+mais il valait mieux le savoir que de le découvrir un matin sur une branche.
+
 ### Le lanceur pouvait répondre avant qu'on ait posé la question
 Relecture de la correction de la nuit, comme on relit le travail d'un autre.
 `attenteIssue` retient une fin de partie sans issue, le temps que le lanceur
