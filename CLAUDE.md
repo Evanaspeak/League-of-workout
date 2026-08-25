@@ -248,6 +248,15 @@ devant valoir la même chose que la variable d'environnement du même nom côté
 Vercel. Sans secret configuré, la route refuse tout le monde — une variable
 oubliée ne doit pas transformer un déclencheur en porte ouverte.
 
+**Ils sont posés, et ça se vérifie dans le journal, pas sur la pastille.** Le
+25 août à 04h02, les deux déclencheurs répondent 200 :
+`{"examines":0,"envoyes":0,"relances":0}` pour le rappel du matin,
+`{"examines":1,"envoyes":0}` pour le bilan. Zéro envoi est le résultat normal à
+cette heure-là et un mardi. Un 401 dirait que le secret ne correspond pas à
+celui de Vercel ; un `::warning::` dirait qu'il manque. C'est la seule façon de
+le savoir : par conception ce travail rend du vert quoi qu'il arrive, pour ne
+pas envoyer vingt-quatre courriels d'échec par jour.
+
 Tant qu'ils manquent, le travail **s'arrête sans échouer**. Un travail horaire
 qui échoue enverrait vingt-quatre courriels d'échec par jour jusqu'à ce que
 quelqu'un cède et le coupe : c'est l'inverse de ce qu'on veut. Voir « Les
