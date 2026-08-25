@@ -127,14 +127,32 @@ export async function PATCH(req: Request) {
       if (paye > 0) {
         await tx.paiement.create({ data: { userId: user.id, points: paye, jour, jeton } });
       }
+      /**
+       * La dette se relit DANS la transaction, et se décrémente.
+       *
+       * Elle était réécrite en valeur ABSOLUE, calculée avant la transaction.
+       * Une partie enregistrée entre la lecture et l'écriture voyait donc sa
+       * dette effacée : c'est exactement ce qui arrive quand on finit sa série
+       * au moment où l'application de bureau enregistre la partie qu'on vient
+       * de quitter. Le paiement vaut un nombre de points, pas un état final.
+       *
+       * Cela vaut aussi pour « j'ai tout fait » : on paie tout ce qu'on avait
+       * sous les yeux, pas tout ce qui existe au moment où la requête arrive.
+       */
+      const actuel = await tx.user.findUnique({
+        where: { id: user.id },
+        select: { dettePointsDus: true },
+      });
+      const apres = Math.max(0, Math.max(0, actuel?.dettePointsDus ?? 0) - paye);
+
       return tx.user.update({
         where: { id: user.id },
         data: {
-          dettePointsDus: restant,
+          dettePointsDus: apres,
           // Une dette éteinte n'a plus de date de début ; une dette entamée
           // garde la sienne, sinon un paiement partiel remettrait le compteur de
           // retard à zéro sans que rien n'ait été soldé.
-          ...(restant === 0 ? { detteDepuis: null } : {}),
+          ...(apres === 0 ? { detteDepuis: null } : {}),
         },
         select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
       });

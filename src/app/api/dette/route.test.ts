@@ -2,7 +2,7 @@ import { requete, corps, utilisateur } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => {
   const paiement = { create: jest.fn(), findUnique: jest.fn() };
-  const user = { update: jest.fn() };
+  const user = { update: jest.fn(), findUnique: jest.fn() };
   return {
     prisma: {
       user, paiement,
@@ -22,7 +22,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { appliquerRatios, RATIOS_DEFAUT } from "@/lib/exercices";
 
 const session = getCurrentUser as jest.Mock;
-const user = prisma.user as unknown as { update: jest.Mock };
+const user = prisma.user as unknown as { update: jest.Mock; findUnique: jest.Mock };
 const paiement = (prisma as unknown as
   { paiement: { create: jest.Mock; findUnique: jest.Mock } }).paiement;
 
@@ -34,6 +34,9 @@ beforeEach(() => {
   appliquerRatios(RATIOS_DEFAUT);
   session.mockResolvedValue(joueur());
   paiement.findUnique.mockResolvedValue(null);
+  // La dette relue DANS la transaction : par défaut, la même qu'à la lecture.
+  // Les tests qui éprouvent la course la changent.
+  user.findUnique.mockResolvedValue({ dettePointsDus: 100 });
   user.update.mockImplementation(async ({ data }: { data: { dettePointsDus: number } }) => ({
     dettePointsDus: data.dettePointsDus, rappelSeuilSec: 300, exercices: ["boxe"],
   }));
@@ -312,5 +315,36 @@ describe("les bornes du paiement partiel", () => {
 
   it("laisse « tout est fait » explicite passer sans durée", async () => {
     expect((await payer({ tout: true })).status).toBe(200);
+  });
+});
+
+describe("la course entre un paiement et une partie", () => {
+  it("décrémente au lieu de réécrire, pour ne pas effacer ce qui vient d'arriver", async () => {
+    // Le cas réel : on finit sa série au moment où l'application de bureau
+    // enregistre la partie qu'on vient de quitter. La dette était réécrite en
+    // valeur ABSOLUE, calculée avant la transaction : la partie disparaissait.
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    // Entre la lecture et la transaction, une partie a ajouté trente points.
+    user.findUnique.mockResolvedValue({ dettePointsDus: 130 });
+
+    const r = await PATCH(requete("http://x/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(r.status).toBe(200);
+
+    // Cent points payés, trente restants : la partie n'a pas été effacée.
+    expect(user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ dettePointsDus: 30 }) }),
+    );
+  });
+
+  it("solde bien la dette quand rien n'est arrivé entre-temps", async () => {
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    user.findUnique.mockResolvedValue({ dettePointsDus: 100 });
+
+    await PATCH(requete("http://x/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ dettePointsDus: 0, detteDepuis: null }),
+      }),
+    );
   });
 });

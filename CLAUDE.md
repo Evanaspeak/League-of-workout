@@ -615,6 +615,27 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Payer sa dette effaçait la partie qui venait d'arriver
+`PATCH /api/dette` lisait la dette, calculait ce qui reste, puis **réécrivait
+cette valeur absolue** dans une transaction. Entre la lecture et l'écriture, il
+peut se passer quelque chose : l'application de bureau enregistre la partie
+qu'on vient de quitter. Sa dette était alors écrasée par un état calculé avant
+elle.
+
+Ce n'est pas un cas tordu, c'est le cas normal : on finit sa série au moment où
+la partie se termine. Le paiement est simplement plus rapide que l'écriture de
+la partie une fois sur deux.
+
+La dette se relit maintenant DANS la transaction, et se **décrémente** du
+nombre de points réellement acquittés. Un paiement vaut un nombre de points,
+pas un état final.
+
+Cela vaut aussi pour « j'ai tout fait » : on paie tout ce qu'on avait sous les
+yeux, pas tout ce qui existe au moment où la requête arrive. Sinon le bouton
+efface une dette qu'on n'a jamais vue.
+
+Sabotage fait, retour à la réécriture absolue : le test tombe.
+
 ### Le chemin principal perdait encore une partie en silence
 Dernier trou de la série, et le plus mal placé : `if (!res.ok) return;` dans la
 détection de partie. L'issue était lue, la partie complète, et le serveur la
