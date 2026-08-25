@@ -97,7 +97,19 @@ export function PartieDetectee() {
             source: "live_client",
           }),
         });
-        if (!res.ok) return;
+        if (!res.ok) {
+          // Un refus était muet, et la partie perdue avec. C'est le chemin
+          // principal du produit : une session expirée, une valeur hors
+          // bornes, une configuration absente, et la soirée ne compte pas
+          // sans que rien ne le dise.
+          const corps = await res.json().catch(() => null);
+          notifierSysteme(
+            t.nonEnregistree,
+            t.refuse(String(corps?.error ?? res.status)),
+            "wow-partie",
+          );
+          return;
+        }
         // La pastille de dette et le tableau de bord écoutent cet événement :
         // la partie apparaît sans qu'on ait à recharger quoi que ce soit.
         window.dispatchEvent(new Event("wow-dette-changee"));
@@ -110,7 +122,10 @@ export function PartieDetectee() {
         const quantite = ventiler(repartition ?? {}).map((v) => `${v.valeur} ${t.noms[v.id]}`).join(" · ");
         if (quantite) notifierSysteme(t.partieTerminee, t.aFaire(quantite), "wow-partie");
       } catch {
-        /* Le suivi de session reste le filet de sécurité. */
+        // Sans clé Riot de production, le suivi de session n'a rien à
+        // rattraper : ce chemin-ci est le seul. Une coupure réseau doit donc se
+        // dire, sinon la partie disparaît sans témoin.
+        notifierSysteme(t.nonEnregistree, t.horsLigne, "wow-partie");
       }
     });
   }, [t]);

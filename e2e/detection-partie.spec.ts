@@ -159,3 +159,38 @@ test("le rôle donné par le lanceur est retenu pour les parties suivantes", asy
 
   await ctx.close();
 });
+
+test("une partie que le serveur refuse le dit, au lieu de disparaître", async ({ browser }) => {
+  // C'est le chemin principal du produit : une session expirée, une valeur
+  // hors bornes, une configuration absente, et la soirée ne comptait pas sans
+  // que rien ne le dise. Le commentaire invoquait le suivi de session comme
+  // filet de sécurité ; sans clé Riot de production, ce filet n'existe pas.
+  const { ctx, page } = await ouvrirSurLApplication(browser);
+  const avant = (await nombreDeParties(ctx)).length;
+
+  await page.route("**/api/games", async (route) => {
+    if (route.request().method() === "POST") {
+      return route.fulfill({
+        status: 400, contentType: "application/json",
+        body: JSON.stringify({ error: "Rôle inconnu" }),
+      });
+    }
+    await route.continue();
+  });
+
+  await page.evaluate((p) =>
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p),
+    { ...partie("V"), score: { kills: 3, deaths: 3, assists: 3, cs: 90, champion: "Yasuo" } });
+
+  await expect.poll(
+    () => page.evaluate(() => (window as unknown as { __dits: string[] }).__dits),
+    { timeout: 15_000 },
+  ).not.toHaveLength(0);
+
+  // Le motif rendu par la route accompagne le message : « refusé » tout seul
+  // n'apprend rien.
+  const dit = (await page.evaluate(() => (window as unknown as { __dits: string[] }).__dits)).join(" ");
+  expect(dit).toMatch(/Rôle inconnu/);
+  expect((await nombreDeParties(ctx)).length).toBe(avant);
+  await ctx.close();
+});
