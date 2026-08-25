@@ -909,6 +909,24 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Le recensement des `catch` silencieux, refait une dernière fois
+Passage final sur tous les `catch {}` et `.catch(() => {})` du site et de
+l'application de bureau. Les dix-neuf qui restent sont **tous des lectures au
+montage** : les préférences d'exercices, les paliers, la version de
+l'application, l'état des jeux surveillés. Un échec y laisse une valeur par
+défaut saine ; rien de ce que la personne a fait n'est perdu, et rien de faux
+n'est affiché. C'est l'usage légitime du silence.
+
+Ce qui n'en était pas — un envoi avalé, un réglage affiché sans avoir été
+gardé, une partie qui disparaît — a été traité au fil de la nuit et des
+précédentes. Le recensement s'arrête donc ici : il ne reste rien à corriger de
+cette famille, et le redire à chaque passage ferait perdre de vue les vrais.
+
+Deux exceptions gardées dans `desktop/src/main.js`, toutes deux à la
+fermeture : la lecture du cookie de session au démarrage, qui retombe sur
+l'écran de connexion, et l'oubli de session demandé, qui ne peut plus rien dire
+à personne puisque la fenêtre se ferme.
+
 ### Un 429 de Riot faisait dormir la fonction six minutes
 Trouvé en relisant la fonction que les deux routes Riot portaient chacune de
 son côté, recopiée à l'identique :
