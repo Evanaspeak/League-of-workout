@@ -340,6 +340,26 @@ Ce qui a été posé :
 - Admin check toujours côté serveur (getCurrentUser + email check)
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
+### Pourquoi le CSP porte `'unsafe-inline'` sur les scripts
+Ce n'est pas un oubli, et ça mérite d'être écrit une fois pour qu'on ne le
+redécouvre pas tous les six mois. Next.js pose ses propres scripts en ligne
+dans chaque page, et leur contenu change à chaque construction : les autoriser
+par empreinte est impossible. Reste le nonce, qui se génère par requête — donc
+qui rend **toutes** les pages dynamiques, y compris les dix pages publiques dont
+le temps d'affichage est le seul canal d'acquisition qui travaille sans qu'on
+s'en occupe.
+
+Ce que `'unsafe-inline'` coûte réellement ici : rien tant qu'aucune donnée
+d'utilisateur n'atteint un point d'injection. React échappe tout ce qu'il rend,
+et les deux seuls `dangerouslySetInnerHTML` de l'application portent des
+constantes — le bloc de données structurées de l'accueil et l'écouteur
+d'invitation à installer. C'est une défense en profondeur qui manque, pas une
+porte ouverte.
+
+À vérifier avant d'ajouter un troisième `dangerouslySetInnerHTML` : s'il devait
+porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
+reprendre, pas seulement échapper la valeur.
+
 ## Tests
 1236 tests unitaires, 103 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
