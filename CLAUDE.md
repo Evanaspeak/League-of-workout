@@ -615,6 +615,44 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Payer sa dette effaçait la partie qui venait d'arriver
+`PATCH /api/dette` lisait la dette, calculait ce qui reste, puis **réécrivait
+cette valeur absolue** dans une transaction. Entre la lecture et l'écriture, il
+peut se passer quelque chose : l'application de bureau enregistre la partie
+qu'on vient de quitter. Sa dette était alors écrasée par un état calculé avant
+elle.
+
+Ce n'est pas un cas tordu, c'est le cas normal : on finit sa série au moment où
+la partie se termine. Le paiement est simplement plus rapide que l'écriture de
+la partie une fois sur deux.
+
+Le retrait passe maintenant par un **décrément atomique** (`src/lib/dette.ts`) :
+deux écritures concurrentes s'ajoutent au lieu de s'écraser. Un paiement vaut
+un nombre de points, pas un état final.
+
+`decrement` n'a pas de plancher, d'où la remise à zéro juste après si on est
+passé sous la ligne — le cas légitime étant « j'ai fait plus que ce que je
+devais ». La fenêtre où la valeur est négative dure une requête, et tout ce qui
+lit la dette la borne déjà à zéro, précisément parce qu'une valeur négative n'a
+aucun sens à l'écran.
+
+Une première version relisait la dette DANS la transaction avant d'écrire une
+valeur absolue. Ça couvre le cas courant et pas le cas général : sous
+PostgreSQL en lecture validée, un incrément qui s'intercale entre la lecture et
+l'écriture se perd quand même. Le décrément, lui, n'a pas ce trou.
+
+**La suppression d'une partie avait exactement le même défaut**, et hors
+transaction : elle relisait puis écrivait une valeur bornée, avec le
+raisonnement écrit en commentaire (« decrement ne connaît pas de plancher »).
+Le raisonnement était juste, la conclusion non : le plancher se pose après, pas
+en renonçant à l'atomicité.
+
+Cela vaut aussi pour « j'ai tout fait » : on paie tout ce qu'on avait sous les
+yeux, pas tout ce qui existe au moment où la requête arrive. Sinon le bouton
+efface une dette qu'on n'a jamais vue.
+
+Sabotage fait, retour à la réécriture absolue : le test tombe.
+
 ### Le chemin principal perdait encore une partie en silence
 Dernier trou de la série, et le plus mal placé : `if (!res.ok) return;` dans la
 détection de partie. L'issue était lue, la partie complète, et le serveur la

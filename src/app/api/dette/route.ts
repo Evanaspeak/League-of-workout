@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { retirerDeLaDette } from "@/lib/dette";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeEffort, exercicesEnTemps, repartirPoints, secondesParPoint, toExerciceIds,
@@ -127,15 +128,15 @@ export async function PATCH(req: Request) {
       if (paye > 0) {
         await tx.paiement.create({ data: { userId: user.id, points: paye, jour, jeton } });
       }
-      return tx.user.update({
+      // Le retrait est atomique : lire puis écrire une valeur absolue perdait
+      // une partie enregistrée entre les deux. Voir `src/lib/dette.ts`.
+      //
+      // Cela vaut aussi pour « j'ai tout fait » : on paie tout ce qu'on avait
+      // sous les yeux, pas tout ce qui existe au moment où la requête arrive.
+      await retirerDeLaDette(tx, user.id, paye);
+
+      return tx.user.findUniqueOrThrow({
         where: { id: user.id },
-        data: {
-          dettePointsDus: restant,
-          // Une dette éteinte n'a plus de date de début ; une dette entamée
-          // garde la sienne, sinon un paiement partiel remettrait le compteur de
-          // retard à zéro sans que rien n'ait été soldé.
-          ...(restant === 0 ? { detteDepuis: null } : {}),
-        },
         select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
       });
     });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { retirerDeLaDette } from "@/lib/dette";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { parseRepartition, pointsEnTemps } from "@/lib/exercices";
 import { analyserDatePartie } from "@/lib/dates";
@@ -49,19 +50,9 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   let dettePointsDus = null;
   if (aRetirer > 0) {
     try {
-      // decrement ne connaît pas de plancher : on relit puis on écrit une
-      // valeur bornée, pour ne jamais passer sous zéro.
-      const actuel = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { dettePointsDus: true },
-      });
-      const restant = Math.max(0, (actuel?.dettePointsDus ?? 0) - aRetirer);
-      const maj = await prisma.user.update({
-        where: { id: user.id },
-        data: { dettePointsDus: restant },
-        select: { dettePointsDus: true },
-      });
-      dettePointsDus = maj.dettePointsDus;
+      // Le retrait est atomique : lire puis écrire une valeur absolue perdait
+      // une partie enregistrée entre les deux. Voir `src/lib/dette.ts`.
+      dettePointsDus = await retirerDeLaDette(prisma, user.id, aRetirer);
     } catch { /* la partie est supprimée : on ne fait pas échouer pour autant */ }
   }
 

@@ -19,6 +19,9 @@ const session = getCurrentUser as jest.Mock;
 const game = prisma.game as unknown as { updateMany: jest.Mock; deleteMany: jest.Mock; findFirst: jest.Mock };
 const user = prisma.user as unknown as { findUnique: jest.Mock; update: jest.Mock };
 
+/** Ce que la base contient, entre deux appels de la doublure d'`update`. */
+let compteur = 100;
+
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 const patch = (id: string, body: unknown) =>
   PATCH(requete(`/api/games/${id}`, { method: "PATCH", body }), params(id));
@@ -30,7 +33,14 @@ beforeEach(() => {
   game.deleteMany.mockResolvedValue({ count: 1 });
   game.findFirst.mockResolvedValue({ exercice: "pompes", repartition: null, pompesCalculees: 38 });
   user.findUnique.mockResolvedValue({ dettePointsDus: 100 });
-  user.update.mockResolvedValue({ dettePointsDus: 100 });
+  // Le retrait passe par `decrement`, qui est atomique côté base. La doublure
+  // le simule : sans ça, on éprouverait une écriture absolue qui n'existe plus.
+  compteur = 100;
+  user.update.mockImplementation(async ({ data }: { data: { dettePointsDus: number | { decrement: number } } }) => {
+    const v = data.dettePointsDus;
+    compteur = typeof v === "number" ? v : compteur - v.decrement;
+    return { dettePointsDus: compteur };
+  });
 });
 
 /**
@@ -114,15 +124,20 @@ describe("DELETE /api/games/[id]", () => {
 
   it("retire du compteur ce que la partie y avait mis", async () => {
     game.findFirst.mockResolvedValue({ exercice: "boxe", repartition: null, pompesCalculees: 38 });
-    await del("g1");
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(62);
+    const r = await del("g1");
+    expect(user.update.mock.calls[0][0].data.dettePointsDus).toEqual({ decrement: 38 });
+    expect((await corps(r) as { dettePointsDus: number }).dettePointsDus).toBe(62);
   });
 
   it("ne fait jamais passer le compteur sous zéro", async () => {
     game.findFirst.mockResolvedValue({ exercice: "boxe", repartition: null, pompesCalculees: 500 });
-    user.findUnique.mockResolvedValue({ dettePointsDus: 20 });
-    await del("g1");
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(0);
+    compteur = 20;
+    const r = await del("g1");
+    // `decrement` n'a pas de plancher : la remise à zéro suit, avec la date de
+    // début de dette qui n'a plus lieu d'être.
+    expect(user.update.mock.calls[1][0].data)
+      .toEqual({ dettePointsDus: 0, detteDepuis: null });
+    expect((await corps(r) as { dettePointsDus: number }).dettePointsDus).toBe(0);
   });
 
   it("ne retire que la part en attente d'une partie ventilée", async () => {
@@ -131,7 +146,20 @@ describe("DELETE /api/games/[id]", () => {
       repartition: JSON.stringify({ pompes: 19, boxe: 19 }),
       pompesCalculees: 38,
     });
-    await del("g1");
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(81);
+    const r = await del("g1");
+    expect(user.update.mock.calls[0][0].data.dettePointsDus).toEqual({ decrement: 19 });
+    expect((await corps(r) as { dettePointsDus: number }).dettePointsDus).toBe(81);
+  });
+
+  it("retire un montant, pas un état : une partie arrivée entre-temps survit", async () => {
+    // Le défaut : on lisait la dette, on calculait ce qui reste, on écrivait
+    // cette valeur absolue. Une partie enregistrée entre les deux voyait sa
+    // dette effacée.
+    game.findFirst.mockResolvedValue({ exercice: "boxe", repartition: null, pompesCalculees: 38 });
+    // La lecture initiale voit 100 ; la base en contient 130 au moment d'écrire.
+    user.findUnique.mockResolvedValue({ dettePointsDus: 100 });
+    compteur = 130;
+    const r = await del("g1");
+    expect((await corps(r) as { dettePointsDus: number }).dettePointsDus).toBe(92);
   });
 });

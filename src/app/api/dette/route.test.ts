@@ -2,7 +2,7 @@ import { requete, corps, utilisateur } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => {
   const paiement = { create: jest.fn(), findUnique: jest.fn() };
-  const user = { update: jest.fn() };
+  const user = { update: jest.fn(), findUnique: jest.fn(), findUniqueOrThrow: jest.fn() };
   return {
     prisma: {
       user, paiement,
@@ -22,9 +22,12 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { appliquerRatios, RATIOS_DEFAUT } from "@/lib/exercices";
 
 const session = getCurrentUser as jest.Mock;
-const user = prisma.user as unknown as { update: jest.Mock };
+const user = prisma.user as unknown as { update: jest.Mock; findUnique: jest.Mock; findUniqueOrThrow: jest.Mock };
 const paiement = (prisma as unknown as
   { paiement: { create: jest.Mock; findUnique: jest.Mock } }).paiement;
+
+/** Ce que la base contient, entre deux appels des doublures. */
+let compteur = 100;
 
 const joueur = (champs: Record<string, unknown> = {}) =>
   utilisateur({ exercices: ["boxe"], dettePointsDus: 100, rappelSeuilSec: 300, ...champs });
@@ -34,8 +37,17 @@ beforeEach(() => {
   appliquerRatios(RATIOS_DEFAUT);
   session.mockResolvedValue(joueur());
   paiement.findUnique.mockResolvedValue(null);
-  user.update.mockImplementation(async ({ data }: { data: { dettePointsDus: number } }) => ({
-    dettePointsDus: data.dettePointsDus, rappelSeuilSec: 300, exercices: ["boxe"],
+  // Le retrait passe par `decrement`, qui est atomique côté base : la doublure
+  // le simule. `compteur` tient lieu de valeur en base entre deux appels.
+  compteur = 100;
+  user.findUnique.mockImplementation(async () => ({ dettePointsDus: compteur }));
+  user.update.mockImplementation(async ({ data }: { data: { dettePointsDus: number | { decrement: number } } }) => {
+    const v = data.dettePointsDus;
+    compteur = typeof v === "number" ? v : compteur - v.decrement;
+    return { dettePointsDus: compteur, rappelSeuilSec: 300, exercices: ["boxe"] };
+  });
+  user.findUniqueOrThrow.mockImplementation(async () => ({
+    dettePointsDus: compteur, rappelSeuilSec: 300, exercices: ["boxe"],
   }));
 });
 
@@ -81,19 +93,23 @@ describe("PATCH /api/dette", () => {
   });
 
   it("remet le compteur à zéro quand tout est fait", async () => {
-    await patch({ tout: true });
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(0);
+    // Le retrait est un décrément, pas une réécriture : c'est ce qui empêche
+    // d'effacer une partie arrivée entre-temps.
+    const r = await patch({ tout: true });
+    expect(user.update.mock.calls[0][0].data.dettePointsDus).toEqual({ decrement: 100 });
+    expect((await corps(r) as { points: number }).points).toBe(0);
   });
 
   it("ne paie que le temps réellement effectué", async () => {
     // 100 points de boxe valent 700 s ; 350 s effectuées en paient la moitié.
-    await patch({ secondes: 350 });
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(50);
+    const r = await patch({ secondes: 350 });
+    expect(user.update.mock.calls[0][0].data.dettePointsDus).toEqual({ decrement: 50 });
+    expect((await corps(r) as { points: number }).points).toBe(50);
   });
 
   it("solde la dette quand le temps effectué la dépasse", async () => {
-    await patch({ secondes: 99999 });
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(0);
+    const r = await patch({ secondes: 99999 });
+    expect((await corps(r) as { points: number }).points).toBe(0);
   });
 
   it("ne crédite rien pour un temps absurde, et le dit", async () => {
@@ -113,7 +129,9 @@ describe("PATCH /api/dette", () => {
   it("accepte un temps nul : c'est un abandon immédiat, pas une erreur", async () => {
     const r = await patch({ secondes: 0 });
     expect(r.status).toBe(200);
-    expect(user.update.mock.calls[0][0].data.dettePointsDus).toBe(100);
+    // Rien à retirer, donc rien à écrire : le compteur est simplement relu.
+    expect(user.update).not.toHaveBeenCalled();
+    expect((await corps(r) as { points: number }).points).toBe(100);
   });
 
   it("n'écrit que sur le compte du demandeur", async () => {
@@ -204,17 +222,20 @@ describe("trace du paiement", () => {
 
   it("efface la date de début quand la dette est soldée, la garde sinon", async () => {
     // Un paiement partiel qui remettrait le compteur de retard à zéro
-    // empêcherait quiconque d'être jamais en retard.
+    // empêcherait quiconque d'être jamais en retard. La date se pose avec la
+    // remise à zéro, dans la seconde écriture du retrait.
     session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
-    user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
     await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
-    expect(user.update.mock.calls[0][0].data).toHaveProperty("detteDepuis", null);
+    const ecritures = user.update.mock.calls.map((c) => c[0].data);
+    expect(ecritures).toContainEqual({ dettePointsDus: 0, detteDepuis: null });
 
     jest.clearAllMocks();
+    compteur = 100;
     session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
-    user.update.mockResolvedValue({ dettePointsDus: 60, rappelSeuilSec: 300, exercices: ["boxe"] });
     await PATCH(requete("/api/dette", { method: "PATCH", body: { secondes: 10 } }));
-    expect(user.update.mock.calls[0][0].data).not.toHaveProperty("detteDepuis");
+    for (const data of user.update.mock.calls.map((c) => c[0].data)) {
+      expect(data).not.toHaveProperty("detteDepuis");
+    }
   });
 });
 
@@ -312,5 +333,32 @@ describe("les bornes du paiement partiel", () => {
 
   it("laisse « tout est fait » explicite passer sans durée", async () => {
     expect((await payer({ tout: true })).status).toBe(200);
+  });
+});
+
+describe("la course entre un paiement et une partie", () => {
+  it("décrémente au lieu de réécrire, pour ne pas effacer ce qui vient d'arriver", async () => {
+    // Le cas réel : on finit sa série au moment où l'application de bureau
+    // enregistre la partie qu'on vient de quitter. La dette était réécrite en
+    // valeur ABSOLUE, calculée avant la transaction : la partie disparaissait.
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    // Entre la lecture et l'écriture, une partie a ajouté trente points.
+    compteur = 130;
+
+    const r = await PATCH(requete("http://x/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(r.status).toBe(200);
+
+    // Cent points payés, trente restants : la partie n'a pas été effacée.
+    expect((await corps(r) as { points: number }).points).toBe(30);
+  });
+
+  it("solde bien la dette quand rien n'est arrivé entre-temps", async () => {
+    session.mockResolvedValue(joueur({ dettePointsDus: 100 }));
+    compteur = 100;
+
+    const r = await PATCH(requete("http://x/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect((await corps(r) as { points: number }).points).toBe(0);
+    expect(user.update.mock.calls.map((c) => c[0].data))
+      .toContainEqual({ dettePointsDus: 0, detteDepuis: null });
   });
 });
