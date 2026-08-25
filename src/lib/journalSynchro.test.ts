@@ -3,6 +3,8 @@ import {
 } from "./journalSynchro";
 
 const entree = (quand: number): Entree => ({ quand, resultat: "rien" });
+/** Des entrées qui ne se ressemblent pas : elles ne doivent pas se regrouper. */
+const distincte = (quand: number): Entree => ({ quand, resultat: "erreur", code: 400 + quand });
 
 /**
  * Un stockage local minimal.
@@ -24,9 +26,40 @@ const memoire = new Map<string, string>();
 describe("journal", () => {
   it("met la plus récente en tête et borne la longueur", () => {
     let j: Entree[] = [];
-    for (let i = 0; i < MAX_ENTREES + 10; i += 1) j = ajouter(j, entree(i));
+    for (let i = 0; i < MAX_ENTREES + 10; i += 1) j = ajouter(j, distincte(i));
     expect(j).toHaveLength(MAX_ENTREES);
     expect(j[0].quand).toBe(MAX_ENTREES + 9);
+  });
+
+  it("regroupe les répétitions au lieu d'empiler la même ligne", () => {
+    // Sans clé Riot, la boucle rend le même refus toutes les deux minutes : le
+    // journal devenait vingt lignes identiques, c'est-à-dire vingt fois rien.
+    let j: Entree[] = [];
+    for (let i = 0; i < 30; i += 1) j = ajouter(j, entree(i));
+    expect(j).toHaveLength(1);
+    expect(j[0].repetitions).toBe(30);
+    // L'instant retenu est le dernier : c'est « depuis quand ça dure » qui
+    // compte, pas la première fois.
+    expect(j[0].quand).toBe(29);
+  });
+
+  it("ne regroupe que ce qui a la même cause", () => {
+    let j = ajouter([], { quand: 1, resultat: "refus", code: 503, motif: "indisponible" });
+    j = ajouter(j, { quand: 2, resultat: "refus", code: 503, motif: "indisponible" });
+    j = ajouter(j, { quand: 3, resultat: "refus", code: 429, motif: "saturee" });
+    expect(j).toHaveLength(2);
+    expect(j[0].code).toBe(429);
+    expect(j[0].repetitions).toBeUndefined();
+    expect(j[1].repetitions).toBe(2);
+  });
+
+  it("ne regroupe qu'avec la ligne du dessus, pas avec une plus ancienne", () => {
+    // Deux pannes séparées par une réussite sont deux événements : les fondre
+    // effacerait le fait que ça avait remarché entre-temps.
+    let j = ajouter([], { quand: 1, resultat: "refus", code: 503 });
+    j = ajouter(j, { quand: 2, resultat: "partie", detail: "Ahri" });
+    j = ajouter(j, { quand: 3, resultat: "refus", code: 503 });
+    expect(j).toHaveLength(3);
   });
 });
 
