@@ -332,7 +332,7 @@ Ce qui a été posé :
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
 ## Tests
-1124 tests unitaires, 91 suites. Base et session doublées : aucune dépendance à
+1236 tests unitaires, 103 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -357,7 +357,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 142 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 163 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -366,6 +366,17 @@ langues et à trois largeurs, sur un compte qu'il ouvre lui-même, et
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
 pourquoi il n'y a qu'un jeu hors application.
+
+`e2e/panne-serveur.spec.ts` est devenu le fichier des échecs : il coupe une
+route à la fois et vérifie que l'écran le dit ET que rien n'a bougé en base.
+`e2e/detection-partie.spec.ts` simule le pont Electron pour éprouver ce que la
+détection locale enregistre, et surtout ce qu'elle n'enregistre plus.
+
+L'application de bureau a ses propres tests, en `desktop/src/*.test.ts` :
+les deux lectures d'issue, l'attente de l'écran de fin, les trois boucles de
+détection, la comparaison d'origine, la langue et les textes. Ils tournent
+avec les autres, sans Electron ni jeu ouvert, parce que tout ce qui dépend du
+monde extérieur s'y injecte.
 
 Le parcours complet a échoué en CI dès l'arrivée de la demande de
 consentement santé : elle est modale, elle recouvre la modale d'accueil, et
