@@ -103,7 +103,12 @@ export async function envoyerBilanHebdo(
   detteRestante: boolean,
 ) {
   if (!resend) return false;
-  const nom = echapper(pseudo);
+  // Le pseudo entre BRUT dans le texte, qui est échappé ensuite. L'échapper
+  // avant le faisait passer deux fois : un « & » devenait « &amp;amp; », donc
+  // « &amp; » à l'écran. Le charset autorisé pour un pseudo n'en contient
+  // aucun aujourd'hui, ce qui rendait le défaut invisible — et vide de son
+  // sens la seule raison d'être de l'échappement, qui est de tenir le jour où
+  // un autre chemin d'écriture oubliera la règle.
   const lignes = lignesBilan(t, bilan).map(({ libelle, valeur }) => `
     <tr>
       <td style="padding:7px 0;color:rgba(236,239,244,0.6);font-size:0.92rem;">${echapper(libelle)}</td>
@@ -116,7 +121,7 @@ export async function envoyerBilanHebdo(
     subject: `${t.sujet} · Win or Workout`,
     html: `
       ${WRAPPER_OPEN}
-        <h1 style="font-size:1.4rem;color:#ECEFF4;margin-bottom:18px;">${echapper(t.titre(nom))}</h1>
+        <h1 style="font-size:1.4rem;color:#ECEFF4;margin-bottom:18px;">${echapper(t.titre(pseudo))}</h1>
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">${lignes}</table>
         <p style="line-height:1.7;color:rgba(236,239,244,0.75);margin-bottom:20px;">
           ${echapper(t.cloture(detteRestante))}

@@ -110,6 +110,30 @@ test("une issue illisible n'enregistre rien, et le dit", async ({ browser }) => 
   await ctx.close();
 });
 
+test("une partie sans aucun relevé n'enregistre rien, et le dit", async ({ browser }) => {
+  // Le cas est atteignable : la boucle de détection passe « en partie » dès sa
+  // première lecture réussie, et ne garde un relevé que s'il porte un score.
+  // Un joueur que l'API locale ne sait pas identifier dans sa propre partie
+  // finit donc ici. Le composant retournait alors sans rien dire : la partie
+  // était bien jouée, elle n'entrait pas, et personne ne l'apprenait. Le même
+  // défaut que l'issue illisible, un cran plus haut.
+  const { ctx, page } = await ouvrirSurLApplication(browser);
+  const avant = (await nombreDeParties(ctx)).length;
+
+  await page.evaluate((p) =>
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p),
+    { ...partie("V"), score: null });
+
+  await expect.poll(
+    () => page.evaluate(() => (window as unknown as { __dits: string[] }).__dits),
+    { timeout: 15_000 },
+  ).not.toHaveLength(0);
+
+  // Rien n'a été écrit : c'est bien le silence qu'on corrige, pas le refus.
+  expect((await nombreDeParties(ctx)).length).toBe(avant);
+  await ctx.close();
+});
+
 test("un remake n'enregistre rien, et ne dit rien", async ({ browser }) => {
   const { ctx, page } = await ouvrirSurLApplication(browser);
   const avant = (await nombreDeParties(ctx)).length;

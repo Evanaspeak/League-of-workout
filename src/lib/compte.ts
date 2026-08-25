@@ -11,9 +11,40 @@
  * Elle vit à part d'`auth-helpers` parce que les tests de routes doublent ce
  * module entier : la fonction y serait remplacée par une doublure, et les
  * tests de fuite éprouveraient un filtre qui n'est pas celui qui tourne.
+ *
+ * C'est une liste de refus, pas une liste d'autorisations, et c'est un choix :
+ * le compte porte une quarantaine de colonnes que les réglages affichent, les
+ * énumérer une à une ferait diverger les deux listes à la première colonne
+ * ajoutée. Le prix, c'est qu'une colonne nouvelle part par défaut — d'où
+ * `src/lib/compte.test.ts`, qui lit le schéma et exige que chacune soit
+ * classée. Une liste de refus sans recensement se referme sur ce qu'on
+ * connaissait le jour où on l'a écrite.
  */
-export function comptePublic<T extends object>(user: T): Omit<T, "passwordHash"> {
-  const copie = { ...(user as T & { passwordHash?: unknown }) };
-  delete copie.passwordHash;
-  return copie as Omit<T, "passwordHash">;
+const NE_SORTENT_PAS = [
+  // Le condensat du mot de passe. `getCurrentUser` ne le lit déjà plus ;
+  // repris ici parce que le compte peut arriver d'ailleurs.
+  "passwordHash",
+  // Le jeton de la source OBS : une adresse publique qui montre la dette en
+  // direct, SANS session. C'est un laissez-passer, pas un réglage. Il partait
+  // à chaque chargement de page, puisque `/api/user` est lu par la navigation
+  // — donc dans le cache du navigateur, dans l'onglet réseau des outils de
+  // développement, et à l'écran de quiconque regarde une diffusion pendant
+  // qu'ils sont ouverts. Sur un produit dont la fonction est justement de
+  // s'afficher en direct, ce n'est pas une hypothèse d'école. Il se demande
+  // par `/api/obs`, qui existe pour ça.
+  "jetonObs",
+  // Le compteur de révocation des sessions. Ce n'est pas un secret : c'est de
+  // la mécanique interne, que le navigateur ne lit nulle part et n'a aucune
+  // raison de connaître. Un compte public qui publie les rouages invite à
+  // construire dessus, et ce qui est construit dessus devient à corriger le
+  // jour où le rouage change.
+  "sessionEpoch",
+] as const;
+
+type Secret = (typeof NE_SORTENT_PAS)[number];
+
+export function comptePublic<T extends object>(user: T): Omit<T, Secret> {
+  const copie = { ...(user as T & Partial<Record<Secret, unknown>>) };
+  for (const cle of NE_SORTENT_PAS) delete copie[cle];
+  return copie as Omit<T, Secret>;
 }

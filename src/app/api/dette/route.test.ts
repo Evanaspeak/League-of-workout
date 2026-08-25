@@ -290,7 +290,20 @@ describe("le jeton d'un paiement rejoué", () => {
       Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
     const r = await payer({ secondes: 60, jeton: "en-double" });
     expect(r.status).toBe(200);
-    expect((await corps(r)).points).toBe(100);
+  });
+
+  it("rend la dette d'APRÈS le paiement jumeau, pas celle du début de requête", async () => {
+    // Le compte lu au début de la requête porte la dette d'avant : le jumeau
+    // a soldé entre-temps. La rendre telle quelle annoncerait à l'écran une
+    // dette qu'on vient de payer, c'est-à-dire exactement ce que la file hors
+    // ligne existe pour éviter.
+    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+      Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+    user.findUniqueOrThrow.mockResolvedValueOnce({
+      dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"],
+    });
+    const r = await payer({ secondes: 60, jeton: "en-double" });
+    expect((await corps(r)).points).toBe(0);
   });
 
   it("ne masque pas une vraie panne de base", async () => {

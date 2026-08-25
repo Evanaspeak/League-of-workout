@@ -30,8 +30,19 @@ export function PartieDetectee() {
 
     return pont.onPartieTerminee(async ({ score, resultat, motifSansResultat, dureeSec, contexte }) => {
       // Sans score, il n'y a rien à enregistrer : mieux vaut ne rien écrire
-      // qu'inventer une partie à zéro partout.
-      if (!score) return;
+      // qu'inventer une partie à zéro partout. Mais se taire n'est pas non
+      // plus une réponse : la partie a bien été jouée, elle n'entre pas, et
+      // personne ne l'apprend. C'est exactement le défaut corrigé juste en
+      // dessous pour l'issue, laissé ouvert un cran plus haut.
+      //
+      // Le cas est atteignable : la boucle passe « en partie » dès la première
+      // lecture réussie, et ne garde un relevé que s'il porte un score. Un
+      // joueur que l'API locale ne sait pas identifier dans sa propre partie
+      // finit donc ici.
+      if (!score) {
+        notifierSysteme(t.partieNonLue, t.partieNonLueCorps, "wow-partie");
+        return;
+      }
 
       // L'issue ne s'invente pas. Elle se lit dans l'événement de fin de l'API
       // de partie, et cette lecture est une course : l'événement n'est publié

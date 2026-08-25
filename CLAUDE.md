@@ -340,6 +340,26 @@ Ce qui a été posé :
 - Admin check toujours côté serveur (getCurrentUser + email check)
 - Toutes les routes API vérifient getCurrentUser() avant d'accéder aux données
 
+### Pourquoi le CSP porte `'unsafe-inline'` sur les scripts
+Ce n'est pas un oubli, et ça mérite d'être écrit une fois pour qu'on ne le
+redécouvre pas tous les six mois. Next.js pose ses propres scripts en ligne
+dans chaque page, et leur contenu change à chaque construction : les autoriser
+par empreinte est impossible. Reste le nonce, qui se génère par requête — donc
+qui rend **toutes** les pages dynamiques, y compris les dix pages publiques dont
+le temps d'affichage est le seul canal d'acquisition qui travaille sans qu'on
+s'en occupe.
+
+Ce que `'unsafe-inline'` coûte réellement ici : rien tant qu'aucune donnée
+d'utilisateur n'atteint un point d'injection. React échappe tout ce qu'il rend,
+et les deux seuls `dangerouslySetInnerHTML` de l'application portent des
+constantes — le bloc de données structurées de l'accueil et l'écouteur
+d'invitation à installer. C'est une défense en profondeur qui manque, pas une
+porte ouverte.
+
+À vérifier avant d'ajouter un troisième `dangerouslySetInnerHTML` : s'il devait
+porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
+reprendre, pas seulement échapper la valeur.
+
 ## Tests
 1236 tests unitaires, 103 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
@@ -539,7 +559,13 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 - **Tuer le serveur avec `pkill -f`.** Le motif `next start -p 3311` figure
   aussi dans la ligne de commande du shell qui lance la commande : `pkill` tue
   le shell, le serveur survit, et le `next start` suivant échoue sur
-  EADDRINUSE dans un journal que personne ne lit. Huit tests navigateur ont
+  EADDRINUSE dans un journal que personne ne lit. **Retombé dedans le 25 août,
+  sur `playwright` cette fois** : un travail de fond dont le script contient
+  `npx playwright test` porte ce mot dans sa propre ligne de commande, donc
+  `pkill -f playwright` posé au début du même travail le tue lui-même. Sortie
+  144, aucun journal, pas même le fichier que le script devait écrire — la
+  panne ne ressemble à rien. La règle vaut pour tout motif, pas seulement pour
+  celui du serveur. Huit tests navigateur ont
   ainsi échoué sur un `.next` d'avant la reconstruction, et le diagnostic est
   parti vers une feuille de style absente qui n'a jamais existé. Trouver le
   processus (`ps -eo pid,args | grep next-server`) et le tuer par son numéro.
@@ -873,6 +899,249 @@ des mots de passe et lit tous les comptes.
 contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
+
+### Constaté, pas corrigé : le stockage local n'est gardé nulle part
+Recensé le 25 août au matin, et **laissé en l'état** : 49 accès à
+`localStorage` ou `sessionStorage` ne sont pas enveloppés dans un `try`, dans
+25 fichiers. Un navigateur réglé pour bloquer les données de site fait lever
+l'accès lui-même — pas l'écriture, l'accès — avec une `SecurityError`.
+
+Ce que ça coûte là où c'est le plus grave : `LoginButtons`, `SessionGuard` et
+`OnboardingModal` sont sur le chemin critique. Une exception y casse l'écran de
+connexion en entier, pour quelqu'un qui n'a aucun recours et aucune raison de
+faire le lien avec un réglage de son navigateur.
+
+C'est rare : il faut avoir explicitement bloqué les données de site. La
+navigation privée moderne, elle, ne lève pas — elle oublie, ce qui est déjà
+traité partout où la valeur est facultative.
+
+**Pourquoi ce n'est pas corrigé cette nuit.** La bonne forme est un petit
+module (`lire`, `ecrire`, `effacer`, et leurs équivalents de session) et le
+remplacement des 49 appels. C'est mécanique, donc ça se fait vite et ça se
+relit mal : quarante-neuf substitutions dans vingt-cinq composants, à quatre
+heures du matin, sans le temps de rejouer la suite navigateur entière derrière.
+Une correction mécanique qu'on ne peut pas éprouver en entier coûte plus cher
+que le défaut qu'elle vise. Un garde structurel refusant tout `localStorage.`
+direct hors du module va avec, et se pose en même temps ou pas du tout.
+
+À prendre en premier sur une fenêtre qui a la place.
+
+### Une partie que rien n'avait pu lire disparaissait sans un mot
+La correction de l'issue illisible s'arrêtait un cran trop bas.
+`PartieDetectee` commence par :
+
+```ts
+if (!score) return;
+```
+
+Ne rien écrire est le bon choix — inventer une partie à zéro partout serait
+pire. Se taire ne l'est pas : la partie a été jouée, elle n'entre pas, et
+personne ne l'apprend. C'est mot pour mot le défaut corrigé trois lignes plus
+bas pour l'issue.
+
+Et le cas est atteignable, ce que j'ai vérifié avant d'y toucher : la boucle
+passe « en partie » dès sa première lecture réussie, et `fusionnerReleve` ne
+garde un relevé que s'il porte un score. Un joueur que l'API locale ne sait pas
+identifier dans sa propre partie sort donc de la boucle avec `partie: null`.
+
+Deux clés de plus dans les six langues, distinctes de l'issue illisible : les
+deux cas ne se ressemblent pas. Pour l'issue, on a les chiffres et on les
+donne ; ici on n'a rien, et le message ne peut que demander de saisir la
+partie. Réemployer le même texte aurait produit une phrase commençant par un
+point, ce qui est le signe qu'on force deux cas dans un moule.
+
+Le pont Electron simulé d'`e2e/detection-partie.spec.ts` a un septième cas.
+
+### Le middleware comparait les chemins par lettres, comme le desktop
+Même défaut que les cinq comparaisons d'origine corrigées dans `desktop/`, un
+étage plus haut : `PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))`.
+`/beta` couvre alors `/betamachin`, `/api/sante` couvre `/api/santeprivee`, et
+`/obs` couvre `/obsolete`.
+
+Rien de tel n'existe aujourd'hui, et c'est exactement ce qui rend la faute
+gênante : elle est invisible, et elle ne dépend que du nom qu'on donnera à la
+prochaine route. `/api/beta` couvrait `/api/beta-access` — ce qui était voulu,
+mais par coïncidence de nommage plutôt que par décision ; la route est nommée
+en entier maintenant.
+
+La comparaison se fait par segments. Un préfixe terminé par `/` ne couvre que
+ses enfants, ce qui distingue `/api/obs/<jeton>`, lu par un logiciel de
+diffusion sans cookie, de `/api/obs`, qui rend et régénère le jeton et exige
+une session — la distinction existait déjà, portée par un espoir sur
+`startsWith`.
+
+**Et la liste a déménagé.** Elle vivait dans `middleware.ts` ;
+`src/porteRoutes.test.ts` la relisait au texte et réimplémentait la
+comparaison de son côté. Deux exemplaires d'une règle finissent toujours par
+diverger, et c'est précisément la divergence entre ces deux listes qui avait
+laissé quatre routes dispensées de session partir en 307 vers `/login` pendant
+des semaines. `src/lib/routesPubliques.ts` porte la liste ET la règle ; le test
+l'importe, donc il éprouve ce qui tourne.
+
+Quatre sabotages, quatre échecs : la comparaison par lettres remise,
+`/api/obs` ouvert en entier, un préfixe qui rend tout public, et la route de
+diffusion retirée de la liste — attrapée par le test de la porte, pas par
+celui de la règle.
+
+Et vérifié qu'il ne change rien à ce qui existe : les deux règles, l'ancienne
+et la nouvelle, ont été passées sur **les soixante-six chemins réels** du
+dossier `src/app` (pages et routes, segments dynamiques remplacés). Aucune
+bascule, dans aucun sens. Le resserrement ne ferme la porte qu'à des noms qui
+n'existent pas encore, ce qui est exactement le propos.
+
+Vérifié sur le serveur, parce qu'une porte se pousse : `/dashboard`,
+`/settings`, `/history`, `/api/games`, `/api/user` **et `/api/obs`** répondent
+307 vers `/login` ; les dix pages publiques répondent 200 ; `/api/obs/<jeton>`,
+`/api/sante`, `/api/champions` et `/api/exercices/ratios` atteignent leur
+handler. Et les trois adresses qui passaient par coïncidence de lettres —
+`/betamachin`, `/api/santeprivee`, `/obsolete` — sont maintenant redirigées.
+
+### Le paiement qui perd la course annonçait une dette déjà payée
+Deux renvois du même paiement partis en même temps passent tous les deux le
+contrôle de jeton : c'est l'unicité en base qui tranche, et le perdant reçoit
+un 200 plutôt qu'une erreur, sinon la file hors ligne réessaierait
+indéfiniment sur un paiement pourtant enregistré. Ça, c'était juste.
+
+Ce qui ne l'était pas : la réponse rendait le compte lu au **début** de la
+requête, donc la dette d'AVANT le paiement jumeau. L'écran annonçait donc une
+dette qu'on venait de solder, ce qui est précisément ce que la file hors ligne
+existe pour éviter : celui qui vient de faire sa séance la voit intacte et la
+refait.
+
+La dette se relit maintenant sur cette branche. Le test qui couvrait déjà le
+croisement ne pouvait pas l'attraper : sa doublure rendait la même valeur des
+deux côtés, donc l'assertion passait quelle que soit la source. Un test qui ne
+distingue pas les deux réponses possibles n'éprouve pas le choix entre elles.
+
+### Deux amorçages simultanés se heurtaient sur une clé primaire
+`seedDefaults` est gardé par une promesse mémorisée au niveau du module, ce
+qui suffit pour un processus. Sur une base neuve, plusieurs requêtes arrivent
+ensemble : un démarrage à froid en sert souvent une poignée d'un coup, et
+chaque instance a sa propre mémoire. Les trois comptages rendaient alors zéro
+partout, les trois semis partaient en même temps, et le second tombait sur une
+violation de clé primaire — `role` et `niveau` sont des identifiants, pas des
+colonnes ordinaires.
+
+Le prix se paie au pire moment : une erreur 500 au premier chargement d'un
+environnement qu'on vient de monter, là où l'on ne sait pas encore ce qui est
+censé marcher. C'est la même famille que « sur une base neuve, la première
+partie enregistrée tombait », plus bas : le chemin de la base vide est celui
+qu'on n'emprunte jamais, sauf le jour d'une reprise après sinistre.
+
+`skipDuplicates` fait de la course une non-affaire. L'identifiant de la
+maîtrise s'écrit maintenant en clair : `createMany` ne peut ignorer un doublon
+que s'il sait sur quoi porte l'unicité.
+
+Trois sabotages, trois échecs — dont l'oubli de l'échec mémorisé, qui n'avait
+pas de test et qui condamnerait le processus entier à ne plus jamais semer
+après une coupure passagère.
+
+### Le pseudo du bilan hebdomadaire était échappé deux fois
+Trouvé en relisant `src/lib/email.ts`, qui n'avait aucun test à lui. Le pseudo
+était échappé, puis le titre qui le porte l'était à son tour :
+
+```ts
+const nom = echapper(pseudo);
+… ${echapper(t.titre(nom))}
+```
+
+« A & B » devenait donc « A &amp;amp; B », c'est-à-dire « A &amp; B » à l'écran.
+Le jeu de caractères autorisé pour un pseudo — lettres, chiffres, espace,
+`_ . -` — n'en contient aucun aujourd'hui, ce qui rendait le défaut invisible.
+C'est précisément ce qui le rendait gênant : le commentaire au-dessus
+d'`echapper` dit que la fonction existe « pour le jour où un autre chemin
+d'écriture oubliera la règle », et ce jour-là elle aurait affiché de la
+ferraille au lieu du pseudo. Un filet qu'on ne peut pas éprouver parce que rien
+ne l'atteint doit au moins être juste.
+
+`src/lib/email.test.ts` couvre les deux courriels, avec le vrai dictionnaire
+plutôt qu'une doublure — une doublure de dictionnaire dérive du jour où une clé
+s'ajoute. Un piège à noter : `Resend` s'instancie au chargement du module à
+partir de la variable d'environnement, donc la clé doit être posée **avant**
+l'import, sinon les deux fonctions rendent la main sans rien envoyer et tous
+les tests passent en ne mesurant rien.
+
+Trois sabotages, trois échecs : le double échappement remis, l'échappement du
+bilan retiré, celui du lien de récupération retiré.
+
+### Une dette pouvait naître sans jamais pouvoir être en retard
+Le pendant du retrait de dette corrigé plus haut, dans l'autre sens. Le montant
+s'incrémentait bien de façon atomique — c'est la date de début qui était
+décidée d'après une lecture faite juste avant :
+
+```ts
+...((avant?.dettePointsDus ?? 0) <= 0 ? { detteDepuis: new Date() } : {}),
+```
+
+Entre cette lecture et l'écriture, un paiement peut éteindre la dette et
+effacer sa date. La condition lit alors « la dette était positive », donc ne
+pose pas de date, et on écrit une **dette positive sans date de début**.
+`etatRetard` rend « pas en retard » dès que la date manque, quel que soit le
+montant : la dette existe, elle se paie, elle s'affiche, et elle ne devient
+jamais en retard. L'état ne se répare qu'une fois la dette soldée puis
+recréée, ce qui peut ne jamais arriver.
+
+La condition est posée à la base maintenant, par un `updateMany` conditionnel —
+`update` ne prend qu'un identifiant unique, c'est le seul moyen de poser une
+condition sur autre chose que la clé. Écrit ainsi, il rattrape aussi les
+comptes déjà dans cet état, sans reprise de données.
+
+Son échec ne coûte que lui-même : le décompte est déjà écrit, et la
+notification de seuil qui suit ne doit pas se perdre parce qu'une date n'a pas
+pu se poser. Trois sabotages, trois échecs — dont celui-là, qui est passé au
+rouge parce que le doublure de base ne connaissait pas encore `updateMany` :
+la première version de la correction faisait perdre la notification, et le
+test l'a dit avant moi.
+
+### Le jeton de la source OBS partait à chaque chargement de page
+`comptePublic` retire l'empreinte du mot de passe et rend le reste par
+diffusion. Son commentaire annonçait « le seul endroit qui décide de ce qui
+part » : c'était une liste de refus d'un seul nom, donc elle ne décidait rien —
+toute colonne ajoutée au compte sortait par défaut, sans que personne n'ait eu
+à en juger.
+
+`jetonObs` est arrivé ainsi. C'est un laissez-passer : l'adresse `/obs/<jeton>`
+montre la dette en direct **sans session**, et régénérer le jeton est la seule
+façon de révoquer un lien déjà collé dans un logiciel de diffusion. Il partait
+dans la réponse de `/api/user`, que la navigation lit à **chaque chargement de
+page** — donc dans le cache du navigateur, dans l'onglet réseau des outils de
+développement, et à l'écran de quiconque regarde une diffusion pendant qu'ils
+sont ouverts. Sur un produit dont la fonction est de s'afficher en direct, ce
+n'est pas une hypothèse d'école. Aucun écran ne le lisait : il se demande par
+`/api/obs`, qui existe pour ça.
+
+`sessionEpoch` est parti avec, pour une autre raison : ce n'est pas un secret,
+c'est de la mécanique interne que le navigateur ne lit nulle part. Un compte
+public qui publie les rouages invite à construire dessus.
+
+La liste reste une liste de refus — énumérer les quarante colonnes que les
+réglages affichent ferait diverger les deux listes à la première ajoutée. Ce
+qui manquait, c'est le recensement : `src/lib/compte.test.ts` lit le modèle
+`User` du schéma et exige que **chaque colonne** soit rangée d'un côté ou de
+l'autre, les refus portant leur raison. C'est le motif de `porteRoutes.test.ts`
+appliqué aux colonnes — regarder la source plutôt que la liste qu'on tient à la
+main. Il compte aussi les colonnes lues : un modèle renommé rendrait le test
+vert sur zéro colonne, ce qui est exactement la forme d'erreur qu'on corrige.
+
+Trois sabotages, trois échecs : `jetonObs` remis dans ce qui sort, une colonne
+nouvelle ajoutée au schéma sans classement, une classification qui ne désigne
+plus rien.
+
+**Et le test a trouvé une troisième colonne pendant que je l'écrivais** :
+`sessionEpoch`, que j'avais rangée dans les refus sans vérifier qu'elle en
+sortait. Elle n'en sortait pas.
+
+### Le retrait de dette n'avait pas de test à lui
+Il est éprouvé par les routes qui l'appellent, ce qui ne dit rien de ce qui
+fait sa raison d'être : la **forme** de la requête. `decrement` et une
+soustraction rendent le même chiffre tant que personne d'autre n'écrit — c'est
+seulement quand une partie s'enregistre pendant le paiement que les deux
+divergent, et ce cas ne se joue pas dans un test de route. `src/lib/dette.test.ts`
+regarde donc les écritures envoyées à la base, pas le nombre rendu.
+
+Trois sabotages, trois échecs : le décrément remplacé par une écriture en
+valeur absolue, la date de début qui survit à une dette soldée, et une dette
+négative rendue telle quelle à l'écran.
 
 ### `onError` sur une image ne suffit pas
 Le bilan de saison montre une image dessinée au serveur. Quand elle ne se
