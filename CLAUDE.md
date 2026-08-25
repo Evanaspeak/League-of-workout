@@ -909,6 +909,35 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Un 429 de Riot faisait dormir la fonction six minutes
+Trouvé en relisant la fonction que les deux routes Riot portaient chacune de
+son côté, recopiée à l'identique :
+
+```ts
+const retryAfter = Number(res.headers.get("Retry-After")) || (attempt + 1);
+await sleep(retryAfter * 1000);
+```
+
+`Retry-After` vient de Riot et vaut couramment **120 secondes** sur un 429.
+Trois reprises : six minutes d'attente, dans un environnement qui coupe une
+requête après quelques dizaines de secondes. L'appelant ne reçoit alors ni 429
+ni erreur — il reçoit une panne sans message, pour une situation parfaitement
+normale que la route sait pourtant expliquer.
+
+`src/lib/riotFetch.ts` garde un budget d'attente total de quatre secondes.
+Quand Riot demande plus que ce qu'il en reste, on renonce et on rend SA
+réponse : la route la traduit en un refus lisible, ce qui vaut infiniment mieux
+qu'un silence de six minutes. Au passage, `Number("bientôt")` vaut `NaN` et
+`NaN * 1000` aussi : un en-tête qui n'est pas un nombre donnait une attente
+indéfinie.
+
+**Et c'est le troisième cas de la nuit** où la même chose écrite deux fois
+porte deux fois le même défaut : les cinq comparaisons d'origine du desktop, les
+trois exemplaires de la règle des chemins publics, et maintenant ces deux
+`riotFetch`. Elle est écrite une fois.
+
+Trois sabotages, trois échecs.
+
 ### Riot refusait notre clé, et l'application accusait le pseudo du joueur
 Les trois routes Riot rendaient le code de Riot **tel quel** :
 
