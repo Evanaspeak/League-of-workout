@@ -105,6 +105,16 @@ export default function HistoryPage() {
 
   // ── Date editing ──
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  /**
+   * La dernière action a échoué.
+   *
+   * Modifier une date et supprimer une partie retiraient la ligne de l'écran
+   * QUELLE QUE SOIT la réponse du serveur. Une suppression refusée paraissait
+   * donc réussie jusqu'au rechargement suivant, où la partie revenait sans
+   * explication — et le compteur de dette avait entre-temps été prié de se
+   * rafraîchir sur une valeur qui n'avait pas bougé.
+   */
+  const [erreurAction, setErreurAction] = useState(false);
   const [editDateVal, setEditDateVal] = useState("");
 
   // ─── Chargement initial (games + parties Riot) ───────────────────────────
@@ -122,23 +132,39 @@ export default function HistoryPage() {
   // ─── Edit game date ──────────────────────────────────────────────────────
   const handleEditDate = async (id: string) => {
     if (!editDateVal) return;
-    await fetch(`/api/games/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ date: editDateVal }),
-    });
-    setGames((prev) => prev.map((g) => g.id === id ? { ...g, date: editDateVal } : g));
-    setEditingDateId(null);
+    setErreurAction(false);
+    try {
+      const res = await fetch(`/api/games/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: editDateVal }),
+      });
+      if (!res.ok) { setErreurAction(true); return; }
+      setGames((prev) => prev.map((g) => g.id === id ? { ...g, date: editDateVal } : g));
+      setEditingDateId(null);
+    } catch {
+      setErreurAction(true);
+    }
   };
 
   // ─── Delete pompe entry ──────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    await fetch(`/api/games/${id}`, { method: "DELETE" });
-    setGames((prev) => prev.filter((g) => g.id !== id));
-    // La suppression rend aussi du temps au compteur : la pastille doit suivre.
-    window.dispatchEvent(new Event("wow-dette-changee"));
-    setDeletingId(null);
+    setErreurAction(false);
+    try {
+      const res = await fetch(`/api/games/${id}`, { method: "DELETE" });
+      // La ligne ne quitte l'écran que si elle a quitté la base. Sinon on
+      // annonce une suppression qui n'a pas eu lieu, et la partie revient au
+      // rechargement suivant sans que rien ne l'explique.
+      if (!res.ok) { setErreurAction(true); return; }
+      setGames((prev) => prev.filter((g) => g.id !== id));
+      // La suppression rend aussi du temps au compteur : la pastille doit suivre.
+      window.dispatchEvent(new Event("wow-dette-changee"));
+    } catch {
+      setErreurAction(true);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   // ─── Filtered pompe games ─────────────────────────────────────────────────
@@ -239,6 +265,12 @@ export default function HistoryPage() {
   return (
     <div className="space-y-5">
       <h1 className="titre-page">{t.pageTitle}</h1>
+
+      {erreurAction && (
+        <p role="alert" className="lol-panel p-3" style={{ color: "var(--loss)", fontSize: "0.85rem" }}>
+          {t.erreurAction}
+        </p>
+      )}
 
       <div className="space-y-4">
           {loadingGames ? (

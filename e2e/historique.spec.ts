@@ -248,3 +248,41 @@ test("une icône de champion qui ne charge pas laisse la lettre, pas un trou", a
     .toBeVisible();
   await ctx.close();
 });
+
+test("une suppression refusée ne fait pas disparaître la partie", async ({ browser }) => {
+  // C'était le pire des deux : la ligne quittait l'écran QUELLE QUE SOIT la
+  // réponse. Une suppression refusée paraissait réussie, et la partie revenait
+  // au rechargement suivant sans que rien ne l'explique.
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  await page.route("**/api/games/*", async (route) => {
+    if (route.request().method() === "DELETE") {
+      return route.fulfill({ status: 500, contentType: "application/json", body: "{}" });
+    }
+    await route.continue();
+  });
+
+  await page.goto("/history", { waitUntil: "networkidle" });
+  await page.waitForTimeout(1000);
+
+  const avant = await page.locator("tbody tr").count();
+  expect(avant).toBeGreaterThan(0);
+
+  await page.locator("tbody tr").first().getByRole("button", { name: /supprimer|delete|✕|×/i })
+    .first().click();
+
+  await expect(page.getByRole("alert").filter({ hasText: /n.a pas abouti|did not go through/i }))
+    .toBeVisible({ timeout: 10_000 });
+  // Et la ligne est toujours là : c'est la base qui tranche, pas l'écran.
+  expect(await page.locator("tbody tr").count()).toBe(avant);
+  await ctx.close();
+});
