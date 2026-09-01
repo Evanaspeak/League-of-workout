@@ -193,3 +193,50 @@
   font-size: 0.74rem;
   color: var(--muted);
 }
+
+/* ── Commandes de correction ────────────────────────────────────────────────
+   Le crayon du résultat, sa croix, et les deux choix.
+
+   44 px est le minimum d'Apple comme de Material, et `e2e/historique.spec.ts`
+   le refuse en dessous : la première version de ces boutons faisait 16 × 20 et
+   le test l'a dit avant qu'on le voie. Les marges négatives rendent au
+   voisinage ce que la zone tactile prend — sans elles, chaque icône pousserait
+   sa ligne de trente pixels.
+
+   Sans condition de largeur : un doigt reste un doigt, et un pointeur fin ne
+   perd rien à viser large. */
+.commande-resultat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -14px -6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.choix-resultat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -12px 0;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.choix-resultat[aria-pressed="true"] {
+  background: rgba(152, 162, 176, 0.16);
+}
+.choix-resultat:disabled,
+.commande-resultat:disabled {
+  cursor: default;
+}

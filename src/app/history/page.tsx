@@ -106,8 +106,9 @@ function ResultatCell({ result, t, correction }: {
           onClick={correction.ouvrir}
           title={t.editResultTitle}
           aria-label={t.editResultTitle}
-          style={{ color: "var(--faint)", background: "none", border: "none", cursor: "pointer", lineHeight: 1, padding: 2 }}
-        ><Icone nom="crayon" taille={12} /></button>
+          className="commande-resultat"
+          style={{ color: "var(--faint)" }}
+        ><Icone nom="crayon" taille={13} /></button>
       </span>
     );
   }
@@ -117,13 +118,7 @@ function ResultatCell({ result, t, correction }: {
       onClick={() => (valeur === result ? correction.annuler() : correction.choisir(valeur))}
       disabled={correction.enCours}
       aria-pressed={valeur === result}
-      className={classe}
-      style={{
-        background: valeur === result ? "rgba(152,162,176,0.16)" : "none",
-        border: "1px solid var(--line)", borderRadius: 6,
-        cursor: correction.enCours ? "default" : "pointer",
-        padding: "2px 8px", fontSize: "0.78rem", fontWeight: 600,
-      }}
+      className={`choix-resultat ${classe}`}
     >{texte}</button>
   );
 
@@ -134,8 +129,9 @@ function ResultatCell({ result, t, correction }: {
       {choix("D", t.defeat, "loss-text")}
       <button onClick={correction.annuler} title={t.cancelTitle} aria-label={t.cancelTitle}
         disabled={correction.enCours}
-        style={{ color: "#e05555", background: "none", border: "none", cursor: "pointer", lineHeight: 1, padding: 2 }}
-      ><Icone nom="croix" taille={13} /></button>
+        className="commande-resultat"
+        style={{ color: "#e05555" }}
+      ><Icone nom="croix" taille={14} /></button>
     </span>
   );
 }
