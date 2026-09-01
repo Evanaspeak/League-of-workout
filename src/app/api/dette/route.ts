@@ -3,36 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { retirerDeLaDette } from "@/lib/dette";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  dureeEffort, exercicesEnTemps, repartirPoints, secondesParPoint, toExerciceIds,
+  dureeEffort, exercicesEnTemps, secondesParPoint, toExerciceIds,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
+import { reponseDette } from "@/lib/contexteConnecte";
 import { jourLocal } from "@/lib/serie";
 import { DUREE_MAX_SEC, entierBorne } from "@/lib/bornesSaisie";
 
-/**
- * Dette en attente. Seuls les exercices comptés en temps s'y accumulent :
- * des pompes se font tout de suite après la partie, tandis qu'un round de
- * boxe n'a d'intérêt qu'une fois quelques minutes réunies.
- */
-function reponse(user: {
-  dettePointsDus: number;
-  rappelSeuilSec: number;
-  exercices: string[];
-}) {
-  const exercices = exercicesEnTemps(toExerciceIds(user.exercices));
-  // Sans exercice au temps sélectionné, il n'y a rien à cumuler.
-  const points = exercices.length > 0 ? Math.max(0, user.dettePointsDus) : 0;
-  return {
-    points,
-    exercices,
-    /** Ce qu'il y a à faire, exercice par exercice. */
-    repartition: repartirPoints(points, exercices),
-    /** Temps de travail que ça représente, en secondes. */
-    dureeSec: Math.round(dureeEffort(points, exercices)),
-    /** Seuil de déclenchement du rappel, en secondes d'effort. 0 = désactivé. */
-    seuilSec: Math.max(0, user.rappelSeuilSec),
-  };
-}
 
 export async function GET() {
   // La dette s'exprime en temps d'effort : sans les ratios réglés en
@@ -40,7 +17,7 @@ export async function GET() {
   await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  return NextResponse.json(reponse(user));
+  return NextResponse.json(reponseDette(user));
 }
 
 /**
@@ -119,7 +96,7 @@ export async function PATCH(req: Request) {
     });
     // Le jeton d'un autre compte n'est pas une raison de refuser : il ne dit
     // rien de celui-ci. C'est le sien, et lui seul, qui vaut « déjà payé ».
-    if (deja?.userId === user.id) return NextResponse.json(reponse(user));
+    if (deja?.userId === user.id) return NextResponse.json(reponseDette(user));
   }
 
   let maj;
@@ -155,11 +132,11 @@ export async function PATCH(req: Request) {
         where: { id: user.id },
         select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
       });
-      return NextResponse.json(reponse(frais));
+      return NextResponse.json(reponseDette(frais));
     }
     throw e;
   }
-  return NextResponse.json(reponse(maj));
+  return NextResponse.json(reponseDette(maj));
 }
 
 /**
@@ -195,5 +172,5 @@ export async function PUT(req: Request) {
     data: { dettePointsDus: points },
     select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
   });
-  return NextResponse.json(reponse(maj));
+  return NextResponse.json(reponseDette(maj));
 }

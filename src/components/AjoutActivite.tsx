@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { useValeurClient } from "@/lib/valeurClient";
+import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
 import { ChampionInput } from "@/components/ChampionInput";
@@ -148,12 +149,13 @@ export function AjoutActivite({
 
 
   // ─── Préférences d'exercices ─────────────────────────────────────────────
+  // Elles viennent du contexte commun : le compte est déjà lu une fois par
+  // page, et le redemander ici en faisait une seconde pour la même réponse.
+  const { user } = useContexteConnecte();
   useEffect(() => {
-    fetch("/api/user")
-      .then((r) => r.json())
-      .then((u) => setExercicesAjout(toExerciceIds(u?.exercices)))
-      .catch(() => {});
-  }, []);
+    if (!user) return;
+    setExercicesAjout(toExerciceIds(user.exercices as string[] | undefined));
+  }, [user]);
 
   // ─── Parties Riot récentes ───────────────────────────────────────────────
   useEffect(() => {

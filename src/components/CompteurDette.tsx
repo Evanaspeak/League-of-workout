@@ -1,6 +1,7 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
+import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { jourLocal } from "@/lib/serie";
 import { useChemin } from "@/lib/i18n/useChemin";
@@ -51,7 +52,7 @@ export function CompteurDette() {
   const minuscule = useMinuscule();
   const nomsExo: Record<ExerciceId, string> = nomsExercices(t);
 
-  const [dette, setDette] = useState<Dette | null>(null);
+
   const [chronoOuvert, setChronoOuvert] = useState(false);
   const chronoRef = useRef<HTMLDivElement>(null);
 
@@ -91,17 +92,15 @@ export function CompteurDette() {
    */
   const enAttenteEnvoi = useValeurClient(() => lireFile().length, 0, abonnerFile);
 
-  const charger = useCallback(async () => {
-    try {
-      const res = await fetch("/api/dette");
-      if (!res.ok) return;
-      setDette(await res.json());
-    } catch { /* le prochain rafraîchissement retentera */ }
-  }, []);
-
-  useEffect(() => {
-    if (!estPagePublique(pathname)) charger();
-  }, [charger, pathname]);
+  /**
+   * La dette vient du contexte commun, plus d'un appel à soi.
+   *
+   * Ce composant et le titre de l'onglet la demandaient chacun de son côté :
+   * deux fois la même réponse par chargement de page. Le fournisseur la lit une
+   * fois et écoute `wow-dette-changee` pour tout le monde.
+   */
+  const contexte = useContexteConnecte();
+  const dette = (contexte.dette ?? null) as Dette | null;
 
   /**
    * Renvoi de ce qui attend : au chargement, et dès que le réseau revient.
@@ -118,20 +117,6 @@ export function CompteurDette() {
     window.addEventListener("online", renvoyer);
     return () => window.removeEventListener("online", renvoyer);
   }, [pathname]);
-
-  // Une partie enregistrée ailleurs dans l'app fait remonter le compteur sans
-  // recharger la page. Le retour sur l'onglet le resynchronise aussi, au cas
-  // où la partie aurait été loggée depuis un autre appareil.
-  useEffect(() => {
-    const surAjout = () => charger();
-    const surRetour = () => { if (!document.hidden) charger(); };
-    window.addEventListener("wow-dette-changee", surAjout);
-    document.addEventListener("visibilitychange", surRetour);
-    return () => {
-      window.removeEventListener("wow-dette-changee", surAjout);
-      document.removeEventListener("visibilitychange", surRetour);
-    };
-  }, [charger]);
 
   const seuilFranchi = !!dette && dette.seuilSec > 0 && dette.dureeSec >= dette.seuilSec;
 
@@ -190,7 +175,7 @@ export function CompteurDette() {
         }),
       });
       if (res.ok) {
-        setDette(await res.json());
+        contexte.poserDette(await res.json());
       } else if (res.status >= 500 || res.status === 401) {
         /**
          * Le serveur a répondu, mal.

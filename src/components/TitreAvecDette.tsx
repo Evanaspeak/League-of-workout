@@ -4,6 +4,7 @@ import { useChemin } from "@/lib/i18n/useChemin";
 import { formaterCompact, toExerciceIds, ventiler, type Repartition } from "@/lib/exercices";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { titreAvecDette } from "@/lib/titreOnglet";
+import { useContexteConnecte } from "@/lib/ContexteConnecte";
 
 /**
  * Le compteur de dette dans le titre de l'onglet.
@@ -18,6 +19,15 @@ import { titreAvecDette } from "@/lib/titreOnglet";
 export function TitreAvecDette() {
   const chemin = useChemin();
   const publique = estPagePublique(chemin);
+  /**
+   * La dette vient du contexte commun, plus d'un appel à soi.
+   *
+   * Ce composant et le compteur du rail la demandaient chacun de leur côté :
+   * deux fois la même réponse à chaque chargement de page, et deux fois encore
+   * après chaque paiement, puisque tous deux écoutaient `wow-dette-changee`.
+   * L'événement est écouté une seule fois, dans le fournisseur.
+   */
+  const { dette } = useContexteConnecte();
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -28,41 +38,31 @@ export function TitreAvecDette() {
       return;
     }
 
-    let vivant = true;
-
     const poser = (valeur: string | null) => {
-      if (!vivant) return;
       document.title = titreAvecDette(document.title, valeur);
     };
 
-    const relire = async () => {
-      try {
-        const r = await fetch("/api/dette");
-        if (!r.ok) return;
-        const dette = await r.json() as { points: number; repartition: Repartition };
-        if ((Number(dette?.points) || 0) <= 0) { poser(null); return; }
-        const lignes = ventiler(dette.repartition ?? {});
-        // Un seul exercice : sa valeur suffit. Plusieurs : on prend le premier
-        // plutôt que d'écrire « 19 · 2 min 10 » dans un onglet large de six
-        // caractères.
-        poser(lignes.length > 0
-          ? lignes[0].valeur
-          : formaterCompact(dette.points, toExerciceIds([])[0]));
-      } catch { /* le prochain événement réessaiera */ }
-    };
+    // Tant que la réponse n'est pas revenue, on ne pose rien : afficher zéro
+    // puis la vraie valeur ferait clignoter le titre de l'onglet.
+    if (dette === undefined) return;
 
-    void relire();
-    window.addEventListener("wow-dette-changee", relire);
+    if (!dette || (Number(dette.points) || 0) <= 0) { poser(null); return; }
+    const lignes = ventiler((dette.repartition ?? {}) as Repartition);
+    // Un seul exercice : sa valeur suffit. Plusieurs : on prend le premier
+    // plutôt que d'écrire « 19 · 2 min 10 » dans un onglet large de six
+    // caractères.
+    poser(lignes.length > 0
+      ? lignes[0].valeur
+      : formaterCompact(dette.points, toExerciceIds([])[0]));
+
     return () => {
-      vivant = false;
-      window.removeEventListener("wow-dette-changee", relire);
       // On retire le compteur en partant : laisser « (38) » sur une page qui
       // ne le met plus à jour est pire que ne rien afficher.
       if (typeof document !== "undefined") {
         document.title = titreAvecDette(document.title, null);
       }
     };
-  }, [publique, chemin]);
+  }, [publique, chemin, dette]);
 
   return null;
 }

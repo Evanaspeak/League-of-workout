@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { reponseConsentement } from "@/lib/contexteConnecte";
 
 /**
  * Consentement au traitement des données de santé.
@@ -25,29 +26,11 @@ const CHAMPS_SANTE = {
   sportsHoursPerWeek: null,
 } as const;
 
-type Etat = "jamais" | "accepte" | "refuse";
-
-function etatDe(user: { santeConsentiLe: Date | null; santeRefuseLe: Date | null }): Etat {
-  if (user.santeConsentiLe) return "accepte";
-  if (user.santeRefuseLe) return "refuse";
-  return "jamais";
-}
-
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  // « A-t-il déjà des données ? » change le texte de la question : on ne demande
-  // pas la même chose à quelqu'un dont on détient déjà le poids qu'à quelqu'un
-  // qui n'a rien donné.
-  const aDesDonnees = Boolean(
-    user.genre || user.age || user.poids || user.taille || user.sportsHoursPerWeek,
-  );
-  return NextResponse.json({
-    etat: etatDe(user),
-    aDesDonnees,
-    depuis: user.santeConsentiLe ?? user.santeRefuseLe ?? null,
-  });
+  return NextResponse.json(reponseConsentement(user));
 }
 
 /**

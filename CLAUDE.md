@@ -701,6 +701,74 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Neuf appels d'API pour ouvrir le tableau de bord, six désormais
+Le chiffre était écrit dans le journal depuis la mesure de charge, sans avoir
+jamais été attaqué. Compté à nouveau sur le serveur local, navigateur en main,
+et l'essentiel n'était pas le total : **la dette partait DEUX fois par page.**
+Le compteur du rail et le compteur du titre de l'onglet la demandaient chacun
+de son côté, sans savoir que l'autre existait — et tous deux écoutaient
+`wow-dette-changee`, donc deux fois encore après chaque paiement.
+
+En production, chaque requête SQL est un appel HTTPS indépendant vers Neon : le
+client passe par `PrismaNeonHttp`, pas par un pool TCP. Trois lectures du même
+enregistrement coûtent trois allers-retours, pas trois fois rien.
+
+`/api/contexte` rend d'un coup ce que `/api/user`, `/api/dette` et
+`/api/consentement` rendaient en trois fois — les trois commençaient de toute
+façon par lire la même session et le même compte. Les trois routes restent :
+elles portent les écritures, et les tests comme l'application de bureau les
+appellent. Ce qui ne se dédouble pas, c'est la MISE EN FORME, sortie dans
+`src/lib/contexteConnecte.ts` et lue par les deux chemins. Un test compare les
+deux réponses champ par champ : sans lui, on n'aurait pas économisé deux
+allers-retours, on aurait créé une quatrième vérité.
+
+**Ce test ne peut pas tout voir, et c'est voulu.** Saboté en changeant le
+constructeur commun, il reste vert — les deux chemins le lisent, donc les deux
+changent ensemble, ce qui est exactement la propriété qu'on veut. Ce qu'il
+attrape, c'est la DIVERGENCE : refaire la mise en forme dans la route fusionnée
+le fait tomber aussitôt. Le contenu de la réponse, lui, est gardé par les tests
+de la route d'origine. Il fallait le sabotage pour s'en apercevoir : j'aurais
+sinon écrit que ce test garde le contenu, ce qui est faux.
+
+| écran | avant | après |
+|---|---|---|
+| tableau de bord, premier chargement | 9 | 6 |
+| tableau de bord, navigation suivante | 8 | 5 |
+| historique | 6 | 3 |
+| réglages | 7 | 3 |
+
+**Deux mémoires valaient mieux qu'une, et c'était le piège.** `useIdCompte`
+mémorisait déjà `/api/user` au niveau du module — une correction antérieure du
+même problème. Poser le fournisseur de contexte à côté aurait fait DEUX appels
+là où il en fallait un : le fournisseur et la mémoire, chacun demandant sa
+version. La mémoire vit maintenant dans `chargerContexte`, un cran plus haut,
+et les deux la partagent. C'est le genre de régression qu'on n'aurait pas vue
+sans recompter après coup.
+
+**Ce que ça n'améliore pas, et il faut le dire.** Le temps d'affichage ne bouge
+pas : le premier écran du tableau de bord est rendu au serveur depuis V236, et
+son LCP est de 272 ms sur poste. Ces appels partent APRÈS le rendu, ils ne
+retardent rien de ce qu'on regarde. Le gain est en requêtes et en lectures de
+base — c'est-à-dire en coût et en marge sous la charge, pas en vitesse
+ressentie. Se raconter le contraire serait exactement l'erreur déjà commise ici
+avec l'écriture de contexte : « une requête de moins, pas une page plus
+rapide ».
+
+**Une piste écartée en la mesurant.** Le premier relevé montrait un
+`PUT /api/settings` à chaque page, alors que le journal affirme cette écriture
+corrigée depuis août. C'était un artefact de ma mesure : j'ouvrais un onglet
+par page, donc un `sessionStorage` neuf à chaque fois, et c'est lui qui porte
+le garde. Refait dans un seul onglet, l'écriture ne part qu'une fois par
+ouverture de l'application. Le journal disait vrai ; j'ai failli publier le
+contraire.
+
+Et un outil de plus, qui aurait dû exister depuis longtemps :
+`scripts/compte-mesure.mjs` ouvre un compte neuf et dépose son jeton et son
+identifiant. Deux campagnes ont déjà été faussées faute de l'avoir fait à la
+main — un cookie périmé fait mesurer la page de connexion, un identifiant
+absent fait mesurer la modale d'accueil. Les deux pièges étaient écrits ; il
+manquait la commande qui les évite.
+
 ### Quatre refus qu'aucun test navigateur ne poussait dans le mur
 `e2e/panne-serveur.spec.ts` couvre l'ajout d'une partie, l'ajout depuis la
 liste Riot, le consentement, les réglages de jeu, le paiement de dette et

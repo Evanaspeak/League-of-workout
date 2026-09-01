@@ -10,6 +10,7 @@ import { PontConnecte } from "@/components/PontConnecte";
 import { Footer } from "@/components/Footer";
 import { Analytics } from "@vercel/analytics/next";
 import { SessionProvider } from "@/lib/SessionContext";
+import { ContexteConnecteProvider } from "@/lib/ContexteConnecte";
 import { LocaleProvider } from "@/lib/i18n/LocaleContext";
 import { RatiosExercicesProvider } from "@/components/RatiosExercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
@@ -160,6 +161,7 @@ export default async function RootLayout({
         <RatiosExercicesProvider valeurs={ratios}>
         <LocaleProvider locale={locale}>
           <SessionProvider>
+          <ContexteConnecteProvider>
             <SplashScreen />
             {/* Tout ce qui ne s'adresse qu'à un compte connecté, chargé
                 seulement hors des pages publiques. */}
@@ -176,6 +178,7 @@ export default async function RootLayout({
             {/* Porte les notifications et la page de secours hors ligne :
                 pour tout le monde, connecté ou non. */}
             <ServiceWorkerActif />
+          </ContexteConnecteProvider>
           </SessionProvider>
         </LocaleProvider>
         </RatiosExercicesProvider>

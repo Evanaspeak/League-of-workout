@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { chargerContexte } from "@/lib/chargerContexte";
 
 type Compte = {
   id: string;
@@ -18,20 +19,16 @@ type Compte = {
  * trois fois sur le tableau de bord et cinq fois dans les réglages, soit
  * autant de lectures en base pour une réponse identique.
  *
- * La promesse est mémorisée au niveau du module. Elle vit donc le temps du
- * chargement de la page — exactement la durée pendant laquelle l'identité ne
- * peut pas changer, puisqu'en changer impose de recharger.
+ * La mémoire a déménagé dans `chargerContexte` : elle y sert aussi au
+ * fournisseur de contexte, qui demandait sinon la même chose de son côté —
+ * soit deux appels là où il en faut un. Le compte n'est qu'une partie de ce
+ * que rend `/api/contexte`.
  */
-let enCours: Promise<Compte | null> | null = null;
-
 export function chargerCompte(): Promise<Compte | null> {
-  if (!enCours) {
-    enCours = fetch("/api/user")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u) => (u && typeof u.id === "string" ? (u as Compte) : null))
-      .catch(() => null);
-  }
-  return enCours;
+  return chargerContexte().then((c) => {
+    const u = c?.user;
+    return u && typeof u.id === "string" ? (u as Compte) : null;
+  });
 }
 
 /** Le compte connecté : `undefined` tant qu'on ne sait pas, `null` si aucun. */
