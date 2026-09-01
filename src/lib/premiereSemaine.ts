@@ -9,6 +9,14 @@
  *
  * Il disparaît au bout de sept jours, atteint ou non. Un objectif raté qui
  * reste affiché n'est plus un objectif, c'est un reproche.
+ *
+ * **Atteint, il ne disparaît plus tout de suite.** Il s'effaçait à la seconde
+ * où on l'atteignait : réussir et ignorer produisaient exactement le même
+ * écran, c'est-à-dire rien. Quelqu'un qui enregistre ses cinq parties le
+ * premier soir voyait sa récompense s'évanouir sans un mot. Il reste jusqu'à
+ * la fin de la fenêtre, dans son état atteint — un objectif raté qu'on laisse
+ * est un reproche, un objectif réussi qu'on laisse est un trophée, et les deux
+ * ne se traitent pas pareil.
  */
 
 /** Parties à enregistrer. */
@@ -52,6 +60,9 @@ export function premiereSemaine(
     // Une date d'inscription illisible ne doit pas faire apparaître l'objectif
     // pour toujours : sans elle, on ne sait pas où en est la fenêtre, et ne
     // rien montrer est la seule réponse honnête.
-    visible: dansLaFenetre && !atteint,
+    //
+    // `atteint` ne le cache plus : c'est l'écran qui change d'état, pas le
+    // bloc qui s'efface.
+    visible: dansLaFenetre,
   };
 }

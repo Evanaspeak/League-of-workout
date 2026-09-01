@@ -140,3 +140,41 @@ test("les deux déclencheurs valent aussi sur un téléphone", async ({ browser 
   }
   await ctx.close();
 });
+
+/**
+ * L'objectif de première semaine se félicite au lieu de s'évanouir.
+ *
+ * Il s'effaçait à la seconde où on l'atteignait : réussir et ignorer
+ * produisaient exactement le même écran, c'est-à-dire rien. Quelqu'un qui
+ * enregistre ses cinq parties le premier soir voyait sa récompense disparaître
+ * sans un mot.
+ *
+ * Le test enregistre les cinq parties par l'API — ce qui compte ici est l'état
+ * de l'écran, pas le geste de saisie, déjà couvert ailleurs.
+ */
+test("atteindre l'objectif de la première semaine se voit", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  for (let i = 0; i < 5; i++) {
+    const r = await ctx.request.post("/api/games", {
+      data: {
+        jeu: "League of Legends", exercice: "pompes", role: "ARAM",
+        champion: "Ashe", kills: 1, deaths: 1, assists: 1, result: "D",
+      },
+    });
+    expect(r.status(), await r.text()).toBe(200);
+  }
+
+  await page.addInitScript(() => {
+    try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+  });
+  await page.goto("/fr/dashboard", { waitUntil: "networkidle" });
+  await passerIntro(page);
+
+  // Le bloc est toujours là, et il dit que c'est fait.
+  await expect(page.getByText(/objectif atteint|goal reached/i)).toBeVisible({ timeout: 15_000 });
+  // Et il ne demande plus rien : le décompte de jours restants a disparu.
+  await expect(page.getByText(/il te reste|days left|jours? restants?/i)).toHaveCount(0);
+  await ctx.close();
+});

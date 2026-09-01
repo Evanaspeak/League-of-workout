@@ -587,20 +587,36 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           grand-chose après. L'objectif est donc petit — cinq parties, ce qu'on
           enregistre en une soirée — et il disparaît au bout de sept jours,
           atteint ou non. Un objectif raté qui reste affiché n'est plus un
-          objectif, c'est un reproche. */}
+          objectif, c'est un reproche.
+
+          Atteint, il reste jusqu'à la fin de la fenêtre, mais il change
+          d'état. Il s'effaçait à la seconde où on l'atteignait : réussir et
+          ignorer produisaient exactement le même écran, c'est-à-dire rien.
+          Un objectif réussi qu'on laisse est un trophée, pas un reproche. */}
       {data.premiereSemaine?.visible && (
         <div className="lol-panel p-4">
           <div style={{
             display: "flex", justifyContent: "space-between",
             alignItems: "baseline", gap: 12, flexWrap: "wrap",
           }}>
-            <div style={{ color: "var(--gold)", fontWeight: 600 }}>{t.debutTitre}</div>
-            <div className="text-xs" style={{ color: "var(--faint)" }}>
-              {t.debutJours(data.premiereSemaine.joursRestants)}
+            <div style={{
+              color: data.premiereSemaine.atteint ? "var(--victory)" : "var(--gold)",
+              fontWeight: 600,
+            }}>
+              {data.premiereSemaine.atteint ? t.debutAtteintTitre : t.debutTitre}
             </div>
+            {/* Le décompte n'a plus de sens une fois l'objectif atteint : il
+                ne reste rien à faire avant la fin de la fenêtre. */}
+            {!data.premiereSemaine.atteint && (
+              <div className="text-xs" style={{ color: "var(--faint)" }}>
+                {t.debutJours(data.premiereSemaine.joursRestants)}
+              </div>
+            )}
           </div>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.6, margin: "4px 0 10px" }}>
-            {t.debutTexte(data.premiereSemaine.restantes)}
+            {data.premiereSemaine.atteint
+              ? t.debutAtteintTexte
+              : t.debutTexte(data.premiereSemaine.restantes)}
           </p>
           <div
             role="progressbar"
@@ -615,7 +631,9 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
               className="h-full rounded-full"
               style={{
                 width: `${Math.round((data.premiereSemaine.parties / OBJECTIF_PARTIES) * 100)}%`,
-                background: "var(--brand-gradient)",
+                background: data.premiereSemaine.atteint
+                  ? "var(--victory)"
+                  : "var(--brand-gradient)",
                 transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             />
