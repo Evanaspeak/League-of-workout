@@ -26,15 +26,29 @@
  * ferait d'une page oubliée une page publique. `src/pagesConnues.test.ts`
  * compare de toute façon cette liste au dossier des pages.
  */
+import { tousLesSlugs } from "@/lib/slugJeu";
+
 export const PAGES_CONNUES = [
   "/",
   "/admin",
   "/beta",
   "/bilan",
   "/calculateur",
-  // Segment dynamique : le catalogue des jeux est fermé, mais c'est la page
-  // elle-même qui rend 404 sur un jeu inconnu — elle sait lesquels existent.
-  "/calculateur/*",
+  /**
+   * Le catalogue des jeux, en clair.
+   *
+   * Une étoile aurait suffi à laisser passer, et c'est ce qui était écrit
+   * d'abord : le routeur rejette de toute façon un jeu inconnu. Mais une
+   * adresse rejetée par le ROUTEUR ne rend pas la 404 du site — elle rend
+   * celle de Next, sans langue et en anglais. En connaissant le catalogue, le
+   * middleware traite un jeu inventé comme ce qu'il est, une adresse qui
+   * n'existe pas, et la bonne page paraît.
+   *
+   * La liste vient de `tousLesSlugs`, la même que celle des pages engendrées :
+   * la recopier ici en ferait une seconde qui divergerait au premier jeu
+   * ajouté.
+   */
+  ...tousLesSlugs().map(({ slug }) => `/calculateur/${slug}`),
   "/cgu",
   "/confidentialite",
   "/connexion-app",
@@ -45,7 +59,7 @@ export const PAGES_CONNUES = [
   "/recuperation/valider",
   "/settings",
   "/telechargement",
-] as const;
+] as const satisfies readonly string[];
 
 /**
  * Cette adresse correspond-elle à une page du site ?

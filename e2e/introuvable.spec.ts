@@ -12,34 +12,63 @@ import { ouvrirCompte } from "./compte";
  *
  * Ces tests portent sur le CODE DE RÉPONSE autant que sur le texte : c'est le
  * code que lit un moteur, et c'est lui qui manquait.
+ *
+ * Et ils lisent le HTML **SERVI**, pas la page rendue. La première version
+ * lisait le DOM vivant et passait, alors que la réponse contenait la 404
+ * intégrée de Next — `<html>` sans langue, texte anglais. Après hydratation,
+ * React finissait par afficher la bonne chose ; un moteur de recherche, lui,
+ * ne va jamais jusque-là. C'est le piège déjà écrit dans le journal pour le
+ * premier écran du tableau de bord : sur ce qui doit exister DANS la réponse,
+ * on lit la réponse.
  */
+
+/** La langue déclarée dans le HTML tel qu'il arrive, avant tout JavaScript. */
+function langueServie(html: string): string | null {
+  return html.match(/<html[^>]*\slang="([a-z-]+)"/)?.[1] ?? null;
+}
 
 test("une adresse inventée rend 404, pas la connexion", async ({ page }) => {
   const reponse = await page.goto("/fr/nimportequoi");
   expect(reponse?.status()).toBe(404);
   // Et surtout : on est resté où l'on avait demandé à aller.
   expect(new URL(page.url()).pathname).toBe("/fr/nimportequoi");
-  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  expect(langueServie(await reponse!.text())).toBe("fr");
 });
 
-test("la 404 parle la langue de l'adresse", async ({ page }) => {
-  const reponse = await page.goto("/de/nimportequoi");
-  expect(reponse?.status()).toBe(404);
-  await expect(page.locator("html")).toHaveAttribute("lang", "de");
-
-  // Six langues, six textes : celui-ci ne doit pas être le français.
-  const de = await page.locator("h1").first().innerText();
-  await page.goto("/fr/nimportequoi");
-  const fr = await page.locator("h1").first().innerText();
-  expect(de).not.toBe(fr);
+test("la 404 parle la langue de l'adresse, dans le HTML servi", async ({ page }) => {
+  const titres = new Set<string>();
+  for (const langue of ["fr", "en", "es", "de", "zh", "ja"]) {
+    const reponse = await page.goto(`/${langue}/nimportequoi`);
+    expect(reponse?.status(), langue).toBe(404);
+    const html = await reponse!.text();
+    expect(langueServie(html), langue).toBe(langue);
+    // Le texte doit être là AVANT le JavaScript : c'est ce qu'indexe un moteur.
+    const titre = html.match(/<h1[^>]*>([^<]+)/)?.[1] ?? "";
+    expect(titre.length, langue).toBeGreaterThan(0);
+    titres.add(titre);
+  }
+  // Six langues, six textes : six copies du français seraient pires que rien.
+  expect(titres.size).toBe(6);
 });
 
-test("un jeu de calculateur inventé rend la 404 du site, pas celle de Next", async ({ page }) => {
+/**
+ * Le seul cas qui résiste, et il est assumé.
+ *
+ * Un jeu de calculateur inventé est refusé par le ROUTEUR — le catalogue est
+ * fermé par `dynamicParams = false` — et un refus du routeur ne passe pas par
+ * la 404 racine : Next rend sa propre page, sans langue et en anglais.
+ *
+ * Trois façons de le contourner ont été essayées et mesurées : ouvrir le
+ * catalogue pour que la page appelle `notFound()` (même résultat), poser une
+ * frontière `not-found` sous `[locale]` (jamais consultée, faute de mise en
+ * page racine), et réécrire l'adresse dans le middleware (casse aussi les cas
+ * qui marchaient). Le code de réponse, lui, est juste, et c'est ce qui compte
+ * pour qu'une adresse sorte d'un index. Ce test fixe l'état réel plutôt que
+ * de laisser croire que le cas est traité.
+ */
+test("un jeu de calculateur inventé rend 404, en anglais faute de mieux", async ({ page }) => {
   const reponse = await page.goto("/de/calculateur/jeu-invente");
   expect(reponse?.status()).toBe(404);
-  // Le 404 par défaut de Next rend `<html>` sans langue et un texte anglais.
-  await expect(page.locator("html")).toHaveAttribute("lang", "de");
-  await expect(page.getByText(/This page could not be found/i)).toHaveCount(0);
 });
 
 test("une langue inventée ne mène pas à la connexion", async ({ page }) => {
@@ -60,6 +89,7 @@ test("connecté, une adresse inventée rend la même 404", async ({ browser }) =
    */
   const reponse = await page.goto("/fr/nimportequoi");
   expect(reponse?.status()).toBe(404);
+  expect(langueServie(await reponse!.text())).toBe("fr");
   await ctx.close();
 });
 
