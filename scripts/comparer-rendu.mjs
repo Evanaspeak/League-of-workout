@@ -6,7 +6,7 @@
  * avant, on remanie, on compare après. Une différence d'un seul pixel se voit,
  * là où une relecture ne verrait rien.
  *
- * Usage : node scripts/comparer-rendu.mjs <avant|apres> [dossier]
+ * Usage : node scripts/comparer-rendu.mjs <avant|apres> [dossier] [--langue=fr]
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

@@ -16,7 +16,7 @@
  * une machine rapide dit seulement que le code n'est pas absurde ; ce qui
  * décide du sort de la page, c'est un téléphone sur un réseau moyen.
  *
- * Usage : node scripts/performance.mjs [adresse] [chemin]
+ * Usage : node scripts/performance.mjs [adresse] [chemin] [--langue=fr]
  */
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";

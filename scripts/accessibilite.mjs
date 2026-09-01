@@ -6,7 +6,7 @@
  * description. Ce sont celles qui décident si quelqu'un peut se servir de
  * l'application, et ce sont celles qu'un humain ne peut pas vérifier à l'œil.
  *
- * Usage : node scripts/accessibilite.mjs [adresse]
+ * Usage : node scripts/accessibilite.mjs [adresse] [langue]
  */
 import { readFileSync, existsSync } from "node:fs";
 import { chromium } from "playwright";
