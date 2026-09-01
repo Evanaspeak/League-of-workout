@@ -22,6 +22,21 @@
 
 import { enLangue, langueDemandee } from "./langue.mjs";
 
+/**
+ * Ce que ce script mesure, et ce qu'il ne mesure PAS.
+ *
+ * Il demande une adresse, en boucle, à concurrence croissante. Sur une PAGE,
+ * c'est donc le document seul : jamais les appels que le navigateur fait
+ * ensuite. Une correction qui supprime des appels d'API ne s'y voit pas — le
+ * regroupement du contexte a rendu 75 requêtes par seconde avant et 71 après,
+ * ce qui n'est pas un échec de la correction mais un hors-sujet de la mesure.
+ *
+ * Pour chiffrer ce genre de changement, on mesure les ROUTES une par une et on
+ * additionne leurs coûts : une page qui a besoin de trois appels consomme
+ * 1/d1 + 1/d2 + 1/d3 seconde de serveur. C'est un modèle de capacité, pas un
+ * débit de page observé, et il vaut ce que vaut son hypothèse — que les appels
+ * ne se recouvrent pas.
+ */
 const args = process.argv.slice(2);
 const positionnels = args.filter((a) => !a.startsWith("--"));
 const option = (nom, defaut) => {

@@ -701,6 +701,56 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La mesure de charge ne voyait pas le regroupement, et c'est elle qui avait tort
+Refaite après les deux regroupements, sur le tableau de bord avec session :
+**71 requêtes par seconde**, rupture à 200 simultanés. Puis refaite sur V309,
+c'est-à-dire AVANT tout regroupement, en revenant à ce commit et en
+reconstruisant : **75 requêtes par seconde**, même rupture, mêmes latences.
+
+Rien n'avait bougé. La tentation, à ce moment-là, est de conclure que le
+chantier ne servait à rien.
+
+**C'est la mesure qui regarde ailleurs.** `charge.mjs` demande une ADRESSE en
+boucle : sur une page, il reçoit le document et s'arrête là. Les appels d'API
+que le navigateur fait ensuite ne partent jamais. Le script mesure donc
+exactement la partie que le regroupement ne touche pas.
+
+Mesuré comme il fallait — chaque route séparément, à quarante simultanés :
+
+| route | débit |
+|---|---|
+| `/api/user` | 148 req/s |
+| `/api/dette` | 153 req/s |
+| `/api/consentement` | 163 req/s |
+| **`/api/contexte`** | **127 req/s** |
+| `/api/badges` | 160 req/s |
+| `/api/serie` | 169 req/s |
+| **`/api/progression`** | **147 req/s** |
+
+Une page a besoin d'UN appel de chacune : les coûts s'additionnent. Trois
+routes à 148, 153 et 163 coûtent ensemble 19,5 ms de serveur, soit **51 pages
+par seconde**. La route fusionnée en coûte 7,9, soit **127**. Les deux
+regroupements ensemble font passer la capacité de **32 à 68 pages par
+seconde** : **elle double.**
+
+Deux choses valent d'être retenues :
+
+- **un débit par route ne se lit pas seul.** `/api/contexte` est la route la
+  plus LENTE du tableau, et c'est la bonne nouvelle : elle fait à elle seule le
+  travail de trois. Comparer les lignes entre elles n'a aucun sens ; ce qui
+  compte est ce qu'une page consomme ;
+- **c'est un modèle de capacité, pas un débit de page observé.** Il suppose que
+  les appels ne se recouvrent pas. La note est écrite en tête de `charge.mjs`,
+  pour que le prochain qui l'ouvre ne conclue pas d'un chiffre stable que rien
+  n'a changé.
+
+Et une friction d'outillage, rencontrée trois fois cette nuit : le compte de
+mesure porte une adresse `@example.test`, et la préparation de la suite
+navigateur purge ces comptes-là. Toute mesure lancée après une suite tombe donc
+sur une session morte. Le garde d'atterrissage l'a dit les trois fois — c'est
+son travail — mais l'ordre est à retenir : **la suite d'abord, le compte
+ensuite, la mesure enfin.**
+
 ### Les paliers et la série lisaient deux fois la même requête
 Suite du regroupement. Après `/api/contexte`, le tableau de bord faisait encore
 cinq appels, dont `/api/badges` et `/api/serie` — et les deux exécutaient
