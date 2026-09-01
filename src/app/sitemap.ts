@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { tousLesSlugs } from "@/lib/slugJeu";
 import { LANGUES } from "@/lib/i18n/langues";
-import { avecLocale } from "@/lib/i18n/cheminLocalise";
+import { avecLocale, languesAlternatives } from "@/lib/i18n/cheminLocalise";
 
 const BASE = "https://winorworkout.com";
 
@@ -35,11 +35,7 @@ const PAGES: { chemin: string; changeFrequency: "weekly" | "monthly" | "yearly";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return PAGES.flatMap(({ chemin, changeFrequency, priority }) => {
-    const alternates = {
-      languages: Object.fromEntries(
-        LANGUES.map((l) => [l, `${BASE}${avecLocale(chemin, l)}`]),
-      ),
-    };
+    const alternates = { languages: languesAlternatives(chemin, BASE) };
     return LANGUES.map((locale) => ({
       url: `${BASE}${avecLocale(chemin, locale)}`,
       changeFrequency,

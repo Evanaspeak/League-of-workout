@@ -119,6 +119,31 @@ function parserAcceptLanguage(entete: string | null | undefined) {
     .sort((a, b) => b.poids - a.poids);
 }
 
+/**
+ * Les six adresses d'une même page, plus `x-default`.
+ *
+ * `x-default` désigne la page à servir à quelqu'un dont la langue ne figure
+ * pas dans la liste. Sans lui, un moteur choisit lui-même parmi les six — et
+ * il choisit mal : la version la plus anciennement connue, c'est-à-dire la
+ * française, y compris pour une recherche faite en portugais ou en russe.
+ *
+ * Elle pointe vers l'adresse SANS préfixe, qui est exactement ce que
+ * `x-default` attend : non pas une septième traduction, mais l'adresse qui
+ * négocie. Le middleware y redirige en 308 vers le cookie, à défaut l'en-tête
+ * du navigateur, à défaut l'anglais.
+ *
+ * Trois endroits en avaient besoin — les métadonnées d'une page publique,
+ * celles d'une page par jeu, et le plan du site. Les trois construisaient leur
+ * table chacun de leur côté, et aucun des trois n'avait `x-default` : c'est
+ * exactement la forme que prend une règle écrite en trois exemplaires.
+ */
+export function languesAlternatives(chemin: string, base = ""): Record<string, string> {
+  return {
+    ...Object.fromEntries(LANGUES.map((l) => [l, `${base}${avecLocale(chemin, l)}`])),
+    "x-default": `${base}${chemin}`,
+  };
+}
+
 /** Toutes les langues, pour `generateStaticParams`. */
 export function toutesLesLocales(): { locale: Locale }[] {
   return LANGUES.map((locale) => ({ locale }));

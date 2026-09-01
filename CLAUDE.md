@@ -701,6 +701,60 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le plan du site n'avait pas de x-default, et une page publique n'était nulle part
+Deux trous ouverts par le passage de la langue dans l'adresse, tous deux
+invisibles à l'écran, tous deux sur le seul canal d'acquisition qui travaille
+sans qu'on s'en occupe.
+
+**Aucune des 126 entrées du plan ne portait `x-default`.** Les six langues
+étaient bien déclarées, et elles sont bien ce qu'il faut pour un lecteur
+français, anglais, espagnol, allemand, chinois ou japonais. `x-default` répond
+à l'autre question, celle que personne ne se pose en écrivant : que servir à
+quelqu'un dont la langue n'est dans aucune des six. Sans lui, le moteur choisit
+seul, et il choisit la version la plus anciennement connue — la française, y
+compris pour une recherche faite en portugais ou en russe. Il pointe vers
+l'adresse SANS préfixe, qui est exactement ce qu'attend `x-default` : pas une
+septième traduction, mais celle qui négocie. Vérifié sur le serveur, les sept
+chemins du plan : `/cgu` avec un en-tête allemand rend bien 308 vers
+`/de/cgu`. Une adresse d'alternative qui ne mène nulle part serait pire que
+son absence.
+
+**Et la table était écrite en trois exemplaires** — métadonnées d'une page
+publique, métadonnées d'une page par jeu, plan du site — donc les trois
+avaient le même trou. C'est le sixième cas de règle dupliquée trouvé sur ce
+projet, et il prend toujours la même forme : ce n'est pas la duplication qu'on
+remarque, c'est qu'une correction n'en répare qu'un tiers.
+`languesAlternatives` vit dans `cheminLocalise.ts`, avec les autres règles
+d'adresse.
+
+**`/connexion-app` était publique, explorable, hors du plan, et sans refus
+d'indexation.** C'est-à-dire dans le seul état qui n'est pas une décision :
+elle s'indexe depuis n'importe quel lien et paraît alors sans titre ni
+description. C'est mot pour mot la leçon écrite dans `robots.ts` au départ de
+`/waitlist` — « interdire l'exploration n'empêche pas l'indexation » — et elle
+n'avait jamais été appliquée à cette page-là. Les deux autres du même genre,
+connexion et récupération, portaient déjà leur `noindex`.
+
+`src/planDuSite.test.ts` regarde le DOSSIER des pages plutôt qu'une liste. Trois
+états sont permis, et un seul manquait : être dans le plan, refuser
+l'indexation, ou être derrière la porte. Le refus se cherche aussi chez les
+ancêtres — `/recuperation/valider` ne le porte pas, elle l'hérite de la mise en
+page au-dessus, et ne regarder que le fichier de la page rendrait le test faux
+sur le cas le plus légitime.
+
+Quatre sabotages, quatre échecs : `x-default` retiré, le `noindex` retiré, les
+CGU sorties du plan, et le dossier renommé — ce dernier parce qu'un test qui ne
+lit rien passe au vert.
+
+**Un piège d'outillage, et il a coûté une passe entière.** Mon harnais de
+sabotage remettait le fichier par `git checkout -- <fichier>`, qui restaure
+depuis l'INDEX. Les corrections n'étaient pas encore indexées : chaque
+« remise en état » effaçait donc la correction elle-même, et les sabotages
+suivants tournaient sur un arbre déjà amputé. Les trois derniers ont rendu
+« 4 échecs sur 4 », ce qui ressemble à un test très mordant et n'est que du
+bruit. Un sabotage se fait contre une base connue ; sans indexation préalable,
+il n'y a pas de base.
+
 ### La liste d'avant lancement réclamait deux choses déjà faites
 `docs/lancement.md` est le document qu'on relit juste avant d'inviter cent
 personnes, c'est-à-dire au moment où l'on a le moins envie de vérifier ce qu'il

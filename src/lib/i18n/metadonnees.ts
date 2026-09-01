@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { LANGUES, type Locale } from "./langues";
-import { avecLocale } from "./cheminLocalise";
+import { type Locale } from "./langues";
+import { avecLocale, languesAlternatives } from "./cheminLocalise";
 
 /**
  * Les titres et descriptions des pages publiques, dans les six langues.
@@ -216,9 +216,7 @@ export function metadonneesPage(cle: PageMeta, locale: Locale, chemin: string): 
     description: textes.description,
     alternates: {
       canonical: avecLocale(chemin, locale),
-      languages: Object.fromEntries(
-        LANGUES.map((l) => [l, avecLocale(chemin, l)]),
-      ),
+      languages: languesAlternatives(chemin),
     },
   };
 }
@@ -275,7 +273,7 @@ export function metadonneesJeu(jeu: string, locale: Locale, chemin: string): Met
     description,
     alternates: {
       canonical: avecLocale(chemin, locale),
-      languages: Object.fromEntries(LANGUES.map((l) => [l, avecLocale(chemin, l)])),
+      languages: languesAlternatives(chemin),
     },
     /**
      * L'image et l'adresse sont redites ici, et il le faut.
