@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { chargerProgression, rafraichirProgression, type Progression } from "@/lib/chargerProgression";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { dashboard as dict } from "@/lib/i18n/dictionaries/dashboard";
 import { jourLocal } from "@/lib/serie";
@@ -27,16 +28,18 @@ export function SerieEtRetard() {
   const t = useT(dict);
   const [etat, setEtat] = useState<Etat | null>(null);
 
+  /**
+   * La série vient de l'appel commun, partagé avec les paliers.
+   *
+   * Les deux composants demandaient leur route de leur côté, et les deux
+   * routes lisaient la même requête de paiements.
+   */
   useEffect(() => {
-    const relire = () => {
-      fetch(`/api/serie?jour=${jourLocal()}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d) setEtat(d); })
-        .catch(() => {});
-    };
-    relire();
+    const poser = (p: Progression | null) => { if (p?.serie) setEtat(p.serie as Etat); };
+    void chargerProgression(jourLocal()).then(poser);
     // La dette qui bouge change la série et le retard : l'écran doit suivre
     // sans qu'on recharge la page.
+    const relire = () => { void rafraichirProgression(jourLocal()).then(poser); };
     window.addEventListener("wow-dette-changee", relire);
     return () => window.removeEventListener("wow-dette-changee", relire);
   }, []);

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { etatRetard, jourLocal, longueurSerie, meilleureSerie } from "@/lib/serie";
+import { jourLocal } from "@/lib/serie";
+import { reponseSerie } from "@/lib/progression";
 
 /**
  * La série de jours payés, et l'éventuel retard.
@@ -26,14 +27,9 @@ export async function GET(req: Request) {
     take: 800,
   });
 
-  const jours = paiements.map((p) => p.jour);
-  const retard = etatRetard(user.detteDepuis, user.dettePointsDus);
-
-  return NextResponse.json({
-    serie: longueurSerie(jours, aujourdhui),
-    meilleure: meilleureSerie(jours),
-    payeAujourdhui: jours.includes(aujourdhui),
-    enRetard: retard.enRetard,
-    joursDeRetard: retard.jours,
-  });
+  return NextResponse.json(reponseSerie(
+    { totalPoints: 0, parties: 0, jours: paiements.map((p) => p.jour) },
+    aujourdhui,
+    user,
+  ));
 }
