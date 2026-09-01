@@ -772,9 +772,19 @@ différence entre une dispense écrite et une dispense vérifiée : la première
 vieillit en silence, ce qui est exactement ce qui vient d'arriver à la liste
 d'avant lancement.
 
-Mises à jour appliquées, toutes mineures ou correctives ; les majeures écartées
-le 23 août le restent (`typescript` 7, `eslint` 10, `@types/node` 26), et
-`prisma` 8 les rejoint — elle n'existe qu'en version candidate.
+Mises à jour appliquées, toutes mineures ou correctives : `prisma` et ses trois
+adaptateurs 7.9.1 → 7.10.0, `next` et `eslint-config-next` 16.3.2 → 16.3.4,
+`jest` 30.4.2 → 30.5.1, `lucide-react` 1.34 → 1.39, `resend` 6.22 → 6.25, et
+`electron` 43.4.1 → 43.5.1 côté application de bureau. Types, 1403 tests
+unitaires, construction et **179 parcours navigateur** repassés après : tout
+vert.
+
+Les majeures écartées le 23 août le restent — `typescript` 7, `eslint` 10,
+`@types/node` 26 — et `prisma` 8 les rejoint, puisqu'elle n'existe qu'en
+version candidate. `next-auth` continue de s'afficher « en retard » sur
+4.24.15 : c'est l'ancienne branche stable, le projet est sur la 5 en
+préversion. Cette ligne revient à chaque audit ; elle est fausse à chaque
+fois.
 
 ### Vingt-quatre modules n'avaient aucun test, quatre en ont maintenant
 Le recensement résout les imports des tests jusqu'aux fichiers, comme
