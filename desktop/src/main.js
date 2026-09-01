@@ -22,7 +22,7 @@ const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures, i
 const lecteur = require("./lecture/lecteurApex");
 const { surveillerClient } = require("./lcu");
 const { creerAttenteFin } = require("./attenteIssue");
-const { memeOrigine, cheminDe, dansLaSection } = require("./origine");
+const { memeOrigine, cheminDe, dansLaSection, sansLangue } = require("./origine");
 const { choisirLangue } = require("./langue");
 const { textes } = require("./textes");
 const { autoUpdater } = require("electron-updater");
@@ -1057,12 +1057,14 @@ function openAuthPopup() {
 
   // Dès que l'OAuth est terminé, Auth.js redirige vers "/" : on transfère le cookie
   authPopup.webContents.on("did-navigate", async (_event, url) => {
-    const chemin = cheminDe(url);
+    // La langue est retirée avant toute comparaison : le site sert
+    // « /fr/login », et demander « ce n'est plus /login ? » y répondrait oui
+    // dès la première page.
+    const chemin = sansLangue(cheminDe(url));
     const isDashboard =
       memeOrigine(url, BACKEND_URL) &&
       !dansLaSection(chemin, "/login") &&
-      !dansLaSection(chemin, "/api") &&
-      !dansLaSection(chemin, "/waitlist");
+      !dansLaSection(chemin, "/api");
     if (isDashboard) {
       try {
         const popupCookies = await authPopup.webContents.session.cookies.get({

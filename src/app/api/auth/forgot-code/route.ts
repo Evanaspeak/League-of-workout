@@ -5,6 +5,7 @@ import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
 import { sendResetLink, SITE_URL, courrielConfigure } from "@/lib/email";
 import { normaliserEmail } from "@/lib/identite";
 import { empreinte, PREFIXE_RESET, VALIDITE_MS } from "@/lib/recuperation";
+import { toLocale } from "@/lib/i18n/langues";
 
 export async function POST(request: Request) {
   try {
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, pseudo: true, passwordHash: true },
+      select: { id: true, pseudo: true, passwordHash: true, langue: true },
     });
 
     // Réponse générique dans tous les cas : ne révèle jamais si l'email existe
@@ -68,7 +69,12 @@ export async function POST(request: Request) {
         },
       });
 
-      const lien = `${SITE_URL}/recuperation/valider?t=${encodeURIComponent(jeton)}`;
+      // Dans la langue du compte : le courriel l'est, et le lien qui l'accompagne
+      // partait sans langue — le site le renvoyait alors vers celle du navigateur
+      // qui l'ouvre, qui n'est pas forcément la même. Arriver sur l'écran qui
+      // rend l'accès dans une langue qu'on ne lit pas est le pire moment pour ça.
+      const lien = `${SITE_URL}/${toLocale(user.langue)}/recuperation/valider`
+        + `?t=${encodeURIComponent(jeton)}`;
       await sendResetLink(email, user.pseudo, lien);
     }
 

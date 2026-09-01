@@ -1,5 +1,6 @@
 import { test, expect, type Browser } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
+import { sansLangue } from "./chemin";
 
 /**
  * L'historique sur téléphone.
@@ -40,7 +41,7 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
   await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
   await page.getByPlaceholder(/ton code|your code/i).fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
   uid = (await (await page.request.get("/api/user")).json()).id as string;

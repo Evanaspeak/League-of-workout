@@ -27,10 +27,10 @@ const RACINE = join(process.cwd(), "src");
 
 /** Où l'on insère du HTML brut, et pourquoi c'est sans danger. */
 const AUTORISEES: Record<string, string> = {
-  "app/page.tsx":
+  "app/[locale]/page.tsx":
     "Bloc de données structurées pour les moteurs de recherche. JSON.stringify " +
     "d'une constante du module : aucune valeur ne vient d'un compte.",
-  "app/layout.tsx":
+  "app/[locale]/layout.tsx":
     "Écouteur de `beforeinstallprompt`, qui doit s'exécuter avant le paquet " +
     "JavaScript. Chaîne littérale écrite dans le fichier, sans interpolation.",
 };

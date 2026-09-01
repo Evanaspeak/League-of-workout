@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import Link from "next/link";
+import { Lien } from "@/components/Lien";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { premiersPas as dict } from "@/lib/i18n/dictionaries/premiersPas";
 import { calculerPublic } from "@/lib/calculateurPublic";
@@ -60,7 +60,7 @@ export function PremiersPas({ pompesMax, onAjouter }: {
       </span>
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {typeof cible === "string" ? (
-          <Link href={cible} style={styleTitre}>{titre}</Link>
+          <Lien href={cible} style={styleTitre}>{titre}</Lien>
         ) : (
           <button
             type="button"

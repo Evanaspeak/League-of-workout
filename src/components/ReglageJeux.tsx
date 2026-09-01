@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Lien } from "@/components/Lien";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { overlay as dictOverlay } from "@/lib/i18n/dictionaries/overlay";
 import { detection as dictDetection } from "@/lib/i18n/dictionaries/detection";
@@ -166,9 +166,9 @@ export function ReglageJeux() {
           <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6, margin: 0 }}>
             {t.surLeWebAide}
           </p>
-          <Link href="/telechargement" style={{ color: "var(--amber)", fontSize: "0.8rem" }}>
+          <Lien href="/telechargement" style={{ color: "var(--amber)", fontSize: "0.8rem" }}>
             {t.surLeWebLien}
-          </Link>
+          </Lien>
         </div>
       )}
 

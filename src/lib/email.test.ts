@@ -45,7 +45,7 @@ describe("courriels", () => {
   });
 
   it("échappe le pseudo du bilan hebdomadaire", async () => {
-    await envoyerBilanHebdo("qui@example.test", "<script>", TEXTES, BILAN, false);
+    await envoyerBilanHebdo("qui@example.test", "<script>", TEXTES, BILAN, false, "fr");
     const html = dernierHtml();
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
@@ -58,14 +58,33 @@ describe("courriels", () => {
     // aujourd'hui, ce qui rendait le défaut invisible — et vide de son sens la
     // seule raison d'être de l'échappement, qui est de tenir le jour où un
     // autre chemin d'écriture oubliera la règle.
-    await envoyerBilanHebdo("qui@example.test", "A & B", TEXTES, BILAN, false);
+    await envoyerBilanHebdo("qui@example.test", "A & B", TEXTES, BILAN, false, "fr");
     const html = dernierHtml();
     expect(html).toContain("Ta semaine, A &amp; B");
     expect(html).not.toContain("&amp;amp;");
   });
 
   it("n'envoie rien à personne d'autre que le destinataire demandé", async () => {
-    await envoyerBilanHebdo("qui@example.test", "Joueur", TEXTES, BILAN, true);
+    await envoyerBilanHebdo("qui@example.test", "Joueur", TEXTES, BILAN, true, "fr");
     expect(envoyer.mock.calls[0][0].to).toBe("qui@example.test");
+  });
+});
+
+/**
+ * Les liens des courriels portent la langue du compte.
+ *
+ * Ils partaient sans : le site rattrape alors l'adresse et la renvoie vers la
+ * langue NÉGOCIÉE par le navigateur qui ouvre le lien. Quelqu'un dont le
+ * compte est en japonais et dont le navigateur est en anglais recevait donc un
+ * courriel en japonais dont les boutons ouvraient l'application en anglais.
+ */
+describe("la langue des liens", () => {
+  it("le bilan hebdomadaire emmène dans la langue de son propre texte", async () => {
+    await envoyerBilanHebdo("qui@example.test", "Joueur", TEXTES, BILAN, true, "ja");
+    const html = dernierHtml();
+    expect(html).toContain("/ja/dashboard");
+    expect(html).toContain("/ja/settings");
+    // Et pas l'adresse d'avant, qui repartirait en négociation.
+    expect(html).not.toMatch(/href="[^"]*\.test\/dashboard"/);
   });
 });

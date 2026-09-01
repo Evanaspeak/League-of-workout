@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import { lignesBilan, type TextesBilan } from "./i18n/courriels";
 import type { Bilan } from "./bilanHebdo";
+import type { Locale } from "@/lib/i18n/langues";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Win or Workout <noreply@winorworkout.com>";
@@ -101,6 +102,16 @@ export async function envoyerBilanHebdo(
   t: TextesBilan,
   bilan: Bilan,
   detteRestante: boolean,
+  /**
+   * La langue du compte, celle dans laquelle ce courriel est écrit.
+   *
+   * Les deux boutons pointaient sur `/dashboard` et `/settings`, sans langue :
+   * le site rattrape l'adresse et la renvoie vers la langue NÉGOCIÉE par le
+   * navigateur qui ouvre le lien. Quelqu'un dont le compte est en japonais et
+   * dont le navigateur est en anglais recevait donc un courriel en japonais
+   * dont les boutons ouvraient l'application en anglais.
+   */
+  langue: Locale,
 ) {
   if (!resend) return false;
   // Le pseudo entre BRUT dans le texte, qui est échappé ensuite. L'échapper
@@ -126,12 +137,12 @@ export async function envoyerBilanHebdo(
         <p style="line-height:1.7;color:rgba(236,239,244,0.75);margin-bottom:20px;">
           ${echapper(t.cloture(detteRestante))}
         </p>
-        <a href="${SITE}/dashboard"
+        <a href="${SITE}/${langue}/dashboard"
            style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#FF4D2E,#FF8A3D);color:#fff;font-weight:700;text-decoration:none;border-radius:8px;">
           ${echapper(t.lien)}
         </a>
         <p style="margin-top:22px;font-size:0.82rem;color:rgba(236,239,244,0.4);">
-          <a href="${SITE}/settings" style="color:rgba(236,239,244,0.5);">${echapper(t.arret)}</a>
+          <a href="${SITE}/${langue}/settings" style="color:rgba(236,239,244,0.5);">${echapper(t.arret)}</a>
         </p>
       ${WRAPPER_CLOSE}
     `,

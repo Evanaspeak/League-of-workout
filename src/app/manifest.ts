@@ -14,6 +14,15 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Win//Workout",
     description:
       "Tes parties de jeu vidéo converties en effort physique. Pompes, squats ou boxe : tu choisis comment tu paies.",
+    /**
+     * Sans langue, volontairement.
+     *
+     * Il n'y a qu'un manifeste pour six langues, et il est engendré une fois :
+     * il ne peut pas savoir laquelle lit la personne qui installe. Le
+     * middleware rattrape l'adresse et la renvoie vers la langue négociée, ce
+     * qui coûte un aller-retour au lancement et donne le bon écran. Y figer une
+     * langue donnerait le mauvais à cinq personnes sur six.
+     */
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",

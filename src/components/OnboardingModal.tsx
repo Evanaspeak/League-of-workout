@@ -1,7 +1,7 @@
 "use client";
 import { Icone } from "@/components/Icone";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/onboardingModal";
 import { cleOnboarding } from "@/lib/premiereVisite";
@@ -48,7 +48,7 @@ function StepIcon({ name }: { name: string }) {
 export function OnboardingModal() {
   const t = useT(onboardingModalDict);
   const STEPS = t.steps;
-  const path = usePathname();
+  const path = useChemin();
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState(0);
   const [closing, setClosing] = useState(false);

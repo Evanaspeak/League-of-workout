@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
 import { LANGUES } from "../src/lib/i18n/LocaleContext";
+import { enLangue, sansLangue } from "./chemin";
 
 /**
  * Les six langues, sur les écrans qu'un visiteur voit avant d'avoir un compte.
@@ -30,18 +31,23 @@ const PAGES = [
   // le plus long des six langues confondues.
 ];
 
-/** Ouvre une page dans une langue donnée, écrans d'accueil écartés. */
+/**
+ * Ouvre une page dans une langue donnée, écrans d'accueil écartés.
+ *
+ * La langue se demande par l'ADRESSE, plus par le stockage : c'est tout
+ * l'objet du changement, et poser `low_locale` ne changerait plus rien à ce
+ * qui s'affiche. Le test le prouve à sa façon — il ne pose que les clés
+ * d'écrans vus, et vérifie ensuite que `<html lang>` porte la bonne valeur.
+ */
 async function ouvrirEn(page: Page, langue: string, chemin: string) {
-  await page.addInitScript(([l]) => {
+  await page.addInitScript(() => {
     try {
-      localStorage.setItem("low_locale", l);
       sessionStorage.setItem("splash", "1");
       localStorage.setItem("low_visite", "1");
       localStorage.setItem("low_onboarded", "1");
-    } catch { /* stockage refusé : la page s'affichera en anglais, c'est tout */ }
-  }, [langue]);
-  await page.goto(chemin, { waitUntil: "domcontentloaded" });
-  // Le temps que la langue soit lue et que le rendu suive.
+    } catch { /* stockage refusé : les écrans d'accueil s'afficheront, c'est tout */ }
+  });
+  await page.goto(enLangue(langue, chemin), { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(800);
 }
 
@@ -169,7 +175,7 @@ test.describe("écrans connectés", () => {
     await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
     await page.getByPlaceholder(/ton code|your code/i).fill(code);
     await Promise.all([
-      page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+      page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
       page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
     ]);
     // L'identifiant sert à désamorcer la modale d'accueil, dont la mémoire est
@@ -207,7 +213,7 @@ test.describe("écrans connectés", () => {
         // aussi ici — il a suffi de lancer un seul de ces tests à part pour
         // que la préparation ne tourne pas et que la page devienne /login.
         expect({ chemin, langue, arrivee: new URL(page.url()).pathname })
-          .toEqual({ chemin, langue, arrivee: chemin });
+          .toEqual({ chemin, langue, arrivee: enLangue(langue, chemin) });
 
         const texte = await page.evaluate(() => document.body.innerText);
         expect({ chemin, langue, trous: texte.match(/\bundefined\b|\[object Object\]/g) ?? [] })

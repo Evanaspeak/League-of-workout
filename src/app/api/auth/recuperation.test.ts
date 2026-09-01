@@ -100,6 +100,19 @@ describe("POST /api/auth/forgot-code", () => {
     expect(sendResetLink).toHaveBeenCalled();
   });
 
+  it("emmène dans la langue du compte, pas dans celle du navigateur", async () => {
+    // Le courriel est écrit dans la langue du compte ; son lien partait sans
+    // langue, et le site le renvoyait alors vers celle négociée par le
+    // navigateur qui l'ouvre. Arriver sur l'écran qui rend l'accès dans une
+    // langue qu'on ne lit pas est le pire moment pour ça.
+    user.findUnique.mockResolvedValue({
+      id: "u1", pseudo: "Joueur", passwordHash: "$2a$ancien", langue: "ja",
+    });
+    await dmd({ email: "joueur@example.com" });
+    const lien = (sendResetLink as jest.Mock).mock.calls[0][2] as string;
+    expect(lien).toContain("/ja/recuperation/valider");
+  });
+
   it("n'écrit jamais le jeton en clair", async () => {
     await dmd({ email: "joueur@example.com" });
     const ecrit = jetons.create.mock.calls[0][0].data;

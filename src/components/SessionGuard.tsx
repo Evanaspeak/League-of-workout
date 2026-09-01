@@ -1,12 +1,15 @@
 "use client";
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { signOut } from "next-auth/react";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { useLocale } from "@/lib/i18n/LocaleContext";
+import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { ecrireSession, lire, lireSession } from "@/lib/stockage";
 
 export function SessionGuard() {
-  const path = usePathname();
+  const path = useChemin();
+  const { locale } = useLocale();
 
   useEffect(() => {
     // La liste des pages publiques est commune au rail, à la visite, au
@@ -48,9 +51,11 @@ export function SessionGuard() {
 
     // sessionStorage vide = le navigateur a été fermé et rouvert → déconnexion
     signOut({ redirect: false }).then(() => {
-      window.location.href = "/login";
+      // Dans la langue qu'on était en train de lire : se faire déconnecter ne
+      // doit pas changer la langue au passage.
+      window.location.href = avecLocale("/login", locale);
     });
-  }, [path]);
+  }, [path, locale]);
 
   return null;
 }

@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { prisma } from "./prisma";
+import { toLocale } from "@/lib/i18n/langues";
 
 /**
  * Services de notification légitimes.
@@ -94,10 +95,24 @@ export async function notifier(userId: string, n: Notification): Promise<number>
   const abonnements = await prisma.pushSubscription.findMany({ where: { userId } });
   if (abonnements.length === 0) return 0;
 
+  /**
+   * L'adresse porte la langue du compte.
+   *
+   * Sans elle, le site la rattrape et la renvoie vers la langue NÉGOCIÉE par
+   * le navigateur qui ouvre le lien. Or la notification, elle, est déjà écrite
+   * dans la langue du compte : on annoncerait donc une chose en japonais pour
+   * ouvrir un écran en anglais. La lecture ne coûte qu'une colonne, et elle
+   * n'a lieu que s'il y a quelqu'un à prévenir.
+   */
+  const compte = await prisma.user.findUnique({
+    where: { id: userId }, select: { langue: true },
+  }).catch(() => null);
+  const langue = toLocale(compte?.langue);
+
   const charge = JSON.stringify({
     titre: n.titre,
     corps: n.corps,
-    url: n.url ?? "/dashboard",
+    url: n.url ?? `/${langue}/dashboard`,
     tag: n.tag ?? "wow",
   });
 

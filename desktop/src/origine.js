@@ -60,4 +60,35 @@ function dansLaSection(chemin, section) {
   return chemin === section || chemin.startsWith(`${section}/`);
 }
 
-module.exports = { memeOrigine, cheminDe, dansLaSection, origineDe };
+/**
+ * Les six langues du site, telles qu'elles paraissent en tête d'adresse.
+ *
+ * La liste est recopiée depuis `src/lib/i18n/langues.ts`, et c'est le seul
+ * endroit du projet où une règle est volontairement écrite deux fois : la
+ * coquille Electron est construite à part, sans le paquet du site, et rien ne
+ * peut lui passer une constante. `desktop/src/origine.test.ts` la compare au
+ * fichier du site pour que la divergence se voie le jour où une septième
+ * langue s'ajoute.
+ */
+const LANGUES = ["fr", "en", "es", "de", "zh", "ja"];
+
+/**
+ * Le chemin sans son préfixe de langue.
+ *
+ * Depuis que la langue est dans l'adresse, la fenêtre d'authentification
+ * navigue vers `/fr/login` et non `/login`. Le contrôle qui décide « la
+ * connexion est finie » demandait « ce n'est plus /login ? » : sans ce
+ * retrait, il aurait répondu oui à la toute première page, refermé la fenêtre
+ * avant qu'on ait tapé quoi que ce soit, et cherché un cookie qui n'existait
+ * pas encore.
+ */
+function sansLangue(chemin) {
+  const segments = String(chemin).split("/");
+  if (LANGUES.includes(segments[1])) {
+    const reste = "/" + segments.slice(2).join("/");
+    return reste === "/" ? "/" : reste.replace(/\/$/, "");
+  }
+  return chemin;
+}
+
+module.exports = { memeOrigine, cheminDe, dansLaSection, origineDe, sansLangue, LANGUES };

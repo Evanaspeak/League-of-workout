@@ -1,6 +1,7 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
 import { passerIntro } from "./intro";
+import { sansLangue } from "./chemin";
 
 /**
  * Les trois parcours qui font l'application : entrer, enregistrer une défaite,
@@ -118,7 +119,7 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
     await page.getByPlaceholder(/ton code|your code/i).fill(code);
     await Promise.all([
-      page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+      page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
       page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
     ]);
 

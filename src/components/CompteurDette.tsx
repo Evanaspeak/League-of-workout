@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { jourLocal } from "@/lib/serie";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
@@ -45,7 +45,7 @@ function duree(secondes: number): string {
  * quand on descend : c'est le point de la chose, ne pas oublier ce qu'on doit.
  */
 export function CompteurDette() {
-  const pathname = usePathname();
+  const pathname = useChemin();
   const t = useT(exercicesDict);
   const minuscule = useMinuscule();
   const nomsExo: Record<ExerciceId, string> = nomsExercices(t);

@@ -20,9 +20,11 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
+import { enLangue, langueDemandee } from "./langue.mjs";
 
 const BASE = process.argv[2] ?? "http://127.0.0.1:3311";
-const CHEMIN = process.argv[3] ?? "/";
+const LANGUE = langueDemandee(process.argv);
+const CHEMIN = enLangue(LANGUE, process.argv[3] ?? "/");
 const CHROMIUM = "/opt/pw-browsers/chromium";
 
 /**

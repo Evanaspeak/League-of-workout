@@ -10,6 +10,7 @@
  */
 import { readFileSync, existsSync } from "node:fs";
 import { chromium } from "playwright";
+import { enLangue } from "./langue.mjs";
 
 const BASE = process.argv[2] ?? "http://127.0.0.1:3311";
 const CHROMIUM = "/opt/pw-browsers/chromium";
@@ -186,7 +187,7 @@ for (const chemin of aVisiter) {
     }]);
   }
   const page = await ctx.newPage();
-  await page.addInitScript(([__langue, __compte]) => {
+  await page.addInitScript(([__compte]) => {
     try {
       sessionStorage.setItem("splash", "1");
       // La modale d'accueil et la visite recouvrent la page : on mesure ce
@@ -202,12 +203,20 @@ for (const chemin of aVisiter) {
         localStorage.setItem(c, "1");
         if (__compte) localStorage.setItem(`${c}:${__compte}`, "1");
       }
-      localStorage.setItem("low_locale", __langue);
     } catch {}
-  }, [langue, COMPTE]);
-  const reponse = await page.goto(BASE + chemin, { waitUntil: "networkidle" }).catch(() => null);
+  }, [COMPTE]);
+  /**
+   * La langue se demande par l'ADRESSE.
+   *
+   * Elle se posait dans le stockage du navigateur — et le ménage des clés
+   * `low_` qui précède l'emportait, ce qui a déjà fait tourner six passes en
+   * français en annonçant six langues. Le problème ne se pose plus : la langue
+   * est dans l'adresse, et le serveur rend la bonne version du premier coup.
+   */
+  const adresse = enLangue(langue, chemin);
+  const reponse = await page.goto(BASE + adresse, { waitUntil: "networkidle" }).catch(() => null);
   if (!reponse || !reponse.ok()) {
-    console.log(`\n${chemin} — injoignable (${reponse ? reponse.status() : "erreur"})`);
+    console.log(`\n${adresse} — injoignable (${reponse ? reponse.status() : "erreur"})`);
     nonMesurees += 1;
     await ctx.close();
     continue;
@@ -223,7 +232,7 @@ for (const chemin of aVisiter) {
    */
   const normaliser = (c) => c.replace(/\/+$/, "") || "/";
   const arrivee = normaliser(new URL(page.url()).pathname);
-  if (arrivee !== normaliser(chemin)) {
+  if (arrivee !== normaliser(adresse)) {
     console.log(`\n═══ ${langue} · ${chemin}`);
     console.log(`  NON MESURÉ : la navigation a abouti sur ${arrivee}`);
     nonMesurees += 1;
@@ -357,9 +366,12 @@ let horsLangue = 0;
         domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
       }]);
     }
-    await page.goto(`${BASE}${chemin}`, { waitUntil: "networkidle" }).catch(() => {});
+    // Ces deux passes-ci ne dépendent pas de la langue du texte : une seule
+    // suffit, en français, qui est la langue écrite d'abord.
+    const adresse = enLangue("fr", chemin);
+    await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
-    if (arrivee !== (chemin.replace(/\/+$/, "") || "/")) continue;
+    if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
 
     const bougent = await page.evaluate(() => {
       const out = [];
@@ -406,9 +418,12 @@ let horsLangue = 0;
         domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
       }]);
     }
-    await page.goto(`${BASE}${chemin}`, { waitUntil: "networkidle" }).catch(() => {});
+    // Ces deux passes-ci ne dépendent pas de la langue du texte : une seule
+    // suffit, en français, qui est la langue écrite d'abord.
+    const adresse = enLangue("fr", chemin);
+    await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
-    if (arrivee !== (chemin.replace(/\/+$/, "") || "/")) continue;
+    if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
 
     const muettes = await page.evaluate(() => {
       const CIBLES = ["rgb(47, 217, 138)", "rgb(255, 90, 71)"];

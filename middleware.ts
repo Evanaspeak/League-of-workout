@@ -2,6 +2,9 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { estCheminPublic } from "@/lib/routesPubliques";
+import {
+  avecLocale, echappeAuPrefixe, localeDuChemin, negocierLocale, sansLocale,
+} from "@/lib/i18n/cheminLocalise";
 
 // On utilise le wrapper Auth.js pour lire la session (il sait déchiffrer le
 // cookie JWT v5 — contrairement à getToken qui échouait et renvoyait tout le
@@ -28,17 +31,55 @@ export default auth((req) => {
 
   const { pathname } = req.nextUrl;
 
+  /**
+   * La langue de l'adresse, d'abord.
+   *
+   * Ce qui échappe au préfixe passe tel quel : les routes d'API, l'adresse de
+   * diffusion et les fichiers servis directement. Les préfixer casserait les
+   * rappels d'Auth.js, l'application de bureau et les liens de diffusion déjà
+   * collés chez les gens, pour un gain nul — personne ne les lit.
+   */
+  if (!echappeAuPrefixe(pathname)) {
+    const portee = localeDuChemin(pathname);
+    if (!portee) {
+      // Adresse sans langue : on redirige vers celle qu'on a de meilleures
+      // raisons de croire bonne. En 308 et non en 307 : c'est permanent, et un
+      // moteur de recherche doit reporter le crédit de l'ancienne adresse sur
+      // la nouvelle plutôt que de garder les deux.
+      const langue = negocierLocale(
+        req.cookies.get("low_locale")?.value,
+        req.headers.get("accept-language"),
+      );
+      const url = req.nextUrl.clone();
+      url.pathname = avecLocale(pathname, langue);
+      return NextResponse.redirect(url, 308);
+    }
+  }
+
+  /**
+   * Le reste des règles ne connaît QUE le chemin sans langue.
+   *
+   * `estCheminPublic` a sa liste et sa comparaison par segments ; lui faire
+   * connaître le préfixe reviendrait à écrire la règle deux fois, et c'est
+   * précisément la divergence entre deux listes qui avait laissé quatre routes
+   * partir en 307 vers /login pendant des semaines.
+   */
+  const chemin = sansLocale(pathname);
+
   // Routes publiques : accès libre. La liste et la règle qui la lit vivent
   // dans `src/lib/routesPubliques.ts`, pour que le test de la porte éprouve
   // la règle qui tourne plutôt qu'une copie de son côté.
-  if (estCheminPublic(pathname)) {
+  if (estCheminPublic(chemin)) {
     return NextResponse.next();
   }
 
   // Routes protégées : req.auth est rempli par Auth.js si la session est valide.
   if (!req.auth) {
     const url = req.nextUrl.clone();
-    url.pathname = "/login";
+    // La connexion garde la langue de la page qu'on voulait ouvrir : y arriver
+    // en anglais parce qu'on a été redirigé serait un changement de langue que
+    // personne n'a demandé.
+    url.pathname = avecLocale("/login", localeDuChemin(pathname) ?? "en");
     url.search = "";
     return NextResponse.redirect(url);
   }
