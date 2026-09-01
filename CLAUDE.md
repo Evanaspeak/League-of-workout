@@ -164,6 +164,10 @@ contenu dépasse : la première version signalait les libellés coupés par une
 ellipse, qui débordent par construction et ne se font jamais défiler.
 - Vue "Parties" : 20 dernières Riot + quick-add + ARAM du chaos manuel
 - Vue "Pompes" : tableau filtrable/triable avec édition de date inline (✎ → datetime-local)
+- **Correction du résultat** : le même crayon à côté de la victoire ou de la
+  défaite. La route rejoue le barème et porte l'écart au compteur de dette ;
+  elle refuse les séances au temps et les battle royale, dont le résultat se
+  déduit du classement
 - Formulaire ajout manuel :
   - **lastRole** et **lastGainageSec** persistés en localStorage
   - **ChampionInput** autocomplete avec validation (rejette hors liste)
@@ -505,7 +509,13 @@ tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 node scripts/accessibilite.mjs   # neuf pages, six langues, règles WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
+node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
 ```
+
+`charge.mjs` ne tape JAMAIS sur la production : une montée en charge y
+écrirait des comptes de test dans la vraie base, consommerait le quota, et le
+but même de l'exercice est de trouver où ça tombe. Il se lance sur le serveur
+local, et les plafonds de production se calculent à partir de la structure.
 
 ### Leurs pièges, tous rencontrés
 - **Mesurer la mauvaise page.** Avec un cookie de session périmé, les trois
@@ -649,6 +659,89 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Une victoire enregistrée en défaite ne se reprenait qu'en la supprimant
+La détection locale a inventé l'issue manquante pendant des semaines, et une
+victoire sur trois entrait du mauvais côté. Le défaut est corrigé depuis, mais
+les parties, elles, sont toujours là, avec la dette qu'elles ont créée. On
+avait écrit à l'époque que les reprendre « demande de décider ce qu'on fait de
+la dette déjà payée dessus, et ça ne se décide pas seul ». La décision est
+prise : on corrige depuis l'historique, partie par partie.
+
+**Corriger un résultat n'est pas modifier un champ, c'est refaire le calcul.**
+Réécrire la lettre seule laisserait le coût de la défaite affiché sous une
+victoire, c'est-à-dire une dette qu'on ne doit plus, affichée par l'écran qui
+vient de dire le contraire. `PATCH /api/games/[id]` rejoue donc le barème avec
+tout ce que la partie a gardé d'elle-même, et porte au compteur l'ÉCART entre
+les deux coûts.
+
+Trois décisions, chacune avec sa raison :
+
+- **Le niveau est relu sur la partie, pas sur le compte d'aujourd'hui.**
+  Quelqu'un qui a refait son test de force entre-temps ne doit pas voir une
+  vieille partie changer de coût pour une raison sans rapport avec ce qu'il
+  vient de corriger. Même chose pour le nombre de parties jouées avec ce
+  champion, figé à l'enregistrement.
+- **Les exercices ne se rouvrent pas.** Ils ont été figés à l'enregistrement
+  pour que l'historique reste fidèle même si la sélection change plus tard.
+  Seul le total qu'on répartit entre eux bouge.
+- **Deux gestes pour corriger**, pas une bascule au clic : le résultat s'ouvre,
+  puis se choisit. Une frappe malheureuse sur la ligne d'à côté créerait sinon
+  une dette qu'on ne doit pas, ce qui est exactement le défaut qu'on répare.
+
+Refusé, et pas proposé : les séances au temps, qui n'ont pas de résultat, et
+les battle royale, dont le résultat se déduit du classement. La règle est écrite
+des deux côtés — la route refuse, l'écran ne propose pas — parce qu'un geste
+offert qui sera repoussé est pire que pas de geste du tout.
+
+**Et une règle qui était écrite deux fois l'est maintenant une seule.**
+L'incrément de dette et la pose de sa date de début vivaient dans `/api/games` ;
+la correction en avait besoin à l'identique. `ajouterALaDette` rejoint
+`retirerDeLaDette` dans `src/lib/dette.ts`. C'est le cinquième cas de règle
+dupliquée trouvé sur ce projet, et le précédent portait précisément sur cette
+date de début.
+
+Six sabotages, six échecs : le résultat réécrit sans recalcul, la correction
+déjà faite qui repasse quand même, le battle royale accepté, la séance au temps
+acceptée, le niveau relu sur le gainage plutôt que sur la partie, et la dette
+réglée en valeur absolue au lieu de l'écart.
+
+Au navigateur, deux tests : la correction change l'écran ET la base, et une
+correction refusée ne change ni l'un ni l'autre. Sans ce second contrôle, un
+écran qui se contente de réécrire la lettre chez lui passerait.
+
+**Un défaut d'étiquette trouvé en passant** : le bouton qui renonce à modifier
+une date s'annonçait « Voir le détail du calcul ». Le libellé lu à voix haute
+n'était pas celui du bouton.
+
+### La dette ne se replie plus
+Sous 1180 px, le rail se replie derrière un bouton, et la pastille de dette
+partait avec. Voir ce qu'on doit demandait donc une touche de plus — sur la
+moitié du produit qui se consulte au téléphone, c'est-à-dire là où la question
+se pose le plus. Le point rouge posé sur le bouton ne remplaçait pas le
+chiffre : il disait qu'il y avait quelque chose, pas combien.
+
+C'était constaté depuis le passage du parcours complet sur un écran de
+téléphone, et laissé en attente parce que déplacer ce bouton est un arbitrage.
+Il est tranché.
+
+Le bouton ne replie plus que les ACTIONS de la page. La dette vit à côté, hors
+du contenu repliable. Elle ne s'affiche toujours que s'il y a quelque chose à
+devoir : ce n'est pas un bandeau permanent, c'est un rappel qui disparaît quand
+il n'a rien à dire.
+
+Trois choses sont parties avec, et c'est le bon signe : le point rouge, la
+bordure d'alerte du bouton, et le rapport d'état que la pastille faisait
+remonter au rail. Un bouton qui n'ouvre plus que des actions n'a pas à savoir
+ce qu'on doit. `noUnusedLocals` a attrapé la variable devenue inutile, et
+`codeMort.test.ts` la règle CSS orpheline — deux gardes qui ont fait leur
+travail sur un remaniement de quinze lignes.
+
+Le test qui avait mis le défaut au jour est celui qui le garde : l'étape 5 du
+parcours sur téléphone dépliait le rail avant de chercher la pastille. Elle
+exige maintenant `toBeVisible` sans rien déplier. C'est le contrôle qui mord :
+l'élément était déjà DANS la page avant la correction, simplement caché, et le
+chercher ne prouvait rien.
 
 ### Le placement de la pastille, la seule chose qui puisse la rendre invisible
 `overlay.js` fait six cents lignes et n'avait aucun test. La plus grande partie
@@ -908,6 +1001,90 @@ des mots de passe et lit tous les comptes.
 contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
+
+### Combien de monde ça tient, mesuré plutôt que supposé
+`scripts/charge.mjs` monte la concurrence par paliers et s'arrête au premier
+qui casse. Sans dépendance : un banc d'essai qui demande d'installer quelque
+chose ne se relance pas six mois plus tard. Il vérifie aussi où il atterrit,
+comme les trois autres scripts de mesure — avec un cookie périmé, on
+chronométrerait l'écran de connexion.
+
+**Mesuré en local**, quatre cœurs, PostgreSQL sur la même machine :
+
+| simultanés | req/s | médiane | p95 | échecs |
+|---|---|---|---|---|
+| 20 | 142 | 138 ms | 170 ms | 0 |
+| 80 | 137 | 585 ms | 654 ms | 0 |
+| 200 | 144 | 1421 ms | 1625 ms | 0 |
+| 400 | 142 | 2565 ms | 5945 ms | 0 |
+
+Le débit plafonne à **~144 requêtes par seconde** et n'en bouge plus : c'est la
+signature d'un serveur saturé en processeur. Au-delà, la concurrence n'ajoute
+que de l'attente. **Aucune erreur, à aucun palier** : ça met en file, ça ne
+refuse pas. C'est la bonne façon de se dégrader, et c'est plus important que le
+chiffre.
+
+**Ce qui se transporte en production, et ce qui ne se transporte pas.** Le mur
+processeur mesuré ici n'existe pas sur Vercel, qui répartit horizontalement.
+Ce qui se transporte, c'est le coût par page :
+
+- **neuf appels d'API pour un chargement du tableau de bord**, soit environ
+  **vingt-neuf requêtes SQL** — chacune étant, en production, un appel HTTPS
+  indépendant vers Neon, puisque le client passe par `PrismaNeonHttp` et non
+  par un pool TCP. Le mur classique du « serverless épuise les connexions »
+  n'existe donc pas ici ;
+- quatre de ces appels sont les mêmes sur toutes les pages : `/api/user`,
+  `/api/dette`, `/api/exercices/ratios`, `/api/consentement` ;
+- `/api/settings` coûte à lui seul neuf requêtes, et le tableau de bord
+  l'appelle.
+
+**Le vrai plafond n'est aucun des deux : c'est la clé Riot.** Il est déjà
+chiffré dans `riotBudget.ts`, et il est très en dessous de tout le reste. Une
+clé de développement autorise cent requêtes par deux minutes, le budget en
+réserve quatre-vingt-dix, et le mode session en coûte deux par joueur toutes
+les deux minutes : **quarante-cinq joueurs simultanés**. Une seule ouverture de
+l'historique en coûte vingt et une, soit autant que dix joueurs qui jouent. La
+réponse chiffrée à « est-ce que ça tient à cent » reste donc : pas avec cette
+clé, et le mur est de très loin celui-là.
+
+À refaire le jour où la base ne contient plus quatre comptes et soixante-quinze
+parties : les requêtes par compte sont indexées (`Game.userId`,
+`Paiement.userId, jour`), donc elles ne devraient pas dériver, mais une mesure
+sur une base minuscule ne le prouve pas.
+
+### Le plafond de cent est levé, et la liste d'attente supprimée avec lui
+Décision du propriétaire du produit, prise sur un fait : une semaine entière
+sans une inscription, sans une partie, sans une tentative de connexion. Le
+plafond existait pour tenir le rythme des premiers jours ; il a surtout tenu le
+produit fermé pendant qu'il n'y avait personne dedans. Une porte qu'on garde
+contre une foule absente ne garde rien.
+
+Il vivait en **deux exemplaires**, `beta-access` et `auth/register`, chacun
+avec sa constante `BETA_LIMIT = 100`. C'est le quatrième cas de règle écrite
+deux fois trouvé sur ce projet. Ici les deux copies étaient d'accord, ce qui
+est la seule raison pour laquelle personne n'a rien vu.
+
+`betaRank` reste : il ne garde plus la porte, il dit dans quel ordre les
+comptes sont arrivés. La porte par mot de passe reste sur invitation
+(`porteMotDePasse`) : c'est un autre mécanisme, et il n'a pas bougé.
+
+**`/waitlist` est supprimée.** Sans plafond, aucun chemin ne peut plus y mener,
+et `pagesOrphelines.test.ts` refuse une page vers laquelle rien ne navigue.
+Elle part donc en entier : la page, sa mise en page, son dictionnaire dans les
+six langues, son entrée dans les chemins publics, dans la navigation, et le
+message d'erreur traduit qui l'accompagnait. La leçon qu'elle avait laissée
+reste écrite dans `robots.ts`, parce qu'elle vaut pour la prochaine page qu'on
+voudra cacher : interdire l'exploration n'empêche pas l'indexation.
+
+**Et le test qui a servi à la lever en a trouvé un autre.** En remplaçant
+« refuse la cent-unième personne » par « la laisse entrer », l'inscription a
+rendu 500. Rien à voir avec le plafond : la doublure de base n'a pas de
+délégué `goal`, la route crée un objectif par défaut après le compte, et le
+`.catch()` posé sur la promesse ne rattrape pas une erreur levée AVANT elle.
+Aucun test de ce fichier ne vérifiait le code d'une inscription réussie : ils
+regardaient tous ce qui avait été écrit, ce qui reste vrai même quand la route
+tombe juste après. Un test qui n'affirme rien sur le résultat laisse passer
+l'échec du résultat.
 
 ### Le recensement des `catch` silencieux, refait une dernière fois
 Passage final sur tous les `catch {}` et `.catch(() => {})` du site et de

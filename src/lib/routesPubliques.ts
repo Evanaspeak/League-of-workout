@@ -20,7 +20,6 @@ export const PREFIXES_PUBLICS = [
   // mais une coïncidence de nommage.
   "/api/beta-access",
   "/login",
-  "/waitlist",
   "/cgu",
   "/confidentialite",
   "/telechargement",

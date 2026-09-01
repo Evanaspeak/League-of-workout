@@ -65,13 +65,6 @@ const ERROR_MAP: Record<string, Traductions> = {
     zh: "这个邮箱已经注册过账号了",
     ja: "このメールアドレスのアカウントはすでにあります",
   },
-  "Beta complète : les 100 places sont prises.": {
-    en: "Beta full: all 100 spots are taken.",
-    es: "Beta completa: las 100 plazas están ocupadas.",
-    de: "Beta voll: alle 100 Plätze sind vergeben.",
-    zh: "内测已满：100 个名额都占完了。",
-    ja: "ベータは満員です。100 枠すべて埋まりました。",
-  },
   "Utilisateur introuvable": {
     en: "User not found", es: "Usuario no encontrado", de: "Nutzer nicht gefunden",
     zh: "找不到这个用户", ja: "ユーザーが見つかりません",
@@ -235,6 +228,17 @@ const ERROR_MAP: Record<string, Traductions> = {
   "Résultat invalide": {
     en: "Invalid result", es: "Resultado no válido", de: "Ungültiges Ergebnis",
     zh: "结果不正确", ja: "結果が正しくありません",
+  },
+  "Cette activité n'a pas de résultat": {
+    en: "This activity has no result", es: "Esta actividad no tiene resultado",
+    de: "Diese Aktivität hat kein Ergebnis",
+    zh: "该活动没有胜负", ja: "このアクティビティに勝敗はありません",
+  },
+  "Le résultat se déduit du classement": {
+    en: "The result comes from your placement",
+    es: "El resultado se deduce de tu posición",
+    de: "Das Ergebnis ergibt sich aus der Platzierung",
+    zh: "结果由名次决定", ja: "結果は順位から決まります",
   },
   "Durée invalide": {
     en: "Invalid duration", es: "Duración no válida", de: "Ungültige Dauer",

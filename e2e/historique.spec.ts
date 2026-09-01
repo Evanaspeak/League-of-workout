@@ -286,3 +286,63 @@ test("une suppression refusée ne fait pas disparaître la partie", async ({ bro
   expect(await page.locator("tbody tr").count()).toBe(avant);
   await ctx.close();
 });
+
+/**
+ * Corriger le résultat d'une partie.
+ *
+ * La détection locale a enregistré des victoires en défaites tant qu'elle
+ * inventait l'issue manquante. Ces parties existent, elles portent une dette
+ * qui n'était pas due, et la seule façon de la reprendre était de supprimer la
+ * partie — c'est-à-dire de la perdre pour corriger une lettre.
+ *
+ * Les tests de route disent ce que le barème rend. Ils ne disent rien du
+ * branchement : que le crayon ouvre le choix, que le choix appelle la route,
+ * et que l'écran ne bouge que si la base a bougé. Un branchement se vérifie en
+ * marchant dessus.
+ */
+test("corriger une défaite en victoire rejoue le barème", async ({ browser }) => {
+  const { ctx, page } = await historique(browser, 1280);
+
+  const avant = await (await page.request.get("/api/games")).json();
+  const kog = avant.find((g: { champion: string }) => g.champion === "Kog'Maw");
+  expect(kog.result).toBe("D");
+
+  const ligne = page.locator("tbody tr").filter({ hasText: "Kog'Maw" }).first();
+  await ligne.getByRole("button", { name: /corriger le résultat|correct the result/i }).click();
+  await ligne.getByRole("button", { name: /^victoire$|^victory$/i }).click();
+
+  // L'écran le dit…
+  await expect(ligne.getByText(/^victoire$|^victory$/i)).toBeVisible({ timeout: 10_000 });
+
+  // …et la base aussi. Sans ce second contrôle, un écran qui se contente de
+  // réécrire la lettre chez lui passerait le test.
+  const apres = await (await page.request.get("/api/games")).json();
+  const corrigee = apres.find((g: { id: string }) => g.id === kog.id);
+  expect(corrigee.result).toBe("V");
+  // Le coût a suivi : une victoire ne se paie pas comme une défaite. Un champ
+  // réécrit sans recalcul laisserait le même nombre.
+  expect(corrigee.pompesCalculees).toBeLessThan(kog.pompesCalculees);
+  await ctx.close();
+});
+
+test("une correction refusée ne change rien à l'écran", async ({ browser }) => {
+  const { ctx, page } = await historique(browser, 1280);
+
+  await page.route("**/api/games/*", async (route) => {
+    if (route.request().method() === "PATCH") {
+      return route.fulfill({ status: 500, contentType: "application/json", body: "{}" });
+    }
+    await route.continue();
+  });
+
+  const ligne = page.locator("tbody tr").filter({ hasText: "Maître Yi" }).first();
+  await ligne.getByRole("button", { name: /corriger le résultat|correct the result/i }).click();
+  await ligne.getByRole("button", { name: /^victoire$|^victory$/i }).click();
+
+  await expect(page.getByRole("alert").filter({ hasText: /n.a pas abouti|did not go through/i }))
+    .toBeVisible({ timeout: 10_000 });
+  // La ligne reste une défaite : c'est la base qui tranche, pas l'écran.
+  const apres = await (await page.request.get("/api/games")).json();
+  expect(apres.find((g: { champion: string }) => g.champion === "Maître Yi").result).toBe("D");
+  await ctx.close();
+});

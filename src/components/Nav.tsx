@@ -10,7 +10,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Wordmark } from "./Wordmark";
 import { chargerCompte } from "@/lib/useIdCompte";
 
-const PUBLIC_PATHS = ["/login", "/waitlist", "/"];
+const PUBLIC_PATHS = ["/login", "/"];
 // Ces pages gèrent leur propre chrome (nav intégrée) : pas de double barre.
 const SELF_CHROMED = ["/", "/beta", "/recuperation"];
 

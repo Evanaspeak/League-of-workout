@@ -4,7 +4,7 @@
  * mise en page n'y réserve donc aucune marge pour lui.
  */
 export const PAGES_PUBLIQUES = [
-  "/", "/beta", "/login", "/waitlist", "/cgu", "/confidentialite",
+  "/", "/beta", "/login", "/cgu", "/confidentialite",
   "/telechargement", "/recuperation", "/connexion-app", "/calculateur", "/obs",
 ];
 

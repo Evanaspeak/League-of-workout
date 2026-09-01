@@ -78,10 +78,25 @@ describe("POST /api/beta-access", () => {
     expect(user.create).not.toHaveBeenCalled();
   });
 
-  it("refuse quand les cent places sont prises", async () => {
+  /**
+   * Le plafond de cent est levé.
+   *
+   * Il existait pour tenir le rythme des premiers jours. En pratique il a
+   * surtout tenu le produit fermé pendant qu'il n'y avait personne dedans :
+   * une semaine entière sans une inscription, sans une partie, sans une
+   * tentative de connexion. Une porte qu'on garde contre une foule qui n'est
+   * pas là ne garde rien.
+   */
+  it("laisse entrer la cent-unième personne", async () => {
     user.count.mockResolvedValue(100);
-    expect((await acceder({ pseudo: "Joueur" })).status).toBe(403);
-    expect(user.create).not.toHaveBeenCalled();
+    expect((await acceder({ pseudo: "Joueur" })).status).toBe(200);
+    expect(user.create).toHaveBeenCalled();
+  });
+
+  it("garde le rang d'arrivée, qui ne garde plus la porte", async () => {
+    user.count.mockResolvedValue(423);
+    await acceder({ pseudo: "Joueur" });
+    expect(user.create.mock.calls[0][0].data.betaRank).toBe(424);
   });
 
   it("n'écrit que l'empreinte du code tiré", async () => {

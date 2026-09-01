@@ -10,7 +10,7 @@ import { history } from "@/lib/i18n/dictionaries/history";
 import {
   formaterCompact, parseRepartition, toExerciceId, ventiler, type ExerciceId,
 } from "@/lib/exercices";
-import { JEU_DEFAUT, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
+import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 
@@ -61,10 +61,79 @@ function maintenantLocal(): string {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 }
 
-function ResultatCell({ result, t }: { result: string; t: { victory: string; defeat: string; sessionLibelle: string } }) {
-  if (result === "V") return <span className="win-text">{t.victory}</span>;
-  if (result === "D") return <span className="loss-text">{t.defeat}</span>;
-  return <span style={{ color: "var(--steel)", fontWeight: 500 }}>{t.sessionLibelle}</span>;
+type TexteResultat = {
+  victory: string; defeat: string; sessionLibelle: string;
+  editResultTitle: string; editResultHint: string; cancelTitle: string;
+};
+
+/**
+ * Le résultat d'une activité, et sa correction.
+ *
+ * La correction vit DANS ce composant, pas à ses trois points d'appel : les
+ * cartes l'affichent une fois, le tableau deux fois selon le jeu de colonnes.
+ * Écrite trois fois, elle finirait par ne valoir que pour l'une d'elles —
+ * c'est déjà arrivé sur cette page, où le même défaut existait des deux
+ * côtés.
+ *
+ * Corriger demande deux gestes : ouvrir, puis choisir. Un simple bascule au
+ * clic ferait d'une frappe malheureuse une dette qu'on ne doit pas, sur la
+ * ligne d'à côté.
+ */
+function ResultatCell({ result, t, correction }: {
+  result: string;
+  t: TexteResultat;
+  correction?: {
+    ouvert: boolean;
+    enCours: boolean;
+    ouvrir: () => void;
+    annuler: () => void;
+    choisir: (r: "V" | "D") => void;
+  };
+}) {
+  const libelle = result === "V"
+    ? <span className="win-text">{t.victory}</span>
+    : result === "D"
+    ? <span className="loss-text">{t.defeat}</span>
+    : <span style={{ color: "var(--steel)", fontWeight: 500 }}>{t.sessionLibelle}</span>;
+
+  if (!correction) return libelle;
+
+  if (!correction.ouvert) {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        {libelle}
+        <button
+          onClick={correction.ouvrir}
+          title={t.editResultTitle}
+          aria-label={t.editResultTitle}
+          className="commande-resultat"
+          style={{ color: "var(--faint)" }}
+        ><Icone nom="crayon" taille={13} /></button>
+      </span>
+    );
+  }
+
+  const choix = (valeur: "V" | "D", texte: string, classe: string) => (
+    <button
+      onClick={() => (valeur === result ? correction.annuler() : correction.choisir(valeur))}
+      disabled={correction.enCours}
+      aria-pressed={valeur === result}
+      className={`choix-resultat ${classe}`}
+    >{texte}</button>
+  );
+
+  return (
+    <span role="group" aria-label={t.editResultHint}
+      style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+      {choix("V", t.victory, "win-text")}
+      {choix("D", t.defeat, "loss-text")}
+      <button onClick={correction.annuler} title={t.cancelTitle} aria-label={t.cancelTitle}
+        disabled={correction.enCours}
+        className="commande-resultat"
+        style={{ color: "#e05555" }}
+      ><Icone nom="croix" taille={14} /></button>
+    </span>
+  );
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -117,6 +186,10 @@ export default function HistoryPage() {
   const [erreurAction, setErreurAction] = useState(false);
   const [editDateVal, setEditDateVal] = useState("");
 
+  // ── Correction du résultat ──
+  const [editingResultId, setEditingResultId] = useState<string | null>(null);
+  const [correctionEnCours, setCorrectionEnCours] = useState<string | null>(null);
+
   // ─── Chargement initial (games + parties Riot) ───────────────────────────
   useEffect(() => {
     fetch("/api/games")
@@ -147,6 +220,42 @@ export default function HistoryPage() {
     }
   };
 
+  // ─── Corriger le résultat d'une partie ───────────────────────────────────
+  /**
+   * Le serveur rejoue le barème et rend le nouveau coût : on ne le recalcule
+   * pas de notre côté. Une seconde implémentation du barème dans le navigateur
+   * finirait par diverger de celle qui fait foi, et c'est celle-ci qui décide
+   * de la dette.
+   *
+   * La ligne ne change à l'écran que si elle a changé en base. Annoncer une
+   * correction qui n'a pas eu lieu est le défaut qu'on a corrigé sur la
+   * suppression et sur la date : la partie revenait au rechargement suivant
+   * sans que rien ne l'explique.
+   */
+  const handleEditResult = async (id: string, result: "V" | "D") => {
+    setCorrectionEnCours(id);
+    setErreurAction(false);
+    try {
+      const res = await fetch(`/api/games/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ result }),
+      });
+      if (!res.ok) { setErreurAction(true); return; }
+      const data = await res.json().catch(() => null);
+      setGames((prev) => prev.map((g) => g.id === id
+        ? { ...g, result, pompesCalculees: data?.pompesCalculees ?? g.pompesCalculees }
+        : g));
+      setEditingResultId(null);
+      // Le coût de la partie a bougé, donc la dette : la pastille doit suivre.
+      window.dispatchEvent(new Event("wow-dette-changee"));
+    } catch {
+      setErreurAction(true);
+    } finally {
+      setCorrectionEnCours(null);
+    }
+  };
+
   // ─── Delete pompe entry ──────────────────────────────────────────────────
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -166,6 +275,15 @@ export default function HistoryPage() {
       setDeletingId(null);
     }
   };
+
+  /** Ce que `ResultatCell` a besoin de savoir pour proposer la correction. */
+  const correctionDe = (id: string, corrigible: boolean) => corrigible ? {
+    ouvert: editingResultId === id,
+    enCours: correctionEnCours === id,
+    ouvrir: () => setEditingResultId(id),
+    annuler: () => setEditingResultId(null),
+    choisir: (r: "V" | "D") => handleEditResult(id, r),
+  } : undefined;
 
   // ─── Filtered pompe games ─────────────────────────────────────────────────
   // ── Multi-jeu : périmètre consulté et jeu de colonnes qui en découle ──
@@ -250,6 +368,11 @@ export default function HistoryPage() {
       parts: Object.entries(ventilationDe(g))
         .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 })),
       type: typeDeLaLigne(g),
+      // Une séance au temps n'a pas de résultat, et un battle royale déduit le
+      // sien du classement : la route refuse les deux. On ne propose donc pas
+      // un geste qui sera repoussé — la règle est la même des deux côtés.
+      corrigible: typeDeLaLigne(g) === "parties"
+        && !capacitesDuJeu(nomDuJeu(g), g.typeJeu).br,
     }));
   })();
 
@@ -400,7 +523,7 @@ export default function HistoryPage() {
                     largeur, que le serveur ne connaît pas, et la première
                     peinture montrerait alors la mauvaise vue. */}
                 <div className="historique-cartes">
-                  {lignes.map(({ g, cumul, parts, type }) => {
+                  {lignes.map(({ g, cumul, parts, type, corrigible }) => {
                     const depliee = ligneDepliee === g.id;
                     return (
                       <article key={g.id} className="carte-activite lol-panel">
@@ -411,7 +534,7 @@ export default function HistoryPage() {
                               <span>{g.champion ?? nomDuJeu(g)}</span>
                               {type === "temps"
                                 ? <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span>
-                                : <ResultatCell result={g.result} t={t} />}
+                                : <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />}
                             </div>
 
                             {editingDateId === g.id ? (
@@ -424,7 +547,7 @@ export default function HistoryPage() {
                                   onChange={(e) => setEditDateVal(e.target.value)}
                                 />
                                 <button onClick={() => handleEditDate(g.id)} aria-label={t.editDateTitle} style={{ color: "#2FD98A" }}><Icone nom="coche" taille={15} /></button>
-                                <button onClick={() => setEditingDateId(null)} aria-label={t.detailToggleTitle} style={{ color: "#e05555" }}><Icone nom="croix" taille={15} /></button>
+                                <button onClick={() => setEditingDateId(null)} aria-label={t.cancelTitle} style={{ color: "#e05555" }}><Icone nom="croix" taille={15} /></button>
                               </div>
                             ) : (
                               <div className="carte-activite-precisions">
@@ -544,7 +667,7 @@ export default function HistoryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {lignes.map(({ g, cumul, parts, type }) => {
+                      {lignes.map(({ g, cumul, parts, type, corrigible }) => {
                           const depliee = ligneDepliee === g.id;
                           const fond = { background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" };
                           return (
@@ -622,7 +745,7 @@ export default function HistoryPage() {
                                   </td>
                                   )}
                                   <td className="px-3 py-2 text-center font-bold">
-                                    <ResultatCell result={g.result} t={t} />
+                                    <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />
                                   </td>
                                 </>
                               )}
@@ -664,7 +787,7 @@ export default function HistoryPage() {
                                           {g.kills}/{g.deaths}/{g.assists}
                                         </span>
                                       )}
-                                      <ResultatCell result={g.result} t={t} />
+                                      <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />
                                     </div>
                                   )}
                                 </td>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notifier } from "@/lib/push";
+import { ajouterALaDette } from "@/lib/dette";
 import {
   calcScore, calcScoreBattleRoyale, calcScoreRocketLeague, calcScoreTemps,
   getLevel, getLevelParPompes, profilNeutre,
@@ -380,36 +381,11 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
       where: { id: userId },
       select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true, langue: true },
     });
-    const maj = await prisma.user.update({
-      where: { id: userId },
-      data: { dettePointsDus: { increment: points } },
-      select: { dettePointsDus: true },
-    });
-
-    // La dette qui NAÎT pose sa date de début ; une dette déjà en cours garde
-    // la sienne. Sans cette distinction, chaque nouvelle partie remettrait le
-    // compteur de retard à zéro, et personne ne serait jamais en retard.
-    //
-    // La condition est posée à la BASE, pas déduite de la lecture d'avant :
-    // entre les deux, un paiement peut éteindre la dette et effacer la date.
-    // On écrivait alors une dette positive sans date de début, c'est-à-dire
-    // une dette qui n'est jamais en retard, et qui ne le redeviendra qu'une
-    // fois soldée puis recréée. Le même défaut que le retrait de dette écrasé
-    // par une écriture en valeur absolue, à l'envers.
-    //
-    // `updateMany` est le seul moyen de poser une condition sur autre chose
-    // que la clé : `update` ne prend qu'un identifiant unique. Écrit ainsi, il
-    // rattrape aussi les comptes déjà dans cet état.
-    //
-    // Son échec ne coûte rien d'autre qu'elle-même : le décompte est déjà
-    // écrit, et la notification de seuil qui suit ne doit pas se perdre parce
-    // qu'une date n'a pas pu se poser. Le tour suivant repassera dessus.
-    try {
-      await prisma.user.updateMany({
-        where: { id: userId, detteDepuis: null, dettePointsDus: { gt: 0 } },
-        data: { detteDepuis: new Date() },
-      });
-    } catch { /* la date se rattrapera à la partie suivante */ }
+    // L'incrément atomique ET la pose de la date de début vivent dans
+    // `src/lib/dette.ts` : la correction du résultat d'une partie réévalue son
+    // coût et doit suivre exactement la même règle. Écrite deux fois, elle
+    // finirait par ne valoir que pour l'une des deux.
+    const total = await ajouterALaDette(prisma, userId, points);
 
     // La notification part au franchissement du seuil, jamais à chaque partie :
     // prévenir dix fois dans la soirée ferait couper les notifications.
@@ -418,7 +394,7 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
       const seuil = Math.max(0, avant.rappelSeuilSec);
       if (exercices.length > 0 && seuil > 0) {
         const avantSec = dureeEffort(Math.max(0, avant.dettePointsDus), exercices);
-        const apresSec = dureeEffort(Math.max(0, maj.dettePointsDus), exercices);
+        const apresSec = dureeEffort(Math.max(0, total), exercices);
         if (avantSec < seuil && apresSec >= seuil) {
           // Dans la langue du compte : le texte était écrit en dur en
           // français et partait tel quel à tout le monde, y compris à qui
@@ -431,7 +407,7 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
       }
     }
 
-    return maj.dettePointsDus;
+    return total;
   } catch {
     return null;
   }

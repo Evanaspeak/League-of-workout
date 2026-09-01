@@ -128,7 +128,17 @@ describe("CSS mort", () => {
     const inutiles: string[] = [];
     const vues = new Set<string>();
     for (const feuille of feuilles(SRC)) {
-      for (const m of readFileSync(feuille, "utf8").matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) {
+      /**
+       * Les commentaires d'abord.
+       *
+       * Le motif cherche un point suivi d'un nom, ce qu'un nom de fichier cité
+       * dans un commentaire produit aussi : « e2e/historique.spec.ts » y a été
+       * lu comme la classe `.spec`, réputée morte, et un billet écrit dans une
+       * feuille de style a fait échouer la suite. Un commentaire ne déclare
+       * aucun sélecteur.
+       */
+      const source = readFileSync(feuille, "utf8").replace(/\/\*[\s\S]*?\*\//g, " ");
+      for (const m of source.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) {
         const classe = m[1];
         if (vues.has(classe)) continue;
         vues.add(classe);

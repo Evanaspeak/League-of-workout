@@ -54,3 +54,52 @@ export async function retirerDeLaDette(
   });
   return 0;
 }
+
+/**
+ * Ajouter des points à la dette, en posant sa date de début si elle naît.
+ *
+ * Ces deux écritures allaient ensemble dans `/api/games` ; elles doivent
+ * maintenant servir aussi à la correction du résultat d'une partie, qui
+ * réévalue son coût. Une règle écrite deux fois finit par ne valoir que pour
+ * l'une des deux — c'est déjà arrivé quatre fois sur ce projet, et la dernière
+ * fois c'est précisément cette date de début qui manquait d'un côté.
+ *
+ * L'incrément est atomique pour la même raison que le retrait : un paiement
+ * qui s'intercale entre la lecture et l'écriture se perdrait.
+ *
+ * La date, elle, est posée par un `updateMany` CONDITIONNEL, pas d'après une
+ * lecture faite juste avant : entre les deux, un paiement peut éteindre la
+ * dette et effacer la date. On écrivait alors une dette positive sans date de
+ * début, c'est-à-dire une dette qui n'est jamais en retard.
+ *
+ * Son échec ne coûte qu'elle-même : le décompte est déjà écrit, et le tour
+ * suivant repassera dessus.
+ */
+export async function ajouterALaDette(
+  db: ClientDette,
+  userId: string,
+  points: number,
+): Promise<number> {
+  if (points <= 0) {
+    const inchange = await db.user.findUnique({
+      where: { id: userId },
+      select: { dettePointsDus: true },
+    });
+    return Math.max(0, inchange?.dettePointsDus ?? 0);
+  }
+
+  const maj = await db.user.update({
+    where: { id: userId },
+    data: { dettePointsDus: { increment: points } },
+    select: { dettePointsDus: true },
+  });
+
+  try {
+    await db.user.updateMany({
+      where: { id: userId, detteDepuis: null, dettePointsDus: { gt: 0 } },
+      data: { detteDepuis: new Date() },
+    });
+  } catch { /* la date se rattrapera au tour suivant */ }
+
+  return Math.max(0, maj.dettePointsDus);
+}

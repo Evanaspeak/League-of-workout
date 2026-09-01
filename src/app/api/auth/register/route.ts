@@ -5,7 +5,6 @@ import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
 import { MESSAGES_PORTE, porteMotDePasse } from "@/lib/porteBeta";
 import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 
-const BETA_LIMIT = 100;
 
 export async function POST(request: Request) {
   try {
@@ -44,11 +43,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: MESSAGES_PORTE[porte.raison] }, { status: 403 });
     }
 
-    const count = await prisma.user.count();
-    if (count >= BETA_LIMIT) {
-      return NextResponse.json({ error: "Beta complète : les 100 places sont prises." }, { status: 403 });
-    }
-
     // Une existence se répond par oui ou non : inutile de charger la ligne
     // entière, empreinte du mot de passe comprise, pour la jeter aussitôt.
     const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
@@ -60,6 +54,10 @@ export async function POST(request: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+
+    // Le rang d'arrivée survit au plafond : il ne garde plus la porte, il dit
+    // seulement dans quel ordre les comptes sont arrivés.
+    const count = await prisma.user.count();
 
     const user = await prisma.user.create({
       data: {
