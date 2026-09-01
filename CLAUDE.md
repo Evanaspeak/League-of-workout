@@ -714,6 +714,35 @@ correction refusée ne change ni l'un ni l'autre. Sans ce second contrôle, un
 une date s'annonçait « Voir le détail du calcul ». Le libellé lu à voix haute
 n'était pas celui du bouton.
 
+### La dette ne se replie plus
+Sous 1180 px, le rail se replie derrière un bouton, et la pastille de dette
+partait avec. Voir ce qu'on doit demandait donc une touche de plus — sur la
+moitié du produit qui se consulte au téléphone, c'est-à-dire là où la question
+se pose le plus. Le point rouge posé sur le bouton ne remplaçait pas le
+chiffre : il disait qu'il y avait quelque chose, pas combien.
+
+C'était constaté depuis le passage du parcours complet sur un écran de
+téléphone, et laissé en attente parce que déplacer ce bouton est un arbitrage.
+Il est tranché.
+
+Le bouton ne replie plus que les ACTIONS de la page. La dette vit à côté, hors
+du contenu repliable. Elle ne s'affiche toujours que s'il y a quelque chose à
+devoir : ce n'est pas un bandeau permanent, c'est un rappel qui disparaît quand
+il n'a rien à dire.
+
+Trois choses sont parties avec, et c'est le bon signe : le point rouge, la
+bordure d'alerte du bouton, et le rapport d'état que la pastille faisait
+remonter au rail. Un bouton qui n'ouvre plus que des actions n'a pas à savoir
+ce qu'on doit. `noUnusedLocals` a attrapé la variable devenue inutile, et
+`codeMort.test.ts` la règle CSS orpheline — deux gardes qui ont fait leur
+travail sur un remaniement de quinze lignes.
+
+Le test qui avait mis le défaut au jour est celui qui le garde : l'étape 5 du
+parcours sur téléphone dépliait le rail avant de chercher la pastille. Elle
+exige maintenant `toBeVisible` sans rien déplier. C'est le contrôle qui mord :
+l'élément était déjà DANS la page avant la correction, simplement caché, et le
+chercher ne prouvait rien.
+
 ### Le placement de la pastille, la seule chose qui puisse la rendre invisible
 `overlay.js` fait six cents lignes et n'avait aucun test. La plus grande partie
 tient à Electron et ne s'éprouve qu'avec une fenêtre ; le placement, lui, est

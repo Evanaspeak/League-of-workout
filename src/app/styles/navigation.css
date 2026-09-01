@@ -47,16 +47,20 @@
 .rail-lateral > * {
   pointer-events: auto;
 }
-.rail-contenu {
+.rail-contenu,
+.rail-dette {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 /* ── Repli sur petit écran ──────────────────────────────────────────────────
-   Sous 1180 px il n'y a pas de marge à occuper : déployé, le rail couvrirait
-   un tiers de l'écran et passerait par-dessus le contenu. Il se replie donc
-   derrière un bouton, qui garde le signal de dette pour ne rien masquer. */
+   Sous 1180 px il n'y a pas de marge à occuper : déployées, les actions
+   couvriraient un tiers de l'écran et passeraient par-dessus le contenu. Elles
+   se replient donc derrière un bouton.
+   La dette, elle, reste dehors : la voir ne doit pas demander un geste de
+   plus, et un point rouge sur le bouton dit qu'il y a quelque chose, pas
+   combien. */
 .rail-bascule {
   display: none;
   width: 42px;
@@ -66,20 +70,8 @@
   justify-content: center;
   color: var(--bone);
   cursor: pointer;
-  position: relative;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
   transition: border-color 0.2s;
-}
-.rail-bascule.alerte { border-color: rgba(255,77,46,0.55); }
-.rail-point {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ember);
-  border: 2px solid var(--bg-raised, #14181D);
 }
 
 @media (max-width: 1179px) {
@@ -87,6 +79,8 @@
   .rail-bascule { display: flex; }
   .rail-contenu { display: none; width: 168px; }
   .rail-lateral.est-ouvert .rail-contenu { display: flex; }
+  /* Elle garde sa largeur : c'est le seul endroit où le chiffre se lit. */
+  .rail-dette { width: 168px; }
 }
 /* La page laisse la marge au rail au lieu de passer dessous. Uniquement là où
    il existe : les pages publiques restent pleine largeur. À garder avant le
@@ -108,6 +102,7 @@
   }
   .rail-lateral::-webkit-scrollbar { width: 0; }
 }
+.rail-dette:empty { display: none; }
 .pastille-dette {
   width: 100%;
 }

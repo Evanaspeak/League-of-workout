@@ -16,9 +16,17 @@ const ZONE_ACTIONS = "rail-actions";
  * Les regrouper dans un même conteneur garantit qu'elles s'empilent au lieu de
  * se recouvrir, quelle que soit la hauteur de la pastille de dette.
  *
- * Sous 1180 px il n'y a plus de marge à occuper : le rail se replie derrière un
- * bouton, sinon il couvrirait un tiers de l'écran. Le bouton conserve l'alerte
- * de dette — replier ne doit pas revenir à masquer ce qu'on doit.
+ * Sous 1180 px il n'y a plus de marge à occuper : les ACTIONS se replient
+ * derrière un bouton, sinon elles couvriraient un tiers de l'écran.
+ *
+ * La dette, elle, ne se replie pas. Elle l'a fait longtemps, et voir ce qu'on
+ * doit demandait alors une touche de plus — sur la moitié du produit qui se
+ * consulte au téléphone, c'est-à-dire là où la question se pose le plus. Un
+ * point rouge sur le bouton ne remplace pas le chiffre : il dit qu'il y a
+ * quelque chose, pas combien.
+ *
+ * Le bouton n'a donc plus à porter de signal de dette : il n'ouvre plus que
+ * les actions de la page.
  */
 export function RailLateral() {
   const chemin = usePathname();
@@ -30,10 +38,6 @@ export function RailLateral() {
   const [etat, setEtat] = useState({ ouvert: false, chemin });
   if (etat.chemin !== chemin) setEtat({ ouvert: false, chemin });
   const ouvert = etat.ouvert;
-  const [dette, setDette] = useState<{ enAttente: boolean; alerte: boolean }>({
-    enAttente: false, alerte: false,
-  });
-
   // La marge du rail se réserve en CSS, mais seulement là où il existe : les
   // pages publiques gardent leur mise en page pleine largeur.
   useEffect(() => {
@@ -48,7 +52,7 @@ export function RailLateral() {
     <div className={`rail-lateral${ouvert ? " est-ouvert" : ""}`} data-visite="rail">
       <button
         type="button"
-        className={`rail-bascule lol-panel${dette.alerte ? " alerte" : ""}`}
+        className="rail-bascule lol-panel"
         onClick={() => setEtat((e) => ({ ...e, ouvert: !e.ouvert }))}
         aria-expanded={ouvert}
         aria-label={ouvert ? t.railReplier : t.railOuvrir}
@@ -60,11 +64,15 @@ export function RailLateral() {
             ? <path d="M18 6 6 18M6 6l12 12" />
             : <><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></>}
         </svg>
-        {dette.enAttente && !ouvert && <span className="rail-point" aria-hidden />}
       </button>
 
+      {/* Hors du contenu repliable : c'est ce qui la rend visible en
+          permanence sur petit écran. */}
+      <div className="rail-dette">
+        <CompteurDette />
+      </div>
+
       <div className="rail-contenu">
-        <CompteurDette onEtat={setDette} />
         <div id={ZONE_ACTIONS} style={{ display: "contents" }} />
       </div>
     </div>

@@ -191,15 +191,20 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     await passerIntro(page);
 
     const avant = await lireDette(page);
-    // Sous 1180 px, la pastille de dette vit dans le rail replié : elle est
-    // dans la page mais cachée, et il faut déplier le rail pour l'atteindre —
-    // exactement ce que fait l'étape 3 pour l'ajout. C'est ce que ce parcours
-    // sur téléphone a mis au jour : le compteur de dette y demande une touche
-    // de plus, et personne ne l'avait jamais joué à cette largeur.
-    await page.locator('[data-visite="rail-bascule"]')
-      .click({ timeout: 2_000 }).catch(() => {});
+    /**
+     * La pastille se voit SANS déplier le rail, à toutes les largeurs.
+     *
+     * C'est ce parcours sur téléphone qui avait mis le défaut au jour : la
+     * pastille vivait dans le rail replié, donc voir ce qu'on doit demandait
+     * une touche de plus — sur la moitié du produit qui se consulte au
+     * téléphone. Le rail ne replie plus que les actions de la page.
+     *
+     * `toBeVisible` est le contrôle qui mord ici : l'élément était déjà DANS
+     * la page avant la correction, simplement caché. Le chercher ne prouvait
+     * rien.
+     */
     const pastille = page.locator('[data-visite="dette"]');
-    await pastille.waitFor({ timeout: 15_000 });
+    await expect(pastille).toBeVisible({ timeout: 15_000 });
     await expect(pastille).toContainText(/\d/);
     await pastille.click();
 
