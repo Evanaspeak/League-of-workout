@@ -221,3 +221,24 @@ test("une adresse sans langue mène à une langue, une fois pour toutes", async 
   expect((await chaine!.response())!.status()).toBe(308);
   expect(new URL(page.url()).pathname).toMatch(/^\/(fr|en|es|de|zh|ja)\/cgu$/);
 });
+
+/**
+ * `/login` garde son adresse, et c'est voulu.
+ *
+ * L'application Windows déjà installée ouvre sa fenêtre d'authentification sur
+ * `${SITE}/login` et décide « la connexion est finie » en demandant « ce n'est
+ * plus /login ? ». Redirigée vers `/fr/login`, elle répondrait oui à la toute
+ * première page : elle refermerait la fenêtre avant qu'on ait tapé quoi que ce
+ * soit, et chercherait un cookie qui n'existe pas encore.
+ *
+ * Les copies installées ne se corrigent pas à distance. La réécriture garde
+ * l'adresse visible, et la page rendue reste celle de la bonne langue.
+ */
+test("l'adresse de connexion ne bouge pas, pour l'application déjà installée", async ({ page }) => {
+  const reponse = await page.goto("/login", { waitUntil: "domcontentloaded" });
+  expect(reponse!.request().redirectedFrom(), "/login ne doit pas rediriger").toBeNull();
+  expect(new URL(page.url()).pathname).toBe("/login");
+  // Et la page est bien rendue dans une langue, pas dans le vide.
+  expect(await page.evaluate(() => document.documentElement.lang)).toMatch(/^(fr|en|es|de|zh|ja)$/);
+  expect((await metadonnees(page)).robots).toContain("noindex");
+});

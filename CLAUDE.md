@@ -694,6 +694,71 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un test vert chez moi, rouge en intégration continue, et c'est lui qui avait tort
+`corriger une défaite en victoire rejoue le barème` est passé **trois fois** en
+local et est tombé du premier coup sur la machine d'intégration continue. La
+tentation, à ce moment-là, est de relancer.
+
+Il attendait ceci après avoir cliqué :
+
+```ts
+await expect(ligne.getByText(/^victoire$|^victory$/i)).toBeVisible();
+```
+
+Le texte « Victoire » était déjà à l'écran : c'est le **libellé du bouton de
+choix qu'on venait de cliquer**. L'attente se résolvait donc instantanément,
+avant même que la requête soit partie, et la lecture en base qui suit portait
+sur l'état d'avant. Sur une machine rapide, la requête gagnait la course une
+fois sur deux ; sur une machine chargée, jamais.
+
+Un test qui attend quelque chose de déjà vrai n'attend rien. Et celui-là avait
+l'air d'attendre le résultat de l'action : c'est ce qui le rendait crédible.
+
+Il attend maintenant que **l'éditeur se referme**, ce qui n'arrive que si la
+base a répondu. Éprouvé dans les deux sens, avec la requête ralentie de trois
+secondes pour reproduire la machine lente : l'ancienne assertion tombe, la
+nouvelle passe.
+
+Ce que ça apprend sur l'outillage : **une machine lente ne se trompe pas, elle
+révèle**. Un échec qui n'arrive qu'en intégration continue est une course, et
+une course est un vrai défaut — ici c'était le défaut du test, ça aurait pu
+être celui du produit.
+
+Et un piège déjà écrit ici, retombé dedans dans la foulée : **`-g` écarte le
+test qui ouvre le compte.** En isolant le test fautif pour le rejouer, la
+session n'existait plus et `/api/games` rendait la page de connexion —
+« Unexpected token '<' », qui ne ressemble en rien à la cause. Le fichier se
+rejoue en entier, jamais un test seul.
+
+### `/login` ne bouge pas, et c'est une dette assumée
+Le préfixe de langue aurait cassé l'application Windows **déjà installée**, en
+silence et de la pire façon. Sa fenêtre d'authentification s'ouvre sur
+`${SITE}/login` et décide « la connexion est finie » en demandant « ce n'est
+plus /login ? ». Redirigée vers `/fr/login`, elle répond oui à la toute
+première page : elle referme la fenêtre avant qu'on ait tapé quoi que ce soit,
+et va chercher un cookie qui n'existe pas encore. La connexion par Google y
+devient impossible.
+
+Le code de la coquille est corrigé (`sansLangue` avant toute comparaison), mais
+**les copies installées ne se corrigent pas à distance**. Elles continueraient
+de casser jusqu'à ce que chacun mette à jour — c'est-à-dire pour certains
+jamais.
+
+`/login` se **réécrit** donc au lieu de se rediriger : l'adresse visible ne
+change pas, l'ancien contrôle continue de marcher, et la page rendue est bien
+celle de la bonne langue. Le prix côté moteurs est nul, `/login` portant
+`noindex` : il n'y a aucun crédit d'adresse à reporter.
+
+C'est une exception, elle est écrite comme telle dans le middleware, et elle
+porte sa date de péremption : à retirer quand plus personne ne fait tourner une
+version antérieure à 0.9.9.
+
+Ce que ça apprend, et qui vaut au-delà de ce cas : **un client déjà distribué
+fait partie du contrat.** Une adresse qu'il connaît n'est pas une adresse
+interne qu'on peut renommer, même quand le renommage est meilleur. Le défaut
+n'aurait été signalé par rien — ni test, ni journal, ni supervision — parce que
+la seule machine capable de le voir est celle de quelqu'un d'autre.
+
 ### La langue est passée dans l'adresse, et cinq langues sur six ont commencé à exister
 Elle vivait dans le stockage du navigateur. Ça marchait, et ça se payait en
 silence : le serveur rendait TOUJOURS la même version, donc les métadonnées de
