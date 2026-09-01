@@ -694,6 +694,55 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Revue de la porte, après le passage de la langue dans l'adresse
+Le middleware est la seule chose que TOUTE requête traverse, et il vient de
+gagner une branche de langue et une réécriture. Passé en revue, poussé plutôt
+que relu : dix-sept adresses fabriquées pour essayer de faire entrer quelqu'un.
+
+**Aucune faille trouvée.** Ce qui a été essayé, et ce que ça rend :
+
+| adresse | réponse |
+|---|---|
+| `/fr/dashboard`, `/fr/fr/dashboard` | 307 vers la connexion |
+| `/FR/dashboard`, `/Fr/dashboard` | 308 vers une adresse qui n'existe pas |
+| `/dashboard.`, `/dashboard.x`, `/api.x` | 307 vers la connexion |
+| `/fr%2Fdashboard`, `/fr/../dashboard` | 308, puis 307 vers la connexion |
+| `/obsolete`, `/betamachin` | 308 vers une adresse qui n'existe pas |
+| `/api/dashboard`, `/api/user`, `/api/obs`, `/api/admin/users` | 307 vers la connexion |
+| `/api/sante`, `/api/champions`, `/api/exercices/ratios` | 200, leur handler |
+| `/api/init` | 401, son propre secret |
+
+La raison tient en une ligne : **le contrôle d'accès ne voit jamais le
+préfixe.** `sansLocale` le retire d'abord, et `estCheminPublic` continue de
+comparer par segments sur le chemin qu'il a toujours connu. Une règle qu'on
+n'a pas eu à réécrire est une règle qui n'a pas pu diverger.
+
+Le contrôle de la casse compte aussi : `estLocale("FR")` est faux, donc le
+segment n'est pas une langue, donc l'adresse est réécrite au lieu d'être
+acceptée. Sans ça, `/FR/dashboard` aurait sauté le préfixe ET le contrôle.
+
+**Les chaînes de requête survivent**, ce qui n'allait pas de soi : un lien de
+récupération envoyé avant la mise en production part sur
+`/recuperation/valider?t=…` sans langue, et arrive sur
+`/en/recuperation/valider?t=…` avec son jeton. Les anciens courriels marchent
+encore.
+
+Deux corrections d'hygiène, aucune exploitable :
+- le cookie de langue part maintenant en `secure` dès que la page est en
+  HTTPS, et la valeur est refusée si ce n'est pas une des six. Elle vient
+  d'une liste fermée aujourd'hui ; mais elle part dans un en-tête que le
+  serveur relit, et un point-virgule y ajouterait un attribut ;
+- **le sélecteur de langue n'était plus couvert par rien.** Tant que la langue
+  vivait dans le stockage, les tests la posaient eux-mêmes et empruntaient le
+  même chemin ; depuis qu'elle est dans l'adresse, ils naviguent directement,
+  et plus personne ne cliquait ce bouton. Or c'est là que tout se joue
+  maintenant. Un parcours l'éprouve : l'adresse, la langue rendue, ET le
+  souvenir. Sabotage fait, le cookie retiré : le test tombe.
+
+Le reste est inchangé et tient : deux `dangerouslySetInnerHTML`, tous deux sur
+des constantes ; aucun SQL brut hors du client engendré ; aucun secret en dur ;
+`PATCH /api/games/[id]` filtre par compte à la lecture comme à l'écriture.
+
 ### Un test vert chez moi, rouge en intégration continue, et c'est lui qui avait tort
 `corriger une défaite en victoire rejoue le barème` est passé **trois fois** en
 local et est tombé du premier coup sur la machine d'intégration continue. La

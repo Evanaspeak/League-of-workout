@@ -227,3 +227,40 @@ test.describe("écrans connectés", () => {
     }
   }
 });
+
+/**
+ * Le sélecteur de langue emmène VRAIMENT dans l'autre langue.
+ *
+ * Il n'était plus couvert par rien. Tant que la langue vivait dans le stockage
+ * du navigateur, les tests la posaient eux-mêmes et empruntaient le même
+ * chemin que le sélecteur ; depuis qu'elle est dans l'adresse, ils naviguent
+ * directement, et plus personne ne clique sur ce bouton.
+ *
+ * Or c'est là que tout se joue maintenant : il écrit le souvenir du choix,
+ * puis réécrit l'adresse. Trois choses se vérifient, et il faut les trois —
+ * l'adresse, la langue rendue, et le souvenir. Sans le dernier, revenir sur le
+ * site par la racine renverrait vers la langue du navigateur, en ignorant le
+ * choix qu'on vient de faire.
+ */
+test("le sélecteur de langue change l'adresse, la page, et s'en souvient", async ({ page }) => {
+  await page.addInitScript(() => {
+    try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
+  });
+  await page.goto("/fr/cgu", { waitUntil: "domcontentloaded" });
+
+  await page.getByRole("button", { name: /changer de langue|change language/i }).click();
+  await page.getByRole("button", { name: /^DE\s+Deutsch$/ }).click();
+
+  await page.waitForURL(/\/de\/cgu$/, { timeout: 15_000 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.lang), { timeout: 15_000 })
+    .toBe("de");
+
+  // Le souvenir : c'est lui que le serveur relit pour quelqu'un qui revient
+  // sur une adresse sans langue.
+  const cookies = await page.context().cookies();
+  expect(cookies.find((c) => c.name === "low_locale")?.value).toBe("de");
+
+  // Et il tient : une adresse sans langue suit le choix, pas le navigateur.
+  await page.goto("/telechargement", { waitUntil: "domcontentloaded" });
+  expect(new URL(page.url()).pathname).toBe("/de/telechargement");
+});

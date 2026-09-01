@@ -38,10 +38,23 @@ export function LocaleProvider({ locale, children }: { locale: string; children:
   const valeur = useMemo<Ctx>(() => ({
     locale: actuelle,
     setLocale: (l: Locale) => {
+      // Une langue qu'on ne connaît pas ne s'écrit nulle part.
+      //
+      // Elle vient aujourd'hui du sélecteur, donc d'une liste fermée. Mais
+      // cette valeur part maintenant dans un COOKIE, c'est-à-dire dans un
+      // en-tête que le serveur relit : un point-virgule dans la chaîne y
+      // ajouterait un attribut de son choix. Le contrôle coûte une ligne et
+      // ferme la question, plutôt que de la rouvrir au prochain appelant.
+      if (!estLocale(l)) return;
       // Le souvenir d'abord : sans lui, revenir sur `winorworkout.com` renverrait
       // vers la langue du navigateur, en ignorant le choix qu'on vient de faire.
       ecrire(CLE_STOCKAGE, l);
-      document.cookie = `${CLE_STOCKAGE}=${l};path=/;max-age=31536000;samesite=lax`;
+      // `secure` dès que la page est servie en HTTPS : un cookie posé en clair
+      // repart en clair sur toutes les requêtes du domaine. Ce n'est pas un
+      // secret, c'est de l'hygiène — et en local, où il n'y a pas de HTTPS,
+      // l'attribut empêcherait simplement le cookie d'exister.
+      const sur = location.protocol === "https:" ? ";secure" : "";
+      document.cookie = `${CLE_STOCKAGE}=${l};path=/;max-age=31536000;samesite=lax${sur}`;
       // Puis l'adresse. `replace` et non `push` : changer de langue n'est pas
       // une étape de navigation, et le bouton retour ne doit pas ramener à la
       // page qu'on vient de quitter dans l'autre langue.
