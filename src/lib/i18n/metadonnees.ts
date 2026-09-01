@@ -125,6 +125,14 @@ const PAGES = {
       description: "Win or Workout のデスクトップアプリ。試合を自動検出し、腕立ての残数をリアルタイムで表示します。",
     },
   },
+  recuperation: {
+    fr: { titre: "Récupération de compte", description: "Récupérez l'accès à votre compte Win or Workout : un lien vous est envoyé par courriel, et il remplace votre code d'accès." },
+    en: { titre: "Account recovery", description: "Recover access to your Win or Workout account: a link is sent to you by email, and it replaces your access code." },
+    es: { titre: "Recuperación de cuenta", description: "Recupere el acceso a su cuenta de Win or Workout: se le envía un enlace por correo, y sustituye a su código de acceso." },
+    de: { titre: "Kontowiederherstellung", description: "Stellen Sie den Zugang zu Ihrem Win-or-Workout-Konto wieder her: Sie erhalten einen Link per E-Mail, der Ihren Zugangscode ersetzt." },
+    zh: { titre: "找回账号", description: "找回你的 Win or Workout 账号：我们会给你发送一个链接，它会替换你的访问码。" },
+    ja: { titre: "アカウントの復旧", description: "Win or Workout のアカウントへのアクセスを取り戻します。メールでリンクをお送りし、アクセスコードを置き換えます。" },
+  },
   cgu: {
     fr: {
       titre: "CGU",
@@ -180,6 +188,18 @@ const PAGES = {
 } as const satisfies Record<string, Record<Locale, Textes>>;
 
 export type PageMeta = keyof typeof PAGES;
+
+/**
+ * La description d'une page, hors du bloc de métadonnées.
+ *
+ * Deux endroits en ont besoin sans passer par `Metadata` : le bloc de données
+ * structurées de l'accueil, que Google lit, et la description par défaut de la
+ * mise en page. Les deux étaient écrits en français en dur, et partaient tels
+ * quels dans les six langues.
+ */
+export function descriptionPage(cle: PageMeta, locale: Locale): string {
+  return (PAGES[cle][locale] ?? PAGES[cle].en).description;
+}
 
 /**
  * Les métadonnées d'une page publique, canonique et hreflang compris.

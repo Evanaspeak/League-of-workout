@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { textesDiffusion } from "@/lib/i18n/diffusion";
 import { prisma } from "@/lib/prisma";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { exercicesEnTemps, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
@@ -36,6 +37,10 @@ export async function GET(
     where: { jetonObs: jeton },
     select: {
       id: true, dettePointsDus: true, detteDepuis: true, exercices: true,
+      // La langue du compte : la page de diffusion n'en a pas dans son adresse,
+      // et ses trois mots s'affichaient en français devant le public d'un
+      // stream. C'est la seule façon de la lui donner.
+      langue: true,
     },
   });
   if (!user) return NextResponse.json({ error: "Lien inconnu" }, { status: 404 });
@@ -55,5 +60,15 @@ export async function GET(
     points,
     serie: longueurSerie(paiements.map((p) => p.jour)),
     enRetard: retard.enRetard,
+    /**
+     * Les MOTS, pas la langue.
+     *
+     * Rendre `langue` ferait sortir une donnée du compte sur une adresse
+     * publique, et la politique de confidentialité promet que ce lien ne
+     * révèle ni le nom ni les parties. Les libellés, eux, allaient de toute
+     * façon s'afficher à l'écran : les traduire ici n'ajoute rien à ce qui est
+     * déjà visible.
+     */
+    textes: textesDiffusion(user.langue),
   });
 }

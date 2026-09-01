@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { metadonneesPage } from "@/lib/i18n/metadonnees";
-import { toLocale } from "@/lib/i18n/langues";
+import { descriptionPage, metadonneesPage } from "@/lib/i18n/metadonnees";
+import { LANGUES, toLocale, type Locale } from "@/lib/i18n/langues";
 import { auth } from "@/auth";
 import LandingClient from "./LandingClient";
 import { dernierInstalleur, PAGE_RELEASES } from "@/lib/release";
@@ -14,21 +14,30 @@ export async function generateMetadata(
   return metadonneesPage("accueil", toLocale(locale), "/");
 }
 
-// Données structurées : aide Google à comprendre ce qu'est le site.
-const JSON_LD = {
+/**
+ * Données structurées : aide Google à comprendre ce qu'est le site.
+ *
+ * La description suit la langue de la page. Elle était écrite en français en
+ * dur et partait telle quelle sur les six adresses, ce qui est exactement le
+ * défaut que le préfixe de langue existe pour corriger — au seul endroit où
+ * c'est un moteur qui lit.
+ */
+const jsonLd = (locale: Locale) => ({
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "Win or Workout",
-  url: "https://winorworkout.com",
-  description:
-    "Application qui convertit les parties de jeux vidéo en effort physique : chaque partie génère une dette calculée selon la performance, payable en pompes, en squats ou en boxe.",
+  url: `https://winorworkout.com/${locale}`,
+  description: descriptionPage("accueil", locale),
   applicationCategory: "HealthApplication",
   operatingSystem: "Web, Windows",
   offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
-  inLanguage: ["fr", "en", "es", "de", "zh", "ja"],
-};
+  inLanguage: LANGUES,
+});
 
-export default async function LandingPage() {
+export default async function LandingPage(
+  { params }: { params: Promise<{ locale: string }> },
+) {
+  const locale = toLocale((await params).locale);
   // On lit la session pour adapter le bouton de la nav, mais on NE redirige plus :
   // la page d'accueil reste accessible même connecté.
   // Le bouton principal de la page est un bouton de téléchargement : il doit
@@ -41,7 +50,7 @@ export default async function LandingPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(locale)) }}
       />
       <LandingClient
         isLoggedIn={isLoggedIn}

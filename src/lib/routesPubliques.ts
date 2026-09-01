@@ -70,6 +70,21 @@ export const PREFIXES_PUBLICS = [
   // `porteRoutes.test.ts` affirmait déjà que « le middleware la couvre » ;
   // il ne la couvrait pas.
   "/api/champions",
+  /**
+   * Les images que Next.js engendre par convention de nom.
+   *
+   * Elles étaient exclues par le motif du middleware, qui ne regarde que le
+   * PREMIER segment : `/opengraph-image` y échappait, `/fr/opengraph-image`
+   * non. Elles ont déménagé sous `[locale]` en même temps que les pages — et
+   * depuis, la carte partagée et l'icône d'onglet partaient toutes les deux
+   * en 307 vers la connexion. Un lien posé sur Discord n'avait plus d'image,
+   * et rien ne le disait : personne ne regarde le code d'une vignette.
+   *
+   * Trouvé en mesurant, pas en relisant. C'est la deuxième fois de la journée.
+   */
+  "/opengraph-image",
+  "/icon",
+  "/apple-icon",
 ] as const;
 
 /**

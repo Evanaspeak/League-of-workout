@@ -695,6 +695,88 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La campagne de mesure a trouvé ce que la relecture n'avait pas vu
+Trois défauts, tous introduits par le passage de la langue dans l'adresse,
+tous invisibles à la lecture du code — et le pire tournait **en production**
+depuis une heure.
+
+**La carte partagée et l'icône d'onglet répondaient 307 vers la connexion.**
+`opengraph-image`, `icon` et `apple-icon` ont déménagé sous `[locale]` avec les
+pages ; or le motif du middleware ne regarde que le PREMIER segment. Il
+excluait `/opengraph-image`, pas `/fr/opengraph-image`. Depuis V301, tout lien
+posé sur Discord ou Reddit partait sans vignette, et l'onglet du navigateur
+sans icône. Rien ne pouvait le dire : personne ne regarde le code de réponse
+d'une image, et la page, elle, s'affichait parfaitement.
+
+**Les deux pages du calculateur affichaient leur titre en français**, dans les
+six langues. Les traductions existaient dans le dictionnaire depuis le premier
+jour — `indexTitre`, `titre(jeu)`, `autresJeux` — et personne ne les lisait.
+Ce sont les quinze pages qui existent pour être trouvées par une recherche : le
+titre TRADUIT partait dans les métadonnées, et le titre FRANÇAIS s'affichait
+dans la page. Un moteur promettait une chose, la page en montrait une autre.
+
+**Et la carte partagée elle-même était en français** dans les six langues, tout
+comme la description des données structurées et le titre de l'écran de
+récupération.
+
+**Comment ça a été trouvé, et pourquoi ça compte.** `performance.mjs` nomme le
+plus grand élément de la page. Sur `/de/calculateur/league-of-legends`, il a
+nommé « Combien de pompes pour une défaite sur League of ». Un chiffre seul
+n'aurait rien dit ; c'est le NOM qui a parlé. La leçon écrite ici il y a une
+semaine — « un chiffre sans nom ne se diagnostique pas » — vient de servir une
+seconde fois, sur un défaut qui n'a rien à voir avec la performance.
+
+**Pourquoi aucun garde ne l'attrapait**, et ce que ça change :
+
+- `texteEnDurComposants.test.ts` ne lisait que `src/components`. `src/app` en
+  était dispensé sans que rien ne le dise — et c'est là que le défaut vivait.
+  Une page est un composant comme un autre ; ce qui la distingue, c'est qu'elle
+  est rendue au serveur, donc qu'elle ne peut pas employer `useT`. C'est
+  précisément ce qui pousse à écrire le texte en dur.
+- Le motif ne cherchait que des chaînes ENTRE GUILLEMETS. Les deux titres du
+  calculateur étaient du texte JSX nu, sans guillemets d'aucune sorte : le
+  garde, même étendu au bon dossier, serait resté vert. Éprouvé — le premier
+  sabotage est passé, et c'est ce qui a fait chercher plus loin.
+
+`textes(dict, locale)` rend au serveur ce que `useT` rend au navigateur. Deux
+sabotages, deux échecs : le texte JSX nu et la chaîne littérale.
+
+**Ce qui reste en anglais, et pourquoi c'est un choix.** La carte partagée
+retombe sur l'anglais en chinois et en japonais : elle est dessinée par le
+moteur de `next/og`, qui n'a que les polices qu'on lui donne. Sans police à
+idéogrammes embarquée — plusieurs méga-octets à chaque rendu — les caractères
+sortent en carrés vides. Une carte anglaise se lit ; une carte de carrés ne se
+lit pas, et c'est celle-là qu'on partage.
+
+**Et la source de diffusion parlait français à un public entier.** Trois mots
+(« À faire », « j », « Lien invalide ») superposés à un stream, la seule
+surface du produit que des inconnus regardent. Elle n'a pas de langue dans son
+adresse, et pour cause : elle est ouverte par un logiciel de diffusion, avec un
+jeton pour toute identité. C'est donc la ROUTE qui rend les mots — pas la
+langue. Rendre `langue` ferait sortir une donnée du compte sur une adresse
+publique, et la politique de confidentialité promet que ce lien ne révèle ni le
+nom ni les parties ; les libellés, eux, allaient de toute façon s'afficher.
+
+**Le reste des mesures**, une fois ces trois corrections faites :
+
+| écran | LCP poste | LCP téléphone bridé | plus grand élément |
+|---|---|---|---|
+| `/de` | 604 ms | 1364 ms | l'image de l'application |
+| `/de/cgu` | 476 ms | 1120 ms | le premier paragraphe |
+| `/de/confidentialite` | 500 ms | 1152 ms | le titre |
+| `/de/calculateur/league-of-legends` | 500 ms | 1136 ms | le titre |
+
+CLS de 0,000 partout, et les dix pages restent très en dessous du seuil de
+2500 ms malgré 228 pages statiques au lieu de 78.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues,
+**aucune page laissée de côté**. Ce dernier point a demandé du travail : la
+première exécution en annonçait douze non mesurées, parce que le jeton de
+session déposé dans `/tmp` datait d'une autre semaine. Les écrans connectés
+partaient alors vers la connexion, et le rapport le disait — c'est le garde
+posé il y a une semaine qui a fait son travail. Un compte neuf, et les quinze
+pages sont mesurées pour de bon.
+
 ### Les documents juridiques dans les six langues, et la clause qui va avec
 Ils n'existaient qu'en français et en anglais, avec un bandeau qui l'annonçait
 aux quatre autres. Le commentaire de ce bandeau disait pourquoi, et il avait

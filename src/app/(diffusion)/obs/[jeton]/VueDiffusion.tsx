@@ -1,7 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
+import { textesDiffusion } from "@/lib/i18n/diffusion";
 
-type Etat = { lignes: string[]; points: number; serie: number; enRetard: boolean };
+type Textes = { aFaire: string; jours: string; lienInvalide: string };
+type Etat = {
+  lignes: string[]; points: number; serie: number; enRetard: boolean;
+  /** Les mots, déjà traduits par la route : la page n'a pas de langue à elle. */
+  textes?: Textes;
+};
 
 /** Toutes les dix secondes : assez pour suivre, assez peu pour ne rien coûter. */
 const PERIODE_MS = 10_000;
@@ -55,7 +61,7 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
     >
       {perdu ? (
         <span style={{ ...contour, color: "#FF8A3D", fontSize: 22 }}>
-          Lien invalide
+          {textesDiffusion(undefined).lienInvalide}
         </span>
       ) : etat && etat.points > 0 ? (
         <>
@@ -63,7 +69,7 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
             ...contour, color: etat.enRetard ? "#FF8A3D" : "#C8AA6E",
             fontSize: 16, letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
-            À faire
+            {(etat.textes ?? textesDiffusion(undefined)).aFaire}
           </span>
           <span style={{
             ...contour, color: "#FFFFFF", fontSize: 56, lineHeight: 1,
@@ -73,7 +79,7 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
           </span>
           {etat.serie > 0 && (
             <span style={{ ...contour, color: "#2FD98A", fontSize: 18 }}>
-              {etat.serie} j
+              {etat.serie} {(etat.textes ?? textesDiffusion(undefined)).jours}
             </span>
           )}
         </>

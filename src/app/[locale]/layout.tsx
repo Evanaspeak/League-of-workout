@@ -14,8 +14,9 @@ import { LocaleProvider } from "@/lib/i18n/LocaleContext";
 import { RatiosExercicesProvider } from "@/components/RatiosExercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { notFound } from "next/navigation";
-import { estLocale } from "@/lib/i18n/langues";
+import { estLocale, etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 import { toutesLesLocales } from "@/lib/i18n/cheminLocalise";
+import { descriptionPage } from "@/lib/i18n/metadonnees";
 
 /**
  * Titrage de la marque.
@@ -48,10 +49,21 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
+/**
+ * La description par défaut suit la langue de l'adresse.
+ *
+ * Elle était écrite en français en dur et servait de repli à toutes les pages
+ * qui ne déclarent pas la leur — donc elle partait en français sur les six
+ * versions, y compris dans le bloc Open Graph que collent les messageries.
+ */
+export async function generateMetadata(
+  { params }: { params: Promise<{ locale: string }> },
+): Promise<Metadata> {
+  const locale = toLocale((await params).locale);
+  return {
   metadataBase: new URL("https://winorworkout.com"),
   title: { default: "Win or Workout", template: "%s · Win or Workout" },
-  description: "Tu gagnes ta game, ou tu paies en sueur. L'app qui convertit tes parties en entraînement.",
+  description: descriptionPage("accueil", locale),
   applicationName: "Win or Workout",
   manifest: "/manifest.webmanifest",
   // Ajouté à l'écran d'accueil, le site s'ouvre sans barre de navigateur —
@@ -64,13 +76,15 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Win or Workout",
-    locale: "fr_FR",
-    url: "https://winorworkout.com",
+    // `og:locale` s'écrit avec l'étiquette complète : « ja_JP », pas « ja ».
+    locale: etiquetteLocale(locale).replace("-", "_"),
+    url: `https://winorworkout.com/${locale}`,
   },
   twitter: {
     card: "summary_large_image",
   },
-};
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#0C0E11",

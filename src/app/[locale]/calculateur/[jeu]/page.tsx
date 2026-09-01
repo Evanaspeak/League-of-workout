@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Calculateur } from "./Calculateur";
 import { jeuDepuisSlug, tousLesSlugs } from "@/lib/slugJeu";
 import { metadonneesJeu } from "@/lib/i18n/metadonnees";
+import { textes } from "@/lib/i18n/textes";
+import { calculateur } from "@/lib/i18n/dictionaries/calculateur";
 import { toLocale } from "@/lib/i18n/langues";
 
 /**
@@ -33,9 +35,10 @@ export async function generateMetadata(
 }
 
 export default async function PageCalculateur(
-  { params }: { params: Promise<{ jeu: string }> },
+  { params }: { params: Promise<{ jeu: string; locale: string }> },
 ) {
-  const { jeu: slug } = await params;
+  const { jeu: slug, locale } = await params;
+  const t = textes(calculateur, toLocale(locale));
   const jeu = jeuDepuisSlug(slug);
   // Une adresse inventée rend 404 plutôt qu'une page vide : c'est ce qu'attend
   // un moteur de recherche, et ça évite d'indexer des pages qui ne disent rien.
@@ -49,13 +52,13 @@ export default async function PageCalculateur(
         fontFamily: "var(--font-heading)", fontSize: "clamp(1.5rem, 5vw, 2rem)",
         lineHeight: 1.2, textWrap: "balance",
       }}>
-        Combien de pompes pour une défaite sur {jeu} ?
+        {t.titre(jeu)}
       </h1>
 
       <Calculateur jeu={jeu} />
 
       <nav className="flex flex-col gap-2">
-        <h2 className="titre-section">Les autres jeux</h2>
+        <h2 className="titre-section">{t.autresJeux}</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
           {autres.map((j) => (
             <Lien
@@ -70,7 +73,7 @@ export default async function PageCalculateur(
             href="/calculateur"
             style={{ fontSize: "0.8rem", color: "var(--gold)", textDecoration: "underline" }}
           >
-            {`Tous les jeux (${tousLesSlugs().length})`}
+            {t.tousLesJeux(tousLesSlugs().length)}
           </Lien>
         </div>
       </nav>
