@@ -36,6 +36,7 @@ export const calculateur = {
     appel: "L'application enregistre vos parties toute seule, tient le compte de ce que vous devez et vous le rappelle. Le calcul ci-dessus est exactement celui qu'elle applique.",
     bouton: "Créer un compte",
     autresJeux: "Les autres jeux",
+    tousLesJeux: (n: number) => `Tous les jeux (${n})`,
     avertissement: "Chiffre donné pour un compte neuf, sans historique. Dans l'application, jouer souvent un même champion augmente la note.",
   },
   en: {
@@ -68,6 +69,7 @@ export const calculateur = {
     appel: "The app records your matches on its own, keeps track of what you owe and reminds you. The calculation above is exactly the one it applies.",
     bouton: "Create an account",
     autresJeux: "Other games",
+    tousLesJeux: (n: number) => `All games (${n})`,
     avertissement: "Figure given for a new account with no history. In the app, playing the same champion often raises the bill.",
   },
   es: {
@@ -100,6 +102,7 @@ export const calculateur = {
     appel: "La aplicación registra tus partidas sola, lleva la cuenta de lo que debes y te lo recuerda. El cálculo de arriba es exactamente el que aplica.",
     bouton: "Crear una cuenta",
     autresJeux: "Otros juegos",
+    tousLesJeux: (n: number) => `Todos los juegos (${n})`,
     avertissement: "Cifra para una cuenta nueva, sin historial. En la aplicación, jugar a menudo con el mismo campeón sube la factura.",
   },
   de: {
@@ -132,6 +135,7 @@ export const calculateur = {
     appel: "Die Anwendung erfasst deine Partien von selbst, führt Buch über deine Schuld und erinnert dich daran. Die Rechnung oben ist genau die, die sie anwendet.",
     bouton: "Konto erstellen",
     autresJeux: "Andere Spiele",
+    tousLesJeux: (n: number) => `Alle Spiele (${n})`,
     avertissement: "Wert für ein neues Konto ohne Verlauf. In der Anwendung erhöht häufiges Spielen desselben Champions die Rechnung.",
   },
   zh: {
@@ -164,6 +168,7 @@ export const calculateur = {
     appel: "应用会自动记录你的对局，统计你欠下的量并提醒你。上面的计算就是它所采用的。",
     bouton: "创建账号",
     autresJeux: "其他游戏",
+    tousLesJeux: (n: number) => `全部游戏（${n}）`,
     avertissement: "此数值对应没有历史记录的新账号。在应用里，经常使用同一英雄会让代价更高。",
   },
   ja: {
@@ -196,6 +201,7 @@ export const calculateur = {
     appel: "アプリは試合を自動で記録し、負債を管理して知らせます。上の計算は、そのアプリが実際に使っているものです。",
     bouton: "アカウントを作成",
     autresJeux: "ほかのゲーム",
+    tousLesJeux: (n: number) => `すべてのゲーム（${n}）`,
     avertissement: "履歴のない新規アカウントを想定した数値です。アプリでは、同じチャンピオンを多く使うほど負担が増えます。",
   },
 };

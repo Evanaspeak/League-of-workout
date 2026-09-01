@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { textesImageSociale } from "@/lib/i18n/imageSociale";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -12,7 +13,10 @@ export const alt = "Win or Workout · Gagne ta game, ou paie en sueur";
  * points qu'on venait précisément d'enlever du titre. Elle porte maintenant la
  * même phrase que la page, dit ce que fait le produit, et nomme la plateforme.
  */
-export default function OgImage() {
+export default async function OgImage(
+  { params }: { params: Promise<{ locale: string }> },
+) {
+  const t = textesImageSociale((await params).locale);
   return new ImageResponse(
     (
       <div
@@ -45,19 +49,19 @@ export default function OgImage() {
 
         {/* L'accroche, sur deux lignes et sans point — comme sur la page. */}
         <div style={{ display: "flex", flexDirection: "column", marginTop: 46, fontSize: 84, fontFamily: "sans-serif", fontWeight: 800, lineHeight: 1.02, letterSpacing: -1 }}>
-          <span style={{ color: "#ECEFF4" }}>Gagne ta game,</span>
-          <span style={{ color: "#FF6A38" }}>ou paie en sueur</span>
+          <span style={{ color: "#ECEFF4" }}>{t.accrocheHaut}</span>
+          <span style={{ color: "#FF6A38" }}>{t.accrocheBas}</span>
         </div>
 
         <div style={{ display: "flex", marginTop: 34, fontSize: 27, fontFamily: "sans-serif", color: "#9AA3B0", maxWidth: 900, lineHeight: 1.4 }}>
-          Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe.
+          {t.sousTitre}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 40, fontSize: 20, fontFamily: "monospace", color: "#7F8896", letterSpacing: 2 }}>
           <span style={{ display: "flex", color: "#ECEFF4", background: "#FF4D2E", padding: "10px 20px", borderRadius: 8, letterSpacing: 3, fontWeight: 700 }}>
-            APPLICATION WINDOWS GRATUITE
+            {t.badge}
           </span>
-          <span style={{ display: "flex" }}>15 JEUX PRIS EN CHARGE</span>
+          <span style={{ display: "flex" }}>{t.jeux}</span>
         </div>
       </div>
     ),

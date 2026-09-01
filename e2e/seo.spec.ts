@@ -242,3 +242,26 @@ test("l'adresse de connexion ne bouge pas, pour l'application déjà installée"
   expect(await page.evaluate(() => document.documentElement.lang)).toMatch(/^(fr|en|es|de|zh|ja)$/);
   expect((await metadonnees(page)).robots).toContain("noindex");
 });
+
+/**
+ * La carte partagée et l'icône d'onglet répondent, dans les six langues.
+ *
+ * Elles ont déménagé sous `[locale]` avec les pages, et le motif du middleware
+ * ne regarde que le PREMIER segment : `/opengraph-image` y échappait,
+ * `/fr/opengraph-image` non. Les deux partaient donc en 307 vers la connexion.
+ * Un lien posé sur Discord n'avait plus d'image, et rien ne le disait —
+ * personne ne regarde le code de réponse d'une vignette.
+ *
+ * Le contrôle porte sur la SIGNATURE du fichier, pas sur sa taille : une page
+ * de connexion rendue en 200 passerait un contrôle de taille.
+ */
+test("la carte partagée et l'icône répondent dans les six langues", async ({ request }) => {
+  for (const langue of LANGUES_SEO) {
+    for (const chemin of ["/opengraph-image", "/icon"]) {
+      const r = await request.get(enLangue(langue, chemin), { maxRedirects: 0 });
+      expect(r.status(), `${langue}${chemin}`).toBe(200);
+      const debut = (await r.body()).subarray(0, 4);
+      expect([...debut], `${langue}${chemin}`).toEqual([0x89, 0x50, 0x4e, 0x47]);
+    }
+  }
+});
