@@ -701,6 +701,35 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La liste d'avant lancement réclamait deux choses déjà faites
+`docs/lancement.md` est le document qu'on relit juste avant d'inviter cent
+personnes, c'est-à-dire au moment où l'on a le moins envie de vérifier ce qu'il
+raconte. Il annonçait deux blocages qui n'en sont plus :
+
+- **les deux secrets de sauvegarde**, posés depuis le 25 août. La sauvegarde
+  tourne tous les matins et fait ses treize étapes — export, restauration dans
+  un PostgreSQL neuf, comparaison table par table, chiffrement, dépôt de
+  l'archive. Huit exécutions vertes d'affilée. Vérifié dans le journal du
+  travail, pas sur sa pastille : c'est la seule façon de le savoir, et c'est
+  écrit plus bas depuis qu'une sauvegarde a pu ne rien produire pendant des
+  semaines sans que rien ne le signale ;
+- **la source OBS**, qui « n'existait pas » et qui vit dans
+  `src/app/(diffusion)/obs/[jeton]`. Le message destiné aux streamers était
+  donc retenu par une fonctionnalité livrée.
+
+Le blocage réel a pris leur place, et il n'y figurait pas : la chaîne de
+connexion Neon qui a circulé en clair. Elle donne un accès direct à la base,
+sans passer par l'application ni par une session — tant qu'elle est valable,
+elle contourne les quarante-huit routes filtrées par compte, le garde des
+routes d'administration et le recensement des colonnes qui sortent. C'est le
+seul geste de la liste qui répare au lieu d'ajouter.
+
+Ce que ça apprend, et c'est la deuxième fois que ça s'écrit ici : une phrase
+juste le jour où on l'écrit devient fausse quand le produit avance, et elle
+vieillit d'autant plus vite qu'elle décrit ce qui manque — parce que c'est
+précisément ce sur quoi on travaille. Une liste de blocages est le pire endroit
+où laisser vieillir une phrase : elle ne se lit qu'une fois, et on lui obéit.
+
 ### Réussir l'objectif de la première semaine ne se voyait pas
 Le premier chantier de rétention, et il commence par un constat qui n'était pas
 celui attendu : **la machinerie existe déjà et elle est complète.** Objectif de

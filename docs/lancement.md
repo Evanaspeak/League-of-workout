@@ -1,7 +1,7 @@
 # Messages de lancement
 
-Brouillons. **Rien n'est envoyé** — c'est à vous de le faire, et il y a deux
-choses à régler avant.
+Brouillons. **Rien n'est envoyé** — c'est à vous de le faire, et il reste une
+chose à régler avant.
 
 ## Avant d'envoyer quoi que ce soit
 
@@ -15,10 +15,22 @@ proprement plutôt que de partir chercher des 429 en cascade — mais refuser
 poliment reste refuser. La clé de production que vous avez demandée est ce
 qui débloque, pas du code.
 
-**2. Les deux secrets de sauvegarde.** `DATABASE_URL` et
-`SAUVEGARDE_PASSPHRASE`, dans les réglages du dépôt. Tant qu'ils manquent, la
-sauvegarde quotidienne refuse de tourner. Inviter cent personnes sur une base
-sans sauvegarde, c'est jouer leur travail à pile ou face.
+**2. Le mot de passe de la base, à faire tourner.** Une chaîne de connexion
+Neon complète a circulé en clair dans une conversation. Elle donne un accès
+direct à la base, sans passer par l'application ni par la moindre session :
+tant qu'elle est valable, elle vaut toutes les protections écrites plus haut.
+Changer le mot de passe côté Neon, puis reporter la nouvelle chaîne dans
+`DATABASE_URL` et `DIRECT_URL` sur Vercel. C'est le seul geste de cette liste
+qui répare quelque chose de cassé plutôt que d'ajouter quelque chose qui
+manque.
+
+**Ce qui n'est plus un blocage, et pourquoi c'est écrit ici.** Les deux
+secrets de sauvegarde figuraient à cette place. Ils sont posés : la sauvegarde
+tourne tous les matins, exporte, restaure dans un PostgreSQL neuf, compare
+table par table, chiffre, et dépose l'archive. Huit exécutions vertes
+d'affilée, la dernière ce matin. Une liste d'avant le lancement qui réclame ce
+qui est déjà fait finit par ne plus se lire du tout — c'est pour ça que la
+ligne est corrigée plutôt que supprimée.
 
 Un lancement réussi qui tombe en panne fait plus de mal que pas de lancement :
 les gens n'y reviennent pas deux fois.
@@ -138,20 +150,21 @@ place du streamer. C'est le ressort, et il fonctionne tout seul.
 >
 > Evan
 
-**Ce qui manque encore pour ça** : la source OBS n'existe pas (question 168,
-répondue « oui, excellent », pas encore construite). N'envoyez ce message
-qu'une fois qu'elle existe — promettre une fonctionnalité absente à cinq
-personnes d'un coup, c'est cinq portes fermées.
+**La source OBS existe maintenant** (question 168). Elle se règle dans les
+réglages du compte : l'adresse `/obs/<jeton>` s'ajoute comme source navigateur
+dans le logiciel de diffusion et montre la dette en direct, sans session. Le
+jeton se régénère, ce qui est la seule façon de couper un lien déjà collé
+quelque part. Ce message peut donc partir.
 
 ## L'ordre
 
-1. Les deux secrets de sauvegarde.
+1. Le mot de passe de la base, à faire tourner.
 2. La clé Riot de production.
 3. r/summonerschool. Attendre les retours, corriger ce qui remonte.
 4. r/fitness30plus, quelques jours plus tard.
 5. Discord, en demandant d'abord.
 6. r/leagueoflegends, en dernier.
-7. Les streamers, une fois la source OBS construite.
+7. Les streamers.
 
 Rien de tout cela ne se rattrape : un message supprimé, un serveur qui vous
 bannit ou un streamer déçu ne se rejouent pas. C'est la seule raison pour
