@@ -312,11 +312,27 @@ test("corriger une défaite en victoire rejoue le barème", async ({ browser }) 
   await ligne.getByRole("button", { name: /corriger le résultat|correct the result/i }).click();
   await ligne.getByRole("button", { name: /^victoire$|^victory$/i }).click();
 
-  // L'écran le dit…
-  await expect(ligne.getByText(/^victoire$|^victory$/i)).toBeVisible({ timeout: 10_000 });
+  /**
+   * On attend que l'ÉDITEUR se referme, pas que « Victoire » paraisse.
+   *
+   * La première version attendait le texte, et il était déjà là : c'est le
+   * libellé du bouton de choix qu'on venait de cliquer. L'attente se résolvait
+   * donc instantanément, avant même que la requête soit partie, et la lecture
+   * en base qui suit portait sur l'état d'avant.
+   *
+   * Ça passait ici et tombait en intégration continue, où la requête met plus
+   * longtemps que la lecture qui la suit. Un test vert sur une machine rapide
+   * et rouge sur une machine lente ne dit pas que la machine lente a tort : il
+   * dit que le test n'attendait rien.
+   *
+   * L'éditeur ne se referme QUE si la base a répondu — c'est le seul signal
+   * qui prouve que la correction est partie.
+   */
+  await expect(ligne.locator(".choix-resultat").first()).toBeHidden({ timeout: 15_000 });
+  await expect(ligne.getByText(/^victoire$|^victory$/i)).toBeVisible();
 
-  // …et la base aussi. Sans ce second contrôle, un écran qui se contente de
-  // réécrire la lettre chez lui passerait le test.
+  // Et la base le dit aussi. Sans ce second contrôle, un écran qui se contente
+  // de réécrire la lettre chez lui passerait le test.
   const apres = await (await page.request.get("/api/games")).json();
   const corrigee = apres.find((g: { id: string }) => g.id === kog.id);
   expect(corrigee.result).toBe("V");

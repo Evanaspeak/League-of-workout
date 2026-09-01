@@ -52,6 +52,29 @@ export default auth((req) => {
       );
       const url = req.nextUrl.clone();
       url.pathname = avecLocale(pathname, langue);
+
+      /**
+       * `/login` se RÉÉCRIT, il ne se redirige pas. Et c'est une dette qu'on
+       * assume, pas une élégance.
+       *
+       * L'application Windows déjà installée ouvre sa fenêtre
+       * d'authentification sur `${SITE}/login`, et décide « la connexion est
+       * finie » en demandant « ce n'est plus /login ? ». Redirigée vers
+       * `/fr/login`, elle répond oui à la toute première page : elle referme
+       * la fenêtre avant qu'on ait tapé quoi que ce soit, et cherche un cookie
+       * qui n'existe pas encore. La connexion par Google y devient impossible.
+       *
+       * Les copies installées ne se corrigent pas à distance. Une réécriture
+       * garde l'adresse `/login` visible, donc l'ancien contrôle continue de
+       * marcher, et la page rendue est bien celle de la bonne langue. Le prix
+       * est nul côté moteurs : `/login` porte `noindex`, il n'y a aucun crédit
+       * d'adresse à reporter.
+       *
+       * À retirer le jour où plus personne ne fait tourner une version
+       * antérieure à 0.9.9 — pas avant.
+       */
+      if (pathname === "/login") return NextResponse.rewrite(url);
+
       return NextResponse.redirect(url, 308);
     }
   }
