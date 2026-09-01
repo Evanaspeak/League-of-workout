@@ -14,6 +14,19 @@
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--bone);
+  /* Un mot allemand se coupe plutôt que de pousser la page hors de l'écran.
+     « ALLGEMEINE NUTZUNGSBEDINGUNGEN » mesure 360 px sur un écran de 320 :
+     le titre débordait, et le test de langue l'a dit dès la traduction posée.
+     `hyphens` coupe aux bons endroits parce que `<html lang>` porte enfin la
+     vraie langue — c'est un effet de bord du passage de la langue dans
+     l'adresse. `overflow-wrap` reste le filet pour les polices sans motifs
+     de césure. */
+  hyphens: auto;
+  overflow-wrap: break-word;
+  /* `inline-block` s'ajuste à son contenu : sans borne, il grandit avec le mot
+     au lieu de le couper, et `hyphens` n'a jamais l'occasion de servir. C'est
+     la borne qui déclenche la césure, pas la césure qui borne. */
+  max-width: 100%;
 }
 
 .titre-page::after {

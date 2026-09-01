@@ -227,8 +227,9 @@ Règles :
   les textes vivent dans `src/lib/i18n/notifications.ts`. Sans ça, le texte
   écrit en dur partait en français à tout le monde, et rien ne le signalait :
   celui qui écrit l'application la lit en français.
-- CGU et politique de confidentialité restent en français et en anglais ; un
-  bandeau (`LangueDocument`) le dit aux quatre autres langues.
+- CGU et politique de confidentialité existent dans les six langues, avec une
+  clause qui dit laquelle fait foi : la française. Le bandeau qui annonçait la
+  limite est parti avec elle.
 
 ### Objectif de première semaine
 Ce que quelqu'un fait dans ses sept premiers jours décide s'il reviendra ; le
@@ -693,6 +694,47 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Les documents juridiques dans les six langues, et la clause qui va avec
+Ils n'existaient qu'en français et en anglais, avec un bandeau qui l'annonçait
+aux quatre autres. Le commentaire de ce bandeau disait pourquoi, et il avait
+raison : « un texte juridique traduit sans relecture engage autant que
+l'original ».
+
+Traduire ne fait pas disparaître ce risque, ça le déplace : on passe de « on
+vous prévient que c'est en anglais » à « voici un texte allemand qui vous
+engage et que personne n'a relu ». Ce que font tous les services multilingues,
+et qui manquait ici, c'est la **clause de langue** : les six versions existent,
+la française fait foi. Elle est posée dans l'article du droit applicable des
+CGU et dans l'article des modifications de la politique — dans les six langues,
+y compris le français et l'anglais, où elle n'existait pas non plus.
+
+Le commentaire du bandeau l'avait d'ailleurs anticipé : « Le bandeau ne dit pas
+quelle version fait foi — c'est une clause juridique, pas une constatation, et
+elle appartient au texte lui-même. » Elle y est maintenant.
+
+`LangueDocument` est supprimé, et son exemption dans le recensement des textes
+en dur avec lui. Il en reste une seule, celle des noms de langue du sélecteur.
+Une exemption qu'on peut retirer est le signe que le produit a rattrapé son
+retard.
+
+**Et il a mordu dès la traduction posée.** Deux débordements en allemand, à
+320 px, tous deux invisibles dans les cinq autres langues :
+
+- le titre `ALLGEMEINE NUTZUNGSBEDINGUNGEN` mesurait 360 px sur un écran de
+  320. Il se coupe maintenant — et il se coupe BIEN, parce que `<html lang>`
+  porte enfin la vraie langue : le navigateur applique les motifs de césure
+  allemands. C'est un effet de bord inattendu du passage de la langue dans
+  l'adresse ;
+- une cellule du tableau des données mesurait 383 px et emportait la page.
+
+Les deux corrections tiennent au même oubli, et c'est le plus intéressant :
+**`hyphens` et `overflow-x` ne servent à rien sur une boîte qui n'est pas
+bornée.** Le titre est en `inline-block`, donc il s'ajuste à son contenu et
+grandit avec le mot au lieu de le couper. Le conteneur du tableau n'avait rien
+à faire défiler tant qu'il pouvait grandir. `max-width: 100%` sur les deux, et
+les deux règles se mettent enfin à faire ce qu'on croyait qu'elles faisaient
+déjà. C'est la borne qui déclenche la césure, pas la césure qui borne.
 
 ### Revue de la porte, après le passage de la langue dans l'adresse
 Le middleware est la seule chose que TOUTE requête traverse, et il vient de
