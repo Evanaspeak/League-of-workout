@@ -1,6 +1,8 @@
 export const dashboard = {
   fr: {
     debutTitre: "Ta première semaine",
+    debutAtteintTitre: "Objectif atteint",
+    debutAtteintTexte: "Cinq parties enregistrées. La suite se joue sur les paliers, juste en dessous.",
     debutTexte: (restantes: number) =>
       `Encore ${restantes} ${restantes > 1 ? "parties" : "partie"} à enregistrer pour voir à quoi ressemble une semaine complète.`,
     debutJours: (jours: number) =>
@@ -119,6 +121,8 @@ export const dashboard = {
   },
   en: {
     debutTitre: "Your first week",
+    debutAtteintTitre: "Goal reached",
+    debutAtteintTexte: "Five matches logged. What comes next is down below, in the milestones.",
     debutTexte: (restantes: number) =>
       `${restantes} more ${restantes > 1 ? "games" : "game"} to log, and you get to see what a full week looks like.`,
     debutJours: (jours: number) =>
@@ -235,6 +239,8 @@ export const dashboard = {
   },
   es: {
     debutTitre: "Tu primera semana",
+    debutAtteintTitre: "Objetivo cumplido",
+    debutAtteintTexte: "Cinco partidas registradas. Lo que viene está justo debajo, en los hitos.",
     debutTexte: (restantes: number) =>
       `${restantes} ${restantes > 1 ? "partidas" : "partida"} más por registrar y verás cómo es una semana entera.`,
     debutJours: (jours: number) =>
@@ -351,6 +357,8 @@ export const dashboard = {
   },
   de: {
     debutTitre: "Deine erste Woche",
+    debutAtteintTitre: "Ziel erreicht",
+    debutAtteintTexte: "Fünf Partien erfasst. Wie es weitergeht, steht gleich darunter bei den Stufen.",
     debutTexte: (restantes: number) =>
       `Noch ${restantes} ${restantes > 1 ? "Runden" : "Runde"} eintragen, dann siehst du, wie eine ganze Woche aussieht.`,
     debutJours: (jours: number) =>
@@ -467,6 +475,8 @@ export const dashboard = {
   },
   zh: {
     debutTitre: "你的第一周",
+    debutAtteintTitre: "目标达成",
+    debutAtteintTexte: "已记录五局。接下来的目标就在下面的阶段里。",
     debutTexte: (restantes: number) => `再记录 ${restantes} 局，就能看到完整一周是什么样子。`,
     debutJours: (jours: number) => jours === 0 ? "最后一天" : `还剩 ${jours} 天`,
     debutAvancement: (faites: number, but: number) => `${faites} / ${but}`,
@@ -581,6 +591,8 @@ export const dashboard = {
   },
   ja: {
     debutTitre: "最初の一週間",
+    debutAtteintTitre: "目標達成",
+    debutAtteintTexte: "5試合を記録しました。この先は、すぐ下の段階で続きます。",
     debutTexte: (restantes: number) => `あと ${restantes} 試合記録すれば、一週間ぶんの姿が見えます。`,
     debutJours: (jours: number) => jours === 0 ? "最終日" : `残り ${jours} 日`,
     debutAvancement: (faites: number, but: number) => `${faites} / ${but}`,

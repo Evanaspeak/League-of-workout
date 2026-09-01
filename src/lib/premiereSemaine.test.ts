@@ -11,12 +11,23 @@ describe("objectif de première semaine", () => {
     expect(e.visible).toBe(true);
   });
 
-  it("disparaît une fois atteint", () => {
-    // Un objectif atteint qui reste affiché n'est plus un objectif.
+  it("reste affiché une fois atteint, dans son état atteint", () => {
+    // Il s'effaçait à la seconde où on l'atteignait : réussir et ignorer
+    // produisaient exactement le même écran, c'est-à-dire rien. Un objectif
+    // raté qu'on laisse est un reproche ; un objectif réussi qu'on laisse est
+    // un trophée. Les deux ne se traitent pas pareil.
     const e = premiereSemaine(ilYA(1), OBJECTIF_PARTIES, MAINTENANT);
     expect(e.atteint).toBe(true);
-    expect(e.visible).toBe(false);
+    expect(e.visible).toBe(true);
     expect(e.restantes).toBe(0);
+  });
+
+  it("le trophée s'en va quand même au bout de la fenêtre", () => {
+    // Une réussite qu'on affiche indéfiniment finit par ne plus rien dire, et
+    // occupe la place de ce qui vient après.
+    const e = premiereSemaine(ilYA(JOURS_FENETRE), OBJECTIF_PARTIES, MAINTENANT);
+    expect(e.atteint).toBe(true);
+    expect(e.visible).toBe(false);
   });
 
   it("disparaît au bout de la fenêtre, atteint ou non", () => {

@@ -210,11 +210,13 @@ describe("objectif de première semaine", () => {
     expect((d.premiereSemaine as { visible: boolean }).visible).toBe(false);
   });
 
-  it("disparaît une fois l'objectif atteint", async () => {
+  it("reste, en état atteint, une fois l'objectif rempli", async () => {
+    // Il s'effaçait à la seconde où on l'atteignait : réussir et ignorer
+    // produisaient exactement le même écran, c'est-à-dire rien.
     session.mockResolvedValue(utilisateur({ createdAt: inscritIlYA(1) }));
     game.findMany.mockResolvedValue(
       Array.from({ length: 5 }, (_, i) => partie({ id: `g${i}` })));
     const d = await corps(await dash());
-    expect(d.premiereSemaine).toMatchObject({ visible: false, atteint: true });
+    expect(d.premiereSemaine).toMatchObject({ visible: true, atteint: true, restantes: 0 });
   });
 });

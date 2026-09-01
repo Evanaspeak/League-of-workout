@@ -238,6 +238,12 @@ cinq parties, ce qu'on enregistre en une soirée — et il ne demande aucun gest
 nouveau. Il disparaît au bout de sept jours, atteint ou non : un objectif raté
 qui reste affiché n'est plus un objectif, c'est un reproche.
 
+Atteint, il **reste jusqu'à la fin de la fenêtre**, dans un état atteint. Il
+s'effaçait à la seconde où on l'atteignait : réussir et ignorer produisaient
+exactement le même écran, c'est-à-dire rien. Un objectif raté qu'on laisse est
+un reproche ; un objectif réussi qu'on laisse est un trophée. Les deux ne se
+traitent pas pareil.
+
 Il se calcule au serveur (`premiereSemaine()` dans `/api/dashboard`) parce que
 la date d'inscription n'est pas remise au navigateur, et n'a aucune raison de
 l'être pour ce seul usage. Une date illisible ne montre rien plutôt que de
@@ -694,6 +700,42 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Réussir l'objectif de la première semaine ne se voyait pas
+Le premier chantier de rétention, et il commence par un constat qui n'était pas
+celui attendu : **la machinerie existe déjà et elle est complète.** Objectif de
+première semaine, série de jours avec son état de retard, dix-huit paliers avec
+le prochain montré, bilan hebdomadaire par courriel, rappel du matin, relance
+après deux semaines d'absence. Chercher quoi ajouter était la mauvaise
+question ; il fallait chercher ce qui, là-dedans, ne fait pas ce qu'il annonce.
+
+Trouvé en lisant une seule ligne :
+
+```ts
+visible: dansLaFenetre && !atteint,
+```
+
+**L'objectif s'efface à la seconde où on l'atteint.** Quelqu'un qui enregistre
+ses cinq parties le premier soir voit sa récompense s'évanouir sans un mot :
+réussir et ignorer produisent exactement le même écran, c'est-à-dire rien. Le
+commentaire au-dessus disait « un objectif raté qui reste affiché n'est plus un
+objectif, c'est un reproche », ce qui est juste — et la règle avait été
+appliquée aux deux cas alors qu'elle n'en concerne qu'un.
+
+Il reste maintenant jusqu'à la fin de la fenêtre, en vert, avec sa barre
+pleine, sans décompte de jours restants — il ne reste rien à faire — et il
+pointe vers ce qui suit : les paliers, juste en dessous, qui montrent déjà le
+prochain seuil. La suite existait, personne ne la désignait.
+
+Sabotage fait, la ligne remise : le parcours navigateur tombe.
+
+**Ce que ça ne règle pas, et qu'il faut dire.** Le produit n'a eu aucune
+activité en une semaine, sur quatre comptes. Ajouter de la rétention à un
+produit que personne n'ouvre revient à réparer une porte dans un mur sans
+maison. C'est le même raisonnement qui a fait lever le plafond de cent : une
+porte qu'on garde contre une foule absente ne garde rien. Ce qui se décide
+maintenant est un arbitrage d'acquisition, pas de code, et il figure dans les
+questions.
 
 ### La campagne de mesure a trouvé ce que la relecture n'avait pas vu
 Trois défauts, tous introduits par le passage de la langue dans l'adresse,
