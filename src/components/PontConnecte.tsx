@@ -1,6 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { estPagePublique } from "@/lib/pagesPubliques";
 
 /**
@@ -13,7 +13,7 @@ import { estPagePublique } from "@/lib/pagesPubliques";
  * de consentement santé et leurs dictionnaires en six langues, pour ne rien
  * en montrer. Ce sont précisément les pages qu'un visiteur voit en premier.
  *
- * La décision se prend au rendu, sans requête : `usePathname` est connu tout
+ * La décision se prend au rendu, sans requête : `useChemin` est connu tout
  * de suite, et `dynamic` ne va chercher un module qu'au moment où le composant
  * se rend vraiment.
  *
@@ -39,7 +39,7 @@ const InvitationInstallation = dynamic(
   () => import("./InvitationInstallation").then((m) => ({ default: m.InvitationInstallation })), { ssr: false });
 
 export function PontConnecte() {
-  if (estPagePublique(usePathname())) return null;
+  if (estPagePublique(useChemin())) return null;
   return (
     <>
       {/* Sort quand la session a expiré. */}

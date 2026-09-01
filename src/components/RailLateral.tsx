@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { CompteurDette } from "@/components/CompteurDette";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { useT } from "@/lib/i18n/LocaleContext";
@@ -29,7 +29,7 @@ const ZONE_ACTIONS = "rail-actions";
  * les actions de la page.
  */
 export function RailLateral() {
-  const chemin = usePathname();
+  const chemin = useChemin();
   const t = useT(navDict);
   const actif = !estPagePublique(chemin);
   // Le chemin voyage avec l'état d'ouverture : changer de page referme le rail,

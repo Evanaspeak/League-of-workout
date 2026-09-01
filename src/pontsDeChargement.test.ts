@@ -73,7 +73,7 @@ describe("les ponts de chargement", () => {
   });
 
   test("la mise en page racine n'importe aucun de ces composants", () => {
-    const layout = lire("src/app/layout.tsx");
+    const layout = lire("src/app/[locale]/layout.tsx");
     for (const pont of PONTS) {
       for (const nom of montesPar(pont)) {
         expect(layout).not.toMatch(new RegExp(`import\\s*\\{[^}]*\\b${nom}\\b[^}]*\\}\\s*from`));
@@ -82,7 +82,7 @@ describe("les ponts de chargement", () => {
   });
 
   test("la mise en page racine monte bien les deux ponts", () => {
-    const layout = lire("src/app/layout.tsx");
+    const layout = lire("src/app/[locale]/layout.tsx");
     expect(layout).toContain("<PontConnecte />");
     expect(layout).toContain("<PontDesktop />");
   });

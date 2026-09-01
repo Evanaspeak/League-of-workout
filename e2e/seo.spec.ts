@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { enLangue } from "./chemin";
 
 /**
  * Ce qu'un moteur de recherche et un salon Discord voient des pages publiques.
@@ -19,6 +20,16 @@ import { test, expect } from "@playwright/test";
 
 /** Les pages ouvertes à tous, hors calculateur par jeu. */
 const PUBLIQUES = ["/", "/beta", "/telechargement", "/calculateur", "/cgu", "/confidentialite"];
+
+/**
+ * Les contrôles de longueur se font en français, et seulement là.
+ *
+ * Un minimum de soixante-dix caractères n'a pas de sens en japonais, où la
+ * même phrase en occupe la moitié : l'imposer forcerait à délayer le texte
+ * pour satisfaire un test. Ce qui vaut pour les six langues — les alternatives
+ * déclarées, et six textes réellement différents — est éprouvé à part.
+ */
+const MESURE = "fr";
 
 async function metadonnees(page: import("@playwright/test").Page) {
   return page.evaluate(() => {
@@ -45,7 +56,7 @@ for (const chemin of PUBLIQUES) {
     await page.addInitScript(() => {
       try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
     });
-    await page.goto(chemin, { waitUntil: "domcontentloaded" });
+    await page.goto(enLangue(MESURE, chemin), { waitUntil: "domcontentloaded" });
     const m = await metadonnees(page);
 
     expect(m.titre.length).toBeGreaterThanOrEqual(15);
@@ -68,7 +79,7 @@ test("les pages par jeu gardent leur vignette et leur adresse", async ({ page })
   // C'est le bloc `openGraph` redéclaré dans la page qui les efface : Next.js
   // remplace celui du parent au lieu de le compléter.
   for (const slug of ["league-of-legends", "valorant", "apex-legends"]) {
-    await page.goto(`/calculateur/${slug}`, { waitUntil: "domcontentloaded" });
+    await page.goto(enLangue(MESURE, `/calculateur/${slug}`), { waitUntil: "domcontentloaded" });
     const m = await metadonnees(page);
     expect(m.ogImage, slug).toBeTruthy();
     expect(m.ogUrl, slug).toContain(slug);
@@ -81,7 +92,7 @@ test("le titre d'une page par jeu tient dans un résultat de recherche", async (
   // Le titre EST la question qu'on a tapée : coupé, il perd le nom du jeu,
   // c'est-à-dire le mot qui prouve qu'on répond à celle-ci.
   for (const slug of ["league-of-legends", "teamfight-tactics", "world-of-warcraft"]) {
-    await page.goto(`/calculateur/${slug}`, { waitUntil: "domcontentloaded" });
+    await page.goto(enLangue(MESURE, `/calculateur/${slug}`), { waitUntil: "domcontentloaded" });
     expect((await metadonnees(page)).titre.length, slug).toBeLessThanOrEqual(60);
   }
 });
@@ -91,7 +102,7 @@ test("les écrans privés disent de ne pas les indexer", async ({ page }) => {
   // d'exploration peut être indexée depuis un lien, et paraît alors sans titre
   // ni description. Un moteur ne lit « noindex » que s'il ouvre la page.
   for (const chemin of ["/login", "/recuperation"]) {
-    await page.goto(chemin, { waitUntil: "domcontentloaded" });
+    await page.goto(enLangue(MESURE, chemin), { waitUntil: "domcontentloaded" });
     expect((await metadonnees(page)).robots, chemin).toContain("noindex");
   }
 });
@@ -132,7 +143,7 @@ test("robots.txt n'interdit pas ce qui porte une balise noindex", async ({ reque
 test("sans JavaScript, la page d'accueil ne se réduit pas au premier écran", async ({ browser }) => {
   const ctx = await browser.newContext({ javaScriptEnabled: false, locale: "fr-FR" });
   const page = await ctx.newPage();
-  await page.goto("/", { waitUntil: "load" });
+  await page.goto(enLangue(MESURE, "/"), { waitUntil: "load" });
 
   // Les sections ne se révèlent qu'au passage : on descend la page.
   for (let i = 0; i < 20; i++) {
@@ -157,4 +168,56 @@ test("sans JavaScript, la page d'accueil ne se réduit pas au premier écran", a
   expect(bilan.total).toBeGreaterThan(5);
   expect(bilan, "des sections restent invisibles sans script").toMatchObject({ caches: 0 });
   await ctx.close();
+});
+
+/**
+ * Les six langues existent pour un moteur, et elles se déclarent l'une l'autre.
+ *
+ * C'est tout l'objet du préfixe de langue dans l'adresse. Tant qu'elle vivait
+ * dans le stockage du navigateur, une seule version pouvait partir — le
+ * français — et les cinq autres n'existaient pas aux yeux d'un moteur. Le
+ * défaut ne cassait rien et ne se voyait nulle part : la page s'affichait
+ * parfaitement dans la bonne langue une fois le script exécuté.
+ *
+ * Deux choses se vérifient, et il faut les deux. Que chaque version se
+ * déclare — sans `hreflang`, les six adresses se font concurrence au lieu de
+ * s'additionner, et c'est la plus ancienne qui gagne partout. Et que les
+ * textes soient réellement différents : six adresses qui rendent le même
+ * titre français seraient pires que rien, un moteur y verrait du contenu
+ * dupliqué.
+ */
+const LANGUES_SEO = ["fr", "en", "es", "de", "zh", "ja"];
+
+test("chaque page publique existe dans les six langues, et le déclare", async ({ page }) => {
+  for (const chemin of ["/", "/cgu", "/calculateur/league-of-legends"]) {
+    const titres = new Set<string>();
+    for (const langue of LANGUES_SEO) {
+      await page.goto(enLangue(langue, chemin), { waitUntil: "domcontentloaded" });
+      const m = await page.evaluate(() => ({
+        lang: document.documentElement.lang,
+        titre: document.title,
+        canonical: document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href ?? "",
+        alternates: [...document.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]')]
+          .map((l) => l.getAttribute("hreflang")),
+      }));
+      expect({ chemin, langue, lang: m.lang }).toEqual({ chemin, langue, lang: langue });
+      expect(m.canonical, `${langue} ${chemin}`).toContain(`/${langue}`);
+      expect([...m.alternates].sort(), `${langue} ${chemin}`).toEqual([...LANGUES_SEO].sort());
+      titres.add(m.titre);
+    }
+    // Six textes réellement différents, pas six copies du français.
+    expect({ chemin, distincts: titres.size }).toEqual({ chemin, distincts: LANGUES_SEO.length });
+  }
+});
+
+test("une adresse sans langue mène à une langue, une fois pour toutes", async ({ page }) => {
+  // Toutes les adresses écrites avant le préfixe — un lien partagé, un
+  // favori, une notification — doivent continuer de marcher. En 308 et non en
+  // 307 : c'est permanent, et un moteur doit reporter le crédit de l'ancienne
+  // adresse sur la nouvelle plutôt que de garder les deux.
+  const reponse = await page.goto("/cgu", { waitUntil: "domcontentloaded" });
+  const chaine = reponse!.request().redirectedFrom();
+  expect(chaine, "la page devait être atteinte par une redirection").not.toBeNull();
+  expect((await chaine!.response())!.status()).toBe(308);
+  expect(new URL(page.url()).pathname).toMatch(/^\/(fr|en|es|de|zh|ja)\/cgu$/);
 });

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { LANGUES } from "@/lib/i18n/langues";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -13,7 +14,16 @@ export default function robots(): MetadataRoute.Robots {
       // paraît alors sans titre ni description, ce qui est le pire des deux
       // mondes. Une page qu'on ne veut pas voir sortir porte `noindex`, et
       // reste explorable pour que le moteur puisse le lire.
-      disallow: ["/api/", "/dashboard", "/history", "/settings", "/admin", "/bilan"],
+      //
+      // Une page publique existe maintenant à six adresses, et une page privée
+      // aussi : la liste se décline donc par langue. Écrite en clair plutôt
+      // qu'avec des jokers — tous les explorateurs ne les comprennent pas, et
+      // ce fichier est engendré, donc sa longueur ne coûte rien à personne.
+      disallow: [
+        "/api/",
+        ...LANGUES.flatMap((l) =>
+          ["/dashboard", "/history", "/settings", "/admin", "/bilan"].map((c) => `/${l}${c}`)),
+      ],
     },
     sitemap: "https://winorworkout.com/sitemap.xml",
   };

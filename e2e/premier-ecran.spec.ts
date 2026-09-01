@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
 import { passerIntro } from "./intro";
+import { sansLangue } from "./chemin";
 
 /**
  * Le premier écran du tableau de bord part dans le HTML de la réponse.
@@ -40,7 +41,7 @@ test("ouvrir un compte", async ({ browser }) => {
   await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
   await page.getByPlaceholder(/ton code|your code/i).fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
   etat = await ctx.storageState();
@@ -49,7 +50,10 @@ test("ouvrir un compte", async ({ browser }) => {
 
 test("le rappel du test de force est déjà dans la réponse du serveur", async ({ browser }) => {
   const ctx = await browser.newContext({ storageState: etat });
-  const reponse = await ctx.request.get("/dashboard");
+  // L'adresse porte la langue : une requête d'API n'envoie pas d'en-tête de
+  // langue, la négociation rendrait donc l'anglais et on chercherait un texte
+  // français dans une page anglaise.
+  const reponse = await ctx.request.get("/fr/dashboard");
   expect(reponse.status()).toBe(200);
   const html = await reponse.text();
 
@@ -66,7 +70,7 @@ test("le rappel disparaît quand le test est fait, sans attendre l'API", async (
   });
   expect(enregistre.status(), await enregistre.text()).toBe(200);
 
-  const html = await (await ctx.request.get("/dashboard")).text();
+  const html = await (await ctx.request.get("/fr/dashboard")).text();
   expect(html).not.toContain("Un seul chiffre fixe ton niveau");
   await ctx.close();
 });

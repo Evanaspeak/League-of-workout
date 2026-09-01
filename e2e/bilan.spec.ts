@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
+import { sansLangue } from "./chemin";
 
 /**
  * Le bilan de saison, et son image.
@@ -34,7 +35,7 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
   await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
   await page.getByPlaceholder(/ton code|your code/i).fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
 
@@ -124,7 +125,7 @@ test("un compte sans partie ne précharge pas d'image", async ({ browser }) => {
   await page.getByPlaceholder(/ton pseudo|your username/i).fill(neuf);
   await page.getByPlaceholder(/ton code|your code/i).fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
 
@@ -158,7 +159,7 @@ test("une image qui ne se dessine pas le dit, au lieu d'une icône cassée", asy
 
   await page.route("**/api/bilan/image", (route) => route.fulfill({ status: 500, body: "boum" }));
   await page.goto("/bilan", { waitUntil: "networkidle" });
-  expect(new URL(page.url()).pathname).toBe("/bilan");
+  expect(sansLangue(new URL(page.url()).pathname)).toBe("/bilan");
 
   await expect(page.getByText(/n.a pas pu être dessinée|could not be drawn/i))
     .toBeVisible({ timeout: 15_000 });

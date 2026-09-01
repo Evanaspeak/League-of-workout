@@ -10,6 +10,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { enLangue, langueDemandee } from "./langue.mjs";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 
@@ -25,7 +26,9 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
  * pas — et deux séries divergent sans qu'une seule ligne de code ait bougé.
  * C'est la seule page du lot dont une différence ne prouve rien.
  */
-const PAGES = ["/", "/cgu", "/login", "/beta", "/telechargement", "/dashboard", "/history", "/settings"];
+const LANGUE_ADRESSE = langueDemandee(process.argv);
+const PAGES = ["/", "/cgu", "/login", "/beta", "/telechargement", "/dashboard", "/history", "/settings"]
+  .map((c) => enLangue(LANGUE_ADRESSE, c));
 const PAGES_INSTABLES = new Set(["_telechargement"]);
 const LARGEURS = [360, 768, 1280];
 

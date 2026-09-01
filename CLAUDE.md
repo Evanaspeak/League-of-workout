@@ -65,19 +65,22 @@ du commit de merge.
 ```
 src/
   app/
-    page.tsx                        # Dashboard (client) — stats, graphiques, mode session
-    history/page.tsx                # Historique parties + pompes (client)
-    admin/page.tsx                  # Panel admin (server) — restreint à evantocquet@gmail.com
-    admin/AdminChampionEditor.tsx   # Éditeur liste champions (client)
-    admin/AdminRatiosExercices.tsx  # Réglage des ratios squats et boxe (client)
-    settings/page.tsx               # Réglages utilisateur
-    login/page.tsx                  # Login
-    telechargement/page.tsx         # Page download app desktop
+    [locale]/                       # Toutes les pages, une version par langue
+      page.tsx                      # Dashboard (client) — stats, graphiques, mode session
+      history/page.tsx              # Historique parties + pompes (client)
+      admin/page.tsx                # Panel admin (server) — restreint à evantocquet@gmail.com
+      admin/AdminChampionEditor.tsx # Éditeur liste champions (client)
+      admin/AdminRatiosExercices.tsx # Réglage des ratios squats et boxe (client)
+      settings/page.tsx             # Réglages utilisateur
+      login/page.tsx                # Login
+      telechargement/page.tsx       # Page download app desktop
+      not-found.tsx                 # 404 dans la langue de la page
+    (diffusion)/obs/[jeton]/        # Source OBS : sa propre coquille, sans langue
     api/
       dashboard/route.ts            # GET stats globales (totalPompes, statsByPeriod, dailyPompes, etc.)
       dashboard/daily/route.ts      # GET ?date=YYYY-MM-DD → détail horaire du jour
       games/route.ts                # GET liste games, POST nouvelle game
-      games/[id]/route.ts           # DELETE + PATCH (modifier date)
+      games/[id]/route.ts           # DELETE + PATCH (date, ou résultat rejoué)
       games/preview/route.ts        # POST preview scoring sans sauvegarder
       champions/route.ts            # GET liste champions (DB override ou défaut)
       admin/config/champions/route.ts  # GET/PUT/DELETE liste champions (admin only)
@@ -94,6 +97,10 @@ src/
     champions.ts      # Liste LoL hardcodée (~170 champions) + findChampion() + suggestChampions()
     prisma.ts         # Client Prisma singleton
     auth-helpers.ts   # getCurrentUser() → User | null
+    dette.ts          # Ajout et retrait de dette, atomiques
+    i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
+    i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
+    i18n/metadonnees.ts     # Titres et descriptions des pages publiques, six langues
 prisma/
   schema.prisma       # Modèles DB
   migrations/
@@ -187,6 +194,23 @@ Six langues : français, anglais, espagnol, allemand, chinois, japonais.
 `src/lib/i18n/dictionaries/` — un fichier par écran, un bloc par langue. Le
 français et l'anglais sont exigés ; une langue absente retombe sur l'anglais,
 jamais sur du vide (`useT`).
+
+**La langue vit dans l'adresse** : `/fr/history`, `/ja/cgu`. Toutes les pages
+sont sous `src/app/[locale]/`, et les six versions sont engendrées à la
+construction. Le middleware redirige en 308 une adresse sans langue vers celle
+du cookie, à défaut celle du navigateur, à défaut l'anglais.
+
+- Les règles d'adresse vivent dans `src/lib/i18n/cheminLocalise.ts` : ce qui
+  prend un préfixe, ce qui n'en prend pas (API, `/obs`, fichiers), et la
+  négociation.
+- `useChemin()` rend le chemin SANS langue : c'est sous cette forme que tout le
+  reste du projet raisonne. `usePathname` est interdit ailleurs.
+- `Lien` remplace `next/link` partout : un `href` écrit tel quel changerait de
+  langue au clic.
+- Les métadonnées des pages publiques vivent dans `src/lib/i18n/metadonnees.ts` :
+  Next.js les rend au serveur, sans composant, donc `useT` ne peut pas y servir.
+- Ce qui part hors du navigateur porte la langue du COMPTE dans son lien :
+  courriel hebdomadaire, lien de récupération, notification push.
 
 Règles :
 - Aucun texte dans un composant. Un composant ne compare jamais `locale` à une
@@ -374,7 +398,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1236 tests unitaires, 103 suites. Base et session doublées : aucune dépendance à
+1357 tests unitaires, 118 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -403,7 +427,8 @@ Au navigateur (`npm run e2e`), 163 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
-langues et à trois largeurs, sur un compte qu'il ouvre lui-même, et
+langues et à trois largeurs, sur un compte qu'il ouvre lui-même, en demandant
+chaque langue par son ADRESSE, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
@@ -506,11 +531,20 @@ Trois scripts pilotent un Chromium sur l'application lancée en local. Ils ne
 tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
 ```bash
-node scripts/accessibilite.mjs   # neuf pages, six langues, règles WCAG
+node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
 ```
+
+Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
+(français par défaut) et `scripts/langue.mjs` porte la règle. Sans ça, `/cgu`
+répond 308 vers `/fr/cgu` et les trois premiers refusent de chronométrer une
+redirection : ils se seraient arrêtés net, ce qui est le bon comportement mais
+pas un usage. L'audit d'accessibilité, lui, n'a plus besoin de poser la langue
+dans le stockage — c'est l'adresse qui la porte, et c'est une source d'erreur
+de moins : la pose se faisait AVANT le ménage des clés `low_`, qui l'emportait,
+et six passes tournaient en français en annonçant six langues.
 
 `charge.mjs` ne tape JAMAIS sur la production : une montée en charge y
 écrirait des comptes de test dans la vraie base, consommerait le quota, et le
@@ -659,6 +693,91 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La langue est passée dans l'adresse, et cinq langues sur six ont commencé à exister
+Elle vivait dans le stockage du navigateur. Ça marchait, et ça se payait en
+silence : le serveur rendait TOUJOURS la même version, donc les métadonnées de
+chaque page partaient en français à tout le monde, `<html lang>` annonçait
+« fr » à un lecteur d'écran japonais jusqu'à ce que le paquet JavaScript
+s'exécute, et un moteur de recherche ne voyait jamais que le français. Les dix
+pages publiques et les quinze pages par jeu existent pour être trouvées ; cinq
+langues sur six ne l'étaient pas.
+
+Le défaut ne cassait rien et ne se voyait nulle part — la page s'affichait
+parfaitement dans la bonne langue une fois le script exécuté. C'est ce qui l'a
+laissé vivre si longtemps.
+
+**Ce qui a changé.** `src/app/[locale]/` porte toutes les pages ; le middleware
+redirige en 308 toute adresse sans langue vers celle qu'on a de meilleures
+raisons de croire bonne (le cookie d'abord, l'en-tête du navigateur ensuite,
+l'anglais à défaut). `generateStaticParams` engendre les six versions à la
+construction : **78 pages statiques avant, 228 après**, dont 90 pages de
+calculateur — quinze jeux fois six langues.
+
+**Deux mises en page racines**, et c'est la seule façon d'y arriver : une page
+racine ne peut pas lire un paramètre de route, donc `<html lang>` ne pouvait
+pas venir de l'adresse tant qu'un `app/layout.tsx` existait. Il a disparu au
+profit de `app/[locale]/layout.tsx` et de `app/(diffusion)/layout.tsx`. La
+source OBS y gagne au passage la coquille qu'elle aurait dû avoir depuis le
+début : ni navigation, ni pied de page, ni police à télécharger, ni pont vers
+l'application de bureau, pour une page qu'OBS superpose au jeu.
+
+**Ce qui ne prend jamais de préfixe**, avec sa raison : les routes d'API (les
+préfixer casserait les rappels d'Auth.js, l'application de bureau et les
+déclencheurs programmés, pour un gain nul), l'adresse de diffusion
+`/obs/<jeton>` (un laissez-passer déjà collé dans des logiciels de streaming),
+et les fichiers servis tels quels. La règle vit une seule fois, dans
+`src/lib/i18n/cheminLocalise.ts`, et elle compare par SEGMENTS — `startsWith("/api")`
+accepte `/apiculture`, faute déjà corrigée deux fois sur ce projet.
+
+**Un seul endroit retire le préfixe.** `useChemin()` rend le chemin sans
+langue, et tout le reste de l'application continue de raisonner sur
+`/history`, `path === "/"`, `estPagePublique(...)`. Sans ça, ces comparaisons
+devenaient fausses d'un coup et en silence : le menu ne soulignait plus rien,
+la modale d'accueil s'invitait sur les pages publiques, le rail s'affichait sur
+la page d'accueil. `src/liensLocalises.test.ts` refuse `usePathname` ailleurs
+que dans `useChemin` et le sélecteur de langue, et `next/link` ailleurs que
+dans `Lien`. Deux sabotages, deux échecs.
+
+**Ce qui partait hors du navigateur, et qui changeait de langue en chemin.**
+Quatre chemins, tous avec le même défaut : le texte était écrit dans la langue
+du COMPTE, et le lien qui l'accompagnait partait sans langue — donc renvoyé
+vers celle négociée par le navigateur qui l'ouvre.
+
+- Le **bilan hebdomadaire** : un courriel en japonais dont les deux boutons
+  ouvraient l'application en anglais.
+- Le **lien de récupération**, qui est le pire des quatre : on arrive sur
+  l'écran qui rend l'accès, et c'est le plus mauvais moment pour ne pas
+  comprendre ce qu'on lit.
+- Les **notifications push**.
+- La **déconnexion automatique** et les redirections des pages serveur.
+
+**Et l'application de bureau, qui aurait cassé sans un mot.** Sa fenêtre
+d'authentification décide « la connexion est finie » en demandant « ce n'est
+plus /login ? ». Avec `/fr/login`, elle répondait oui à la toute première page,
+refermait la fenêtre avant qu'on ait tapé quoi que ce soit, et cherchait un
+cookie qui n'existait pas encore. `desktop/src/origine.js` retire donc le
+préfixe avant toute comparaison. La liste des six langues y est recopiée — le
+SEUL endroit du projet où une règle est volontairement écrite deux fois,
+puisque la coquille Electron est construite sans le paquet du site. Un test la
+compare au fichier du site, pour que la divergence se voie le jour où une
+septième langue s'ajoute.
+
+**Vérifié sur le serveur, parce qu'une porte se pousse** : `/` répond 308 vers
+`/fr` en français, vers `/ja/cgu` avec un en-tête japonais, vers `/en/cgu` avec
+un en-tête portugais (langue inconnue, donc anglais), et vers
+`/es/telechargement` quand un cookie dit « es » malgré un navigateur japonais.
+`/fr/dashboard` redirige vers `/fr/login` — la langue survit à la porte.
+`/obs/<jeton>` et `/api/sante` atteignent leur handler sans préfixe. Et
+`/de/cgu` sert `<html lang="de">` avec « Nutzungsbedingungen » dans le titre,
+en statique.
+
+**Un piège de construction qui ne se voit qu'en lisant le HTML rendu** : les
+avertissements `metadataBase` ne portaient que sur `/_not-found`, et pas sur
+les 90 pages de calculateur — vérifié en cherchant « localhost » dans tout le
+HTML engendré. Les canoniques et les six `hreflang` s'y résolvent bien sur le
+domaine de production. Un avertissement de construction ne dit pas quelle page
+il concerne ; le fichier, lui, le dit.
 
 ### Une victoire enregistrée en défaite ne se reprenait qu'en la supprimant
 La détection locale a inventé l'issue manquante pendant des semaines, et une

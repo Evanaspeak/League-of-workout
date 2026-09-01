@@ -33,7 +33,7 @@ const PLEIN_ECRAN = /position:\s*["']fixed["']\s*,\s*inset:\s*0/;
  * capture ni le focus ni l'attention n'a pas à s'annoncer comme une fenêtre.
  */
 const PAS_DES_FENETRES: Record<string, string> = {
-  "app/obs/[jeton]/VueDiffusion.tsx":
+  "app/(diffusion)/obs/[jeton]/VueDiffusion.tsx":
     "page entière d'une source de diffusion, pas une fenêtre par-dessus autre chose",
   "components/SplashScreen.tsx":
     "écran d'ouverture : il ne pose aucune question et disparaît seul, personne n'a à en sortir",

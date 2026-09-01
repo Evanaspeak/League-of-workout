@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
 import { ouvrirCompte } from "./compte";
+import { sansLangue } from "./chemin";
 
 /**
  * Ce que l'écran dit quand le serveur répond mal.
@@ -43,7 +44,7 @@ test("ouvrir un compte avec une partie", async ({ browser }) => {
   await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
   await page.getByPlaceholder(/ton code|your code/i).fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
   uid = (await (await page.request.get("/api/user")).json()).id as string;
@@ -136,7 +137,9 @@ test("un historique vide dit où enregistrer une activité", async ({ browser })
 
   const lien = page.getByRole("link", { name: /tableau de bord/i });
   await expect(lien).toBeVisible();
-  expect(await lien.getAttribute("href")).toBe("/dashboard");
+  // Le lien porte la langue de la page : c'est `Lien` qui la pose, et sans
+  // elle on changerait de langue au clic.
+  expect(await lien.getAttribute("href")).toBe("/fr/dashboard");
   await ctx.close();
 });
 
@@ -186,7 +189,7 @@ test("un ajout Riot refusé le dit, sans faire disparaître la liste", async ({ 
   });
 
   await page.goto("/dashboard", { waitUntil: "networkidle" });
-  expect(new URL(page.url()).pathname).toBe("/dashboard");
+  expect(sansLangue(new URL(page.url()).pathname)).toBe("/dashboard");
   await page.locator('[data-visite="rail-bascule"]').click({ timeout: 2_000 }).catch(() => {});
   await page.locator('[data-visite="rail-ajout"]').click();
 

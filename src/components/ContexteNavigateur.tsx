@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { ecrireSession, lireSession } from "@/lib/stockage";
@@ -33,7 +33,7 @@ const CLE_ENVOYE = "low_contexte_envoye";
 
 export function ContexteNavigateur() {
   const { locale } = useLocale();
-  const pathname = usePathname();
+  const pathname = useChemin();
   const envoye = useRef<string | null>(null);
 
   useEffect(() => {

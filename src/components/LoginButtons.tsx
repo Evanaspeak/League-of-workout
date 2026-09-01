@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useValeurClient } from "@/lib/valeurClient";
 import { signIn } from "next-auth/react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
-import Link from "next/link";
+import { Lien } from "@/components/Lien";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { loginButtons as loginButtonsDict } from "@/lib/i18n/dictionaries/loginButtons";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -217,10 +217,10 @@ export function LoginButtons() {
           {checkbox}
           <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center", marginTop: "0.5rem" }}>
             {t.noCodeYet}{" "}
-            <Link href="/beta" style={{ color: "var(--ember)", textDecoration: "none", fontWeight: 600 }}>{t.getAccess}</Link>
+            <Lien href="/beta" style={{ color: "var(--ember)", textDecoration: "none", fontWeight: 600 }}>{t.getAccess}</Lien>
           </p>
           <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center", marginTop: "0.25rem" }}>
-            <Link href="/recuperation" style={{ color: "var(--faint)", textDecoration: "underline" }}>{t.forgotCode}</Link>
+            <Lien href="/recuperation" style={{ color: "var(--faint)", textDecoration: "underline" }}>{t.forgotCode}</Lien>
           </p>
         </div>
       )}

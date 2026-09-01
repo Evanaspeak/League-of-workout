@@ -39,7 +39,10 @@ function pages(dossier: string, prefixe = ""): string[] {
     if (statSync(complet).isDirectory()) {
       // `(groupe)` et `api` ne produisent pas de page.
       if (entree === "api") continue;
-      const segment = entree.startsWith("(") ? "" : `/${entree}`;
+      // `[locale]` non plus : c'est la langue, et le reste du projet ne
+      // connaît que le chemin sans elle — c'est sous cette forme que les liens
+      // sont écrits, et donc sous cette forme qu'il faut les chercher.
+      const segment = entree.startsWith("(") || entree === "[locale]" ? "" : `/${entree}`;
       trouvees.push(...pages(complet, prefixe + segment));
     } else if (entree === "page.tsx" || entree === "page.ts") {
       trouvees.push(prefixe || "/");

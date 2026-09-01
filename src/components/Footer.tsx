@@ -1,13 +1,14 @@
 "use client";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { SignalerProbleme } from "@/components/SignalerProbleme";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { layout } from "@/lib/i18n/dictionaries/layout";
 import { Wordmark } from "./Wordmark";
+import { Lien } from "@/components/Lien";
 
 export function Footer() {
   const t = useT(layout);
-  const path = usePathname();
+  const path = useChemin();
 
   // La landing gère son propre pied de page via sa section CTA — on garde
   // quand même le footer légal partout, y compris "/", pour le disclaimer.
@@ -33,9 +34,9 @@ export function Footer() {
       }}>
         <Wordmark fontSize="0.85rem" muted />
         <div style={{ display: "flex", justifyContent: "center", gap: "1.5rem", flexWrap: "wrap" }}>
-          <a href="/cgu" style={linkStyle}>{t.footerCgu}</a>
-          <a href="/confidentialite" style={linkStyle}>{t.footerConfidentialite}</a>
-          <a href="/telechargement" style={linkStyle}>{t.footerTelecharger}</a>
+          <Lien href="/cgu" style={linkStyle}>{t.footerCgu}</Lien>
+          <Lien href="/confidentialite" style={linkStyle}>{t.footerConfidentialite}</Lien>
+          <Lien href="/telechargement" style={linkStyle}>{t.footerTelecharger}</Lien>
           {/* Au pied de chaque page, y compris publiques : un problème sur
               l'écran de connexion est celui qu'on a le plus besoin de
               connaître, et c'est le seul qu'une session exigée cacherait. */}

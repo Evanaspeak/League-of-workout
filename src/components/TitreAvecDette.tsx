@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { formaterCompact, toExerciceIds, ventiler, type Repartition } from "@/lib/exercices";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { titreAvecDette } from "@/lib/titreOnglet";
@@ -16,7 +16,7 @@ import { titreAvecDette } from "@/lib/titreOnglet";
  * compteur disparaîtrait au premier changement de page.
  */
 export function TitreAvecDette() {
-  const chemin = usePathname();
+  const chemin = useChemin();
   const publique = estPagePublique(chemin);
 
   useEffect(() => {

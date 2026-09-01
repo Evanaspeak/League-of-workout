@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { useChemin } from "@/lib/i18n/useChemin";
+import { Lien } from "@/components/Lien";
 import { Modale } from "@/components/Modale";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { consentementSante as dict } from "@/lib/i18n/dictionaries/consentementSante";
@@ -22,7 +22,7 @@ type Etat = "jamais" | "accepte" | "refuse";
  */
 export function ConsentementSante() {
   const t = useT(dict);
-  const chemin = usePathname();
+  const chemin = useChemin();
   const [etat, setEtat] = useState<Etat | null>(null);
   const [aDesDonnees, setADesDonnees] = useState(false);
   const [envoi, setEnvoi] = useState(false);
@@ -110,12 +110,12 @@ export function ConsentementSante() {
           </button>
         </div>
 
-        <Link
+        <Lien
           href="/confidentialite"
           style={{ color: "var(--muted)", fontSize: "0.8rem", textDecoration: "underline" }}
         >
           {t.lien}
-        </Link>
+        </Lien>
       </div>
     </Modale>
   );

@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { visite as dict } from "@/lib/i18n/dictionaries/visite";
 import { estPagePublique } from "@/lib/pagesPubliques";
@@ -100,7 +101,7 @@ function tropGrand(el: Element): boolean {
 
 export function VisiteGuidee() {
   const t = useT(dict);
-  const chemin = usePathname();
+  const chemin = useChemin();
   const routeur = useRouter();
 
   const ETAPES: Etape[] = [

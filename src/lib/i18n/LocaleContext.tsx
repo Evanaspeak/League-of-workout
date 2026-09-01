@@ -1,63 +1,53 @@
 "use client";
-import { createContext, useContext, useEffect, useMemo } from "react";
-import { useValeurClient } from "@/lib/valeurClient";
+import { createContext, useContext, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { estLocale, etiquetteLocale, type Locale } from "./langues";
-import { ecrire, lire } from "@/lib/stockage";
+import { avecLocale } from "./cheminLocalise";
+import { ecrire } from "@/lib/stockage";
 
 // La liste elle-même vit dans un module sans React : une route API qui valide
 // une langue n'a pas à tirer tout le contexte avec elle. Réexportée ici, où
 // une trentaine de composants la lisent déjà.
 export { LANGUES, estLocale, etiquetteLocale, type Locale } from "./langues";
 
-const STORAGE_KEY = "low_locale";
-
 /**
- * La langue vit hors de React : elle est lue dans le stockage du navigateur,
- * que le rendu serveur ne connaît pas. La poser dans un effet imposait un
- * second rendu de toute l'application à chaque chargement — et le temps de
- * celui-ci, un anglophone voyait la page en français.
+ * La langue vient de l'ADRESSE, pas du stockage du navigateur.
+ *
+ * Elle a longtemps vécu dans `localStorage`, et ça se payait en silence :
+ * le serveur rendait toujours la même version, donc les métadonnées de chaque
+ * page partaient en français à tout le monde et `<html lang>` annonçait
+ * « fr » à un lecteur d'écran japonais jusqu'à ce que le paquet JavaScript
+ * s'exécute. Un moteur de recherche, lui, ne voyait jamais que le français.
+ *
+ * Le cookie reste, mais il ne décide plus rien à l'affichage : il sert au
+ * middleware à savoir où envoyer quelqu'un qui arrive sur une adresse sans
+ * langue. C'est un souvenir de choix, pas une source de vérité.
  */
-const abonnes = new Set<() => void>();
-
-function abonner(onChange: () => void) {
-  abonnes.add(onChange);
-  return () => { abonnes.delete(onChange); };
-}
-
-/**
- * Un choix explicite prime toujours. À défaut, on suit la langue du
- * navigateur : le français par défaut envoyait tout le monde sur la version
- * française, y compris des anglophones qui n'avaient rien demandé.
- */
-function lireLangue(): Locale {
-  const stocke = lire(STORAGE_KEY);
-  if (estLocale(stocke)) return stocke;
-  // `navigator.language` rend « fr-BE », « zh-Hant-TW », « pt-BR »… Seule la
-  // première étiquette nous intéresse, et ce qu'on ne connaît pas devient de
-  // l'anglais plutôt que du français : le défaut français envoyait tout le
-  // monde sur la version française, y compris ceux qui n'avaient rien demandé.
-  const brut = (navigator.language || "").toLowerCase().split("-")[0];
-  return estLocale(brut) ? brut : "en";
-}
+const CLE_STOCKAGE = "low_locale";
 
 type Ctx = { locale: Locale; setLocale: (l: Locale) => void };
 const LocaleContext = createContext<Ctx | null>(null);
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  // Le serveur rend en français : c'est la langue du contenu écrit d'abord.
-  const locale = useValeurClient(lireLangue, "fr", abonner);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-  }, [locale]);
+export function LocaleProvider({ locale, children }: { locale: string; children: React.ReactNode }) {
+  const router = useRouter();
+  const chemin = usePathname();
+  // La mise en page refuse déjà un premier segment qui n'est pas une langue ;
+  // le repli existe pour que le type soit honnête, pas pour rattraper un cas.
+  const actuelle: Locale = estLocale(locale) ? locale : "en";
 
   const valeur = useMemo<Ctx>(() => ({
-    locale,
+    locale: actuelle,
     setLocale: (l: Locale) => {
-      ecrire(STORAGE_KEY, l);
-      for (const prevenir of abonnes) prevenir();
+      // Le souvenir d'abord : sans lui, revenir sur `winorworkout.com` renverrait
+      // vers la langue du navigateur, en ignorant le choix qu'on vient de faire.
+      ecrire(CLE_STOCKAGE, l);
+      document.cookie = `${CLE_STOCKAGE}=${l};path=/;max-age=31536000;samesite=lax`;
+      // Puis l'adresse. `replace` et non `push` : changer de langue n'est pas
+      // une étape de navigation, et le bouton retour ne doit pas ramener à la
+      // page qu'on vient de quitter dans l'autre langue.
+      router.replace(avecLocale(chemin || "/", l));
     },
-  }), [locale]);
+  }), [actuelle, router, chemin]);
 
   return (
     <LocaleContext.Provider value={valeur}>

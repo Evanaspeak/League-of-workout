@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
+import { sansLangue } from "./chemin";
 
 /**
  * La section « Tes jeux », vue depuis un navigateur.
@@ -36,7 +37,7 @@ test("ouvrir un compte", async ({ browser }) => {
   await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
   await page.getByPlaceholder(/ton code|your code/i).fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
   ]);
   uid = (await (await page.request.get("/api/user")).json()).id as string;
@@ -70,7 +71,7 @@ test("dit pourquoi il n'y a qu'un jeu, et où sont les autres", async ({ browser
   await expect(page.getByText("League of Legends").first()).toBeVisible();
   const lien = page.getByRole("link", { name: /installer l.application|install the app/i });
   await expect(lien).toBeVisible();
-  await expect(lien).toHaveAttribute("href", "/telechargement");
+  await expect(lien).toHaveAttribute("href", "/fr/telechargement");
 
   // Et rien ne déborde de l'écran au passage.
   const deborde = await page.evaluate(() =>
@@ -106,7 +107,7 @@ test("un réglage que le serveur refuse revient en arrière, et le dit", async (
   await page.waitForTimeout(1000);
   // On est bien sur les réglages : sans session on atterrirait sur la
   // connexion, et le test mesurerait une page qui n'a aucun réglage.
-  expect(new URL(page.url()).pathname).toBe("/settings");
+  expect(sansLangue(new URL(page.url()).pathname)).toBe("/settings");
   // Les réglages sont rangés en rubriques repliées : il faut ouvrir « Ton
   // effort » avant de voir la liste des exercices.
   await page.getByRole("button", { name: /ton effort|your effort/i }).first().click();
@@ -175,7 +176,7 @@ test("une suppression de compte qui échoue le dit, au lieu de tourner sans fin"
   });
 
   await page.goto("/settings", { waitUntil: "networkidle" });
-  expect(new URL(page.url()).pathname).toBe("/settings");
+  expect(sansLangue(new URL(page.url()).pathname)).toBe("/settings");
   await page.getByRole("button", { name: /données|data/i }).first().click();
   await page.waitForTimeout(500);
 

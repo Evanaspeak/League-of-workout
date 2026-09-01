@@ -4,6 +4,7 @@ import { envoyerBilanHebdo } from "@/lib/email";
 import { textesBilan } from "@/lib/i18n/courriels";
 import { bilanHebdo, bilanDu, vautUnBilan, JOURS_BILAN } from "@/lib/bilanHebdo";
 import { heureLocale } from "@/lib/fuseau";
+import { toLocale } from "@/lib/i18n/langues";
 
 /**
  * Le bilan hebdomadaire, par courriel.
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
     try {
       parti = await envoyerBilanHebdo(
         u.email!, u.pseudo, textesBilan(u.langue), bilan, u.dettePointsDus > 0,
+        toLocale(u.langue),
       );
     } catch {
       // Une adresse morte ne doit pas arrêter la boucle : c'est un passage sur

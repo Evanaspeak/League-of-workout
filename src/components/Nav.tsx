@@ -1,7 +1,7 @@
 "use client";
 import { Icone } from "@/components/Icone";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Lien } from "@/components/Lien";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/SessionContext";
 import { useT } from "@/lib/i18n/LocaleContext";
@@ -15,7 +15,7 @@ const PUBLIC_PATHS = ["/login", "/"];
 const SELF_CHROMED = ["/", "/beta", "/recuperation"];
 
 export default function Nav() {
-  const path = usePathname();
+  const path = useChemin();
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
   // Sous 720 px les liens ne tiennent plus sur une ligne et le dernier était
@@ -63,12 +63,12 @@ export default function Nav() {
       zIndex: 40,
     }}>
       <div className="max-w-6xl mx-auto px-4 flex items-center gap-1 h-14">
-        <Link
+        <Lien
           href="/"
           style={{ textDecoration: "none", marginRight: "1.75rem", flexShrink: 0, display: "inline-flex" }}
         >
           <Wordmark fontSize="1.05rem" />
-        </Link>
+        </Lien>
 
         {!isPublic && (
           <button
@@ -90,7 +90,7 @@ export default function Nav() {
         {!isPublic && [...links, ...(isAdmin ? [{ href: "/admin", label: t.admin }] : [])].map((l) => {
           const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
           return (
-            <Link
+            <Lien
               key={l.href}
               href={l.href}
               className="nav-lien"
@@ -122,7 +122,7 @@ export default function Nav() {
                   transform: "skewX(-18deg)",
                 }} />
               )}
-            </Link>
+            </Lien>
           );
         })}
 
@@ -184,7 +184,7 @@ export default function Nav() {
           {[...links, ...(isAdmin ? [{ href: "/admin", label: t.admin }] : [])].map((l) => {
             const active = l.href === "/" ? path === "/" : path.startsWith(l.href);
             return (
-              <Link
+              <Lien
                 key={l.href}
                 href={l.href}
                 aria-current={active ? "page" : undefined}
@@ -203,7 +203,7 @@ export default function Nav() {
                 }}
               >
                 {l.label}
-              </Link>
+              </Lien>
             );
           })}
         </div>

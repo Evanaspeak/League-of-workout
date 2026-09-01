@@ -1,5 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
+import { sansLangue } from "./chemin";
 
 /**
  * Ouvre un compte neuf et rend son état de session.
@@ -45,7 +46,7 @@ export async function ouvrirCompte(
   await pseudo.fill(compte.pseudo);
   await secret.fill(code);
   await Promise.all([
-    page.waitForURL((u) => !u.pathname.startsWith("/login"), { timeout: 30_000 }),
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
     connecter.click(),
   ]);
 

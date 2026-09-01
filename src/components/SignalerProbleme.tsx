@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { Modale } from "@/components/Modale";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { signalement as dict } from "@/lib/i18n/dictionaries/signalement";
@@ -30,7 +30,7 @@ type Contexte = {
 export function SignalerProbleme({ surFermeture }: { surFermeture?: () => void }) {
   const t = useT(dict);
   const { locale } = useLocale();
-  const chemin = usePathname();
+  const chemin = useChemin();
   const [ouvert, setOuvert] = useState(false);
   const [message, setMessage] = useState("");
   const [envoi, setEnvoi] = useState(false);

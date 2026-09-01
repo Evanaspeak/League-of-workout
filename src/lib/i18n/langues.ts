@@ -37,3 +37,15 @@ const ETIQUETTES: Record<Locale, string> = {
 export function etiquetteLocale(locale: Locale): string {
   return ETIQUETTES[locale] ?? "en-US";
 }
+
+/**
+ * Ramène à une langue connue.
+ *
+ * Les pages serveur reçoivent leur segment d'adresse en `string` : la mise en
+ * page l'a déjà refusé s'il n'est pas une langue, mais le type ne le sait pas.
+ * Le repli est l'anglais, comme partout ailleurs — le français par défaut est
+ * le réflexe de celui qui écrit l'application, et il ne le voit jamais.
+ */
+export function toLocale(v: unknown): Locale {
+  return estLocale(v) ? v : "en";
+}

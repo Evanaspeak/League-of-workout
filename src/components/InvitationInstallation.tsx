@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useChemin } from "@/lib/i18n/useChemin";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { installation } from "@/lib/i18n/dictionaries/installation";
 import { estPagePublique } from "@/lib/pagesPubliques";
@@ -57,7 +57,7 @@ function inviteRetenue(): InviteInstallation | null {
  */
 export function InvitationInstallation() {
   const t = useT(installation);
-  const pathname = usePathname();
+  const pathname = useChemin();
   const [visible, setVisible] = useState(false);
   const [invite, setInvite] = useState<InviteInstallation | null>(null);
   const [ios, setIos] = useState(false);
