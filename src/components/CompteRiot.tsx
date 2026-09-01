@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { settings as dict } from "@/lib/i18n/dictionaries/settings";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -29,20 +30,16 @@ export function CompteRiot() {
   // état, et sa couleur ne se déduit pas.
   const [message, setMessage] = useState<{ texte: string; ok: boolean } | null>(null);
 
+  // Le compte vient du contexte commun : il est déjà lu une fois par page.
+  const { user } = useContexteConnecte();
+
   useEffect(() => {
-    let vivant = true;
-    fetch("/api/user")
-      .then((r) => r.json())
-      .then((u) => {
-        if (!vivant) return;
-        setRiotId(u.riotId ?? "");
-        setRegion(u.riotRegion ?? "EUW1");
-        setPuuid(u.riotPuuid ?? "");
-        setCharge(true);
-      })
-      .catch(() => { if (vivant) setCharge(true); });
-    return () => { vivant = false; };
-  }, []);
+    if (!user) return;
+    setRiotId((user.riotId as string) ?? "");
+    setRegion((user.riotRegion as string) ?? "EUW1");
+    setPuuid((user.riotPuuid as string) ?? "");
+    setCharge(true);
+  }, [user]);
 
   if (!charge) return null;
 

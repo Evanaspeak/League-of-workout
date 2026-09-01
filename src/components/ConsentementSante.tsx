@@ -6,6 +6,7 @@ import { Modale } from "@/components/Modale";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { consentementSante as dict } from "@/lib/i18n/dictionaries/consentementSante";
 import { estPagePublique } from "@/lib/pagesPubliques";
+import { useContexteConnecte } from "@/lib/ContexteConnecte";
 
 type Etat = "jamais" | "accepte" | "refuse";
 
@@ -30,21 +31,21 @@ export function ConsentementSante() {
 
   const publique = estPagePublique(chemin);
 
+  /**
+   * L'état vient du contexte commun, plus d'un appel à soi.
+   *
+   * Rien à demander sur les pages publiques : personne n'y est connecté, et la
+   * question s'y poserait par-dessus l'accueil. Le fournisseur ne demande rien
+   * non plus sur ces pages-là, donc `consentement` y reste indéfini.
+   */
+  const { consentement } = useContexteConnecte();
+
   useEffect(() => {
-    // Rien à demander sur les pages publiques : personne n'y est connecté, et
-    // la question s'y poserait par-dessus l'accueil.
     if (publique) { setEtat(null); return; }
-    let vivant = true;
-    fetch("/api/consentement")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (!vivant || !d) return;
-        setEtat(d.etat as Etat);
-        setADesDonnees(Boolean(d.aDesDonnees));
-      })
-      .catch(() => {});
-    return () => { vivant = false; };
-  }, [publique, chemin]);
+    if (!consentement) return;
+    setEtat(consentement.etat as Etat);
+    setADesDonnees(Boolean(consentement.aDesDonnees));
+  }, [publique, chemin, consentement]);
 
   if (etat !== "jamais") return null;
 

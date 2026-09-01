@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
+import { chargerContexte } from "@/lib/chargerContexte";
 import { descriptionsExercices, nomsExercices } from "@/lib/nomsExercices";
 import { logout } from "@/lib/actions";
 import { useT, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
@@ -128,8 +129,16 @@ export default function SettingsPage() {
   const [pompesMaxLe, setPompesMaxLe] = useState<string | null>(null);
 
   useEffect(() => {
+    /**
+     * Le compte vient du contexte commun, déjà lu une fois par page.
+     *
+     * `/api/user` et le bloc `user` de `/api/contexte` rendent exactement la
+     * même chose — le compte filtré par `comptePublic`, plus `estAdmin`. Le
+     * redemander ici en faisait une lecture de plus pour une réponse
+     * identique, sur la page où le compteur était déjà le plus élevé.
+     */
     Promise.all([
-      fetch("/api/user").then((r) => r.json()),
+      chargerContexte().then((c) => (c?.user ?? {}) as Record<string, never>),
       fetch("/api/settings").then((r) => r.json()),
     ]).then(([u, s]) => {
       setProfileForm({
