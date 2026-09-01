@@ -123,7 +123,7 @@ export function SuspensionExercice({ surChangement }: { surChangement?: () => vo
         </div>
       )}
 
-      {erreur && <p className="text-sm loss-text">{erreur}</p>}
+      {erreur && <p role="alert" className="text-sm loss-text">{erreur}</p>}
     </div>
   );
 }

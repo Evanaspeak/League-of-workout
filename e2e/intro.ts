@@ -34,3 +34,27 @@ export async function passerIntro(page: Page) {
     await lien.waitFor({ state: "hidden", timeout: 4_000 }).catch(() => {});
   }
 }
+
+/**
+ * Vide l'écran de tout ce qui le recouvre, quel qu'en soit l'ordre.
+ *
+ * `passerIntro` traverse les trois fenêtres dans un ordre fixe, avec quatre
+ * secondes d'attente chacune. Ça tient sur le tableau de bord ; ailleurs, la
+ * visite guidée arrive après la fin de la boucle et recouvre ce qu'on venait
+ * cliquer — le test expire alors sur une page parfaitement normale.
+ *
+ * Et la visite NAVIGUE d'une page à l'autre au fil de ses douze étapes : on la
+ * traverse donc avant d'aller où l'on va, jamais depuis la page qu'on veut
+ * éprouver.
+ */
+export async function viderLesFenetres(page: Page) {
+  const sorties = /^j.accepte$|^i agree$|passer.{0,6}(introduction|visite)|skip.{0,10}(introduction|tour)/i;
+  for (let tour = 0; tour < 6; tour++) {
+    const fenetre = page.locator('[aria-modal="true"]').first();
+    const ouverte = await fenetre.waitFor({ state: "visible", timeout: 6_000 })
+      .then(() => true).catch(() => false);
+    if (!ouverte) return;
+    await page.getByRole("button", { name: sorties }).last().click({ timeout: 5_000 });
+    await fenetre.waitFor({ state: "hidden", timeout: 6_000 }).catch(() => {});
+  }
+}

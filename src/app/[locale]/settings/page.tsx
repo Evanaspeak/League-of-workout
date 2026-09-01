@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { descriptionsExercices, nomsExercices } from "@/lib/nomsExercices";
 import { logout } from "@/lib/actions";
 import { useT, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
@@ -79,6 +80,20 @@ export default function SettingsPage() {
 
   // ── Suppression de compte ──
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const suppressionRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * La confirmation de suppression de compte : l'action la plus irréversible
+   * de l'application, et au clavier la tabulation en sortait droit sur les
+   * réglages derrière — dont le bouton qui vient de l'ouvrir.
+   *
+   * Échap annule, ce qui est le bon défaut : sur une fenêtre destructrice, la
+   * sortie par réflexe doit être celle qui ne détruit rien.
+   */
+  usePiegeFocus(suppressionRef, {
+    actif: showDeleteModal,
+    onEchap: () => setShowDeleteModal(false),
+  });
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [erreurSuppression, setErreurSuppression] = useState(false);
@@ -728,6 +743,8 @@ export default function SettingsPage() {
       {/* Modal de confirmation */}
       {showDeleteModal && (
         <div
+          ref={suppressionRef}
+          tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label={t.supprimerDefinitivement}
@@ -763,7 +780,7 @@ export default function SettingsPage() {
               style={{ marginBottom: "1rem" }}
             />
             {erreurSuppression && (
-              <p className="loss-text" role="status" style={{
+              <p className="loss-text" role="alert" style={{
                 fontSize: "0.82rem", marginBottom: "0.8rem", lineHeight: 1.5,
               }}>
                 {t.erreurSauvegarde}

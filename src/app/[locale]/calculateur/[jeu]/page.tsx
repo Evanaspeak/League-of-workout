@@ -81,6 +81,18 @@ export default async function PageCalculateur(
   );
 }
 
-// Le catalogue est fermé : une adresse hors liste rend 404 sans rendu à la
-// demande, plutôt que d'ouvrir une page vide pour n'importe quelle chaîne.
-export const dynamicParams = false;
+/**
+ * Le catalogue reste fermé — mais c'est la PAGE qui referme, pas le routeur.
+ *
+ * Avec `dynamicParams = false`, un jeu inconnu rendait le 404 par défaut de
+ * Next : `<html>` sans langue, « 404: This page could not be found. » en
+ * anglais dans les six langues. La page 404 du site, traduite, n'était jamais
+ * atteinte, parce que le routeur refusait l'adresse avant que la page ne
+ * s'exécute.
+ *
+ * Ouvert, le rendu a lieu, `jeuDepuisSlug` ne trouve rien, et `notFound()`
+ * rend la 404 du site dans la bonne langue. Les quinze jeux restent prérendus
+ * par `generateStaticParams` : ce qui change n'est pas leur coût, c'est ce que
+ * voit celui qui tape une adresse inventée.
+ */
+export const dynamicParams = true;
