@@ -229,6 +229,17 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Invalid result", es: "Resultado no válido", de: "Ungültiges Ergebnis",
     zh: "结果不正确", ja: "結果が正しくありません",
   },
+  "Cette activité n'a pas de résultat": {
+    en: "This activity has no result", es: "Esta actividad no tiene resultado",
+    de: "Diese Aktivität hat kein Ergebnis",
+    zh: "该活动没有胜负", ja: "このアクティビティに勝敗はありません",
+  },
+  "Le résultat se déduit du classement": {
+    en: "The result comes from your placement",
+    es: "El resultado se deduce de tu posición",
+    de: "Das Ergebnis ergibt sich aus der Platzierung",
+    zh: "结果由名次决定", ja: "結果は順位から決まります",
+  },
   "Durée invalide": {
     en: "Invalid duration", es: "Duración no válida", de: "Ungültige Dauer",
     zh: "时长不正确", ja: "時間が正しくありません",

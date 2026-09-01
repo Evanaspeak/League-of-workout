@@ -164,6 +164,10 @@ contenu dépasse : la première version signalait les libellés coupés par une
 ellipse, qui débordent par construction et ne se font jamais défiler.
 - Vue "Parties" : 20 dernières Riot + quick-add + ARAM du chaos manuel
 - Vue "Pompes" : tableau filtrable/triable avec édition de date inline (✎ → datetime-local)
+- **Correction du résultat** : le même crayon à côté de la victoire ou de la
+  défaite. La route rejoue le barème et porte l'écart au compteur de dette ;
+  elle refuse les séances au temps et les battle royale, dont le résultat se
+  déduit du classement
 - Formulaire ajout manuel :
   - **lastRole** et **lastGainageSec** persistés en localStorage
   - **ChampionInput** autocomplete avec validation (rejette hors liste)
@@ -655,6 +659,60 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Une victoire enregistrée en défaite ne se reprenait qu'en la supprimant
+La détection locale a inventé l'issue manquante pendant des semaines, et une
+victoire sur trois entrait du mauvais côté. Le défaut est corrigé depuis, mais
+les parties, elles, sont toujours là, avec la dette qu'elles ont créée. On
+avait écrit à l'époque que les reprendre « demande de décider ce qu'on fait de
+la dette déjà payée dessus, et ça ne se décide pas seul ». La décision est
+prise : on corrige depuis l'historique, partie par partie.
+
+**Corriger un résultat n'est pas modifier un champ, c'est refaire le calcul.**
+Réécrire la lettre seule laisserait le coût de la défaite affiché sous une
+victoire, c'est-à-dire une dette qu'on ne doit plus, affichée par l'écran qui
+vient de dire le contraire. `PATCH /api/games/[id]` rejoue donc le barème avec
+tout ce que la partie a gardé d'elle-même, et porte au compteur l'ÉCART entre
+les deux coûts.
+
+Trois décisions, chacune avec sa raison :
+
+- **Le niveau est relu sur la partie, pas sur le compte d'aujourd'hui.**
+  Quelqu'un qui a refait son test de force entre-temps ne doit pas voir une
+  vieille partie changer de coût pour une raison sans rapport avec ce qu'il
+  vient de corriger. Même chose pour le nombre de parties jouées avec ce
+  champion, figé à l'enregistrement.
+- **Les exercices ne se rouvrent pas.** Ils ont été figés à l'enregistrement
+  pour que l'historique reste fidèle même si la sélection change plus tard.
+  Seul le total qu'on répartit entre eux bouge.
+- **Deux gestes pour corriger**, pas une bascule au clic : le résultat s'ouvre,
+  puis se choisit. Une frappe malheureuse sur la ligne d'à côté créerait sinon
+  une dette qu'on ne doit pas, ce qui est exactement le défaut qu'on répare.
+
+Refusé, et pas proposé : les séances au temps, qui n'ont pas de résultat, et
+les battle royale, dont le résultat se déduit du classement. La règle est écrite
+des deux côtés — la route refuse, l'écran ne propose pas — parce qu'un geste
+offert qui sera repoussé est pire que pas de geste du tout.
+
+**Et une règle qui était écrite deux fois l'est maintenant une seule.**
+L'incrément de dette et la pose de sa date de début vivaient dans `/api/games` ;
+la correction en avait besoin à l'identique. `ajouterALaDette` rejoint
+`retirerDeLaDette` dans `src/lib/dette.ts`. C'est le cinquième cas de règle
+dupliquée trouvé sur ce projet, et le précédent portait précisément sur cette
+date de début.
+
+Six sabotages, six échecs : le résultat réécrit sans recalcul, la correction
+déjà faite qui repasse quand même, le battle royale accepté, la séance au temps
+acceptée, le niveau relu sur le gainage plutôt que sur la partie, et la dette
+réglée en valeur absolue au lieu de l'écart.
+
+Au navigateur, deux tests : la correction change l'écran ET la base, et une
+correction refusée ne change ni l'un ni l'autre. Sans ce second contrôle, un
+écran qui se contente de réécrire la lettre chez lui passerait.
+
+**Un défaut d'étiquette trouvé en passant** : le bouton qui renonce à modifier
+une date s'annonçait « Voir le détail du calcul ». Le libellé lu à voix haute
+n'était pas celui du bouton.
 
 ### Le placement de la pastille, la seule chose qui puisse la rendre invisible
 `overlay.js` fait six cents lignes et n'avait aucun test. La plus grande partie
