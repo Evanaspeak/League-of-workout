@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { jourLocal } from "@/lib/serie";
+import { chargerProgression, rafraichirProgression, type Progression } from "@/lib/chargerProgression";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { badges as dict } from "@/lib/i18n/dictionaries/badges";
 import type { Badge } from "@/lib/badges";
@@ -18,14 +20,17 @@ export function Paliers() {
   const t = useT(dict);
   const [etat, setEtat] = useState<Reponse | null>(null);
 
+  /**
+   * Les paliers viennent de l'appel commun, partagé avec la série.
+   *
+   * Les deux composants demandaient leur route de leur côté, et les deux
+   * routes lisaient la même requête de paiements : deux allers-retours pour
+   * deux réponses qui se déduisent des mêmes lignes.
+   */
   useEffect(() => {
-    const relire = () => {
-      fetch("/api/badges")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (d) setEtat(d); })
-        .catch(() => {});
-    };
-    relire();
+    const poser = (p: Progression | null) => { if (p?.badges) setEtat(p.badges as Reponse); };
+    void chargerProgression(jourLocal()).then(poser);
+    const relire = () => { void rafraichirProgression(jourLocal()).then(poser); };
     window.addEventListener("wow-dette-changee", relire);
     return () => window.removeEventListener("wow-dette-changee", relire);
   }, []);

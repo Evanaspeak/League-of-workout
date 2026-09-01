@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { prochainPalier, tousLesBadges } from "@/lib/badges";
-import { meilleureSerie } from "@/lib/serie";
+import { reponseBadges } from "@/lib/progression";
 
 /**
  * Les paliers atteints, et le prochain.
@@ -29,17 +28,9 @@ export async function GET() {
     }),
   ]);
 
-  const jours = paiements.map((p) => p.jour);
-  const source = {
+  return NextResponse.json(reponseBadges({
     totalPoints: agregat._sum.pompesCalculees ?? 0,
     parties: agregat._count._all ?? 0,
-    meilleureSerie: meilleureSerie(jours),
-    joursPayes: new Set(jours).size,
-  };
-
-  return NextResponse.json({
-    source,
-    badges: tousLesBadges(source),
-    prochain: prochainPalier(source),
-  });
+    jours: paiements.map((p) => p.jour),
+  }));
 }

@@ -701,6 +701,39 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les paliers et la série lisaient deux fois la même requête
+Suite du regroupement. Après `/api/contexte`, le tableau de bord faisait encore
+cinq appels, dont `/api/badges` et `/api/serie` — et les deux exécutaient
+**exactement la même requête** : les huit cents derniers jours payés du compte,
+triés du plus récent au plus ancien. Deux allers-retours pour deux réponses qui
+se déduisent des mêmes lignes.
+
+Pire : les deux composants qui les portent écoutent tous deux
+`wow-dette-changee`. Après chaque paiement, deux lectures identiques
+repartaient. Sur une soirée où l'on paie sa dette, quatre lectures pour rien.
+
+`/api/progression` les rend d'un coup, et la mise en forme vit dans
+`src/lib/progression.ts`, lue par la route fusionnée comme par les deux
+d'origine. Un test vérifie que les deux réponses sont identiques champ par
+champ, et un autre que les paiements ne sont lus **qu'une fois** — c'est la
+raison d'être de la route, et sans ce contrôle on n'aurait mesuré que le
+nombre d'appels HTTP, pas le nombre de requêtes.
+
+| écran | au départ | après `/api/contexte` | après `/api/progression` |
+|---|---|---|---|
+| tableau de bord, premier chargement | 9 | 6 | **5** |
+| tableau de bord, navigation suivante | 8 | 5 | **4** |
+| historique | 6 | 3 | 3 |
+| réglages | 7 | 3 | 3 |
+
+Comme pour le contexte, ce n'est pas la route fusionnée qui économise l'appel :
+c'est le fait qu'un seul appelant le fasse. `chargerProgression` porte la
+mémoire de module, et les deux composants la partagent.
+
+Quatre sabotages, quatre échecs — dont la mise en forme refaite dans la route
+fusionnée, et le filtre par compte retiré de la lecture des paiements, attrapé
+par le garde structurel autant que par le test de la route.
+
 ### La 404 localisée ne l'était que pour ceux qui exécutent le JavaScript
 Suite immédiate du chantier précédent, et correction d'un défaut que j'avais
 publié en croyant l'avoir réglé. `/de/nimportequoi` répondait bien 404 — mais
