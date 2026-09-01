@@ -701,6 +701,50 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 2 septembre
+Passée après six chantiers de la nuit, sur un compte neuf ouvert par
+`scripts/compte-mesure.mjs`. En allemand : c'est la langue où les mots sont les
+plus longs, donc celle qui déborde en premier.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues,
+**aucune page laissée de côté**.
+
+| écran | LCP poste | LCP téléphone bridé | plus grand élément |
+|---|---|---|---|
+| `/de` | 604 ms | 1404 ms | l'image de l'application |
+| `/de/beta` | 492 ms | 1676 ms | le titre |
+| `/de/history` | 120 ms | 1296 ms | la mention Riot, en pied |
+| `/de/confidentialite` | 480 ms | 1144 ms | le titre |
+| `/de/dashboard` | 280 ms | 1136 ms | le rappel du test de force |
+| `/de/calculateur/league-of-legends` | 528 ms | 1128 ms | le titre |
+| `/de/telechargement` | 476 ms | 1128 ms | le paragraphe SmartScreen |
+| `/de/cgu` | 496 ms | 1124 ms | le premier paragraphe |
+| `/de/calculateur` | 480 ms | 1124 ms | le titre |
+| `/de/settings` | 136 ms | 928 ms | la mention Riot, en pied |
+| `/de/bilan` | 128 ms | 920 ms | la mention Riot, en pied |
+
+Aucune page au-dessus du seuil de 2500 ms, CLS négligeable partout. Le tableau
+de bord, longtemps le seul écran au-dessus, tient à 1136 ms depuis que son
+premier écran est rendu au serveur.
+
+**Deux gardes ont mordu pendant cette campagne, et c'est le plus intéressant.**
+
+- L'audit d'accessibilité a d'abord rendu « 0 constat, 15 pages NON MESURÉES »
+  six fois de suite. Ce n'était pas le produit : `accessibilite.mjs` prend la
+  langue en argument NU quand les trois autres la prennent en option, et mon
+  `--langue=de` était devenu un chemin. Sans le décompte séparé des pages non
+  mesurées — posé le 23 août précisément pour ça — j'aurais publié « zéro
+  constat sur six langues » en n'ayant rien regardé du tout.
+- Le contrôle d'atterrissage de `performance.mjs` a refusé de chronométrer
+  `/fr/dashboard` en annonçant qu'il avait abouti sur `/fr/login`. Le compte de
+  mesure venait d'être effacé par la préparation de la suite navigateur, qui
+  purge les comptes `@example.test` — et le compte de mesure en est un. C'est
+  la troisième fois que ce garde évite un rapport flatteur sur la page de
+  connexion.
+
+Les deux fois, l'outil a dit « je n'ai pas mesuré » au lieu de dire « tout va
+bien ». C'est toute la différence entre un audit et un satisfecit.
+
 ### Neuf appels d'API pour ouvrir le tableau de bord, six désormais
 Le chiffre était écrit dans le journal depuis la mesure de charge, sans avoir
 jamais été attaqué. Compté à nouveau sur le serveur local, navigateur en main,
