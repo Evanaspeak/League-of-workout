@@ -505,7 +505,13 @@ tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 node scripts/accessibilite.mjs   # neuf pages, six langues, règles WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
+node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
 ```
+
+`charge.mjs` ne tape JAMAIS sur la production : une montée en charge y
+écrirait des comptes de test dans la vraie base, consommerait le quota, et le
+but même de l'exercice est de trouver où ça tombe. Il se lance sur le serveur
+local, et les plafonds de production se calculent à partir de la structure.
 
 ### Leurs pièges, tous rencontrés
 - **Mesurer la mauvaise page.** Avec un cookie de session périmé, les trois
@@ -908,6 +914,56 @@ des mots de passe et lit tous les comptes.
 contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
+
+### Combien de monde ça tient, mesuré plutôt que supposé
+`scripts/charge.mjs` monte la concurrence par paliers et s'arrête au premier
+qui casse. Sans dépendance : un banc d'essai qui demande d'installer quelque
+chose ne se relance pas six mois plus tard. Il vérifie aussi où il atterrit,
+comme les trois autres scripts de mesure — avec un cookie périmé, on
+chronométrerait l'écran de connexion.
+
+**Mesuré en local**, quatre cœurs, PostgreSQL sur la même machine :
+
+| simultanés | req/s | médiane | p95 | échecs |
+|---|---|---|---|---|
+| 20 | 142 | 138 ms | 170 ms | 0 |
+| 80 | 137 | 585 ms | 654 ms | 0 |
+| 200 | 144 | 1421 ms | 1625 ms | 0 |
+| 400 | 142 | 2565 ms | 5945 ms | 0 |
+
+Le débit plafonne à **~144 requêtes par seconde** et n'en bouge plus : c'est la
+signature d'un serveur saturé en processeur. Au-delà, la concurrence n'ajoute
+que de l'attente. **Aucune erreur, à aucun palier** : ça met en file, ça ne
+refuse pas. C'est la bonne façon de se dégrader, et c'est plus important que le
+chiffre.
+
+**Ce qui se transporte en production, et ce qui ne se transporte pas.** Le mur
+processeur mesuré ici n'existe pas sur Vercel, qui répartit horizontalement.
+Ce qui se transporte, c'est le coût par page :
+
+- **neuf appels d'API pour un chargement du tableau de bord**, soit environ
+  **vingt-neuf requêtes SQL** — chacune étant, en production, un appel HTTPS
+  indépendant vers Neon, puisque le client passe par `PrismaNeonHttp` et non
+  par un pool TCP. Le mur classique du « serverless épuise les connexions »
+  n'existe donc pas ici ;
+- quatre de ces appels sont les mêmes sur toutes les pages : `/api/user`,
+  `/api/dette`, `/api/exercices/ratios`, `/api/consentement` ;
+- `/api/settings` coûte à lui seul neuf requêtes, et le tableau de bord
+  l'appelle.
+
+**Le vrai plafond n'est aucun des deux : c'est la clé Riot.** Il est déjà
+chiffré dans `riotBudget.ts`, et il est très en dessous de tout le reste. Une
+clé de développement autorise cent requêtes par deux minutes, le budget en
+réserve quatre-vingt-dix, et le mode session en coûte deux par joueur toutes
+les deux minutes : **quarante-cinq joueurs simultanés**. Une seule ouverture de
+l'historique en coûte vingt et une, soit autant que dix joueurs qui jouent. La
+réponse chiffrée à « est-ce que ça tient à cent » reste donc : pas avec cette
+clé, et le mur est de très loin celui-là.
+
+À refaire le jour où la base ne contient plus quatre comptes et soixante-quinze
+parties : les requêtes par compte sont indexées (`Game.userId`,
+`Paiement.userId, jour`), donc elles ne devraient pas dériver, mais une mesure
+sur une base minuscule ne le prouve pas.
 
 ### Le plafond de cent est levé, et la liste d'attente supprimée avec lui
 Décision du propriétaire du produit, prise sur un fait : une semaine entière
