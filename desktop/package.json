@@ -10,7 +10,7 @@
     "build": "set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder"
   },
   "devDependencies": {
-    "electron": "^43.4.1",
+    "electron": "^43.5.1",
     "electron-builder": "^26.15.3"
   },
   "build": {
@@ -23,7 +23,10 @@
       "package.json"
     ],
     "extraResources": [
-      { "from": "donnees", "to": "donnees" }
+      {
+        "from": "donnees",
+        "to": "donnees"
+      }
     ],
     "win": {
       "target": "nsis",
