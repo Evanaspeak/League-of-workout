@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { estCheminPublic } from "@/lib/routesPubliques";
+import { estPageConnue } from "@/lib/pagesConnues";
 import {
   avecLocale, echappeAuPrefixe, localeDuChemin, negocierLocale, sansLocale,
 } from "@/lib/i18n/cheminLocalise";
@@ -93,6 +94,24 @@ export default auth((req) => {
   // dans `src/lib/routesPubliques.ts`, pour que le test de la porte éprouve
   // la règle qui tourne plutôt qu'une copie de son côté.
   if (estCheminPublic(chemin)) {
+    return NextResponse.next();
+  }
+
+  /**
+   * Une adresse qui n'existe pas n'est pas une adresse protégée.
+   *
+   * Sans ce passage, `/fr/nimportequoi` répondait 307 vers `/fr/login` : une
+   * faute de frappe ou un lien mort menaient à un écran de connexion, la page
+   * 404 localisée était inatteignable pour qui n'a pas de session, et un
+   * moteur qui suit un lien mort recevait 307 puis 200 — jamais 404, donc
+   * l'adresse supprimée ne sortait jamais de l'index.
+   *
+   * Réservé aux PAGES. Ce qui échappe au préfixe de langue — les routes d'API
+   * avant tout — garde le contrôle : y appliquer la même règle laisserait
+   * passer sans session tout ce qui ne figure pas dans une liste de pages,
+   * c'est-à-dire l'intégralité de l'API.
+   */
+  if (!echappeAuPrefixe(pathname) && !estPageConnue(chemin)) {
     return NextResponse.next();
   }
 

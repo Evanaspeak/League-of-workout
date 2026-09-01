@@ -1,6 +1,7 @@
 "use client";
 import { Icone } from "@/components/Icone";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { onboardingModal as onboardingModalDict } from "@/lib/i18n/dictionaries/onboardingModal";
@@ -46,6 +47,7 @@ function StepIcon({ name }: { name: string }) {
 }
 
 export function OnboardingModal() {
+  const panneauRef = useRef<HTMLDivElement>(null);
   const t = useT(onboardingModalDict);
   const STEPS = t.steps;
   const path = useChemin();
@@ -95,6 +97,23 @@ export function OnboardingModal() {
     else close();
   };
 
+  /**
+   * C'est la toute première chose qu'un compte neuf voit, et elle recouvrait
+   * la page sans rien retenir au clavier : la tabulation partait droit dans
+   * le tableau de bord derrière, sur des commandes invisibles.
+   *
+   * Échap ferme, comme le bouton : cette fenêtre ne pose aucune question, elle
+   * présente. Une fenêtre qui présente et qu'on ne peut pas fermer d'une
+   * touche est une fenêtre qu'on subit.
+   *
+   * `actif` n'est pas une précaution : ce composant reste monté et bascule
+   * `visible`, en laissant d'abord passer l'écran d'ouverture. Sans lui, le
+   * piège se posait au chargement de la page, sur une fenêtre qui n'existait
+   * pas encore, et ne se reposait jamais. Le test au navigateur l'a dit ; la
+   * relecture ne l'avait pas vu.
+   */
+  usePiegeFocus(panneauRef, { actif: visible, onEchap: close });
+
   if (!visible) return null;
 
   const current = STEPS[step];
@@ -108,6 +127,8 @@ export function OnboardingModal() {
       role="dialog"
       aria-modal="true"
       aria-label={current.title}
+      ref={panneauRef}
+      tabIndex={-1}
       style={{
       position: "fixed",
       inset: 0,

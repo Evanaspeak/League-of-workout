@@ -199,10 +199,24 @@ test("chaque page publique existe dans les six langues, et le déclare", async (
         canonical: document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href ?? "",
         alternates: [...document.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]')]
           .map((l) => l.getAttribute("hreflang")),
+        defaut: document.querySelector<HTMLLinkElement>('link[rel="alternate"][hreflang="x-default"]')?.href ?? "",
       }));
       expect({ chemin, langue, lang: m.lang }).toEqual({ chemin, langue, lang: langue });
       expect(m.canonical, `${langue} ${chemin}`).toContain(`/${langue}`);
-      expect([...m.alternates].sort(), `${langue} ${chemin}`).toEqual([...LANGUES_SEO].sort());
+      /**
+       * Les six langues, PLUS `x-default`.
+       *
+       * `x-default` répond à la question que les six ne couvrent pas : que
+       * servir à quelqu'un dont la langue n'est dans aucune d'elles. Sans lui,
+       * un moteur choisit seul, et il choisit la version la plus anciennement
+       * connue — la française, y compris pour une recherche faite en portugais.
+       */
+      expect([...m.alternates].sort(), `${langue} ${chemin}`)
+        .toEqual([...LANGUES_SEO, "x-default"].sort());
+      // Il désigne l'adresse SANS préfixe, celle qui négocie — pas une
+      // septième traduction.
+      expect(new URL(m.defaut).pathname, `x-default ${langue} ${chemin}`)
+        .toBe(chemin === "/" ? "/" : chemin);
       titres.add(m.titre);
     }
     // Six textes réellement différents, pas six copies du français.

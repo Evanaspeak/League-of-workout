@@ -701,6 +701,243 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Quatre refus qu'aucun test navigateur ne poussait dans le mur
+`e2e/panne-serveur.spec.ts` couvre l'ajout d'une partie, l'ajout depuis la
+liste Riot, le consentement, les réglages de jeu, le paiement de dette et
+l'historique. Restaient quatre routes d'écriture atteintes depuis un écran et
+jamais mises en échec : suppression de compte, signalement, mise de côté d'un
+exercice, régénération du jeton de diffusion.
+
+Les quatre traitaient DÉJÀ leur échec correctement — ce sont des tests de non
+régression sur du code juste, ce qui est le bon moment pour les écrire. Chacun
+vérifie deux choses et jamais une seule : que l'échec se DIT, et que rien n'a
+bougé. Sans le second contrôle, un écran qui annonce l'échec tout en gardant la
+nouvelle valeur chez lui passerait.
+
+Celui qui compte le plus est le jeton de diffusion. Le régénérer est la SEULE
+façon de révoquer une adresse déjà collée dans un logiciel de streaming : un
+échec silencieux ferait croire que le lien d'avant ne vaut plus rien, alors
+qu'il ouvre toujours la dette en direct. Une révocation imaginaire est pire
+que pas de bouton du tout.
+
+**Et l'écriture des tests a trouvé deux vrais défauts.** Les messages d'échec
+du signalement et de la mise de côté n'étaient annoncés à personne : un simple
+paragraphe, sans `role`. Ils paraissent à l'écran et n'existent pas pour un
+lecteur d'écran — sous un bouton redevenu cliquable, ce qui est exactement
+l'expérience du refus silencieux qu'on croyait avoir corrigée. La suppression
+de compte, elle, portait `role="status"`, qui est poli : un échec sur l'action
+la plus irréversible du produit se dit tout de suite, il n'attend pas.
+
+**Trois pièges, tous déjà écrits ici, tous retombés dedans dans la même
+heure :**
+
+- **`getByRole("alert")` ne prouve rien tout seul.** Next pose son annonceur de
+  route avec ce rôle, vide, sur chaque page. TROIS de ces quatre tests sont
+  passés au vert en le lisant — c'est-à-dire en ne mesurant rien. Le message se
+  cherche par son TEXTE, dans un élément qui l'annonce.
+- **Une boucle d'attente qui lit un fichier périmé.** Le fichier de sortie
+  était effacé par le travail de fond, pas avant lui : ma boucle a vu la ligne
+  de fin de l'exécution PRÉCÉDENTE et rendu ses résultats. Deux minutes passées
+  à relire des chiffres qui n'avaient rien à voir.
+- **Un sabotage qui ne compile pas.** Retirer la chute dans le 404 rendait
+  `estPageConnue` inutilisée : la construction échouait avant le test, ce qui
+  n'est pas un test qui mord. Réécrit en `if (false && …)`.
+
+Et un défaut de test qui ressemblait à une panne : `PSEUDO_MAX` vaut 24, et un
+préfixe de compte trop long faisait refuser l'inscription. L'échec se
+présentait comme un délai de trente secondes sur la navigation, ce qui ne
+ressemble en rien à « ce pseudo fait deux caractères de trop ».
+
+### Deux vulnérabilités hautes qu'on garde, et pourquoi
+`npm audit` en signale deux là où le 23 août n'en trouvait aucune. Les deux
+sont la même : `mysql2 < 3.22.0`, « Auth Plugin Downgrade to
+mysql_clear_password Leaks Plaintext Credentials ». Elle décrit un CLIENT MySQL
+qu'un serveur MySQL malveillant convainc de repasser au mot de passe en clair.
+
+**Elle est inatteignable ici.** Ce projet parle à PostgreSQL ; `mysql2` n'arrive
+que comme dépendance de la ligne de commande `prisma`, qui embarque un pilote
+par base gérée, et aucune ligne du dépôt ne l'appelle. Il faudrait ouvrir une
+connexion MySQL pour l'atteindre, et il n'y en a pas.
+
+**Et elle ne se corrige pas.** `prisma@7.10.0`, la dernière de la branche,
+épingle toujours `mysql2@3.15.3`. Le seul « correctif » que propose npm est de
+REVENIR à `prisma@6.19.3` : un retour de version majeure, sur le client d'accès
+aux données, pour une faille qu'on ne peut pas atteindre. Le remède serait plus
+dangereux que le mal.
+
+`src/dependanceMysql.test.ts` garde le raisonnement plutôt que la conclusion. Il
+tient à deux conditions — la base est PostgreSQL, aucun code ne charge un pilote
+MySQL — et le jour où l'une tombe, l'exemption tombe avec elle. C'est la
+différence entre une dispense écrite et une dispense vérifiée : la première
+vieillit en silence, ce qui est exactement ce qui vient d'arriver à la liste
+d'avant lancement.
+
+Mises à jour appliquées, toutes mineures ou correctives ; les majeures écartées
+le 23 août le restent (`typescript` 7, `eslint` 10, `@types/node` 26), et
+`prisma` 8 les rejoint — elle n'existe qu'en version candidate.
+
+### Vingt-quatre modules n'avaient aucun test, quatre en ont maintenant
+Le recensement résout les imports des tests jusqu'aux fichiers, comme
+`codeMort.test.ts` : chercher un nom de fichier dans le texte des tests donne
+des faux positifs. Sur 136 modules de `src/lib` et `desktop/src`, 67 n'étaient
+importés par aucun test — dont 43 dictionnaires de langue, couverts
+collectivement par `dictionaries.test.ts` qui parcourt le dossier au lieu de
+les importer. Restaient vingt-quatre vrais.
+
+Tous ne se valent pas, et couvrir pour couvrir n'apprend rien : `graphiques.ts`
+n'est qu'une table de couleurs, l'éprouver reviendrait à recopier ses valeurs
+dans un test. Quatre ont été retenus sur un seul critère — qu'un défaut s'y
+paie :
+
+- **`riot-role.ts`** décide du rôle, donc du barème, donc de la dette. Un
+  support compté comme jungler paie ses morts trois points au lieu de deux et
+  deux dixièmes. Le module porte un repli — une position inconnue devient
+  « Mid » — qui a exactement la forme du défaut déjà corrigé côté détection
+  locale. Il est **figé par un test plutôt que changé** : refuser ferait perdre
+  une partie entière importée de Riot pour un détail de pondération, alors que
+  ce qu'on refusait de l'autre côté était une ISSUE inventée, qui crée une
+  dette qu'on ne doit pas. Les deux ne se valent pas, et l'arbitrage figure
+  dans les questions.
+- **`recuperation.ts`**, la seule porte de secours du produit : le jeton ne se
+  stocke jamais en clair, un lien vaut une heure, le préfixe ne se mêle pas aux
+  jetons d'Auth.js.
+- **`premiereVisite.ts`**, dont un défaut prive un compte neuf de tout accueil
+  sur un poste déjà utilisé — c'est-à-dire au moment où il en a le plus besoin.
+- **`textes.ts`**, qui porte la règle « ce qui n'est pas traduit retombe sur
+  l'ANGLAIS ». Le repli français est le réflexe de celui qui écrit
+  l'application, et il ne le voit jamais.
+
+Cinq sabotages, cinq échecs. Et un piège d'écriture : `oublierPremiereVisite`
+commence par un garde de rendu serveur, or les tests tournent sans `window` —
+les trois premières épreuves passaient donc sur zéro appel, c'est-à-dire sur
+rien. Le garde est posé exprès maintenant, et son absence a son propre test.
+
+### Une adresse qui n'existe pas était traitée comme une adresse protégée
+`/fr/nimportequoi` répondait **307 vers `/fr/login`**. Vérifié en production
+avant d'y toucher, ainsi que `/xx/cgu`, qui faisait 308 vers `/en/xx/cgu` puis
+307 vers la connexion.
+
+Ce n'est pas un défaut du contrôle d'accès, qui est juste : tout ce qui n'est
+pas public exige une session. C'est son effet de bord, que personne n'avait
+regardé — le middleware ne sait pas distinguer « protégé » de « inexistant »,
+alors il traite les deux pareil. Trois conséquences :
+
+- une faute de frappe ou un lien mort mènent à un écran de connexion, qui ne
+  dit rien de ce qui s'est passé ;
+- **la page 404 localisée, écrite exprès et traduite en six langues, était
+  inatteignable** pour qui n'a pas de session. Elle existait depuis le passage
+  de la langue dans l'adresse et n'avait jamais pu s'afficher ;
+- un moteur qui suit un lien mort reçoit 307 puis 200 sur la connexion, jamais
+  404. Une adresse supprimée ne sort donc **jamais** de l'index — et c'est
+  précisément la famille de défaut déjà rencontrée avec `/waitlist` :
+  « interdire l'exploration n'empêche pas l'indexation ».
+
+`src/lib/pagesConnues.ts` porte la liste des pages qui existent. Hors liste,
+l'adresse n'est pas protégée : elle n'existe pas, et Next rend son 404 dans la
+langue de l'adresse.
+
+**Le sens de l'erreur a décidé de la forme.** On aurait pu lister les pages
+PRIVÉES et laisser passer le reste — c'est plus court, et c'est un piège :
+une page privée ajoutée sans être inscrite deviendrait publique. Ici, une page
+oubliée répond 404 au lieu d'emmener à la connexion : visible, et sans fuite.
+`src/pagesConnues.test.ts` compare de toute façon la liste au dossier.
+
+**Le garde qui compte n'est pas celui-là**, c'est la condition
+`!echappeAuPrefixe(pathname)` qui borne la chute aux PAGES. Sans elle, toute
+adresse d'API — aucune ne figure dans une liste de pages — traverserait le
+contrôle de session, et le reste du fichier ne vaudrait plus rien. Un test la
+tient, ainsi que l'ORDRE des trois branches : public, puis inexistant, puis
+session. Inverser les deux dernières rendrait toute page connue publique.
+
+### Quatre fenêtres s'annonçaient modales sans rien retenir au clavier
+`src/modalesAnnoncees.test.ts` a été écrit en août pour refuser un recouvrement
+plein écran qui ne se déclare pas. Il a fait son travail : les cinq fenêtres
+portent `role="dialog"` et `aria-modal`. Il ne dit rien de ce qui vient APRÈS
+l'annonce — et `aria-modal="true"` est une promesse, celle que le reste de la
+page n'existe plus tant que la fenêtre est ouverte.
+
+Quatre ne la tenaient pas : accueil, décompte de dette, suppression de compte,
+visite guidée. À la souris ça ne se voit pas — le fond est opaque, le clic
+dessus ferme. Au clavier, la tabulation continuait dans la page derrière, sur
+des commandes qu'on ne voit pas, sans rien qui dise qu'on en est sorti. La
+modale d'accueil est la toute première chose qu'un compte neuf rencontre.
+
+Le comportement existait pourtant, complet et juste, dans `Modale.tsx` : entrer,
+tourner, revenir, geler le défilement. Il y était écrit **une fois et pour elle
+seule**. C'est le septième cas de règle qui ne vaut que pour un de ses lieux
+d'emploi. Il vit maintenant dans `src/lib/usePiegeFocus.ts`, et `Modale`
+l'emploie comme les autres.
+
+**Une fenêtre n'est pas l'autre, et la distinction est le cœur du sujet.**
+`InvitationInstallation` porte `role="dialog"` SANS `aria-modal` : c'est une
+bannière en bas d'écran qui ne recouvre rien. Y piéger le focus empêcherait
+d'atteindre la page qu'on est en train de lire — ce serait un défaut, pas une
+correction. Le recensement porte donc sur `aria-modal`, jamais sur
+`role="dialog"`, et un test fixe ce choix pour qu'on ne le « corrige » pas.
+
+**Deux façons d'appeler le hook, et il faut les deux.** Un composant qui ne se
+monte que lorsque la fenêtre s'ouvre n'a rien à dire : le montage est le signal.
+Un composant qui reste monté et rend sa fenêtre sous condition doit passer
+`actif`. J'avais prévu l'option et oublié de la passer à `OnboardingModal`, qui
+est dans le second cas : le piège se posait au chargement de la page, sur une
+fenêtre qui n'existait pas encore, et ne se reposait jamais. **Le test au
+navigateur l'a dit ; la relecture ne l'avait pas vu.**
+
+**Le défaut le plus intéressant, trouvé en instrumentant.** La restitution du
+focus échouait sur la suppression de compte, et le code avait l'air juste :
+`const rendreA = document.activeElement` à l'ouverture, `rendreA.focus()` à la
+fermeture. Ce qui était faux, c'est l'INSTANT. Le champ « tapez SUPPRIMER »
+porte `autoFocus`, donc React le focalise pendant la validation du rendu,
+c'est-à-dire **avant** que l'effet ne s'exécute. On capturait ce champ comme
+« l'endroit d'où l'on vient » — et comme il disparaît avec la fenêtre, lui
+rendre le focus ne rendait rien : on repartait du haut du document.
+
+Un écouteur `focusin` retient donc en continu le dernier élément focalisé hors
+de toute fenêtre, et la capture s'y rabat quand l'élément courant est déjà
+dedans. Le rendu vérifie en plus `isConnected` : un nœud démonté ne reprend pas
+le focus, il renvoie sur `body`.
+
+Ça n'a pas été trouvé en relisant, et ça ne pouvait pas l'être : trois
+diagnostics au navigateur ont été nécessaires, dont un qui a demandé
+d'instrumenter le hook lui-même pour voir ce qu'il capturait vraiment. La leçon
+déjà écrite pour les scripts de mesure vaut ici : **un chiffre — ou un nom —
+qu'on ne relève pas ne se diagnostique pas.**
+
+**Et un texte en dur, trouvé en passant.** `aria-label="Fermer"` dans
+`Modale.tsx`, en français dans les six langues. Le garde des textes en dur ne
+l'attrape pas : il cherche des chaînes dans le JSX rendu, et celle-ci vivait
+dans un attribut — c'est-à-dire à l'endroit précis où le texte ne se voit pas
+et ne s'entend que pour ceux qui n'ont que lui.
+
+Sept sabotages, sept échecs. Le premier est passé au vert et c'est celui qui a
+appris quelque chose : mon garde cherchait `usePiegeFocus` n'importe où dans le
+fichier, donc **la ligne d'import suffisait**. Retirer l'appel laissait le test
+vert. Un garde qui reconnaît un import reconnaît une intention, pas un
+comportement — et c'est le comportement qui manquait aux quatre fenêtres. Il
+exige un appel maintenant.
+
+**Un défaut de rendu trouvé chemin faisant, sans rapport avec le clavier.**
+`ModaleChrono`, dans `CompteurDette`, était une fonction redéfinie à chaque
+rendu, donc un type de composant différent à chaque fois : React démontait et
+remontait la fenêtre ENTIÈRE une fois par seconde, puisque le décompte fait
+rendre le parent à chaque tic. Aucun piège de focus n'y aurait survécu. Elle
+est appelée comme une fonction maintenant, ce qui la fait entrer dans l'arbre
+du parent au lieu d'en créer un nouveau.
+
+**Trois pièges d'outillage, tous déjà écrits ici, tous retombés dedans.**
+Le serveur qui sert un `.next` d'avant la modification — deux fois. La rubrique
+des réglages qui ne s'ouvre pas par son paramètre d'adresse. Et un nouveau,
+qui mérite sa ligne : **la visite guidée navigue d'une page à l'autre au fil de
+ses douze étapes**, donc la traverser depuis les réglages laissait le test sur
+le tableau de bord, où le bouton cherché n'existe pas. L'échec ne ressemblait
+pas à sa cause — un délai dépassé sur une page parfaitement normale. Les
+fenêtres d'accueil se traversent avant d'aller où l'on va.
+
+Enfin, un sabotage qui ne compilait pas : retirer le repli rendait
+`dernierHorsFenetre` inutilisée, et `noUnusedLocals` faisait échouer la
+construction avant le test. Un échec de compilation n'est pas un test qui mord ;
+le sabotage a été réécrit pour compiler.
+
 ### Le plan du site n'avait pas de x-default, et une page publique n'était nulle part
 Deux trous ouverts par le passage de la langue dans l'adresse, tous deux
 invisibles à l'écran, tous deux sur le seul canal d'acquisition qui travaille

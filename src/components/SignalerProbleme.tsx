@@ -170,7 +170,7 @@ export function SignalerProbleme({ surFermeture }: { surFermeture?: () => void }
                 </div>
               )}
 
-              {erreur && <p className="text-sm loss-text">{erreur}</p>}
+              {erreur && <p role="alert" className="text-sm loss-text">{erreur}</p>}
 
               <button className="lol-btn w-full" onClick={envoyer} disabled={envoi}>
                 {envoi ? t.envoi : t.envoyer}

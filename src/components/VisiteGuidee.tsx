@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useRouter } from "next/navigation";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useT } from "@/lib/i18n/LocaleContext";
@@ -119,6 +120,7 @@ export function VisiteGuidee() {
     { cle: "rubrique-profil", titre: t.finTitre, texte: t.finTexte },
   ];
 
+  const couverture = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
   const [cible, setCible] = useState(0);
   /**
@@ -291,13 +293,21 @@ export function VisiteGuidee() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
-  // Échap abandonne : une couche qui recouvre tout doit toujours avoir sa sortie.
-  useEffect(() => {
-    if (!active) return;
-    const surTouche = (e: KeyboardEvent) => { if (e.key === "Escape") cloturer(); };
-    window.addEventListener("keydown", surTouche);
-    return () => window.removeEventListener("keydown", surTouche);
-  }, [active, cloturer]);
+  /**
+   * Échap abandonne : une couche qui recouvre tout doit toujours avoir sa
+   * sortie. Elle l'avait déjà, écrite ici — mais elle était la SEULE des cinq
+   * fenêtres à l'avoir, et elle n'avait pas le reste : la tabulation sortait
+   * de la visite pour aller dans la page qu'elle est en train de désigner.
+   *
+   * Le défilement n'est pas gelé, contrairement aux autres : la visite fait
+   * défiler elle-même la page jusqu'à l'élément qu'elle montre
+   * (`scrollIntoView`). Le geler l'empêcherait de faire son seul travail.
+   */
+  usePiegeFocus(couverture, {
+    actif: active,
+    onEchap: cloturer,
+    gelerLeDefilement: false,
+  });
 
   // Ce qu'on LIT suit ce qu'on VOIT : l'étape affichée est celle du cadre en
   // place, pas celle qu'on est en train de rejoindre.
@@ -327,7 +337,7 @@ export function VisiteGuidee() {
   const glisse = "0.42s cubic-bezier(0.22, 1, 0.36, 1)";
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9800 }} role="dialog" aria-modal="true">
+    <div ref={couverture} tabIndex={-1} style={{ position: "fixed", inset: 0, zIndex: 9800 }} role="dialog" aria-modal="true">
       {/* Le halo : un rectangle transparent dont l'ombre portée assombrit tout
           le reste. Un seul élément, pas quatre volets à faire coïncider — et
           donc une seule chose à animer. */}

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { jourLocal } from "@/lib/serie";
 import { useChemin } from "@/lib/i18n/useChemin";
@@ -52,6 +53,24 @@ export function CompteurDette() {
 
   const [dette, setDette] = useState<Dette | null>(null);
   const [chronoOuvert, setChronoOuvert] = useState(false);
+  const chronoRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Le décompte recouvre l'écran entier : au clavier, il ne retenait rien.
+   *
+   * Le piège se pose depuis le PARENT et non depuis la fenêtre, parce que
+   * `ModaleChrono` n'est pas un composant stable : c'était une fonction
+   * redéfinie à chaque rendu, donc un type différent à chaque fois, donc un
+   * démontage et un remontage complets — une fois par seconde, puisque le
+   * décompte fait rendre le parent à chaque tic. Le focus y aurait été détruit
+   * aussitôt posé. Elle est appelée comme une fonction maintenant, ce qui la
+   * fait entrer dans l'arbre du parent au lieu d'en créer un nouveau.
+   *
+   * Échap abandonne la séance sans rien acquitter, ce qui est le seul choix
+   * sûr : acquitter au clavier ce qu'on n'a peut-être pas fait effacerait une
+   * dette qu'on doit encore.
+   */
+  usePiegeFocus(chronoRef, { actif: chronoOuvert, onEchap: () => setChronoOuvert(false) });
   const [restantSec, setRestantSec] = useState(0);
   const [enPause, setEnPause] = useState(false);
   const [fini, setFini] = useState(false);
@@ -214,7 +233,7 @@ export function CompteurDette() {
   // Rien en attente, ou page publique : la pastille ne s'affiche pas.
   if (surPagePubliqueRef.current) return null;
   if (!dette || dette.exercices.length === 0 || dette.dureeSec <= 0) {
-    return chronoOuvert ? <ModaleChrono /> : null;
+    return chronoOuvert ? ModaleChrono() : null;
   }
 
   const progression = dette.seuilSec > 0
@@ -294,7 +313,7 @@ export function CompteurDette() {
         </div>
       </button>
 
-      {chronoOuvert && <ModaleChrono />}
+      {chronoOuvert && ModaleChrono()}
     </>
   );
 
@@ -302,6 +321,8 @@ export function CompteurDette() {
   function ModaleChrono() {
     return (
       <div
+        ref={chronoRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={t.detteChronoTitre}

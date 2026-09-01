@@ -1,11 +1,8 @@
 "use client";
-import { useEffect, useRef } from "react";
-
-/** Ce qui peut recevoir le focus au clavier à l'intérieur de la fenêtre. */
-const FOCUSABLES = [
-  "a[href]", "button:not([disabled])", "input:not([disabled])",
-  "select:not([disabled])", "textarea:not([disabled])", "[tabindex]:not([tabindex='-1'])",
-].join(",");
+import { useRef } from "react";
+import { usePiegeFocus } from "@/lib/usePiegeFocus";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { modale } from "@/lib/i18n/dictionaries/modale";
 
 /**
  * Fenêtre modale de l'app. Elle se ferme au clic sur le fond, à la croix et à
@@ -36,54 +33,21 @@ export function Modale({
   sansFermeture?: boolean;
   children: React.ReactNode;
 }) {
+  const t = useT(modale);
   const panneauRef = useRef<HTMLDivElement>(null);
 
-  // `onFermer` est presque toujours écrit en ligne par l'appelant, donc recréé
-  // à chaque rendu. En faire une dépendance de l'effet le rejouait à chaque
-  // frappe et à chaque seconde de compte à rebours — et chaque relance rendait
-  // le focus à la croix, en plein milieu de la saisie. On le lit par référence.
-  const fermerRef = useRef(onFermer);
-  useEffect(() => { fermerRef.current = onFermer; }, [onFermer]);
-  // Lu par référence pour la même raison : l'effet ne se rejoue pas.
-  const sansFermetureRef = useRef(sansFermeture);
-  useEffect(() => { sansFermetureRef.current = sansFermeture; }, [sansFermeture]);
-
-  useEffect(() => {
-    // Le focus entre dans la fenêtre et n'en sort plus tant qu'elle est
-    // ouverte : sans ça, la tabulation continue dans la page derrière et la
-    // fenêtre n'existe pas pour qui navigue au clavier ou au lecteur d'écran.
-    const rendreA = document.activeElement as HTMLElement | null;
-    const premier = panneauRef.current?.querySelector<HTMLElement>(FOCUSABLES);
-    (premier ?? panneauRef.current)?.focus();
-
-    const surTouche = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { if (!sansFermetureRef.current) fermerRef.current(); return; }
-      if (e.key !== "Tab") return;
-      const cibles = Array.from(
-        panneauRef.current?.querySelectorAll<HTMLElement>(FOCUSABLES) ?? [],
-      ).filter((el) => el.offsetParent !== null);
-      if (cibles.length === 0) return;
-      const debut = cibles[0];
-      const fin = cibles[cibles.length - 1];
-      if (e.shiftKey && document.activeElement === debut) {
-        e.preventDefault(); fin.focus();
-      } else if (!e.shiftKey && document.activeElement === fin) {
-        e.preventDefault(); debut.focus();
-      }
-    };
-
-    document.addEventListener("keydown", surTouche);
-    const overflowInitial = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", surTouche);
-      document.body.style.overflow = overflowInitial;
-      // Le focus revient d'où il venait : on ne perd pas sa place dans la page.
-      rendreA?.focus?.();
-    };
-    // Monté une seule fois : le piège se pose à l'ouverture et se lève à la
-    // fermeture, jamais entre les deux.
-  }, []);
+  /**
+   * Le clavier vit dans `usePiegeFocus`, avec les quatre autres fenêtres.
+   *
+   * Il était écrit ici et nulle part ailleurs : les quatre fenêtres qui
+   * n'emploient pas ce composant s'annonçaient donc comme modales sans rien
+   * tenir de ce qu'annonce `aria-modal`.
+   *
+   * `sansFermeture` retire Échap en même temps que la croix et le clic sur le
+   * fond : une fenêtre qui pose une question dont la réponse conditionne la
+   * suite ne se referme pas d'une touche.
+   */
+  usePiegeFocus(panneauRef, { onEchap: sansFermeture ? null : onFermer });
 
   return (
     <div
@@ -114,7 +78,7 @@ export function Modale({
           {!sansFermeture && <button
             type="button"
             onClick={onFermer}
-            aria-label="Fermer"
+            aria-label={t.fermer}
             style={{
               flexShrink: 0, width: 28, height: 28, borderRadius: 6,
               background: "rgba(152,162,176,0.08)",
