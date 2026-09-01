@@ -227,8 +227,9 @@ Règles :
   les textes vivent dans `src/lib/i18n/notifications.ts`. Sans ça, le texte
   écrit en dur partait en français à tout le monde, et rien ne le signalait :
   celui qui écrit l'application la lit en français.
-- CGU et politique de confidentialité restent en français et en anglais ; un
-  bandeau (`LangueDocument`) le dit aux quatre autres langues.
+- CGU et politique de confidentialité existent dans les six langues, avec une
+  clause qui dit laquelle fait foi : la française. Le bandeau qui annonçait la
+  limite est parti avec elle.
 
 ### Objectif de première semaine
 Ce que quelqu'un fait dans ses sept premiers jours décide s'il reviendra ; le
@@ -693,6 +694,96 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Les documents juridiques dans les six langues, et la clause qui va avec
+Ils n'existaient qu'en français et en anglais, avec un bandeau qui l'annonçait
+aux quatre autres. Le commentaire de ce bandeau disait pourquoi, et il avait
+raison : « un texte juridique traduit sans relecture engage autant que
+l'original ».
+
+Traduire ne fait pas disparaître ce risque, ça le déplace : on passe de « on
+vous prévient que c'est en anglais » à « voici un texte allemand qui vous
+engage et que personne n'a relu ». Ce que font tous les services multilingues,
+et qui manquait ici, c'est la **clause de langue** : les six versions existent,
+la française fait foi. Elle est posée dans l'article du droit applicable des
+CGU et dans l'article des modifications de la politique — dans les six langues,
+y compris le français et l'anglais, où elle n'existait pas non plus.
+
+Le commentaire du bandeau l'avait d'ailleurs anticipé : « Le bandeau ne dit pas
+quelle version fait foi — c'est une clause juridique, pas une constatation, et
+elle appartient au texte lui-même. » Elle y est maintenant.
+
+`LangueDocument` est supprimé, et son exemption dans le recensement des textes
+en dur avec lui. Il en reste une seule, celle des noms de langue du sélecteur.
+Une exemption qu'on peut retirer est le signe que le produit a rattrapé son
+retard.
+
+**Et il a mordu dès la traduction posée.** Deux débordements en allemand, à
+320 px, tous deux invisibles dans les cinq autres langues :
+
+- le titre `ALLGEMEINE NUTZUNGSBEDINGUNGEN` mesurait 360 px sur un écran de
+  320. Il se coupe maintenant — et il se coupe BIEN, parce que `<html lang>`
+  porte enfin la vraie langue : le navigateur applique les motifs de césure
+  allemands. C'est un effet de bord inattendu du passage de la langue dans
+  l'adresse ;
+- une cellule du tableau des données mesurait 383 px et emportait la page.
+
+Les deux corrections tiennent au même oubli, et c'est le plus intéressant :
+**`hyphens` et `overflow-x` ne servent à rien sur une boîte qui n'est pas
+bornée.** Le titre est en `inline-block`, donc il s'ajuste à son contenu et
+grandit avec le mot au lieu de le couper. Le conteneur du tableau n'avait rien
+à faire défiler tant qu'il pouvait grandir. `max-width: 100%` sur les deux, et
+les deux règles se mettent enfin à faire ce qu'on croyait qu'elles faisaient
+déjà. C'est la borne qui déclenche la césure, pas la césure qui borne.
+
+### Revue de la porte, après le passage de la langue dans l'adresse
+Le middleware est la seule chose que TOUTE requête traverse, et il vient de
+gagner une branche de langue et une réécriture. Passé en revue, poussé plutôt
+que relu : dix-sept adresses fabriquées pour essayer de faire entrer quelqu'un.
+
+**Aucune faille trouvée.** Ce qui a été essayé, et ce que ça rend :
+
+| adresse | réponse |
+|---|---|
+| `/fr/dashboard`, `/fr/fr/dashboard` | 307 vers la connexion |
+| `/FR/dashboard`, `/Fr/dashboard` | 308 vers une adresse qui n'existe pas |
+| `/dashboard.`, `/dashboard.x`, `/api.x` | 307 vers la connexion |
+| `/fr%2Fdashboard`, `/fr/../dashboard` | 308, puis 307 vers la connexion |
+| `/obsolete`, `/betamachin` | 308 vers une adresse qui n'existe pas |
+| `/api/dashboard`, `/api/user`, `/api/obs`, `/api/admin/users` | 307 vers la connexion |
+| `/api/sante`, `/api/champions`, `/api/exercices/ratios` | 200, leur handler |
+| `/api/init` | 401, son propre secret |
+
+La raison tient en une ligne : **le contrôle d'accès ne voit jamais le
+préfixe.** `sansLocale` le retire d'abord, et `estCheminPublic` continue de
+comparer par segments sur le chemin qu'il a toujours connu. Une règle qu'on
+n'a pas eu à réécrire est une règle qui n'a pas pu diverger.
+
+Le contrôle de la casse compte aussi : `estLocale("FR")` est faux, donc le
+segment n'est pas une langue, donc l'adresse est réécrite au lieu d'être
+acceptée. Sans ça, `/FR/dashboard` aurait sauté le préfixe ET le contrôle.
+
+**Les chaînes de requête survivent**, ce qui n'allait pas de soi : un lien de
+récupération envoyé avant la mise en production part sur
+`/recuperation/valider?t=…` sans langue, et arrive sur
+`/en/recuperation/valider?t=…` avec son jeton. Les anciens courriels marchent
+encore.
+
+Deux corrections d'hygiène, aucune exploitable :
+- le cookie de langue part maintenant en `secure` dès que la page est en
+  HTTPS, et la valeur est refusée si ce n'est pas une des six. Elle vient
+  d'une liste fermée aujourd'hui ; mais elle part dans un en-tête que le
+  serveur relit, et un point-virgule y ajouterait un attribut ;
+- **le sélecteur de langue n'était plus couvert par rien.** Tant que la langue
+  vivait dans le stockage, les tests la posaient eux-mêmes et empruntaient le
+  même chemin ; depuis qu'elle est dans l'adresse, ils naviguent directement,
+  et plus personne ne cliquait ce bouton. Or c'est là que tout se joue
+  maintenant. Un parcours l'éprouve : l'adresse, la langue rendue, ET le
+  souvenir. Sabotage fait, le cookie retiré : le test tombe.
+
+Le reste est inchangé et tient : deux `dangerouslySetInnerHTML`, tous deux sur
+des constantes ; aucun SQL brut hors du client engendré ; aucun secret en dur ;
+`PATCH /api/games/[id]` filtre par compte à la lecture comme à l'écriture.
 
 ### Un test vert chez moi, rouge en intégration continue, et c'est lui qui avait tort
 `corriger une défaite en victoire rejoue le barème` est passé **trois fois** en

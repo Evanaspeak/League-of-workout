@@ -23,17 +23,17 @@ import path from "node:path";
 const DOSSIER = path.join(process.cwd(), "src", "components");
 
 /**
- * Deux exemptions, chacune avec sa raison. Au-delà, il faudrait se demander si
- * le garde sert encore.
+ * Une seule exemption, avec sa raison.
+ *
+ * Il y en avait deux : la seconde annonçait, dans quatre langues, que les
+ * documents juridiques n'existaient qu'en français et en anglais. Ils existent
+ * maintenant dans les six, et le bandeau est parti avec elle. Une exemption
+ * qu'on peut retirer est le signe que le produit a rattrapé son retard.
  */
 const EXEMPTS = new Set([
   // Les noms de langue s'écrivent dans leur propre langue : « Français » n'est
   // pas du français imposé, c'est le nom du choix qu'on propose.
   "LanguageSwitcher.tsx",
-  // Le bandeau qui annonce, dans les quatre langues concernées, qu'un document
-  // juridique n'existe qu'en français et en anglais. Il est multilingue par
-  // construction.
-  "LangueDocument.tsx",
 ]);
 
 /** Le texte d'un fichier, commentaires retirés. */

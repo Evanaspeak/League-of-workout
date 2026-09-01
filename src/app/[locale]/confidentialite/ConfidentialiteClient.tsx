@@ -1,6 +1,5 @@
 "use client";
 import { Lien } from "@/components/Lien";
-import { LangueDocument } from "@/components/LangueDocument";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { confidentialite } from "@/lib/i18n/dictionaries/confidentialite";
 
@@ -19,7 +18,6 @@ export default function ConfidentialiteClient() {
         <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
           {t.versionLabel(DATE)}
         </p>
-        <LangueDocument />
       </div>
 
       <Section title={t.article1.title}>
@@ -34,6 +32,7 @@ export default function ConfidentialiteClient() {
         {/* Un lecteur d'écran annonce « tableau, trois colonnes » et rien de
             plus. Le titre de l'article dit de quoi il parle, et il est déjà
             traduit : inutile d'inventer une clé pour le répéter. */}
+        <div className="tableau-donnees">
         <table aria-label={t.article2.title}>
           <thead>
             <tr>
@@ -48,6 +47,7 @@ export default function ConfidentialiteClient() {
             ))}
           </tbody>
         </table>
+        </div>
         <p>{t.article2.outro}</p>
       </Section>
 

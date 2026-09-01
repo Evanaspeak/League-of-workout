@@ -156,3 +156,27 @@ textarea:focus-visible {
   text-transform: uppercase;
   color: var(--steel);
 }
+
+/* ── Tableau d'un document juridique ────────────────────────────────────────
+   Trois colonnes de phrases, sur un écran de 320 px. En français il se
+   dégrade tout seul ; en allemand une cellule mesurait 383 px et poussait la
+   PAGE hors de l'écran, ce qui est le seul débordement qui compte.
+
+   Deux choses, et il faut les deux : les mots se coupent, et ce qui déborde
+   encore défile DANS son conteneur au lieu d'emporter la page. C'est la règle
+   du projet pour tout contenu large. */
+.tableau-donnees {
+  overflow-x: auto;
+  /* `overflow-x` ne coupe que ce qui dépasse d'une largeur BORNÉE. Sans
+     `max-width`, le conteneur grandit avec son tableau et n'a jamais rien à
+     faire défiler : la page part avec lui. */
+  max-width: 100%;
+}
+.tableau-donnees table {
+  min-width: 100%;
+}
+.tableau-donnees th,
+.tableau-donnees td {
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
