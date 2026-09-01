@@ -28,7 +28,6 @@ const PAGES = [
   // La liste d'attente y entre en même temps qu'elle devient atteignable.
   // C'est une page qu'on ne voit qu'une fois, au pire moment, et son texte est
   // le plus long des six langues confondues.
-  "/waitlist",
 ];
 
 /** Ouvre une page dans une langue donnée, écrans d'accueil écartés. */

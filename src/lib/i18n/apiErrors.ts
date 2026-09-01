@@ -65,13 +65,6 @@ const ERROR_MAP: Record<string, Traductions> = {
     zh: "这个邮箱已经注册过账号了",
     ja: "このメールアドレスのアカウントはすでにあります",
   },
-  "Beta complète : les 100 places sont prises.": {
-    en: "Beta full: all 100 spots are taken.",
-    es: "Beta completa: las 100 plazas están ocupadas.",
-    de: "Beta voll: alle 100 Plätze sind vergeben.",
-    zh: "内测已满：100 个名额都占完了。",
-    ja: "ベータは満員です。100 枠すべて埋まりました。",
-  },
   "Utilisateur introuvable": {
     en: "User not found", es: "Usuario no encontrado", de: "Nutzer nicht gefunden",
     zh: "找不到这个用户", ja: "ユーザーが見つかりません",

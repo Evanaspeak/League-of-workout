@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { betaAccess } from "@/lib/i18n/dictionaries/betaAccess";
@@ -58,7 +57,6 @@ export default function BetaPage() {
   const [showOptional, setShowOptional] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const [error, setError] = useState("");
   const [code, setCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -73,15 +71,6 @@ export default function BetaPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek }),
       });
-      // La beta pleine n'est pas une erreur de saisie : rien de ce que la
-      // personne tapera ne fera passer ce formulaire. Elle recevait pourtant
-      // un cadre rouge sous un bouton devenu inutile, et la page qui explique
-      // la situation — `/waitlist`, écrite et traduite en six langues —
-      // n'était atteignable par aucun chemin du produit. On l'y emmène.
-      //
-      // Le code d'état plutôt que le texte : c'est le seul 403 de cette route,
-      // et un message se retraduit sans prévenir.
-      if (res.status === 403) { router.push("/waitlist"); return; }
       const data = await res.json();
       if (!res.ok) { setError(translateApiError(data.error, locale) || t.genericError); return; }
       setCode(data.code);

@@ -4,7 +4,7 @@ import { join } from "node:path";
 /**
  * Aucune page ne doit être injoignable.
  *
- * `/waitlist` avait une page, un dictionnaire dans les six langues et un texte
+ * `/waitlist` avait eu une page, un dictionnaire dans les six langues et un texte
  * qui explique que les cent places de la beta sont prises. **Rien n'y menait.**
  * Au moment précis où elle sert — le cent unième inscrit — la page
  * d'inscription affichait un cadre rouge et s'arrêtait là.
@@ -69,7 +69,7 @@ const CODE = sources(join(__dirname));
  * Les chemins vers lesquels le code fait NAVIGUER.
  *
  * Pas les chemins qu'il mentionne : la première version cherchait la chaîne
- * n'importe où, et `/waitlist` passait pour joignable parce qu'elle figure
+ * n'importe où, et `/waitlist` passait alors pour joignable parce qu'elle figurait
  * dans la liste des pages publiques et dans celle de la barre de navigation.
  * Deux listes d'appartenance, aucun chemin. Le sabotage — retirer la
  * redirection — laissait le test au vert : il ne prouvait rien.

@@ -6,7 +6,6 @@ import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
 import { autoriserAdresse } from "@/lib/porteBeta";
 import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 
-const BETA_LIMIT = 100;
 
 // Code lisible : pas de caractères ambigus (0/O, 1/l/I).
 function generateCode(length = 8): string {
@@ -52,10 +51,10 @@ export async function POST(request: Request) {
       }
     }
 
+    // Le comptage reste : il donne son rang d'arrivée au compte. Ce n'est plus
+    // une porte. Le plafond de cent existait pour tenir le rythme des premiers
+    // jours ; il a surtout tenu le produit fermé pendant que personne n'entrait.
     const count = await prisma.user.count();
-    if (count >= BETA_LIMIT) {
-      return NextResponse.json({ error: "Beta complète : les 100 places sont prises." }, { status: 403 });
-    }
 
     // Unicité côté appli (pas de contrainte DB : des pseudos existants sont dupliqués).
     if (await pseudoDejaPris(pseudo)) {

@@ -90,7 +90,7 @@ test("les écrans privés disent de ne pas les indexer", async ({ page }) => {
   // Les interdire dans robots.txt ne suffit pas : une adresse interdite
   // d'exploration peut être indexée depuis un lien, et paraît alors sans titre
   // ni description. Un moteur ne lit « noindex » que s'il ouvre la page.
-  for (const chemin of ["/login", "/recuperation", "/waitlist"]) {
+  for (const chemin of ["/login", "/recuperation"]) {
     await page.goto(chemin, { waitUntil: "domcontentloaded" });
     expect((await metadonnees(page)).robots, chemin).toContain("noindex");
   }
@@ -106,8 +106,14 @@ test("le plan du site liste les pages par jeu", async ({ request }) => {
 });
 
 test("robots.txt n'interdit pas ce qui porte une balise noindex", async ({ request }) => {
+  // La règle vient de `/waitlist`, supprimée depuis avec le plafond de cent :
+  // interdire l'exploration n'empêche pas l'indexation, et la page paraît
+  // alors sans titre ni description. Elle vaut pour les écrans privés, qui
+  // sont les seuls à porter encore les deux.
   const txt = await (await request.get("/robots.txt")).text();
-  expect(txt).not.toContain("/waitlist");
+  for (const chemin of ["/login", "/recuperation"]) {
+    expect(txt, chemin).not.toContain(chemin);
+  }
   expect(txt).toContain("Sitemap");
 });
 

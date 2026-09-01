@@ -1,7 +1,20 @@
 import { requete, corps } from "@/test/api";
 
+/**
+ * `goal` fait partie de la doublure, et ce n'est pas un détail.
+ *
+ * Il manquait. La route crée un objectif par défaut après le compte, et son
+ * `.catch()` ne rattrape que le rejet de la promesse : `prisma.goal` valant
+ * `undefined`, l'accès à `.create` levait AVANT, et la route rendait 500.
+ * Aucun test ne l'avait vu parce qu'aucun ne vérifiait le code d'une
+ * inscription réussie — ils regardaient tous ce qui avait été écrit, ce qui
+ * reste vrai même quand la route tombe juste après.
+ */
 jest.mock("@/lib/prisma", () => ({
-  prisma: { user: { count: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn() } },
+  prisma: {
+    user: { count: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
+    goal: { create: jest.fn() },
+  },
 }));
 jest.mock("@/lib/rate-limit", () => ({
   isRateLimited: jest.fn(), recordAttempt: jest.fn(), getClientIp: () => "203.0.113.7",
@@ -31,6 +44,7 @@ beforeEach(() => {
   user.findUnique.mockResolvedValue(null);
   user.findFirst.mockResolvedValue(null);
   user.create.mockImplementation(async ({ data }: { data: unknown }) => ({ id: "u9", ...(data as object) }));
+  (prisma as unknown as { goal: { create: jest.Mock } }).goal.create.mockResolvedValue({});
   (porteMotDePasse as jest.Mock).mockResolvedValue({ ouverte: true });
 });
 
@@ -119,10 +133,13 @@ describe("POST /api/auth/register", () => {
     expect(user.create).not.toHaveBeenCalled();
   });
 
-  it("refuse quand les cent places sont prises", async () => {
+  // Le plafond de cent est levé : il tenait le produit fermé pendant qu'il
+  // n'y avait personne dedans. La porte par mot de passe, elle, reste sur
+  // invitation — c'est un autre mécanisme, et il n'a pas bougé.
+  it("laisse entrer la cent-unième personne", async () => {
     user.count.mockResolvedValue(100);
-    expect((await inscrire(VALIDE)).status).toBe(403);
-    expect(user.create).not.toHaveBeenCalled();
+    expect((await inscrire(VALIDE)).status).toBe(200);
+    expect(user.create).toHaveBeenCalled();
   });
 
   it("attribue le rang suivant", async () => {

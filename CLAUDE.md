@@ -909,6 +909,40 @@ contrôle de non-vacuité habituel. Et un second garde refuse une adresse
 électronique écrite en dur dans une route : c'est le second endroit à changer
 le jour où la liste bouge, et celui qu'on oublie. Deux sabotages, deux échecs.
 
+### Le plafond de cent est levé, et la liste d'attente supprimée avec lui
+Décision du propriétaire du produit, prise sur un fait : une semaine entière
+sans une inscription, sans une partie, sans une tentative de connexion. Le
+plafond existait pour tenir le rythme des premiers jours ; il a surtout tenu le
+produit fermé pendant qu'il n'y avait personne dedans. Une porte qu'on garde
+contre une foule absente ne garde rien.
+
+Il vivait en **deux exemplaires**, `beta-access` et `auth/register`, chacun
+avec sa constante `BETA_LIMIT = 100`. C'est le quatrième cas de règle écrite
+deux fois trouvé sur ce projet. Ici les deux copies étaient d'accord, ce qui
+est la seule raison pour laquelle personne n'a rien vu.
+
+`betaRank` reste : il ne garde plus la porte, il dit dans quel ordre les
+comptes sont arrivés. La porte par mot de passe reste sur invitation
+(`porteMotDePasse`) : c'est un autre mécanisme, et il n'a pas bougé.
+
+**`/waitlist` est supprimée.** Sans plafond, aucun chemin ne peut plus y mener,
+et `pagesOrphelines.test.ts` refuse une page vers laquelle rien ne navigue.
+Elle part donc en entier : la page, sa mise en page, son dictionnaire dans les
+six langues, son entrée dans les chemins publics, dans la navigation, et le
+message d'erreur traduit qui l'accompagnait. La leçon qu'elle avait laissée
+reste écrite dans `robots.ts`, parce qu'elle vaut pour la prochaine page qu'on
+voudra cacher : interdire l'exploration n'empêche pas l'indexation.
+
+**Et le test qui a servi à la lever en a trouvé un autre.** En remplaçant
+« refuse la cent-unième personne » par « la laisse entrer », l'inscription a
+rendu 500. Rien à voir avec le plafond : la doublure de base n'a pas de
+délégué `goal`, la route crée un objectif par défaut après le compte, et le
+`.catch()` posé sur la promesse ne rattrape pas une erreur levée AVANT elle.
+Aucun test de ce fichier ne vérifiait le code d'une inscription réussie : ils
+regardaient tous ce qui avait été écrit, ce qui reste vrai même quand la route
+tombe juste après. Un test qui n'affirme rien sur le résultat laisse passer
+l'échec du résultat.
+
 ### Le recensement des `catch` silencieux, refait une dernière fois
 Passage final sur tous les `catch {}` et `.catch(() => {})` du site et de
 l'application de bureau. Les dix-neuf qui restent sont **tous des lectures au

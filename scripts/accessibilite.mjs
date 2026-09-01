@@ -28,7 +28,7 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
  */
 const PAGES = [
   "/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargement",
-  "/waitlist", "/recuperation", "/recuperation/valider", "/calculateur",
+  "/recuperation", "/recuperation/valider", "/calculateur",
   "/calculateur/league-of-legends", "/connexion-app",
 ];
 
