@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { PAGES_CONNUES, estPageConnue } from "@/lib/pagesConnues";
+import { tousLesSlugs } from "@/lib/slugJeu";
 
 /**
  * La liste des pages qui existent, comparée au dossier des pages.
@@ -44,7 +45,26 @@ describe("les pages connues", () => {
     // Un dossier renommé rendrait le test vert sur zéro page : c'est la forme
     // d'erreur que ce genre de recensement doit refuser en premier.
     expect(dossier.length).toBeGreaterThan(10);
-    expect([...PAGES_CONNUES].sort()).toEqual(dossier);
+    /**
+     * Le segment dynamique du calculateur est développé en clair dans la
+     * liste, jeu par jeu — le middleware doit distinguer un jeu qui existe
+     * d'un jeu inventé, sans quoi ce dernier passe pour une page connue et
+     * rend la 404 de Next au lieu de la nôtre. Le dossier, lui, n'en connaît
+     * qu'un seul, écrit `*`.
+     */
+    const nus = [...new Set([...PAGES_CONNUES].map(
+      (p) => (p.startsWith("/calculateur/") ? "/calculateur/*" : p)))].sort();
+    expect(nus).toEqual(dossier);
+  });
+
+  it("connaît chaque jeu du catalogue, et lui seul", () => {
+    for (const { slug } of tousLesSlugs()) {
+      expect(estPageConnue(`/calculateur/${slug}`)).toBe(true);
+    }
+    // Un jeu inventé n'est pas une page : sans ça, il traverse le middleware
+    // et c'est le ROUTEUR qui le refuse — ce qui rend la 404 intégrée de Next,
+    // sans langue et en anglais.
+    expect(estPageConnue("/calculateur/jeu-invente")).toBe(false);
   });
 
   it("se comparent par segments, jamais par lettres", () => {
@@ -57,7 +77,7 @@ describe("les pages connues", () => {
   });
 
   it("une étoile couvre un segment, pas plusieurs", () => {
-    expect(estPageConnue("/calculateur/valorant")).toBe(true);
+    expect(estPageConnue(`/calculateur/${tousLesSlugs()[0].slug}`)).toBe(true);
     expect(estPageConnue("/calculateur/a/b")).toBe(false);
   });
 
@@ -84,11 +104,24 @@ describe("le middleware", () => {
     expect(branche).toMatch(/!echappeAuPrefixe\(pathname\)\s*&&\s*!estPageConnue\(chemin\)/);
   });
 
-  it("refuse toujours par défaut une page connue sans session", () => {
-    // La chute dans le 404 vient APRÈS le contrôle des pages publiques et
-    // AVANT celui de la session : inverser les deux derniers rendrait toute
-    // page inconnue accessible ET toute page connue publique.
-    expect(source.indexOf("estPageConnue(chemin)")).toBeLessThan(source.indexOf("if (!req.auth)"));
-    expect(source.indexOf("estCheminPublic(chemin)")).toBeLessThan(source.indexOf("estPageConnue(chemin)"));
+  it("range ses trois questions dans le bon ordre", () => {
+    /**
+     * « Existe-t-elle ? », puis « est-elle publique ? », puis « y a-t-il une
+     * session ? ».
+     *
+     * L'existence passe en premier parce qu'une page publique couvre ses
+     * enfants : `/calculateur` couvre `/calculateur/<jeu>`, donc un jeu inventé
+     * sortait par la porte publique avant qu'on ait pu constater qu'il n'existe
+     * pas. Ça ne relâche rien — une adresse qui n'existe pas n'a pas de contenu
+     * à protéger.
+     *
+     * Le contrôle de session, lui, reste DERNIER : le remonter rendrait
+     * publique toute page connue.
+     */
+    const existe = source.indexOf("estPageConnue(chemin)");
+    const publique = source.indexOf("if (estCheminPublic(chemin))");
+    const session = source.indexOf("if (!req.auth)");
+    expect(existe).toBeLessThan(publique);
+    expect(publique).toBeLessThan(session);
   });
 });

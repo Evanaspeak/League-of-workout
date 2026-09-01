@@ -4,7 +4,8 @@ import { authConfig } from "@/auth.config";
 import { estCheminPublic } from "@/lib/routesPubliques";
 import { estPageConnue } from "@/lib/pagesConnues";
 import {
-  avecLocale, echappeAuPrefixe, localeDuChemin, negocierLocale, sansLocale,
+  avecLocale, echappeAuPrefixe, EN_TETE_LANGUE, localeDuChemin, negocierLocale,
+  sansLocale,
 } from "@/lib/i18n/cheminLocalise";
 
 // On utilise le wrapper Auth.js pour lire la session (il sait déchiffrer le
@@ -90,29 +91,61 @@ export default auth((req) => {
    */
   const chemin = sansLocale(pathname);
 
-  // Routes publiques : accès libre. La liste et la règle qui la lit vivent
-  // dans `src/lib/routesPubliques.ts`, pour que le test de la porte éprouve
-  // la règle qui tourne plutôt qu'une copie de son côté.
-  if (estCheminPublic(chemin)) {
-    return NextResponse.next();
-  }
-
   /**
    * Une adresse qui n'existe pas n'est pas une adresse protégée.
    *
    * Sans ce passage, `/fr/nimportequoi` répondait 307 vers `/fr/login` : une
    * faute de frappe ou un lien mort menaient à un écran de connexion, la page
-   * 404 localisée était inatteignable pour qui n'a pas de session, et un
-   * moteur qui suit un lien mort recevait 307 puis 200 — jamais 404, donc
-   * l'adresse supprimée ne sortait jamais de l'index.
+   * 404 était inatteignable pour qui n'a pas de session, et un moteur qui suit
+   * un lien mort recevait 307 puis 200 — jamais 404, donc l'adresse supprimée
+   * ne sortait jamais de l'index.
    *
    * Réservé aux PAGES. Ce qui échappe au préfixe de langue — les routes d'API
    * avant tout — garde le contrôle : y appliquer la même règle laisserait
    * passer sans session tout ce qui ne figure pas dans une liste de pages,
    * c'est-à-dire l'intégralité de l'API.
    */
+  /**
+   * La langue voyage avec CHAQUE requête de page, jusqu'à la 404.
+   *
+   * Celle-ci vit à la racine — sans mise en page racine, aucune frontière
+   * posée sous `[locale]` n'est consultée — donc elle n'a plus de paramètre de
+   * route à lire, et le middleware est le seul à connaître la langue.
+   *
+   * Posé sur toutes les pages et pas seulement sur les adresses inconnues :
+   * une adresse REJETÉE PAR LE ROUTEUR — un jeu de calculateur qui n'existe
+   * pas — figure dans les pages connues et ne passe donc pas par la branche
+   * ci-dessous. Elle a pourtant besoin de sa langue, comme les autres.
+   */
+  const entetes = new Headers(req.headers);
+  if (!echappeAuPrefixe(pathname)) {
+    entetes.set(EN_TETE_LANGUE, localeDuChemin(pathname) ?? negocierLocale(
+      req.cookies.get("low_locale")?.value, req.headers.get("accept-language"),
+    ));
+  }
+
+  /**
+   * L'adresse existe-t-elle ? La question passe AVANT « est-elle publique ».
+   *
+   * Une page publique couvre ses enfants — `/calculateur` couvre
+   * `/calculateur/<jeu>` — donc un jeu inventé sortait ici, avant qu'on ait pu
+   * constater qu'il n'existe pas. Le routeur le refusait alors lui-même, et
+   * une adresse rejetée par le routeur rend la 404 de Next, sans langue et en
+   * anglais, au lieu de la nôtre.
+   *
+   * L'inversion ne relâche rien : une adresse qui n'existe pas n'a pas de
+   * contenu à protéger, et les pages connues traversent toujours les deux
+   * contrôles qui suivent, dans le même ordre qu'avant.
+   */
   if (!echappeAuPrefixe(pathname) && !estPageConnue(chemin)) {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: entetes } });
+  }
+
+  // Routes publiques : accès libre. La liste et la règle qui la lit vivent
+  // dans `src/lib/routesPubliques.ts`, pour que le test de la porte éprouve
+  // la règle qui tourne plutôt qu'une copie de son côté.
+  if (estCheminPublic(chemin)) {
+    return NextResponse.next({ request: { headers: entetes } });
   }
 
   // Routes protégées : req.auth est rempli par Auth.js si la session est valide.
@@ -126,7 +159,7 @@ export default auth((req) => {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  return NextResponse.next({ request: { headers: entetes } });
 });
 
 export const config = {

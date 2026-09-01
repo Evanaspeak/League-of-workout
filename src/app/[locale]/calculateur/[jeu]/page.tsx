@@ -82,17 +82,17 @@ export default async function PageCalculateur(
 }
 
 /**
- * Le catalogue reste fermé — mais c'est la PAGE qui referme, pas le routeur.
+ * Le catalogue est fermé, et c'est le ROUTEUR qui referme.
  *
- * Avec `dynamicParams = false`, un jeu inconnu rendait le 404 par défaut de
- * Next : `<html>` sans langue, « 404: This page could not be found. » en
- * anglais dans les six langues. La page 404 du site, traduite, n'était jamais
- * atteinte, parce que le routeur refusait l'adresse avant que la page ne
- * s'exécute.
+ * Un jeu inconnu n'atteint jamais cette page : le routeur rejette l'adresse,
+ * et une adresse rejetée par le routeur rend la 404 racine — celle du site,
+ * dans la langue de l'adresse.
  *
- * Ouvert, le rendu a lieu, `jeuDepuisSlug` ne trouve rien, et `notFound()`
- * rend la 404 du site dans la bonne langue. Les quinze jeux restent prérendus
- * par `generateStaticParams` : ce qui change n'est pas leur coût, c'est ce que
- * voit celui qui tape une adresse inventée.
+ * Ouvrir le catalogue avait paru plus propre : la page se serait exécutée et
+ * aurait appelé `notFound()`. Mesuré, c'est le contraire. Un `notFound()` levé
+ * depuis une page cherche une frontière dans SON arbre de segments, n'en
+ * trouve aucune faute de mise en page racine, et retombe sur la 404 intégrée
+ * de Next — `<html>` sans langue, texte anglais. Les deux chemins ne se valent
+ * pas, et seul celui-ci donne la bonne page.
  */
-export const dynamicParams = true;
+export const dynamicParams = false;

@@ -144,6 +144,15 @@ export function languesAlternatives(chemin: string, base = ""): Record<string, s
   };
 }
 
+/**
+ * L'en-tête par lequel le middleware transmet la langue négociée.
+ *
+ * La page 404 racine n'a plus de paramètre de route à lire — c'est justement
+ * ce qui la définit. Le middleware, lui, connaît la langue : il vient de la
+ * négocier ou de la lire dans l'adresse.
+ */
+export const EN_TETE_LANGUE = "x-wow-langue";
+
 /** Toutes les langues, pour `generateStaticParams`. */
 export function toutesLesLocales(): { locale: Locale }[] {
   return LANGUES.map((locale) => ({ locale }));

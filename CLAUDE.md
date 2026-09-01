@@ -701,6 +701,59 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La 404 localisée ne l'était que pour ceux qui exécutent le JavaScript
+Suite immédiate du chantier précédent, et correction d'un défaut que j'avais
+publié en croyant l'avoir réglé. `/de/nimportequoi` répondait bien 404 — mais
+le HTML SERVI était la 404 intégrée de Next : `<html>` sans langue, « 404: This
+page could not be found. » en anglais, pour les six langues.
+
+**Le test passait, et c'est ce qui est instructif.** Il lisait le DOM vivant :
+après hydratation, React rendait bien notre page et posait `lang`. Un moteur de
+recherche, lui, ne va jamais jusque-là — et c'est précisément pour un moteur
+qu'on a fait ce chantier. Le piège est écrit dans ce journal depuis le premier
+écran du tableau de bord, mot pour mot : **sur ce qui doit exister DANS la
+réponse, on lit la réponse.** Les tests d'`introuvable.spec.ts` lisent
+maintenant `response.text()`.
+
+**La cause tient à une conséquence du passage de la langue dans l'adresse.**
+`app/layout.tsx` a disparu au profit de deux mises en page racines, une par
+coquille. Or sans mise en page racine, Next ne consulte AUCUNE frontière
+`not-found` posée sous `[locale]` : il remonte à la racine, où il n'y avait
+rien, et sert la sienne. Trois tentatives avant de le comprendre — une
+frontière sous `[locale]`, une dans le segment attrape-tout, la même rendue
+sans `useLocale` — toutes ignorées.
+
+`src/app/not-found.tsx` porte donc son propre `<html>`, comme le veut une 404
+racine sans mise en page racine. Elle n'a plus de paramètre de route à lire :
+la langue lui arrive par un en-tête que le middleware pose sur chaque requête
+de page, `x-wow-langue`. Deux sabotages, deux échecs : sans l'en-tête posé, ou
+sans sa lecture, la langue disparaît de la réponse.
+
+**Et l'ordre des questions du middleware a changé.** « L'adresse existe-t-elle »
+passe maintenant AVANT « est-elle publique », parce qu'une page publique couvre
+ses enfants : `/calculateur` couvre `/calculateur/<jeu>`, donc un jeu inventé
+sortait par la porte publique avant qu'on ait pu constater qu'il n'existe pas.
+L'inversion ne relâche rien — une adresse qui n'existe pas n'a pas de contenu à
+protéger — et le contrôle de session reste dernier, ce qu'un test fixe.
+`PAGES_CONNUES` développe le catalogue des jeux en clair, depuis `tousLesSlugs`
+plutôt qu'une seconde liste.
+
+**Ce qui résiste, et qui est assumé.** Un jeu de calculateur inventé rend 404
+avec la page anglaise de Next. Le refus vient du ROUTEUR — le catalogue est
+fermé — et un refus du routeur ne passe pas par la 404 racine. Trois
+contournements essayés et mesurés : ouvrir le catalogue pour que la page appelle
+`notFound()` (même résultat, `notFound()` levé depuis une page ne consulte pas
+davantage la racine), poser la frontière ailleurs (jamais consultée), réécrire
+l'adresse dans le middleware (casse en plus les cas qui marchaient). Le code de
+réponse, lui, est juste, et c'est lui qui fait sortir une adresse d'un index. Le
+test fixe l'état réel plutôt que de laisser croire que le cas est traité.
+
+Ce que ça apprend, au-delà du cas : **publier une correction et vérifier une
+correction sont deux gestes différents.** Celle-ci a été publiée dans V308,
+vérifiée dans la foulée par un test vert, et elle ne faisait que la moitié de ce
+qu'elle annonçait. Ce sont les sondes sur la PRODUCTION, faites par acquit de
+conscience après la publication, qui l'ont montré.
+
 ### Campagne de clôture du 2 septembre
 Passée après six chantiers de la nuit, sur un compte neuf ouvert par
 `scripts/compte-mesure.mjs`. En allemand : c'est la langue où les mots sont les
