@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { chargerBareme } from "@/lib/baremeConfig";
 import { ajouterALaDette, retirerDeLaDette } from "@/lib/dette";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
@@ -94,11 +95,22 @@ async function corrigerResultat(id: string, userId: string, brut: unknown) {
   }
 
   await seedDefaults();
-  const [ponderations, levelConfigs, masteryConfig] = await Promise.all([
-    prisma.roleWeight.findMany(),
-    prisma.levelConfig.findMany({ orderBy: { seuilGainageSec: "asc" } }),
-    prisma.masteryConfig.findFirst(),
-  ]);
+  /**
+   * Le barème vient du cache mémoire : trois tables globales, identiques pour
+   * tout le monde, qui changent quand un administrateur y touche. Elles étaient
+   * relues à chaque appel — trois allers-retours vers la base pour des valeurs
+   * qui ne bougent pas d'un mois sur l'autre.
+   */
+  const bareme = await chargerBareme();
+  const ponderations = bareme.roleWeights;
+  const masteryConfig = bareme.masteryConfig;
+  // Le tri par seuil de gainage est ce que `getLevel` attend : il lit le
+  // dernier palier franchi. L'ordre par niveau donnerait le même résultat tant
+  // que les deux progressent ensemble — ce qui est vrai aujourd'hui et n'est
+  // écrit nulle part. On trie donc explicitement.
+  const levelConfigs = [...bareme.levelConfigs]
+    .sort((a, b) => a.seuilGainageSec - b.seuilGainageSec);
+
   if (levelConfigs.length === 0 || ponderations.length === 0) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }

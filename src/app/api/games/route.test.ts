@@ -18,6 +18,7 @@ jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
 jest.mock("@/lib/push", () => ({ notifier: jest.fn().mockResolvedValue(undefined) }));
 
 import { GET, POST } from "./route";
+import { oublierBareme } from "@/lib/baremeConfig";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
@@ -40,6 +41,13 @@ const NIVEAUX = [1, 2, 3, 4, 5].map((niveau) => ({
 }));
 
 beforeEach(() => {
+  /**
+   * Le barème est mis en cache au niveau du module : une valeur retenue par un
+   * cas précédent survivrait au suivant, et le cas « configuration absente »
+   * passerait alors sur les paliers d'un autre test. C'est un état partagé, il
+   * se réinitialise comme les doublures.
+   */
+  oublierBareme();
   jest.clearAllMocks();
   session.mockResolvedValue(utilisateur({ pompesMax: 20 }));
   bride.mockResolvedValue(false);
