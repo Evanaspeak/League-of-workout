@@ -17,6 +17,27 @@ git checkout main && git merge claude/excel-app-conversion-5hk2fg
 git push origin main
 ```
 
+## Quoi construire ensuite (IMPORTANT)
+
+**`docs/plan-action.md` dit sur quoi travailler.** Il faut le LIRE avant de
+choisir un chantier produit, et ne pas improviser une liste à sa place : le
+plan a été établi avec le propriétaire, à partir de ses 308 réponses au Second
+Interrogatoire, et proposer autre chose sans le dire revient à défaire une
+décision qu'il a prise.
+
+Il porte huit étapes ordonnées et cent trois lignes cochables. La raison de
+l'ordre est écrite dans le document ; s'en écarter se discute, mais ça se
+discute — ça ne se fait pas en silence.
+
+**Quand une ligne est faite**, cocher sa case dans le même commit que le code.
+Un plan qu'on ne tient pas à jour ment, et on lui obéit quand même.
+
+`docs/interrogatoire-2.txt` porte les 308 réponses dont le plan dérive. Quand
+une ligne du plan est ambiguë, la réponse fait foi.
+
+Ce qui relève de la correction, de l'audit, de la mesure ou d'un garde de test
+ne figure PAS dans le plan : ça vit dans le journal, plus bas.
+
 ## Travail sur une fenêtre longue (IMPORTANT)
 
 Quand l'utilisateur annonce qu'il s'absente pour une durée donnée — « je pars
