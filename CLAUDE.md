@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1560 tests unitaires, 145 suites. Base et session doublées : aucune dépendance à
+1563 tests unitaires, 146 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -703,6 +703,38 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Ce que la sauvegarde va bien, et l'avertissement qu'elle traîne
+Vérifiée par son journal et non par sa pastille, comme il se doit depuis
+qu'elle a pu ne rien produire pendant des semaines sans que rien ne le dise :
+sept exécutions vertes d'affilée depuis le 26 août, la dernière le 1er
+septembre, et **les treize étapes ont réellement tourné** — export, restauration
+dans un PostgreSQL neuf, comparaison table par table, chiffrement, dépôt de
+l'archive. Ce n'est pas une exécution qui saute tout faute de secrets.
+
+Le rythme, lui, est irrégulier comme celui des envois — entre 04 h et 15 h UTC
+selon les jours — mais une sauvegarde QUOTIDIENNE ne vise aucune fenêtre : le
+décalage ne lui coûte rien. C'est ce qui distingue son cas de celui du rappel du
+matin, et ça vaut d'être écrit : le même déclencheur irrégulier est sans effet
+ici et fatal là-bas.
+
+**Un avertissement traîne dans le journal, et il n'est pas traité :**
+
+> Node.js 20 is deprecated. The following actions target Node.js 20 but are
+> being forced to run on Node.js 24: actions/checkout@v4, actions/upload-artifact@v4
+
+Treize emplois d'actions en v4 dans les quatre travaux — `checkout`,
+`setup-node`, `upload-artifact`, `cache`. GitHub compense pour l'instant ; le
+jour où il cessera, les quatre travaux tombent d'un coup, sauvegarde et
+supervision comprises.
+
+Ça n'a **pas** été corrigé cette nuit, et la raison mérite d'être notée :
+l'API de GitHub n'est pas joignable depuis cet environnement, donc impossible
+de vérifier quelle version majeure existe pour chacune. Écrire `@v5` au jugé et
+se tromper casse les quatre travaux — y compris la sauvegarde, qui ne tourne
+qu'une fois par jour et dont l'échec ne se verrait pas avant le lendemain. Un
+avertissement que GitHub compense encore ne justifie pas de deviner. À faire
+depuis une machine qui peut lire les versions.
+
 ### La mécanique de rétention n'a jamais tourné, et répondait 200
 Le rappel du matin, la relance des absents et le bilan hebdomadaire cherchaient
 tous les trois l'heure EXACTE : `heureLocale(...) === 9`. C'est juste si le
@@ -770,6 +802,20 @@ raison d'être : `compte.test.ts` a exigé qu'on range `rappelLe` d'un côté ou
 l'autre de ce qui sort du compte, et `politiqueComplete.test.ts` qu'on la
 décrive dans la politique de confidentialité ou qu'on dise pourquoi elle en est
 absente. Aucune des deux ne se serait posée toute seule.
+
+**Un garde pour la classe, pas pour la ligne.** `src/envoisProgrammes.test.ts`
+lit les workflows — la source de vérité — pour savoir quelles routes un travail
+PROGRAMMÉ appelle, et refuse dans celles-là toute comparaison de `heureLocale`
+à une valeur exacte. Comparer une heure exacte reste parfaitement légitime
+ailleurs ; c'est la répétition automatique qui rend l'hypothèse coûteuse. Il
+exige aussi que la fenêtre fasse au moins trois heures : une heure est
+exactement le cas qu'on vient de corriger. Trois sabotages, trois échecs — dont
+le renommage des adresses dans le workflow, qui doit faire tomber le contrôle
+de non-vacuité plutôt que de le rendre vert sur zéro route.
+
+Il lit le CODE et non les commentaires, ce qui n'allait pas de soi : les
+commentaires de ces routes citent le motif fautif pour expliquer pourquoi il a
+disparu, et un garde naïf se serait déclenché sur sa propre explication.
 
 **Un piège d'outillage, nouveau celui-là.** La suite navigateur est tombée en
 entier après l'ajout de la colonne : quatre-vingt-dix tests non joués, et le
