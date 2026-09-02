@@ -1,8 +1,9 @@
-"use client";
 import { Lien } from "@/components/Lien";
-import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { textes } from "@/lib/i18n/textes";
+import { toLocale } from "@/lib/i18n/langues";
 import { landing } from "@/lib/i18n/dictionaries/landing";
+import { DebtFeed } from "@/components/accueil/DebtFeed";
+import { RevelationAuDefilement } from "@/components/RevelationAuDefilement";
 import { Wordmark } from "@/components/Wordmark";
 import { Icone } from "@/components/Icone";
 import { PastilleOverlay } from "@/components/landing/PastilleOverlay";
@@ -13,7 +14,6 @@ import { VideoFond } from "@/components/landing/VideoFond";
 import type { VideoBoucle } from "@/lib/videoBoucle";
 import { CadreApp } from "@/components/landing/CadreApp";
 import { LogoWindows } from "@/components/landing/LogoOS";
-import { useMouvementReduit } from "@/lib/valeurClient";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 /* Chaque icône a sa couleur — la palette vit dans le contenu */
@@ -25,30 +25,6 @@ const ICON_COLORS: Record<string, string> = {
   brain: "var(--violet)",
   heart: "var(--ember)",
 };
-
-/* Reveal au scroll : ajoute .is-visible aux éléments .reveal quand ils entrent */
-function useRevealOnScroll() {
-  useEffect(() => {
-    const els = Array.from(document.querySelectorAll(".reveal"));
-    if (!("IntersectionObserver" in window)) {
-      els.forEach((el) => el.classList.add("is-visible"));
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            e.target.classList.add("is-visible");
-            io.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
-}
 
 /* ── Icônes SVG (stroke, style unique — pas d'emoji) ─────────────────────── */
 function Icon({ name, size = 20, color = "var(--steel)" }: { name: string; size?: number; color?: string }) {
@@ -132,140 +108,9 @@ function Slash({ height = 12 }: { height?: number }) {
  * `issue` est le résultat lui-même : c'est lui qui donne la couleur, sinon
  * un « S » de Sieg passerait pour une défaite en allemand.
  */
-type FeedEntry = {
-  r: string;
-  issue: "gagne" | "perdu" | "neutre";
-  jeu: string;
-  detail: string;
-  pts: number;
-};
 
-function DebtFeed({
-  title, count, totalLabel, unit, conversion, entries,
-}: {
-  title: string; count: string; totalLabel: string; unit: string;
-  /** Ce que le total donne dans chaque exercice : le modèle en une ligne. */
-  conversion: string;
-  entries: FeedEntry[];
-}) {
-  const HOLD_STEPS = 3; // temps de pause une fois la soirée complète
-  const [step, setStep] = useState(0);
-  const mouvementReduit = useMouvementReduit();
-
-  useEffect(() => {
-    // Animation refusée par le système : le compteur ne sert plus à rien, la
-    // soirée s'affiche entière et l'intervalle n'est jamais lancé.
-    if (mouvementReduit) return;
-    const id = setInterval(() => {
-      // Après la pause, on repart directement sur la première game (pas de trou vide)
-      setStep((prev) => (prev >= entries.length + HOLD_STEPS ? 1 : prev + 1));
-    }, 950);
-    return () => clearInterval(id);
-  }, [entries.length, mouvementReduit]);
-
-  const visible = mouvementReduit ? entries.length : Math.min(step, entries.length);
-  const total = entries.slice(0, visible).reduce((s, e) => s + e.pts, 0);
-  const complet = visible === entries.length;
-
-  return (
-    <div style={{
-      background: "var(--carbon)",
-      border: "1px solid var(--line)",
-      borderRadius: 16,
-      overflow: "hidden",
-      width: "100%",
-      maxWidth: 440,
-    }}>
-      {/* Header */}
-      <div style={{
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "14px 20px", borderBottom: "1px solid var(--line)",
-      }}>
-        <span className="eyebrow">{title}</span>
-        <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--faint)" }}>{count}</span>
-      </div>
-
-      {/* Rows */}
-      <div>
-        {entries.map((e, i) => {
-          const isWin = e.issue === "gagne";
-          // Une session au temps n'a ni victoire ni défaite : elle reste neutre.
-          const isNeutre = e.issue === "neutre";
-          const teinte = isNeutre ? "var(--steel)" : isWin ? "var(--victory)" : "var(--loss)";
-          const fond = isNeutre
-            ? "rgba(152,162,176,0.1)"
-            : isWin ? "var(--victory-soft)" : "rgba(255,90,71,0.1)";
-          const bord = isNeutre
-            ? "rgba(152,162,176,0.3)"
-            : isWin ? "rgba(47,217,138,0.3)" : "rgba(255,90,71,0.3)";
-          const shown = i < visible;
-          return (
-            <div
-              key={i}
-              style={{
-                display: "flex", alignItems: "center", gap: 14,
-                padding: "12px 20px",
-                borderBottom: "1px solid var(--line)",
-                opacity: shown ? 1 : 0,
-                transform: shown ? "translateY(0)" : "translateY(8px)",
-                transition: "opacity 0.35s ease, transform 0.35s ease",
-              }}
-            >
-              <span
-                className="mono-num"
-                style={{
-                  width: 26, height: 26, borderRadius: 6, flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.75rem", fontWeight: 600,
-                  color: teinte,
-                  background: fond,
-                  border: `1px solid ${bord}`,
-                }}
-              >
-                {isNeutre ? "·" : e.r}
-              </span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: "0.85rem", color: "var(--bone)", fontWeight: 500 }}>{e.jeu}</span>
-                <span className="mono-num" style={{ display: "block", fontSize: "0.68rem", color: "var(--faint)" }}>{e.detail}</span>
-              </span>
-              <span className="mono-num" style={{
-                fontSize: "0.95rem", fontWeight: 600,
-                color: isWin ? "var(--victory)" : "var(--ember)",
-              }}>
-                +{e.pts}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Total, puis ce qu'il donne dans chaque exercice : la conversion est le
-          produit, autant la montrer dès l'accueil. */}
-      <div style={{ padding: "16px 20px", background: "rgba(255,77,46,0.05)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <span className="eyebrow">{totalLabel}</span>
-          <span className="mono-num" style={{ fontSize: "1.5rem", fontWeight: 600, color: "var(--ember)", lineHeight: 1 }}>
-            {total} <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "rgba(255,77,46,0.7)" }}>{unit}</span>
-          </span>
-        </div>
-        <div
-          className="mono-num"
-          style={{
-            fontSize: "0.7rem", color: "var(--faint)", textAlign: "right", marginTop: 6,
-            opacity: complet ? 1 : 0,
-            transition: "opacity 0.4s ease",
-          }}
-        >
-          {conversion}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Landing ─────────────────────────────────────────────────────────────── */
 export default function LandingClient({
-  isLoggedIn, telechargement, version, logosJeux, video,
+  isLoggedIn, telechargement, version, logosJeux, video, locale,
 }: {
   isLoggedIn: boolean;
   /** L'installeur de la dernière version, résolu côté serveur. */
@@ -275,9 +120,10 @@ export default function LandingClient({
   logosJeux: Record<string, string>;
   /** La vidéo de démonstration, si le fichier a été déposé. */
   video: VideoBoucle | null;
+  /** La langue vient de l'adresse : c'est ce qui permet le rendu au serveur. */
+  locale: string;
 }) {
-  const t = useT(landing);
-  useRevealOnScroll();
+  const t = textes(landing, toLocale(locale));
 
   const h2: React.CSSProperties = {
     fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
@@ -296,6 +142,9 @@ export default function LandingClient({
       marginTop: "-1.5rem",
       marginBottom: "-1.5rem",
     }}>
+      {/* Le seul script de cette page : il révèle les sections au défilement
+          et ne connaît aucun de ses textes. */}
+      <RevelationAuDefilement />
 
       {/* NAV */}
       <nav style={{
