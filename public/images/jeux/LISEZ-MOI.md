@@ -19,15 +19,32 @@ Le vectoriel est préférable, il reste net à toutes les tailles.
 | Fortnite              | `fortnite`      | oui     |
 | PUBG                  | `pubg`          | oui     |
 | Apex Legends          | `apex`          | oui     |
+| Rocket League         | `rocket-league` | oui     |
+| Minecraft             | `minecraft`     | oui     |
+| World of Warcraft     | `wow`           | oui     |
 | Call of Duty: Warzone | `warzone`       | non     |
-| Rocket League         | `rocket-league` | non     |
 | Teamfight Tactics     | `tft`           | non     |
-| Minecraft             | `minecraft`     | non     |
-| World of Warcraft     | `wow`           | non     |
 | Grand Theft Auto V    | `gta5`          | non     |
 | Elden Ring            | `elden-ring`    | non     |
 
-## Ce qui est en place
+## Les logos officiels, et les deux glyphes qu'ils remplacent
+
+Cinq logos officiels ont été déposés par le propriétaire du site : `league`,
+`apex`, `rocket-league`, `minecraft`, `wow`. Ils sont servis tels quels — ni
+recadrés, ni recolorés, ni redessinés.
+
+Deux d'entre eux ont pris la place d'un glyphe : `league.svg` et `apex.svg` ont
+été supprimés. C'est nécessaire et pas cosmétique — l'ordre de préférence va du
+SVG au PNG, donc un `league.png` déposé à côté d'un `league.svg` ne s'affiche
+JAMAIS. Un fichier qui reste sans être servi n'est pas inoffensif : il masque
+en silence celui qu'on vient d'ajouter.
+
+Le prix du PNG est connu et accepté : il ne reste pas net à l'agrandissement.
+La bande les affiche à vingt-deux pixels, et les fichiers déposés font entre
+deux cent cinquante et cinq cents pixels de côté — il y a donc de la marge pour
+les écrans à forte densité.
+
+## Ce qui reste en glyphe dessiné pour ce site
 
 Cinq des six glyphes présents viennent de [Simple Icons], collection publiée en CC0
 donc librement redistribuable, et portent la couleur officielle que la
@@ -45,9 +62,9 @@ destine à ce fond.
 
 [Simple Icons]: https://simpleicons.org
 
-## Les sept qui manquent
+## Les quatre qui manquent
 
-Aucune collection redistribuable ne les publie. Il faut les prendre au kit
+`warzone`, `tft`, `gta5`, `elden-ring`. Aucune collection redistribuable ne les publie. Il faut les prendre au kit
 presse de l'éditeur, ou dans une source dont on connaît les conditions.
 
 Les marques restent la propriété de leurs éditeurs. Elles sont affichées ici au
