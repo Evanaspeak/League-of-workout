@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1523 tests unitaires, 141 suites. Base et session doublées : aucune dépendance à
+1526 tests unitaires, 142 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -700,6 +700,37 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le contrat du pont Electron n'était tenu par personne
+`preload.js` expose des méthodes à la page ; `src/types/electron.d.ts` déclare
+celles sur lesquelles le site compte. Les deux moitiés vivaient chacune de son
+côté, et le défaut que ça laisse passer est le pire de sa famille : une méthode
+ajoutée au type et appelée par une page, oubliée dans le pont, donne
+« undefined is not a function » **dans l'application installée seulement**.
+
+Rien ne peut le dire ici. TypeScript se tait — le type promet qu'elle existe.
+Les parcours navigateur se taisent — ils posent un FAUX pont, dont la forme est
+justement ce qu'on voudrait vérifier. Et l'appel tombe dans un `catch`. C'est
+la leçon déjà écrite pour l'adresse `/login` : la seule machine capable de voir
+le défaut est celle de quelqu'un d'autre.
+
+Comparé : **rien ne manque**. Trente méthodes déclarées, toutes exposées. Une
+seule en surplus, `retourConnexion`, et elle a sa raison — c'est l'écran
+d'attente de la COQUILLE qui l'appelle, une page `data:` qui n'est pas le site.
+Le test l'exempte nommément et vérifie en plus qu'elle sert vraiment : une
+exemption qui ne désigne plus rien de vivant est du code mort qu'on a fini par
+admettre.
+
+**Le premier résultat de ce contrôle était faux**, et c'est ce qu'il y a à en
+retenir. Il annonçait dix méthodes déclarées et non exposées — `score`,
+`contexte`, `classement`… — qui sont en réalité les CHAMPS des objets
+imbriqués dans les signatures. Un motif ligne à ligne ne distingue pas un
+membre d'un niveau d'un membre d'un autre ; il faut suivre la profondeur des
+accolades. Dix faux positifs auraient envoyé corriger un pont qui n'avait rien.
+
+Trois sabotages, trois échecs — dont le troisième par ENOENT plutôt que par
+assertion, ce qui est le bon bruit : un garde qui ne trouve plus ses fichiers
+doit tomber, pas passer au vert sur deux listes vides.
 
 ### Revue des deux routes nées cette nuit
 `/api/contexte` et `/api/progression` regroupent ce que cinq routes rendaient.
