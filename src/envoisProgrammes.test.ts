@@ -82,3 +82,53 @@ describe("les routes appelées par un travail programmé", () => {
     expect(FIN_MATIN - DEBUT_MATIN).toBeGreaterThanOrEqual(3);
   });
 });
+
+/**
+ * Un canal muet ne doit pas consommer les marques.
+ *
+ * Sans clés VAPID, `notifier` rend zéro sans rien tenter ; sans clé Resend,
+ * `envoyerBilanHebdo` rend `false`. Les deux routes continuaient quand même :
+ * elles parcouraient toute la base et posaient `rappelLe`, `relanceLe` et
+ * `bilanLe` sur chaque compte, pour des envois qui ne partaient pas. Et elles
+ * rendaient `{ examines: N, envoyes: 0 }`, c'est-à-dire exactement la réponse
+ * d'une matinée normale où il n'y a personne à prévenir.
+ *
+ * Les marques sont CONSOMMÉES : la relance des absents ne se rejoue qu'au bout
+ * de quatre-vingt-dix jours. Le seul message que le produit adresse à
+ * quelqu'un qui a cessé de jouer était donc brûlé par un déploiement incapable
+ * de l'envoyer, en silence et en répondant 200.
+ *
+ * La règle : une route programmée qui envoie doit demander à son canal s'il
+ * peut envoyer, AVANT d'écrire quoi que ce soit.
+ */
+describe("le canal d'envoi", () => {
+  /** Ce qui envoie, et la question qu'il faut lui poser d'abord. */
+  const CANAUX = [
+    { envoie: /\bnotifier\s*\(/, demande: /pushConfigure\s*\(\s*\)/ },
+    { envoie: /\benvoyerBilanHebdo\s*\(/, demande: /courrielConfigure\s*\(\s*\)/ },
+  ];
+
+  it("est consulté avant que la route n'écrive quoi que ce soit", () => {
+    let examinees = 0;
+    for (const chemin of routesProgrammees()) {
+      const source = fichierDeRoute(chemin);
+      if (!source) continue;
+      for (const canal of CANAUX) {
+        if (!canal.envoie.test(source)) continue;
+        examinees += 1;
+        // Nommer la route dans l'assertion : « false n'est pas true » ne dit
+        // pas laquelle des routes programmées est en cause.
+        expect({ route: chemin, demandeSonCanal: canal.demande.test(source) })
+          .toEqual({ route: chemin, demandeSonCanal: true });
+        // La question doit précéder la première écriture, sinon elle ne
+        // protège rien : un contrôle posé après la boucle constate les dégâts.
+        const question = source.search(canal.demande);
+        const ecriture = source.search(/prisma\.\w+\.(update|updateMany|create)\b/);
+        if (ecriture !== -1) expect(question).toBeLessThan(ecriture);
+      }
+    }
+    // Sans témoin, un renommage de `notifier` rendrait ce test vert en
+    // n'examinant aucun canal.
+    expect(examinees).toBeGreaterThanOrEqual(2);
+  });
+});

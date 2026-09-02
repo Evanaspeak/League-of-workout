@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { envoyerBilanHebdo } from "@/lib/email";
+import { courrielConfigure, envoyerBilanHebdo } from "@/lib/email";
 import { textesBilan } from "@/lib/i18n/courriels";
 import { bilanHebdo, bilanDu, vautUnBilan, JOURS_BILAN } from "@/lib/bilanHebdo";
 import { heureLocale } from "@/lib/fuseau";
@@ -51,6 +51,21 @@ function autorise(req: Request): boolean {
 export async function POST(req: Request) {
   if (!autorise(req)) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  }
+
+  /**
+   * Sans clé Resend, `envoyerBilanHebdo` rend `false` sans rien tenter. La
+   * route parcourait quand même toute la base et posait `bilanLe` sur chaque
+   * compte, donc marquait « bilan envoyé aujourd'hui » pour un envoi qui
+   * n'était jamais parti — et rendait `{ examines: N, envoyes: 0 }`, la même
+   * réponse qu'un lundi où personne n'a joué de la semaine.
+   *
+   * C'est le défaut déjà corrigé sur la récupération de mot de passe, où l'on
+   * promettait un courriel qui ne partait pas. `courrielConfigure` existait
+   * depuis ; les deux routes d'envoi programmé ne l'appelaient pas.
+   */
+  if (!courrielConfigure()) {
+    return NextResponse.json({ examines: 0, envoyes: 0, courriel: "absent" });
   }
 
   const maintenant = new Date();
@@ -104,5 +119,5 @@ export async function POST(req: Request) {
     if (parti) envoyes += 1;
   }
 
-  return NextResponse.json({ examines: comptes.length, envoyes });
+  return NextResponse.json({ examines: comptes.length, envoyes, courriel: "configuré" });
 }

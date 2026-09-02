@@ -3,7 +3,16 @@ import { requete } from "@/test/api";
 jest.mock("@/lib/prisma", () => ({
   prisma: { user: { findMany: jest.fn(), update: jest.fn() } },
 }));
-jest.mock("@/lib/push", () => ({ notifier: jest.fn().mockResolvedValue(1) }));
+/**
+ * `jest.mock` remplace le MODULE ENTIER : une fonction ajoutée au vrai module
+ * et absente d'ici rend `undefined`, et la route tombe en 500 sans que la
+ * cause ressemble à quoi que ce soit. C'est déjà arrivé sur `@/lib/email`.
+ */
+const configure = jest.fn(() => true);
+jest.mock("@/lib/push", () => ({
+  notifier: jest.fn().mockResolvedValue(1),
+  pushConfigure: () => configure(),
+}));
 jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
 
 import { POST, HEURE_RAPPEL, MINIMUM_SEC } from "./route";
@@ -99,7 +108,7 @@ describe("choix des comptes", () => {
   it("envoie à qui est au matin chez lui", async () => {
     const r = await appeler(SECRET);
     expect(envoi).toHaveBeenCalledTimes(1);
-    expect(await r.json()).toEqual({ examines: 1, envoyes: 1, relances: 0 });
+    expect(await r.json()).toEqual({ examines: 1, envoyes: 1, relances: 0, push: "configuré" });
   });
 
   it("ne réveille personne ailleurs dans le monde", async () => {
@@ -265,5 +274,33 @@ describe("la fenêtre du matin", () => {
       where: { id: "u1" },
       data: expect.objectContaining({ rappelLe: expect.any(Date) }),
     }));
+  });
+});
+
+/**
+ * Le déploiement sans clés VAPID.
+ *
+ * `notifier` y rend zéro sans rien tenter, et la route continuait quand même :
+ * elle parcourait la base et posait `rappelLe` et `relanceLe` sur chaque
+ * compte. Les marques sont consommées — la relance des absents ne se rejoue
+ * qu'au bout de quatre-vingt-dix jours — donc le seul message adressé à
+ * quelqu'un qui a cessé de jouer était brûlé par un déploiement incapable de
+ * l'envoyer. Et la réponse était celle d'une matinée normale.
+ */
+describe("sans clés de notification", () => {
+  it("ne touche pas à la base et le dit dans sa réponse", async () => {
+    configure.mockReturnValueOnce(false);
+    repondre({ matin: [compte()], absents: [] });
+
+    const res = await appeler(SECRET);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      examines: 0, envoyes: 0, relances: 0, push: "absent",
+    });
+    // Rien de marqué : une clé posée à dix heures rattrape encore la matinée.
+    expect(user.update).not.toHaveBeenCalled();
+    // Et pas même une lecture : inutile de faire le tour de la base pour rien.
+    expect(user.findMany).not.toHaveBeenCalled();
   });
 });
