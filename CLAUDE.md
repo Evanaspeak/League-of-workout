@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1565 tests unitaires, 147 suites. Base et session doublées : aucune dépendance à
+1574 tests unitaires, 148 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -702,6 +702,28 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le menu de la zone de notification, éprouvé enfin
+C'est le seul écran qui subsiste quand la fenêtre est fermée — et la fenêtre
+est fermée pendant toute une soirée de jeu, puisque c'est le but. Deux choses
+s'y jouent, et aucune n'était tenue :
+
+- **la langue.** L'icône est posée AU DÉMARRAGE, avant que la fenêtre ait
+  chargé la moindre page, donc avant qu'on sache quoi que ce soit de la langue
+  choisie. D'où la langue passée en fonction et le menu reconstruit ensuite. Le
+  commentaire l'a promis avant que le code le fasse — c'est écrit plus bas dans
+  ce journal — et rien n'aurait redit si ça se défaisait ;
+- **l'avertissement de mise en veille.** Une fois par session : jamais, et on
+  croit avoir quitté en fermant la fenêtre ; à chaque fois, et c'est un
+  harcèlement qu'on coupe — en coupant tout le reste avec.
+
+Neuf tests, trois sabotages, trois échecs : la langue lue une seule fois,
+l'avertissement qui se répète, et le rafraîchissement qui agit sur une icône
+détruite.
+
+Rien de cassé trouvé. C'est un test de non-régression sur du code correct, ce
+qui est le bon moment pour l'écrire — la même raison que pour le placement de
+la pastille.
 
 ### Un script d'un soir dormait à la racine depuis dix jours
 `diag.mjs` y vivait depuis la nuit où l'image du bilan de saison partait quatre
