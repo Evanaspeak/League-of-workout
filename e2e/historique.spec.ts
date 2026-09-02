@@ -70,8 +70,11 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
     } catch { /* stockage refusé */ }
   }, uid);
   // Le consentement santé est modal : sans réponse, c'est lui qu'on mesure.
-  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  // On l'attend LUI plutôt que le silence du réseau — c'est la seule chose
+  // qu'on vient chercher ici, et il paraît bien avant que la page se taise.
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   const accepter = page.getByRole("button", { name: /^j.accepte$/i }).first();
+  await accepter.waitFor({ state: "visible", timeout: 20_000 }).catch(() => {});
   if (await accepter.isVisible().catch(() => false)) {
     await accepter.click();
     await accepter.waitFor({ state: "hidden", timeout: 10_000 });
@@ -106,8 +109,23 @@ async function historique(browser: Browser, largeur: number) {
       }
     } catch { /* stockage refusé */ }
   }, uid);
-  await page.goto("/history", { waitUntil: "networkidle" });
-  await page.waitForTimeout(1000);
+  /**
+   * On attend la LISTE, pas le silence du réseau.
+   *
+   * `networkidle` guettait cinq cents millisecondes sans requête. C'est
+   * fragile par nature sur une page qui continue de parler — et depuis que le
+   * fournisseur de contexte reprend deux secondes après une lecture vide,
+   * c'est un silence qui peut ne pas venir quand on l'attend. Ce test-ci ouvre
+   * TROIS contextes de suite dans le même budget de soixante secondes : c'est
+   * lui qui a fini par déborder, sur une machine chargée.
+   *
+   * Les deux vues sont rendues ensemble et `historique.css` choisit laquelle
+   * paraît ; attendre l'une OU l'autre dit exactement ce qu'on veut savoir —
+   * la liste est là — et le dit dès que c'est vrai.
+   */
+  await page.goto("/history", { waitUntil: "domcontentloaded" });
+  await page.locator(".historique-cartes, .historique-tableau").first()
+    .waitFor({ state: "attached", timeout: 20_000 });
   return { ctx, page };
 }
 
@@ -237,8 +255,9 @@ test("une icône de champion qui ne charge pas laisse la lettre, pas un trou", a
   await page.route("https://ddragon.leagueoflegends.com/**", (route) =>
     route.fulfill({ status: 404, body: "" }));
 
-  await page.goto("/history", { waitUntil: "networkidle" });
-  await page.waitForTimeout(1500);
+  await page.goto("/history", { waitUntil: "domcontentloaded" });
+  await page.locator(".historique-cartes, .historique-tableau").first()
+    .waitFor({ state: "attached", timeout: 20_000 });
 
   // Plus aucune image de champion à l'écran, et la lettre est là à la place.
   await expect(page.locator('img[src*="ddragon"]')).toHaveCount(0);
@@ -272,8 +291,8 @@ test("une suppression refusée ne fait pas disparaître la partie", async ({ bro
     await route.continue();
   });
 
-  await page.goto("/history", { waitUntil: "networkidle" });
-  await page.waitForTimeout(1000);
+  await page.goto("/history", { waitUntil: "domcontentloaded" });
+  await page.locator("tbody tr").first().waitFor({ state: "attached", timeout: 20_000 });
 
   const avant = await page.locator("tbody tr").count();
   expect(avant).toBeGreaterThan(0);

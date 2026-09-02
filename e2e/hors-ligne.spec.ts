@@ -82,8 +82,15 @@ async function ouvrir(browser: import("@playwright/test").Browser) {
       }
     } catch { /* stockage refusé */ }
   }, uid);
-  await page.goto("/dashboard", { waitUntil: "networkidle" });
-  await page.waitForTimeout(800);
+  // On attend ce qu'on vient chercher, pas le silence du réseau : il n'arrive
+  // jamais franchement sur une page qui continue de parler.
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  // Le rail plutôt que la pastille de dette : celle-ci n'existe pas tant qu'il
+  // n'y a rien à devoir, et ce fichier ouvre le tableau de bord AVANT
+  // d'enregistrer la partie qui crée la dette. Un marqueur qui n'est pas
+  // toujours là ne dit pas « la page est prête », il dit « ce cas-ci ».
+  await page.locator('[data-visite="rail-ajout"]').first()
+    .waitFor({ state: "attached", timeout: 20_000 });
   return { ctx, page };
 }
 
@@ -129,7 +136,9 @@ test("au retour du réseau, elle part toute seule", async ({ browser }) => {
     }]));
   });
 
-  await page.reload({ waitUntil: "networkidle" });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator('[data-visite="rail-ajout"]').first()
+    .waitFor({ state: "attached", timeout: 20_000 });
   await page.waitForTimeout(1500);
 
   const file = await page.evaluate(() =>
@@ -188,8 +197,9 @@ test("quand le serveur répond 500, la séance est gardée aussi", async ({ brow
             kills: 1, deaths: 11, assists: 2, result: "D", exercice: "boxe" },
   });
   expect(partie.status(), await partie.text()).toBe(200);
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForTimeout(1000);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.locator('[data-visite="rail-ajout"]').first()
+    .waitFor({ state: "attached", timeout: 20_000 });
   await page.evaluate(() => localStorage.removeItem("low_file_paiements"));
 
   // Seul l'acquittement tombe en panne. La lecture continue de répondre, sans

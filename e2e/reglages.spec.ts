@@ -64,8 +64,10 @@ test("dit pourquoi il n'y a qu'un jeu, et où sont les autres", async ({ browser
       }
     } catch { /* stockage refusé */ }
   }, uid);
-  await page.goto("/settings#jeux", { waitUntil: "networkidle" });
-  await page.waitForTimeout(1200);
+  // On attend ce qu'on vient chercher, pas le silence du réseau : celui-ci
+  // n'arrive jamais franchement sur une page qui continue de parler, et il
+  // coûtait plus de temps à lui seul que tout le reste du fichier.
+  await page.goto("/settings#jeux", { waitUntil: "domcontentloaded" });
 
   // Le jeu est bien là, et l'explication aussi.
   await expect(page.getByText("League of Legends").first()).toBeVisible();
@@ -103,8 +105,9 @@ test("un réglage que le serveur refuse revient en arrière, et le dit", async (
       }
     } catch { /* stockage refusé */ }
   }, uid);
-  await page.goto("/settings", { waitUntil: "networkidle" });
-  await page.waitForTimeout(1000);
+  await page.goto("/settings", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: /ton effort|your effort/i }).first()
+    .waitFor({ state: "visible", timeout: 20_000 });
   // On est bien sur les réglages : sans session on atterrirait sur la
   // connexion, et le test mesurerait une page qui n'a aucun réglage.
   expect(sansLangue(new URL(page.url()).pathname)).toBe("/settings");
@@ -175,9 +178,11 @@ test("une suppression de compte qui échoue le dit, au lieu de tourner sans fin"
     await route.continue();
   });
 
-  await page.goto("/settings", { waitUntil: "networkidle" });
+  await page.goto("/settings", { waitUntil: "domcontentloaded" });
   expect(sansLangue(new URL(page.url()).pathname)).toBe("/settings");
-  await page.getByRole("button", { name: /données|data/i }).first().click();
+  const rubriqueDonnees = page.getByRole("button", { name: /données|data/i }).first();
+  await rubriqueDonnees.waitFor({ state: "visible", timeout: 20_000 });
+  await rubriqueDonnees.click();
   await page.waitForTimeout(500);
 
   await page.getByRole("button", { name: /supprimer mon compte|delete my account/i })
@@ -245,7 +250,7 @@ test("un réglage de jeu que l'application refuse revient en arrière, et le dit
     };
   }, uid);
 
-  await page.goto("/settings#jeux", { waitUntil: "networkidle" });
+  await page.goto("/settings#jeux", { waitUntil: "domcontentloaded" });
   // Le bouton porte l'état COURANT : « Pastille affichée » quand elle l'est.
   // Le cliquer demande donc de la masquer.
   //

@@ -76,9 +76,21 @@ async function imageEcran() {
  */
 function estNoir(image) {
   const bitmap = image.toBitmap(); // BGRA, quatre octets par pixel
-  // Un nombre premier : l'échantillon ne suit aucune grille de l'interface.
-  // Assez serré pour qu'un petit élément lumineux sur fond noir — un écran de
-  // chargement — ne passe pas pour un écran vide.
+  /**
+   * Un nombre premier : l'échantillon ne suit aucune grille de l'interface.
+   *
+   * Ce que ce pas attrape, mesuré plutôt que supposé : sur un écran 1920×1080,
+   * une zone lumineuse d'environ 100×20 pixels est vue, une de 50×10 ne l'est
+   * pas. Le commentaire disait ici qu'« un petit élément lumineux ne passe pas
+   * pour un écran vide » — c'est faux en dessous de cette taille, et ça se
+   * relisait comme une garantie.
+   *
+   * Ce n'est pas un défaut pour autant, parce que la question posée n'est pas
+   * « y a-t-il un pixel allumé ? » mais « y a-t-il de quoi lire des chiffres ? ».
+   * Un écran où seule une pastille de cinquante pixels brille n'a rien à lire,
+   * et le refuser est le bon résultat. Le tableau de fin d'Apex, lui, occupe la
+   * moitié de l'écran.
+   */
   const pas = 4 * 101;
   let vus = 0;
   for (let i = 0; i + 2 < bitmap.length; i += pas) {
@@ -135,6 +147,23 @@ let raccourciActif = null;
  *   ne sait pas si l'on a appuyé sur la bonne touche.
  */
 function initCapture(signaler) {
+  /**
+   * Une seconde pose ne garde rien de la première.
+   *
+   * `raccourciActif` survivait à l'appel : si tous les candidats étaient pris
+   * cette fois-ci, la fonction rendait quand même celui de la fois d'avant, et
+   * `lireRaccourciCapture` annonçait à l'écran une touche qui n'appelle plus
+   * personne. Le raccourci d'avant restait aussi enregistré, avec son rappel.
+   *
+   * Ce n'est atteignable par personne aujourd'hui — `main.js` appelle une
+   * seule fois, au démarrage. C'est écrit ici parce qu'une fonction qui
+   * annonce « le raccourci actif » doit annoncer celui de CET appel, et parce
+   * que reposer les raccourcis après un changement de réglages est exactement
+   * le genre de chose qu'on ajoute sans relire ce fichier.
+   */
+  if (raccourciActif) globalShortcut.unregister(raccourciActif);
+  raccourciActif = null;
+
   for (const combinaison of CANDIDATS) {
     const pris = globalShortcut.register(combinaison, () => {
       capturer("apex").then(signaler).catch(() => signaler({ chemin: null, raison: "raisonEchecCapture" }));

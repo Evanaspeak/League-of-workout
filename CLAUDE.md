@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1492 tests unitaires, 137 suites. Base et session doublées : aucune dépendance à
+1543 tests unitaires, 144 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -700,6 +700,263 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### `networkidle` attendait un silence qui ne vient jamais
+Deux fichiers de parcours ont échoué en cinq exécutions complètes, chacun une
+fois, chacun sur un `page.goto(..., { waitUntil: "networkidle" })` qui expire.
+Rejoués seuls, les deux passent. La tentation, à ce moment-là, est de relancer.
+
+`networkidle` attend cinq cents millisecondes sans une seule requête. Sur une
+page qui continue de parler — un sondage, un rafraîchissement au retour sur
+l'onglet, et depuis cette nuit une reprise deux secondes après une lecture
+vide — ce silence n'arrive jamais franchement. Le test n'attend donc pas ce
+qu'il croit : il attend que la page se taise, ce qui n'est ni nécessaire ni
+suffisant pour qu'elle soit prête.
+
+Le test qui a fini par déborder est celui qui ouvre TROIS contextes de suite
+dans le même budget de soixante secondes. Ce n'est pas un hasard : c'est celui
+qui payait trois fois l'attente.
+
+Les dix-sept `networkidle` de la suite sont remplacés par ce que chaque test
+vient réellement chercher — la liste de l'historique, la rubrique des réglages,
+le bouton du rail, l'en-tête du bilan. C'est plus juste ET c'est bien plus
+rapide, parce qu'un marqueur paraît dès qu'il est vrai :
+
+| fichier | avant | après |
+|---|---|---|
+| `historique.spec.ts` | 3 min 24 | 14 s |
+| `reglages.spec.ts` | 40 s | 9 s |
+| `hors-ligne.spec.ts` | 47 s | 11 s |
+| **la suite entière** | **14 min 30** | **9 min 20** |
+
+Cinq minutes d'attente pure, sur chaque exécution, en local comme en
+intégration continue.
+
+**Un marqueur mal choisi, attrapé du premier coup.** J'avais pris la pastille
+de dette pour dire « le tableau de bord est prêt » dans `hors-ligne.spec.ts`.
+Elle n'existe pas tant qu'il n'y a rien à devoir, et ce fichier ouvre le
+tableau de bord AVANT d'enregistrer la partie qui crée la dette. Un marqueur
+qui n'est pas toujours là ne dit pas « la page est prête », il dit « ce cas-ci
+est arrivé ». Le rail, lui, est toujours rendu.
+
+C'est la deuxième fois cette nuit que je prends la pastille de dette pour un
+élément permanent. La première, c'était le parcours de reprise, sur un compte
+qui n'a que les pompes.
+
+### Un commentaire promettait ce que l'échantillonnage ne fait pas
+`estNoir` décide si la capture d'écran est noire — c'est ce qui distingue « le
+jeu tourne en plein écran exclusif » de « voilà l'écran de fin ». Elle
+échantillonne un pixel sur cent un, et le commentaire annonçait que c'était
+« assez serré pour qu'un petit élément lumineux sur fond noir — un écran de
+chargement — ne passe pas pour un écran vide ».
+
+Mesuré : sur un écran 1920×1080, une zone lumineuse de 100×20 pixels est vue,
+une de 50×10 ne l'est pas. La promesse est fausse en dessous d'une centaine de
+pixels de large.
+
+**Et le code a raison quand même**, ce qui est le point intéressant. La
+question posée n'est pas « y a-t-il un pixel allumé ? » mais « y a-t-il de quoi
+lire des chiffres ? ». Un écran où seule une pastille de cinquante pixels
+brille n'a rien à lire, et le refuser est le bon résultat ; le tableau de fin
+d'Apex, lui, occupe la moitié de l'écran. C'est le commentaire qui était faux,
+pas la fonction — et un commentaire faux se relit comme une garantie, ce qui
+est le défaut le plus souvent trouvé sur ce projet. Il dit le seuil réel
+maintenant, avec la raison pour laquelle il convient, et un test le pin.
+
+**Le test a trouvé autre chose au passage, et un vrai.** `raccourciActif`
+survivait à l'appel : une seconde pose où tous les candidats sont pris rendait
+quand même le raccourci de la première, et `lireRaccourciCapture` l'annonçait à
+l'écran alors qu'il n'appelait plus personne. L'ancien restait enregistré avec
+son rappel. Personne ne peut l'atteindre aujourd'hui — `main.js` appelle une
+seule fois au démarrage — et c'est corrigé quand même : une fonction qui
+annonce « le raccourci actif » doit annoncer celui de CET appel, et reposer les
+raccourcis après un changement de réglages est exactement le genre de chose
+qu'on ajoute sans relire ce fichier.
+
+La chaîne de repli des raccourcis est éprouvée avec : Discord, GeForce et Steam
+tiennent couramment `Control+Shift+S`, et si le repli casse il n'y a plus aucun
+raccourci de capture — on appuie, il ne se passe rien, et rien ne le dit.
+
+Quatre sabotages, quatre échecs.
+
+### Le contrat du pont Electron n'était tenu par personne
+`preload.js` expose des méthodes à la page ; `src/types/electron.d.ts` déclare
+celles sur lesquelles le site compte. Les deux moitiés vivaient chacune de son
+côté, et le défaut que ça laisse passer est le pire de sa famille : une méthode
+ajoutée au type et appelée par une page, oubliée dans le pont, donne
+« undefined is not a function » **dans l'application installée seulement**.
+
+Rien ne peut le dire ici. TypeScript se tait — le type promet qu'elle existe.
+Les parcours navigateur se taisent — ils posent un FAUX pont, dont la forme est
+justement ce qu'on voudrait vérifier. Et l'appel tombe dans un `catch`. C'est
+la leçon déjà écrite pour l'adresse `/login` : la seule machine capable de voir
+le défaut est celle de quelqu'un d'autre.
+
+Comparé : **rien ne manque**. Trente méthodes déclarées, toutes exposées. Une
+seule en surplus, `retourConnexion`, et elle a sa raison — c'est l'écran
+d'attente de la COQUILLE qui l'appelle, une page `data:` qui n'est pas le site.
+Le test l'exempte nommément et vérifie en plus qu'elle sert vraiment : une
+exemption qui ne désigne plus rien de vivant est du code mort qu'on a fini par
+admettre.
+
+**Le premier résultat de ce contrôle était faux**, et c'est ce qu'il y a à en
+retenir. Il annonçait dix méthodes déclarées et non exposées — `score`,
+`contexte`, `classement`… — qui sont en réalité les CHAMPS des objets
+imbriqués dans les signatures. Un motif ligne à ligne ne distingue pas un
+membre d'un niveau d'un membre d'un autre ; il faut suivre la profondeur des
+accolades. Dix faux positifs auraient envoyé corriger un pont qui n'avait rien.
+
+Trois sabotages, trois échecs — dont le troisième par ENOENT plutôt que par
+assertion, ce qui est le bon bruit : un garde qui ne trouve plus ses fichiers
+doit tomber, pas passer au vert sur deux listes vides.
+
+**Et le pont a reçu ses premiers tests de comportement**, distincts du contrat
+de forme. Deux choses seulement, parce que ce sont les deux qui peuvent mal
+tourner sans bruit :
+
+- **le filtrage par type.** Un seul canal, `lol:event`, porte le début ET la
+  fin de partie. Si le filtre saute, `onGameStarted` se déclenche à la fin :
+  la page ouvre une session de jeu au moment où elle devrait la fermer, et
+  personne ne fait le lien ;
+- **le désabonnement.** La page monte et démonte ces écouteurs au fil de la
+  navigation. Une fonction de retrait qui ne retire rien laisse s'empiler des
+  rappels sur des composants démontés, et le symptôme — une partie enregistrée
+  plusieurs fois — ne ressemble pas à sa cause.
+
+Le recollage du contexte à la partie est éprouvé aussi : c'est lui qui porte le
+rôle et la file lus sur le lanceur, et sa perte est le défaut déjà corrigé où
+un support payait ses morts au tarif d'un jungler.
+
+Quatre sabotages, quatre échecs, chacun précédé d'un contrôle que le fichier a
+bien changé — la parade au « sabotage qui ne sabote pas », retombé dedans
+l'heure d'avant.
+
+### Revue des deux routes nées cette nuit
+`/api/contexte` et `/api/progression` regroupent ce que cinq routes rendaient.
+Une route neuve qui remplace cinq routes éprouvées mérite qu'on la pousse plutôt
+qu'on la relise. **Aucune faille**, et deux corrections d'hygiène, chacune avec
+sa raison.
+
+**Une règle écrite deux fois, et la seconde copie était déjà fausse.**
+`/api/dashboard/daily` contrôle une date par son ALLER-RETOUR depuis que
+« 9999-99-99 » l'a fait tomber en 500 et que « 2026-02-30 » y montrait le
+2 mars. `/api/progression` s'en tenait au motif. La même chaîne y passait donc,
+était employée telle quelle, et rendait une série de zéro — en
+court-circuitant le repli prévu pour ce cas exact. Ce n'est ni une injection ni
+une fuite : c'est un chiffre faux affiché à quelqu'un, sur l'écran qui existe
+pour le lui dire. `estJourValide` vit dans `serie.ts` et les deux routes la
+lisent. C'est le sixième cas de règle dupliquée trouvé sur ce projet.
+
+**Une route qui agit avant de savoir à qui elle parle.** `/api/contexte`
+semait le barème et chargeait les ratios AVANT de lire la session : une requête
+sans session faisait travailler la base avant de se faire éconduire. Le
+middleware n'ouvre pas cette adresse aux anonymes, donc ce n'était pas une
+porte — mais c'est une mauvaise habitude, et le contrôle du code de réponse ne
+dit rien de ce qu'une route a fait en chemin. Le test le dit maintenant, avec
+son témoin : sans lui, cesser d'appeler les deux modules des deux côtés rendrait
+le contrôle vrai en ne prouvant plus rien.
+
+Le reste tient : session exigée sur les deux, filtrage par `userId` sur les
+trois requêtes, `comptePublic` plutôt qu'un `{ ...user }`, et le jour reçu du
+navigateur ne touche jamais une requête SQL.
+
+**Deux sabotages sur cinq ne sabotaient rien**, et c'est la leçon de la passe.
+Le premier était un `sed` dont l'échappement avait mangé le motif : le fichier
+n'avait pas changé, les tests passaient, et j'ai failli conclure que le contrôle
+ne mordait pas. C'est le piège déjà écrit ici — « un sabotage qui ne sabote
+pas » — et la parade est la même : vérifier que le fichier a bougé avant de
+lancer les tests. Le second sabotait bien, et c'est le TEST qui manquait :
+vérifier un code 401 ne dit rien du travail fait avant de le rendre.
+
+**Dépendances, au 2 septembre.** Rien à mettre à jour : sur le site comme sur
+l'application de bureau, tout ce qui est en retard l'est d'une version MAJEURE
+— `typescript` 5 → 7, `eslint` 9 → 10, `@types/node` 20 → 26, `electron` 43 →
+44 — ou d'une préversion, `prisma` 8.0.0-rc. Un saut majeur se relit, il ne se
+prend pas de nuit. `npm audit` rend zéro vulnérabilité sur l'application de
+bureau, et les deux « hautes » du site restent celles de `mysql2`, hors
+d'atteinte et gardées par `src/dependanceMysql.test.ts`.
+
+### Le recensement de `src/lib`, et le seul module laissé de côté
+Refait après les extractions de la nuit. Il ne se fait pas au nom du fichier :
+un module est couvert quand un test l'IMPORTE, ce qui se cherche dans le texte
+des tests, alias `@/lib/` compris. Les dictionnaires de langue sortent du
+compte — `dictionaries.test.ts` lit le dossier entier, pas les fichiers un par
+un.
+
+Neuf modules sans test au départ, tous couverts sauf un :
+
+- **`useChampions`** et **`notifier`**, décrits plus haut : les deux portaient
+  une règle et l'un cachait un défaut ;
+- **`chargerContexte`** et **`chargerProgression`**, écrits cette nuit et
+  couverts dans la foulée du défaut de mémoire ;
+- **`release`** — le bouton principal de l'accueil et toute la page de
+  téléchargement, alimentés par un service tiers dont la FORME n'est jamais
+  garantie. Huit cas : release sans exécutable, champ renommé, panne d'API, tag
+  illisible. Tous doivent rendre `null` plutôt qu'un bouton qui télécharge
+  « undefined » ;
+- **`logosJeux`** — l'ordre de préférence des formats. Un jeu dont on a récupéré
+  un SVG propre ET un PNG hérité s'affichait flou si le PNG l'emportait, sans
+  que rien ne le signale : les deux fichiers sont là, l'image se charge ;
+- **`videoBoucle`** — la vidéo n'existe pas encore, et c'est précisément
+  pourquoi le test compte. Le jour où le fichier arrive, personne ne relira ce
+  module, et une inversion des deux formats ferait télécharger le MP4 à des
+  navigateurs qui savent lire le WebM ;
+- **`graphiques`** — que des constantes, sauf une propriété : « une couleur par
+  nature de donnée, jamais deux pour la même ». Le test éprouve la propriété,
+  pas les valeurs, et compte les entrées — une table vidée n'a pas de doublon
+  non plus.
+
+**`valeurClient` reste dehors, avec sa raison.** Il n'expose que des crochets
+React bâtis sur `useSyncExternalStore` : les éprouver demande un rendu, donc un
+DOM, et la suite tourne en environnement Node. Monter jsdom pour un module ne
+paie pas ; ce qu'il fait se voit dans les parcours navigateur, qui ouvrent les
+pages où il sert.
+
+Treize sabotages sur les cinq modules, treize échecs.
+
+**Trois modules ne sont pas passés au recensement**, et il faut le dire :
+`actions` et `auth-actions` sont des enveloppes de trois lignes autour
+d'Auth.js — les éprouver, c'est éprouver la doublure — et `seed-defaults` et
+`exercicesConfig` étaient déjà couverts par sept et huit tests de route.
+
+### Campagne de clôture du 2 septembre — douze pages, toutes dans le seuil
+Refaite après le regroupement des appels d'API, le cache de barème, les six
+conversions au serveur et le resserrement des colonnes lues en base. C'est la
+première campagne de ce projet où **aucune page ne dépasse**, ni sur poste ni
+sur téléphone bridé.
+
+| écran | LCP poste | LCP téléphone bridé | plus grand élément |
+|---|---|---|---|
+| `/fr/settings` | 148 ms | 940 ms | la mention Riot, en pied |
+| `/fr/bilan` | 148 ms | 912 ms | la mention Riot, en pied |
+| `/fr/history` | 152 ms | 912 ms | la mention Riot, en pied |
+| `/fr/dashboard` | 312 ms | 1128 ms | le bandeau d'attente Riot |
+| `/fr/login` | 468 ms | 1140 ms | la mention des CGU |
+| `/fr/cgu` | 500 ms | 1124 ms | le premier paragraphe |
+| `/fr/telechargement` | 512 ms | 1144 ms | le paragraphe SmartScreen |
+| `/fr/calculateur` | 524 ms | 1124 ms | le titre |
+| `/fr/calculateur/league-of-legends` | 524 ms | 1136 ms | le titre |
+| `/fr/confidentialite` | 540 ms | 1140 ms | le titre |
+| `/fr/beta` | 552 ms | 1648 ms | « Un pseudo suffit » |
+| `/fr` | 680 ms | 1400 ms | l'image de l'application |
+
+CLS de 0,000 partout, sauf 0,001 sur le tableau de bord.
+
+Ce que les trois écrans connectés apprennent : leur plus grand élément est la
+**mention Riot du pied de page**, à 150 ms. Autrement dit ils peignent quelque
+chose de définitif tout de suite, et rien de plus grand n'arrive ensuite — la
+page ne se réorganise plus quand les données reviennent. C'était le contraire
+il y a deux semaines, où le tableau de bord n'avait rien à montrer avant
+3456 ms.
+
+Le poids du JavaScript par page, qui est l'autre moitié du sujet : 173 ko sur
+les pages publiques (elles ne montent plus les vingt composants du fournisseur
+connecté), 362 ko sur le tableau de bord, qui porte recharts.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, aucune
+page laissée de côté. Et l'outil sait toujours échouer, ce qui se vérifie plutôt
+que se suppose : un contraste de 1,43 posé volontairement sur le titre des CGU
+remonte avec son ratio, sa taille et son texte, dans les six langues.
 
 ### Trois mémoires de module retenaient l'échec comme une réponse
 Le défaut des champions n'était pas isolé : c'est une famille, et les trois

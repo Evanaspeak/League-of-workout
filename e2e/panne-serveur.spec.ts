@@ -188,7 +188,9 @@ test("un ajout Riot refusé le dit, sans faire disparaître la liste", async ({ 
     await route.continue();
   });
 
-  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  // On attend ce qu'on vient chercher, pas le silence du réseau : il n'arrive
+  // jamais franchement sur une page qui continue de parler.
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   expect(sansLangue(new URL(page.url()).pathname)).toBe("/dashboard");
   await page.locator('[data-visite="rail-bascule"]').click({ timeout: 2_000 }).catch(() => {});
   await page.locator('[data-visite="rail-ajout"]').click();
@@ -267,9 +269,9 @@ test("sans réseau, l'enregistrement d'une partie rend la main et le dit", async
     } catch { /* stockage refusé */ }
   }, uid);
 
-  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await page.locator('[data-visite="rail-bascule"]').click({ timeout: 2_000 }).catch(() => {});
-  await page.locator('[data-visite="rail-ajout"]').click();
+  await page.locator('[data-visite="rail-ajout"]').click({ timeout: 20_000 });
 
   // Le formulaire est ouvert : on coupe seulement l'envoi, pas le chargement.
   await page.route("**/api/games", async (route) => {
@@ -317,9 +319,9 @@ test("un test de force refusé garde la saisie et le dit", async ({ browser }) =
     await route.continue();
   });
 
-  await page.goto("/dashboard", { waitUntil: "networkidle" });
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /faire le test|refaire le test|take the test|retake/i })
-    .first().click();
+    .first().click({ timeout: 20_000 });
 
   const champ = page.getByRole("spinbutton").first();
   await champ.fill("30");

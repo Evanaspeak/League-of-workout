@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { jourLocal } from "@/lib/serie";
+import { estJourValide, jourLocal } from "@/lib/serie";
 import { reponseBadges, reponseSerie } from "@/lib/progression";
 
 /**
@@ -24,8 +24,14 @@ export async function GET(req: Request) {
   // Le jour vient du navigateur : c'est le sien qui compte. Quelqu'un qui paie
   // à une heure du matin verrait sinon sa série comptée sur la veille ou le
   // lendemain, selon le fuseau du serveur.
+  //
+  // Le contrôle porte sur l'aller-retour et non sur la seule forme :
+  // « 9999-99-99 » respecte le motif, n'est pas une date, et passait — il
+  // rendait alors une série de zéro en court-circuitant le repli prévu pour
+  // ce cas exact. La règle vit dans `estJourValide`, avec celle de
+  // `/api/dashboard/daily` qui la portait seule.
   const demande = new URL(req.url).searchParams.get("jour");
-  const aujourdhui = demande && /^\d{4}-\d{2}-\d{2}$/.test(demande) ? demande : jourLocal();
+  const aujourdhui = estJourValide(demande) ? demande : jourLocal();
 
   const [agregat, paiements] = await Promise.all([
     prisma.game.aggregate({

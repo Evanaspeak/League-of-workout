@@ -19,6 +19,30 @@ export function jourLocal(d: Date = new Date()): Jour {
   return `${d.getFullYear()}-${deux(d.getMonth() + 1)}-${deux(d.getDate())}`;
 }
 
+/**
+ * Une étiquette de calendrier qui désigne un vrai jour.
+ *
+ * La FORME ne suffit pas, et cette leçon a déjà été payée une fois : « 9999-99-99 »
+ * respecte le motif sans être une date, et « 2026-02-30 » n'est pas rejeté par
+ * `Date` selon la plateforme — il glisse au 2 mars, et la journée montrée n'est
+ * alors pas celle demandée. Le contrôle porte donc sur l'ALLER-RETOUR : on
+ * réécrit la date et on la compare à celle qu'on nous a donnée.
+ *
+ * La règle vivait dans `/api/dashboard/daily` seule, et `/api/progression`
+ * s'en tenait au motif : « 9999-99-99 » y passait, donnait une série de zéro,
+ * et court-circuitait le repli prévu pour ce cas exact. Deux exemplaires d'une
+ * règle divergent toujours ; celui-là avait déjà commencé.
+ *
+ * `toISOString` lève sur une date invalide : on regarde d'abord qu'elle en est
+ * une, sinon le contrôle devient lui-même la panne.
+ */
+export function estJourValide(jour: string | null | undefined): jour is Jour {
+  if (!jour || !/^\d{4}-\d{2}-\d{2}$/.test(jour)) return false;
+  const d = new Date(`${jour}T00:00:00.000Z`);
+  if (Number.isNaN(d.getTime())) return false;
+  return d.toISOString().slice(0, 10) === jour;
+}
+
 /** Le jour qui précède celui donné. */
 export function jourPrecedent(jour: Jour): Jour {
   // `Date.UTC` évite qu'un changement d'heure retire ou ajoute un jour : on ne

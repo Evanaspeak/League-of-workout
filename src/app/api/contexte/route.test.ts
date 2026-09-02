@@ -10,6 +10,8 @@ import { GET as GET_USER } from "../user/route";
 import { GET as GET_DETTE } from "../dette/route";
 import { GET as GET_CONSENTEMENT } from "../consentement/route";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { seedDefaults } from "@/lib/seed-defaults";
+import { chargerRatios } from "@/lib/exercicesConfig";
 
 const session = getCurrentUser as jest.Mock;
 
@@ -31,6 +33,31 @@ describe("sans session", () => {
   it("refuse", async () => {
     session.mockResolvedValue(null);
     expect((await GET()).status).toBe(401);
+  });
+
+  /**
+   * Et ne fait rien avant de refuser.
+   *
+   * Le semis du barème et le chargement des ratios partaient d'abord : une
+   * requête sans session faisait travailler la base avant de se faire
+   * éconduire. Le middleware n'ouvre pas cette adresse aux anonymes, donc ce
+   * n'était pas une porte — mais une route qui agit avant de savoir à qui elle
+   * parle est une mauvaise habitude, et le contrôle du code de réponse ne dit
+   * rien de ce qu'elle a fait en chemin.
+   */
+  it("ne touche à rien avant d'avoir refusé", async () => {
+    session.mockResolvedValue(null);
+    await GET();
+    expect(seedDefaults).not.toHaveBeenCalled();
+    expect(chargerRatios).not.toHaveBeenCalled();
+  });
+
+  // Sans ce témoin, un module qu'on cesserait d'appeler DES DEUX CÔTÉS rendrait
+  // le contrôle ci-dessus vrai en ne prouvant plus rien.
+  it("les appelle bien une fois la session connue", async () => {
+    await GET();
+    expect(seedDefaults).toHaveBeenCalled();
+    expect(chargerRatios).toHaveBeenCalled();
   });
 });
 
