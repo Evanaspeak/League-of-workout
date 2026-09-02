@@ -735,6 +735,22 @@ tard.
 seul `useT`. Deux sabotages, deux échecs — dont le motif vidé, parce qu'un
 recensement qui ne trouve rien passe au vert.
 
+**Puis la page d'accueil, qui était le plus gros morceau.** Six cents lignes et
+un dictionnaire de mille cinq cents, cliente en entier pour deux raisons
+seulement : un observateur de défilement, et un compteur animé. Or ni l'un ni
+l'autre n'a besoin des textes — l'observateur parcourt le DOM déjà rendu et pose
+une classe, le compteur recevait déjà les siens en propriétés.
+
+Les deux sont sortis (`RevelationAuDefilement`, `accueil/DebtFeed`), la page est
+redevenue du HTML rendu au serveur, et le paquet passe de **618 à 591 ko** :
+**27 ko de plus**. Depuis le début : **655 → 591, soit 64 ko, près de 10 %.**
+
+Vérifié que rien n'a bougé : les dix-neuf sections révélables sont dans le HTML
+servi, dans les six langues, et `/de` mesure 628 ms sur poste contre 604 avant,
+1380 ms sur téléphone bridé contre 1404 — du bruit dans les deux sens. Le plus
+grand élément change sur poste, ce qui est attendu : davantage de contenu arrive
+avec le document, donc le candidat n'est plus le même.
+
 **Ce que ça n'améliore pas** : le temps d'affichage ne bouge pas, 264 ms sur
 poste comme avant. Ces pages étaient déjà rapides ; ce qui change est ce qu'on
 fait télécharger, et sur un forfait mobile ça se compte autrement qu'en

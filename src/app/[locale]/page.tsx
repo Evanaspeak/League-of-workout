@@ -52,7 +52,7 @@ export default async function LandingPage(
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(locale)) }}
       />
-      <LandingClient
+      <LandingClient locale={locale}
         isLoggedIn={isLoggedIn}
         telechargement={installeur?.url ?? PAGE_RELEASES}
         version={installeur?.version ?? null}
