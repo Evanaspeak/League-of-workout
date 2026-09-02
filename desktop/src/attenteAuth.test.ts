@@ -1,3 +1,10 @@
+
+// Fait de ce fichier un MODULE : sans ça, TypeScript le traite comme un
+// script et ses noms de premier niveau entrent dans la portée globale, où
+// ils entrent en collision avec ceux d'un autre fichier de test. Jest ne
+// s'en aperçoit pas — chaque fichier y a sa propre portée — c'est `tsc` qui
+// le dit.
+export {};
 const { ATTENTE_MS, attenteCourante, nonceValide } = require("./attenteAuth");
 
 /**

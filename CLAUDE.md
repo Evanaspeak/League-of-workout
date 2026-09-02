@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1574 tests unitaires, 148 suites. Base et session doublées : aucune dépendance à
+1582 tests unitaires, 150 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -721,6 +721,31 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le pont de la pastille, et huit fichiers de test qui n'étaient pas des modules
+`overlay-preload.js` fait vingt-quatre lignes et c'est le seul chemin par
+lequel la pastille en jeu apprend quoi que ce soit. Trois abonnements
+identiques sur trois canaux distincts : un canal recopié d'un abonnement à
+l'autre enverrait l'état à celui qui attend des mots, et la pastille
+afficherait « undefined » par-dessus le jeu. Huit tests, trois sabotages, trois
+échecs.
+
+**Et il a mis au jour une fragilité qui dormait.** `tsc` s'est mis à refuser
+« Cannot redeclare block-scoped variable 'pont' » — sur `preload.test.ts`, que
+je n'avais pas touché. La cause : un fichier de test sans `import` ni `export`
+au premier niveau n'est pas un MODULE pour TypeScript, c'est un script, et ses
+noms entrent dans la portée globale. Les huit fichiers de test de `desktop/`
+étaient dans ce cas ; ça n'a jamais gêné parce qu'aucun ne partageait un nom
+avec un autre, jusqu'à ce que deux ponts se ressemblent.
+
+Jest ne s'en aperçoit jamais — chaque fichier y a sa propre portée à
+l'exécution. C'est `tsc` qui le dit, et il a raison : ce n'est pas une plainte
+de typage, c'est une collision réelle dans un espace de noms partagé. Les huit
+portent `export {}` maintenant.
+
+Ce que ça apprend : **une contrainte qui ne gêne pas encore n'est pas
+respectée, elle est seulement non encore violée.** Le fichier qui la révèle
+n'est pas celui qui la casse.
 
 ### Le menu de la zone de notification, éprouvé enfin
 C'est le seul écran qui subsiste quand la fenêtre est fermée — et la fenêtre
