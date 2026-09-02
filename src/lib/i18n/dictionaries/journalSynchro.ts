@@ -24,7 +24,6 @@ export const journalSynchro = {
       resultatIllisible: "Partie annulée, ou résultat contradictoire chez Riot. Rien n'est enregistré : mieux vaut ça qu'une défaite inventée.",
       inattendu: "Réponse inattendue.",
     } satisfies Record<MotifSynchro, string>,
-    ilYA: (texte: string) => `il y a ${texte}`,
   },
   en: {
     repetitions: (n: number) => `${n} times in a row`,
@@ -48,7 +47,6 @@ export const journalSynchro = {
       resultatIllisible: "Remade game, or contradictory result from Riot. Nothing is recorded: better that than an invented loss.",
       inattendu: "Unexpected response.",
     } satisfies Record<MotifSynchro, string>,
-    ilYA: (texte: string) => `${texte} ago`,
   },
   es: {
     repetitions: (n: number) => `${n} veces seguidas`,
@@ -72,7 +70,6 @@ export const journalSynchro = {
       resultatIllisible: "Partida anulada, o resultado contradictorio en Riot. No se registra nada: mejor eso que una derrota inventada.",
       inattendu: "Respuesta inesperada.",
     } satisfies Record<MotifSynchro, string>,
-    ilYA: (texte: string) => `hace ${texte}`,
   },
   de: {
     repetitions: (n: number) => `${n} Mal hintereinander`,
@@ -96,7 +93,6 @@ export const journalSynchro = {
       resultatIllisible: "Abgebrochene Partie, oder widersprüchliches Ergebnis bei Riot. Es wird nichts erfasst: besser das als eine erfundene Niederlage.",
       inattendu: "Unerwartete Antwort.",
     } satisfies Record<MotifSynchro, string>,
-    ilYA: (texte: string) => `vor ${texte}`,
   },
   zh: {
     repetitions: (n: number) => `连续 ${n} 次`,
@@ -120,7 +116,6 @@ export const journalSynchro = {
       resultatIllisible: "对局被重开，或 Riot 的结果自相矛盾。不做任何记录：这好过凭空判一场败局。",
       inattendu: "返回了预料之外的结果。",
     } satisfies Record<MotifSynchro, string>,
-    ilYA: (texte: string) => `${texte}前`,
   },
   ja: {
     repetitions: (n: number) => `${n} 回連続`,
@@ -144,6 +139,5 @@ export const journalSynchro = {
       resultatIllisible: "リメイク、または Riot 側の結果が食い違っています。記録はしません。架空の敗北を作るよりましです。",
       inattendu: "予期しない応答です。",
     } satisfies Record<MotifSynchro, string>,
-    ilYA: (texte: string) => `${texte}前`,
   },
 };

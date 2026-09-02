@@ -30,7 +30,6 @@ export const exercices = {
 
     // ── Compteur de dette en attente ──
     detteTitre: "En attente",
-    detteVide: "Rien en attente.",
     detteSeuil: (t: string) => `On y va à partir de ${t}`,
     detteFaireBtn: "Lancer le chrono",
     /** Séances faites sans réseau, en attente d'envoi. */
@@ -43,7 +42,6 @@ export const exercices = {
     detteChronoTermine: "J'ai fini",
     detteChronoAbandon: "Plus tard",
     detteChronoFini: "Dette effacée. Bien joué.",
-    detteRappelTitre: "Tu as de quoi faire",
     detteRappelCorps: (t: string) => `${t} accumulées. C'est le moment d'y aller.`,
     pompesNom: "Pompes",
     pompesDesc: "Haut du corps. La référence historique de l'app.",
@@ -51,9 +49,6 @@ export const exercices = {
     squatsDesc: "Bas du corps. Compte 1,5 fois plus de répétitions qu'en pompes.",
     boxeNom: "Boxe",
     boxeDesc: "Sac ou shadow, au choix. Compté en temps de travail effectif.",
-    // Unités affichées à côté d'un nombre
-    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
-    exempleTitle: "Ce que ça donne",
     exempleLigne: (ex: string, valeur: string) => `${ex} : ${valeur}`,
     exempleIntro: "Pour une partie perdue coûtant 38 points d'effort :",
 
@@ -86,17 +81,7 @@ export const exercices = {
     rappelTitle: "Rappel du compteur de boxe",
     rappelSeuilValeur: (t: string) => `À partir de ${t}`,
     rappelSeuilAide: "La boxe s'accumule au fil des parties. Passé ce temps, la pastille passe en alerte et t'envoie une notification.",
-    rappelHint:
-      "Quand ta dette dépasse ce seuil pendant une session, l'app te prévient d'aller la payer. Ça évite les micro-séries inutiles et les grosses sessions de fin de soirée.",
     rappelDesactive: "Désactivé",
-    rappelValeur: (valeur: string) => `Environ ${valeur}`,
-    rappelNotifTitre: "Debout, tu as une dette",
-    rappelNotifCorps: (quantite: string) => `${quantite} à faire maintenant.`,
-    rappelBandeau: (quantite: string) => `Tu as accumulé ${quantite}. C'est le moment d'y aller.`,
-    rappelFait: "C'est fait",
-    rappelPlusTard: "Plus tard",
-    rappelAutoriser: "Autoriser les notifications",
-    rappelAutorisees: "Notifications activées",
   },
   en: {
     suspendreTitre: "Set aside",
@@ -128,7 +113,6 @@ export const exercices = {
     apercuExemple: "Example: fill in the game to see the real cost",
 
     detteTitre: "Pending",
-    detteVide: "Nothing pending.",
     detteSeuil: (t: string) => `Kicks in at ${t}`,
     detteFaireBtn: "Start the clock",
     detteHorsLigneUne: "1 session done offline, waiting to sync",
@@ -140,7 +124,6 @@ export const exercices = {
     detteChronoTermine: "I'm done",
     detteChronoAbandon: "Later",
     detteChronoFini: "Debt cleared. Nice.",
-    detteRappelTitre: "You owe some work",
     detteRappelCorps: (t: string) => `${t} piled up. Time to get to it.`,
     pompesNom: "Push-ups",
     pompesDesc: "Upper body. The app's original reference.",
@@ -148,8 +131,6 @@ export const exercices = {
     squatsDesc: "Lower body. Counts 1.5× more reps than push-ups.",
     boxeNom: "Boxing",
     boxeDesc: "Heavy bag or shadow boxing. Counted in actual working time.",
-    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
-    exempleTitle: "What it looks like",
     exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
     exempleIntro: "For a lost game costing 38 effort points:",
 
@@ -180,17 +161,7 @@ export const exercices = {
     rappelTitle: "Boxing counter reminder",
     rappelSeuilValeur: (t: string) => `From ${t}`,
     rappelSeuilAide: "Boxing piles up game after game. Past this much, the badge turns red and sends you a notification.",
-    rappelHint:
-      "When your debt goes over this threshold during a session, the app tells you to go pay it. Keeps you from doing pointless 30-second sets or one huge session at the end of the night.",
     rappelDesactive: "Off",
-    rappelValeur: (valeur: string) => `About ${valeur}`,
-    rappelNotifTitre: "Up you get, you owe",
-    rappelNotifCorps: (quantite: string) => `${quantite} to do now.`,
-    rappelBandeau: (quantite: string) => `You've racked up ${quantite}. Time to go.`,
-    rappelFait: "Done",
-    rappelPlusTard: "Later",
-    rappelAutoriser: "Enable notifications",
-    rappelAutorisees: "Notifications enabled",
   },
   es: {
     suspendreTitre: "Dejar de lado",
@@ -222,7 +193,6 @@ export const exercices = {
     apercuExemple: "Ejemplo: rellena la partida para ver el coste real",
 
     detteTitre: "Pendiente",
-    detteVide: "Nada pendiente.",
     detteSeuil: (t: string) => `Entra en juego a partir de ${t}`,
     detteFaireBtn: "Poner el cronómetro",
     detteHorsLigneUne: "1 sesión hecha sin red, pendiente de enviar",
@@ -234,7 +204,6 @@ export const exercices = {
     detteChronoTermine: "He terminado",
     detteChronoAbandon: "Más tarde",
     detteChronoFini: "Deuda saldada. Bien hecho.",
-    detteRappelTitre: "Tienes trabajo pendiente",
     detteRappelCorps: (t: string) => `${t} acumuladas. Es el momento.`,
     pompesNom: "Flexiones",
     pompesDesc: "Tren superior. La referencia histórica de la app.",
@@ -242,8 +211,6 @@ export const exercices = {
     squatsDesc: "Tren inferior. Cuentan 1,5 veces más repeticiones que las flexiones.",
     boxeNom: "Boxeo",
     boxeDesc: "Saco o sombra, como prefieras. Se cuenta en tiempo de trabajo real.",
-    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
-    exempleTitle: "Cómo queda",
     exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
     exempleIntro: "Para una partida perdida que cuesta 38 puntos de esfuerzo:",
 
@@ -274,17 +241,7 @@ export const exercices = {
     rappelTitle: "Aviso del contador de boxeo",
     rappelSeuilValeur: (t: string) => `A partir de ${t}`,
     rappelSeuilAide: "El boxeo se acumula partida tras partida. Pasado este tiempo, la insignia se pone en alerta y te envía una notificación.",
-    rappelHint:
-      "Cuando tu deuda supera este umbral durante una sesión, la app te avisa para que vayas a pagarla. Así evitas las microseries inútiles y las sesiones enormes a final de noche.",
     rappelDesactive: "Desactivado",
-    rappelValeur: (valeur: string) => `Unos ${valeur}`,
-    rappelNotifTitre: "Arriba, que tienes deuda",
-    rappelNotifCorps: (quantite: string) => `${quantite} que hacer ahora.`,
-    rappelBandeau: (quantite: string) => `Has acumulado ${quantite}. Es el momento.`,
-    rappelFait: "Hecho",
-    rappelPlusTard: "Más tarde",
-    rappelAutoriser: "Permitir las notificaciones",
-    rappelAutorisees: "Notificaciones activadas",
   },
   de: {
     suspendreTitre: "Beiseitelegen",
@@ -316,7 +273,6 @@ export const exercices = {
     apercuExemple: "Beispiel: trag die Partie ein, um den echten Preis zu sehen",
 
     detteTitre: "Offen",
-    detteVide: "Nichts offen.",
     detteSeuil: (t: string) => `Greift ab ${t}`,
     detteFaireBtn: "Uhr starten",
     detteHorsLigneUne: "1 Einheit ohne Netz, wartet auf Übertragung",
@@ -328,7 +284,6 @@ export const exercices = {
     detteChronoTermine: "Ich bin fertig",
     detteChronoAbandon: "Später",
     detteChronoFini: "Schuld beglichen. Stark.",
-    detteRappelTitre: "Da wartet Arbeit",
     detteRappelCorps: (t: string) => `${t} angesammelt. Jetzt wäre der Moment.`,
     pompesNom: "Liegestütze",
     pompesDesc: "Oberkörper. Die ursprüngliche Bezugsgröße der App.",
@@ -336,8 +291,6 @@ export const exercices = {
     squatsDesc: "Unterkörper. Zählt 1,5-mal so viele Wiederholungen wie Liegestütze.",
     boxeNom: "Boxen",
     boxeDesc: "Sack oder Schattenboxen, ganz wie du willst. Gezählt wird die tatsächliche Arbeitszeit.",
-    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
-    exempleTitle: "So sieht das aus",
     exempleLigne: (ex: string, valeur: string) => `${ex}: ${valeur}`,
     exempleIntro: "Für eine verlorene Partie zu 38 Anstrengungspunkten:",
 
@@ -368,17 +321,7 @@ export const exercices = {
     rappelTitle: "Erinnerung des Box-Zählers",
     rappelSeuilValeur: (t: string) => `Ab ${t}`,
     rappelSeuilAide: "Boxen sammelt sich Partie für Partie an. Über dieser Zeit schlägt das Abzeichen Alarm und schickt dir eine Benachrichtigung.",
-    rappelHint:
-      "Übersteigt deine Schuld während einer Sitzung diese Schwelle, sagt dir die App, dass du sie abarbeiten sollst. Das erspart dir sinnlose Mikro-Sätze und eine riesige Einheit am Ende des Abends.",
     rappelDesactive: "Aus",
-    rappelValeur: (valeur: string) => `Etwa ${valeur}`,
-    rappelNotifTitre: "Aufstehen, du schuldest was",
-    rappelNotifCorps: (quantite: string) => `${quantite} jetzt fällig.`,
-    rappelBandeau: (quantite: string) => `Du hast ${quantite} angesammelt. Jetzt wäre der Moment.`,
-    rappelFait: "Erledigt",
-    rappelPlusTard: "Später",
-    rappelAutoriser: "Benachrichtigungen erlauben",
-    rappelAutorisees: "Benachrichtigungen aktiviert",
   },
   zh: {
     suspendreTitre: "暂时搁置",
@@ -410,7 +353,6 @@ export const exercices = {
     apercuExemple: "示例：把这一局填完，就能看到真实代价",
 
     detteTitre: "待处理",
-    detteVide: "没有待处理的。",
     detteSeuil: (t: string) => `${t} 起生效`,
     detteFaireBtn: "开始计时",
     detteHorsLigneUne: "1 次离线完成的训练，等待同步",
@@ -422,7 +364,6 @@ export const exercices = {
     detteChronoTermine: "我做完了",
     detteChronoAbandon: "稍后再说",
     detteChronoFini: "欠账清了，漂亮。",
-    detteRappelTitre: "有活儿等着你",
     detteRappelCorps: (t: string) => `已经攒了 ${t}，该动一动了。`,
     pompesNom: "俯卧撑",
     pompesDesc: "上半身。这个应用最早的计量基准。",
@@ -430,8 +371,6 @@ export const exercices = {
     squatsDesc: "下半身。次数按俯卧撑的 1.5 倍计。",
     boxeNom: "拳击",
     boxeDesc: "打沙袋还是空击都行，按实际出拳时间计算。",
-    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
-    exempleTitle: "换算出来是这样",
     exempleLigne: (ex: string, valeur: string) => `${ex}：${valeur}`,
     exempleIntro: "以一局输掉、代价 38 点努力为例：",
 
@@ -462,17 +401,7 @@ export const exercices = {
     rappelTitle: "拳击计数器提醒",
     rappelSeuilValeur: (t: string) => `${t} 起`,
     rappelSeuilAide: "拳击会一局一局累积。超过这个时长，标记会转为警示并给你发通知。",
-    rappelHint:
-      "一个时段内欠账超过这个阈值时，应用会提醒你去还。这样能免掉零碎的小组，也免掉深夜那一场大的。",
     rappelDesactive: "关闭",
-    rappelValeur: (valeur: string) => `大约 ${valeur}`,
-    rappelNotifTitre: "起来，你还欠着",
-    rappelNotifCorps: (quantite: string) => `现在要做 ${quantite}。`,
-    rappelBandeau: (quantite: string) => `你已经攒了 ${quantite}，该动一动了。`,
-    rappelFait: "做完了",
-    rappelPlusTard: "稍后再说",
-    rappelAutoriser: "允许通知",
-    rappelAutorisees: "通知已开启",
   },
   ja: {
     suspendreTitre: "いったん外す",
@@ -504,7 +433,6 @@ export const exercices = {
     apercuExemple: "例：試合を入力すると実際の費用が出ます",
 
     detteTitre: "未払い",
-    detteVide: "未払いはありません。",
     detteSeuil: (t: string) => `${t} から効きます`,
     detteFaireBtn: "タイマーを始める",
     detteHorsLigneUne: "オフラインで行った1回分、送信待ち",
@@ -516,7 +444,6 @@ export const exercices = {
     detteChronoTermine: "終わりました",
     detteChronoAbandon: "あとで",
     detteChronoFini: "負債は解消。お見事。",
-    detteRappelTitre: "やることが溜まっています",
     detteRappelCorps: (t: string) => `${t} 溜まりました。いまが頃合いです。`,
     pompesNom: "腕立て",
     pompesDesc: "上半身。このアプリのもともとの基準です。",
@@ -524,8 +451,6 @@ export const exercices = {
     squatsDesc: "下半身。腕立ての 1.5 倍の回数で数えます。",
     boxeNom: "ボクシング",
     boxeDesc: "サンドバッグでもシャドーでも。実働時間で数えます。",
-    uniteReps: (n: number, ex: string) => `${n} ${ex}`,
-    exempleTitle: "換算するとこうなります",
     exempleLigne: (ex: string, valeur: string) => `${ex}：${valeur}`,
     exempleIntro: "負けて 38 努力ポイントかかった試合の場合：",
 
@@ -556,16 +481,6 @@ export const exercices = {
     rappelTitle: "ボクシングのカウンター通知",
     rappelSeuilValeur: (t: string) => `${t} から`,
     rappelSeuilAide: "ボクシングは試合ごとに溜まっていきます。この時間を超えるとバッジが警告に変わり、通知が届きます。",
-    rappelHint:
-      "セッション中に負債がこのしきい値を超えると、アプリが払いに行くよう促します。無駄な細切れセットも、夜更けの大仕事も避けられます。",
     rappelDesactive: "オフ",
-    rappelValeur: (valeur: string) => `およそ ${valeur}`,
-    rappelNotifTitre: "立って、負債があります",
-    rappelNotifCorps: (quantite: string) => `いま ${quantite} です。`,
-    rappelBandeau: (quantite: string) => `${quantite} 溜まりました。いまが頃合いです。`,
-    rappelFait: "やりました",
-    rappelPlusTard: "あとで",
-    rappelAutoriser: "通知を許可する",
-    rappelAutorisees: "通知は有効です",
   },
 };

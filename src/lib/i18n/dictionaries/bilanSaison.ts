@@ -26,7 +26,6 @@ export const bilanSaison = {
     imageErreur: "L'image n'a pas pu être dessinée. Tes chiffres sont bons, c'est la mise en image qui a échoué : recharge la page.",
     imageAlt: "Bilan de saison en image",
     enregistrer: "Enregistrer l'image",
-    partager: "Partager",
     ouvrir: "Ouvrir l'image",
   },
   en: {
@@ -50,7 +49,6 @@ export const bilanSaison = {
     imageErreur: "The image could not be drawn. Your numbers are fine, only the picture failed: reload the page.",
     imageAlt: "Season summary image",
     enregistrer: "Save the image",
-    partager: "Share",
     ouvrir: "Open the image",
   },
   es: {
@@ -74,7 +72,6 @@ export const bilanSaison = {
     imageErreur: "No se ha podido dibujar la imagen. Tus cifras están bien, solo ha fallado la imagen: recarga la página.",
     imageAlt: "Imagen del resumen de temporada",
     enregistrer: "Guardar la imagen",
-    partager: "Compartir",
     ouvrir: "Abrir la imagen",
   },
   de: {
@@ -98,7 +95,6 @@ export const bilanSaison = {
     imageErreur: "Das Bild konnte nicht gezeichnet werden. Deine Zahlen stimmen, nur das Bild ist fehlgeschlagen: lad die Seite neu.",
     imageAlt: "Bild der Saisonbilanz",
     enregistrer: "Bild speichern",
-    partager: "Teilen",
     ouvrir: "Bild öffnen",
   },
   zh: {
@@ -122,7 +118,6 @@ export const bilanSaison = {
     imageErreur: "图片没能生成。你的数据没问题，只是出图失败了，请刷新页面。",
     imageAlt: "赛季总结图片",
     enregistrer: "保存图片",
-    partager: "分享",
     ouvrir: "打开图片",
   },
   ja: {
@@ -146,7 +141,6 @@ export const bilanSaison = {
     imageErreur: "画像を生成できませんでした。数値は問題ありません。画像だけが失敗したので、ページを再読み込みしてください。",
     imageAlt: "シーズンまとめの画像",
     enregistrer: "画像を保存",
-    partager: "共有",
     ouvrir: "画像を開く",
   },
 };
