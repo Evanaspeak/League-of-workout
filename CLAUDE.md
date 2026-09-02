@@ -723,6 +723,32 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Cinq logos officiels, et deux fichiers qui en masquaient deux en silence
+Le propriétaire du site a déposé cinq logos officiels par l'interface web de
+GitHub : `league`, `apex`, `rocket-league`, `minecraft`, `wow`. La bande de
+l'accueil en montre donc neuf sur treize au lieu de six.
+
+**Deux d'entre eux ne se seraient jamais affichés.** L'ordre de préférence de
+`logosDisponibles()` va du SVG au PNG, et `league.svg` comme `apex.svg`
+existaient déjà : un `league.png` déposé à côté est ignoré, sans erreur, sans
+image cassée, sans rien qui le signale — la bande continue simplement de
+montrer l'ancien glyphe. Les deux SVG sont supprimés.
+
+Ce n'est pas une subtilité d'implémentation, c'est la forme la plus courante de
+défaut sur ce projet : **un fichier qui reste sans être servi n'est pas
+inoffensif, il masque celui qu'on vient d'ajouter.** Le commentaire de
+`logosJeux.ts` disait déjà « un SVG ne doit pas se faire doubler par un PNG
+homonyme » — la règle était juste, et personne n'avait écrit ce qu'elle
+implique le jour où l'on REMPLACE.
+
+Vérifié en poussant : les neuf adresses répondent 200 avec le bon type, et les
+deux SVG retirés rendent 404. Aucun filtre n'est appliqué aux images —
+`.jeu-logo` ne pose que `width`, `height` et `object-fit: contain`. Elles sont
+servies telles quelles, ce qui était la consigne.
+
+Restent quatre glyphes dessinés pour le site : `warzone`, `tft`, `gta5`,
+`elden-ring`.
+
 ### Deux règles de la visite guidée y étaient écrites deux fois
 `VisiteGuidee.tsx` fait quatre cent soixante lignes, et c'est la première chose
 qu'un compte neuf rencontre. Deux de ses règles y figuraient en double, et
