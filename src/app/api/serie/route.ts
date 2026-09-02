@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { jourLocal } from "@/lib/serie";
+import { estJourValide, jourLocal } from "@/lib/serie";
 import { reponseSerie } from "@/lib/progression";
 
 /**
@@ -16,7 +16,10 @@ export async function GET(req: Request) {
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   const demande = new URL(req.url).searchParams.get("jour");
-  const aujourdhui = demande && /^\d{4}-\d{2}-\d{2}$/.test(demande) ? demande : jourLocal();
+  // La forme ne dit pas que le jour existe : « 2026-02-30 » passe le motif et
+  // GLISSE au 2 mars selon la plateforme. La série se compterait alors depuis
+  // un jour qui n'existe pas, en court-circuitant le repli prévu pour ça.
+  const aujourdhui = estJourValide(demande) ? (demande as string) : jourLocal();
 
   const paiements = await prisma.paiement.findMany({
     where: { userId: user.id },
