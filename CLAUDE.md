@@ -723,6 +723,55 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'historique sautait d'un quart d'écran, et toutes les campagnes disaient zéro
+Campagne de mesure après les cinq versions du matin. **Accessibilité : 0 constat
+sur 90 passes** — quinze pages, six langues, aucune page laissée de côté. Les
+douze pages tiennent sous les 2500 ms, sur poste comme sur téléphone bridé.
+
+Et un défaut, sur une métrique qui rendait zéro depuis toujours : **CLS 0,252
+sur `/fr/history`**, pour un seuil de 0,1.
+
+La page affichait un « Chargement… » d'une ligne, le pied de page se posait
+juste dessous, et tout ce qui était visible sautait de plusieurs centaines de
+pixels quand la liste arrivait. C'est **mot pour mot le défaut déjà corrigé
+sur le tableau de bord**, mesuré à 0,148 à l'époque, et dont la correction — un
+squelette qui réserve la place — est en place depuis.
+
+**Pourquoi personne ne l'avait vu** : toutes les campagnes précédentes
+tournaient sur un compte VIDE. Une liste sans ligne ne pousse rien, et la
+mesure rendait 0,000 en toute honnêteté sans rien dire. C'est le piège déjà
+écrit pour `routes.mjs` — « avec un compte frais, `/api/games` rend deux
+octets » — sur une autre métrique, et il a fallu semer soixante parties pour
+qu'il se voie.
+
+Sabotage fait dans le bon ordre, ce qui a demandé trois essais : retirer
+`<Squelette />` ne compile pas (`noUnusedLocals` attrape l'import devenu
+inutile), et la première tentative a mesuré un serveur qui n'avait pas
+redémarré — le port était encore pris, `next start` est sorti en 1, et le
+chiffre rendu ne valait rien. Le squelette vidé de son contenu, qui lui
+compile : **0,268**. Avec : **0,041**.
+
+**Le garde ne mesure pas le déplacement, il mesure la cause.** Le déplacement
+dépend des polices et de l'ordre des ressources ; la RÉSERVE, elle, est
+déterministe. `e2e/historique.spec.ts` retient la réponse de `/api/games` deux
+secondes et demie, relève la hauteur de la page pendant l'attente, puis une
+fois remplie, et refuse que la première fasse moins de soixante pour cent de la
+seconde.
+
+Deux pièges d'écriture, tous deux déjà dans ce fichier : `-g` écarte le test
+qui ouvre le compte, donc la sonde mesurait la page de connexion ; et à 1280 px
+les cartes existent dans le DOM mais la feuille de style les cache — chercher
+un nom de champion tombe sur un élément invisible. C'est l'effacement du
+squelette qui sert de marqueur, parce qu'il vaut des deux côtés.
+
+**Une observation qu'il faut dire sans la surinterpréter** : « une correction
+refusée ne change rien à l'écran » a échoué deux fois pendant cette passe, et
+douze fois sur douze une fois la machine tranquille. Les deux échecs sont
+tombés pendant qu'une construction, un serveur, Playwright et un Chromium de
+mesure tournaient ensemble. Ce n'est pas diagnostiqué, et je ne touche pas à ce
+test sans l'avoir été : allonger un délai sans savoir ce qu'on attend est la
+façon la plus sûre de rendre un test muet.
+
 ### Soixante et onze composants sur soixante-douze n'ont aucun test, et ce n'est pas la question
 Recensement fait : un seul composant de `src/components` est importé par un
 test. Le chiffre a l'air terrible et il ne veut presque rien dire — la suite

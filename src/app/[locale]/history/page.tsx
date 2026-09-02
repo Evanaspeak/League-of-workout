@@ -1,5 +1,6 @@
 "use client";
 import { Icone } from "@/components/Icone";
+import { Squelette } from "./Squelette";
 import { Lien } from "@/components/Lien";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { CorrectionDates } from "@/components/CorrectionDates";
@@ -397,7 +398,14 @@ export default function HistoryPage() {
 
       <div className="space-y-4">
           {loadingGames ? (
-            <div className="text-center py-10 gold-text">{t.loading}</div>
+            /* Le squelette réserve la place de la liste : sans lui, tout ce
+               qui est visible saute quand les parties arrivent. Il est
+               `aria-hidden`, d'où l'annonce qui l'accompagne — un lecteur
+               d'écran n'a rien à faire d'une forme, il a besoin du mot. */
+            <>
+              <span className="lecture-ecran" role="status">{t.loading}</span>
+              <Squelette />
+            </>
           ) : (
             <>
               {/* Filtres — le filtre par jeu commande le reste */}

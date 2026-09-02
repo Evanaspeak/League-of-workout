@@ -382,3 +382,55 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
   expect(apres.find((g: { champion: string }) => g.champion === "Maître Yi").result).toBe("D");
   await ctx.close();
 });
+
+/**
+ * La place de la liste, réservée avant qu'elle n'arrive.
+ *
+ * L'historique affichait un « Chargement… » d'une ligne, le pied de page se
+ * posait juste dessous, et tout ce qui était visible sautait quand les parties
+ * arrivaient : **0,252 de déplacement cumulé** mesuré sur soixante parties,
+ * pour un seuil de 0,1. C'est le défaut déjà corrigé sur le tableau de bord, à
+ * 0,148 — et il a vécu ici parce que toutes les campagnes tournaient sur un
+ * compte VIDE, où une liste sans ligne ne pousse rien.
+ *
+ * Le contrôle ne mesure pas le déplacement, qui dépend des polices et de
+ * l'ordre des ressources : il mesure la RÉSERVE, qui est la cause. La page
+ * pendant le chargement doit faire à peu près la hauteur qu'elle aura une fois
+ * remplie.
+ */
+test("la liste réserve sa place pendant le chargement", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat, viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  // La réponse est retenue le temps de mesurer l'écran d'attente. Sans ce
+  // délai, la liste arrive avant qu'on ait pu regarder.
+  await page.route("**/api/games**", async (route) => {
+    await new Promise((r) => setTimeout(r, 2500));
+    await route.continue();
+  });
+
+  await page.goto("/history", { waitUntil: "domcontentloaded" });
+  await page.locator("[data-attente='historique']").waitFor({ timeout: 15_000 });
+  const enAttente = await page.evaluate(() => document.body.scrollHeight);
+
+  // Le squelette qui s'efface est le seul marqueur qui vaille des deux côtés :
+  // à 1280 px les cartes existent dans le DOM mais la feuille de style les
+  // cache, donc chercher un champion tomberait sur un élément invisible.
+  await page.locator("[data-attente='historique']").waitFor({ state: "detached", timeout: 20_000 });
+  await page.locator("table").first().waitFor({ timeout: 10_000 });
+  const remplie = await page.evaluate(() => document.body.scrollHeight);
+
+  // Sans réserve, l'écran d'attente fait un quart de la page remplie et le
+  // pied saute de plusieurs centaines de pixels. La marge est large à dessein :
+  // c'est l'ordre de grandeur qui compte, pas une hauteur au pixel.
+  expect(enAttente).toBeGreaterThan(remplie * 0.6);
+  await ctx.close();
+});
