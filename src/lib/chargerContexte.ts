@@ -30,15 +30,34 @@ function demander(): Promise<ContexteCompte | null> {
     .catch(() => null);
 }
 
+/**
+ * Mémorise l'appel en vol, mais pas son échec.
+ *
+ * La mémoire existe pour qu'un seul appel serve à tout le monde. Retenir
+ * l'ÉCHEC, c'est autre chose : une coupure d'une seconde au chargement rendait
+ * `null` à tous les composants pour toute la durée de la page — compteur de
+ * dette vide, lien d'administration absent, demande de consentement reposée.
+ * Rien n'est perdu, mais l'écran ment jusqu'au prochain `rafraichir`, qui peut
+ * ne jamais venir.
+ *
+ * On efface donc la mémoire quand la réponse n'est pas venue, et le prochain
+ * composant qui se monte retente. Les montages d'un même écran ont lieu dans
+ * le même tour de boucle et partagent l'appel en vol : il n'y a pas de tempête
+ * à craindre.
+ */
+function memoriser(p: Promise<ContexteCompte | null>): Promise<ContexteCompte | null> {
+  enCours = p;
+  void p.then((c) => { if (c === null && enCours === p) enCours = null; });
+  return p;
+}
+
 export function chargerContexte(): Promise<ContexteCompte | null> {
-  if (!enCours) enCours = demander();
-  return enCours;
+  return enCours ?? memoriser(demander());
 }
 
 /** Redemande au serveur et remplace ce que tout le monde lira ensuite. */
 export function rafraichirContexte(): Promise<ContexteCompte | null> {
-  enCours = demander();
-  return enCours;
+  return memoriser(demander());
 }
 
 /** Pour les tests : la mémoire ne doit pas traverser deux cas. */

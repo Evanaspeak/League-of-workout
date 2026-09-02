@@ -332,3 +332,69 @@ test("un test de force refusé garde la saisie et le dit", async ({ browser }) =
   await expect(champ).toHaveValue("30");
   await ctx.close();
 });
+
+test("une coupure d'un instant ne vide pas le compteur de dette pour toute la page", async ({ browser }) => {
+  /**
+   * Le contexte du compte est demandé UNE fois et mémorisé pour tous les
+   * composants de l'écran. C'est un gain mesuré ; c'est aussi ce qui peut
+   * transformer une coupure d'une seconde en écran faux pour toute la page.
+   *
+   * Ici la route échoue au PREMIER appel seulement, puis répond normalement.
+   * Le compteur de dette doit finir par paraître : c'est la reprise unique du
+   * fournisseur qui le permet, la mémoire de module ne suffisant pas — les
+   * composants d'un même écran se montent dans le même tour de boucle et
+   * partagent l'appel en vol.
+   *
+   * Sans la reprise, la dette reste absente de l'écran dont elle est le sujet,
+   * et rien ne le dit.
+   */
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  let coupes = 0;
+  await page.route("**/api/contexte", async (r) => {
+    if (coupes === 0) {
+      coupes = 1;
+      return r.fulfill({
+        status: 500, contentType: "application/json", body: '{"error":"Erreur serveur"}',
+      });
+    }
+    await r.continue();
+  });
+
+  /**
+   * Il faut d'abord un exercice AU TEMPS, sinon il n'y a rien à afficher.
+   *
+   * Le compteur ne suit que ce qui se compte en minutes : un compte neuf n'a
+   * que les pompes, qui se font dans la foulée et n'entrent jamais au
+   * compteur. C'est ce que fait l'étape 2 du parcours complet, et ma première
+   * version de ce test l'ignorait — la pastille était absente pour une raison
+   * parfaitement normale, et le test accusait la correction qu'il éprouvait.
+   *
+   * Ce test est le DERNIER du fichier : il change les réglages du compte
+   * partagé, et un test qui suivrait hériterait de la boxe.
+   */
+  const reglages = await page.request.put("/api/settings", {
+    data: { userPrefs: { exercices: ["boxe"] } },
+  });
+  expect(reglages.status(), await reglages.text()).toBe(200);
+  const partie = await page.request.post("/api/games", {
+    data: { jeu: "League of Legends", role: "Mid", champion: "Ahri",
+            kills: 1, deaths: 9, assists: 2, result: "D", exercice: "boxe" },
+  });
+  expect(partie.status(), await partie.text()).toBe(200);
+
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await expect(page.locator('[data-visite="dette"]').first())
+    .toBeVisible({ timeout: 20_000 });
+  expect(coupes).toBe(1);
+  await ctx.close();
+});

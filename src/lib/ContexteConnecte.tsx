@@ -17,7 +17,7 @@ import { chargerContexte, rafraichirContexte } from "@/lib/chargerContexte";
  *
  * En production, chaque requête SQL est un appel HTTPS indépendant vers Neon —
  * le client passe par `PrismaNeonHttp`, pas par un pool TCP. Trois lectures du
- * même enregistrement coûtent donc trois allers-terours, pas trois fois rien.
+ * même enregistrement coûtent donc trois allers-retours, pas trois fois rien.
  *
  * Le rafraîchissement passe par l'événement `wow-dette-changee`, qui existait
  * déjà et que les deux composants écoutaient chacun de leur côté : il est
@@ -86,7 +86,34 @@ export function ContexteConnecteProvider({ children }: { children: React.ReactNo
     // Aucun compte sur une page publique : la route répondrait 401, et
     // demander pour rien est précisément ce qu'on vient de retirer.
     if (publique) return;
-    void chargerContexte().then(poser);
+
+    /**
+     * Une seule reprise, si la première lecture revient vide.
+     *
+     * Sur une page connectée, `null` n'est pas « pas de compte » : le
+     * middleware a déjà exigé une session pour servir la page. C'est donc une
+     * anomalie — coupure d'un instant, serveur qui redémarre — et la traiter
+     * comme une réponse laisse le compteur de dette absent de l'écran dont il
+     * est le sujet, sans que rien ne le dise.
+     *
+     * La mémoire de module ne suffit pas à rattraper ce cas : elle permet à un
+     * composant qui se monte PLUS TARD de retenter, mais ceux d'un même écran
+     * se montent dans le même tour de boucle et partagent l'appel en vol. Il
+     * faut donc une reprise explicite ici.
+     *
+     * Une seule, et après un délai : une boucle de reprises sur un serveur qui
+     * ne répond pas est le remède qui aggrave la panne.
+     */
+    let repriseFaite = false;
+    let minuteur: ReturnType<typeof setTimeout> | undefined;
+    const lire = (c: Awaited<ReturnType<typeof chargerContexte>>) => {
+      poser(c);
+      if (c === null && !repriseFaite) {
+        repriseFaite = true;
+        minuteur = setTimeout(() => { void chargerContexte().then(poser); }, 2_000);
+      }
+    };
+    void chargerContexte().then(lire);
     const surChangement = () => { void recharger(); };
     // Le retour sur l'onglet resynchronise : la partie a pu être enregistrée
     // depuis un autre appareil, ou par l'application Windows pendant qu'on
@@ -95,6 +122,7 @@ export function ContexteConnecteProvider({ children }: { children: React.ReactNo
     window.addEventListener("wow-dette-changee", surChangement);
     document.addEventListener("visibilitychange", surRetour);
     return () => {
+      if (minuteur) clearTimeout(minuteur);
       window.removeEventListener("wow-dette-changee", surChangement);
       document.removeEventListener("visibilitychange", surRetour);
     };

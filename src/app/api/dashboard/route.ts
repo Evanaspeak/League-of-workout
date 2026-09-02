@@ -21,7 +21,29 @@ export async function GET(req: Request) {
   // afficher, et sur un téléphone bridé le premier rendu utile arrivait à
   // 3,8 secondes. Un aller-retour de moins, et tout arrive ensemble.
   const [toutesLesGames, goal, levelConfigs] = await Promise.all([
-    prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
+    prisma.game.findMany({
+      where: { userId: user.id },
+      orderBy: { date: "asc" },
+      /**
+       * Les quinze colonnes que cette route lit, et pas les trente et une.
+       *
+       * Le tableau de bord charge TOUTES les parties du compte pour les
+       * agréger : à soixante-quinze parties ça ne se voit pas, à plusieurs
+       * milliers la moitié de ce qui traverse le réseau ne sert à rien —
+       * identifiants Riot, détail du calcul, arrêts, file, source.
+       *
+       * Agréger en SQL serait mieux encore, et ce n'est pas le moment : ce
+       * serait optimiser pour une charge qui n'existe pas, sur une base de
+       * quatre comptes. Ceci ne coûte rien et se vérifie à la compilation —
+       * une colonne oubliée ne passe pas `tsc`.
+       */
+      select: {
+        date: true, role: true, champion: true, kills: true, deaths: true,
+        assists: true, result: true, niveauCalcule: true, pompesCalculees: true,
+        exercice: true, repartition: true, jeu: true, typeJeu: true,
+        dureeSec: true, joueurs: true,
+      },
+    }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
     // Les paliers sont globaux et en cache : les relire ici serait un
     // aller-retour de plus pour des valeurs qui ne bougent pas d'un mois
