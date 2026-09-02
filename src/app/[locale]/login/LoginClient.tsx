@@ -1,10 +1,10 @@
-"use client";
 import { Icone } from "@/components/Icone";
 import { Lien } from "@/components/Lien";
 import { LoginButtons } from "@/components/LoginButtons";
 import { DesktopModeDetector } from "@/components/DesktopModeDetector";
 import { Wordmark } from "@/components/Wordmark";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { textes } from "@/lib/i18n/textes";
+import { toLocale } from "@/lib/i18n/langues";
 import { login as loginDict } from "@/lib/i18n/dictionaries/login";
 
 export function LoginClient({
@@ -16,6 +16,7 @@ export function LoginClient({
   deleted,
   reconnexion,
   code,
+  locale,
 }: {
   betaFull: boolean;
   betaPending: boolean;
@@ -36,8 +37,10 @@ export function LoginClient({
    * lisant un signalement, de savoir laquelle on regardait.
    */
   code?: string;
+  /** La langue vient de l'adresse : c'est ce qui permet le rendu au serveur. */
+  locale: string;
 }) {
-  const t = useT(loginDict);
+  const t = textes(loginDict, toLocale(locale));
 
   const card: React.CSSProperties = {
     position: "relative",

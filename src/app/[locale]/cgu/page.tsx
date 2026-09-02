@@ -10,6 +10,9 @@ export async function generateMetadata(
   return metadonneesPage("cgu", toLocale(locale), "/cgu");
 }
 
-export default function CGUPage() {
-  return <CguClient />;
+export default async function CGUPage(
+  { params }: { params: Promise<{ locale: string }> },
+) {
+  const { locale } = await params;
+  return <CguClient locale={locale} />;
 }

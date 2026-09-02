@@ -1,9 +1,14 @@
-"use client";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { textes } from "@/lib/i18n/textes";
+import { toLocale } from "@/lib/i18n/langues";
 import { adminHeader } from "@/lib/i18n/dictionaries/adminHeader";
 
-export default function AdminHeader({ email }: { email: string }) {
-  const t = useT(adminHeader);
+/**
+ * Rendu au SERVEUR : il n'était client que pour `useT`.
+ */
+export default function AdminHeader(
+  { email, locale }: { email: string; locale: string },
+) {
+  const t = textes(adminHeader, toLocale(locale));
 
   return (
     <>

@@ -1,18 +1,28 @@
-"use client";
 import { Lien } from "@/components/Lien";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { textes } from "@/lib/i18n/textes";
+import { toLocale } from "@/lib/i18n/langues";
 import { telechargement as telechargementDict } from "@/lib/i18n/dictionaries/telechargement";
 import { Icone } from "@/components/Icone";
 
+/**
+ * Rendu au SERVEUR : il n'était client que pour `useT`.
+ *
+ * Aucun état, aucun gestionnaire, aucune lecture du navigateur — son
+ * dictionnaire partait pourtant dans le paquet JavaScript, dans les six
+ * langues, pour un texte que le serveur sait rendre entièrement.
+ */
 export function TelechargementClient({
   downloadUrl,
   version,
+  locale,
 }: {
   downloadUrl: string | null;
+  /** La langue vient de l'adresse : c'est ce qui permet le rendu au serveur. */
+  locale: string;
   /** Version proposée au téléchargement, quand elle a pu être lue. */
   version?: string | null;
 }) {
-  const t = useT(telechargementDict);
+  const t = textes(telechargementDict, toLocale(locale));
   return (
     <div
       style={{ minHeight: "72vh", display: "flex", alignItems: "center", justifyContent: "center" }}

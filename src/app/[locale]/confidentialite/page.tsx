@@ -10,6 +10,9 @@ export async function generateMetadata(
   return metadonneesPage("confidentialite", toLocale(locale), "/confidentialite");
 }
 
-export default function ConfidentialitePage() {
-  return <ConfidentialiteClient />;
+export default async function ConfidentialitePage(
+  { params }: { params: Promise<{ locale: string }> },
+) {
+  const { locale } = await params;
+  return <ConfidentialiteClient locale={locale} />;
 }

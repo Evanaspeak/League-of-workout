@@ -701,6 +701,45 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trente-sept kilo-octets partaient au navigateur pour du texte fixe
+Le tableau de bord transférait 537 ko, dont 375 de JavaScript, là où l'accueil
+en fait 210. Les graphiques étaient déjà chargés à la demande depuis V169 ; le
+reste s'est trouvé en deux temps.
+
+**D'abord le formulaire d'ajout**, huit cent soixante-dix lignes qui ne
+s'affichent que dans une fenêtre ouverte à la demande, et qui traînent avec
+elles la saisie de champion, la liste des parties Riot et deux dictionnaires.
+Chargé à la demande comme les graphiques : **13 ko**.
+
+**Ensuite le vrai gisement, trouvé en le mesurant.** Une expérience — retirer
+quatre des six langues de tous les dictionnaires, construire, peser les
+fragments — donne **140 ko compressés, 21 % de tout le JavaScript du site**.
+Le chantier « une langue par paquet » vaut donc la peine, mais il suppose que
+chaque composant reçoive son texte au lieu d'importer son dictionnaire : c'est
+une refonte, pas une retouche, et elle n'a pas été faite de nuit.
+
+**Ce qui a été fait, c'est le sous-ensemble à risque nul.** Un recensement des
+composants marqués `"use client"` dont le SEUL besoin est `useT` — aucun état,
+aucun gestionnaire, aucune lecture du navigateur — en rend cinq : CGU,
+confidentialité, connexion, téléchargement, en-tête d'administration. Rendus au
+serveur avec `textes(dict, locale)`, leurs dictionnaires ne partent plus du
+tout. Le paquet passe de **655 à 618 ko compressés**, soit **37 ko, 5,6 %**.
+
+Ce n'était possible qu'une fois la langue dans l'adresse : le composant a
+besoin de connaître sa langue au serveur, et jusqu'à V301 elle vivait dans le
+stockage du navigateur. C'est le bénéfice différé de ce chantier-là, et il ne
+s'est pas encaissé tout seul — il a fallu venir le chercher trois semaines plus
+tard.
+
+`src/clientInutile.test.ts` refuse qu'un composant redevienne client pour le
+seul `useT`. Deux sabotages, deux échecs — dont le motif vidé, parce qu'un
+recensement qui ne trouve rien passe au vert.
+
+**Ce que ça n'améliore pas** : le temps d'affichage ne bouge pas, 264 ms sur
+poste comme avant. Ces pages étaient déjà rapides ; ce qui change est ce qu'on
+fait télécharger, et sur un forfait mobile ça se compte autrement qu'en
+millisecondes.
+
 ### Le mode session avait cinq cents lignes et aucun test
 `SessionContext.tsx` porte le mode session : la boucle de sondage, la dette qui
 s'accumule pendant une soirée, le chrono des exercices au temps. C'est un

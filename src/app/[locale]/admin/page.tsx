@@ -31,7 +31,7 @@ export default async function AdminPage(
 
   return (
     <div className="space-y-6">
-      <AdminHeader email={user.email} />
+      <AdminHeader locale={locale} email={user.email} />
       <AdminMesures />
       <AdminUserList />
       <AdminSignalements />
