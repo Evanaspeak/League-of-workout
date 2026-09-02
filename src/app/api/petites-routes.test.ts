@@ -128,9 +128,30 @@ describe("GET /api/exercices/ratios", () => {
     expect((await corps(r)).ratios).toEqual({ pompes: 1, squats: 2, boxe: 9 });
   });
 
-  it("laisse le navigateur garder la réponse une minute", async () => {
+  /**
+   * Ce test disait l'inverse, et il avait figé le défaut comme une garantie.
+   *
+   * La route porte `public, max-age=60, stale-while-revalidate=300`, ce qui
+   * défait exactement ce pour quoi elle existe : le navigateur relit la valeur
+   * à la source parce que celle du HTML peut dater — et il se servait dans son
+   * propre cache, donc il réinstallait l'ancienne par-dessus la bonne.
+   *
+   * Ce que ça donnait à l'écran : la pastille de dette convertissait les
+   * points avec l'ancien ratio pendant que le décompte affichait la durée
+   * calculée au serveur avec le nouveau. « 6 min 05 » sur l'une, « 2 min 41 »
+   * dans l'autre, sur le même écran, et le rapport entre les deux valait
+   * exactement celui des deux ratios.
+   *
+   * `public` est le mot qui coûte le plus cher : il autorise le CDN à garder
+   * la réponse pour tout le monde, pas seulement pour celui qui l'a demandée.
+   */
+  it("ne se met jamais en cache", async () => {
     const r = await lireRatios();
-    expect(r.headers.get("Cache-Control")).toContain("max-age=60");
+    const cache = r.headers.get("Cache-Control") ?? "";
+    expect(cache).toContain("no-store");
+    expect(cache).not.toContain("public");
+    expect(cache).not.toMatch(/max-age=[1-9]/);
+    expect(cache).not.toContain("stale-while-revalidate");
   });
 });
 

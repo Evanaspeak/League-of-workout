@@ -1,3 +1,4 @@
+import type { ExerciceId } from "@/lib/exercices";
 /**
  * Ce que la pastille de dette affiche, et quand elle prévient.
  *
@@ -45,4 +46,30 @@ export function duree(secondes: number): string {
  */
 export function seuilFranchi(dette: { dureeSec: number; seuilSec: number } | null): boolean {
   return !!dette && dette.seuilSec > 0 && dette.dureeSec >= dette.seuilSec;
+}
+
+/**
+ * Ce que le décompte doit décompter : le nombre ANNONCÉ à l'écran.
+ *
+ * La pastille et l'en-tête de la fenêtre affichent `formaterCompact` — donc
+ * une quantité convertie côté navigateur et arrondie au pas de l'exercice,
+ * cinq secondes pour la boxe. Le décompte, lui, partait de `dureeSec`, calculé
+ * au serveur à la seconde près. Les deux nombres décrivent la même dette et ne
+ * tombaient jamais tout à fait pareil : « 1 min 15 » écrit juste au-dessus
+ * d'un chrono qui démarre à 1:17.
+ *
+ * On compte donc ce qu'on a promis. Le reliquat n'est pas perdu : un décompte
+ * mené à zéro solde la dette entière (`tout: true`), et un décompte
+ * interrompu n'acquitte que les secondes réellement faites.
+ *
+ * Le repli sur `dureeSec` couvre le cas où la ventilation serait vide alors
+ * qu'une durée existe — mieux vaut un décompte que pas de décompte.
+ */
+export function secondesAnnoncees(
+  lignes: { pts: number; id: ExerciceId }[],
+  dureeSec: number,
+  convertir: (points: number, exercice: ExerciceId) => number,
+): number {
+  const total = lignes.reduce((s, l) => s + convertir(l.pts, l.id), 0);
+  return total > 0 ? Math.round(total) : Math.max(0, Math.round(dureeSec));
 }

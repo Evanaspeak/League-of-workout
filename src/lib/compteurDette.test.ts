@@ -1,4 +1,4 @@
-import { duree, horloge, seuilFranchi } from "./compteurDette";
+import { duree, horloge, secondesAnnoncees, seuilFranchi } from "./compteurDette";
 
 describe("l'horloge du décompte", () => {
   it("écrit les minutes et les secondes", () => {
@@ -73,5 +73,39 @@ describe("le seuil de séance", () => {
 
   it("ne prévient pas sans dette", () => {
     expect(seuilFranchi(null)).toBe(false);
+  });
+});
+
+/**
+ * Le décompte compte ce que l'écran a annoncé.
+ *
+ * La pastille et l'en-tête de la fenêtre affichent une quantité convertie côté
+ * navigateur et arrondie au pas de l'exercice — cinq secondes pour la boxe. Le
+ * décompte partait de `dureeSec`, calculé au serveur à la seconde près : les
+ * deux nombres décrivent la même dette et ne tombaient jamais tout à fait
+ * pareil.
+ */
+describe("les secondes annoncées", () => {
+  /** Une conversion de boxe arrondie au pas de cinq secondes, comme la vraie. */
+  const convertir = (pts: number) => Math.round((pts * 7) / 5) * 5;
+
+  it("compte ce que l'écran affiche, pas la durée du serveur", () => {
+    // 11 points × 7 = 77 s au serveur ; l'écran annonce 75.
+    expect(secondesAnnoncees([{ pts: 11, id: "boxe" }], 77, convertir)).toBe(75);
+  });
+
+  it("additionne les exercices quand la dette est partagée", () => {
+    expect(secondesAnnoncees(
+      [{ pts: 11, id: "boxe" }, { pts: 4, id: "planche" }], 999, convertir,
+    )).toBe(75 + convertir(4));
+  });
+
+  it("retombe sur la durée du serveur quand rien n'est ventilé", () => {
+    // Mieux vaut un décompte que pas de décompte : le repli existe pour ça.
+    expect(secondesAnnoncees([], 77, convertir)).toBe(77);
+  });
+
+  it("ne rend jamais de durée négative", () => {
+    expect(secondesAnnoncees([], -10, convertir)).toBe(0);
   });
 });

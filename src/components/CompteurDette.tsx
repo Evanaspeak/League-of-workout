@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { duree, horloge, seuilFranchi } from "@/lib/compteurDette";
+import { duree, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -8,7 +8,7 @@ import { jourLocal } from "@/lib/serie";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
-import { formaterCompact, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
+import { formaterCompact, quantite, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { notifierSysteme } from "@/lib/notifier";
 import { echauffementConseille } from "@/lib/echauffement";
@@ -88,6 +88,13 @@ export function CompteurDette() {
   const contexte = useContexteConnecte();
   const dette = (contexte.dette ?? null) as Dette | null;
 
+  /** Les lignes de la dette, une par exercice réellement dû. */
+  const lignesDette = dette
+    ? Object.entries(dette.repartition)
+        .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 }))
+        .filter((l) => l.pts > 0)
+    : [];
+
   /**
    * Renvoi de ce qui attend : au chargement, et dès que le réseau revient.
    *
@@ -121,8 +128,12 @@ export function CompteurDette() {
 
   const ouvrirChrono = () => {
     if (!dette || dette.dureeSec <= 0) return;
-    totalRef.current = dette.dureeSec;
-    setRestantSec(dette.dureeSec);
+    // On décompte le nombre ANNONCÉ juste au-dessus, pas `dureeSec` : voir
+    // `secondesAnnoncees`. Sans ça, l'en-tête disait « 1 min 15 » et le chrono
+    // démarrait à 1:17.
+    const total = secondesAnnoncees(lignesDette, dette.dureeSec, quantite);
+    totalRef.current = total;
+    setRestantSec(total);
     setEnPause(false);
     setFini(false);
     setChronoOuvert(true);
@@ -195,11 +206,7 @@ export function CompteurDette() {
     notifieRef.current = false;
   };
 
-  const lignes = dette
-    ? Object.entries(dette.repartition)
-        .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 }))
-        .filter((l) => l.pts > 0)
-    : [];
+  const lignes = lignesDette;
 
   // Rien en attente, ou page publique : la pastille ne s'affiche pas.
   if (surPagePubliqueRef.current) return null;
