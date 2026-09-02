@@ -282,6 +282,11 @@ function basculer() {
  * Déclare si une partie tourne. C'est le filet de sécurité de l'affichage :
  * l'overlay n'a rien à faire à l'écran en dehors d'une partie, même si la fin
  * de la précédente n'a jamais été signalée.
+ *
+ * @param {unknown} valeur
+ * @param {string|null} jeu Nom du jeu, tel que la détection le publie. Sans
+ *   annotation, TypeScript déduit le type de la valeur par défaut — `null` —
+ *   et refuse le seul argument que cette fonction reçoive jamais.
  */
 function definirEnPartie(valeur, jeu = null) {
   const avant = enPartie;
