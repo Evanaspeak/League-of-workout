@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1492 tests unitaires, 137 suites. Base et session doublées : aucune dépendance à
+1516 tests unitaires, 141 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -700,6 +700,49 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le recensement de `src/lib`, et le seul module laissé de côté
+Refait après les extractions de la nuit. Il ne se fait pas au nom du fichier :
+un module est couvert quand un test l'IMPORTE, ce qui se cherche dans le texte
+des tests, alias `@/lib/` compris. Les dictionnaires de langue sortent du
+compte — `dictionaries.test.ts` lit le dossier entier, pas les fichiers un par
+un.
+
+Neuf modules sans test au départ, tous couverts sauf un :
+
+- **`useChampions`** et **`notifier`**, décrits plus haut : les deux portaient
+  une règle et l'un cachait un défaut ;
+- **`chargerContexte`** et **`chargerProgression`**, écrits cette nuit et
+  couverts dans la foulée du défaut de mémoire ;
+- **`release`** — le bouton principal de l'accueil et toute la page de
+  téléchargement, alimentés par un service tiers dont la FORME n'est jamais
+  garantie. Huit cas : release sans exécutable, champ renommé, panne d'API, tag
+  illisible. Tous doivent rendre `null` plutôt qu'un bouton qui télécharge
+  « undefined » ;
+- **`logosJeux`** — l'ordre de préférence des formats. Un jeu dont on a récupéré
+  un SVG propre ET un PNG hérité s'affichait flou si le PNG l'emportait, sans
+  que rien ne le signale : les deux fichiers sont là, l'image se charge ;
+- **`videoBoucle`** — la vidéo n'existe pas encore, et c'est précisément
+  pourquoi le test compte. Le jour où le fichier arrive, personne ne relira ce
+  module, et une inversion des deux formats ferait télécharger le MP4 à des
+  navigateurs qui savent lire le WebM ;
+- **`graphiques`** — que des constantes, sauf une propriété : « une couleur par
+  nature de donnée, jamais deux pour la même ». Le test éprouve la propriété,
+  pas les valeurs, et compte les entrées — une table vidée n'a pas de doublon
+  non plus.
+
+**`valeurClient` reste dehors, avec sa raison.** Il n'expose que des crochets
+React bâtis sur `useSyncExternalStore` : les éprouver demande un rendu, donc un
+DOM, et la suite tourne en environnement Node. Monter jsdom pour un module ne
+paie pas ; ce qu'il fait se voit dans les parcours navigateur, qui ouvrent les
+pages où il sert.
+
+Treize sabotages sur les cinq modules, treize échecs.
+
+**Trois modules ne sont pas passés au recensement**, et il faut le dire :
+`actions` et `auth-actions` sont des enveloppes de trois lignes autour
+d'Auth.js — les éprouver, c'est éprouver la doublure — et `seed-defaults` et
+`exercicesConfig` étaient déjà couverts par sept et huit tests de route.
 
 ### Campagne de clôture du 2 septembre — douze pages, toutes dans le seuil
 Refaite après le regroupement des appels d'API, le cache de barème, les six
