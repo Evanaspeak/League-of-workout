@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1526 tests unitaires, 142 suites. Base et session doublées : aucune dépendance à
+1533 tests unitaires, 143 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -731,6 +731,27 @@ accolades. Dix faux positifs auraient envoyé corriger un pont qui n'avait rien.
 Trois sabotages, trois échecs — dont le troisième par ENOENT plutôt que par
 assertion, ce qui est le bon bruit : un garde qui ne trouve plus ses fichiers
 doit tomber, pas passer au vert sur deux listes vides.
+
+**Et le pont a reçu ses premiers tests de comportement**, distincts du contrat
+de forme. Deux choses seulement, parce que ce sont les deux qui peuvent mal
+tourner sans bruit :
+
+- **le filtrage par type.** Un seul canal, `lol:event`, porte le début ET la
+  fin de partie. Si le filtre saute, `onGameStarted` se déclenche à la fin :
+  la page ouvre une session de jeu au moment où elle devrait la fermer, et
+  personne ne fait le lien ;
+- **le désabonnement.** La page monte et démonte ces écouteurs au fil de la
+  navigation. Une fonction de retrait qui ne retire rien laisse s'empiler des
+  rappels sur des composants démontés, et le symptôme — une partie enregistrée
+  plusieurs fois — ne ressemble pas à sa cause.
+
+Le recollage du contexte à la partie est éprouvé aussi : c'est lui qui porte le
+rôle et la file lus sur le lanceur, et sa perte est le défaut déjà corrigé où
+un support payait ses morts au tarif d'un jungler.
+
+Quatre sabotages, quatre échecs, chacun précédé d'un contrôle que le fichier a
+bien changé — la parade au « sabotage qui ne sabote pas », retombé dedans
+l'heure d'avant.
 
 ### Revue des deux routes nées cette nuit
 `/api/contexte` et `/api/progression` regroupent ce que cinq routes rendaient.
