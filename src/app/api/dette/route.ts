@@ -7,7 +7,7 @@ import {
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { reponseDette } from "@/lib/contexteConnecte";
-import { jourLocal } from "@/lib/serie";
+import { estJourValide, jourLocal } from "@/lib/serie";
 import { DUREE_MAX_SEC, entierBorne } from "@/lib/bornesSaisie";
 
 
@@ -70,9 +70,17 @@ export async function PATCH(req: Request) {
    * jour sur l'autre selon le fuseau de la personne. À défaut, celui du
    * serveur.
    */
-  const jour = typeof body?.jour === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.jour)
-    ? body.jour
-    : jourLocal();
+  /**
+   * `estJourValide` et non le motif seul : la FORME d'une date ne dit pas
+   * qu'elle existe. « 2026-02-30 » et « 9999-99-99 » passent le motif, et ce
+   * jour-ci est écrit tel quel dans `Paiement.jour` — il resterait en base
+   * pour toujours, sur un jour qu'aucun calendrier ne contient. La série se
+   * compte en remontant jour par jour : un paiement posé là ne compterait
+   * jamais, et l'effort serait fait pour rien.
+   *
+   * Le repli existait déjà pour ce cas exact ; le motif le court-circuitait.
+   */
+  const jour = estJourValide(body?.jour) ? (body.jour as string) : jourLocal();
 
   /**
    * Jeton d'un paiement rejoué depuis la file hors ligne.

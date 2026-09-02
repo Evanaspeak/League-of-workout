@@ -1,10 +1,10 @@
 import { Lien } from "@/components/Lien";
+import { CONTACT_LEGAL, DATE_ENTREE_EN_VIGUEUR } from "@/lib/mentionsLegales";
 import { textes } from "@/lib/i18n/textes";
 import { toLocale } from "@/lib/i18n/langues";
 import { confidentialite } from "@/lib/i18n/dictionaries/confidentialite";
 
-const CONTACT = "evantocquet@gmail.com";
-const DATE = "26 juin 2026";
+
 
 /**
  * Rendu au SERVEUR, et c'est ce qui compte ici.
@@ -29,14 +29,14 @@ export default function ConfidentialiteClient({ locale }: { locale: string }) {
           {t.pageTitle}
         </h1>
         <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
-          {t.versionLabel(DATE)}
+          {t.versionLabel(DATE_ENTREE_EN_VIGUEUR)}
         </p>
       </div>
 
       <Section title={t.article1.title}>
         <p>
           {t.article1.role}<br />
-          {t.article1.contactLabel} <a href={`mailto:${CONTACT}`} style={{ color: "#ECEFF4" }}>{CONTACT}</a>
+          {t.article1.contactLabel} <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "#ECEFF4" }}>{CONTACT_LEGAL}</a>
         </p>
       </Section>
 
@@ -99,7 +99,7 @@ export default function ConfidentialiteClient({ locale }: { locale: string }) {
         </ul>
         <p>
           {t.article7.exerciseLabel}{" "}
-          <a href={`mailto:${CONTACT}`} style={{ color: "#ECEFF4" }}>{CONTACT}</a>
+          <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "#ECEFF4" }}>{CONTACT_LEGAL}</a>
         </p>
         <p>
           {t.article7.cnilPrefix}{" "}

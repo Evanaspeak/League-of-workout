@@ -1,10 +1,10 @@
 import { Lien } from "@/components/Lien";
+import { CONTACT_LEGAL, DATE_ENTREE_EN_VIGUEUR } from "@/lib/mentionsLegales";
 import { textes } from "@/lib/i18n/textes";
 import { toLocale } from "@/lib/i18n/langues";
 import { cgu } from "@/lib/i18n/dictionaries/cgu";
 
-const CONTACT = "evantocquet@gmail.com";
-const DATE = "26 juin 2026";
+
 
 /**
  * Rendu au SERVEUR, et c'est ce qui compte ici.
@@ -29,7 +29,7 @@ export default function CguClient({ locale }: { locale: string }) {
           {t.pageTitle}
         </h1>
         <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
-          {t.versionLabel(DATE)}
+          {t.versionLabel(DATE_ENTREE_EN_VIGUEUR)}
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default function CguClient({ locale }: { locale: string }) {
       <Section title={t.article9.title}>
         <p>
           {t.article9.contactPrefix}{" "}
-          <a href={`mailto:${CONTACT}`} style={{ color: "#ECEFF4" }}>{CONTACT}</a>
+          <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "#ECEFF4" }}>{CONTACT_LEGAL}</a>
         </p>
       </Section>
 

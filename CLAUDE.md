@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1649 tests unitaires, 154 suites. Base et session doublées : aucune dépendance à
+1653 tests unitaires, 155 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -722,6 +722,60 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Une date qui n'existe pas s'écrivait en base, pour toujours
+Recensement systématique des règles écrites deux fois — c'était le septième cas
+ce matin, et ça méritait d'être cherché plutôt qu'attendu. Le recensement par
+LIGNES identiques ne rend que du bruit : en-têtes HTTP, littéraux de style,
+gardes de session. Ce qui parle, ce sont les **motifs** et les **constantes
+nommées** répétés d'un fichier à l'autre.
+
+Deux trouvailles, et la première coûte cher.
+
+**`/^\d{4}-\d{2}-\d{2}$/`, écrit dans trois fichiers.** `serie.ts` le porte à
+l'intérieur d'`estJourValide`, qui ajoute l'ALLER-RETOUR — la correction déjà
+faite deux fois, sur `/api/dashboard/daily` qui tombait en 500, puis sur
+`/api/progression` qui rendait une série de zéro. `/api/serie` et `/api/dette`
+s'en tenaient au motif.
+
+Pour `/api/serie`, c'est le défaut de `/api/progression` à l'identique : la
+série se compte depuis un jour qui n'existe pas, en court-circuitant le repli
+prévu pour ce cas.
+
+**Pour `/api/dette`, c'est pire : le jour est ÉCRIT tel quel dans
+`Paiement.jour`.** « 2026-02-30 » et « 9999-99-99 » passent le motif et se
+gravent en base. La série se compte en remontant jour par jour depuis
+aujourd'hui : un paiement posé sur une date qu'aucun calendrier ne contient ne
+compte jamais. L'effort est fait, il est enregistré, et il ne compte pas — pour
+toujours, sur une ligne que rien ne viendra corriger.
+
+**Le test de cette route ne pouvait pas l'attraper**, et c'est ce qu'il y a à
+en retenir :
+
+```ts
+expect(paiement.create.mock.calls[0][0].data.jour).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+```
+
+Il vérifiait la FORME du jour stocké. « 2026-02-30 » l'a. Un test écrit contre
+le même motif que le code éprouve le motif, pas la règle — c'est le pendant du
+« test qui compare une chose à elle-même » déjà écrit ici pour le focus.
+
+**La seconde trouvaille est petite et de la même famille** : `CONTACT` et
+`DATE` étaient écrites une fois dans les CGU et une fois dans la politique de
+confidentialité. Changer l'une sans l'autre fait dire aux deux textes qu'ils
+ont pris effet à des dates différentes, ou donne deux adresses pour exercer ses
+droits — sur les deux documents qui engagent l'éditeur du site.
+`src/lib/mentionsLegales.ts` les porte.
+
+`src/regleDate.test.ts` refuse le motif de forme partout sauf dans `serie.ts`,
+et exige que `serie.ts` l'écrive encore — sans quoi il pourrait disparaître de
+partout, y compris de là où il doit être, et le test resterait vert en ne
+gardant plus rien. Quatre sabotages, quatre échecs.
+
+Ce que le recensement n'a PAS trouvé, et qui vaut d'être dit : aucune autre
+constante de même nom et même valeur dans deux fichiers ne porte de règle.
+`TTL_MS`, `JOUR_MS`, `MARGE`, `PERIODE_MS` désignent des choses différentes qui
+partagent un nom — les fusionner créerait un couplage là où il n'y en a pas.
 
 ### Créer son compte pouvait changer la langue du site
 Trouvé en cherchant ce qui reste d'extractible dans les gros composants, et

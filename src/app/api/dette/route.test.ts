@@ -213,6 +213,33 @@ describe("trace du paiement", () => {
     expect(paiement.create.mock.calls[0][0].data.jour).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
+  /**
+   * La FORME d'une date ne dit pas qu'elle existe.
+   *
+   * « 2026-02-30 » et « 9999-99-99 » passent le motif, et ce jour est écrit
+   * TEL QUEL dans `Paiement.jour` : il y resterait pour toujours. La série se
+   * compte en remontant jour par jour depuis aujourd'hui — un paiement posé
+   * sur un jour qu'aucun calendrier ne contient ne compte jamais, et l'effort
+   * est fait pour rien.
+   *
+   * Le test qui précède ne pouvait pas l'attraper : il vérifiait la forme du
+   * jour stocké, et ces deux valeurs-là l'ont.
+   */
+  it("refuse un jour bien formé qui n'existe pas", async () => {
+    for (const faux of ["2026-02-30", "9999-99-99", "2025-02-29"]) {
+      paiement.create.mockClear();
+      session.mockResolvedValue(joueur({ dettePointsDus: 50 }));
+      user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
+      await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true, jour: faux } }));
+
+      const ecrit = paiement.create.mock.calls[0][0].data.jour as string;
+      expect(ecrit).not.toBe(faux);
+      // Et ce qui est écrit à la place est un vrai jour : l'aller-retour le
+      // dit, là où le motif se laisse tromper.
+      expect(new Date(`${ecrit}T00:00:00Z`).toISOString().slice(0, 10)).toBe(ecrit);
+    }
+  });
+
   it("n'écrit aucun paiement quand rien n'a été acquitté", async () => {
     session.mockResolvedValue(joueur({ dettePointsDus: 0 }));
     user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
