@@ -6,7 +6,7 @@ import { heureLocale, jourDansFuseau } from "@/lib/fuseau";
 import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/fenetreEnvoi";
 import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
-import { dureeEffort, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
+import { dureeAffichee, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
 
 /**
  * Les envois programmés : ce que l'application dit d'elle-même, sans que
@@ -109,7 +109,10 @@ export async function POST(req: Request) {
     // foulée des parties et n'attend pas.
     const exercices = exercicesEnTemps(toExerciceIds(u.exercices));
     if (exercices.length === 0) continue;
-    const sec = Math.round(dureeEffort(u.dettePointsDus, exercices));
+    // La MÊME durée que celle affichée à l'écran : une notification qui
+    // annonce un autre nombre que la pastille est un chiffre de plus à ne
+    // pas comprendre.
+    const sec = Math.round(dureeAffichee(u.dettePointsDus, exercices));
     if (sec < MINIMUM_SEC) continue;
 
     const { titre, corps } = textesNotification(u.langue).matin(formaterDuree(sec));

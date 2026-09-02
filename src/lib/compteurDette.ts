@@ -1,4 +1,3 @@
-import type { ExerciceId } from "@/lib/exercices";
 /**
  * Ce que la pastille de dette affiche, et quand elle prévient.
  *
@@ -66,10 +65,9 @@ export function seuilFranchi(dette: { dureeSec: number; seuilSec: number } | nul
  * qu'une durée existe — mieux vaut un décompte que pas de décompte.
  */
 export function secondesAnnoncees(
-  lignes: { pts: number; id: ExerciceId }[],
+  lignes: { secondes: number }[],
   dureeSec: number,
-  convertir: (points: number, exercice: ExerciceId) => number,
 ): number {
-  const total = lignes.reduce((s, l) => s + convertir(l.pts, l.id), 0);
+  const total = lignes.reduce((s, l) => s + (l.secondes ?? 0), 0);
   return total > 0 ? Math.round(total) : Math.max(0, Math.round(dureeSec));
 }

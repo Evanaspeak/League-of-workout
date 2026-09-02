@@ -396,6 +396,27 @@ export function dureeEffort(points: number, exercices: ExerciceId[]): number {
 }
 
 /**
+ * La durée d'effort telle qu'elle est AFFICHÉE, en secondes.
+ *
+ * `dureeEffort` rend le temps exact ; celle-ci rend la somme des quantités
+ * telles qu'on les montre, arrondies au pas de chaque exercice — cinq
+ * secondes pour la boxe. Les deux diffèrent de quelques secondes, et c'est
+ * assez pour que l'écran se contredise : la pastille affichait « 1 min 15 »
+ * pendant que le seuil d'alerte comparait 77 secondes à son plafond.
+ *
+ * C'est celle-ci qui fait foi partout où un nombre est montré ou comparé à un
+ * seuil. `dureeEffort` reste la bonne pour un calcul de proportion, où
+ * l'arrondi n'a rien à faire.
+ */
+export function dureeAffichee(points: number, exercices: ExerciceId[]): number {
+  const parts = repartirPoints(points, exercices);
+  return Object.entries(parts).reduce(
+    (total, [id, pts]) => total + quantite(pts ?? 0, toExerciceId(id)),
+    0,
+  );
+}
+
+/**
  * Un exercice se compte-t-il en temps ? Cette distinction commande le
  * compteur d'attente : des pompes se font tout de suite, à la fin de la
  * partie ; de la boxe ne vaut la peine qu'une fois quelques minutes cumulées.

@@ -197,6 +197,21 @@ test("la pastille de dette et son décompte annoncent le même nombre", async ({
   // Une seconde de tolérance : le tic peut tomber entre le clic et la lecture.
   expect(Math.abs(depart - annonce),
     `la pastille annonce ${annonce} s et le chrono démarre à ${depart} s`).toBeLessThanOrEqual(1);
+
+  /**
+   * Et le même nombre que le SERVEUR.
+   *
+   * C'est ce contrôle-là qui manquait. Le seuil d'alerte et la notification
+   * système lisent `dureeSec` ; la pastille affichait sa propre conversion.
+   * Elle passait donc en alerte à 3 min 35 sous un seuil de 5 min, et la
+   * notification annonçait 8 min 06 — un chiffre que rien à l'écran ne
+   * montrait.
+   */
+  const dette = await (await page.request.get("/api/dette")).json();
+  expect(Math.abs(dette.dureeSec - annonce),
+    `la pastille annonce ${annonce} s et le serveur ${dette.dureeSec} s`).toBeLessThanOrEqual(1);
+  expect(dette.dureeSec < dette.seuilSec, "la pastille ne doit pas être en alerte sous son seuil")
+    .toBe(true);
   await ctx.close();
 });
 
