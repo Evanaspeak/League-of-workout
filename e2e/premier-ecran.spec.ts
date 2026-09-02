@@ -169,7 +169,9 @@ test("atteindre l'objectif de la première semaine se voit", async ({ browser })
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
-  await page.goto("/fr/dashboard", { waitUntil: "networkidle" });
+  // On attend ce qu'on vient chercher, pas le silence du réseau : il n'arrive
+  // jamais franchement sur une page qui continue de parler.
+  await page.goto("/fr/dashboard", { waitUntil: "domcontentloaded" });
   await passerIntro(page);
 
   // Le bloc est toujours là, et il dit que c'est fait.

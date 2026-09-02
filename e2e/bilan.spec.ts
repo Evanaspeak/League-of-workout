@@ -58,9 +58,11 @@ test("la page montre les chiffres de la période", async ({ browser }) => {
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
-  await page.goto("/bilan", { waitUntil: "networkidle" });
+  // On attend ce qu'on vient chercher, pas le silence du réseau : il n'arrive
+  // jamais franchement sur une page qui continue de parler.
+  await page.goto("/bilan", { waitUntil: "domcontentloaded" });
 
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 });
   // Trois parties enregistrées, une victoire sur trois.
   await expect(page.getByText("33 %", { exact: false })).toBeVisible();
   await expect(page.getByText("League of Legends").first()).toBeVisible();
@@ -158,7 +160,7 @@ test("une image qui ne se dessine pas le dit, au lieu d'une icône cassée", asy
   await ctx.request.post("/api/consentement", { data: { accepte: true } });
 
   await page.route("**/api/bilan/image", (route) => route.fulfill({ status: 500, body: "boum" }));
-  await page.goto("/bilan", { waitUntil: "networkidle" });
+  await page.goto("/bilan", { waitUntil: "domcontentloaded" });
   expect(sansLangue(new URL(page.url()).pathname)).toBe("/bilan");
 
   await expect(page.getByText(/n.a pas pu être dessinée|could not be drawn/i))

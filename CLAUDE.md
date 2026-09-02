@@ -701,6 +701,48 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### `networkidle` attendait un silence qui ne vient jamais
+Deux fichiers de parcours ont échoué en cinq exécutions complètes, chacun une
+fois, chacun sur un `page.goto(..., { waitUntil: "networkidle" })` qui expire.
+Rejoués seuls, les deux passent. La tentation, à ce moment-là, est de relancer.
+
+`networkidle` attend cinq cents millisecondes sans une seule requête. Sur une
+page qui continue de parler — un sondage, un rafraîchissement au retour sur
+l'onglet, et depuis cette nuit une reprise deux secondes après une lecture
+vide — ce silence n'arrive jamais franchement. Le test n'attend donc pas ce
+qu'il croit : il attend que la page se taise, ce qui n'est ni nécessaire ni
+suffisant pour qu'elle soit prête.
+
+Le test qui a fini par déborder est celui qui ouvre TROIS contextes de suite
+dans le même budget de soixante secondes. Ce n'est pas un hasard : c'est celui
+qui payait trois fois l'attente.
+
+Les dix-sept `networkidle` de la suite sont remplacés par ce que chaque test
+vient réellement chercher — la liste de l'historique, la rubrique des réglages,
+le bouton du rail, l'en-tête du bilan. C'est plus juste ET c'est bien plus
+rapide, parce qu'un marqueur paraît dès qu'il est vrai :
+
+| fichier | avant | après |
+|---|---|---|
+| `historique.spec.ts` | 3 min 24 | 14 s |
+| `reglages.spec.ts` | 40 s | 9 s |
+| `hors-ligne.spec.ts` | 47 s | 11 s |
+| **la suite entière** | **14 min 30** | **9 min 20** |
+
+Cinq minutes d'attente pure, sur chaque exécution, en local comme en
+intégration continue.
+
+**Un marqueur mal choisi, attrapé du premier coup.** J'avais pris la pastille
+de dette pour dire « le tableau de bord est prêt » dans `hors-ligne.spec.ts`.
+Elle n'existe pas tant qu'il n'y a rien à devoir, et ce fichier ouvre le
+tableau de bord AVANT d'enregistrer la partie qui crée la dette. Un marqueur
+qui n'est pas toujours là ne dit pas « la page est prête », il dit « ce cas-ci
+est arrivé ». Le rail, lui, est toujours rendu.
+
+C'est la deuxième fois cette nuit que je prends la pastille de dette pour un
+élément permanent. La première, c'était le parcours de reprise, sur un compte
+qui n'a que les pompes.
+
 ### Un commentaire promettait ce que l'échantillonnage ne fait pas
 `estNoir` décide si la capture d'écran est noire — c'est ce qui distingue « le
 jeu tourne en plein écran exclusif » de « voilà l'écran de fin ». Elle
