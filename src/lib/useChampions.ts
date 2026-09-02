@@ -10,7 +10,11 @@ import { CHAMPIONS } from "@/lib/champions";
 let cache: string[] | null = null;
 let enCours: Promise<string[]> | null = null;
 
-function charger(): Promise<string[]> {
+/**
+ * La liste en vigueur : celle de la base si l'admin l'a modifiée, sinon celle
+ * du code. Exportée pour être éprouvée — le crochet, lui, a besoin de React.
+ */
+export function chargerChampions(): Promise<string[]> {
   if (cache) return Promise.resolve(cache);
   if (!enCours) {
     enCours = fetch("/api/champions", { cache: "no-store" })
@@ -19,7 +23,25 @@ function charger(): Promise<string[]> {
         if (Array.isArray(list) && list.length > 0) cache = list as string[];
         return cache ?? CHAMPIONS;
       })
-      .catch(() => CHAMPIONS);
+      .catch(() => {
+        /**
+         * L'échec ne se mémorise pas.
+         *
+         * `enCours` retenait la promesse quoi qu'il arrive : une coupure au
+         * premier montage figeait la liste codée en dur pour toute la durée de
+         * la page, sans jamais réessayer. Et ce n'est pas anodin ici — la même
+         * liste sert à VALIDER : un champion ajouté par l'admin devenait
+         * « non reconnu », le bouton d'enregistrement restait éteint, et le
+         * message accusait la frappe de la personne alors que la faute est
+         * chez nous. C'est le défaut de la clé Riot refusée, en plus petit.
+         *
+         * Effacer la promesse suffit : le prochain montage du champ retente.
+         * Il n'y a pas de tempête à craindre, `charger` n'étant appelé qu'au
+         * montage d'un composant.
+         */
+        enCours = null;
+        return CHAMPIONS;
+      });
   }
   return enCours;
 }
@@ -28,7 +50,7 @@ export function useChampions(): string[] {
   const [liste, setListe] = useState<string[]>(cache ?? CHAMPIONS);
   useEffect(() => {
     let vivant = true;
-    charger().then((l) => {
+    chargerChampions().then((l) => {
       if (vivant) setListe(l);
     });
     return () => {

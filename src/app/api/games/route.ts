@@ -27,6 +27,28 @@ export async function GET() {
   const games = await prisma.game.findMany({
     where: { userId: user.id },
     orderBy: { date: "desc" },
+    /**
+     * Les colonnes que l'historique affiche, et pas les trente et une.
+     *
+     * `NextResponse.json(games)` publie tout ce qu'on lui remet — c'est le
+     * défaut déjà corrigé sur le compte, un modèle plus bas. Partaient ainsi
+     * `riotMatchId`, `file`, `fileClassee`, `gainageSec`, `partiesAvantCalcule`
+     * et `createdAt`, qu'aucun écran ne lit : rien de secret, mais un tiers de
+     * la plus grosse réponse de l'application pour rien.
+     *
+     * La liste ne se vérifie pas à la compilation : l'écran déclare son propre
+     * type `Game` de son côté, et une colonne retirée ici s'y traduirait par
+     * une case vide, sans erreur. C'est `src/colonnesHistorique.test.ts` qui
+     * tient les deux listes ensemble.
+     */
+    select: {
+      id: true, date: true, role: true, champion: true,
+      kills: true, deaths: true, assists: true, result: true,
+      niveauCalcule: true, scoreCalcule: true, malusCalcule: true,
+      surchargeCalculee: true, pompesCalculees: true, exercice: true,
+      source: true, jeu: true, typeJeu: true, dureeSec: true,
+      placement: true, joueurs: true, repartition: true, variante: true,
+    },
   });
   return NextResponse.json(games);
 }
