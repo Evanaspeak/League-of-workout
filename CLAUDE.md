@@ -982,10 +982,11 @@ rapide, parce qu'un marqueur paraît dès qu'il est vrai :
 | `historique.spec.ts` | 3 min 24 | 14 s |
 | `reglages.spec.ts` | 40 s | 9 s |
 | `hors-ligne.spec.ts` | 47 s | 11 s |
-| **la suite entière** | **14 min 30** | **9 min 20** |
+| **la suite entière** | **14 min 30** | **9 min 20 à 9 min 50** |
 
-Cinq minutes d'attente pure, sur chaque exécution, en local comme en
-intégration continue.
+Cinq minutes d'attente pure en moins, sur chaque exécution, en local comme en
+intégration continue. La fourchette est celle de cinq exécutions complètes :
+un chiffre unique aurait été le meilleur des cinq, ce qui n'est pas une mesure.
 
 **Un marqueur mal choisi, attrapé du premier coup.** J'avais pris la pastille
 de dette pour dire « le tableau de bord est prêt » dans `hors-ligne.spec.ts`.
