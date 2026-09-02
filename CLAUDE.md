@@ -701,6 +701,27 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les six conversions au serveur ne changent rien à l'écran, prouvé
+Six composants sont passés du navigateur au serveur cette nuit — CGU,
+confidentialité, connexion, téléchargement, en-tête d'administration, page
+d'accueil. C'est un remaniement qui ne doit RIEN changer à l'écran, et ce genre
+de chose se prouve, il ne se relit pas.
+
+`scripts/comparer-rendu.mjs`, captures prises sur V315 puis sur l'état actuel :
+vingt-quatre captures, huit pages à trois largeurs. **Deux différences**, et
+aucune n'en est une :
+
+- `360_fr_telechargement` dépend des releases GitHub, et le script la range
+  déjà à part sous « à vérifier à la main » ;
+- `360_fr_history` diffère d'**un pixel sur deux lignes**, à la même position.
+  Compté en défiltrant les deux PNG et en comparant pixel à pixel : c'est de
+  l'anticrénelage, pas un déplacement.
+
+L'ordre compte, et je m'y suis pris à l'envers la première fois : le script
+prend d'abord la référence (`avant`), puis compare (`apres`). Lancé dans
+l'autre sens, il cherche un fichier d'empreintes qui n'existe pas et tombe sur
+une pile d'appels qui ne dit pas laquelle des deux passes manque.
+
 ### Deux règles de l'application de bureau sortent de main.js
 `desktop/src/main.js` fait mille cinq cents lignes et n'avait aucun test :
 l'essentiel tient à Electron et ne s'éprouve qu'avec une fenêtre. Deux règles
