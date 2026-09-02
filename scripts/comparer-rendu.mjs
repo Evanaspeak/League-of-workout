@@ -62,6 +62,28 @@ for (const largeur of LARGEURS) {
         domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax",
       }]);
     }
+    /**
+     * Les icônes de champions viennent d'un CDN tiers, et l'historique en
+     * demande une par partie — soixante sur un compte semé. Trois états
+     * possibles au moment de la capture : l'icône est arrivée, la requête a
+     * échoué (le composant montre alors la première lettre du champion), ou
+     * elle est encore en vol (un carré vide). Lequel des trois dépend du CDN,
+     * du proxy et de l'ordre des connexions ; l'attente d'image du script
+     * borne chaque requête à quatre secondes, ce qui déplace la course sans
+     * la supprimer.
+     *
+     * Constaté : deux séries prises sur des versions dont le rendu est
+     * strictement identique différaient sur `360_fr_history`, l'une montrant
+     * les lettres de repli et l'autre des carrés vides. Une différence qui ne
+     * vient d'aucune ligne de code est du bruit, et du bruit dans un outil qui
+     * sert à prouver qu'on n'a rien cassé est pire qu'inutile.
+     *
+     * Le CDN est donc COUPÉ : chaque icône tombe sur son repli, tout de suite
+     * et de la même façon dans les deux séries. On ne compare plus l'icône —
+     * on ne la comparait déjà pas, on comparait une course — et le reste de la
+     * mise en page, qui est ce qu'on vient regarder, redevient stable.
+     */
+    await ctx.route("**ddragon.leagueoflegends.com**", (r) => r.abort());
     const page = await ctx.newPage();
     await page.addInitScript((uid) => {
       try {

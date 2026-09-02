@@ -723,6 +723,62 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les neuf versions ne changent rien à l'écran, et l'outil a dû être réparé pour le dire
+Comparaison de rendu entre V321 et la tête — neuf versions, dont le
+resserrement des colonnes de `/api/games`, qui est le seul changement capable
+de vider une colonne de l'historique sans que rien ne se plaigne.
+
+**Sur un compte vide : vingt-quatre captures identiques.** Et cette passe ne
+prouve presque rien — c'est le piège déjà écrit pour `routes.mjs` : avec un
+compte frais, `/api/games` rend deux octets, l'historique n'a rien à montrer,
+et la mesure est parfaitement juste sans rien dire. Refaite sur soixante
+parties semées.
+
+**Une différence, sur `360_fr_history`, et elle ne venait d'aucune ligne de
+code.** Huit mille neuf cent soixante pixels, dans une bande de trente pixels
+de large répétée sur toute la hauteur de la liste : la vignette du champion.
+D'un côté la lettre de repli, de l'autre un carré vide.
+
+Ce n'est ni l'un ni l'autre des deux états attendus. L'icône vient d'un CDN
+tiers, l'historique en demande une PAR PARTIE — soixante — et au moment de la
+capture chacune est dans l'un de trois états : arrivée, échouée (le composant
+montre alors la première lettre), ou encore en vol (un carré vide). Lequel
+dépend du CDN, du proxy et de l'ordre des connexions. L'attente d'image du
+script borne chaque requête à quatre secondes, ce qui DÉPLACE la course sans la
+supprimer.
+
+Deux vérifications avant de conclure, parce qu'une différence sur la seule page
+que le changement pouvait toucher est exactement ce qu'on redoute :
+
+- `ChampionIcon.tsx` et la page d'historique sont **identiques** entre les deux
+  versions ; le seul fichier modifié du lot est la route ;
+- Data Dragon **répond** depuis cet environnement, 200 en six cent
+  trente-cinq millisecondes. Aucune des deux séries ne montrait donc l'état
+  normal : les deux montraient un chargement en cours, à deux instants
+  différents.
+
+Chaque version comparée à elle-même rendait pourtant zéro différence. C'est ce
+qui rend ce bruit-là traître : il est stable dans une série et change d'une
+série à l'autre, donc il ressemble à une régression.
+
+**Le CDN est coupé dans la capture.** Chaque icône tombe alors sur son repli,
+tout de suite et de la même façon des deux côtés. On ne compare plus l'icône —
+on ne la comparait déjà pas, on comparait une course — et le reste de la mise
+en page redevient stable. Vérifié : la lettre de repli est bien là, et
+`360_fr_history` passe à **zéro pixel de différence**.
+
+Le script connaissait déjà cette leçon pour `/telechargement`, qui lit les
+releases GitHub au SERVEUR. Il ne la connaissait pas pour ce que le NAVIGATEUR
+va chercher ailleurs, et c'est la moitié qui compte sur une page de liste.
+
+Reste une différence après correction : **cinq pixels** sur `360_fr_cgu`, dans
+une bande de deux pixels de large au bord d'un élément arrondi de l'en-tête.
+Regardée agrandie, elle ne se voit pas. C'est de l'anticrénelage, comme lors de
+la campagne précédente — et c'est la raison pour laquelle on compte les pixels
+au lieu de comparer deux empreintes et de conclure.
+
+Conclusion : **les neuf versions ne changent rien à l'écran.**
+
 ### Un test du mode placement passait pour la mauvaise raison
 `overlay.js` fait six cent onze lignes et n'avait qu'un test : le placement,
 écrit parce que c'est la seule partie qui puisse rendre la pastille INVISIBLE.
