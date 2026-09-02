@@ -28,6 +28,19 @@ import { reponseConsentement, reponseDette } from "@/lib/contexteConnecte";
  * par diverger, et c'est le défaut le plus souvent trouvé sur ce projet.
  */
 export async function GET() {
+  /**
+   * La session AVANT tout le reste.
+   *
+   * Le semis et les ratios partaient d'abord, donc une requête sans session
+   * faisait travailler la base avant de se faire refuser. Le middleware
+   * n'ouvre pas cette adresse aux anonymes, donc ce n'était pas une porte —
+   * mais rien ne demande de faire ce travail-là pour quelqu'un qu'on va
+   * éconduire, et une route qui agit avant de savoir à qui elle parle est une
+   * mauvaise habitude à prendre.
+   */
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
   // Sur une base neuve, la configuration du barème n'existe pas encore. Le
   // semis est mémoïsé pour le processus : après le premier appel, il ne coûte
   // qu'une promesse déjà résolue.
@@ -35,9 +48,6 @@ export async function GET() {
   // La dette s'exprime en temps d'effort : sans les ratios réglés en
   // administration, la durée rendue serait celle des valeurs d'origine.
   await chargerRatios();
-
-  const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
   return NextResponse.json({
     /**

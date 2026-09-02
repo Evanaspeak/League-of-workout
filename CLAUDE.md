@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1516 tests unitaires, 141 suites. Base et session doublées : aucune dépendance à
+1523 tests unitaires, 141 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -700,6 +700,51 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Revue des deux routes nées cette nuit
+`/api/contexte` et `/api/progression` regroupent ce que cinq routes rendaient.
+Une route neuve qui remplace cinq routes éprouvées mérite qu'on la pousse plutôt
+qu'on la relise. **Aucune faille**, et deux corrections d'hygiène, chacune avec
+sa raison.
+
+**Une règle écrite deux fois, et la seconde copie était déjà fausse.**
+`/api/dashboard/daily` contrôle une date par son ALLER-RETOUR depuis que
+« 9999-99-99 » l'a fait tomber en 500 et que « 2026-02-30 » y montrait le
+2 mars. `/api/progression` s'en tenait au motif. La même chaîne y passait donc,
+était employée telle quelle, et rendait une série de zéro — en
+court-circuitant le repli prévu pour ce cas exact. Ce n'est ni une injection ni
+une fuite : c'est un chiffre faux affiché à quelqu'un, sur l'écran qui existe
+pour le lui dire. `estJourValide` vit dans `serie.ts` et les deux routes la
+lisent. C'est le sixième cas de règle dupliquée trouvé sur ce projet.
+
+**Une route qui agit avant de savoir à qui elle parle.** `/api/contexte`
+semait le barème et chargeait les ratios AVANT de lire la session : une requête
+sans session faisait travailler la base avant de se faire éconduire. Le
+middleware n'ouvre pas cette adresse aux anonymes, donc ce n'était pas une
+porte — mais c'est une mauvaise habitude, et le contrôle du code de réponse ne
+dit rien de ce qu'une route a fait en chemin. Le test le dit maintenant, avec
+son témoin : sans lui, cesser d'appeler les deux modules des deux côtés rendrait
+le contrôle vrai en ne prouvant plus rien.
+
+Le reste tient : session exigée sur les deux, filtrage par `userId` sur les
+trois requêtes, `comptePublic` plutôt qu'un `{ ...user }`, et le jour reçu du
+navigateur ne touche jamais une requête SQL.
+
+**Deux sabotages sur cinq ne sabotaient rien**, et c'est la leçon de la passe.
+Le premier était un `sed` dont l'échappement avait mangé le motif : le fichier
+n'avait pas changé, les tests passaient, et j'ai failli conclure que le contrôle
+ne mordait pas. C'est le piège déjà écrit ici — « un sabotage qui ne sabote
+pas » — et la parade est la même : vérifier que le fichier a bougé avant de
+lancer les tests. Le second sabotait bien, et c'est le TEST qui manquait :
+vérifier un code 401 ne dit rien du travail fait avant de le rendre.
+
+**Dépendances, au 2 septembre.** Rien à mettre à jour : sur le site comme sur
+l'application de bureau, tout ce qui est en retard l'est d'une version MAJEURE
+— `typescript` 5 → 7, `eslint` 9 → 10, `@types/node` 20 → 26, `electron` 43 →
+44 — ou d'une préversion, `prisma` 8.0.0-rc. Un saut majeur se relit, il ne se
+prend pas de nuit. `npm audit` rend zéro vulnérabilité sur l'application de
+bureau, et les deux « hautes » du site restent celles de `mysql2`, hors
+d'atteinte et gardées par `src/dependanceMysql.test.ts`.
 
 ### Le recensement de `src/lib`, et le seul module laissé de côté
 Refait après les extractions de la nuit. Il ne se fait pas au nom du fichier :

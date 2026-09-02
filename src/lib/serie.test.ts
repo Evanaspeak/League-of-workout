@@ -1,5 +1,5 @@
 import {
-  ecartEnJours, etatRetard, JOURS_AVANT_RETARD, jourPrecedent,
+  ecartEnJours, estJourValide, etatRetard, JOURS_AVANT_RETARD, jourPrecedent,
   longueurSerie, meilleureSerie,
 } from "./serie";
 
@@ -89,5 +89,46 @@ describe("retard", () => {
   it("ne rend pas un retard négatif sur une horloge décalée", () => {
     const futur = new Date(Date.now() + 86_400_000);
     expect(etatRetard(futur, 40).jours).toBe(0);
+  });
+});
+
+/**
+ * La forme d'une date ne dit pas qu'elle existe.
+ *
+ * La règle vivait dans `/api/dashboard/daily`, où son absence avait fait
+ * tomber la route en 500 sur « 9999-99-99 » et montrer le 2 mars pour un
+ * « 2026-02-30 » demandé. `/api/progression` s'en tenait au motif, et laissait
+ * donc passer la même chaîne — elle rendait une série de zéro en
+ * court-circuitant le repli prévu pour ce cas exact.
+ */
+describe("estJourValide", () => {
+  it("accepte un vrai jour", () => {
+    expect(estJourValide("2026-09-02")).toBe(true);
+    expect(estJourValide("2024-02-29")).toBe(true); // année bissextile
+  });
+
+  it("refuse ce qui a la forme sans être une date", () => {
+    expect(estJourValide("9999-99-99")).toBe(false);
+    expect(estJourValide("2026-13-01")).toBe(false);
+    expect(estJourValide("2026-00-10")).toBe(false);
+  });
+
+  /**
+   * Le cas qui échappe à un simple « est-ce que Date l'accepte » : selon la
+   * plateforme, `Date` fait GLISSER le 30 février au 2 mars au lieu de le
+   * refuser. C'est l'aller-retour qui l'attrape.
+   */
+  it("refuse un jour qui n'existe pas dans son mois", () => {
+    expect(estJourValide("2026-02-30")).toBe(false);
+    expect(estJourValide("2025-02-29")).toBe(false); // année non bissextile
+    expect(estJourValide("2026-04-31")).toBe(false);
+  });
+
+  it("refuse ce qui n'a pas la forme", () => {
+    expect(estJourValide("2026-9-2")).toBe(false);
+    expect(estJourValide("02/09/2026")).toBe(false);
+    expect(estJourValide("")).toBe(false);
+    expect(estJourValide(null)).toBe(false);
+    expect(estJourValide(undefined)).toBe(false);
   });
 });

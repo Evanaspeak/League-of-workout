@@ -79,4 +79,23 @@ describe("la progression", () => {
     const bancal = await corps(r2) as { serie: { payeAujourdhui: boolean } };
     expect(typeof bancal.serie.payeAujourdhui).toBe("boolean");
   });
+
+  /**
+   * Le cas qui passait : « 9999-99-99 » respecte le motif sans être une date.
+   *
+   * Il était employé TEL QUEL, donc la série valait zéro — et le repli prévu
+   * pour ce cas exact était court-circuité par le contrôle qui le laissait
+   * passer. La comparaison porte sur le repli lui-même : avec cette valeur, la
+   * réponse doit être celle qu'on obtient SANS jour du tout.
+   */
+  it("retombe sur le jour du serveur quand la date a la forme sans exister", async () => {
+    const sansJour = await corps(await GET(requete("/api/progression")));
+    const bidon = await corps(await GET(requete("/api/progression?jour=9999-99-99")));
+    expect(bidon).toEqual(sansJour);
+
+    // Et un jour qui n'existe pas dans son mois tombe pareil : `Date` le fait
+    // glisser au lieu de le refuser, ce qu'un contrôle de forme ne voit pas.
+    const glissant = await corps(await GET(requete("/api/progression?jour=2026-02-30")));
+    expect(glissant).toEqual(sansJour);
+  });
 });
