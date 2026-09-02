@@ -701,6 +701,34 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux règles de l'application de bureau sortent de main.js
+`desktop/src/main.js` fait mille cinq cents lignes et n'avait aucun test :
+l'essentiel tient à Electron et ne s'éprouve qu'avec une fenêtre. Deux règles
+n'en dépendaient par aucun bout, et toutes deux se paient cher quand elles se
+trompent.
+
+**L'aléa qui garde le canal de connexion.** L'application ouvre le navigateur
+du système et attend un retour sur un port local ; sans cet aléa, n'importe
+quoi tournant sur la machine pourrait pousser une session dans l'application.
+Un cas mérite d'être nommé : `timingSafeEqual` **lève** sur deux tampons de
+longueurs différentes. Sans le contrôle de longueur qui le précède, un aléa
+trop court ne rendrait pas « faux » — il ferait tomber le serveur local. Le
+test l'éprouve sur quatre longueurs, dont la chaîne vide.
+
+**La table des réglages de pastille**, et surtout la reprise de l'ANCIEN
+format. Les versions antérieures rangeaient `overlay`, `overlayCoin` et
+`overlayPosition` à plat, pour un seul jeu. Les ignorer remettrait tout le
+monde au coin par défaut sans prévenir — et le placement est la seule chose qui
+puisse rendre la pastille invisible. Onze cas, dont le coin inventé qui poserait
+la pastille hors de tout écran, et `!== false` plutôt que `=== true` : quelqu'un
+qui n'a jamais rien réglé doit voir la pastille, sinon la fonction principale du
+produit n'apparaît pas.
+
+Quatre sabotages, quatre échecs. Et un commentaire qui a déménagé avec son
+code : « le `crypto` global d'Electron est celui du navigateur, ni randomBytes
+ni timingSafeEqual ». Il expliquait un import devenu inutile dans `main.js` ; le
+laisser là aurait fait perdre la raison en même temps que la ligne.
+
 ### Le barème était relu à chaque partie enregistrée
 Trois tables décrivent comment une partie devient des points : pondérations par
 rôle, paliers de niveau, maîtrise. Elles sont GLOBALES — la même réponse pour
