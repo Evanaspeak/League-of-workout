@@ -4,6 +4,7 @@ import { defaitesDAffilee } from "@/lib/serieDeDefaites";
 import { premiereSemaine } from "@/lib/premiereSemaine";
 import { caloriesDePoints, minutesDeMarche } from "@/lib/calories";
 import { prisma } from "@/lib/prisma";
+import { chargerBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   isExerciceId, parseRepartition, partPourExercice, toExerciceIds, RAPPEL_SEUIL_DEFAUT,
@@ -22,7 +23,10 @@ export async function GET(req: Request) {
   const [toutesLesGames, goal, levelConfigs] = await Promise.all([
     prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
-    prisma.levelConfig.findMany({ orderBy: { niveau: "asc" } }),
+    // Les paliers sont globaux et en cache : les relire ici serait un
+    // aller-retour de plus pour des valeurs qui ne bougent pas d'un mois
+    // sur l'autre.
+    chargerBareme().then((b) => b.levelConfigs),
   ]);
 
   const params = new URL(req.url).searchParams;

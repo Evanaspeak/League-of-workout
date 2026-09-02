@@ -7,11 +7,22 @@ jest.mock("@/lib/prisma", () => ({
     // Les paliers du test de force voyagent avec les statistiques depuis
     // qu'un aller-retour a été retiré du premier rendu.
     levelConfig: { findMany: jest.fn() },
+    /**
+     * Les deux autres tables du barème.
+     *
+     * La route ne lit que les paliers, mais elle passe par le cache commun, et
+     * celui-ci charge le barème ENTIER — trois tables en parallèle, une fois par
+     * minute. C'est le prix d'une valeur partagée : la doublure doit refléter ce
+     * que le code appelle, pas ce dont il se sert.
+     */
+    roleWeight: { findMany: jest.fn().mockResolvedValue([{ role: "Mid" }]) },
+    masteryConfig: { findFirst: jest.fn().mockResolvedValue(null) },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { GET as tableauDeBord } from "./route";
+import { oublierBareme } from "@/lib/baremeConfig";
 import { GET as journee } from "./daily/route";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -31,6 +42,10 @@ const partie = (champs: Record<string, unknown> = {}) => ({
 const niveaux = prisma.levelConfig as unknown as { findMany: jest.Mock };
 
 beforeEach(() => {
+  // Le barème est mis en cache au niveau du module : une valeur retenue par un
+  // cas précédent survivrait au suivant. C'est un état partagé, il se
+  // réinitialise comme les doublures.
+  oublierBareme();
   jest.clearAllMocks();
   niveaux.findMany.mockResolvedValue([]);
   session.mockResolvedValue(utilisateur({ exercices: ["pompes"] }));

@@ -767,6 +767,19 @@ Et un tri qu'il ne fallait pas supposer : les routes de partie trient les
 paliers par seuil de gainage, les réglages par niveau. Les deux coïncident
 aujourd'hui et rien ne l'écrit. Le tri reste donc explicite chez l'appelant.
 
+**Les deux derniers lecteurs sont passés au cache dans la foulée** :
+`/api/dashboard` et la page du tableau de bord, qui rend le premier écran au
+serveur — donc dont les paliers sont sur le chemin critique de l'affichage.
+
+Un effet de bord à connaître : un consommateur qui n'a besoin QUE des paliers
+charge quand même le barème entier, trois tables en parallèle. En régime établi
+c'est gratuit, le cache étant chaud ; au tout premier appel après un démarrage à
+froid, c'est trois requêtes au lieu d'une. L'échange se fait dans le bon sens
+sur un écran qu'on ouvre plusieurs fois par soirée, et les tests le disent
+clairement : la doublure de base doit désormais porter les trois tables, pas
+seulement celle dont la route se sert. Une doublure reflète ce que le code
+APPELLE, pas ce dont il a besoin.
+
 **Ce que le cache a cassé, et qui vaut d'être noté :** trois tests de route
 sont tombés d'un coup. Un cache au niveau du module est un état PARTAGÉ entre
 les cas d'un même fichier — une valeur retenue par un cas précédent survivait
