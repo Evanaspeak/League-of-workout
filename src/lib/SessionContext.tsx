@@ -1,5 +1,8 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {
+  chronoARestaurer, pointsDuChrono, resteAPayer, type ChronoSauvegarde,
+} from "@/lib/chronoSession";
 import { lireCode, noter } from "@/lib/journalSynchro";
 import {
   EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, formaterCompact, toExerciceId, toExerciceIds,
@@ -17,7 +20,6 @@ const CHRONO_MIN_SEC = 30;
 /** Une session chronométrée survit à un rechargement de page. */
 const CHRONO_STORAGE_KEY = "wow-chrono-session";
 
-type ChronoSauvegarde = { jeu: string; debut: number; niveau: number };
 // Délai après la fin d'une partie (détectée nativement par l'app desktop) avant
 // d'interroger l'API Riot — le match met quelques secondes à y apparaître.
 const POST_GAME_DELAY_MS = 20 * 1000;
@@ -117,9 +119,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   /** Dette totale générée depuis le début du chrono, acquittements compris. */
   const detteTotaleChrono = useCallback(() => {
-    if (chronoDebutRef.current === null) return 0;
-    const ecoule = (Date.now() - chronoDebutRef.current) / 1000;
-    return Math.round((pointsParHeureRef.current * ecoule) / 3600);
+    return pointsDuChrono(chronoDebutRef.current, pointsParHeureRef.current, Date.now());
   }, []);
 
   const acquitterRappel = useCallback(() => {
@@ -167,7 +167,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       if (chronoDebutRef.current === null) return;
       setChronoSec(Math.floor((Date.now() - chronoDebutRef.current) / 1000));
 
-      const restant = Math.max(0, detteTotaleChrono() - chronoPayesRef.current);
+      const restant = resteAPayer(detteTotaleChrono(), chronoPayesRef.current);
       dettePointsRef.current = restant;
       setDettePoints(restant);
 
@@ -423,21 +423,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // heures de Minecraft disparaîtraient sur un F5 malheureux.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const brut = lire(CHRONO_STORAGE_KEY);
-    if (!brut) return;
-
-    let sauvegarde: ChronoSauvegarde;
-    try { sauvegarde = JSON.parse(brut); } catch { effacer(CHRONO_STORAGE_KEY); return; }
-    const debut = Number(sauvegarde?.debut);
-    // Au-delà de 12 h, c'est un chrono oublié plutôt qu'une session en cours.
-    if (!debut || Date.now() - debut > 12 * 3600 * 1000) {
-      effacer(CHRONO_STORAGE_KEY);
-      return;
-    }
+    /**
+     * La règle vit dans `chronoSession.ts`, avec ses quatorze cas.
+     *
+     * Elle était écrite ici, dans un composant de cinq cents lignes qu'aucun
+     * test ne couvrait — et ce qu'elle décide coûte cher : une reprise ratée
+     * fait disparaître deux heures de jeu sur un rechargement, une reprise
+     * abusive fait payer la soirée d'avant-hier.
+     */
+    const sauvegarde = chronoARestaurer(lire(CHRONO_STORAGE_KEY), Date.now());
+    if (!sauvegarde) { effacer(CHRONO_STORAGE_KEY); return; }
+    const debut = sauvegarde.debut;
 
     let annule = false;
     (async () => {
-      setSessionNiveau(Number(sauvegarde.niveau) || 0);
+      setSessionNiveau(sauvegarde.niveau);
       setTypeSession("temps");
       typeSessionRef.current = "temps";
       setJeuSession(sauvegarde.jeu);

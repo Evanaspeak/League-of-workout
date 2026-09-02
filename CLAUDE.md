@@ -701,6 +701,37 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le mode session avait cinq cents lignes et aucun test
+`SessionContext.tsx` porte le mode session : la boucle de sondage, la dette qui
+s'accumule pendant une soirée, le chrono des exercices au temps. C'est un
+composant, donc ce qui s'y éprouve n'est pas le rendu mais les DÉCISIONS — et
+elles étaient écrites au milieu des effets, où rien ne pouvait les atteindre.
+
+Trois règles sont sorties dans `src/lib/chronoSession.ts`, choisies sur ce que
+leur erreur coûte :
+
+- **reprendre un chrono après un rechargement.** Une reprise ratée fait
+  disparaître deux heures de Minecraft sur un F5 malheureux ; une reprise
+  abusive fait payer la soirée d'avant-hier. Quatorze cas l'éprouvent, dont
+  cinq formes de sauvegarde illisible — le stockage du navigateur n'est pas un
+  format, n'importe qui peut y écrire et une version antérieure y a peut-être
+  écrit autre chose ;
+- **ce que le temps coûte**, au prorata de l'heure et arrondi à l'entier :
+  « 12,4 pompes » n'existe pas ;
+- **ce qui reste à faire**, borné à zéro — avoir fait plus que ce qu'on devait
+  est un cas légitime, pas une erreur.
+
+Deux protections ajoutées au passage, et il faut dire ce qu'elles sont : des
+durcissements, pas des défauts qui auraient mordu. Un chrono dont la date de
+début est dans le FUTUR — une horloge changée entre deux ouvertures — donnait
+une durée négative ; elle était rattrapée plus loin par un plancher à zéro, donc
+l'effet restait borné. Et une sauvegarde sans nom de jeu était reprise avec un
+jeu `undefined`. Les deux sont refusées maintenant, à la source.
+
+Quatre sabotages, quatre échecs. Et la règle du projet, une fois de plus : le
+module ne vaut que s'il est LU — `SessionContext` l'emploie, sinon j'aurais
+écrit quatorze tests sur du code que personne n'exécute.
+
 ### La mesure de charge ne voyait pas le regroupement, et c'est elle qui avait tort
 Refaite après les deux regroupements, sur le tableau de bord avec session :
 **71 requêtes par seconde**, rupture à 200 simultanés. Puis refaite sur V309,
