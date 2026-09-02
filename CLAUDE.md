@@ -542,6 +542,8 @@ node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
+node scripts/routes.mjs          # poids et temps de chaque route d'API
+node scripts/semer-parties.mjs   # de quoi mesurer autre chose qu'un compte vide
 ```
 
 Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
@@ -700,6 +702,40 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le poids par route, mesuré avant/après plutôt qu'annoncé
+`charge.mjs` monte en charge sur le DOCUMENT : il ne dit rien du poids d'une
+réponse d'API, qui est justement ce que le resserrement des colonnes vient de
+changer. `scripts/routes.mjs` le mesure — corps pesé, vingt appels chronométrés
+— et `scripts/semer-parties.mjs` lui donne de quoi mesurer.
+
+Sur soixante parties, serveur local :
+
+| route | avant | après |
+|---|---|---|
+| `/api/games` | 35 634 octets | **24 834** |
+| `/api/dashboard` | 5 405 octets | 5 405 |
+
+**Et il faut dire pourquoi le tableau de bord ne bouge pas.** Sa réponse est
+faite d'agrégats, pas de lignes : son `select` réduit ce qui sort de la BASE,
+pas ce qui part vers le navigateur. Le gain est sur l'autre moitié du chemin —
+en production, chaque requête est un appel HTTPS indépendant vers Neon, et ce
+sont quinze colonnes sur trente et une qui traversent au lieu de toutes. Ça ne
+se mesure pas d'ici ; l'annoncer comme un gain de réponse serait faux.
+
+Les temps ne bougent pas non plus, et c'est attendu : la base est sur la même
+machine, treize millisecondes de médiane des deux côtés. Ce qu'on a retiré,
+c'est du volume, pas du travail.
+
+**Deux pièges retombés en écrivant l'outil, tous deux déjà dans ce fichier.**
+Le premier rapport donnait 31 143 octets pour les SEPT routes — c'est-à-dire la
+page de connexion sept fois : j'envoyais le jeton nu en guise d'en-tête
+`cookie`, alors qu'Auth.js le découpe en deux au-delà de 3 500 caractères. Sept
+chiffres identiques auraient dû me sauter aux yeux ; c'est le contrôle
+d'atterrissage qui l'a dit, et il n'existait que parce que je l'ai ajouté après
+coup. Le second : avec un compte frais, `/api/games` rend deux octets. La
+mesure est juste et ne dit rien. D'où le semis, et d'où la phrase en tête de
+l'outil.
 
 ### `networkidle` attendait un silence qui ne vient jamais
 Deux fichiers de parcours ont échoué en cinq exécutions complètes, chacun une
