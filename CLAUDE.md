@@ -723,6 +723,78 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Mille cent trente-deux mots sur la page d'accueil, deux cent quatre-vingt-six restent
+Le propriétaire du produit a essayé plusieurs fois de faire venir du monde
+depuis Reddit : « tout le monde trouve que ça fait trop IA et ne veulent pas
+venir ». C'est le seul retour qu'on ait eu sur l'acquisition, et il ne porte
+pas sur une fonctionnalité — il porte sur la façon dont le site parle.
+
+Mesuré avant d'y toucher, sur le HTML servi : **1 132 mots visibles** sur
+`/fr`, répartis en dix sections. Après : **286**, dont une bonne moitié n'est
+pas de la prose — les vingt-six noms de jeux du bandeau défilant, les libellés
+de la démonstration, et les cinquante mots de la mention légale Riot. Il reste
+environ **soixante-dix mots** de texte écrit.
+
+Quatre sections entières sont parties : la galerie de captures, la grille des
+tarifs et son flux de dettes, la scène de partie avec la pastille, et le bloc
+« le problème » avec ses trois citations d'études à comité de lecture. Cette
+dernière est celle qui coûtait le plus : trois références scientifiques sous
+une page qui promet des pompes, c'est la marque la plus reconnaissable d'un
+texte écrit par une machine — personne n'écrit ça pour vendre un logiciel à
+des joueurs.
+
+Avec elles : les libellés en petites capitales au-dessus de chaque titre (les
+« eyebrows »), qui sont le second signe, et les titres balancés en deux
+membres. « Gagne ta game, ou paie en sueur » est un slogan de publicité ; « Tu
+perds une game, tu fais des pompes » dit la même chose sans la balance. « Trois
+temps, et c'est réglé » devient « Comment ça marche ». « Ta prochaine soirée a
+un prix » devient « Commencer ».
+
+**Le slogan vivait à quatre endroits, et trois ne se voient pas depuis la
+page.** Le titre de l'onglet et la description (`metadonnees.ts`), c'est-à-dire
+ce qu'un moteur affiche ; le texte de la carte partagée (`imageSociale.ts`),
+c'est-à-dire ce qui s'affiche quand le lien part sur Discord ou Reddit ; et
+l'`alt` de cette carte. Corriger la page sans eux aurait laissé le slogan
+exactement là où le retour disait qu'il faisait du mal : **dans l'aperçu du
+lien collé sur Reddit**, qui est la seule chose que la plupart des gens
+verront. Vérifié en la rendant : la carte allemande, la plus longue, tient dans
+son cadre.
+
+**Le poids n'a presque pas bougé, et c'était prévisible.** 185 → 183 ko de
+JavaScript, 605 → 571 ko en tout, mesurés sur le même serveur avant et après.
+La page est rendue au serveur depuis V300 : ses dictionnaires ne partaient déjà
+plus au navigateur, donc en retirer 276 clés n'allège pas le paquet. Les 34 ko
+gagnés sont les composants et les images des sections supprimées. Annoncer ce
+chantier comme un gain de performance serait faux — c'est un chantier de texte.
+
+Trois composants sont partis avec leurs sections (`DebtFeed`,
+`PastilleOverlay`, `ScenePartie`), 276 entrées de dictionnaire dans les six
+langues, et une cinquantaine de règles CSS devenues orphelines.
+
+**Deux témoins de garde ont dû être recalibrés, et c'est le prix normal.**
+`pagesOrphelines` comptait plus de cinquante cibles de navigation ; les liens
+retirés le font tomber à quarante-cinq. `seo.spec.ts` comptait plus de cinq
+sections révélables ; il n'en reste que trois. Dans les deux cas l'assertion de
+FOND passe toujours — aucune page orpheline, aucune section invisible sans
+script — et seul le compte qui prouve qu'on a lu quelque chose a bougé. Un
+témoin calibré sur la taille du produit se recalibre quand le produit maigrit ;
+ce qu'il ne doit jamais faire, c'est descendre à zéro.
+
+**Le piège de l'outil de suppression, à retenir.** Le recensement des clés
+mortes cherche un nom de clé dans TOUT le code, pas fichier par fichier :
+retirer `t.jeuxTitre` de l'accueil a fait passer `jeuxTitre` pour morte dans
+`detection.ts` et `overlay.ts` aussi, et le script l'a supprimée des trois.
+Vérifié après coup qu'elle n'était lue nulle part — rien de vivant n'est parti
+— mais la prochaine fois ce sera peut-être une clé homonyme bien vivante
+ailleurs.
+
+Et un piège d'environnement qui a coûté une exécution complète : les 186
+parcours navigateur sont tombés à quatorze échecs, tous sur « ouvrir un
+compte », avec « Erreur serveur » sur `/api/beta-access`. Le PostgreSQL local
+n'était pas démarré. Le symptôme — un compte qui ne s'ouvre pas — ne ressemble
+pas à sa cause, et c'est le troisième déguisement de cette panne-là recensé
+ici. `pg_isready` avant de lancer la suite coûte une seconde.
+
 ### Quatre gardes sur vingt-six pouvaient passer au vert en ne lisant rien
 Suite du défaut précédent, où le test d'une route vérifiait la FORME du jour
 stocké avec le motif même que le code employait. La question générale est :

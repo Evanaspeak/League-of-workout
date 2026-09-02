@@ -3,7 +3,7 @@ import { textesImageSociale } from "@/lib/i18n/imageSociale";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Win or Workout · Gagne ta game, ou paie en sueur";
+export const alt = "Win or Workout · Tu perds une game, tu fais des pompes";
 
 /**
  * La carte affichée quand le lien est partagé.

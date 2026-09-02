@@ -125,7 +125,10 @@ describe("les pages du site", () => {
    */
   it("recense vraiment des pages", () => {
     expect(routes.length).toBeGreaterThan(10);
-    expect(CIBLES.length).toBeGreaterThan(50);
+    // Le seuil se recalibre quand des liens disparaissent : l'allègement de
+    // la page d'accueil en a retiré une dizaine. Il reste très au-dessus de
+    // zéro, qui est le seul chiffre qu'un extracteur cassé rendrait.
+    expect(CIBLES.length).toBeGreaterThan(30);
   });
 
   it("sont toutes joignables par un chemin écrit quelque part", () => {

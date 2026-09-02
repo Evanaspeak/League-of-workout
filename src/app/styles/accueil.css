@@ -11,22 +11,6 @@
 .accueil .conteneur { max-width: 1120px; margin: 0 auto; }
 
 /* Une intro de section : la respiration entre le titre et le contenu. */
-.accueil .section-intro {
-  font-size: 1rem;
-  line-height: 1.7;
-  color: var(--muted);
-  max-width: 58ch;
-  margin: 0 0 40px;
-}
-.accueil .section-note {
-  font-size: 0.94rem;
-  line-height: 1.75;
-  color: var(--muted);
-  max-width: 62ch;
-  margin: 34px 0 0;
-  padding-left: 16px;
-  border-left: 2px solid var(--ember);
-}
 
 /* ── Hero ────────────────────────────────────────────────────────────────
    Plus de halos. Un dégradé de fond très bas, qui ne fait que détacher la
@@ -45,19 +29,6 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
   gap: clamp(36px, 5vw, 60px);
   align-items: center;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 26px;
-}
-.hero-badge-point {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--victory);
-  box-shadow: 0 0 0 4px rgba(47, 217, 138, 0.14);
-  animation: pulse 2s ease-in-out infinite;
 }
 
 .hero-titre {
@@ -202,11 +173,7 @@
   padding: 30px 0 34px;
   overflow: hidden;
 }
-.section-jeux-titre {
-  text-align: center;
-  margin: 0 0 22px;
-  color: var(--faint);
-}
+
 .bande-jeux {
   /* Les bords s'estompent : la bande continue au-delà du cadre, elle ne s'y
      arrête pas net. */
@@ -426,106 +393,15 @@
 .vign-puce.actif { border-color: rgba(255, 77, 46, 0.4); color: var(--ember); background: rgba(255, 77, 46, 0.08); }
 
 /* ── Galerie de captures ─────────────────────────────────────────────────
-   « Nike ne vend pas de chaussures sans en montrer une paire. » */
-.section-produit {
-  border-top: 1px solid var(--line);
-  background: var(--carbon);
-  padding: clamp(64px, 8vw, 104px) 24px;
-}
-.galerie {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(24px, 3vw, 40px);
-  align-items: start;
-}
-.galerie-item { margin: 0; }
-.galerie-item figcaption {
-  display: block;
-  margin-top: 16px;
-}
-.galerie-item figcaption strong {
-  display: block;
-  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 0.92rem;
-  color: var(--bone);
-  margin-bottom: 6px;
-}
-.galerie-item figcaption span {
-  font-size: 0.86rem;
-  line-height: 1.65;
-  color: var(--muted);
-  max-width: 46ch;
-  display: block;
-}
+   « Nike ne vend pas de chaussures sans en montrer une paire. » *
+
 /* La capture de téléphone est haute et étroite : elle prend une colonne mais
-   pas toute sa largeur, sinon elle écrase tout le reste. */
-.galerie-item-etroit { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 24px; align-items: center; }
-.galerie-item-etroit figcaption { margin-top: 0; }
+   pas toute sa largeur, sinon elle écrase tout le reste. *
 
 /* ── Le problème, en infographie ─────────────────────────────────────────
-   Les chiffres s'enchaînaient en paragraphes : on les lisait comme un mur. */
-.section-probleme { padding: clamp(64px, 8vw, 104px) 24px; }
-.infographie {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  overflow: hidden;
-}
-.info-carte {
-  background: var(--carbon);
-  padding: clamp(22px, 3vw, 30px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.info-val {
-  font-size: clamp(2.1rem, 4vw, 2.9rem);
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-}
-.info-label {
-  font-size: 0.84rem;
-  line-height: 1.6;
-  color: var(--muted);
-  margin: 0;
-}
+   Les chiffres s'enchaînaient en paragraphes : on les lisait comme un mur. *
 
-/* ── Paiement et desktop ─────────────────────────────────────────────────*/
-.section-payer {
-  border-top: 1px solid var(--line);
-  background: var(--carbon);
-  padding: clamp(64px, 8vw, 104px) 24px;
-}
-.section-desktop {
-  border-top: 1px solid var(--line);
-  padding: clamp(64px, 8vw, 104px) 24px;
-}
-.payer-grille {
-  display: grid;
-  grid-template-columns: minmax(0, 1.32fr) minmax(0, 0.68fr);
-  gap: clamp(32px, 5vw, 60px);
-  align-items: center;
-}
-.payer-feed { display: flex; justify-content: center; }
-.payer-partage {
-  font-size: 0.88rem; color: var(--muted); line-height: 1.7;
-  margin: 20px 0 0; padding-left: 14px; border-left: 2px solid var(--ember);
-}
-.liste-features { display: flex; flex-direction: column; gap: 12px; }
-.feature {
-  display: flex; gap: 16px; padding: 18px 20px;
-  background: var(--carbon); border: 1px solid var(--line); border-radius: 12px;
-}
-.section-desktop .feature { background: var(--carbon-2); }
-.feature-titre { font-size: 0.92rem; font-weight: 600; color: var(--bone); margin-bottom: 4px; }
-.feature-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+/* ── Paiement et desktop ─────────────────────────────────────────────────*
 
 /* ── CTA final ───────────────────────────────────────────────────────────*/
 .section-cta {
@@ -558,7 +434,7 @@
   color: var(--faint);
 }
 .sources summary:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
-.sources-intro { font-size: 0.8rem; color: var(--faint); margin: 14px 0 10px; }
+
 .sources ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .sources li { font-size: 0.76rem; line-height: 1.6; color: var(--faint); }
 .sources a { color: var(--signal); text-decoration: none; }
@@ -567,10 +443,7 @@
 /* ── Adaptations ─────────────────────────────────────────────────────────*/
 @media (max-width: 1000px) {
   .wow-hero { grid-template-columns: 1fr; }
-  .payer-grille { grid-template-columns: 1fr; }
   .galerie { grid-template-columns: 1fr; }
-  .galerie-item-etroit { grid-template-columns: minmax(0, 200px) minmax(0, 1fr); }
-  .section-desktop .desktop-scene { order: 2; }
 }
 @media (max-width: 760px) {
   .boucle-temps { grid-template-columns: 1fr; align-content: center; gap: 22px; }
@@ -580,8 +453,6 @@
   .boucle-barre { gap: 8px; }
 }
 @media (max-width: 560px) {
-  .galerie-item-etroit { grid-template-columns: 1fr; }
-  .galerie-item-etroit figcaption { margin-top: 14px; }
   .cta-telecharger, .hero-ghost { width: 100%; justify-content: center; }
   .cta-telecharger-texte { align-items: center; }
   .hero-actions { flex-direction: column; align-items: stretch; }
@@ -639,63 +510,14 @@
   .wow-ghost-nav { padding: 6px 10px; font-size: 0.7rem; }
 }
 
-
 /* ── Corrections de la refonte, deuxième passe ───────────────────────────*/
 
 /* La bande tarifaire vit désormais dans une colonne, pas sur toute la largeur :
-   trois montants à 2,6 rem s'y coupaient en deux. Ils s'adaptent au cadre. */
-.section-payer .bande-tarifs { grid-template-columns: repeat(auto-fit, minmax(min(168px, 100%), 1fr)); }
-.section-payer .tarif { padding: 22px 20px; }
-.section-payer .tarif-valeur { font-size: clamp(1.5rem, 2.2vw, 1.95rem); }
-.section-payer .tarif-desc { font-size: 0.8rem; line-height: 1.6; }
+   trois montants à 2,6 rem s'y coupaient en deux. Ils s'adaptent au cadre. *
 
-/* ── L'overlay, posé sur une partie ──────────────────────────────────────*/
-.scene-partie {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid var(--line-strong);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-  background: linear-gradient(150deg, #10141b 0%, #0b0e13 55%, #0a0d11 100%);
-}
-.scene-partie-ecran { position: absolute; inset: 0; }
-/* Des lignes de HUD suggérées : on n'imite aucun jeu, on pose un décor. */
-.sp-barre {
-  position: absolute;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(236, 239, 244, 0.06);
-}
-.sp-barre-1 { top: 11%; left: 8%; width: 22%; }
-.sp-barre-2 { top: 11%; right: 8%; width: 14%; background: rgba(110, 155, 255, 0.12); }
-.sp-barre-3 { bottom: 12%; left: 50%; transform: translateX(-50%); width: 34%; height: 8px; }
-.sp-vignette {
-  position: absolute; inset: 0;
-  background: radial-gradient(120% 100% at 50% 45%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
-}
-.scene-partie-etiquette {
-  position: absolute;
-  top: 14px; left: 16px;
-  display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--font-mono, 'IBM Plex Mono', monospace);
-  font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
-  color: rgba(236, 239, 244, 0.42);
-}
-.scene-partie-etiquette::before {
-  content: ""; width: 6px; height: 6px; border-radius: 50%;
-  background: var(--loss); box-shadow: 0 0 0 3px rgba(255, 90, 71, 0.16);
-}
-.scene-partie-pastille {
-  position: absolute;
-  right: 4.5%; bottom: 7%;
-  width: min(62%, 300px);
-}
-.desktop-legende {
-  font-size: 0.85rem; line-height: 1.65; color: var(--muted);
-  margin: 18px 0 0; max-width: 46ch;
-}
+/* ── L'overlay, posé sur une partie ──────────────────────────────────────*
+
+/* Des lignes de HUD suggérées : on n'imite aucun jeu, on pose un décor. *
 
 /* ── Hero : la capture mérite plus de place que le texte ─────────────────*/
 @media (min-width: 1001px) {
@@ -706,11 +528,6 @@
 /* La règle vit sous condition de largeur : posée sans, elle passait après la
    version téléphone de la galerie et lui réimposait une colonne de 230 px —
    la page débordait alors de 41 px à 320 px. */
-@media (min-width: 561px) {
-  .galerie-item-etroit { grid-template-columns: minmax(0, 230px) minmax(0, 1fr); }
-}
-@media (min-width: 1001px) { .galerie-item-etroit { grid-column: 1 / -1; } }
-
 
 /* ── Troisième passe : ce que la mesure a montré ─────────────────────────
    À 320 px, le bouton de téléchargement imposait sa largeur minimale à toute
@@ -718,16 +535,13 @@
    mettait à défiler de travers. Les colonnes ne peuvent plus être poussées
    par leur contenu, et le bouton se resserre au lieu de forcer. */
 .wow-hero > * { min-width: 0; }
-.payer-grille > * { min-width: 0; }
 
 @media (max-width: 430px) {
   .cta-telecharger { padding: 13px 16px; gap: 9px; }
   .cta-telecharger-texte { font-size: 0.8rem; letter-spacing: 0.03em; }
   .cta-telecharger-texte em { font-size: 0.6rem; }
   .hero-ghost { padding: 13px 16px; font-size: 0.82rem; letter-spacing: 0.04em; }
-  .hero-section { padding-left: 16px; padding-right: 16px; }
-  .section-boucle, .section-produit, .section-probleme,
-  .section-payer, .section-desktop, .section-cta { padding-left: 16px; padding-right: 16px; }
+  .hero-section { padding-left: 16px; padding-right: 16px; }.section-boucle, .section-cta { padding-left: 16px; padding-right: 16px; }
   .hero-note { font-size: 0.66rem; }
 }
 
@@ -738,7 +552,6 @@
   .wow-nav { --marque-nav: 0.74rem; padding: 0 8px; gap: 6px; }
   .wow-ghost-nav { padding: 5px 8px; font-size: 0.64rem; letter-spacing: 0.02em; }
 }
-
 
 /* ══════════════════════════════════════════════════════════════════════════
    QUATRIÈME PASSE — sortir de la recette
@@ -751,89 +564,7 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* Les fonds alternent de section en section. L'ordre ayant changé, deux
-   sections claires se retrouvaient côte à côte. */
-.section-payer { background: var(--ink); }
-.section-probleme { background: var(--carbon); border-top: 1px solid var(--line); }
-
-/* ── Les fonctionnalités en feuille de spécifications ────────────────────
-   Six cartes arrondies alignées, c'est exactement l'image que le rapport
-   décrit. La même information tient dans une liste réglée : le nom à gauche,
-   ce qu'il fait à droite, un filet entre chaque. On lit une fiche technique,
-   pas une grille de vignettes. */
-.liste-features { display: block; border-top: 1px solid var(--line); }
-/* Un seul sélecteur, à une seule classe. `.section-desktop .feature` traînait
-   dans cette liste : plus spécifique, il l'emportait sur la version téléphone
-   posée plus bas, et la fiche restait sur deux colonnes à 390 px. */
-.feature {
-  display: grid;
-  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1fr);
-  gap: 10px 26px;
-  align-items: baseline;
-  padding: 18px 2px;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  transition: background 0.2s ease;
-}
-.feature:hover { background: rgba(236, 239, 244, 0.02); }
-/* Le slash de la marque tient lieu de puce : c'est la géométrie du logo, pas
-   un ornement pris ailleurs. */
-.feature-titre {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: var(--font-heading, 'Chakra Petch', sans-serif);
-  font-weight: 600;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  color: var(--bone);
-  margin: 0;
-}
-.feature-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
-
-@media (max-width: 620px) {
-  .feature { grid-template-columns: 1fr; gap: 4px; }
-}
-
-/* ── L'infographie du problème, pleine largeur ───────────────────────────
-   Quatre constats dans une boîte arrondie se lisaient comme quatre cartes de
-   plus. Sans boîte, avec un filet entre chaque et un chiffre qui domine, ils
-   se lisent comme un tableau — ce qu'ils sont. */
-.infographie {
-  background: none;
-  border: none;
-  border-top: 1px solid var(--line-strong);
-  border-radius: 0;
-  gap: 0;
-}
-.info-carte {
-  background: none;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 26px 24px 26px 0;
-}
-.info-carte:last-child { border-right: none; }
-@media (max-width: 700px) {
-  .info-carte { border-right: none; padding-right: 0; }
-}
-
-
-/* La section desktop inverse les proportions : la scène de jeu se suffit d'un
-   carré, la feuille de spécifications a besoin de deux colonnes lisibles.
-   Et les deux blocs s'alignent par le haut — centrés, la scène flottait au
-   milieu d'une colonne deux fois plus haute qu'elle. */
-/* Sous condition de largeur : sans elle, la règle passait après la version
-   téléphone de `.payer-grille` et lui réimposait deux colonnes — la scène de
-   jeu se retrouvait écrasée dans une bande de 180 px à côté du titre. */
-@media (min-width: 1001px) {
-  .section-desktop .payer-grille {
-    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    align-items: start;
-  }
-  .section-desktop .feature { grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr); gap: 10px 20px; }
-}
-
+   sections claires se retrouvaient côte à côte. *
 
 /* ── La boucle, resserrée ────────────────────────────────────────────────
    La vignette flottait au milieu d'une colonne deux fois plus large qu'elle.
@@ -851,14 +582,8 @@
 .vign-anneau { flex-shrink: 0; transition: opacity 0.3s ease; }
 .vign-anneau circle:last-child { transition: stroke-dashoffset 0.07s linear, stroke 0.3s ease; }
 
-
 /* Sur un écran étroit, la pastille occupait presque toute la scène et venait
    frôler le cadre. Elle respire, et la scène s'allonge un peu pour la porter. */
-@media (max-width: 620px) {
-  .scene-partie { aspect-ratio: 4 / 3; }
-  .scene-partie-pastille { right: 7%; bottom: 9%; width: min(78%, 260px); }
-}
-
 /* Le vrai logo, quand un fichier a été déposé (voir public/images/jeux). */
 .jeu-logo { display: block; width: 22px; height: 22px; object-fit: contain; }
 

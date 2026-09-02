@@ -23,28 +23,28 @@ type Textes = { titre: string; description: string };
 const PAGES = {
   accueil: {
     fr: {
-      titre: "Win or Workout · Gagne ta game, ou paie en sueur",
-      description: "Chaque partie a un prix, calculé sur ta performance. Tu le paies en pompes, en squats ou en boxe. Quinze jeux pris en charge, application Windows gratuite.",
+      titre: "Win or Workout · Tu perds une game, tu fais des pompes",
+      description: "L'app calcule combien de pompes tu dois après chaque partie, d'après ton KDA et ton niveau de forme. Quinze jeux, application Windows gratuite.",
     },
     en: {
-      titre: "Win or Workout · Win the game, or pay in sweat",
-      description: "Every match has a price, worked out from how you played. You pay it in push-ups, squats or boxing. Fifteen games supported, free Windows app.",
+      titre: "Win or Workout · You lose a game, you do push-ups",
+      description: "The app works out how many push-ups you owe after each match, from your KDA and your fitness level. Fifteen games, free Windows app.",
     },
     es: {
-      titre: "Win or Workout · Gana la partida, o paga sudando",
-      description: "Cada partida tiene un precio, calculado según tu rendimiento. Lo pagas en flexiones, sentadillas o boxeo. Quince juegos compatibles, app de Windows gratuita.",
+      titre: "Win or Workout · Pierdes una partida, haces flexiones",
+      description: "La app calcula cuántas flexiones debes tras cada partida, según tu KDA y tu nivel de forma. Quince juegos, app de Windows gratuita.",
     },
     de: {
-      titre: "Win or Workout · Gewinn dein Spiel, oder zahl mit Schweiß",
-      description: "Jede Partie hat ihren Preis, berechnet aus deiner Leistung. Du zahlst in Liegestützen, Kniebeugen oder Boxen. Fünfzehn Spiele, kostenlose Windows-App.",
+      titre: "Win or Workout · Du verlierst, du machst Liegestütze",
+      description: "Die App berechnet, wie viele Liegestütze du nach jeder Partie schuldest, aus deinem KDA und deinem Fitnesslevel. Fünfzehn Spiele, kostenlose Windows-App.",
     },
     zh: {
-      titre: "Win or Workout · 赢下这局，或者用汗水买单",
-      description: "每一局都有代价，按你的表现计算，用俯卧撑、深蹲或拳击来偿还。支持十五款游戏，Windows 应用免费。",
+      titre: "Win or Workout · 输了一把，就做几个俯卧撑",
+      description: "每局结束后，应用根据你的 KDA 和体能等级算出该做多少个俯卧撑。支持十五款游戏，Windows 应用免费。",
     },
     ja: {
-      titre: "Win or Workout · 勝つか、汗で払うか",
-      description: "試合ごとに代償があり、プレイ内容から計算されます。腕立て、スクワット、ボクシングで返済。15タイトル対応、Windows アプリは無料。",
+      titre: "Win or Workout · 負けたら、腕立て伏せ",
+      description: "試合ごとに、KDA と体力レベルから腕立ての回数を計算します。15タイトル対応、Windows アプリは無料。",
     },
   },
   beta: {
