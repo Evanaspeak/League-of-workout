@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { toLocale } from "@/lib/i18n/langues";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
+import { chargerBareme } from "@/lib/baremeConfig";
 import TableauDeBord from "./TableauDeBord";
 
 /**
@@ -32,7 +32,10 @@ export default async function DashboardPage(
   const user = await getCurrentUser();
   if (!user) redirect(avecLocale("/login", toLocale(locale)));
 
-  const niveaux = await prisma.levelConfig.findMany({ orderBy: { niveau: "asc" } });
+  // Le premier écran est rendu au serveur : ces paliers sont sur le chemin
+  // critique de l'affichage, et ils sont globaux. Le cache les sert sans
+  // aller-retour.
+  const niveaux = (await chargerBareme()).levelConfigs;
 
   return (
     <TableauDeBord
