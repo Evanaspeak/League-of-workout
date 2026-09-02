@@ -1,13 +1,26 @@
-"use client";
 import { Lien } from "@/components/Lien";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { textes } from "@/lib/i18n/textes";
+import { toLocale } from "@/lib/i18n/langues";
 import { cgu } from "@/lib/i18n/dictionaries/cgu";
 
 const CONTACT = "evantocquet@gmail.com";
 const DATE = "26 juin 2026";
 
-export default function CguClient() {
-  const t = useT(cgu);
+/**
+ * Rendu au SERVEUR, et c'est ce qui compte ici.
+ *
+ * Ce composant n'avait aucun état, aucun gestionnaire, aucune lecture du
+ * navigateur : il était client pour la seule raison qu'il appelait `useT`. Son
+ * dictionnaire partait donc dans le paquet JavaScript, dans les six langues, à
+ * chaque visite — pour un texte qui ne bouge jamais et que le serveur sait
+ * rendre entièrement.
+ *
+ * `textes(dict, locale)` fait au serveur ce que `useT` fait au navigateur. La
+ * langue vient du paramètre de route, ce qui n'était possible qu'une fois la
+ * langue dans l'adresse : c'est le bénéfice différé de ce chantier-là.
+ */
+export default function CguClient({ locale }: { locale: string }) {
+  const t = textes(cgu, toLocale(locale));
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }} className="space-y-8 py-4">

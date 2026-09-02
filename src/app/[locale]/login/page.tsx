@@ -6,22 +6,24 @@ export const metadata = {
 };
 
 export default async function LoginPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ locale: string }>;
   searchParams: Promise<{
     error?: string; transferred?: string; deleted?: string; transfer_error?: string;
     reconnexion?: string; code?: string;
   }>;
 }) {
-  const {
+  const [{ locale }, {
     error, transferred, deleted, transfer_error: transfertEchec, reconnexion, code,
-  } = await searchParams;
+  }] = await Promise.all([params, searchParams]);
   const betaFull = error === "AccessDenied";
   const betaPending = error === "BetaPending";
   const betaRejected = error === "BetaRejected";
 
   return (
-    <LoginClient
+    <LoginClient locale={locale}
       betaFull={betaFull}
       betaPending={betaPending}
       betaRejected={betaRejected}

@@ -11,12 +11,14 @@ export async function generateMetadata(
   return metadonneesPage("telechargement", toLocale(locale), "/telechargement");
 }
 
-export default async function TelechargementPage() {
-  const installeur = await dernierInstalleur();
+export default async function TelechargementPage(
+  { params }: { params: Promise<{ locale: string }> },
+) {
+  const [{ locale }, installeur] = await Promise.all([params, dernierInstalleur()]);
   // Si GitHub ne répond pas, la page des releases reste un lien utilisable :
   // mieux vaut un clic de plus qu'un bouton absent.
   return (
-    <TelechargementClient
+    <TelechargementClient locale={locale}
       downloadUrl={installeur?.url ?? PAGE_RELEASES}
       version={installeur?.version ?? null}
     />

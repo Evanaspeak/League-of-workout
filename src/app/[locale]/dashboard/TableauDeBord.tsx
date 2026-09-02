@@ -23,7 +23,6 @@ import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
 import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 import { JeuSelector } from "@/components/JeuSelector";
 import { SessionChrono } from "@/components/SessionChrono";
-import { AjoutActivite } from "@/components/AjoutActivite";
 import { RailActions } from "@/components/RailLateral";
 import { Modale } from "@/components/Modale";
 import { TestPompes } from "@/components/TestPompes";
@@ -46,6 +45,24 @@ import { PlaceGraphique } from "@/components/dashboard/Squelette";
  * l'attendre. Le cadre est réservé pendant ce temps, sinon la page sauterait
  * au moment où les tracés se posent.
  */
+/**
+ * Le formulaire d'ajout ne s'affiche que dans une fenêtre ouverte à la demande.
+ *
+ * Huit cent soixante-dix lignes, et tout ce qu'elles traînent — la saisie de
+ * champion avec son autocomplétion, la liste des parties Riot, deux
+ * dictionnaires — partaient dans le paquet initial du tableau de bord pour un
+ * écran que la plupart des chargements ne montrent jamais. Même traitement que
+ * les graphiques, et pour la même raison.
+ *
+ * Sans repli visible : il n'apparaît qu'à l'intérieur d'une fenêtre qu'on vient
+ * d'ouvrir, où un cadre vide le temps du chargement vaut mieux qu'un squelette
+ * qui bouge.
+ */
+const AjoutActivite = dynamic(
+  () => import("@/components/AjoutActivite").then((m) => m.AjoutActivite),
+  { ssr: false },
+);
+
 const GraphiquePeriode = dynamic(
   () => import("@/components/dashboard/GraphiquePeriode").then((m) => m.GraphiquePeriode),
   { ssr: false, loading: () => <PlaceGraphique /> },
