@@ -1,6 +1,5 @@
 export const telechargement = {
   fr: {
-    metaTitle: "Téléchargement · Win or Workout",
     title: "APPLICATION DESKTOP",
     description: "Intègre le client League of Legends en temps réel.",
     compatibilite: "Compatible Windows 10 / 11.",
@@ -24,7 +23,6 @@ export const telechargement = {
     smartScreenExplication: "Windows le montre pour tout programme dont l'éditeur n'est pas encore certifié. Le faire disparaître demande un certificat de signature payant, délivré après vérification d'identité. Tant que Win or Workout est en bêta et n'a pas d'utilisateurs, cette dépense n'a pas de sens : elle viendra avec eux. Le code de l'application est le même, signé ou non.",
   },
   en: {
-    metaTitle: "Download · Win or Workout",
     title: "DESKTOP APP",
     description: "Integrates with the League of Legends client in real time.",
     compatibilite: "Compatible with Windows 10 / 11.",
@@ -45,7 +43,6 @@ export const telechargement = {
     smartScreenExplication: "Windows shows it for any program whose publisher isn't certified yet. Removing it takes a paid signing certificate, issued after an identity check. While Win or Workout is in beta with no users, that spend makes no sense; it will come with them. The app's code is the same either way.",
   },
   es: {
-    metaTitle: "Descarga · Win or Workout",
     title: "APLICACIÓN DE ESCRITORIO",
     description: "Se integra con el cliente de League of Legends en tiempo real.",
     compatibilite: "Compatible con Windows 10 / 11.",
@@ -66,7 +63,6 @@ export const telechargement = {
     smartScreenExplication: "Windows lo muestra con cualquier programa cuyo editor todavía no esté certificado. Quitarlo exige un certificado de firma de pago, que se emite tras comprobar la identidad. Mientras Win or Workout esté en beta y sin usuarios, ese gasto no tiene sentido: llegará con ellos. El código de la aplicación es el mismo, firmado o no.",
   },
   de: {
-    metaTitle: "Download · Win or Workout",
     title: "DESKTOP-ANWENDUNG",
     description: "Bindet den League-of-Legends-Client in Echtzeit ein.",
     compatibilite: "Läuft unter Windows 10 / 11.",
@@ -87,7 +83,6 @@ export const telechargement = {
     smartScreenExplication: "Windows zeigt sie bei jedem Programm, dessen Herausgeber noch nicht zertifiziert ist. Sie verschwindet nur mit einem kostenpflichtigen Signaturzertifikat, das nach einer Identitätsprüfung ausgestellt wird. Solange Win or Workout in der Beta ist und keine Nutzer hat, ergibt diese Ausgabe keinen Sinn; sie kommt mit ihnen. Der Code der Anwendung ist derselbe, signiert oder nicht.",
   },
   zh: {
-    metaTitle: "下载 · Win or Workout",
     title: "桌面应用",
     description: "实时对接 League of Legends 客户端。",
     compatibilite: "支持 Windows 10 / 11。",
@@ -108,7 +103,6 @@ export const telechargement = {
     smartScreenExplication: "只要程序的发布者还没通过认证，Windows 就会这样提示。要让它消失，需要一份付费的签名证书，而且要先核验身份。Win or Workout 还在内测、还没有用户的阶段，这笔钱花得没有道理——等有了用户再说。签不签名，应用的代码都是同一份。",
   },
   ja: {
-    metaTitle: "ダウンロード · Win or Workout",
     title: "デスクトップアプリ",
     description: "League of Legends のクライアントとリアルタイムに連携します。",
     compatibilite: "Windows 10 / 11 に対応。",

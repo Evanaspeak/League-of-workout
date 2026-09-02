@@ -1,6 +1,5 @@
 export const landing = {
   fr: {
-    navDownload: "Télécharger",
     navLoggedIn: "Mon espace",
     navLoggedOut: "Se connecter",
     heroBadge: "Bêta ouverte : Google, Discord ou un simple pseudo",
@@ -12,12 +11,7 @@ export const landing = {
     heroTelecharger: "Télécharger pour Windows",
     heroTelechargerNote: "Gratuit · Windows 10 et 11 · aucune carte bancaire",
     heroVersion: (v: string) => `Version ${v}`,
-    heroNavigateur: "Ou l'essayer dans le navigateur",
-    heroGamesLive: "15 jeux pris en charge",
-    heroGamesNext: "League · Valorant · CS2 · Fortnite · Apex · Warzone · Rocket League · TFT · Minecraft…",
-    heroDownload: "Télécharger l'app Windows",
     heroBeta: "Créer mon compte",
-    heroLogin: "Se connecter",
     heroApercuTitre: "Win or Workout · Tableau de bord",
     heroApercuAlt: "Le tableau de bord de Win or Workout : 105 activités, 55 % de winrate, 2 203 points de dette et la progression vers l'objectif.",
 
@@ -127,7 +121,6 @@ export const landing = {
       { r: "V", issue: "gagne" as const, jeu: "Rocket League", detail: "Classée · 3-1", pts: 4 },
     ],
 
-    statsLabel: "La réalité des gamers",
     stats: [
       { value: "-30%", label: "de pas quotidiens chez les gamers par rapport à la population générale (Withings)" },
       { value: "13h", label: "de jeu par semaine en moyenne, soit près de 2h par jour (ESA, 2023)" },
@@ -141,14 +134,6 @@ export const landing = {
     problemTitleHighlight: "des heures",
     problemPara1: "Une soirée de jeu dépasse facilement les six heures. Entre les parties, les lobbies, les replays et le stream, on reste assis des journées entières. Le corps paie la note.",
     problemPara2: "La sédentarité chronique augmente les risques cardiovasculaires, réduit la concentration et dégrade les performances cognitives. Exactement ce dont tu as besoin pour carry.",
-    problemStats: [
-      { label: "Temps assis moyen / jour (gamer PC)", value: "8-10h" },
-      { label: "Adultes insuffisamment actifs (OMS)", value: "1 sur 4" },
-      { label: "Décès liés à la sédentarité / an (OMS)", value: "3,2M" },
-      { label: "Risque maladies chroniques", value: "+20-30%" },
-    ],
-
-    // ── Comment tu paies : le cœur du modèle, une dette convertible ──
     payEyebrow: "Une dette, trois monnaies",
     payTitle: "Tu choisis comment tu paies",
     paySubtitle: "L'app ne compte pas des pompes : elle compte des points d'effort. Le même coût se convertit dans l'exercice qui te va, et tu peux même le partager entre plusieurs. Rien à acheter, rien à installer, ça se fait entre deux parties.",
@@ -192,8 +177,6 @@ export const landing = {
       },
     ],
 
-    howEyebrow: "Comment ça marche",
-    howTitle: "3 étapes, c'est tout",
     steps: [
       {
         num: "01",
@@ -209,32 +192,6 @@ export const landing = {
         num: "03",
         title: "Paie l'addition",
         desc: "Ton score dépend de ta performance et de ton niveau. Pompes, squats ou boxe : tu choisis la monnaie, l'app tient les comptes.",
-      },
-    ],
-
-    benefitsEyebrow: "Pourquoi s'y mettre",
-    benefitsTitle: "L'exercice améliore ton jeu",
-    benefitsSubtitle: "Accessoirement, ça te fait jouer mieux.",
-    benefits: [
-      {
-        icon: "zap",
-        title: "Concentration",
-        desc: "L'exercice physique augmente le flux sanguin cérébral, améliorant la concentration et les prises de décision en game.",
-      },
-      {
-        icon: "target",
-        title: "Réflexes",
-        desc: "Une activité physique régulière réduit les temps de réaction. Tes réflexes en jeu s'améliorent avec ton cardio.",
-      },
-      {
-        icon: "brain",
-        title: "Mental",
-        desc: "L'exercice libère des endorphines qui réduisent le stress et la tilté. Tu joues mieux quand tu vas bien.",
-      },
-      {
-        icon: "heart",
-        title: "Santé long terme",
-        desc: "Rester assis plus de 6h par jour augmente de 34% les risques cardiovasculaires. Quelques séries cassent ce cycle.",
       },
     ],
 
@@ -254,17 +211,13 @@ export const landing = {
     // Sans point : c'est un titre, pas une phrase de paragraphe.
     ctaTitle: "Ta prochaine soirée a un prix",
     ctaSubtitle: "Télécharge l'application, ou crée ton compte en trente secondes. Google, Discord, ou un simple pseudo.",
-    ctaDownload: "Télécharger l'app",
     ctaBeta: "Créer mon compte",
     overlayEtiquette: "Partie en cours",
     overlayLegende: "La surcouche s'affiche par-dessus le jeu, dans le coin que tu choisis. Elle montre ce que la soirée te coûte, et ce que la partie en cours coûtera selon qu'elle se gagne ou se perd.",
     footerCgu: "CGU",
     footerConfidentialite: "Confidentialité",
-    footerLogin: "Se connecter",
-    footerDisclaimer: "Win or Workout n'est affilié à aucun éditeur de jeux.",
   },
   en: {
-    navDownload: "Download",
     navLoggedIn: "My space",
     navLoggedOut: "Log in",
     heroBadge: "Open beta: Google, Discord or just a nickname",
@@ -274,12 +227,7 @@ export const landing = {
     heroTelecharger: "Download for Windows",
     heroTelechargerNote: "Free · Windows 10 and 11 · no credit card",
     heroVersion: (v: string) => `Version ${v}`,
-    heroNavigateur: "Or try it in the browser",
-    heroGamesLive: "15 games supported",
-    heroGamesNext: "League · Valorant · CS2 · Fortnite · Apex · Warzone · Rocket League · TFT · Minecraft…",
-    heroDownload: "Download the Windows app",
     heroBeta: "Create my account",
-    heroLogin: "Log in",
     heroApercuTitre: "Win or Workout · Dashboard",
     heroApercuAlt: "The Win or Workout dashboard: 105 activities, 55% win rate, 2,203 points owed and progress toward the goal.",
 
@@ -379,7 +327,6 @@ export const landing = {
       { r: "W", issue: "gagne" as const, jeu: "Rocket League", detail: "Ranked · 3-1", pts: 4 },
     ],
 
-    statsLabel: "The gamer reality check",
     stats: [
       { value: "-30%", label: "fewer daily steps for gamers compared to the general population (Withings)" },
       { value: "13h", label: "of gaming per week on average, almost 2h a day (ESA, 2023)" },
@@ -393,13 +340,6 @@ export const landing = {
     problemTitleHighlight: "hours on end",
     problemPara1: "A gaming night easily runs past six hours. Between matches, lobbies, replays, and stream, you're glued to your chair all day. Your body pays the price.",
     problemPara2: "Chronic inactivity raises cardiovascular risk, kills your focus, and tanks cognitive performance. Exactly what you need to carry.",
-    problemStats: [
-      { label: "Avg. time seated / day (PC gamer)", value: "8-10h" },
-      { label: "Adults not active enough (WHO)", value: "1 in 4" },
-      { label: "Deaths linked to inactivity / year (WHO)", value: "3.2M" },
-      { label: "Chronic disease risk", value: "+20-30%" },
-    ],
-
     payEyebrow: "One debt, three currencies",
     payTitle: "You pick how you pay",
     paySubtitle: "The app doesn't count push-ups: it counts effort points. The same cost converts into whichever exercise suits you, and you can even split it across several. Nothing to buy, nothing to set up, it fits between two matches.",
@@ -443,8 +383,6 @@ export const landing = {
       },
     ],
 
-    howEyebrow: "How it works",
-    howTitle: "3 steps, that's it",
     steps: [
       {
         num: "01",
@@ -463,32 +401,6 @@ export const landing = {
       },
     ],
 
-    benefitsEyebrow: "Why bother",
-    benefitsTitle: "Exercise makes you play better",
-    benefitsSubtitle: "It also happens to make you play better.",
-    benefits: [
-      {
-        icon: "zap",
-        title: "Focus",
-        desc: "Physical exercise boosts blood flow to the brain, sharpening focus and decision-making mid-game.",
-      },
-      {
-        icon: "target",
-        title: "Reflexes",
-        desc: "Regular physical activity cuts reaction time. Your in-game reflexes improve along with your cardio.",
-      },
-      {
-        icon: "brain",
-        title: "Mental game",
-        desc: "Exercise releases endorphins that cut stress and tilt. You play better when you feel better.",
-      },
-      {
-        icon: "heart",
-        title: "Long-term health",
-        desc: "Sitting more than 6 hours a day raises cardiovascular risk by 34%. A few sets break that cycle.",
-      },
-    ],
-
     featuresEyebrow: "Features",
     featuresTitle: "What the app does",
     features: [
@@ -504,17 +416,13 @@ export const landing = {
 
     ctaTitle: "Your next gaming night has a price",
     ctaSubtitle: "Download the app, or create your account in thirty seconds. Google, Discord, or just a nickname.",
-    ctaDownload: "Download the app",
     ctaBeta: "Create my account",
     overlayEtiquette: "Match in progress",
     overlayLegende: "The overlay sits on top of the game, in whichever corner you pick. It shows what the evening is costing you, and what the current match will cost depending on whether you win or lose.",
     footerCgu: "Terms",
     footerConfidentialite: "Privacy",
-    footerLogin: "Log in",
-    footerDisclaimer: "Win or Workout is not affiliated with any game publisher.",
   },
   es: {
-    navDownload: "Descargar",
     navLoggedIn: "Mi espacio",
     navLoggedOut: "Iniciar sesión",
     heroBadge: "Beta abierta: Google, Discord o simplemente un nick",
@@ -524,12 +432,7 @@ export const landing = {
     heroTelecharger: "Descargar para Windows",
     heroTelechargerNote: "Gratis · Windows 10 y 11 · sin tarjeta bancaria",
     heroVersion: (v: string) => `Versión ${v}`,
-    heroNavigateur: "O pruébalo en el navegador",
-    heroGamesLive: "15 juegos compatibles",
-    heroGamesNext: "League · Valorant · CS2 · Fortnite · Apex · Warzone · Rocket League · TFT · Minecraft…",
-    heroDownload: "Descargar la app de Windows",
     heroBeta: "Crear mi cuenta",
-    heroLogin: "Iniciar sesión",
     heroApercuTitre: "Win or Workout · Panel",
     heroApercuAlt: "El panel de Win or Workout: 105 actividades, 55 % de victorias, 2203 puntos de deuda y el avance hacia el objetivo.",
 
@@ -629,7 +532,6 @@ export const landing = {
       { r: "V", issue: "gagne" as const, jeu: "Rocket League", detail: "Clasificatoria · 3-1", pts: 4 },
     ],
 
-    statsLabel: "La realidad de los gamers",
     stats: [
       { value: "-30 %", label: "menos pasos diarios entre los gamers que en la población general (Withings)" },
       { value: "13 h", label: "de juego por semana de media, casi 2 h al día (ESA, 2023)" },
@@ -643,13 +545,6 @@ export const landing = {
     problemTitleHighlight: "horas",
     problemPara1: "Una noche de juego pasa fácilmente de las seis horas. Entre partidas, salas de espera, repeticiones y stream, uno se queda sentado días enteros. El cuerpo paga la factura.",
     problemPara2: "El sedentarismo crónico aumenta el riesgo cardiovascular, reduce la concentración y hunde el rendimiento cognitivo. Justo lo que necesitas para cargar la partida.",
-    problemStats: [
-      { label: "Tiempo sentado al día (gamer de PC)", value: "8-10 h" },
-      { label: "Adultos poco activos (OMS)", value: "1 de cada 4" },
-      { label: "Muertes ligadas al sedentarismo al año (OMS)", value: "3,2 M" },
-      { label: "Riesgo de enfermedades crónicas", value: "+20-30 %" },
-    ],
-
     payEyebrow: "Una deuda, tres monedas",
     payTitle: "Tú eliges cómo pagas",
     paySubtitle: "La app no cuenta flexiones: cuenta puntos de esfuerzo. El mismo coste se convierte en el ejercicio que mejor te va, y hasta puedes repartirlo entre varios. Nada que comprar, nada que instalar, cabe entre dos partidas.",
@@ -693,8 +588,6 @@ export const landing = {
       },
     ],
 
-    howEyebrow: "Cómo funciona",
-    howTitle: "3 pasos, nada más",
     steps: [
       {
         num: "01",
@@ -713,32 +606,6 @@ export const landing = {
       },
     ],
 
-    benefitsEyebrow: "Por qué ponerse",
-    benefitsTitle: "El ejercicio mejora tu juego",
-    benefitsSubtitle: "De paso, te hace jugar mejor.",
-    benefits: [
-      {
-        icon: "zap",
-        title: "Concentración",
-        desc: "El ejercicio físico aumenta el flujo sanguíneo cerebral, lo que mejora la concentración y las decisiones en partida.",
-      },
-      {
-        icon: "target",
-        title: "Reflejos",
-        desc: "La actividad física regular reduce los tiempos de reacción. Tus reflejos en el juego mejoran con tu cardio.",
-      },
-      {
-        icon: "brain",
-        title: "Mental",
-        desc: "El ejercicio libera endorfinas que reducen el estrés y el tilteo. Se juega mejor cuando uno está bien.",
-      },
-      {
-        icon: "heart",
-        title: "Salud a largo plazo",
-        desc: "Estar sentado más de 6 h al día aumenta un 34 % el riesgo cardiovascular. Unas cuantas series rompen ese ciclo.",
-      },
-    ],
-
     featuresEyebrow: "Funciones",
     featuresTitle: "Lo que hace la app",
     features: [
@@ -754,17 +621,13 @@ export const landing = {
 
     ctaTitle: "Tu próxima noche tiene un precio",
     ctaSubtitle: "Descarga la aplicación o crea tu cuenta en treinta segundos. Google, Discord o simplemente un nick.",
-    ctaDownload: "Descargar la app",
     ctaBeta: "Crear mi cuenta",
     overlayEtiquette: "Partida en curso",
     overlayLegende: "La superposición aparece encima del juego, en la esquina que elijas. Muestra lo que te está costando la noche y lo que costará la partida en curso según se gane o se pierda.",
     footerCgu: "Condiciones",
     footerConfidentialite: "Privacidad",
-    footerLogin: "Iniciar sesión",
-    footerDisclaimer: "Win or Workout no está afiliada a ninguna editora de videojuegos.",
   },
   de: {
-    navDownload: "Herunterladen",
     navLoggedIn: "Mein Bereich",
     navLoggedOut: "Anmelden",
     heroBadge: "Offene Beta: Google, Discord oder einfach ein Nickname",
@@ -774,12 +637,7 @@ export const landing = {
     heroTelecharger: "Für Windows herunterladen",
     heroTelechargerNote: "Kostenlos · Windows 10 und 11 · keine Kreditkarte",
     heroVersion: (v: string) => `Version ${v}`,
-    heroNavigateur: "Oder im Browser ausprobieren",
-    heroGamesLive: "15 unterstützte Spiele",
-    heroGamesNext: "League · Valorant · CS2 · Fortnite · Apex · Warzone · Rocket League · TFT · Minecraft…",
-    heroDownload: "Windows-App herunterladen",
     heroBeta: "Konto erstellen",
-    heroLogin: "Anmelden",
     heroApercuTitre: "Win or Workout · Übersicht",
     heroApercuAlt: "Die Übersicht von Win or Workout: 105 Aktivitäten, 55 % Siegquote, 2203 Punkte Schuld und der Fortschritt zum Ziel.",
 
@@ -879,7 +737,6 @@ export const landing = {
       { r: "S", issue: "gagne" as const, jeu: "Rocket League", detail: "Rangliste · 3-1", pts: 4 },
     ],
 
-    statsLabel: "Die Realität der Gamer",
     stats: [
       { value: "-30 %", label: "weniger Schritte pro Tag bei Gamern als in der Gesamtbevölkerung (Withings)" },
       { value: "13 Std.", label: "Spielzeit pro Woche im Schnitt, also fast 2 Std. am Tag (ESA, 2023)" },
@@ -893,13 +750,6 @@ export const landing = {
     problemTitleHighlight: "stundenlang",
     problemPara1: "Ein Spieleabend überschreitet leicht sechs Stunden. Zwischen Partien, Lobbys, Replays und Stream sitzt man ganze Tage. Der Körper zahlt die Rechnung.",
     problemPara2: "Dauerhafter Bewegungsmangel erhöht das Herz-Kreislauf-Risiko, senkt die Konzentration und drückt die kognitive Leistung. Genau das, was du zum Carry brauchst.",
-    problemStats: [
-      { label: "Sitzzeit pro Tag (PC-Gamer)", value: "8-10 Std." },
-      { label: "Erwachsene mit zu wenig Bewegung (WHO)", value: "1 von 4" },
-      { label: "Todesfälle durch Bewegungsmangel pro Jahr (WHO)", value: "3,2 Mio." },
-      { label: "Risiko chronischer Krankheiten", value: "+20-30 %" },
-    ],
-
     payEyebrow: "Eine Schuld, drei Währungen",
     payTitle: "Du wählst, wie du zahlst",
     paySubtitle: "Die App zählt keine Liegestütze: Sie zählt Anstrengungspunkte. Derselbe Preis lässt sich in die Übung umrechnen, die dir liegt, und du kannst ihn sogar auf mehrere aufteilen. Nichts zu kaufen, nichts einzurichten, das passt zwischen zwei Partien.",
@@ -943,8 +793,6 @@ export const landing = {
       },
     ],
 
-    howEyebrow: "So funktioniert es",
-    howTitle: "3 Schritte, mehr nicht",
     steps: [
       {
         num: "01",
@@ -963,32 +811,6 @@ export const landing = {
       },
     ],
 
-    benefitsEyebrow: "Warum anfangen",
-    benefitsTitle: "Bewegung verbessert dein Spiel",
-    benefitsSubtitle: "Nebenbei spielst du dadurch besser.",
-    benefits: [
-      {
-        icon: "zap",
-        title: "Konzentration",
-        desc: "Bewegung erhöht die Durchblutung des Gehirns und verbessert so Konzentration und Entscheidungen mitten im Spiel.",
-      },
-      {
-        icon: "target",
-        title: "Reflexe",
-        desc: "Regelmäßige Bewegung verkürzt die Reaktionszeit. Deine Reflexe im Spiel verbessern sich mit deiner Ausdauer.",
-      },
-      {
-        icon: "brain",
-        title: "Kopfsache",
-        desc: "Bewegung setzt Endorphine frei, die Stress und Tilt senken. Man spielt besser, wenn es einem gut geht.",
-      },
-      {
-        icon: "heart",
-        title: "Langfristige Gesundheit",
-        desc: "Mehr als 6 Std. am Tag zu sitzen erhöht das Herz-Kreislauf-Risiko um 34 %. Ein paar Sätze durchbrechen diesen Kreislauf.",
-      },
-    ],
-
     featuresEyebrow: "Funktionen",
     featuresTitle: "Was die App macht",
     features: [
@@ -1004,17 +826,13 @@ export const landing = {
 
     ctaTitle: "Dein nächster Spieleabend hat einen Preis",
     ctaSubtitle: "Lad die App herunter oder erstell dein Konto in dreißig Sekunden. Google, Discord oder einfach ein Nickname.",
-    ctaDownload: "App herunterladen",
     ctaBeta: "Konto erstellen",
     overlayEtiquette: "Laufende Partie",
     overlayLegende: "Die Überlagerung liegt über dem Spiel, in der Ecke, die du wählst. Sie zeigt, was der Abend dich kostet, und was die laufende Partie kosten wird, je nachdem, ob sie gewonnen oder verloren wird.",
     footerCgu: "AGB",
     footerConfidentialite: "Datenschutz",
-    footerLogin: "Anmelden",
-    footerDisclaimer: "Win or Workout steht mit keinem Spielehersteller in Verbindung.",
   },
   zh: {
-    navDownload: "下载",
     navLoggedIn: "我的空间",
     navLoggedOut: "登录",
     heroBadge: "公开内测：Google、Discord，或者只要一个昵称",
@@ -1024,12 +842,7 @@ export const landing = {
     heroTelecharger: "下载 Windows 版",
     heroTelechargerNote: "免费 · Windows 10 和 11 · 无需银行卡",
     heroVersion: (v: string) => `版本 ${v}`,
-    heroNavigateur: "或者直接在浏览器里试试",
-    heroGamesLive: "支持 15 款游戏",
-    heroGamesNext: "League · Valorant · CS2 · Fortnite · Apex · Warzone · Rocket League · TFT · Minecraft…",
-    heroDownload: "下载 Windows 应用",
     heroBeta: "创建账号",
-    heroLogin: "登录",
     heroApercuTitre: "Win or Workout · 面板",
     heroApercuAlt: "Win or Workout 的面板：105 项活动、55% 胜率、2,203 点欠账，以及朝目标推进的进度。",
 
@@ -1129,7 +942,6 @@ export const landing = {
       { r: "胜", issue: "gagne" as const, jeu: "Rocket League", detail: "排位 · 3-1", pts: 4 },
     ],
 
-    statsLabel: "玩家的真实处境",
     stats: [
       { value: "-30%", label: "玩家每日步数比普通人群少三成（Withings）" },
       { value: "13 小时", label: "平均每周游戏时长，接近每天 2 小时（ESA，2023）" },
@@ -1143,13 +955,6 @@ export const landing = {
     problemTitleHighlight: "一坐就是几小时",
     problemPara1: "一个游戏之夜轻轻松松就超过六小时。对局、大厅、回放、直播，一整天都黏在椅子上。买单的是身体。",
     problemPara2: "长期久坐会提高心血管风险、削弱专注力、拉低认知表现。正好是你 carry 最需要的那些东西。",
-    problemStats: [
-      { label: "日均久坐时长（PC 玩家）", value: "8-10 小时" },
-      { label: "运动量不足的成年人（世卫组织）", value: "四分之一" },
-      { label: "每年与久坐相关的死亡（世卫组织）", value: "320 万" },
-      { label: "慢性病风险", value: "+20-30%" },
-    ],
-
     payEyebrow: "一笔欠账，三种货币",
     payTitle: "怎么还，你说了算",
     paySubtitle: "应用数的不是俯卧撑，而是努力点数。同一笔代价可以换成适合你的动作，甚至可以拆开分给好几种。不用买什么，也不用装什么，两局之间就能做完。",
@@ -1193,8 +998,6 @@ export const landing = {
       },
     ],
 
-    howEyebrow: "怎么用",
-    howTitle: "三步，仅此而已",
     steps: [
       {
         num: "01",
@@ -1213,32 +1016,6 @@ export const landing = {
       },
     ],
 
-    benefitsEyebrow: "为什么值得开始",
-    benefitsTitle: "运动会让你打得更好",
-    benefitsSubtitle: "顺便一提，它确实让你打得更好。",
-    benefits: [
-      {
-        icon: "zap",
-        title: "专注",
-        desc: "运动会增加脑部血流，让你在局内更专注、决策更清楚。",
-      },
-      {
-        icon: "target",
-        title: "反应",
-        desc: "规律运动会缩短反应时间。心肺变好，局内的反应也跟着变好。",
-      },
-      {
-        icon: "brain",
-        title: "心态",
-        desc: "运动会释放内啡肽，减少压力和上头。状态好的时候，自然打得更好。",
-      },
-      {
-        icon: "heart",
-        title: "长期健康",
-        desc: "每天坐超过 6 小时，心血管风险会上升 34%。几组动作就能打断这个循环。",
-      },
-    ],
-
     featuresEyebrow: "功能",
     featuresTitle: "这个应用做什么",
     features: [
@@ -1254,17 +1031,13 @@ export const landing = {
 
     ctaTitle: "你下一个游戏之夜是有价格的",
     ctaSubtitle: "下载应用，或者三十秒创建账号。Google、Discord，或者只要一个昵称。",
-    ctaDownload: "下载应用",
     ctaBeta: "创建账号",
     overlayEtiquette: "对局进行中",
     overlayLegende: "叠加层显示在游戏之上，位置由你挑。它会告诉你这一晚已经欠了多少，以及当前这局赢或输分别要付多少。",
     footerCgu: "使用条款",
     footerConfidentialite: "隐私",
-    footerLogin: "登录",
-    footerDisclaimer: "Win or Workout 与任何游戏发行商均无关联。",
   },
   ja: {
-    navDownload: "ダウンロード",
     navLoggedIn: "マイページ",
     navLoggedOut: "ログイン",
     heroBadge: "オープンベータ：Google、Discord、またはニックネームだけで",
@@ -1274,12 +1047,7 @@ export const landing = {
     heroTelecharger: "Windows 版をダウンロード",
     heroTelechargerNote: "無料 · Windows 10 と 11 · クレジットカード不要",
     heroVersion: (v: string) => `バージョン ${v}`,
-    heroNavigateur: "ブラウザーで試すこともできます",
-    heroGamesLive: "15 タイトル対応",
-    heroGamesNext: "League · Valorant · CS2 · Fortnite · Apex · Warzone · Rocket League · TFT · Minecraft…",
-    heroDownload: "Windows アプリをダウンロード",
     heroBeta: "アカウントを作る",
-    heroLogin: "ログイン",
     heroApercuTitre: "Win or Workout · ダッシュボード",
     heroApercuAlt: "Win or Workout のダッシュボード：105 件のアクティビティ、勝率 55%、2,203 ポイントの負債、そして目標までの進み具合。",
 
@@ -1379,7 +1147,6 @@ export const landing = {
       { r: "勝", issue: "gagne" as const, jeu: "Rocket League", detail: "ランク · 3-1", pts: 4 },
     ],
 
-    statsLabel: "ゲーマーの現実",
     stats: [
       { value: "-30%", label: "ゲーマーの一日の歩数は一般の人より三割少ない（Withings）" },
       { value: "13 時間", label: "週あたりの平均プレー時間、一日およそ 2 時間（ESA、2023）" },
@@ -1393,13 +1160,6 @@ export const landing = {
     problemTitleHighlight: "何時間も",
     problemPara1: "ゲームの夜は簡単に六時間を超えます。試合、ロビー、リプレイ、配信。気づけば一日中座りっぱなしです。請求書を受け取るのは身体です。",
     problemPara2: "慢性的な運動不足は心血管リスクを高め、集中力を削り、認知パフォーマンスを落とします。キャリーするのに一番いらないものばかりです。",
-    problemStats: [
-      { label: "一日の平均着席時間（PC ゲーマー）", value: "8〜10 時間" },
-      { label: "運動が足りていない成人（WHO）", value: "4 人に 1 人" },
-      { label: "運動不足に関連する年間死亡数（WHO）", value: "320 万人" },
-      { label: "慢性疾患のリスク", value: "+20〜30%" },
-    ],
-
     payEyebrow: "一つの負債、三つの通貨",
     payTitle: "支払い方はあなたが選ぶ",
     paySubtitle: "アプリが数えているのは腕立てではなく、努力ポイントです。同じ費用を自分に合った種目に換算できますし、複数に分けることもできます。買うものも用意するものもなく、試合と試合のあいだに片づきます。",
@@ -1443,8 +1203,6 @@ export const landing = {
       },
     ],
 
-    howEyebrow: "使い方",
-    howTitle: "3 ステップ、それだけ",
     steps: [
       {
         num: "01",
@@ -1463,32 +1221,6 @@ export const landing = {
       },
     ],
 
-    benefitsEyebrow: "始める理由",
-    benefitsTitle: "運動はプレーを良くする",
-    benefitsSubtitle: "ついでに、勝てるようにもなります。",
-    benefits: [
-      {
-        icon: "zap",
-        title: "集中力",
-        desc: "運動は脳の血流を増やし、試合中の集中力と判断を鋭くします。",
-      },
-      {
-        icon: "target",
-        title: "反応速度",
-        desc: "定期的な運動は反応時間を縮めます。心肺が良くなるほど、ゲーム内の反応も良くなります。",
-      },
-      {
-        icon: "brain",
-        title: "メンタル",
-        desc: "運動はエンドルフィンを出し、ストレスとティルトを減らします。調子がいいほど、うまく打てます。",
-      },
-      {
-        icon: "heart",
-        title: "長期的な健康",
-        desc: "一日 6 時間以上座ると心血管リスクが 34% 上がります。数セットでその流れを断ち切れます。",
-      },
-    ],
-
     featuresEyebrow: "機能",
     featuresTitle: "このアプリができること",
     features: [
@@ -1504,13 +1236,10 @@ export const landing = {
 
     ctaTitle: "次のゲームの夜にも値段がつきます",
     ctaSubtitle: "アプリをダウンロードするか、三十秒でアカウントを作ってください。Google、Discord、またはニックネームだけで。",
-    ctaDownload: "アプリをダウンロード",
     ctaBeta: "アカウントを作る",
     overlayEtiquette: "試合中",
     overlayLegende: "オーバーレイはゲームの上に、好きな隅に表示されます。今夜いくらかかっているか、そしていまの試合が勝ち負けそれぞれでいくらになるかを示します。",
     footerCgu: "利用規約",
     footerConfidentialite: "プライバシー",
-    footerLogin: "ログイン",
-    footerDisclaimer: "Win or Workout はいかなるゲーム会社とも提携していません。",
   },
 };

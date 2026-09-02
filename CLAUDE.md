@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1608 tests unitaires, 150 suites. Base et session doublées : aucune dépendance à
+1612 tests unitaires, 151 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -722,6 +722,60 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Soixante et une clés de dictionnaire que plus personne ne lisait
+`dictionaries.test.ts` refuse un FICHIER de dictionnaire que rien n'importe —
+deux avaient survécu six semaines à la suppression de leurs écrans. Il ne dit
+rien des clés à l'intérieur d'un fichier bien vivant, et c'est là que la même
+chose se produit en plus discret : un écran qu'on remanie laisse ses anciens
+libellés derrière lui, dans les six langues.
+
+**Soixante et une clés sur onze cent trente**, dans douze fichiers, soit
+**trois cent soixante-six entrées** et cinq cent cinquante lignes. Le plus gros
+lot vient de `landing.ts` — dix-sept clés, laissées par la conversion de la
+page d'accueil au rendu serveur — puis `history.ts` (dix), `exercices.ts`
+(treize), `dashboard.ts` (huit).
+
+Le coût est humain, pas technique : TypeScript ne se plaint pas d'une clé que
+personne ne lit, et le paquet livré ne s'en allège pas — elle part au
+navigateur avec les autres. On la traduit, on la relit, on la corrige.
+L'inverse, une clé EMPLOYÉE que personne ne déclare, est attrapé ici par le
+compilateur ; il avait fallu un test pour ça dans la coquille Electron, où
+« undefined » s'écrivait en travers de la pastille.
+
+**Le recensement s'est trompé deux fois, et les deux erreurs sont
+instructives.**
+
+La première version prenait des morceaux de phrases pour des clés :
+« Actuellement », « scientifiquement », « Duty ». Un texte français contient
+« Actuellement : », et un motif naïf en fait une clé — elle annonçait alors
+une trentaine de clés mortes qui n'existaient pas. Il faut SAUTER les chaînes
+et les commentaires, ce que fait la version retenue. Une clé inventée envoie
+supprimer du texte vivant.
+
+La seconde a failli le faire pour de bon. Huit clés sont CONSTRUITES au vol :
+`nomsExercices` lit `${id}Nom` et `${id}Desc` pour chaque exercice du
+catalogue. Un recensement par le nom les déclare mortes. **C'est
+`nomsExercices.test.ts` qui a arrêté le geste**, en exigeant un nom et une
+description pour chaque exercice — un garde écrit pour une autre raison, qui a
+attrapé la suppression au moment où elle passait. Le nouveau garde connaît
+cette famille maintenant, et lit la liste des identifiants dans le CATALOGUE
+plutôt que dans une copie.
+
+Un piège d'écriture dans le script de suppression, qui mérite sa ligne : deux
+entrées mortes voisines séparées par un commentaire réclament **toutes les
+deux** ce commentaire. Leurs plages se recouvrent, et les supprimer l'une
+après l'autre coupe au milieu de la ligne d'après — `tsc` a rendu « chaîne non
+terminée » sur un fichier que je venais de réécrire. Les plages se fusionnent
+avant d'être retirées.
+
+`src/lib/i18n/clesMortes.test.ts` garde l'ensemble, avec deux témoins : au
+moins vingt fichiers et huit cents clés examinés, et la règle des clés
+construites doit désigner au moins autant de clés qu'il y a d'exercices. Sans
+eux, un extracteur cassé rendrait le fichier vert en n'examinant rien.
+
+Trois sabotages, trois échecs : une clé morte ajoutée, l'extracteur rendu
+aveugle, la règle des clés construites vidée.
 
 ### Un canal muet brûlait la relance des absents pour quatre-vingt-dix jours
 Recherche d'autres cas de « répond juste, ne fait rien », la famille de la
