@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1543 tests unitaires, 144 suites. Base et session doublées : aucune dépendance à
+1560 tests unitaires, 145 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -542,6 +542,8 @@ node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
+node scripts/routes.mjs          # poids et temps de chaque route d'API
+node scripts/semer-parties.mjs   # de quoi mesurer autre chose qu'un compte vide
 ```
 
 Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
@@ -700,6 +702,116 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La mécanique de rétention n'a jamais tourné, et répondait 200
+Le rappel du matin, la relance des absents et le bilan hebdomadaire cherchaient
+tous les trois l'heure EXACTE : `heureLocale(...) === 9`. C'est juste si le
+déclencheur passe toutes les heures. **Il ne le fait pas.**
+
+Relevé sur les trente dernières exécutions du travail, huit jours :
+
+| jour | exécutions | heures UTC |
+|---|---|---|
+| 1ᵉʳ sept | 5 | 05 10 14 18 21 |
+| 31 août | 4 | 05 13 20 23 |
+| 30 août | 6 | 00 06 12 17 21 23 |
+| 29 août | 5 | 02 09 14 18 21 |
+| 28 août | 2 | 05 18 |
+| 27 août | 2 | 09 20 |
+
+Vingt-quatre attendues par jour, trois à six en vrai — le `schedule` de GitHub
+Actions est au mieux disant, il décale et il saute. Et sur ces huit jours,
+**aucune exécution à sept heures UTC**, c'est-à-dire neuf heures en France.
+
+Donc : le rappel du matin, le bilan et la relance ne sont **jamais partis**
+pour un compte français. Les deux routes répondent 200 à chaque passage avec
+zéro envoi, ce qui est le résultat exact et normal quand on regarde à la
+mauvaise heure. Rien ne pouvait le signaler — c'est le même piège que la
+sauvegarde muette, sous une autre forme : **une réponse juste à une question
+qu'on ne pose jamais au bon moment.**
+
+C'est la deuxième fois que ces trois envois se révèlent n'avoir jamais tourné.
+La première, c'était les quatre routes qui partaient en 307 vers `/login` ; on
+a corrigé la porte, vérifié que la route répondait 200, et conclu. La
+vérification était juste et incomplète : « la route répond » ne dit pas
+« quelqu'un l'appelle à l'heure ».
+
+**Ce qui change.** On ne cherche plus une heure, on cherche une FENÊTRE — neuf
+heures à midi local — et on retient ce qui est déjà parti. Les deux moitiés
+sont nécessaires : sans fenêtre le déclencheur rate la cible, sans marque il
+enverrait trois fois dans la matinée. Le bilan et la relance avaient déjà leur
+marque (`bilanLe`, `relanceLe`) ; le rappel du matin n'en avait pas, d'où
+`User.rappelLe`.
+
+La fenêtre s'arrête à midi : c'est encore le matin, le rappel garde son sens,
+et ça fait trois occasions au lieu d'une. L'élargir davantage ferait un rappel
+« de la journée », ce qui n'est pas la même promesse — et ce serait un
+arbitrage de produit, pas une tolérance d'implémentation.
+
+**La marque se compare par JOUR LOCAL, pas en heures écoulées.** « Au moins
+vingt-quatre heures depuis le dernier » ferait dériver la marque : envoyé à
+11 h 30 lundi, le suivant ne pourrait pas partir avant 11 h 30 mardi, donc
+sortirait de la fenêtre au bout de quelques jours et l'envoi sauterait un jour
+sur deux. Un test tient ce cas précis.
+
+Cinq sabotages, cinq échecs — dont un qui est passé au vert au premier essai :
+remettre l'heure exacte dans le bilan hebdomadaire ne faisait tomber aucun
+test, parce que son fichier ne l'éprouvait qu'à neuf heures pile. Un test
+écrit autour d'une constante n'éprouve que cette constante.
+
+**Ce qui n'est pas réglé, et qui ne se décide pas seul** : la fenêtre rend le
+système tolérant à un déclencheur irrégulier, elle ne le rend pas ponctuel.
+Trois à six passages par jour, ça reste une loterie à trois cases sur
+vingt-quatre. Un déclencheur fiable — les tâches planifiées de Vercel, par
+exemple — est une décision d'infrastructure ; elle figure dans les questions.
+
+**Et deux gardes ont mordu sur la colonne ajoutée**, ce qui est exactement leur
+raison d'être : `compte.test.ts` a exigé qu'on range `rappelLe` d'un côté ou de
+l'autre de ce qui sort du compte, et `politiqueComplete.test.ts` qu'on la
+décrive dans la politique de confidentialité ou qu'on dise pourquoi elle en est
+absente. Aucune des deux ne se serait posée toute seule.
+
+**Un piège d'outillage, nouveau celui-là.** La suite navigateur est tombée en
+entier après l'ajout de la colonne : quatre-vingt-dix tests non joués, et le
+symptôme était « l'ouverture de compte expire ». La cause n'a rien à voir —
+la base locale n'avait pas la migration, donc TOUTE requête authentifiée
+échouait, `getCurrentUser` nommant la colonne dans son SQL. `npx prisma migrate
+deploy` après avoir touché au schéma, avant de lancer quoi que ce soit. La CI,
+elle, monte sa base par les migrations : elle n'aurait pas eu le problème.
+
+### Le poids par route, mesuré avant/après plutôt qu'annoncé
+`charge.mjs` monte en charge sur le DOCUMENT : il ne dit rien du poids d'une
+réponse d'API, qui est justement ce que le resserrement des colonnes vient de
+changer. `scripts/routes.mjs` le mesure — corps pesé, vingt appels chronométrés
+— et `scripts/semer-parties.mjs` lui donne de quoi mesurer.
+
+Sur soixante parties, serveur local :
+
+| route | avant | après |
+|---|---|---|
+| `/api/games` | 35 634 octets | **24 834** |
+| `/api/dashboard` | 5 405 octets | 5 405 |
+
+**Et il faut dire pourquoi le tableau de bord ne bouge pas.** Sa réponse est
+faite d'agrégats, pas de lignes : son `select` réduit ce qui sort de la BASE,
+pas ce qui part vers le navigateur. Le gain est sur l'autre moitié du chemin —
+en production, chaque requête est un appel HTTPS indépendant vers Neon, et ce
+sont quinze colonnes sur trente et une qui traversent au lieu de toutes. Ça ne
+se mesure pas d'ici ; l'annoncer comme un gain de réponse serait faux.
+
+Les temps ne bougent pas non plus, et c'est attendu : la base est sur la même
+machine, treize millisecondes de médiane des deux côtés. Ce qu'on a retiré,
+c'est du volume, pas du travail.
+
+**Deux pièges retombés en écrivant l'outil, tous deux déjà dans ce fichier.**
+Le premier rapport donnait 31 143 octets pour les SEPT routes — c'est-à-dire la
+page de connexion sept fois : j'envoyais le jeton nu en guise d'en-tête
+`cookie`, alors qu'Auth.js le découpe en deux au-delà de 3 500 caractères. Sept
+chiffres identiques auraient dû me sauter aux yeux ; c'est le contrôle
+d'atterrissage qui l'a dit, et il n'existait que parce que je l'ai ajouté après
+coup. Le second : avec un compte frais, `/api/games` rend deux octets. La
+mesure est juste et ne dit rien. D'où le semis, et d'où la phrase en tête de
+l'outil.
 
 ### `networkidle` attendait un silence qui ne vient jamais
 Deux fichiers de parcours ont échoué en cinq exécutions complètes, chacun une

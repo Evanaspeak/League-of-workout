@@ -50,7 +50,7 @@ const PART_AU_NAVIGATEUR = new Set([
   "santeConsentiLe", "santeRefuseLe",
   "detteDepuis", "dettePointsDus",
   "exercicesSuspendus", "suspensionDepuis",
-  "langue", "bilanActif", "bilanLe", "relanceLe", "fuseau",
+  "langue", "bilanActif", "bilanLe", "relanceLe", "rappelLe", "fuseau",
   "variantePompes", "exercice", "exercices",
   "rappelSeuilPoints", "rappelSeuilSec", "plafondQuotidien",
   "pompesMax", "pompesMaxLe",

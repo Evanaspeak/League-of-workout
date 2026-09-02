@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notifier } from "@/lib/push";
 import { textesNotification } from "@/lib/i18n/notifications";
-import { heureLocale } from "@/lib/fuseau";
+import { heureLocale, jourDansFuseau } from "@/lib/fuseau";
+import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/fenetreEnvoi";
 import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { dureeEffort, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
@@ -22,15 +23,28 @@ import { dureeEffort, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/l
  * une application qui redit tous les jours « tu nous manques » se fait
  * couper, et elle l'a cherché.
  *
- * Appelé toutes les heures depuis GitHub Actions : le service ne sait pas
- * quelle heure il est chez chacun, donc il regarde à chaque passage qui, à
- * cet instant, est au matin chez lui. Un compte sans fuseau connu n'est
- * jamais notifié — envoyer « bonjour » à trois heures du matin est pire que
- * ne rien envoyer.
+ * Appelé depuis GitHub Actions : le service ne sait pas quelle heure il est
+ * chez chacun, donc il regarde à chaque passage qui, à cet instant, est au
+ * matin chez lui. Un compte sans fuseau connu n'est jamais notifié — envoyer
+ * « bonjour » à trois heures du matin est pire que ne rien envoyer.
+ *
+ * **Une fenêtre, et non une heure.** Le déclencheur était réputé passer toutes
+ * les heures ; il ne le fait pas. Relevé sur huit jours : trente exécutions au
+ * lieu de cent quatre-vingt-douze, et aucune à sept heures UTC — c'est-à-dire
+ * neuf heures en France. Cette route répondait 200 à chaque passage, avec zéro
+ * envoi, ce qui est le résultat normal quand on regarde à la mauvaise heure :
+ * rien ne pouvait le signaler. La fenêtre couvre maintenant la matinée, et une
+ * marque par compte empêche d'envoyer trois fois entre neuf heures et midi.
  */
 
-/** L'heure locale à laquelle le rappel part. */
-export const HEURE_RAPPEL = 9;
+/**
+ * L'heure locale à laquelle la fenêtre du matin s'ouvre.
+ *
+ * Ce n'est plus l'heure à laquelle le rappel part : il part au premier passage
+ * du déclencheur DANS la fenêtre, qui va de neuf heures à midi. Le nom reste
+ * pour ce qu'il désigne toujours — le moment où l'on juge décent d'écrire.
+ */
+export const HEURE_RAPPEL = DEBUT_MATIN;
 
 /**
  * En dessous, ça ne vaut pas la peine de réveiller quelqu'un pour ça : une
@@ -57,12 +71,19 @@ export async function POST(req: Request) {
   const maintenant = new Date();
   const candidats = await prisma.user.findMany({
     where: { dettePointsDus: { gt: 0 }, fuseau: { not: null } },
-    select: { id: true, dettePointsDus: true, exercices: true, langue: true, fuseau: true },
+    select: {
+      id: true, dettePointsDus: true, exercices: true, langue: true, fuseau: true,
+      rappelLe: true,
+    },
   });
 
   let envoyes = 0;
   for (const u of candidats) {
-    if (heureLocale(maintenant, u.fuseau) !== HEURE_RAPPEL) continue;
+    if (!dansLaFenetreDuMatin(heureLocale(maintenant, u.fuseau))) continue;
+    // Le jour se lit dans le fuseau de la personne : à midi à Tokyo, c'est
+    // encore la veille à Paris, et la marque désignerait le mauvais jour.
+    const jourDe = (d: Date) => jourDansFuseau(d, u.fuseau);
+    if (dejaEnvoyeAujourdhui(u.rappelLe, maintenant, jourDe)) continue;
     // Seule la part comptée en temps s'accumule : le reste s'est fait dans la
     // foulée des parties et n'attend pas.
     const exercices = exercicesEnTemps(toExerciceIds(u.exercices));
@@ -74,6 +95,11 @@ export async function POST(req: Request) {
     // Un envoi raté ne doit pas empêcher les suivants : c'est une boucle sur
     // tous les comptes, et le premier abonnement périmé les arrêterait tous.
     const partis = await notifier(u.id, { titre, corps, tag: "wow-matin" }).catch(() => 0);
+    // La marque se pose même si l'envoi n'a atteint personne : sans
+    // abonnement, réessayer à dix heures puis à onze ne changerait rien et
+    // referait le tour de la base. Même règle que la relance.
+    await prisma.user.update({ where: { id: u.id }, data: { rappelLe: maintenant } })
+      .catch(() => {});
     if (partis > 0) envoyes += 1;
   }
 
@@ -102,7 +128,9 @@ async function relancerLesAbsents(maintenant: Date): Promise<number> {
 
   let envoyees = 0;
   for (const u of comptes) {
-    if (heureLocale(maintenant, u.fuseau) !== HEURE_RAPPEL) continue;
+    // Même fenêtre que le rappel. Pas besoin d'une marque de plus ici :
+    // `relancer` en tient déjà une, et elle se compte en semaines.
+    if (!dansLaFenetreDuMatin(heureLocale(maintenant, u.fuseau))) continue;
     const dernierePartie = u.games[0]?.createdAt ?? null;
     if (!relancer({ dernierePartie, derniereRelance: u.relanceLe }, maintenant)) continue;
 

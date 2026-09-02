@@ -4,6 +4,7 @@ import { envoyerBilanHebdo } from "@/lib/email";
 import { textesBilan } from "@/lib/i18n/courriels";
 import { bilanHebdo, bilanDu, vautUnBilan, JOURS_BILAN } from "@/lib/bilanHebdo";
 import { heureLocale } from "@/lib/fuseau";
+import { DEBUT_MATIN, dansLaFenetreDuMatin } from "@/lib/fenetreEnvoi";
 import { toLocale } from "@/lib/i18n/langues";
 
 /**
@@ -22,7 +23,20 @@ import { toLocale } from "@/lib/i18n/langues";
  */
 
 /** Heure locale d'envoi. La même que les notifications, volontairement. */
-export const HEURE_BILAN = 9;
+/**
+ * L'heure locale à laquelle la fenêtre du lundi matin s'ouvre.
+ *
+ * Le bilan partait à neuf heures PILE, ce qui suppose un déclencheur qui passe
+ * toutes les heures. Il ne le fait pas : trente exécutions en huit jours au
+ * lieu de cent quatre-vingt-douze, jamais à l'heure voulue. Le bilan
+ * hebdomadaire n'est donc jamais parti, et la route répondait 200 à chaque
+ * passage — zéro envoi est le résultat normal quand on regarde à la mauvaise
+ * heure, donc rien ne pouvait le dire.
+ *
+ * La fenêtre couvre la matinée. `bilanLe` empêche déjà d'envoyer deux fois,
+ * et elle se compte en jours : il n'y a pas de marque à ajouter ici.
+ */
+export const HEURE_BILAN = DEBUT_MATIN;
 
 /** Jour d'envoi : lundi, quand la semaine passée vient de se refermer. */
 export const JOUR_BILAN = 1;
@@ -62,8 +76,7 @@ export async function POST(req: Request) {
 
   let envoyes = 0;
   for (const u of comptes) {
-    const heure = heureLocale(maintenant, u.fuseau);
-    if (heure !== HEURE_BILAN) continue;
+    if (!dansLaFenetreDuMatin(heureLocale(maintenant, u.fuseau))) continue;
     // Le jour de la semaine se lit dans le fuseau de la personne : à neuf
     // heures à Tokyo, il est encore dimanche à Paris.
     const jour = new Intl.DateTimeFormat("en-US", { timeZone: u.fuseau!, weekday: "short" })

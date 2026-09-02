@@ -151,3 +151,56 @@ describe("envoi", () => {
     expect((await r.json()).envoyes).toBe(1);
   });
 });
+
+/**
+ * La fenêtre du lundi matin.
+ *
+ * Le bilan partait à neuf heures PILE, ce qui suppose un déclencheur ponctuel.
+ * Il ne l'est pas : trente exécutions en huit jours au lieu de cent
+ * quatre-vingt-douze, jamais à l'heure voulue. Le bilan n'est donc jamais parti,
+ * et la route répondait 200 à chaque passage — zéro envoi est le résultat normal
+ * quand on regarde au mauvais moment.
+ *
+ * Le contrôle en tête de fichier vérifie que l'horloge du test tombe sur neuf
+ * heures ; celui-ci vérifie que ONZE heures marche aussi, ce qui est la moitié
+ * de la correction que rien ne tenait.
+ */
+describe("la fenêtre du lundi matin", () => {
+  const decalerA = (heure: number) => {
+    const d = new Date(LUNDI_MATIN);
+    d.setUTCHours(d.getUTCHours() + (heure - HEURE_BILAN));
+    jest.setSystemTime(d);
+    return d;
+  };
+
+  it("part encore à onze heures", async () => {
+    decalerA(11);
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(1);
+  });
+
+  it("ne part plus à midi", async () => {
+    decalerA(12);
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(0);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("ne part pas à huit heures", async () => {
+    decalerA(8);
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(0);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Et la marque existante suffit contre les doublons : c'est pour ça qu'il n'a
+   * pas fallu en ajouter une ici, contrairement au rappel du matin.
+   */
+  it("ne part pas deux fois dans la même matinée", async () => {
+    decalerA(11);
+    user.findMany.mockResolvedValue([compte({ bilanLe: new Date(LUNDI_MATIN) })]);
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(0);
+  });
+});
