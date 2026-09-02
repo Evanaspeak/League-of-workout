@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { avecLocale } from "@/lib/i18n/cheminLocalise";
+import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { oublierPremiereVisite } from "@/lib/premiereVisite";
 import { useIdCompte } from "@/lib/useIdCompte";
@@ -36,6 +37,7 @@ export function ReglagesAvances({
   setNiveaux: (maj: (prec: LevelConfig[]) => LevelConfig[]) => void;
 }) {
   const t = useT(settingsDict);
+  const { locale } = useLocale();
   const uid = useIdCompte();
   const [roleWeights, setRoleWeights] = useState<RoleWeight[]>([]);
   const [masteryConfig, setMasteryConfig] = useState<MasteryConfig | null>(null);
@@ -226,7 +228,7 @@ export function ReglagesAvances({
             <button
               onClick={() => {
                 oublierPremiereVisite(uid);
-                window.location.href = "/dashboard";
+                window.location.href = avecLocale("/dashboard", locale);
               }}
               style={{
                 width: "100%",

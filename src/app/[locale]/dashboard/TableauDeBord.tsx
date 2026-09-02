@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { SerieEtRetard } from "@/components/SerieEtRetard";
 import { Paliers } from "@/components/Paliers";
@@ -252,7 +253,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
       if (!res.ok) {
         // Session invalide (ex. cookie d'une ancienne base) → retour au login.
         if (res.status === 401 && typeof window !== "undefined") {
-          window.location.href = "/login";
+          window.location.href = avecLocale("/login", locale);
           return;
         }
         setChargementRate(true);

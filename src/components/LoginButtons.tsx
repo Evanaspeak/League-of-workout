@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { useValeurClient } from "@/lib/valeurClient";
 import { signIn } from "next-auth/react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
@@ -81,7 +82,7 @@ export function LoginButtons() {
         setError(t.erreurPseudoCode);
       } else {
         await appliquerMemorisation();
-        window.location.assign("/dashboard?li=1");
+        window.location.assign(avecLocale("/dashboard?li=1", locale));
       }
     } catch {
       setError(t.erreurConnexion);
@@ -124,7 +125,7 @@ export function LoginButtons() {
         setError(t.erreurEmailMotDePasse);
       } else {
         await appliquerMemorisation();
-        window.location.assign("/dashboard?li=1");
+        window.location.assign(avecLocale("/dashboard?li=1", locale));
       }
     } catch {
       setError(t.erreurConnexion);
@@ -155,7 +156,7 @@ export function LoginButtons() {
         setMode("login");
       } else {
         await appliquerMemorisation();
-        window.location.assign("/dashboard?li=1");
+        window.location.assign(avecLocale("/dashboard?li=1", locale));
       }
     } catch {
       setError(t.erreurServeur);

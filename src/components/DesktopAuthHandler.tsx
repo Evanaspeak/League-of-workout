@@ -39,6 +39,17 @@ export function DesktopAuthHandler() {
     };
     const echouer = (raison: string) => {
       oublier();
+      /**
+       * L'adresse reste NUE, et c'est une exception assumée.
+       *
+       * La fenêtre d'authentification de l'application installée décide « la
+       * connexion est finie » en demandant « ce n'est plus /login ? ». Une
+       * adresse préfixée y répondrait oui à la toute première page : la
+       * fenêtre se refermerait avant qu'on ait tapé quoi que ce soit. Les
+       * copies antérieures à 0.9.9 ne se corrigent pas à distance, et c'est
+       * pour elles que cette exception existe — la même que celle du
+       * middleware, avec la même date de péremption.
+       */
       window.location.assign(`/login?transfer_error=${raison}`);
     };
 
