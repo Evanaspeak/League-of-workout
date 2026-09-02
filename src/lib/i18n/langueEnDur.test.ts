@@ -33,6 +33,15 @@ function fichiers(dossier: string): string[] {
 }
 
 describe("la langue ne se décide pas dans les composants", () => {
+  /**
+   * Sans témoin, un dossier renommé rendrait ce garde vert en ne lisant aucun
+   * fichier — c'est exactement le raccourci qu'il existe pour interdire, à
+   * l'étage au-dessus.
+   */
+  it("regarde vraiment des fichiers", () => {
+    expect(fichiers(RACINE).length).toBeGreaterThan(100);
+  });
+
   it("aucune comparaison de locale hors du dossier i18n", () => {
     // `locale === "fr"`, `locale !== "en"`, `lang == 'ja'` : toutes les formes
     // d'un même raccourci.

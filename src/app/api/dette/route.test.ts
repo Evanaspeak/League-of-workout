@@ -1,4 +1,5 @@
 import { requete, corps, utilisateur } from "@/test/api";
+import { jourLocal } from "@/lib/serie";
 
 jest.mock("@/lib/prisma", () => {
   const paiement = { create: jest.fn(), findUnique: jest.fn() };
@@ -210,7 +211,11 @@ describe("trace du paiement", () => {
     session.mockResolvedValue(joueur({ dettePointsDus: 50 }));
     user.update.mockResolvedValue({ dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"] });
     await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true, jour: "pas un jour" } }));
-    expect(paiement.create.mock.calls[0][0].data.jour).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // Le repli est `jourLocal()` : vérifier la seule FORME du jour rendu
+    // n'affirme rien, puisque cette fonction en produit toujours une juste.
+    // C'est le jour LOCAL qu'on attend, et c'est ce qui distingue le repli
+    // d'un jour inventé.
+    expect(paiement.create.mock.calls[0][0].data.jour).toBe(jourLocal());
   });
 
   /**
