@@ -701,6 +701,173 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois mémoires de module retenaient l'échec comme une réponse
+Le défaut des champions n'était pas isolé : c'est une famille, et les trois
+membres ont été écrits pour la même bonne raison. Plusieurs composants d'un
+écran ont besoin de la même réponse, donc on mémorise l'appel au niveau du
+module pour qu'un seul parte. C'est juste, c'est mesuré, et ça ne dit rien de
+ce qu'il faut faire quand la réponse ne vient pas.
+
+```ts
+if (!enCours) enCours = demander();   // l'échec aussi devient définitif
+```
+
+- **`useChampions`** : liste codée en dur figée, et comme elle sert à VALIDER,
+  un champion ajouté par l'administrateur devenait « non reconnu ».
+- **`chargerContexte`** : `null` rendu à tous les composants pour toute la
+  durée de la page. Compteur de dette vide, lien d'administration absent,
+  consentement redemandé. Aucun ne se plaint, aucun ne redirige : l'écran est
+  simplement moins vrai qu'il ne le dit.
+- **`chargerProgression`** : paliers et série effacés, dans les mêmes
+  conditions.
+
+Une mémoire retient maintenant l'appel EN VOL, pas son résultat quand il est
+vide. Le prochain composant qui se monte retente ; comme les montages d'un
+écran ont lieu dans le même tour de boucle, il n'y a pas de tempête à craindre.
+La règle vaut aussi pour `rafraichir` : un rafraîchissement raté ne doit pas
+effacer ce qu'on avait, sinon un paiement fait dans le métro vide l'écran.
+
+**Et `chargerProgression` en cachait un second, sans rapport avec l'échec** :
+le jour demandé était ignoré après le premier appel (`if (!enCours)` ne regarde
+pas l'argument). Un onglet laissé ouvert pendant la nuit gardait la série de la
+veille, avec son état de retard — c'est-à-dire exactement l'information qu'on
+vient regarder le matin. La mémoire porte le jour maintenant.
+
+Aucune des trois n'avait de test. Six sabotages, six échecs.
+
+**Et ça ne suffisait pas à réparer le premier chargement**, ce qu'il faut dire
+plutôt que de laisser croire le contraire. Effacer la mémoire permet à un
+composant qui se monte PLUS TARD de retenter ; ceux d'un même écran se montent
+dans le même tour de boucle et partagent l'appel en vol. Le gain réel était donc
+« changer de page répare » au lieu de « rien ne répare ». C'est mieux, ce n'est
+pas la panne qu'on croyait corriger.
+
+Le fournisseur reprend donc une fois, après deux secondes, quand la première
+lecture revient vide. Une seule reprise, et après un délai : une boucle de
+reprises sur un serveur qui ne répond pas est le remède qui aggrave la panne.
+Le raisonnement qui l'autorise est que sur une page connectée, `null` ne veut
+pas dire « pas de compte » — le middleware a déjà exigé une session pour servir
+la page. C'est une anomalie, et une anomalie se retente.
+
+Ce que ça apprend : **mémoriser un appel et mémoriser sa réponse ne sont pas la
+même chose**, et le raccourci qui confond les deux se relit comme une
+optimisation. C'est la même forme d'erreur que le `catch` qui décrit ce qu'il
+ne fait pas — le code a l'air de garantir quelque chose, alors qu'il fige un
+accident.
+
+### Une coupure d'une seconde refusait un champion pour toute la session
+Trouvé en couvrant `useChampions`, et c'est le genre de défaut qu'on ne voit
+qu'en écrivant le test qui l'entoure. La liste des champions est mémorisée au
+niveau du module — une seule demande par page, ce qui est juste. Mais l'ÉCHEC
+l'était aussi :
+
+```ts
+enCours = fetch("/api/champions").then(…).catch(() => CHAMPIONS);
+```
+
+`enCours` retenait la promesse quoi qu'il arrive. Une coupure au premier
+montage figeait donc la liste codée en dur jusqu'au prochain rechargement de
+page, sans jamais retenter.
+
+Ce serait un repli acceptable si la liste ne servait qu'à proposer. Elle sert
+aussi à **valider** : `championConnu` refuse ce qui n'y figure pas, et
+`AjoutActivite` en fait une condition du bouton d'enregistrement. Un champion
+ajouté par l'administrateur devenait donc « non reconnu », le bouton restait
+éteint, et le message accusait la frappe de la personne alors que la faute est
+chez nous. C'est le défaut de la clé Riot refusée — « l'application accusait le
+pseudo du joueur » — en plus petit et en plus silencieux.
+
+L'échec ne se mémorise plus : `enCours` est effacée dans le `catch`, et le
+prochain montage du champ retente. Pas de tempête à craindre, `charger` n'étant
+appelé qu'au montage d'un composant.
+
+Deux sabotages, deux échecs : la mémorisation de l'échec remise, et le contrôle
+de forme retiré — sans lui, un `{ error: "Non authentifié" }` deviendrait la
+liste des champions.
+
+### Deux de mes propres tests ne prouvaient rien, et le sabotage l'a dit
+L'autocomplétion des champions n'était couverte par rien : ni test à elle, ni
+par ceux de `ChampionInput`, qui doublent le module entier. Or elle porte une
+promesse écrite en commentaire depuis le premier jour — « taper « r » doit
+d'abord donner Rakan et Renekton, pas Aatrox » — et une promesse qu'aucun test
+ne tient n'est qu'une intention.
+
+Les onze tests écrits sont passés du premier coup, ce qui est le bon moment
+pour les figer. Puis le sabotage : **deux sur trois sont repassés au vert.**
+
+- **Le classement, éprouvé sur la vraie liste.** « r » y rend bien Rakan en
+  tête et pas Aatrox. Sauf que ça reste vrai sans le rang 0 : une centaine de
+  champions commencent par « r », ils tombent tous au rang 1, et les huit
+  places sont prises bien avant qu'un Aatrox de rang 2 arrive. **C'était la
+  limite qui faisait le travail du classement.** La deuxième version, sur une
+  liste fabriquée, a laissé passer le même sabotage pour une autre raison : le
+  membre de rang 1 se rangeait de toute façon après celui de rang 0. Il a fallu
+  une liste dont l'ordre alphabétique est l'INVERSE du classement attendu.
+- **L'ordre alphabétique à rang égal.** Le test lisait la vraie liste, qui est
+  déjà triée ; le tri de V8 étant stable, retirer la comparaison ne déplaçait
+  rien. Il éprouvait l'ordre du fichier `champions.ts`, pas le comparateur.
+
+Cinq sabotages sur la version finale, cinq échecs — les deux rangs, l'ordre
+alphabétique, l'aplatissement de l'apostrophe et le filtre de non-pertinence.
+
+Ce que ça apprend, et c'est la troisième fois que ça s'écrit ici sous une forme
+ou une autre : **un test qui lit les vraies données éprouve souvent les vraies
+données.** Une propriété ne se prouve que sur un cas construit pour que son
+absence déplace quelque chose. La leçon vaut aussi contre moi : ces deux tests
+étaient les miens, écrits l'heure d'avant, et je les croyais bons.
+
+`notifierSysteme` a reçu le même traitement, pour une raison plus dure : dans
+l'application de bureau, le push web ne PEUT PAS marcher — il exige un
+abonnement auprès du service de notification du navigateur, dont Electron n'a
+pas les identifiants. L'ordre des deux chemins n'est donc pas une préférence,
+c'est la correction d'un défaut, et rien ne la tenait. Trois sabotages, trois
+échecs. Piège évité au passage : le module lit `window.electronLOL`, pas
+`globalThis` — une doublure posée à côté n'aurait jamais été lue, exactement
+comme sur le stockage.
+
+### Les deux plus grosses réponses de l'application publiaient tout
+`NextResponse.json(games)` rend la ligne de base telle qu'elle vient. C'est le
+défaut déjà corrigé sur le compte par `comptePublic` — « un `{ ...user }`
+publie tout ce qu'on lui remet » — un modèle plus bas, et personne n'était allé
+voir si `Game` avait la même forme de problème. Il l'avait.
+
+Deux routes, le même geste :
+
+- **`/api/dashboard`** charge TOUTES les parties du compte pour les agréger, et
+  les chargeait entières : trente et une colonnes pour quinze lues. Ici le
+  `select` se vérifie à la compilation — les lectures sont dans le même
+  fichier, et retirer `dureeSec` fait nommer ses trois usages par `tsc`.
+- **`/api/games`**, la plus grosse réponse de l'application, publiait `userId`,
+  `createdAt`, `gainageSec`, `partiesAvantCalcule`, `arrets`, `file`,
+  `fileClassee` et `riotMatchId`, qu'aucun écran ne lit. Rien de secret — ce
+  sont les données de la personne qui les demande — mais un tiers de la
+  réponse pour rien, sur l'écran qui la charge en entier.
+
+**Et la seconde ne se vérifie pas à la compilation**, ce qui est toute la
+différence. L'historique déclare son propre type `Game` de son côté, la réponse
+arrive en JSON, et une colonne retirée du `select` s'y traduit par une case
+vide : pas d'erreur, pas de test rouge, juste une colonne qui cesse de
+s'afficher. Le KDA d'une partie ne se recalcule pas de mémoire.
+
+`src/colonnesHistorique.test.ts` lit les deux listes à la source et les compare
+**dans les deux sens** : une colonne déclarée que la route n'envoie pas est une
+case vide, une colonne envoyée que personne ne lit est le gaspillage qu'on
+vient de retirer, et elle reviendrait sans bruit. Avec le contrôle de
+non-vacuité habituel — sans lui, un motif qui ne trouve plus rien rendrait le
+test vert en comparant deux listes vides, ce qui est exactement la forme
+d'erreur que ce fichier existe pour empêcher.
+
+Trois sabotages, trois échecs : `variante` retirée du `select`, `gainageSec`
+ajouté sans lecteur, et le motif rendu aveugle par un `as const` posé dans
+l'`orderBy`. Ce troisième cas mérite d'être noté : une retouche parfaitement
+légitime de la route fait tomber le test. C'est le bon sens de l'échec — il dit
+« viens mettre le motif à jour » au lieu de passer au vert sur rien.
+
+Ce qui n'a **pas** été fait, et pourquoi : agréger en SQL plutôt que de
+rapatrier les parties. Ce serait mieux, et ce serait optimiser pour une charge
+qui n'existe pas — quatre comptes, soixante-quinze parties. Le `select`, lui,
+ne coûte rien.
+
 ### Les six conversions au serveur ne changent rien à l'écran, prouvé
 Six composants sont passés du navigateur au serveur cette nuit — CGU,
 confidentialité, connexion, téléchargement, en-tête d'administration, page
@@ -1449,159 +1616,6 @@ suivants tournaient sur un arbre déjà amputé. Les trois derniers ont rendu
 « 4 échecs sur 4 », ce qui ressemble à un test très mordant et n'est que du
 bruit. Un sabotage se fait contre une base connue ; sans indexation préalable,
 il n'y a pas de base.
-
-### Trois mémoires de module retenaient l'échec comme une réponse
-Le défaut des champions n'était pas isolé : c'est une famille, et les trois
-membres ont été écrits pour la même bonne raison. Plusieurs composants d'un
-écran ont besoin de la même réponse, donc on mémorise l'appel au niveau du
-module pour qu'un seul parte. C'est juste, c'est mesuré, et ça ne dit rien de
-ce qu'il faut faire quand la réponse ne vient pas.
-
-```ts
-if (!enCours) enCours = demander();   // l'échec aussi devient définitif
-```
-
-- **`useChampions`** : liste codée en dur figée, et comme elle sert à VALIDER,
-  un champion ajouté par l'administrateur devenait « non reconnu ».
-- **`chargerContexte`** : `null` rendu à tous les composants pour toute la
-  durée de la page. Compteur de dette vide, lien d'administration absent,
-  consentement redemandé. Aucun ne se plaint, aucun ne redirige : l'écran est
-  simplement moins vrai qu'il ne le dit.
-- **`chargerProgression`** : paliers et série effacés, dans les mêmes
-  conditions.
-
-Une mémoire retient maintenant l'appel EN VOL, pas son résultat quand il est
-vide. Le prochain composant qui se monte retente ; comme les montages d'un
-écran ont lieu dans le même tour de boucle, il n'y a pas de tempête à craindre.
-La règle vaut aussi pour `rafraichir` : un rafraîchissement raté ne doit pas
-effacer ce qu'on avait, sinon un paiement fait dans le métro vide l'écran.
-
-**Et `chargerProgression` en cachait un second, sans rapport avec l'échec** :
-le jour demandé était ignoré après le premier appel (`if (!enCours)` ne regarde
-pas l'argument). Un onglet laissé ouvert pendant la nuit gardait la série de la
-veille, avec son état de retard — c'est-à-dire exactement l'information qu'on
-vient regarder le matin. La mémoire porte le jour maintenant.
-
-Aucune des trois n'avait de test. Six sabotages, six échecs.
-
-Ce que ça apprend : **mémoriser un appel et mémoriser sa réponse ne sont pas la
-même chose**, et le raccourci qui confond les deux se relit comme une
-optimisation. C'est la même forme d'erreur que le `catch` qui décrit ce qu'il
-ne fait pas — le code a l'air de garantir quelque chose, alors qu'il fige un
-accident.
-
-### Une coupure d'une seconde refusait un champion pour toute la session
-Trouvé en couvrant `useChampions`, et c'est le genre de défaut qu'on ne voit
-qu'en écrivant le test qui l'entoure. La liste des champions est mémorisée au
-niveau du module — une seule demande par page, ce qui est juste. Mais l'ÉCHEC
-l'était aussi :
-
-```ts
-enCours = fetch("/api/champions").then(…).catch(() => CHAMPIONS);
-```
-
-`enCours` retenait la promesse quoi qu'il arrive. Une coupure au premier
-montage figeait donc la liste codée en dur jusqu'au prochain rechargement de
-page, sans jamais retenter.
-
-Ce serait un repli acceptable si la liste ne servait qu'à proposer. Elle sert
-aussi à **valider** : `championConnu` refuse ce qui n'y figure pas, et
-`AjoutActivite` en fait une condition du bouton d'enregistrement. Un champion
-ajouté par l'administrateur devenait donc « non reconnu », le bouton restait
-éteint, et le message accusait la frappe de la personne alors que la faute est
-chez nous. C'est le défaut de la clé Riot refusée — « l'application accusait le
-pseudo du joueur » — en plus petit et en plus silencieux.
-
-L'échec ne se mémorise plus : `enCours` est effacée dans le `catch`, et le
-prochain montage du champ retente. Pas de tempête à craindre, `charger` n'étant
-appelé qu'au montage d'un composant.
-
-Deux sabotages, deux échecs : la mémorisation de l'échec remise, et le contrôle
-de forme retiré — sans lui, un `{ error: "Non authentifié" }` deviendrait la
-liste des champions.
-
-### Deux de mes propres tests ne prouvaient rien, et le sabotage l'a dit
-L'autocomplétion des champions n'était couverte par rien : ni test à elle, ni
-par ceux de `ChampionInput`, qui doublent le module entier. Or elle porte une
-promesse écrite en commentaire depuis le premier jour — « taper « r » doit
-d'abord donner Rakan et Renekton, pas Aatrox » — et une promesse qu'aucun test
-ne tient n'est qu'une intention.
-
-Les onze tests écrits sont passés du premier coup, ce qui est le bon moment
-pour les figer. Puis le sabotage : **deux sur trois sont repassés au vert.**
-
-- **Le classement, éprouvé sur la vraie liste.** « r » y rend bien Rakan en
-  tête et pas Aatrox. Sauf que ça reste vrai sans le rang 0 : une centaine de
-  champions commencent par « r », ils tombent tous au rang 1, et les huit
-  places sont prises bien avant qu'un Aatrox de rang 2 arrive. **C'était la
-  limite qui faisait le travail du classement.** La deuxième version, sur une
-  liste fabriquée, a laissé passer le même sabotage pour une autre raison : le
-  membre de rang 1 se rangeait de toute façon après celui de rang 0. Il a fallu
-  une liste dont l'ordre alphabétique est l'INVERSE du classement attendu.
-- **L'ordre alphabétique à rang égal.** Le test lisait la vraie liste, qui est
-  déjà triée ; le tri de V8 étant stable, retirer la comparaison ne déplaçait
-  rien. Il éprouvait l'ordre du fichier `champions.ts`, pas le comparateur.
-
-Cinq sabotages sur la version finale, cinq échecs — les deux rangs, l'ordre
-alphabétique, l'aplatissement de l'apostrophe et le filtre de non-pertinence.
-
-Ce que ça apprend, et c'est la troisième fois que ça s'écrit ici sous une forme
-ou une autre : **un test qui lit les vraies données éprouve souvent les vraies
-données.** Une propriété ne se prouve que sur un cas construit pour que son
-absence déplace quelque chose. La leçon vaut aussi contre moi : ces deux tests
-étaient les miens, écrits l'heure d'avant, et je les croyais bons.
-
-`notifierSysteme` a reçu le même traitement, pour une raison plus dure : dans
-l'application de bureau, le push web ne PEUT PAS marcher — il exige un
-abonnement auprès du service de notification du navigateur, dont Electron n'a
-pas les identifiants. L'ordre des deux chemins n'est donc pas une préférence,
-c'est la correction d'un défaut, et rien ne la tenait. Trois sabotages, trois
-échecs. Piège évité au passage : le module lit `window.electronLOL`, pas
-`globalThis` — une doublure posée à côté n'aurait jamais été lue, exactement
-comme sur le stockage.
-
-### Les deux plus grosses réponses de l'application publiaient tout
-`NextResponse.json(games)` rend la ligne de base telle qu'elle vient. C'est le
-défaut déjà corrigé sur le compte par `comptePublic` — « un `{ ...user }`
-publie tout ce qu'on lui remet » — un modèle plus bas, et personne n'était allé
-voir si `Game` avait la même forme de problème. Il l'avait.
-
-Deux routes, le même geste :
-
-- **`/api/dashboard`** charge TOUTES les parties du compte pour les agréger, et
-  les chargeait entières : trente et une colonnes pour quinze lues. Ici le
-  `select` se vérifie à la compilation — les lectures sont dans le même
-  fichier, et retirer `dureeSec` fait nommer ses trois usages par `tsc`.
-- **`/api/games`**, la plus grosse réponse de l'application, publiait `userId`,
-  `createdAt`, `gainageSec`, `partiesAvantCalcule`, `arrets`, `file`,
-  `fileClassee` et `riotMatchId`, qu'aucun écran ne lit. Rien de secret — ce
-  sont les données de la personne qui les demande — mais un tiers de la
-  réponse pour rien, sur l'écran qui la charge en entier.
-
-**Et la seconde ne se vérifie pas à la compilation**, ce qui est toute la
-différence. L'historique déclare son propre type `Game` de son côté, la réponse
-arrive en JSON, et une colonne retirée du `select` s'y traduit par une case
-vide : pas d'erreur, pas de test rouge, juste une colonne qui cesse de
-s'afficher. Le KDA d'une partie ne se recalcule pas de mémoire.
-
-`src/colonnesHistorique.test.ts` lit les deux listes à la source et les compare
-**dans les deux sens** : une colonne déclarée que la route n'envoie pas est une
-case vide, une colonne envoyée que personne ne lit est le gaspillage qu'on
-vient de retirer, et elle reviendrait sans bruit. Avec le contrôle de
-non-vacuité habituel — sans lui, un motif qui ne trouve plus rien rendrait le
-test vert en comparant deux listes vides, ce qui est exactement la forme
-d'erreur que ce fichier existe pour empêcher.
-
-Trois sabotages, trois échecs : `variante` retirée du `select`, `gainageSec`
-ajouté sans lecteur, et le motif rendu aveugle par un `as const` posé dans
-l'`orderBy`. Ce troisième cas mérite d'être noté : une retouche parfaitement
-légitime de la route fait tomber le test. C'est le bon sens de l'échec — il dit
-« viens mettre le motif à jour » au lieu de passer au vert sur rien.
-
-Ce qui n'a **pas** été fait, et pourquoi : agréger en SQL plutôt que de
-rapatrier les parties. Ce serait mieux, et ce serait optimiser pour une charge
-qui n'existe pas — quatre comptes, soixante-quinze parties. Le `select`, lui,
-ne coûte rien.
 
 ### La liste d'avant lancement réclamait deux choses déjà faites
 `docs/lancement.md` est le document qu'on relit juste avant d'inviter cent

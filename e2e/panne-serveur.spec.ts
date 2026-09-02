@@ -332,3 +332,49 @@ test("un test de force refusé garde la saisie et le dit", async ({ browser }) =
   await expect(champ).toHaveValue("30");
   await ctx.close();
 });
+
+test("une coupure d'un instant ne vide pas le compteur de dette pour toute la page", async ({ browser }) => {
+  /**
+   * Le contexte du compte est demandé UNE fois et mémorisé pour tous les
+   * composants de l'écran. C'est un gain mesuré ; c'est aussi ce qui peut
+   * transformer une coupure d'une seconde en écran faux pour toute la page.
+   *
+   * Ici la route échoue au PREMIER appel seulement, puis répond normalement.
+   * Le compteur de dette doit finir par paraître : c'est la reprise unique du
+   * fournisseur qui le permet, la mémoire de module ne suffisant pas — les
+   * composants d'un même écran se montent dans le même tour de boucle et
+   * partagent l'appel en vol.
+   *
+   * Sans la reprise, la dette reste absente de l'écran dont elle est le sujet,
+   * et rien ne le dit.
+   */
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  let coupes = 0;
+  await page.route("**/api/contexte", async (r) => {
+    if (coupes === 0) {
+      coupes = 1;
+      return r.fulfill({
+        status: 500, contentType: "application/json", body: '{"error":"Erreur serveur"}',
+      });
+    }
+    await r.continue();
+  });
+
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  // La partie enregistrée à l'ouverture du compte est une défaite : il y a
+  // forcément une dette à afficher.
+  await expect(page.locator('[data-visite="dette"]').first())
+    .toBeVisible({ timeout: 20_000 });
+  expect(coupes).toBe(1);
+  await ctx.close();
+});
