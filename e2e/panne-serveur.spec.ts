@@ -370,9 +370,29 @@ test("une coupure d'un instant ne vide pas le compteur de dette pour toute la pa
     await r.continue();
   });
 
+  /**
+   * Il faut d'abord un exercice AU TEMPS, sinon il n'y a rien à afficher.
+   *
+   * Le compteur ne suit que ce qui se compte en minutes : un compte neuf n'a
+   * que les pompes, qui se font dans la foulée et n'entrent jamais au
+   * compteur. C'est ce que fait l'étape 2 du parcours complet, et ma première
+   * version de ce test l'ignorait — la pastille était absente pour une raison
+   * parfaitement normale, et le test accusait la correction qu'il éprouvait.
+   *
+   * Ce test est le DERNIER du fichier : il change les réglages du compte
+   * partagé, et un test qui suivrait hériterait de la boxe.
+   */
+  const reglages = await page.request.put("/api/settings", {
+    data: { userPrefs: { exercices: ["boxe"] } },
+  });
+  expect(reglages.status(), await reglages.text()).toBe(200);
+  const partie = await page.request.post("/api/games", {
+    data: { jeu: "League of Legends", role: "Mid", champion: "Ahri",
+            kills: 1, deaths: 9, assists: 2, result: "D", exercice: "boxe" },
+  });
+  expect(partie.status(), await partie.text()).toBe(200);
+
   await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
-  // La partie enregistrée à l'ouverture du compte est une défaite : il y a
-  // forcément une dette à afficher.
   await expect(page.locator('[data-visite="dette"]').first())
     .toBeVisible({ timeout: 20_000 });
   expect(coupes).toBe(1);

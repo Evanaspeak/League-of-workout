@@ -430,7 +430,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 163 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 180 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -743,7 +743,15 @@ dans le même tour de boucle et partagent l'appel en vol. Le gain réel était d
 pas la panne qu'on croyait corriger.
 
 Le fournisseur reprend donc une fois, après deux secondes, quand la première
-lecture revient vide. Une seule reprise, et après un délai : une boucle de
+lecture revient vide. Sabotage fait, la reprise retirée : le parcours tombe.
+
+**Et le premier jet de ce parcours accusait la correction qu'il éprouvait.** Il
+attendait la pastille de dette sur un compte qui n'en a jamais eu : le compteur
+ne suit que ce qui se compte en MINUTES, et un compte neuf n'a que les pompes,
+qui se font dans la foulée. La pastille était absente pour une raison
+parfaitement normale. C'est écrit depuis longtemps dans l'étape 2 du parcours
+complet — « choisir la boxe, pour que la dette s'accumule » — et je ne l'avais
+pas lu. Un test qui échoue n'a pas forcément trouvé un défaut du produit. Une seule reprise, et après un délai : une boucle de
 reprises sur un serveur qui ne répond pas est le remède qui aggrave la panne.
 Le raisonnement qui l'autorise est que sur une page connectée, `null` ne veut
 pas dire « pas de compte » — le middleware a déjà exigé une session pour servir
