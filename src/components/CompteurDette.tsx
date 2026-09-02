@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { duree, horloge, seuilFranchi } from "@/lib/compteurDette";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -21,21 +22,6 @@ type Dette = {
   dureeSec: number;
   seuilSec: number;
 };
-
-/** Horloge d'un décompte : 4:32. */
-function horloge(secondes: number): string {
-  const s = Math.max(0, Math.ceil(secondes));
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
-/** Durée lisible pour un libellé : « 5 min 20 ». */
-function duree(secondes: number): string {
-  const s = Math.max(0, Math.round(secondes));
-  if (s < 60) return `${s} s`;
-  const m = Math.floor(s / 60);
-  const reste = s % 60;
-  return reste === 0 ? `${m} min` : `${m} min ${String(reste).padStart(2, "0")}`;
-}
 
 /**
  * Compteur d'effort en attente. Il ne concerne que les exercices comptés en
@@ -118,15 +104,15 @@ export function CompteurDette() {
     return () => window.removeEventListener("online", renvoyer);
   }, [pathname]);
 
-  const seuilFranchi = !!dette && dette.seuilSec > 0 && dette.dureeSec >= dette.seuilSec;
+  const seuilAtteint = seuilFranchi(dette);
 
   // Notification système au franchissement du seuil, une seule fois par palier.
   useEffect(() => {
-    if (!seuilFranchi) { notifieRef.current = false; return; }
+    if (!seuilAtteint) { notifieRef.current = false; return; }
     if (notifieRef.current) return;
     notifieRef.current = true;
     notifierSysteme("Win or Workout", t.detteRappelCorps(duree(dette!.dureeSec)), "wow-dette");
-  }, [seuilFranchi, dette, t]);
+  }, [seuilAtteint, dette, t]);
 
   const arreterTick = () => {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
@@ -238,8 +224,8 @@ export function CompteurDette() {
           padding: "10px 12px",
           textAlign: "left",
           cursor: "pointer",
-          borderColor: seuilFranchi ? "rgba(255,77,46,0.5)" : "var(--line)",
-          boxShadow: seuilFranchi
+          borderColor: seuilAtteint ? "rgba(255,77,46,0.5)" : "var(--line)",
+          boxShadow: seuilAtteint
             ? "0 12px 34px rgba(0,0,0,0.5), 0 0 24px rgba(255,77,46,0.16)"
             : "0 10px 28px rgba(0,0,0,0.4)",
           transition: "border-color 0.3s, box-shadow 0.3s",
@@ -248,7 +234,7 @@ export function CompteurDette() {
         <div
           style={{
             fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em",
-            color: seuilFranchi ? "var(--ember)" : "var(--steel)",
+            color: seuilAtteint ? "var(--ember)" : "var(--steel)",
           }}
         >
           {t.detteTitre}
@@ -260,7 +246,7 @@ export function CompteurDette() {
               className="mono-num"
               style={{
                 fontSize: "1.35rem", fontWeight: 700, lineHeight: 1.1,
-                color: seuilFranchi ? "var(--ember)" : "var(--amber)",
+                color: seuilAtteint ? "var(--ember)" : "var(--amber)",
               }}
             >
               {formaterCompact(ligne.pts, ligne.id)}
@@ -287,14 +273,14 @@ export function CompteurDette() {
             className="h-full rounded-full"
             style={{
               width: `${progression}%`,
-              background: seuilFranchi ? "var(--ember)" : "var(--brand-gradient)",
+              background: seuilAtteint ? "var(--ember)" : "var(--brand-gradient)",
               transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
             }}
           />
         </div>
 
-        <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilFranchi ? "var(--ember)" : "var(--faint)" }}>
-          {seuilFranchi ? t.detteFaireBtn : t.detteSeuil(duree(dette.seuilSec))}
+        <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilAtteint ? "var(--ember)" : "var(--faint)" }}>
+          {seuilAtteint ? t.detteFaireBtn : t.detteSeuil(duree(dette.seuilSec))}
         </div>
       </button>
 

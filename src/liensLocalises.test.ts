@@ -87,3 +87,57 @@ describe("la langue voyage avec les liens", () => {
     expect(IMPORT_PATHNAME.test('const p = usePathname();')).toBe(true);
   });
 });
+
+/**
+ * Une navigation en dur emmène dans une autre langue que celle qu'on lit.
+ *
+ * `window.location.assign("/dashboard")` part sans préfixe. Le middleware la
+ * rattrape et NÉGOCIE : le cookie d'abord, puis l'en-tête du navigateur, puis
+ * l'anglais. Or ce cookie n'est écrit que par le sélecteur de langue —
+ * quelqu'un qui arrive sur `/fr/login` par un lien partagé et n'y touche
+ * jamais n'en a pas. Vérifié sur le serveur : sans cookie, `/dashboard` répond
+ * 308 vers `/de/dashboard` avec un navigateur allemand, vers `/ja/dashboard`
+ * avec un japonais.
+ *
+ * Autrement dit : on lit le site en français, on crée son compte, et on
+ * atterrit en allemand. C'est le défaut déjà corrigé sur le lien de
+ * récupération, au moment de la connexion plutôt qu'au moment du secours.
+ */
+const NAVIGATION_NUE = /location\s*\.\s*(?:assign|replace)\s*\(\s*[`"']\//;
+const NAVIGATION_NUE_HREF = /location\s*\.\s*href\s*=\s*[`"']\//;
+
+/**
+ * `DesktopAuthHandler` navigue vers `/login` SANS préfixe, et c'est une
+ * exception assumée : la fenêtre d'authentification de l'application installée
+ * décide « la connexion est finie » en demandant « ce n'est plus /login ? ».
+ * Une adresse préfixée y répondrait oui à la première page. Les copies
+ * antérieures à 0.9.9 ne se corrigent pas à distance ; c'est la même exception
+ * que celle du middleware, avec la même date de péremption.
+ */
+const EXEMPTS_NAVIGATION = new Set(["components/DesktopAuthHandler.tsx"]);
+
+describe("les navigations en dur", () => {
+  const fichiers = fichiersSource(SRC);
+
+  it("portent toutes la langue", () => {
+    // `fichiersSource` rend des chemins ABSOLUS : les rejoindre à `SRC` les
+    // doublerait, et le garde tomberait sur un ENOENT au lieu de mesurer.
+    const fautifs = fichiers
+      .map((abs) => relative(SRC, abs))
+      .filter((rel) => !EXEMPTS_NAVIGATION.has(rel))
+      .filter((rel) => {
+        const source = readFileSync(join(SRC, rel), "utf8");
+        return NAVIGATION_NUE.test(source) || NAVIGATION_NUE_HREF.test(source);
+      });
+    expect(fautifs).toEqual([]);
+  });
+
+  it("n'a pas d'exemption qui ne désigne plus rien", () => {
+    // Une dispense qui ne correspond à aucun fichier vivant est du code mort
+    // qu'on a fini par admettre.
+    for (const rel of EXEMPTS_NAVIGATION) {
+      const source = readFileSync(join(SRC, rel), "utf8");
+      expect(NAVIGATION_NUE.test(source) || NAVIGATION_NUE_HREF.test(source)).toBe(true);
+    }
+  });
+});

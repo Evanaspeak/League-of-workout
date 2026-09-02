@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1635 tests unitaires, 153 suites. Base et session doublées : aucune dépendance à
+1649 tests unitaires, 154 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -722,6 +722,59 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Créer son compte pouvait changer la langue du site
+Trouvé en cherchant ce qui reste d'extractible dans les gros composants, et
+c'est mieux qu'une extraction : sept navigations partaient sans préfixe de
+langue.
+
+```ts
+window.location.assign("/dashboard?li=1");
+```
+
+Le middleware rattrape l'adresse nue et NÉGOCIE : le cookie d'abord, puis
+l'en-tête du navigateur, puis l'anglais. Or **ce cookie n'est écrit que par le
+sélecteur de langue**. Quelqu'un qui arrive sur `/fr/login` par un lien
+partagé, un signet ou une recherche, et qui n'y touche jamais, n'en a pas.
+
+Vérifié sur le serveur plutôt que raisonné : sans cookie, `/dashboard` répond
+308 vers `/de/dashboard` avec un navigateur allemand, vers `/ja/dashboard` avec
+un japonais. Autrement dit **on lit le site en français, on crée son compte, et
+on atterrit en allemand** — à la seconde où l'on vient d'accepter les CGU
+françaises.
+
+C'est le défaut déjà corrigé sur le lien de récupération, déplacé au moment de
+la connexion. Trois sites dans `LoginButtons`, un dans l'administration, un
+dans les réglages avancés, un dans le tableau de bord. `SessionGuard` faisait
+déjà les choses correctement, ce qui rendait l'incohérence invisible : le
+même geste, deux comportements.
+
+**Une exception reste, et elle est écrite.** `DesktopAuthHandler` navigue vers
+`/login` NU. La fenêtre d'authentification de l'application installée décide
+« la connexion est finie » en demandant « ce n'est plus /login ? » : une
+adresse préfixée y répondrait oui à la toute première page, et la fenêtre se
+refermerait avant qu'on ait tapé quoi que ce soit. C'est la même exception que
+celle du middleware, avec la même date de péremption — quand plus personne ne
+fait tourner une version antérieure à 0.9.9.
+
+`src/liensLocalises.test.ts` refuse désormais une navigation en dur vers une
+adresse nue, et vérifie que l'exemption désigne encore quelque chose de vivant.
+Deux sabotages, deux échecs.
+
+**Un piège d'écriture qui aurait rendu le garde muet** : `fichiersSource` rend
+des chemins ABSOLUS. Les rejoindre à `SRC` les double, et le contrôle tombe sur
+un ENOENT — ce qui est le bon bruit, mais rattrapé par un `try` il serait passé
+au vert en n'examinant aucun fichier.
+
+**Et deux extractions au passage**, dans la même veine que les précédentes :
+les deux formateurs et la règle de seuil de `CompteurDette` (quatre cent vingt
+lignes) vivent dans `src/lib/compteurDette.ts`. Ce qu'ils portent :
+l'arrondi de l'horloge va vers le HAUT quand celui de la durée va au plus
+proche — un décompte qui affiche « 0:00 » alors qu'il reste une demi-seconde
+ment à la seconde où l'on relâche l'effort ; « 45 s » et non « 0 min 45 » ; les
+secondes sur deux chiffres, sans quoi « 5 min 7 » se lit comme cinq minutes et
+sept minutes ; et un seuil à zéro qui veut dire « pas de seuil » et non
+« préviens tout de suite ». Trois sabotages, trois échecs.
 
 ### Cinq logos officiels, et deux fichiers qui en masquaient deux en silence
 Le propriétaire du site a déposé cinq logos officiels par l'interface web de

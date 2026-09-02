@@ -1,5 +1,6 @@
 "use client";
 import { Icone } from "@/components/Icone";
+import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { useEffect, useState } from "react";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -142,7 +143,7 @@ export default function AdminTools() {
         <button
           onClick={() => {
             oublierPremiereVisite(uid);
-            window.location.href = "/dashboard";
+            window.location.href = avecLocale("/dashboard", locale);
           }}
           style={{
             width: "100%",
