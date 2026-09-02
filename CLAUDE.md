@@ -701,6 +701,45 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 2 septembre — douze pages, toutes dans le seuil
+Refaite après le regroupement des appels d'API, le cache de barème, les six
+conversions au serveur et le resserrement des colonnes lues en base. C'est la
+première campagne de ce projet où **aucune page ne dépasse**, ni sur poste ni
+sur téléphone bridé.
+
+| écran | LCP poste | LCP téléphone bridé | plus grand élément |
+|---|---|---|---|
+| `/fr/settings` | 148 ms | 940 ms | la mention Riot, en pied |
+| `/fr/bilan` | 148 ms | 912 ms | la mention Riot, en pied |
+| `/fr/history` | 152 ms | 912 ms | la mention Riot, en pied |
+| `/fr/dashboard` | 312 ms | 1128 ms | le bandeau d'attente Riot |
+| `/fr/login` | 468 ms | 1140 ms | la mention des CGU |
+| `/fr/cgu` | 500 ms | 1124 ms | le premier paragraphe |
+| `/fr/telechargement` | 512 ms | 1144 ms | le paragraphe SmartScreen |
+| `/fr/calculateur` | 524 ms | 1124 ms | le titre |
+| `/fr/calculateur/league-of-legends` | 524 ms | 1136 ms | le titre |
+| `/fr/confidentialite` | 540 ms | 1140 ms | le titre |
+| `/fr/beta` | 552 ms | 1648 ms | « Un pseudo suffit » |
+| `/fr` | 680 ms | 1400 ms | l'image de l'application |
+
+CLS de 0,000 partout, sauf 0,001 sur le tableau de bord.
+
+Ce que les trois écrans connectés apprennent : leur plus grand élément est la
+**mention Riot du pied de page**, à 150 ms. Autrement dit ils peignent quelque
+chose de définitif tout de suite, et rien de plus grand n'arrive ensuite — la
+page ne se réorganise plus quand les données reviennent. C'était le contraire
+il y a deux semaines, où le tableau de bord n'avait rien à montrer avant
+3456 ms.
+
+Le poids du JavaScript par page, qui est l'autre moitié du sujet : 173 ko sur
+les pages publiques (elles ne montent plus les vingt composants du fournisseur
+connecté), 362 ko sur le tableau de bord, qui porte recharts.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, aucune
+page laissée de côté. Et l'outil sait toujours échouer, ce qui se vérifie plutôt
+que se suppose : un contraste de 1,43 posé volontairement sur le titre des CGU
+remonte avec son ratio, sa taille et son texte, dans les six langues.
+
 ### Trois mémoires de module retenaient l'échec comme une réponse
 Le défaut des champions n'était pas isolé : c'est une famille, et les trois
 membres ont été écrits pour la même bonne raison. Plusieurs composants d'un
