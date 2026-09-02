@@ -2,9 +2,6 @@ export const detection = {
   fr: {
     titre: "Détection des jeux",
     aide: "L'application repère quand un jeu se lance en lisant la liste des processus, comme le gestionnaire des tâches. Rien n'est injecté dans le jeu.",
-    jeuxTitre: "Jeux à surveiller",
-    // Formulé du point de vue du jeu : le réglage vit maintenant dans le bloc
-    // de ce jeu, où « Jeux à surveiller » au pluriel n'aurait plus de sens.
     jeuSurveille: "Lancement surveillé",
     jeuIgnore: "Lancement ignoré",
     actionsTitre: "Au lancement d'un jeu surveillé",
@@ -24,7 +21,6 @@ export const detection = {
   en: {
     titre: "Game detection",
     aide: "The app spots a game starting by reading the process list, like Task Manager does. Nothing is injected into the game.",
-    jeuxTitre: "Games to watch",
     jeuSurveille: "Launch watched",
     jeuIgnore: "Launch ignored",
     actionsTitre: "When a watched game starts",
@@ -44,7 +40,6 @@ export const detection = {
   es: {
     titre: "Detección de juegos",
     aide: "La aplicación se da cuenta de que arrancas un juego leyendo la lista de procesos, como el administrador de tareas. No se inyecta nada en el juego.",
-    jeuxTitre: "Juegos que vigilar",
     jeuSurveille: "Arranque vigilado",
     jeuIgnore: "Arranque ignorado",
     actionsTitre: "Al arrancar un juego vigilado",
@@ -64,7 +59,6 @@ export const detection = {
   de: {
     titre: "Spieleerkennung",
     aide: "Die Anwendung merkt am Prozessverzeichnis, wenn ein Spiel startet, so wie es der Task-Manager tut. Ins Spiel selbst wird nichts eingeschleust.",
-    jeuxTitre: "Zu beobachtende Spiele",
     jeuSurveille: "Start wird beobachtet",
     jeuIgnore: "Start wird ignoriert",
     actionsTitre: "Wenn ein beobachtetes Spiel startet",
@@ -84,7 +78,6 @@ export const detection = {
   zh: {
     titre: "游戏检测",
     aide: "应用通过读取进程列表来发现游戏启动，跟任务管理器一样。不会往游戏里注入任何东西。",
-    jeuxTitre: "要监视的游戏",
     jeuSurveille: "监视启动",
     jeuIgnore: "忽略启动",
     actionsTitre: "监视的游戏启动时",
@@ -104,7 +97,6 @@ export const detection = {
   ja: {
     titre: "ゲームの検知",
     aide: "タスクマネージャーと同じように、プロセス一覧を読んでゲームの起動を見つけます。ゲームそのものには何も入れません。",
-    jeuxTitre: "監視するタイトル",
     jeuSurveille: "起動を監視する",
     jeuIgnore: "起動を無視する",
     actionsTitre: "監視中のタイトルが起動したら",

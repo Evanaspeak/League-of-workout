@@ -131,12 +131,13 @@ test("robots.txt n'interdit pas ce qui porte une balise noindex", async ({ reque
 /**
  * La page d'accueil se lit encore quand le script ne s'exécute pas.
  *
- * Les dix-neuf sections sous le héros portent `.reveal` : la feuille de style
- * les pose à `opacity: 0`, et seul l'IntersectionObserver installé après
- * l'hydratation les rend visibles. Le HTML était complet, le serveur faisait
- * son travail — et la page se réduisait au premier écran pour qui a coupé le
- * script ou le fait bloquer par une extension. Mesuré avant correction :
- * 19 sections sur 19 invisibles après avoir descendu toute la page.
+ * Les sections sous le héros portent `.reveal` : la feuille de style les pose
+ * à `opacity: 0`, et seul l'IntersectionObserver installé après l'hydratation
+ * les rend visibles. Le HTML était complet, le serveur faisait son travail —
+ * et la page se réduisait au premier écran pour qui a coupé le script ou le
+ * fait bloquer par une extension. Mesuré avant correction : 19 sections sur
+ * 19 invisibles après avoir descendu toute la page. Elles ne sont plus que
+ * trois depuis l'allègement de l'accueil ; la règle, elle, n'a pas changé.
  *
  * Le test descend comme un lecteur, puis compte ce qui est resté caché.
  */
@@ -165,7 +166,7 @@ test("sans JavaScript, la page d'accueil ne se réduit pas au premier écran", a
 
   // Le compte total sert de garde : si la classe disparaissait, le test
   // passerait sur une page qui n'a plus rien à révéler, et ne prouverait rien.
-  expect(bilan.total).toBeGreaterThan(5);
+  expect(bilan.total).toBeGreaterThan(2);
   expect(bilan, "des sections restent invisibles sans script").toMatchObject({ caches: 0 });
   await ctx.close();
 });

@@ -2,12 +2,8 @@ import { Lien } from "@/components/Lien";
 import { textes } from "@/lib/i18n/textes";
 import { toLocale } from "@/lib/i18n/langues";
 import { landing } from "@/lib/i18n/dictionaries/landing";
-import { DebtFeed } from "@/components/accueil/DebtFeed";
 import { RevelationAuDefilement } from "@/components/RevelationAuDefilement";
 import { Wordmark } from "@/components/Wordmark";
-import { Icone } from "@/components/Icone";
-import { PastilleOverlay } from "@/components/landing/PastilleOverlay";
-import { ScenePartie } from "@/components/landing/ScenePartie";
 import { BandeJeux } from "@/components/landing/BandeJeux";
 import { BoucleDemo } from "@/components/landing/BoucleDemo";
 import { VideoFond } from "@/components/landing/VideoFond";
@@ -15,99 +11,6 @@ import type { VideoBoucle } from "@/lib/videoBoucle";
 import { CadreApp } from "@/components/landing/CadreApp";
 import { LogoWindows } from "@/components/landing/LogoOS";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-
-/* Chaque icône a sa couleur — la palette vit dans le contenu */
-const ICON_COLORS: Record<string, string> = {
-  home: "var(--amber)",
-  layers: "var(--violet)",
-  zap: "var(--amber)",
-  target: "var(--signal)",
-  brain: "var(--violet)",
-  heart: "var(--ember)",
-};
-
-/* ── Icônes SVG (stroke, style unique — pas d'emoji) ─────────────────────── */
-function Icon({ name, size = 20, color = "var(--steel)" }: { name: string; size?: number; color?: string }) {
-  const paths: Record<string, React.ReactNode> = {
-    home: (
-      <>
-        <path d="M3 10.5 12 3l9 7.5" />
-        <path d="M5 9.5V21h14V9.5" />
-      </>
-    ),
-    layers: (
-      <>
-        <path d="m12 2 9 5-9 5-9-5 9-5Z" />
-        <path d="m3 12 9 5 9-5" />
-        <path d="m3 17 9 5 9-5" />
-      </>
-    ),
-    zap: <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />,
-    target: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="5" />
-        <circle cx="12" cy="12" r="1" />
-      </>
-    ),
-    brain: (
-      <>
-        <path d="M9.5 3A2.5 2.5 0 0 0 7 5.5a3 3 0 0 0-2.2 5A3.5 3.5 0 0 0 6.5 21H11V3H9.5Z" />
-        <path d="M14.5 3A2.5 2.5 0 0 1 17 5.5a3 3 0 0 1 2.2 5A3.5 3.5 0 0 1 17.5 21H13V3h1.5Z" />
-      </>
-    ),
-    heart: <path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3Z" />,
-    chaise: (
-      <>
-        <path d="M6 4v9h9V4" />
-        <path d="M15 13H4v3h11" />
-        <path d="M6 16v4M15 16v4" />
-      </>
-    ),
-    coeur: <path d="M19.5 12.6 12 20l-7.5-7.4A5 5 0 1 1 12 6.3a5 5 0 1 1 7.5 6.3Z" />,
-    horloge: (
-      <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3.5 2" />
-      </>
-    ),
-  };
-  return (
-    <svg
-      width={size} height={size} viewBox="0 0 24 24" fill="none"
-      stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden
-    >
-      {paths[name] ?? null}
-    </svg>
-  );
-}
-
-/* Petit slash ember — le "or" de la marque, utilisé comme puce */
-function Slash({ height = 12 }: { height?: number }) {
-  return (
-    <span
-      aria-hidden
-      style={{
-        display: "inline-block",
-        width: Math.max(2, Math.round(height / 5)),
-        height,
-        background: "var(--ember)",
-        transform: "skewX(-18deg)",
-        borderRadius: 1,
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
-/* ── Le feed de dette : la soirée facturée, game par game ────────────────── */
-/** `r` vaut V/W, D/L, ou N pour une session au temps, qui ne se gagne ni ne se perd. */
-/**
- * `r` est la lettre affichée dans la pastille, elle change avec la langue.
- * `issue` est le résultat lui-même : c'est lui qui donne la couleur, sinon
- * un « S » de Sieg passerait pour une défaite en allemand.
- */
 
 export default function LandingClient({
   isLoggedIn, telechargement, version, logosJeux, video, locale,
@@ -185,11 +88,6 @@ export default function LandingClient({
         <div className="wow-hero">
           {/* Colonne texte */}
           <div className="hero-col-texte">
-            <span className="hero-rise hero-badge" style={{ animationDelay: "0.05s" }}>
-              <span className="hero-badge-point" />
-              <span className="eyebrow">{t.heroBadge}</span>
-            </span>
-
             <h1 className="hero-rise hero-titre" style={{ animationDelay: "0.12s" }}>
               <span className="hero-titre-l1">{t.heroTitleLine1}</span>
               <span className="brand-fire hero-titre-l2">{t.heroTitleLine2}</span>
@@ -247,153 +145,16 @@ export default function LandingClient({
 
       {/* ══ BANDE DES JEUX ═══════════════════════════════════════════════ */}
       <section className="section-jeux">
-        <p className="eyebrow section-jeux-titre">{t.jeuxTitre}</p>
-        <BandeJeux legende={t.jeuxLegende} logos={logosJeux} />
+        <div className="reveal">
+          <BandeJeux legende={t.jeuxLegende} logos={logosJeux} />
+        </div>
       </section>
 
       {/* ══ LA BOUCLE ════════════════════════════════════════════════════ */}
       <section className="section-boucle">
-        <div className="conteneur">
-          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.boucleEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 12 }}>{t.boucleTitre}</h2>
-          <p className="section-intro">{t.boucleSoustitre}</p>
+        <div className="conteneur reveal">
+          <h2 style={{ ...h2, marginBottom: 20 }}>{t.boucleTitre}</h2>
           <BoucleDemo temps={t.boucleTemps} legende={t.boucleLegende} aria={t.boucleAria} libelles={t.boucleVignettes} />
-        </div>
-      </section>
-
-      {/* ══ LE PRODUIT, EN CAPTURES ══════════════════════════════════════ */}
-      <section className="section-produit">
-        <div className="conteneur">
-          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.produitEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 12 }}>{t.produitTitre}</h2>
-          <p className="section-intro">{t.produitSoustitre}</p>
-
-          <div className="galerie">
-            {t.produitCaptures.map((c, i) => (
-              <figure key={c.image} className={`galerie-item reveal${i === 2 ? " galerie-item-etroit" : ""}`} style={{ transitionDelay: `${i * 90}ms` }}>
-                <CadreApp
-                  src={c.image}
-                  alt={c.alt}
-                  titre={c.cadre}
-                  largeur={c.largeur}
-                  hauteur={c.hauteur}
-                  tailles={i === 2 ? "(max-width: 960px) 70vw, 300px" : "(max-width: 960px) 100vw, 700px"}
-                />
-                <figcaption>
-                  <strong>{c.titre}</strong>
-                  <span>{c.legende}</span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-      {/* ══ UNE DETTE, TROIS MONNAIES ════════════════════════════════════ */}
-      <section className="section-payer">
-        <div className="conteneur">
-          <div className="payer-grille">
-            <div>
-              <p className="eyebrow" style={{ marginBottom: 16 }}>{t.payEyebrow}</p>
-              <h2 style={{ ...h2, marginBottom: 12 }}>{t.payTitle}</h2>
-              <p className="section-intro" style={{ marginBottom: 26 }}>{t.paySubtitle}</p>
-
-              <p className="eyebrow" style={{ marginBottom: 14 }}>{t.payUnitLabel}</p>
-              <div className="bande-tarifs">
-                {t.payModes.map((m, i) => (
-                  <div key={m.name} className="reveal tarif" style={{ transitionDelay: `${i * 100}ms` }}>
-                    <div className="tarif-entete">
-                      <Icon name={m.icon} size={18} color={ICON_COLORS[m.icon] ?? "var(--steel)"} />
-                      <span>{m.name}</span>
-                    </div>
-                    <p className="mono-num tarif-valeur">{m.valeur}</p>
-                    <p className="tarif-desc">{m.desc}</p>
-                  </div>
-                ))}
-              </div>
-              <p className="payer-partage">{t.payShareNote}</p>
-            </div>
-
-            {/* Une soirée qui se remplit sous les yeux : le même relevé que
-                dans l'application, et la conversion en bas. */}
-            <div className="payer-feed reveal">
-              <DebtFeed
-                title={t.feedTitle}
-                count={t.feedCount}
-                totalLabel={t.feedTotalLabel}
-                unit={t.feedPointsUnit}
-                conversion={t.feedConversion}
-                entries={t.feedEntries}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ L'APP DESKTOP ET SON OVERLAY ═════════════════════════════════ */}
-      <section className="section-desktop">
-        <div className="conteneur payer-grille">
-          <div className="desktop-scene reveal">
-            <ScenePartie
-              etiquette={t.overlayEtiquette}
-              pastille={
-                <PastilleOverlay
-                  temps={t.pastilleTemps}
-                  soiree={t.pastilleSoiree}
-                  jeu={t.pastilleJeu}
-                  kda={t.pastilleKda}
-                  kdaValeur={t.pastilleKdaValeur}
-                  siGagne={t.pastilleSiGagne}
-                  siPerdu={t.pastilleSiPerdu}
-                  gagne={t.pastilleGagne}
-                  perdu={t.pastillePerdu}
-                />
-              }
-            />
-            <p className="desktop-legende">{t.overlayLegende}</p>
-          </div>
-          <div>
-            <p className="eyebrow" style={{ marginBottom: 16 }}>{t.featuresEyebrow}</p>
-            <h2 style={{ ...h2, marginBottom: 28 }}>{t.featuresTitle}</h2>
-            <div className="liste-features">
-              {t.features.slice(0, 6).map((f, i) => (
-                <div key={f.title} className="reveal feature" style={{ transitionDelay: `${i * 70}ms` }}>
-                  {/* Le nom à gauche, ce qu'il fait à droite : une feuille de
-                      spécifications se lit en deux colonnes, pas en vignettes. */}
-                  <div className="feature-titre"><Slash height={12} />{f.title}</div>
-                  <div className="feature-desc">{f.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ LE PROBLÈME ══════════════════════════════════════════════════
-          Les chiffres s'enchaînaient en paragraphes, sans respiration : on
-          les lisait comme un mur. Chacun tient désormais dans son propre
-          bloc, avec un pictogramme et une jauge qui le rend comparable. */}
-      <section className="section-probleme">
-        <div className="conteneur">
-          <p className="eyebrow" style={{ marginBottom: 16 }}>{t.problemEyebrow}</p>
-          <h2 style={{ ...h2, marginBottom: 20, maxWidth: "18ch" }}>
-            {t.problemTitleLine1}<br />{t.problemTitleLine2}{" "}
-            <span className="titre-accent" style={{ color: "var(--ember)" }}>{t.problemTitleHighlight}</span>
-          </h2>
-          <p className="section-intro" style={{ maxWidth: "62ch" }}>{t.problemPara1}</p>
-
-          <div className="infographie">
-            {t.stats.map((s, i) => (
-              <div key={s.value} className="info-carte reveal" style={{ transitionDelay: `${i * 80}ms` }}>
-                <Icon name={INFO_ICONES[i] ?? "horloge"} size={20} color={INFO_TEINTES[i] ?? "var(--amber)"} />
-                <div className="mono-num info-val" style={{ color: INFO_TEINTES[i] ?? "var(--amber)" }}>{s.value}</div>
-                <p className="info-label">{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <p className="section-note">{t.problemPara2}</p>
         </div>
       </section>
 
@@ -418,40 +179,8 @@ export default function LandingClient({
           </div>
           <p className="hero-note" style={{ marginTop: 18 }}>{t.heroTelechargerNote}</p>
 
-          {/* Les sources restent accessibles, mais en bas : elles étayent le
-              propos, elles ne sont pas le propos. */}
-          <details className="sources">
-            <summary>{t.sourcesTitle}</summary>
-            <p className="sources-intro">{t.payFootnote}</p>
-            <ul>
-              {t.paySources.map((s) => (
-                <li key={s.href}>
-                  <a href={s.href} target="_blank" rel="noopener noreferrer">
-                    {(() => {
-                      const mots = s.label.split(" ");
-                      const dernier = mots.pop() ?? "";
-                      return (
-                        <>
-                          {mots.length > 0 && `${mots.join(" ")} `}
-                          <span style={{ whiteSpace: "nowrap" }}>
-                            {dernier}
-                            <Icone nom="lien-externe" taille={11} style={{ marginLeft: 5 }} />
-                          </span>
-                        </>
-                      );
-                    })()}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </details>
         </div>
       </section>
     </div>
   );
 }
-
-/** Un pictogramme et une teinte par constat : quatre chiffres alignés en
- *  colonne se lisaient comme une liste de courses. */
-const INFO_ICONES = ["chaise", "horloge", "coeur", "zap"];
-const INFO_TEINTES = ["var(--amber)", "var(--signal)", "var(--ember)", "var(--victory)"];

@@ -165,11 +165,7 @@
    tombe donc au milieu du groupe accentué : « 一坐就是几 / 小时 » sépare le
    nombre de son unité. On rend la ligne explicite plutôt que de compter sur
    la largeur du conteneur, qui ne veut pas dire la même chose d'une écriture
-   à l'autre — `18ch` fait dix-huit chiffres, mais neuf idéogrammes. */
-:lang(zh) .titre-accent,
-:lang(ja) .titre-accent {
-  display: block;
-}
+   à l'autre — `18ch` fait dix-huit chiffres, mais neuf idéogrammes. *
 
 /* Lu par les lecteurs d'écran, invisible à l'œil.
    Un graphique ne dit rien à qui ne le voit pas : sa forme n'existe que pour
