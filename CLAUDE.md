@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1612 tests unitaires, 151 suites. Base et session doublées : aucune dépendance à
+1624 tests unitaires, 152 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -722,6 +722,44 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Soixante et onze composants sur soixante-douze n'ont aucun test, et ce n'est pas la question
+Recensement fait : un seul composant de `src/components` est importé par un
+test. Le chiffre a l'air terrible et il ne veut presque rien dire — la suite
+unitaire tourne en environnement Node, sans DOM, et les composants sont
+éprouvés par les 185 parcours navigateur. Monter jsdom pour rendre du React
+dans jest est un changement de stratégie de test, pas un rattrapage ; il
+figure dans les questions, pas dans le code.
+
+Ce qui se fait sans arbitrage, c'est ce que le projet fait déjà depuis
+`SessionContext` → `chronoSession.ts` : **sortir les DÉCISIONS des composants**,
+là où leur erreur se paie.
+
+`AjoutActivite.tsx` fait huit cent soixante-onze lignes et trente états de
+React. Au milieu, la règle qui décide si le bouton d'enregistrement s'allume —
+c'est-à-dire la porte de l'action la plus employée du produit, et la SEULE
+façon d'enregistrer quoi que ce soit tant que la clé Riot n'est pas arrivée.
+Elle ne dépend d'aucun de ces états, et rien ne pouvait l'atteindre.
+
+Elle se trompe dans les deux sens, et les deux coûtent : trop sévère, le bouton
+reste éteint et rien n'entre ; trop permissive, une partie incomplète part au
+serveur, qui la refuse — et le message accuse alors la saisie de quelqu'un qui
+avait rempli ce qu'on lui demandait.
+
+`src/lib/saisiePartie.ts` la porte, avec les cas qui la distinguent : une
+séance au temps ne demande ni score ni champion, un champion vide est permis
+mais un champion inconnu non, zéro mort est une valeur et pas une absence, et
+un classement de battle royale commence à un.
+
+**Un durcissement au passage, à ne pas confondre avec un défaut qui aurait
+mordu.** La durée se lisait `Number(dureeH) || 0`, qui laisse passer l'infini :
+`Number("1e999")` vaut `Infinity`, et `Infinity || 0` le garde. La valeur
+partait telle quelle vers l'aperçu. Le serveur la refuse déjà par
+`bornesSaisie`, donc rien n'entrait en base ; ce qu'on évite ici, c'est un
+aperçu absurde sous un bouton allumé. `Number.isFinite` remplace le `|| 0`.
+
+Quatre sabotages, quatre échecs. Et les 185 parcours navigateur repassés : le
+remaniement ne change rien à ce que l'écran fait.
 
 ### Soixante et une clés de dictionnaire que plus personne ne lisait
 `dictionaries.test.ts` refuse un FICHIER de dictionnaire que rien n'importe —

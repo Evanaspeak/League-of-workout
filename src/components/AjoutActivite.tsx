@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { dureeEnSecondes as dureeSaisie, saisieComplete } from "@/lib/saisiePartie";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { useValeurClient } from "@/lib/valeurClient";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
@@ -360,14 +361,16 @@ export function AjoutActivite({
   };
 
 
-  const dureeEnSecondes = (Number(dureeH) || 0) * 3600 + (Number(dureeM) || 0) * 60;
+  const dureeEnSecondes = dureeSaisie(dureeH, dureeM);
   const isChampionValid = !addForm.champion || championConnu(champList, addForm.champion);
-  const isAddReady = typeJeu === "temps"
-    ? jeu.trim().length > 0 && dureeEnSecondes > 0
-    : jeu.trim().length > 0
-      && (!capacites.champions || isChampionValid)
-      && (!capacites.kda || (addForm.kills !== "" && addForm.deaths !== "" && addForm.assists !== ""))
-      && (!capacites.br || Number(placement) >= 1);
+  // La règle vit dans `src/lib/saisiePartie.ts` : elle ne dépend d'aucun état
+  // de React, et au milieu de ce fichier rien ne pouvait l'éprouver.
+  const isAddReady = saisieComplete({
+    typeJeu, jeu, dureeSec: dureeEnSecondes, capacites,
+    champion: addForm.champion, championValide: isChampionValid,
+    kills: addForm.kills, deaths: addForm.deaths, assists: addForm.assists,
+    placement,
+  });
 
   /**
    * Coût réel de la partie en cours de saisie. Chaque carte d'exercice le
