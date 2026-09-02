@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1475 tests unitaires, 135 suites. Base et session doublées : aucune dépendance à
+1492 tests unitaires, 137 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1449,6 +1449,46 @@ suivants tournaient sur un arbre déjà amputé. Les trois derniers ont rendu
 « 4 échecs sur 4 », ce qui ressemble à un test très mordant et n'est que du
 bruit. Un sabotage se fait contre une base connue ; sans indexation préalable,
 il n'y a pas de base.
+
+### Trois mémoires de module retenaient l'échec comme une réponse
+Le défaut des champions n'était pas isolé : c'est une famille, et les trois
+membres ont été écrits pour la même bonne raison. Plusieurs composants d'un
+écran ont besoin de la même réponse, donc on mémorise l'appel au niveau du
+module pour qu'un seul parte. C'est juste, c'est mesuré, et ça ne dit rien de
+ce qu'il faut faire quand la réponse ne vient pas.
+
+```ts
+if (!enCours) enCours = demander();   // l'échec aussi devient définitif
+```
+
+- **`useChampions`** : liste codée en dur figée, et comme elle sert à VALIDER,
+  un champion ajouté par l'administrateur devenait « non reconnu ».
+- **`chargerContexte`** : `null` rendu à tous les composants pour toute la
+  durée de la page. Compteur de dette vide, lien d'administration absent,
+  consentement redemandé. Aucun ne se plaint, aucun ne redirige : l'écran est
+  simplement moins vrai qu'il ne le dit.
+- **`chargerProgression`** : paliers et série effacés, dans les mêmes
+  conditions.
+
+Une mémoire retient maintenant l'appel EN VOL, pas son résultat quand il est
+vide. Le prochain composant qui se monte retente ; comme les montages d'un
+écran ont lieu dans le même tour de boucle, il n'y a pas de tempête à craindre.
+La règle vaut aussi pour `rafraichir` : un rafraîchissement raté ne doit pas
+effacer ce qu'on avait, sinon un paiement fait dans le métro vide l'écran.
+
+**Et `chargerProgression` en cachait un second, sans rapport avec l'échec** :
+le jour demandé était ignoré après le premier appel (`if (!enCours)` ne regarde
+pas l'argument). Un onglet laissé ouvert pendant la nuit gardait la série de la
+veille, avec son état de retard — c'est-à-dire exactement l'information qu'on
+vient regarder le matin. La mémoire porte le jour maintenant.
+
+Aucune des trois n'avait de test. Six sabotages, six échecs.
+
+Ce que ça apprend : **mémoriser un appel et mémoriser sa réponse ne sont pas la
+même chose**, et le raccourci qui confond les deux se relit comme une
+optimisation. C'est la même forme d'erreur que le `catch` qui décrit ce qu'il
+ne fait pas — le code a l'air de garantir quelque chose, alors qu'il fige un
+accident.
 
 ### Une coupure d'une seconde refusait un champion pour toute la session
 Trouvé en couvrant `useChampions`, et c'est le genre de défaut qu'on ne voit

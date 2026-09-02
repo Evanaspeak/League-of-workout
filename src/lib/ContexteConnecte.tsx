@@ -17,7 +17,7 @@ import { chargerContexte, rafraichirContexte } from "@/lib/chargerContexte";
  *
  * En production, chaque requête SQL est un appel HTTPS indépendant vers Neon —
  * le client passe par `PrismaNeonHttp`, pas par un pool TCP. Trois lectures du
- * même enregistrement coûtent donc trois allers-terours, pas trois fois rien.
+ * même enregistrement coûtent donc trois allers-retours, pas trois fois rien.
  *
  * Le rafraîchissement passe par l'événement `wow-dette-changee`, qui existait
  * déjà et que les deux composants écoutaient chacun de leur côté : il est
