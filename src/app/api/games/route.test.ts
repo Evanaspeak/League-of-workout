@@ -1,3 +1,4 @@
+import { EXERCICE_IDS, RATIOS_DEFAUT } from "@/lib/exercices";
 import { requete, corps, utilisateur } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => ({
@@ -479,5 +480,42 @@ describe("variante d'exécution", () => {
     session.mockResolvedValue(utilisateur({ pompesMax: 20, variantePompes: "sur une main" }));
     await post(partie({ exercice: "pompes" }));
     expect(game.create.mock.calls[0][0].data.variante).toBeNull();
+  });
+});
+
+/**
+ * Le barème des exercices, gelé sur la partie.
+ *
+ * `pompesCalculees` est un coût en POINTS, qui ne dépend d'aucun ratio. Le
+ * ratio ne sert qu'à dire ce que ça représente en secondes de boxe ou en
+ * squats — et il était lu au moment de l'AFFICHAGE. Changer le prix d'une
+ * seconde de boxe dans le panneau d'administration réécrivait donc tout
+ * l'historique de tout le monde : une soirée qui avait coûté 4 min 25 en
+ * affichait 8 min 50.
+ *
+ * C'est la même règle que pour `variante` et `exercice` juste au-dessus, et
+ * elle avait été appliquée à eux deux sans l'être aux ratios.
+ */
+describe("le barème en vigueur", () => {
+  it("se recopie sur la partie", async () => {
+    await post(partie({ exercice: "boxe" }));
+    const ecrit = game.create.mock.calls[0][0].data.ratios;
+    expect(typeof ecrit).toBe("string");
+    expect(JSON.parse(ecrit).boxe).toBe(RATIOS_DEFAUT.boxe);
+  });
+
+  it("se recopie aussi sur une séance comptée au temps", async () => {
+    // L'autre chemin d'écriture. Il en portait un de moins, et rien ne
+    // l'aurait dit : une séance de Minecraft se serait réécrite toute seule.
+    await post({ jeu: "Minecraft", dureeSec: 7200, exercice: "boxe" });
+    expect(typeof game.create.mock.calls[0][0].data.ratios).toBe("string");
+  });
+
+  it("porte tous les exercices, et pas seulement celui qu'on paie", async () => {
+    // Une sélection change plus tard ; la partie doit rester lisible sous
+    // n'importe quel exercice qu'elle a pu concerner.
+    await post(partie({ exercice: "boxe" }));
+    const ecrit = JSON.parse(game.create.mock.calls[0][0].data.ratios);
+    for (const id of EXERCICE_IDS) expect(typeof ecrit[id]).toBe("number");
   });
 });

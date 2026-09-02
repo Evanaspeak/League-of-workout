@@ -207,12 +207,30 @@ export function toExerciceIds(v: unknown): ExerciceId[] {
 
 
 /**
+ * Le ratio à employer pour cet exercice.
+ *
+ * Sans jeu de ratios explicite, c'est celui en vigueur MAINTENANT. C'est ce
+ * qu'il faut pour un aperçu, un compteur, un simulateur — tout ce qui parle du
+ * présent. Ce n'est PAS ce qu'il faut pour une partie déjà enregistrée : elle
+ * a été chiffrée sous un barème, et ce barème est le sien pour toujours.
+ */
+function ratioDe(exercice: ExerciceId, ratios?: RatiosExercices | null): number {
+  const r = ratios?.[exercice];
+  return typeof r === "number" && Number.isFinite(r) ? r : EXERCICES[exercice].ratio;
+}
+
+/**
  * Convertit des points d'effort en quantité concrète pour l'exercice donné :
  * un nombre de répétitions, ou un nombre de secondes.
+ *
+ * `ratios` gèle la conversion sur un barème donné. Une partie passée porte le
+ * sien : sans lui, changer le prix d'une seconde de boxe réécrivait tout
+ * l'historique — une soirée qui avait coûté 4 min 25 en affichait 8 min 50, et
+ * l'effort déjà fait ne correspondait plus à rien.
  */
-export function quantite(points: number, exercice: ExerciceId): number {
+export function quantite(points: number, exercice: ExerciceId, ratios?: RatiosExercices | null): number {
   const def = EXERCICES[exercice];
-  const brut = Math.max(0, points) * def.ratio;
+  const brut = Math.max(0, points) * ratioDe(exercice, ratios);
   const arrondi = Math.round(brut / def.pas) * def.pas;
   /**
    * Un pas décimal laisse traîner les flottants : 3 × 0,1 vaut
@@ -240,14 +258,28 @@ export function formaterDuree(totalSecondes: number): string {
  * Valeur compacte, sans nom d'exercice — pour les tableaux et les compteurs.
  * Reps → « 38 ». Temps → « 4 min 26 ».
  */
-export function formaterCompact(points: number, exercice: ExerciceId): string {
-  const q = quantite(points, exercice);
+export function formaterCompact(points: number, exercice: ExerciceId, ratios?: RatiosExercices | null): string {
+  return formaterQuantite(quantite(points, exercice, ratios), exercice);
+}
+
+/**
+ * Met en forme une quantité DÉJÀ convertie : des répétitions, des secondes,
+ * des kilomètres.
+ *
+ * Elle existe pour les cumuls. Un total qui court sur plusieurs parties ne
+ * peut pas se convertir d'un coup : chaque partie porte le barème sous lequel
+ * elle a été chiffrée, et les additionner en points reviendrait à reconvertir
+ * l'ensemble au barème du jour — c'est-à-dire à refaire exactement ce qu'on
+ * corrige. On convertit donc partie par partie, puis on additionne des
+ * quantités.
+ */
+export function formaterQuantite(q: number, exercice: ExerciceId): string {
   const unite = EXERCICES[exercice].unite;
   if (unite === "temps") return formaterDuree(q);
   // La distance porte son unité : « 2,4 » seul ne dit pas des kilomètres, et
   // c'est le seul exercice dont la quantité ne se compte pas en répétitions.
   if (unite === "distance") return `${q.toLocaleString("fr-FR")} km`;
-  return String(q);
+  return String(Math.round(q));
 }
 
 /**
@@ -257,13 +289,14 @@ export function formaterCompact(points: number, exercice: ExerciceId): string {
  */
 export function ventiler(
   parExercice: Record<string, number>,
+  ratios?: RatiosExercices | null,
 ): { id: ExerciceId; points: number; valeur: string }[] {
   return EXERCICE_IDS
     .filter((id) => (parExercice[id] ?? 0) > 0)
     .map((id) => ({
       id,
       points: parExercice[id],
-      valeur: formaterCompact(parExercice[id], id),
+      valeur: formaterCompact(parExercice[id], id, ratios),
     }));
 }
 
@@ -271,8 +304,8 @@ export function ventiler(
  * Format court pour les axes de graphique, où la place est comptée :
  * les durées sont arrondies à la minute au-delà d'une minute.
  */
-export function formaterAxe(points: number, exercice: ExerciceId): string {
-  const q = quantite(points, exercice);
+export function formaterAxe(points: number, exercice: ExerciceId, ratios?: RatiosExercices | null): string {
+  const q = quantite(points, exercice, ratios);
   const unite = EXERCICES[exercice].unite;
   if (unite === "distance") return `${q} km`;
   if (unite !== "temps") return String(q);

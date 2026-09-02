@@ -17,6 +17,27 @@ git checkout main && git merge claude/excel-app-conversion-5hk2fg
 git push origin main
 ```
 
+## Quoi construire ensuite (IMPORTANT)
+
+**`docs/plan-action.md` dit sur quoi travailler.** Il faut le LIRE avant de
+choisir un chantier produit, et ne pas improviser une liste à sa place : le
+plan a été établi avec le propriétaire, à partir de ses 308 réponses au Second
+Interrogatoire, et proposer autre chose sans le dire revient à défaire une
+décision qu'il a prise.
+
+Il porte huit étapes ordonnées et cent trois lignes cochables. La raison de
+l'ordre est écrite dans le document ; s'en écarter se discute, mais ça se
+discute — ça ne se fait pas en silence.
+
+**Quand une ligne est faite**, cocher sa case dans le même commit que le code.
+Un plan qu'on ne tient pas à jour ment, et on lui obéit quand même.
+
+`docs/interrogatoire-2.txt` porte les 308 réponses dont le plan dérive. Quand
+une ligne du plan est ambiguë, la réponse fait foi.
+
+Ce qui relève de la correction, de l'audit, de la mesure ou d'un garde de test
+ne figure PAS dans le plan : ça vit dans le journal, plus bas.
+
 ## Travail sur une fenêtre longue (IMPORTANT)
 
 Quand l'utilisateur annonce qu'il s'absente pour une durée donnée — « je pars
@@ -424,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1659 tests unitaires, 156 suites. Base et session doublées : aucune dépendance à
+1677 tests unitaires, 158 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -449,7 +470,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 186 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 187 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -722,6 +743,126 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Changer un ratio réécrivait tout l'historique de tout le monde
+Signalé par le propriétaire du produit : « j'ai changé le ratio de combien
+valait une seconde de boxe par rapport à une pompe, ça change tous les ratios
+de l'historique ». C'est un défaut de fond, pas d'affichage : un effort déjà
+fourni cessait de correspondre à ce qu'on avait payé.
+
+Reproduit avant d'y toucher, au niveau du module : une partie qui avait coûté
+**4 min 25 de boxe en affichait 8 min 50** après un doublement du ratio.
+
+**La cause tient en une phrase, et elle était déjà écrite ailleurs.**
+`pompesCalculees` est un coût en POINTS d'effort, qui ne dépend d'aucun
+ratio ; le ratio ne sert qu'à dire ce que ça fait en secondes de boxe ou en
+squats, et il était lu au moment de l'AFFICHAGE, sur le module. Or le schéma
+gelait déjà `exercice` (« l'historique reste fidèle même si la sélection
+change plus tard ») et `variante` (« le réglage change, l'historique ne doit
+pas changer avec »). La même règle, écrite deux fois pour deux colonnes
+voisines, n'avait pas été appliquée à la troisième.
+
+`Game.ratios` porte désormais le barème en vigueur à l'enregistrement, et les
+conversions acceptent un jeu de ratios explicite. Sans argument, elles
+continuent d'employer celui du jour — c'est ce qu'il faut pour un aperçu, un
+compteur, un simulateur, qui parlent du présent.
+
+**Le cumul demandait une seconde correction, moins visible.** Additionner les
+points de plusieurs parties puis convertir la somme revient à réévaluer tout
+le passé au barème du jour, c'est-à-dire à refaire exactement ce qu'on
+corrige. `cumulsParExercice` convertit donc partie par partie, sous le barème
+de chacune, puis additionne des répétitions et des secondes. D'où
+`formaterQuantite`, qui met en forme une quantité DÉJÀ convertie, là où
+`formaterCompact` part de points.
+
+**Le remplissage de la colonne écrit le barème COURANT, pas celui d'origine**,
+et c'est contre-intuitif. Les points n'ont jamais dépendu du barème : ce qu'on
+gèle est l'affichage, et l'affichage qu'une partie ancienne a aujourd'hui est
+celui du barème courant. Y écrire les ratios d'origine changerait le passé au
+lieu de l'arrêter. La migration les lit donc dans `SystemConfig` ; sans ligne
+de configuration, la colonne reste nulle et la lecture retombe sur les ratios
+d'origine, qui sont bien ceux qui étaient affichés.
+
+**Ce qui n'est PAS gelé, et pourquoi.** Le tableau de bord et le bilan de
+saison continuent de convertir au barème du jour. Ils agrègent des points au
+serveur, sans distinguer les parties, et surtout ils ne répondent pas à la
+même question : l'historique est un registre — ce que chaque partie a coûté,
+et ça ne se réécrit pas —, tandis que le tableau de bord dit « voilà l'effort
+accumulé, dans l'unité que tu emploies en ce moment ». L'objectif et les
+paliers, eux, sont en points : ils sont insensibles au barème par
+construction.
+
+**Le garde de la correction de résultat était le plus facile à oublier.**
+`PATCH /api/games/[id]` rejoue le barème de SCORING ; s'il rouvrait aussi
+celui des exercices, une partie corrigée se remettrait à l'heure du jour au
+passage — et le chiffre qui change serait précisément celui qu'on venait
+corriger. Un test l'interdit, avec son témoin : sans lui, une correction qui
+n'écrirait plus rien du tout satisferait le contrôle en ne prouvant rien.
+
+Preuve de bout en bout, `e2e/bareme-gele.spec.ts`, et il faut ses DEUX
+moitiés : l'ancienne partie reste à 2 min 55 après le changement, et la
+suivante passe à 5 min 45. Ne vérifier que la première laisserait passer un
+gel complet, qui rendrait le réglage inutile.
+
+**Le premier jet du parcours dépendait de son état de départ.** Il supprimait
+la ligne de configuration puis mesurait — sans pouvoir purger le cache mémoire
+du serveur, qui dure soixante secondes et portait encore le barème d'un essai
+précédent. La partie était donc chiffrée sous un barème, comparée à lui-même,
+et le test échouait en annonçant que le nouveau barème ne s'appliquait pas. Il
+pose maintenant un barème connu PAR LA ROUTE avant de mesurer : c'est elle qui
+purge le cache, et c'est ce qui rend la mesure indépendante de ce qui
+précédait.
+
+Neuf sabotages, neuf échecs — dont celui qui compte le plus, l'historique
+remis à reconvertir au barème du jour, qui fait tomber le parcours navigateur.
+
+Et le garde des colonnes a mordu comme prévu : la route envoyait `ratios`,
+l'écran ne le lisait pas encore, et `colonnesHistorique` l'a dit avant moi.
+
+### La date d'inscription demandait un clic par compte, et un signalement faisait déborder la page
+Deux trouvailles dans le même panneau, dont une seule était demandée.
+
+**La date d'inscription existait, dans le profil déroulant.** Il fallait donc
+ouvrir chaque compte pour savoir qui venait d'arriver — c'est-à-dire la
+question qu'on se pose le jour où l'on invite du monde, et la seule que la
+liste ne répondait pas d'un coup d'œil. Elle est sur la ligne repliée
+maintenant, en relatif : « inscrit aujourd'hui », « inscrit il y a 2j ». Le
+relatif se lit sans compter, « 31/08 » non. La date exacte reste dans le
+profil, elle n'a pas disparu.
+
+**Et la page débordait de 15 348 pixels latéralement.** Trouvé en mesurant le
+débordement horizontal après la retouche, par acquit de conscience : le
+coupable n'était pas la ligne ajoutée mais un **signalement** dont le texte
+n'a aucun espace. `white-space: pre-wrap` conserve les retours à la ligne, ce
+qu'on veut pour un rapport de bug tapé à la main, et ne dit rien de ce qu'il
+faut faire d'un mot de quinze mille caractères. Le navigateur pousse la ligne,
+et c'est la PAGE qui part de côté.
+
+C'est du texte **écrit par quelqu'un d'autre** : une trace d'erreur, une
+adresse collée, un clavier martelé. `overflow-wrap: anywhere` — et pas
+`break-word`, qui refuse de couper à l'intérieur d'un mot tant qu'il existe
+une autre occasion. Mesuré : 15 348 px avant, **0 après**.
+
+`src/texteUtilisateurCoupe.test.ts` garde la classe et non la ligne : tout
+endroit qui pose `pre-wrap` porte du texte qu'on n'a pas écrit — sinon on
+n'aurait pas besoin de conserver ses retours à la ligne — donc tout endroit
+qui pose `pre-wrap` doit dire comment couper. Le motif lit l'objet de style
+ENTIER, accolade à accolade, parce qu'un style écrit sur plusieurs lignes
+échappe à une recherche ligne à ligne — et c'est justement la forme qu'on
+écrit quand le style s'allonge. Deux sabotages, deux échecs.
+
+**Un rappel d'outillage, retombé dedans trois fois de suite.** Le panneau ne
+se laisse pas photographier sans traverser d'abord les trois fenêtres d'un
+compte neuf, et **la visite guidée NAVIGUE** : « Passer l'introduction »
+cliqué depuis `/admin` renvoie sur le tableau de bord et lance la visite, donc
+la capture montre le tableau de bord. Les fenêtres se vident depuis la page
+d'arrivée, avant d'aller où l'on va. C'est écrit dans `e2e/intro.ts` depuis
+des semaines, sous le nom de `viderLesFenetres`.
+
+Et le limiteur d'inscription — cinq par quart d'heure — mord après quelques
+essais manuels. La panne se présente comme « le code ne s'affiche pas », ce
+qui ne ressemble pas à sa cause. `DELETE FROM "LoginAttempt"` avant chaque
+tentative.
 
 ### Mille cent trente-deux mots sur la page d'accueil, deux cent quatre-vingt-six restent
 Le propriétaire du produit a essayé plusieurs fois de faire venir du monde

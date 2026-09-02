@@ -334,3 +334,30 @@ describe("DELETE /api/games/[id]", () => {
     expect((await corps(r) as { dettePointsDus: number }).dettePointsDus).toBe(92);
   });
 });
+
+/**
+ * Corriger un résultat rejoue le barème de SCORING, pas celui des exercices.
+ *
+ * La règle est déjà écrite pour les exercices retenus : ils ne se rouvrent
+ * pas, pour que l'historique reste fidèle. Les ratios sont dans le même cas,
+ * et pour la même raison : une partie corrigée ne doit pas se remettre à
+ * l'heure du barème du jour au passage. Rien ne l'aurait dit — le chiffre qui
+ * change est précisément celui qu'on venait corriger.
+ */
+describe("PATCH /api/games/[id] — le barème des exercices", () => {
+  beforeEach(() => { game.findFirst.mockResolvedValue(PARTIE); });
+
+  it("ne se rouvre pas quand on corrige le résultat", async () => {
+    await patch("g1", { result: "V" });
+    expect(Object.keys(game.updateMany.mock.calls[0][0].data)).not.toContain("ratios");
+  });
+
+  /**
+   * Le témoin : sans lui, une correction qui n'écrirait plus rien du tout
+   * satisferait le contrôle ci-dessus en ne prouvant rien.
+   */
+  it("écrit bien quelque chose", async () => {
+    await patch("g1", { result: "V" });
+    expect(Object.keys(game.updateMany.mock.calls[0][0].data).length).toBeGreaterThan(3);
+  });
+});

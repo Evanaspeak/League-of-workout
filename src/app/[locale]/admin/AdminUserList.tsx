@@ -212,6 +212,15 @@ export default function AdminUserList() {
                 </div>
               </div>
               <div style={{ display: "flex", gap: 16, alignItems: "center", flexShrink: 0, fontSize: "0.78rem" }}>
+                {/* La date d'inscription, sur la ligne repliée.
+                    Elle existait, mais seulement dans le profil déroulant : il
+                    fallait ouvrir chaque compte pour savoir qui venait
+                    d'arriver. C'est exactement la question qu'on se pose le
+                    jour où l'on invite du monde, et elle demandait un clic par
+                    compte. Relative plutôt que datée : « il y a 2j » se lit
+                    sans compter, « 31/08 » non. La date exacte reste dans le
+                    profil, elle n'a pas disparu. */}
+                <span style={{ color: "var(--faint)" }}>{t.joinedAgo(daysSince(u.createdAt, t) ?? "")}</span>
                 <span style={{ color: "#6E9BFF" }}>{u.totalGames} {t.gamesSuffix}</span>
                 <span style={{ color: "#ECEFF4" }}>{u.totalPompes} {t.pompesSuffix}</span>
                 <span style={{ color: "var(--faint)" }}>

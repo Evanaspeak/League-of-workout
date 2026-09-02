@@ -257,6 +257,15 @@ model Game {
   // Ventilation de la dette entre exercices, en JSON : {"pompes":23,"boxe":23}.
   // Null quand un seul exercice est concerné — `exercice` suffit alors.
   repartition         String?
+  // Ratios en vigueur au moment de l'enregistrement, en JSON :
+  // {"pompes":1,"boxe":6.9}. Ils disent combien de répétitions ou de secondes
+  // vaut un point d'effort. Gelés ici pour la MÊME raison que `variante` et
+  // `exercice` juste au-dessus, et l'oubli s'était payé cher : un ratio changé
+  // dans le panneau d'administration réécrivait tout l'historique de tout le
+  // monde, et une soirée qui avait coûté 4 min 25 de boxe en affichait 8 min 50.
+  // Null pour les parties antérieures à cette colonne : elles retombent sur les
+  // ratios d'origine, qui sont ceux sous lesquels elles ont été chiffrées.
+  ratios              String?
   // Variante d'exécution en vigueur au moment de l'enregistrement ("genoux").
   // Recopiée depuis le réglage du compte plutôt que lue au moment de
   // l'affichage : le réglage change, l'historique ne doit pas changer avec.
