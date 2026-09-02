@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1624 tests unitaires, 152 suites. Base et session doublées : aucune dépendance à
+1635 tests unitaires, 153 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -449,7 +449,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 185 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 186 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -722,6 +722,31 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Deux règles de la visite guidée y étaient écrites deux fois
+`VisiteGuidee.tsx` fait quatre cent soixante lignes, et c'est la première chose
+qu'un compte neuf rencontre. Deux de ses règles y figuraient en double, et
+c'est le motif déjà trouvé six fois sur ce projet : ce n'est pas la copie qu'on
+remarque, c'est qu'une correction n'en répare qu'une moitié.
+
+- **La liste des ancres d'une étape** — l'ancre étroite d'abord sur petit
+  écran, puis l'ancre principale, puis le repli — écrite une fois pour trouver
+  l'élément et une fois pour le resuivre au défilement. Une divergence ferait
+  éclairer le rail replié, c'est-à-dire le vide, dès qu'on fait défiler.
+- **La part d'écran qu'un cadre peut occuper**, `0.62`, écrite une fois dans la
+  mesure et une fois dans le contrôle de taille. Divergentes, elles donneraient
+  un cadre rogné qu'on ne déclare pas trop grand : la visite ne ferait alors
+  pas défiler jusqu'à l'ancre, et désignerait quelque chose qui n'est pas à
+  l'écran.
+
+`src/lib/visiteGuidee.ts` les porte, avec les cas qui les distinguent : le
+seuil de 900 px éprouvé des deux côtés, l'ordre des trois ancres, l'élément
+sans surface qui ne se cadre pas (un rail replié n'occupe aucun pixel), et le
+tableau d'historique de quatre mille pixels borné sans que son haut ne bouge.
+Un test vérifie que la borne et le contrôle emploient le MÊME seuil — c'est
+exactement ce que la duplication rendait invérifiable.
+
+Cinq sabotages, cinq échecs, dont les deux seuils rendus divergents.
 
 ### L'historique sautait d'un quart d'écran, et toutes les campagnes disaient zéro
 Campagne de mesure après les cinq versions du matin. **Accessibilité : 0 constat

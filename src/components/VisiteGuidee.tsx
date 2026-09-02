@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cadreDepuisRect, clesCandidates, tropGrandPourLEcran } from "@/lib/visiteGuidee";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useRouter } from "next/navigation";
 import { useChemin } from "@/lib/i18n/useChemin";
@@ -71,33 +72,14 @@ type Etape = {
 
 type Cadre = { i: number; left: number; top: number; width: number; height: number };
 
-/**
- * Surface de l'élément, ou `null` s'il n'en occupe aucune.
- *
- * Un test « est-il dans l'écran ? » vivait ici, et c'est lui qui faisait sauter
- * des étapes. Le chercheur s'en servait pour décider si l'ancre EXISTE : tout
- * ce qui se trouvait sous la ligne de flottaison lui était donc invisible —
- * alors que c'est précisément ce qu'on allait amener à l'écran juste après.
- * L'étape attendait cinq secondes une ancre pourtant présente, puis se sautait
- * elle-même. Reste le seul critère qui compte : occuper des pixels. Un rail
- * replié ou une section non dépliée n'en occupe aucun, et l'éclairer
- * désignerait le vide.
- */
+/** Le cadre d'un élément, ou `null` s'il n'occupe aucune surface. */
 function mesurer(el: Element): Omit<Cadre, "i"> | null {
-  const r = el.getBoundingClientRect();
-  if (r.width === 0 || r.height === 0) return null;
-  // Une ancre peut être immense : le tableau de l'historique fait plus de
-  // quatre mille pixels de haut dès qu'on a quelques dizaines de parties.
-  // L'entourer en entier n'éclaire plus rien — le cadre déborde de l'écran des
-  // deux côtés, et la bulle, placée par rapport à lui, part avec. On n'en
-  // désigne alors que le haut : c'est là que commence ce qu'on montre.
-  const hMax = Math.round(window.innerHeight * 0.62);
-  return { left: r.left, top: r.top, width: r.width, height: Math.min(r.height, hMax) };
+  return cadreDepuisRect(el.getBoundingClientRect(), window.innerHeight);
 }
 
 /** Vrai si l'élément est plus grand que ce que l'écran peut cadrer. */
 function tropGrand(el: Element): boolean {
-  return el.getBoundingClientRect().height > window.innerHeight * 0.62;
+  return tropGrandPourLEcran(el.getBoundingClientRect().height, window.innerHeight);
 }
 
 export function VisiteGuidee() {
@@ -170,12 +152,7 @@ export function VisiteGuidee() {
     if (!active || !etape) return;
     cibleRef.current = i;
 
-    const etroit = window.innerWidth < 900;
-    const cles = [
-      ...(etroit && etape.cleEtroite ? [etape.cleEtroite] : []),
-      etape.cle,
-      ...(etape.cleSecours ? [etape.cleSecours] : []),
-    ];
+    const cles = clesCandidates(etape, window.innerWidth);
     const debut = Date.now();
     let annule = false;
     let minuteur: ReturnType<typeof setTimeout>;
@@ -272,12 +249,7 @@ export function VisiteGuidee() {
       const i = cibleRef.current;
       const etape = ETAPES[i];
       if (!etape) return;
-      const etroit = window.innerWidth < 900;
-      const cles = [
-        ...(etroit && etape.cleEtroite ? [etape.cleEtroite] : []),
-        etape.cle,
-        ...(etape.cleSecours ? [etape.cleSecours] : []),
-      ];
+      const cles = clesCandidates(etape, window.innerWidth);
       for (const cle of cles) {
         const el = document.querySelector(`[data-visite="${cle}"]`);
         const m = el && mesurer(el);
