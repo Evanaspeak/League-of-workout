@@ -98,6 +98,24 @@ function retirer(jeton: string) {
 }
 
 /**
+ * Pourquoi le dernier envoi n'est pas passé.
+ *
+ * Une file qui grossit sans rien dire est la pire des deux : on voit six
+ * séances en attente, on est manifestement connecté, et rien n'explique
+ * pourquoi elles restent là. `null` = rien à signaler.
+ */
+export type EchecFile =
+  | { motif: "reseau" }
+  | { motif: "session" }
+  | { motif: "serveur"; code: number };
+
+let dernierEchec: EchecFile | null = null;
+
+export function echecFile(): EchecFile | null {
+  return dernierEchec;
+}
+
+/**
  * Envoie ce qui attend, une entrée à la fois.
  *
  * En série et non en parallèle : le serveur calcule chaque paiement sur la
@@ -109,6 +127,7 @@ function retirer(jeton: string) {
  */
 export async function viderFile(): Promise<number> {
   let passees = 0;
+  let echec: EchecFile | null = null;
   for (const entree of lireFile()) {
     let res: Response;
     try {
@@ -123,6 +142,7 @@ export async function viderFile(): Promise<number> {
       });
     } catch {
       // Toujours hors réseau : on garde tout et on réessaiera.
+      echec = { motif: "reseau" };
       break;
     }
     if (res.ok) {
@@ -132,7 +152,7 @@ export async function viderFile(): Promise<number> {
     }
     // 401 : la session a expiré. La séance reste, elle repartira une fois
     // reconnecté — la jeter serait perdre l'effort pour de bon.
-    if (res.status === 401) break;
+    if (res.status === 401) { echec = { motif: "session" }; break; }
     // 4xx : le serveur ne veut pas de cette entrée et n'en voudra jamais. La
     // garder ferait bloquer toute la file derrière elle.
     if (res.status >= 400 && res.status < 500) {
@@ -140,8 +160,13 @@ export async function viderFile(): Promise<number> {
       continue;
     }
     // 5xx : c'est peut-être passager.
+    echec = { motif: "serveur", code: res.status };
     break;
   }
+  dernierEchec = echec;
+  // La pastille lit `echecFile()` par abonnement : sans cet appel, elle
+  // continuerait d'annoncer une file qui attend sans dire ce qui la bloque.
+  prevenir();
   if (passees > 0) {
     // La pastille de dette et le titre de l'onglet se rafraîchissent.
     window.dispatchEvent(new Event("wow-dette-changee"));

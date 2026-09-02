@@ -445,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1681 tests unitaires, 158 suites. Base et session doublées : aucune dépendance à
+1689 tests unitaires, 159 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -743,6 +743,76 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La même durée était calculée à quatre endroits, et les quatre divergeaient
+Signalé après la correction du cache : la pastille passait en ALERTE à
+3 min 35 sous un seuil réglé à 5 min, une notification Windows annonçait
+8 min 06 que rien à l'écran ne montrait, et treize notifications identiques
+étaient arrivées dans la soirée.
+
+Trois symptômes, une seule cause : **la même dette était convertie à
+plusieurs endroits, de plusieurs façons.**
+
+- la PASTILLE convertissait les points dans le navigateur, avec les ratios
+  qui y sont installés ;
+- le SEUIL d'alerte et la NOTIFICATION lisaient `dureeSec`, calculé au
+  serveur ;
+- et le serveur lui-même en produisait deux : `dureeEffort` à la seconde
+  près, quand l'affichage arrondit au pas de l'exercice — cinq secondes pour
+  la boxe.
+
+D'où l'alerte sous son propre seuil : l'écran montrait 3 min 35 pendant que la
+comparaison portait sur 8 min 06. Le rapport entre les deux valait celui des
+deux ratios, comme la veille, mais dans l'autre sens.
+
+**Une seule conversion, faite là où les ratios font autorité.** `reponseDette`
+rend désormais `quantites` — la dette déjà convertie, exercice par exercice —
+et le navigateur affiche ce qu'on lui donne. `dureeAffichee` remplace
+`dureeEffort` partout où un nombre est MONTRÉ ou comparé à un seuil ;
+`dureeEffort` reste la bonne pour un calcul de proportion, où l'arrondi n'a
+rien à faire.
+
+**Et le type `Dette` était déclaré deux fois**, à la main, dans deux
+composants. Un champ ajouté au serveur ne rejoignait ni l'un ni l'autre, et le
+compilateur ne s'en plaignait pas — c'est la duplication la plus discrète de
+toutes. `DettePourEcran` se déduit de `ReturnType<typeof reponseDette>` : le
+sabotage qui retire `quantites` du serveur casse maintenant la compilation
+chez le consommateur, ce qu'aucun test n'aurait fait aussi bien.
+
+**Treize notifications, et la marque vivait dans un montage.** `notifieRef`
+est une `useRef` : elle repart à zéro à chaque changement de page. Une soirée
+passée à naviguer entre le tableau de bord, l'historique et les réglages
+produisait donc une notification par navigation. Elle vit dans le stockage
+maintenant, et s'efface quand la dette repasse sous le seuil — le palier
+suivant doit pouvoir prévenir à son tour.
+
+**Six séances attendaient depuis des heures sur une machine en ligne.** Le
+renvoi de la file ne se déclenchait qu'au chargement d'une page et au retour
+de l'événement `online`. Un envoi refusé alors qu'on est connecté — le serveur
+qui tousse, une session qui vient d'expirer — n'était donc plus jamais retenté
+tant qu'on ne changeait pas de page. Une reprise toutes les minutes tant qu'il
+reste quelque chose ; la boucle ne coûte rien sur une file vide.
+
+Et surtout **la file dit maintenant pourquoi elle n'avance pas** : session
+expirée, pas de réseau, ou serveur qui refuse. Une file qui grossit en silence
+sur une machine manifestement connectée est la pire des deux — on la voit, et
+il n'y a aucune suite à donner. C'est la famille « répond juste, ne fait
+rien », appliquée à ce qui ne répond pas du tout.
+
+**Un quatrième producteur trouvé en recensant**, dans la notification qui part
+à l'enregistrement d'une partie : elle comparait au seuil et écrivait son texte
+avec la durée exacte, donc elle pouvait franchir le seuil à un autre moment que
+la pastille, et annoncer un autre nombre.
+
+`src/dureeAffichee.test.ts` garde la classe : `dureeEffort` n'est plus permise
+que là où l'on calcule une PROPORTION — le paiement partiel d'une séance
+interrompue — et chaque emploi restant porte sa raison écrite. Avec les deux
+contrôles habituels : un recensement qui ne lit rien tombe, et une exemption
+qui ne désigne plus rien de vivant tombe aussi.
+
+Dix sabotages. Celui du serveur qui cesse d'envoyer `quantites` ne fait pas
+tomber un test mais la COMPILATION, et c'est mieux : le type dérivé rend la
+divergence impossible plutôt que détectable.
 
 ### Deux nombres se contredisaient sur le même écran, et un test exigeait la cause
 Suite immédiate du défaut précédent, signalée dans la foulée : « le compteur

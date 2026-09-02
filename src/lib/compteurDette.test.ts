@@ -86,26 +86,23 @@ describe("le seuil de séance", () => {
  * pareil.
  */
 describe("les secondes annoncées", () => {
-  /** Une conversion de boxe arrondie au pas de cinq secondes, comme la vraie. */
-  const convertir = (pts: number) => Math.round((pts * 7) / 5) * 5;
-
   it("compte ce que l'écran affiche, pas la durée du serveur", () => {
-    // 11 points × 7 = 77 s au serveur ; l'écran annonce 75.
-    expect(secondesAnnoncees([{ pts: 11, id: "boxe" }], 77, convertir)).toBe(75);
+    // La pastille annonce 75 s ; `dureeSec` en vaut 77. C'est le nombre
+    // annoncé qu'on décompte, sinon le chrono démarre au-dessus de sa
+    // propre étiquette.
+    expect(secondesAnnoncees([{ secondes: 75 }], 77)).toBe(75);
   });
 
   it("additionne les exercices quand la dette est partagée", () => {
-    expect(secondesAnnoncees(
-      [{ pts: 11, id: "boxe" }, { pts: 4, id: "planche" }], 999, convertir,
-    )).toBe(75 + convertir(4));
+    expect(secondesAnnoncees([{ secondes: 75 }, { secondes: 20 }], 999)).toBe(95);
   });
 
   it("retombe sur la durée du serveur quand rien n'est ventilé", () => {
     // Mieux vaut un décompte que pas de décompte : le repli existe pour ça.
-    expect(secondesAnnoncees([], 77, convertir)).toBe(77);
+    expect(secondesAnnoncees([], 77)).toBe(77);
   });
 
   it("ne rend jamais de durée négative", () => {
-    expect(secondesAnnoncees([], -10, convertir)).toBe(0);
+    expect(secondesAnnoncees([], -10)).toBe(0);
   });
 });

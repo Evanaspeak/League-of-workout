@@ -9,7 +9,7 @@ import {
 } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, ratiosActuels,
+  dureeAffichee, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, ratiosActuels,
   repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
@@ -440,8 +440,12 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
       const exercices = exercicesEnTemps(toExerciceIds(avant.exercices));
       const seuil = Math.max(0, avant.rappelSeuilSec);
       if (exercices.length > 0 && seuil > 0) {
-        const avantSec = dureeEffort(Math.max(0, avant.dettePointsDus), exercices);
-        const apresSec = dureeEffort(Math.max(0, total), exercices);
+        // La durée AFFICHÉE, des deux côtés de la comparaison : le seuil doit
+        // se franchir au même nombre que celui montré sur la pastille, et la
+        // notification doit annoncer ce nombre-là. Trois producteurs de la
+        // même durée s'étaient mis à diverger.
+        const avantSec = dureeAffichee(Math.max(0, avant.dettePointsDus), exercices);
+        const apresSec = dureeAffichee(Math.max(0, total), exercices);
         if (avantSec < seuil && apresSec >= seuil) {
           // Dans la langue du compte : le texte était écrit en dur en
           // français et partait tel quel à tout le monde, y compris à qui

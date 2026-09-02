@@ -1,4 +1,4 @@
-import { abonnerFile, enfiler, lireFile, viderFile } from "./fileHorsLigne";
+import { abonnerFile, echecFile, enfiler, lireFile, viderFile } from "./fileHorsLigne";
 
 /**
  * La file des séances faites sans réseau.
@@ -167,5 +167,61 @@ describe("renvoyer", () => {
     (globalThis.fetch as jest.Mock).mockResolvedValue(reponse(200));
     await viderFile();
     expect(globalThis.window.dispatchEvent).toHaveBeenCalled();
+  });
+});
+
+/**
+ * Pourquoi la file n'avance pas.
+ *
+ * Six séances ont attendu des heures sur une machine parfaitement en ligne,
+ * et rien à l'écran ne disait pourquoi. Une file qui grossit en silence est
+ * la pire des deux : on la voit, on est connecté, et il n'y a aucune suite à
+ * donner.
+ */
+describe("la raison du blocage", () => {
+  beforeEach(() => {
+    // La préparation globale pose déjà le stockage sur `window` ; on n'ajoute
+    // qu'une entrée à envoyer.
+    enfiler({ jour: "2026-09-02", secondes: 60 });
+  });
+
+  it("dit « session » sur un 401", async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 }) as never;
+    await viderFile();
+    expect(echecFile()).toEqual({ motif: "session" });
+  });
+
+  it("dit « serveur » sur un 500, avec le code", async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503 }) as never;
+    await viderFile();
+    expect(echecFile()).toEqual({ motif: "serveur", code: 503 });
+  });
+
+  it("dit « réseau » quand l'envoi ne part pas", async () => {
+    globalThis.fetch = jest.fn().mockRejectedValue(new Error("hors ligne")) as never;
+    await viderFile();
+    expect(echecFile()).toEqual({ motif: "reseau" });
+  });
+
+  it("n'a plus rien à signaler quand tout est passé", async () => {
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as never;
+    await viderFile();
+    expect(echecFile()).not.toBeNull();
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 }) as never;
+    await viderFile();
+    expect(echecFile()).toBeNull();
+  });
+
+  /**
+   * L'abonnement est ce qui fait remonter la raison à l'écran. Sans lui, elle
+   * serait notée dans un module que personne ne relit.
+   */
+  it("prévient les abonnés même quand rien n'est passé", async () => {
+    const vu = jest.fn();
+    const desabonner = abonnerFile(vu);
+    globalThis.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 }) as never;
+    await viderFile();
+    expect(vu).toHaveBeenCalled();
+    desabonner();
   });
 });

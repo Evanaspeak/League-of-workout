@@ -8,20 +8,19 @@ import { jourLocal } from "@/lib/serie";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
-import { formaterCompact, quantite, toExerciceId, type ExerciceId, type Repartition } from "@/lib/exercices";
+import { formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId } from "@/lib/exercices";
+import type { DettePourEcran } from "@/lib/contexteConnecte";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { notifierSysteme } from "@/lib/notifier";
 import { echauffementConseille } from "@/lib/echauffement";
-import { abonnerFile, enfiler, lireFile, viderFile } from "@/lib/fileHorsLigne";
+import { abonnerFile, echecFile, enfiler, lireFile, viderFile } from "@/lib/fileHorsLigne";
+import { ecrire, effacer, lire } from "@/lib/stockage";
 import { useValeurClient } from "@/lib/valeurClient";
 
-type Dette = {
-  points: number;
-  exercices: ExerciceId[];
-  repartition: Repartition;
-  dureeSec: number;
-  seuilSec: number;
-};
+type Dette = DettePourEcran;
+
+/** Le seuil a déjà donné lieu à une notification, pour ce franchissement-ci. */
+const CLE_SEUIL_NOTIFIE = "low_dette_seuil_notifie";
 
 /**
  * Compteur d'effort en attente. Il ne concerne que les exercices comptés en
@@ -77,6 +76,8 @@ export function CompteurDette() {
    * zéro — il ne voit pas le stockage du navigateur.
    */
   const enAttenteEnvoi = useValeurClient(() => lireFile().length, 0, abonnerFile);
+  /** Pourquoi la file n'avance pas, quand elle n'avance pas. */
+  const blocage = useValeurClient(() => echecFile()?.motif ?? null, null, abonnerFile);
 
   /**
    * La dette vient du contexte commun, plus d'un appel à soi.
@@ -88,10 +89,32 @@ export function CompteurDette() {
   const contexte = useContexteConnecte();
   const dette = (contexte.dette ?? null) as Dette | null;
 
-  /** Les lignes de la dette, une par exercice réellement dû. */
+  /**
+   * Les lignes de la dette, une par exercice réellement dû.
+   *
+   * `valeur` vient du SERVEUR (`dette.quantites`) et n'est pas recalculée ici.
+   * Elle l'était, à partir des points et des ratios du navigateur : la
+   * pastille affichait alors « 3 min 35 » pendant que le seuil d'alerte et la
+   * notification lisaient `dureeSec` et voyaient 8 min 06. Deux conversions de
+   * la même dette, sur deux machines.
+   *
+   * Le repli sur la conversion locale ne sert qu'aux réponses d'avant cette
+   * colonne : il vaut mieux un nombre approché qu'une case vide.
+   */
   const lignesDette = dette
     ? Object.entries(dette.repartition)
-        .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 }))
+        .map(([id, pts]) => {
+          const exercice = toExerciceId(id);
+          const rendue = dette.quantites?.[id];
+          return {
+            id: exercice,
+            pts: pts ?? 0,
+            valeur: typeof rendue === "number"
+              ? formaterQuantite(rendue, exercice)
+              : formaterCompact(pts ?? 0, exercice),
+            secondes: typeof rendue === "number" ? rendue : quantite(pts ?? 0, exercice),
+          };
+        })
         .filter((l) => l.pts > 0)
     : [];
 
@@ -108,16 +131,51 @@ export function CompteurDette() {
     const renvoyer = () => { viderFile().catch(() => {}); };
     renvoyer();
     window.addEventListener("online", renvoyer);
-    return () => window.removeEventListener("online", renvoyer);
+    /**
+     * Et on réessaie tant qu'il reste quelque chose.
+     *
+     * Le renvoi ne se déclenchait qu'au chargement d'une page et au retour de
+     * l'événement `online`. Un envoi refusé alors qu'on est connecté — le
+     * serveur qui tousse, une session qui vient d'expirer — n'était donc plus
+     * jamais retenté tant qu'on ne changeait pas de page. Six séances ont
+     * ainsi attendu des heures sur une machine parfaitement en ligne.
+     *
+     * Une minute : assez pour rattraper une panne passagère, assez peu pour ne
+     * pas marteler un serveur qui refuse. La boucle s'arrête d'elle-même
+     * quand la file est vide — `viderFile` ne fait alors aucun appel.
+     */
+    const reprise = setInterval(renvoyer, 60_000);
+    return () => {
+      window.removeEventListener("online", renvoyer);
+      clearInterval(reprise);
+    };
   }, [pathname]);
 
   const seuilAtteint = seuilFranchi(dette);
 
-  // Notification système au franchissement du seuil, une seule fois par palier.
+  /**
+   * Notification système au franchissement du seuil, une seule fois par palier.
+   *
+   * La marque vivait dans une `useRef`, donc dans le MONTAGE du composant :
+   * elle repartait à zéro à chaque changement de page. Sur une soirée passée à
+   * naviguer entre le tableau de bord, l'historique et les réglages, ça faisait
+   * une notification par navigation — treize d'affilée relevées sur une seule
+   * session. Une application qui redit la même chose treize fois se fait
+   * couper les notifications, et elle l'a cherché.
+   *
+   * Elle vit donc dans le stockage, qui survit au montage comme au
+   * rechargement, et elle s'efface quand la dette repasse sous le seuil : le
+   * palier suivant doit pouvoir prévenir à son tour.
+   */
   useEffect(() => {
-    if (!seuilAtteint) { notifieRef.current = false; return; }
-    if (notifieRef.current) return;
+    if (!seuilAtteint) {
+      notifieRef.current = false;
+      effacer(CLE_SEUIL_NOTIFIE);
+      return;
+    }
+    if (notifieRef.current || lire(CLE_SEUIL_NOTIFIE) === "1") return;
     notifieRef.current = true;
+    ecrire(CLE_SEUIL_NOTIFIE, "1");
     notifierSysteme("Win or Workout", t.detteRappelCorps(duree(dette!.dureeSec)), "wow-dette");
   }, [seuilAtteint, dette, t]);
 
@@ -131,7 +189,7 @@ export function CompteurDette() {
     // On décompte le nombre ANNONCÉ juste au-dessus, pas `dureeSec` : voir
     // `secondesAnnoncees`. Sans ça, l'en-tête disait « 1 min 15 » et le chrono
     // démarrait à 1:17.
-    const total = secondesAnnoncees(lignesDette, dette.dureeSec, quantite);
+    const total = secondesAnnoncees(lignesDette, dette.dureeSec);
     totalRef.current = total;
     setRestantSec(total);
     setEnPause(false);
@@ -256,7 +314,7 @@ export function CompteurDette() {
                 color: seuilAtteint ? "var(--ember)" : "var(--amber)",
               }}
             >
-              {formaterCompact(ligne.pts, ligne.id)}
+              {ligne.valeur}
             </span>
             <span style={{ fontSize: "0.66rem", color: "var(--faint)" }}>
               {minuscule(nomsExo[ligne.id])}
@@ -269,6 +327,15 @@ export function CompteurDette() {
         {enAttenteEnvoi > 0 && (
           <div style={{ fontSize: "0.62rem", color: "var(--steel)", marginTop: 5 }}>
             {enAttenteEnvoi === 1 ? t.detteHorsLigneUne : t.detteHorsLignePlusieurs(enAttenteEnvoi)}
+            {/* Et pourquoi elles attendent. Sans ça, une file qui grossit sur
+                une machine connectée ne s'explique par rien. */}
+            {blocage && (
+              <span style={{ display: "block", color: "var(--ember)", marginTop: 2 }}>
+                {blocage === "session" ? t.detteFileSession
+                  : blocage === "reseau" ? t.detteFileReseau
+                  : t.detteFileServeur}
+              </span>
+            )}
           </div>
         )}
 
@@ -319,7 +386,7 @@ export function CompteurDette() {
             {lignes.map((ligne) => (
               <div key={ligne.id}>
                 <div className="mono-num text-xl font-bold gold-text">
-                  {formaterCompact(ligne.pts, ligne.id)}
+                  {ligne.valeur}
                 </div>
                 <div className="text-xs" style={{ color: "var(--faint)" }}>
                   {minuscule(nomsExo[ligne.id])}

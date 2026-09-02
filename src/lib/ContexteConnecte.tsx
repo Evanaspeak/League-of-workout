@@ -5,6 +5,7 @@ import {
 import { useChemin } from "@/lib/i18n/useChemin";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { chargerContexte, rafraichirContexte } from "@/lib/chargerContexte";
+import type { DettePourEcran } from "@/lib/contexteConnecte";
 
 /**
  * Ce que le compte connecté a de commun à tous les écrans, demandé UNE fois.
@@ -24,13 +25,7 @@ import { chargerContexte, rafraichirContexte } from "@/lib/chargerContexte";
  * écouté ici, une seule fois, et tout le monde voit la nouvelle valeur.
  */
 
-type Dette = {
-  points: number;
-  exercices: string[];
-  repartition: Record<string, number>;
-  dureeSec: number;
-  seuilSec: number;
-};
+type Dette = DettePourEcran;
 
 type Consentement = {
   etat: "jamais" | "accepte" | "refuse";
