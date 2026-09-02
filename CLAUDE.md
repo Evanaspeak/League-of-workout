@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1563 tests unitaires, 146 suites. Base et session doublées : aucune dépendance à
+1565 tests unitaires, 147 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -703,6 +703,30 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un script d'un soir dormait à la racine depuis dix jours
+`diag.mjs` y vivait depuis la nuit où l'image du bilan de saison partait quatre
+étapes trop tard. Il avait servi, il avait été commis avec la correction, et il
+n'a plus rien fait depuis — chemins codés en dur, cookie nommé à la main,
+aucune référence nulle part.
+
+`codeMort.test.ts` ne pouvait pas le voir : il ne regarde que `src/`. Or c'est
+justement DEHORS que ce genre de fichier atterrit — on le pose à la racine pour
+l'exécuter vite, et il y reste. Le coût est le même que celui du code mort
+ordinaire, et il est humain : on le lit en cherchant autre chose, on se demande
+s'il sert encore, on n'ose pas le supprimer.
+
+`src/scriptsRacine.test.ts` refuse tout script suivi par git à la racine qui ne
+soit pas chargé PAR SON NOM par un outil. Sept exemptions, toutes réelles et
+vérifiées à l'écriture — `middleware.ts` en fait partie sans être une
+configuration : Next.js le trouve par son nom, et personne ne l'importe.
+
+**Le premier sabotage était faux, pas le garde.** J'ai posé un fichier de
+brouillon à la racine et le test est resté vert : `git ls-files` ne liste que
+ce qui est SUIVI, et je ne l'avais pas ajouté. C'est le bon comportement — un
+brouillon non commis n'est pas dans le dépôt — mais il a fallu une seconde
+lecture pour ne pas conclure que le contrôle ne mordait pas. Reproduit
+correctement : il tombe. Trois sabotages au total, trois échecs.
+
 ### La source de diffusion marche, et maintenant on le sait
 Elle n'avait aucun parcours à elle. `refus-silencieux.spec.ts` éprouve le refus
 de régénérer le jeton — pas la page. Or c'est **la seule surface du produit que
@@ -753,13 +777,19 @@ Treize emplois d'actions en v4 dans les quatre travaux — `checkout`,
 jour où il cessera, les quatre travaux tombent d'un coup, sauvegarde et
 supervision comprises.
 
-Ça n'a **pas** été corrigé cette nuit, et la raison mérite d'être notée :
-l'API de GitHub n'est pas joignable depuis cet environnement, donc impossible
-de vérifier quelle version majeure existe pour chacune. Écrire `@v5` au jugé et
+Les majeures disponibles, lues par `git ls-remote --tags` faute d'API
+joignable : `checkout`, `setup-node` et `upload-artifact` sont en **v7**,
+`cache` en **v6**. On sait donc quoi installer ; on ne sait pas ce que chaque
+majeure a changé, et c'est ce qui manque. Trois majeures d'écart sur
+`upload-artifact` ne se prennent pas à l'aveugle.
+
+Ça n'a donc **pas** été corrigé cette nuit, et la raison mérite d'être notée :
 se tromper casse les quatre travaux — y compris la sauvegarde, qui ne tourne
-qu'une fois par jour et dont l'échec ne se verrait pas avant le lendemain. Un
-avertissement que GitHub compense encore ne justifie pas de deviner. À faire
-depuis une machine qui peut lire les versions.
+qu'une fois par jour et dont l'échec ne se verrait pas avant le lendemain.
+C'est précisément le travail dont on veut le moins qu'il tombe en silence. Un
+avertissement que GitHub compense encore ne justifie pas ce risque-là. À faire
+depuis une machine qui peut LIRE les notes de version, pas seulement lister les
+étiquettes.
 
 ### La mécanique de rétention n'a jamais tourné, et répondait 200
 Le rappel du matin, la relance des absents et le bilan hebdomadaire cherchaient
