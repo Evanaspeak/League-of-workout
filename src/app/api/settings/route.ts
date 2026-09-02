@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { chargerBareme, oublierBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { comptePublic } from "@/lib/compte";
 import { isExerciceId, toExerciceIds } from "@/lib/exercices";
@@ -12,10 +13,10 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const [roleWeights, levelConfigs, masteryConfig, goal] = await Promise.all([
-    prisma.roleWeight.findMany({ orderBy: { role: "asc" } }),
-    prisma.levelConfig.findMany({ orderBy: { niveau: "asc" } }),
-    prisma.masteryConfig.findFirst(),
+  // Le barème est global et mis en cache ; l'objectif appartient au compte et
+  // se relit à chaque fois.
+  const [{ roleWeights, levelConfigs, masteryConfig }, goal] = await Promise.all([
+    chargerBareme(),
     prisma.goal.findUnique({ where: { userId: user.id } }),
   ]);
   return NextResponse.json({
@@ -288,5 +289,15 @@ export async function PUT(req: Request) {
   }
 
   await Promise.all(updates);
+  /**
+   * Le cache du barème se vide APRÈS l'écriture, pas avant.
+   *
+   * Sans ça, l'administrateur qui vient de changer un multiplicateur continue
+   * de voir l'ancien pendant une minute — sur l'écran même où il vient de le
+   * modifier. Les autres instances mettront au pire ce délai à suivre, ce qui
+   * est le prix assumé du cache ; celle qui reçoit l'enregistrement, elle, n'a
+   * aucune raison de le payer.
+   */
+  oublierBareme();
   return NextResponse.json({ ok: true });
 }

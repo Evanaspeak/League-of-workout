@@ -701,6 +701,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le barème était relu à chaque partie enregistrée
+Trois tables décrivent comment une partie devient des points : pondérations par
+rôle, paliers de niveau, maîtrise. Elles sont GLOBALES — la même réponse pour
+tout le monde — et elles changent quand un administrateur y touche, c'est-à-dire
+à peu près jamais.
+
+Elles étaient relues à chaque enregistrement de partie, à chaque aperçu de
+score, à chaque correction de résultat et à chaque ouverture des réglages :
+**trois allers-retours vers la base à chaque fois**, sur les chemins les plus
+chauds du produit — ceux qu'on emprunte pendant une soirée de jeu.
+
+`src/lib/baremeConfig.ts` les met en cache une minute, exactement comme
+`chargerRatios` le fait depuis août pour les ratios d'exercices. Mesuré sur
+`/api/settings`, avant et après, en revenant au commit précédent pour avoir un
+vrai point de comparaison : **105 → 122 requêtes par seconde**, et le p95 passe
+de **498 à 369 ms**. Le gain réel est ailleurs — sur l'enregistrement d'une
+partie, qu'on ne sait pas mettre en charge avec cet outil — mais il est de la
+même nature et de la même taille.
+
+Trois décisions, chacune avec sa raison :
+
+- **un barème VIDE ne se met pas en cache.** Sur une base neuve, l'amorçage n'a
+  pas encore eu lieu au premier appel : retenir ce vide une minute ferait
+  échouer tout ce qui calcule un score, avec « Config manquante » sur une base
+  semée quelques millisecondes plus tard. C'est mot pour mot un défaut déjà
+  rencontré ici ;
+- **le cache se vide APRÈS l'écriture**, pas avant. Sans ça, l'administrateur
+  qui vient de changer un multiplicateur continue de voir l'ancien pendant une
+  minute, sur l'écran même où il l'a modifié ;
+- **l'écran d'administration lit sans le cache**, volontairement. Il sert à
+  REGARDER la configuration avant de la changer ; y servir une valeur vieille
+  d'une minute ferait douter de ce qu'on vient d'enregistrer. Le cache est pour
+  les chemins chauds, pas pour celui-là.
+
+Et un tri qu'il ne fallait pas supposer : les routes de partie trient les
+paliers par seuil de gainage, les réglages par niveau. Les deux coïncident
+aujourd'hui et rien ne l'écrit. Le tri reste donc explicite chez l'appelant.
+
+**Ce que le cache a cassé, et qui vaut d'être noté :** trois tests de route
+sont tombés d'un coup. Un cache au niveau du module est un état PARTAGÉ entre
+les cas d'un même fichier — une valeur retenue par un cas précédent survivait
+au cas « configuration absente », qui passait alors sur les paliers d'un autre
+test. Il se réinitialise comme les doublures, et les trois fichiers appellent
+maintenant `oublierBareme()` dans leur `beforeEach`. Introduire un cache, c'est
+introduire de l'état ; les tests le voient avant la production.
+
+Trois sabotages, trois échecs. Et un piège d'écriture : `jest.resetModules()`
+recrée aussi la doublure de base, donc les compteurs qu'on interroge ne sont
+plus ceux que le module sous test appelle. Les doublures vivent hors de la
+fabrique, avec un nom qui commence par `mock` — le seul que jest laisse
+traverser le hissage.
+
 ### Trente-sept kilo-octets partaient au navigateur pour du texte fixe
 Le tableau de bord transférait 537 ko, dont 375 de JavaScript, là où l'accueil
 en fait 210. Les graphiques étaient déjà chargés à la demande depuis V169 ; le

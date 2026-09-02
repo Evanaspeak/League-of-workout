@@ -15,6 +15,7 @@ jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedVa
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { PATCH, DELETE } from "./route";
+import { oublierBareme } from "@/lib/baremeConfig";
 import { prisma } from "@/lib/prisma";
 import { MAITRISE_DEFAUT, NIVEAUX_DEFAUT, ROLES_DEFAUT } from "@/lib/scoringDefaut";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -54,6 +55,13 @@ const patch = (id: string, body: unknown) =>
   PATCH(requete(`/api/games/${id}`, { method: "PATCH", body }), params(id));
 
 beforeEach(() => {
+  /**
+   * Le barème est mis en cache au niveau du module : une valeur retenue par un
+   * cas précédent survivrait au suivant, et le cas « configuration absente »
+   * passerait alors sur les paliers d'un autre test. C'est un état partagé, il
+   * se réinitialise comme les doublures.
+   */
+  oublierBareme();
   jest.clearAllMocks();
   session.mockResolvedValue(utilisateur());
   game.updateMany.mockResolvedValue({ count: 1 });

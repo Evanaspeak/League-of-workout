@@ -14,6 +14,7 @@ jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedVa
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { POST } from "./route";
+import { oublierBareme } from "@/lib/baremeConfig";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 
@@ -25,6 +26,13 @@ const NIVEAUX = [1, 2, 3, 4, 5].map((niveau) => ({
 }));
 
 beforeEach(() => {
+  /**
+   * Le barème est mis en cache au niveau du module : une valeur retenue par un
+   * cas précédent survivrait au suivant, et le cas « configuration absente »
+   * passerait alors sur les paliers d'un autre test. C'est un état partagé, il
+   * se réinitialise comme les doublures.
+   */
+  oublierBareme();
   jest.clearAllMocks();
   session.mockResolvedValue(utilisateur({ pompesMax: 20 }));
   (prisma.game.count as jest.Mock).mockResolvedValue(0);
