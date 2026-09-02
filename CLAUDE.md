@@ -744,6 +744,51 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La date d'inscription demandait un clic par compte, et un signalement faisait déborder la page
+Deux trouvailles dans le même panneau, dont une seule était demandée.
+
+**La date d'inscription existait, dans le profil déroulant.** Il fallait donc
+ouvrir chaque compte pour savoir qui venait d'arriver — c'est-à-dire la
+question qu'on se pose le jour où l'on invite du monde, et la seule que la
+liste ne répondait pas d'un coup d'œil. Elle est sur la ligne repliée
+maintenant, en relatif : « inscrit aujourd'hui », « inscrit il y a 2j ». Le
+relatif se lit sans compter, « 31/08 » non. La date exacte reste dans le
+profil, elle n'a pas disparu.
+
+**Et la page débordait de 15 348 pixels latéralement.** Trouvé en mesurant le
+débordement horizontal après la retouche, par acquit de conscience : le
+coupable n'était pas la ligne ajoutée mais un **signalement** dont le texte
+n'a aucun espace. `white-space: pre-wrap` conserve les retours à la ligne, ce
+qu'on veut pour un rapport de bug tapé à la main, et ne dit rien de ce qu'il
+faut faire d'un mot de quinze mille caractères. Le navigateur pousse la ligne,
+et c'est la PAGE qui part de côté.
+
+C'est du texte **écrit par quelqu'un d'autre** : une trace d'erreur, une
+adresse collée, un clavier martelé. `overflow-wrap: anywhere` — et pas
+`break-word`, qui refuse de couper à l'intérieur d'un mot tant qu'il existe
+une autre occasion. Mesuré : 15 348 px avant, **0 après**.
+
+`src/texteUtilisateurCoupe.test.ts` garde la classe et non la ligne : tout
+endroit qui pose `pre-wrap` porte du texte qu'on n'a pas écrit — sinon on
+n'aurait pas besoin de conserver ses retours à la ligne — donc tout endroit
+qui pose `pre-wrap` doit dire comment couper. Le motif lit l'objet de style
+ENTIER, accolade à accolade, parce qu'un style écrit sur plusieurs lignes
+échappe à une recherche ligne à ligne — et c'est justement la forme qu'on
+écrit quand le style s'allonge. Deux sabotages, deux échecs.
+
+**Un rappel d'outillage, retombé dedans trois fois de suite.** Le panneau ne
+se laisse pas photographier sans traverser d'abord les trois fenêtres d'un
+compte neuf, et **la visite guidée NAVIGUE** : « Passer l'introduction »
+cliqué depuis `/admin` renvoie sur le tableau de bord et lance la visite, donc
+la capture montre le tableau de bord. Les fenêtres se vident depuis la page
+d'arrivée, avant d'aller où l'on va. C'est écrit dans `e2e/intro.ts` depuis
+des semaines, sous le nom de `viderLesFenetres`.
+
+Et le limiteur d'inscription — cinq par quart d'heure — mord après quelques
+essais manuels. La panne se présente comme « le code ne s'affiche pas », ce
+qui ne ressemble pas à sa cause. `DELETE FROM "LoginAttempt"` avant chaque
+tentative.
+
 ### Mille cent trente-deux mots sur la page d'accueil, deux cent quatre-vingt-six restent
 Le propriétaire du produit a essayé plusieurs fois de faire venir du monde
 depuis Reddit : « tout le monde trouve que ça fait trop IA et ne veulent pas

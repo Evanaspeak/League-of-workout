@@ -92,7 +92,16 @@ export default function AdminSignalements() {
               </span>
             </div>
 
-            <p style={{ fontSize: "0.9rem", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+            {/* `overflow-wrap` n'est pas un ornement : ce paragraphe porte du
+                texte ÉCRIT PAR QUELQU'UN D'AUTRE. Une trace d'erreur, une
+                adresse collée ou un clavier martelé n'ont aucun espace où
+                couper, et `pre-wrap` seul les laisse pousser la ligne aussi
+                loin qu'il faut. Mesuré sur un signalement de test : la page
+                d'administration débordait de 15 348 px latéralement, sur
+                téléphone comme sur poste. `anywhere` plutôt que `break-word`
+                parce que lui seul coupe à l'intérieur d'un mot quand il n'y a
+                aucune autre occasion de le faire. */}
+            <p style={{ fontSize: "0.9rem", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
               {l.message}
             </p>
 
