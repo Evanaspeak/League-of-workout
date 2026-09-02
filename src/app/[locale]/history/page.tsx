@@ -9,10 +9,12 @@ import { ChampionIcon } from "@/components/ChampionIcon";
 import { useT, useDateLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import {
-  formaterCompact, parseRepartition, toExerciceId, ventiler, type ExerciceId,
+  EXERCICE_IDS, formaterCompact, formaterQuantite, parseRepartition,
+  quantite, toExerciceId, type ExerciceId,
 } from "@/lib/exercices";
 import { JEU_DEFAUT, capacitesDuJeu, formaterTempsJeu, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 import { jeux as jeuxDict } from "@/lib/i18n/dictionaries/jeux";
+import { baremeDeLaPartie, cumulsParExercice } from "@/lib/historiqueBareme";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -43,6 +45,8 @@ type Game = {
   repartition?: string | null;
   /** Variante d'exécution déclarée à l'enregistrement ("genoux"). */
   variante?: string | null;
+  /** Barème sous lequel la partie a été chiffrée, en JSON. Null = celui d'origine. */
+  ratios?: string | null;
 };
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -145,9 +149,17 @@ export default function HistoryPage() {
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
-  /** « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité. */
+  /**
+   * « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité.
+   *
+   * Reçoit des QUANTITÉS déjà converties, pas des points : les parties n'ont
+   * pas toutes le même barème, et les additionner en points reviendrait à
+   * reconvertir le tout au barème du jour.
+   */
   const resumeParExo = (parExercice: Record<string, number>) => {
-    const parts = ventiler(parExercice).map((v) => `${nomsExo[v.id]} ${v.valeur}`);
+    const parts = EXERCICE_IDS
+      .filter((id) => (parExercice[id] ?? 0) > 0)
+      .map((id) => `${nomsExo[id]} ${formaterQuantite(parExercice[id], id)}`);
     return parts.length > 0 ? parts.join(" · ") : "—";
   };
   const dateLocale = useDateLocale();
@@ -291,6 +303,8 @@ export default function HistoryPage() {
   const nomDuJeu = (g: Game) => g.jeu || JEU_DEFAUT;
   /** Ce que cette partie doit, exercice par exercice. */
   const ventilationDe = (g: Game) => parseRepartition(g.repartition, g.exercice, g.pompesCalculees);
+  /** Le barème de CETTE partie, et pas celui du jour. Voir `historiqueBareme`. */
+  const ratiosDe = (g: Game) => baremeDeLaPartie(g.ratios);
   const typeDeLaLigne = (g: Game): TypeJeu => toTypeJeu(g.typeJeu);
 
   // Jeux réellement présents dans l'historique : eux seuls méritent un filtre.
@@ -351,23 +365,19 @@ export default function HistoryPage() {
     // Cumul tenu SÉPARÉMENT par exercice : chaque ligne affiche le total de
     // son propre exercice à cet instant. Mélanger des répétitions et des
     // secondes n'aurait aucun sens.
-    const cumulMap = new Map<string, Record<string, number>>();
-    const running: Record<string, number> = {};
-    for (let i = filtered.length - 1; i >= 0; i--) {
-      const parts = ventilationDe(filtered[i]);
-      for (const [ex, pts] of Object.entries(parts)) {
-        running[ex] = (running[ex] ?? 0) + (pts ?? 0);
-      }
-      // On fige l'état des compteurs concernés par cette ligne.
-      const instantane: Record<string, number> = {};
-      for (const ex of Object.keys(parts)) instantane[ex] = running[ex];
-      cumulMap.set(filtered[i].id, instantane);
-    }
+    const cumulMap = cumulsParExercice(
+      filtered.map((g) => ({ id: g.id, parts: ventilationDe(g), ratios: g.ratios })),
+    );
     return filtered.map((g) => ({
       g,
       cumul: cumulMap.get(g.id) ?? {},
       parts: Object.entries(ventilationDe(g))
-        .map(([id, pts]) => ({ id: toExerciceId(id), pts: pts ?? 0 })),
+        .map(([id, pts]) => ({
+          id: toExerciceId(id),
+          pts: pts ?? 0,
+          // La valeur affichée est calculée ICI, sous le barème de la partie.
+          valeur: formaterCompact(pts ?? 0, toExerciceId(id), ratiosDe(g)),
+        })),
       type: typeDeLaLigne(g),
       // Une séance au temps n'a pas de résultat, et un battle royale déduit le
       // sien du classement : la route refuse les deux. On ne propose donc pas
@@ -379,8 +389,9 @@ export default function HistoryPage() {
 
   // Ventilation du total affiché : une entrée par exercice réellement joué.
   const totauxParExo = filtered.reduce<Record<string, number>>((acc, g) => {
+    const bareme = ratiosDe(g);
     for (const [ex, pts] of Object.entries(ventilationDe(g))) {
-      acc[ex] = (acc[ex] ?? 0) + (pts ?? 0);
+      acc[ex] = (acc[ex] ?? 0) + quantite(pts ?? 0, toExerciceId(ex), bareme);
     }
     return acc;
   }, {});
@@ -590,7 +601,7 @@ export default function HistoryPage() {
                             {parts.map((part) => (
                               <div key={part.id}>
                                 <span className="gold-text" style={{ fontSize: "1.05rem" }}>
-                                  {formaterCompact(part.pts, part.id)}
+                                  {part.valeur}
                                 </span>
                                 <span style={{ marginLeft: 5, fontSize: "0.72rem", color: "var(--steel)" }}>
                                   {minuscule(nomsExo[part.id])}
@@ -599,7 +610,7 @@ export default function HistoryPage() {
                                   <span className="carte-activite-variante">{tExo.varianteBadge}</span>
                                 )}
                                 <span style={{ marginLeft: 8, fontSize: "0.72rem", color: "var(--faint)" }}>
-                                  {minuscule(t.tableCumul)} {formaterCompact(cumul[part.id] ?? 0, part.id)}
+                                  {minuscule(t.tableCumul)} {formaterQuantite(cumul[part.id] ?? 0, part.id)}
                                 </span>
                               </div>
                             ))}
@@ -809,7 +820,7 @@ export default function HistoryPage() {
                               <td className="px-3 py-2 text-right gold-text font-bold" style={{ whiteSpace: "nowrap" }}>
                                 {parts.map((part) => (
                                   <div key={part.id}>
-                                    {formaterCompact(part.pts, part.id)}
+                                    {part.valeur}
                                     <span style={{
                                       marginLeft: 5, fontWeight: 400, fontSize: "0.72rem",
                                       color: "var(--steel)",
@@ -834,7 +845,7 @@ export default function HistoryPage() {
                               </td>
                               <td className="px-3 py-2 text-right" style={{ color: "var(--steel)", whiteSpace: "nowrap" }}>
                                 {parts.map((part) => (
-                                  <div key={part.id}>{formaterCompact(cumul[part.id] ?? 0, part.id)}</div>
+                                  <div key={part.id}>{formaterQuantite(cumul[part.id] ?? 0, part.id)}</div>
                                 ))}
                               </td>
                               <td className="px-3 py-2 text-center" style={{ whiteSpace: "nowrap" }}>

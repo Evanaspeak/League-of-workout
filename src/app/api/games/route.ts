@@ -9,7 +9,8 @@ import {
 } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, repartirPoints, toExerciceIds, type Repartition,
+  dureeEffort, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, ratiosActuels,
+  repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { toVariante, varianteApplicable } from "@/lib/variantes";
@@ -48,6 +49,7 @@ export async function GET() {
       surchargeCalculee: true, pompesCalculees: true, exercice: true,
       source: true, jeu: true, typeJeu: true, dureeSec: true,
       placement: true, joueurs: true, repartition: true, variante: true,
+      ratios: true,
     },
   });
   return NextResponse.json(games);
@@ -56,7 +58,16 @@ export async function GET() {
 export async function POST(req: Request) {
   // Enregistrer une partie fait franchir des seuils de rappel exprimés en
   // secondes : la conversion doit utiliser les ratios en vigueur.
+  //
+  // Et on RETIENT ce qu'on vient de charger : ces ratios sont ceux sous
+  // lesquels la partie est chiffrée, et ils sont recopiés sur elle. Sans ça,
+  // un changement de barème réécrivait le coût de tout ce qui existait déjà.
   await chargerRatios();
+  // On relit sur le module plutôt que d'utiliser ce que `chargerRatios` rend :
+  // c'est là que les conversions vont chercher leurs ratios, donc c'est le
+  // seul jeu de valeurs dont on soit sûr qu'il corresponde à ce qui sera
+  // affiché. Et il est toujours complet, quoi qu'ait rendu le chargement.
+  const ratiosDuJour = JSON.stringify(ratiosActuels());
   const body = await req.json();
 
   const user = await getCurrentUser();
@@ -233,6 +244,7 @@ export async function POST(req: Request) {
         pompesCalculees: scoringTemps.pointsFinaux,
         exercice,
         repartition: ventilation(scoringTemps.pointsFinaux),
+        ratios: ratiosDuJour,
         variante,
         jeu,
         typeJeu,
@@ -369,6 +381,7 @@ export async function POST(req: Request) {
       // sélection change plus tard.
       exercice,
       repartition: ventilation(scoring.pompesFinales),
+      ratios: ratiosDuJour,
       variante,
       jeu,
       typeJeu,

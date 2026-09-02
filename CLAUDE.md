@@ -445,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1659 tests unitaires, 156 suites. Base et session doublées : aucune dépendance à
+1677 tests unitaires, 158 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -470,7 +470,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 186 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 187 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -743,6 +743,81 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Changer un ratio réécrivait tout l'historique de tout le monde
+Signalé par le propriétaire du produit : « j'ai changé le ratio de combien
+valait une seconde de boxe par rapport à une pompe, ça change tous les ratios
+de l'historique ». C'est un défaut de fond, pas d'affichage : un effort déjà
+fourni cessait de correspondre à ce qu'on avait payé.
+
+Reproduit avant d'y toucher, au niveau du module : une partie qui avait coûté
+**4 min 25 de boxe en affichait 8 min 50** après un doublement du ratio.
+
+**La cause tient en une phrase, et elle était déjà écrite ailleurs.**
+`pompesCalculees` est un coût en POINTS d'effort, qui ne dépend d'aucun
+ratio ; le ratio ne sert qu'à dire ce que ça fait en secondes de boxe ou en
+squats, et il était lu au moment de l'AFFICHAGE, sur le module. Or le schéma
+gelait déjà `exercice` (« l'historique reste fidèle même si la sélection
+change plus tard ») et `variante` (« le réglage change, l'historique ne doit
+pas changer avec »). La même règle, écrite deux fois pour deux colonnes
+voisines, n'avait pas été appliquée à la troisième.
+
+`Game.ratios` porte désormais le barème en vigueur à l'enregistrement, et les
+conversions acceptent un jeu de ratios explicite. Sans argument, elles
+continuent d'employer celui du jour — c'est ce qu'il faut pour un aperçu, un
+compteur, un simulateur, qui parlent du présent.
+
+**Le cumul demandait une seconde correction, moins visible.** Additionner les
+points de plusieurs parties puis convertir la somme revient à réévaluer tout
+le passé au barème du jour, c'est-à-dire à refaire exactement ce qu'on
+corrige. `cumulsParExercice` convertit donc partie par partie, sous le barème
+de chacune, puis additionne des répétitions et des secondes. D'où
+`formaterQuantite`, qui met en forme une quantité DÉJÀ convertie, là où
+`formaterCompact` part de points.
+
+**Le remplissage de la colonne écrit le barème COURANT, pas celui d'origine**,
+et c'est contre-intuitif. Les points n'ont jamais dépendu du barème : ce qu'on
+gèle est l'affichage, et l'affichage qu'une partie ancienne a aujourd'hui est
+celui du barème courant. Y écrire les ratios d'origine changerait le passé au
+lieu de l'arrêter. La migration les lit donc dans `SystemConfig` ; sans ligne
+de configuration, la colonne reste nulle et la lecture retombe sur les ratios
+d'origine, qui sont bien ceux qui étaient affichés.
+
+**Ce qui n'est PAS gelé, et pourquoi.** Le tableau de bord et le bilan de
+saison continuent de convertir au barème du jour. Ils agrègent des points au
+serveur, sans distinguer les parties, et surtout ils ne répondent pas à la
+même question : l'historique est un registre — ce que chaque partie a coûté,
+et ça ne se réécrit pas —, tandis que le tableau de bord dit « voilà l'effort
+accumulé, dans l'unité que tu emploies en ce moment ». L'objectif et les
+paliers, eux, sont en points : ils sont insensibles au barème par
+construction.
+
+**Le garde de la correction de résultat était le plus facile à oublier.**
+`PATCH /api/games/[id]` rejoue le barème de SCORING ; s'il rouvrait aussi
+celui des exercices, une partie corrigée se remettrait à l'heure du jour au
+passage — et le chiffre qui change serait précisément celui qu'on venait
+corriger. Un test l'interdit, avec son témoin : sans lui, une correction qui
+n'écrirait plus rien du tout satisferait le contrôle en ne prouvant rien.
+
+Preuve de bout en bout, `e2e/bareme-gele.spec.ts`, et il faut ses DEUX
+moitiés : l'ancienne partie reste à 2 min 55 après le changement, et la
+suivante passe à 5 min 45. Ne vérifier que la première laisserait passer un
+gel complet, qui rendrait le réglage inutile.
+
+**Le premier jet du parcours dépendait de son état de départ.** Il supprimait
+la ligne de configuration puis mesurait — sans pouvoir purger le cache mémoire
+du serveur, qui dure soixante secondes et portait encore le barème d'un essai
+précédent. La partie était donc chiffrée sous un barème, comparée à lui-même,
+et le test échouait en annonçant que le nouveau barème ne s'appliquait pas. Il
+pose maintenant un barème connu PAR LA ROUTE avant de mesurer : c'est elle qui
+purge le cache, et c'est ce qui rend la mesure indépendante de ce qui
+précédait.
+
+Neuf sabotages, neuf échecs — dont celui qui compte le plus, l'historique
+remis à reconvertir au barème du jour, qui fait tomber le parcours navigateur.
+
+Et le garde des colonnes a mordu comme prévu : la route envoyait `ratios`,
+l'écran ne le lisait pas encore, et `colonnesHistorique` l'a dit avant moi.
 
 ### La date d'inscription demandait un clic par compte, et un signalement faisait déborder la page
 Deux trouvailles dans le même panneau, dont une seule était demandée.
