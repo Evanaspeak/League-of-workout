@@ -430,7 +430,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 180 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 185 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -702,6 +702,32 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La source de diffusion marche, et maintenant on le sait
+Elle n'avait aucun parcours à elle. `refus-silencieux.spec.ts` éprouve le refus
+de régénérer le jeton — pas la page. Or c'est **la seule surface du produit que
+des inconnus regardent** : elle s'affiche par-dessus un stream, devant le public
+de quelqu'un d'autre, et une régression y serait invisible depuis l'application.
+
+Poussée de bout en bout, elle tient : le jeton n'existe pas avant qu'on le
+demande, la page se lit sans session, elle montre le temps d'effort dû, un
+jeton faux ne montre que trois mots, et régénérer coupe l'ancien lien — ce qui
+est la seule façon de révoquer une adresse déjà collée dans un logiciel de
+diffusion.
+
+Une fausse alerte en passant, et elle valait la vérification : la page affiche
+« À FAIRE » en français sous un `<html lang="en">`. Ce n'est pas un défaut,
+c'est la règle écrite : la page n'a pas de langue dans son adresse, donc les
+mots viennent du COMPTE. Le compte de la sonde était français, l'anglais du
+`lang` vient de la coquille de diffusion, qui n'en a pas. Vérifier avant de
+« corriger » aura évité de casser une décision documentée.
+
+**Deux sabotages, deux échecs — au deuxième essai.** Les premiers sont passés
+au vert parce que j'avais modifié la source sans reconstruire : `next start`
+sert le `.next` qu'on lui a donné, et un sabotage qui ne change pas le binaire
+ne sabote rien. C'est le piège déjà écrit ici sous sa forme inverse (« ne
+jamais reconstruire pendant qu'un test tourne ») ; celle-ci est plus sournoise,
+parce qu'elle ne casse rien — elle rend simplement le contrôle muet.
 
 ### Ce que la sauvegarde va bien, et l'avertissement qu'elle traîne
 Vérifiée par son journal et non par sa pastille, comme il se doit depuis
