@@ -34,6 +34,7 @@ const HORS_POLITIQUE: Record<string, string> = {
   rappelSeuilSec: "réglage de rappel",
   plafondQuotidien: "réglage d'avertissement de volume",
   relanceLe: "date d'un envoi que nous avons fait, pas une donnée fournie",
+  rappelLe: "date d'un envoi que nous avons fait, pas une donnée fournie",
 
   dettePointsDus: "état de jeu calculé, décrit par « données de parties »",
   gainageMaxSec: "mesure de force, décrite par « nombre maximum de pompes »",

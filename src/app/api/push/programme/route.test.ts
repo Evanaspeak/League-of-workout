@@ -47,6 +47,12 @@ function fuseauOuIlEst(heureVoulue: number): string {
 
 const AU_MATIN = fuseauOuIlEst(HEURE_RAPPEL);
 const AILLEURS = fuseauOuIlEst((HEURE_RAPPEL + 5) % 24);
+/** Encore dans la fenêtre : elle va de neuf heures à midi, exclu. */
+const FIN_DE_MATINEE = fuseauOuIlEst((HEURE_RAPPEL + 2) % 24);
+/** Juste après : midi n'est plus le matin. */
+const MIDI = fuseauOuIlEst((HEURE_RAPPEL + 3) % 24);
+/** Juste avant : huit heures est trop tôt pour écrire à quelqu'un. */
+const TROP_TOT = fuseauOuIlEst((HEURE_RAPPEL + 23) % 24);
 
 const compte = (champs: Record<string, unknown> = {}) => ({
   id: "u1", dettePointsDus: 100, exercices: ["boxe"], langue: "fr",
@@ -196,5 +202,68 @@ describe("relance des absents", () => {
     const requeteAbsents = user.findMany.mock.calls.find(
       (c: [{ select?: { games?: unknown } }]) => c[0]?.select?.games);
     expect(requeteAbsents[0].select.games.orderBy).toEqual({ createdAt: "desc" });
+  });
+});
+
+/**
+ * La fenêtre du matin, et la marque qui empêche d'y envoyer trois fois.
+ *
+ * Le rappel cherchait l'heure EXACTE. Ça suppose un déclencheur qui passe
+ * toutes les heures ; celui-ci n'y passe pas — trente exécutions en huit jours
+ * au lieu de cent quatre-vingt-douze, et jamais à l'heure voulue. La route
+ * répondait 200 avec zéro envoi, ce qui est le résultat normal quand on regarde
+ * au mauvais moment : rien ne pouvait le signaler.
+ */
+describe("la fenêtre du matin", () => {
+  it("envoie encore à onze heures", async () => {
+    repondre({ matin: [compte({ fuseau: FIN_DE_MATINEE })] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(1);
+  });
+
+  it("n'envoie pas à midi ni à huit heures", async () => {
+    for (const fuseau of [MIDI, TROP_TOT]) {
+      jest.clearAllMocks();
+      repondre({ matin: [compte({ fuseau })] });
+      const r = await appeler(SECRET);
+      // Le fuseau dans le message : sans lui, on ne sait pas lequel des deux
+      // cas a lâché.
+      expect(`${fuseau} : ${(await r.json()).envoyes}`).toBe(`${fuseau} : 0`);
+      expect(envoi).not.toHaveBeenCalled();
+    }
+  });
+
+  /**
+   * Le pendant de la fenêtre : sans marque, trois passages entre neuf heures
+   * et midi enverraient trois notifications. C'est exactement le défaut que la
+   * fenêtre créerait si on l'élargissait seule.
+   */
+  it("ne repart pas si le rappel du jour est déjà parti", async () => {
+    repondre({ matin: [compte({ rappelLe: new Date() })] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(0);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("repart le lendemain", async () => {
+    const hier = new Date(Date.now() - 24 * 3600_000);
+    repondre({ matin: [compte({ rappelLe: hier })] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).envoyes).toBe(1);
+  });
+
+  /**
+   * La marque se pose même quand l'envoi n'atteint personne : sans abonnement,
+   * réessayer à dix heures puis à onze ne changerait rien et referait le tour
+   * de la base. Même règle que la relance.
+   */
+  it("pose la marque même sans abonnement joignable", async () => {
+    envoi.mockResolvedValue(0);
+    repondre({ matin: [compte()] });
+    await appeler(SECRET);
+    expect(user.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: "u1" },
+      data: expect.objectContaining({ rappelLe: expect.any(Date) }),
+    }));
   });
 });

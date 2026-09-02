@@ -24,6 +24,23 @@ Changer le mot de passe côté Neon, puis reporter la nouvelle chaîne dans
 qui répare quelque chose de cassé plutôt que d'ajouter quelque chose qui
 manque.
 
+**3. Le déclencheur des envois programmés n'est pas ponctuel.** Le rappel du
+matin, la relance des absents et le bilan hebdomadaire sont déclenchés par un
+travail GitHub Actions censé passer toutes les heures. Relevé sur huit jours :
+trois à six passages par jour, et **aucun à l'heure où il fallait**. Les trois
+envois n'ont donc jamais eu lieu, en répondant 200 à chaque passage.
+
+Le code tolère maintenant l'irrégularité — la fenêtre couvre la matinée au lieu
+d'une heure pile, et une marque par compte empêche les doublons — mais trois
+passages par jour restent une loterie à trois cases sur vingt-quatre. Le geste
+qui règle vraiment la question est un déclencheur fiable : les tâches planifiées
+de Vercel appellent les deux mêmes adresses avec le même secret, et elles
+partent à l'heure. C'est une décision d'infrastructure, elle vous revient.
+
+Ça compte pour un lancement : la rétention repose entièrement sur ces trois
+envois, et inviter cent personnes à un produit dont les relances ne partent pas
+revient à les inviter une fois.
+
 **Ce qui n'est plus un blocage, et pourquoi c'est écrit ici.** Les deux
 secrets de sauvegarde figuraient à cette place. Ils sont posés : la sauvegarde
 tourne tous les matins, exporte, restaure dans un PostgreSQL neuf, compare

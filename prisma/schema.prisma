@@ -105,6 +105,16 @@ model User {
   // enverrait le même bilan vingt-quatre fois dans la journée.
   bilanLe DateTime?
 
+  // Date du dernier rappel du matin envoyé.
+  //
+  // Le rappel n'en avait pas : il se contentait de partir à neuf heures pile,
+  // ce qui suffit tant que le déclencheur passe toutes les heures. Il ne le
+  // fait pas — trente exécutions en huit jours au lieu de cent quatre-vingt-
+  // douze, et aucune à l'heure voulue. La fenêtre s'étend donc à la matinée,
+  // et c'est cette date qui empêche d'envoyer trois fois entre neuf heures et
+  // midi.
+  rappelLe DateTime?
+
   // Date de la dernière relance envoyée après une absence. Sans elle, le
   // travail horaire renverrait la même relance toutes les vingt-quatre heures
   // à quelqu'un qui a précisément choisi de ne pas revenir — le moyen le plus
