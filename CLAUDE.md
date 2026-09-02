@@ -445,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1677 tests unitaires, 158 suites. Base et session doublées : aucune dépendance à
+1681 tests unitaires, 158 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -470,7 +470,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 187 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 188 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
 écrans connectés — tableau de bord, historique, réglages, saison — dans les six
@@ -743,6 +743,66 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Deux nombres se contredisaient sur le même écran, et un test exigeait la cause
+Suite immédiate du défaut précédent, signalée dans la foulée : « le compteur
+de boxe m'affiche encore 6 min 05 mais quand je clique dessus, j'ai
+2 min 42 ». La pastille de dette et le décompte qu'elle ouvre annonçaient deux
+durées différentes pour la même dette.
+
+**Le rapport entre les deux nombres était celui des deux ratios**, et c'est ce
+qui a désigné la cause : 365 ÷ 161 = 2,27, soit exactement 7 ÷ 3,09. La
+pastille convertissait les points DANS LE NAVIGATEUR, avec le ratio installé
+côté client ; le décompte affichait `dureeSec`, calculé AU SERVEUR. Les deux
+n'avaient pas le même barème.
+
+**La faute est dans l'en-tête de cache d'une route dont c'est tout l'objet.**
+`/api/exercices/ratios` existe pour que le navigateur relise la valeur à la
+source, parce que celle du HTML peut dater sur une page prérendue. Elle
+portait `public, max-age=60, stale-while-revalidate=300` : le navigateur
+servait donc l'ancienne valeur pendant une minute, puis jusqu'à cinq de plus
+en arrière-plan — et il l'installait PAR-DESSUS celle que le serveur venait de
+rendre, qui était la bonne. `public` autorisait en prime le CDN à la garder
+pour tout le monde.
+
+Reproduit : la base contenait 3,09, un `curl` direct rendait 3,09, et la même
+requête depuis la page rendait 7.
+
+**Et un test EXIGEAIT ce cache.** « laisse le navigateur garder la réponse une
+minute » — il avait figé le défaut comme une garantie, et toute correction le
+faisait échouer. C'est la forme la plus coûteuse d'un mauvais test : il ne se
+contente pas de ne rien attraper, il défend ce qu'il faudrait corriger. Il dit
+maintenant l'inverse, avec la raison écrite, et il refuse nommément `public`,
+`max-age` non nul et `stale-while-revalidate`.
+
+**Un second écart restait, plus petit et de la même famille.** La pastille
+arrondit au pas de l'exercice — cinq secondes pour la boxe — tandis que
+`dureeSec` est à la seconde près : « 1 min 15 » écrit juste au-dessus d'un
+chrono qui démarre à 1:17. `secondesAnnoncees` fait décompter ce qui a été
+ANNONCÉ. Le reliquat n'est pas perdu : un décompte mené à zéro solde la dette
+entière, un décompte interrompu n'acquitte que les secondes faites.
+
+**Ce que le parcours navigateur prouve, et ce qu'il ne prouve pas.** Il compare
+les deux nombres à l'écran, ce qu'aucun test unitaire ne peut faire — la
+divergence naît de ce que les deux côtés ne partagent pas. Mais depuis la
+correction, pastille et décompte partent tous deux de la conversion
+navigateur : ils s'accordent donc même quand le navigateur a un ratio périmé.
+Le sabotage de l'en-tête ne le fait pas tomber, et c'est attendu. La fraîcheur
+est gardée par le test d'en-tête, qui tombe. Écrire l'inverse serait
+surestimer ce qu'on tient.
+
+Trois sabotages : l'en-tête remis (le test d'en-tête tombe), le décompte
+reparti de `dureeSec` (deux tests tombent), et l'appel à la règle retiré du
+composant — celui-là ne compile pas, `noUnusedLocals` nommant les deux imports
+devenus inutiles. Ce n'est pas un test qui mord, c'est le compilateur ; noté
+comme tel.
+
+**Et le piège des fenêtres d'accueil, pour la huitième fois.** Le nouveau
+parcours passait seul et tombait dans la suite complète : le décompte porte
+`aria-modal`, la modale d'accueil aussi, et le sélecteur en trouvait deux. Un
+fichier qui passe seul et tombe en suite ne dit pas que la suite est instable,
+il dit que le compte n'en est pas au même point. `viderLesFenetres` avant de
+chercher quoi que ce soit.
 
 ### Changer un ratio réécrivait tout l'historique de tout le monde
 Signalé par le propriétaire du produit : « j'ai changé le ratio de combien

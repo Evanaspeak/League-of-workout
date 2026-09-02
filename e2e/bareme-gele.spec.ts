@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { Client } from "pg";
 import { purgerTentatives } from "./limiteur";
 import { sansLangue } from "./chemin";
+import { viderLesFenetres } from "./intro";
 
 /**
  * Un barème s'applique à partir du moment où on le change, jamais en arrière.
@@ -112,3 +113,99 @@ test("changer un ratio ne réécrit pas ce que les parties passées ont coûté"
   });
   await ctx.close();
 });
+
+/**
+ * La pastille et le décompte disent le même nombre.
+ *
+ * Ils sortaient de deux conversions différentes : la pastille convertissait
+ * les points DANS LE NAVIGATEUR, le décompte affichait la durée calculée AU
+ * SERVEUR. Tant que les deux avaient les mêmes ratios, l'écart se limitait à
+ * l'arrondi au pas de l'exercice — cinq secondes pour la boxe. Après un
+ * changement de barème, la route publique servait l'ancienne valeur depuis le
+ * cache du navigateur, et les deux nombres se contredisaient franchement :
+ * « 6 min 05 » sur la pastille, « 2 min 41 » dans le chrono.
+ *
+ * Le test compare les deux à l'écran, ce qu'aucun test unitaire ne peut faire :
+ * la divergence naît précisément de ce que les deux côtés ne partagent pas.
+ */
+test("la pastille de dette et son décompte annoncent le même nombre", async ({ browser }) => {
+  test.skip(!process.env.DATABASE_URL, "la base est nécessaire pour changer le barème");
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  const compte = { pseudo: `Pas${Date.now().toString(36)}`, email: `pas-${Date.now().toString(36)}@example.test` };
+
+  await purgerTentatives();
+  await page.goto("/beta");
+  await page.getByPlaceholder(/pseudo/i).first().fill(compte.pseudo);
+  await page.locator('input[type="email"]').first().fill(compte.email);
+  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
+  const bloc = page.locator(".mono-num").first();
+  await bloc.waitFor({ timeout: 20_000 });
+  const code = (await bloc.innerText()).trim();
+
+  await page.goto("/login");
+  await page.getByPlaceholder(/ton pseudo|your username/i).fill(compte.pseudo);
+  await page.getByPlaceholder(/ton code|your code/i).fill(code);
+  await Promise.all([
+    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
+    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
+  ]);
+  const uid = (await (await page.request.get("/api/user")).json()).id as string;
+  await page.request.post("/api/consentement", { data: { accepte: true } });
+  // La boxe seule : c'est le seul exercice compté en temps du catalogue par
+  // défaut, et il faut que pastille et chrono parlent du même.
+  await page.request.put("/api/settings", { data: { userPrefs: { exercices: ["boxe"] } } });
+
+  const admin = (process.env.ADMIN_EMAILS || "evantocquet@gmail.com").split(",")[0].trim();
+  await avecBase(async (c) => {
+    await c.query(`UPDATE "User" SET email = NULL WHERE email = $1`, [admin]);
+    await c.query(`UPDATE "User" SET email = $1 WHERE id = $2`, [admin, uid]);
+  });
+
+  // Une première visite AVANT le changement : c'est elle qui remplissait le
+  // cache du navigateur, et donc elle qui rendait le défaut atteignable.
+  await page.request.put("/api/admin/config/exercices", { data: { ratios: { boxe: 7 } } });
+  await page.goto("/dashboard", { waitUntil: "load" });
+  // Les fenêtres d'un compte neuf se traversent AVANT de chercher quoi que ce
+  // soit : elles portent `aria-modal`, comme le décompte, et le sélecteur en
+  // trouverait deux. Le fichier passait seul parce que le compte n'en était
+  // pas au même point ; c'est le huitième fichier de parcours à tomber dessus.
+  await viderLesFenetres(page);
+  await page.locator("[data-visite='dette']").first()
+    .waitFor({ state: "attached", timeout: 20_000 }).catch(() => {});
+
+  await page.request.put("/api/admin/config/exercices", { data: { ratios: { boxe: 3.09 } } });
+  expect((await page.request.post("/api/games", {
+    data: { jeu: "League of Legends", role: "Mid", champion: "Ahri", kills: 2,
+            deaths: 9, assists: 4, result: "D", gainageSec: 30, exercice: "boxe" },
+  })).status()).toBe(200);
+
+  await page.goto("/dashboard", { waitUntil: "load" });
+  await viderLesFenetres(page);
+  const pastille = page.locator("[data-visite='dette']").first();
+  await pastille.waitFor({ timeout: 20_000 });
+  const annonce = enSecondes((await pastille.innerText()));
+
+  await pastille.click();
+  const chrono = page.locator('[aria-modal="true"]');
+  await chrono.waitFor({ timeout: 10_000 });
+  // On met en pause tout de suite : le décompte tourne, et comparer une valeur
+  // qui bouge à une valeur figée ferait échouer le test une fois sur deux.
+  await page.getByRole("button", { name: /^pause$/i }).click().catch(() => {});
+  const depart = enSecondes(await chrono.innerText());
+
+  // Une seconde de tolérance : le tic peut tomber entre le clic et la lecture.
+  expect(Math.abs(depart - annonce),
+    `la pastille annonce ${annonce} s et le chrono démarre à ${depart} s`).toBeLessThanOrEqual(1);
+  await ctx.close();
+});
+
+/** « 2 min 41 » ou « 2:41 » → 161. Le premier nombre lisible de ce texte. */
+function enSecondes(texte: string): number {
+  const horloge = texte.match(/(\d+):(\d{2})/);
+  if (horloge) return Number(horloge[1]) * 60 + Number(horloge[2]);
+  const min = texte.match(/(\d+)\s*min(?:\s*(\d+))?/);
+  if (min) return Number(min[1]) * 60 + Number(min[2] ?? 0);
+  const sec = texte.match(/\b(\d+)\s*s\b/);
+  return sec ? Number(sec[1]) : NaN;
+}
