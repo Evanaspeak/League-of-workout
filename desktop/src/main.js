@@ -16,6 +16,11 @@ const path = require("path");
 const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
+const { ATTENTE_MS, attenteCourante, nonceValide: validerNonce } = require("./attenteAuth");
+const {
+  JEU_DEFAUT, overlayNeutre: neutreOverlay, overlayTable: tableOverlay,
+  overlayDuJeu: reglageDuJeu, tableApresPatch,
+} = require("./reglagesOverlay");
 const { initTray, signalerVeille } = require("./tray");
 const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
 const { initCapture, capturer, lireRaccourciCapture, dossier: dossierCaptures, imageEcran, estNoir } = require("./capture");
@@ -27,9 +32,6 @@ const { choisirLangue } = require("./langue");
 const { textes } = require("./textes");
 const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
-// `crypto` global d'Electron est celui du navigateur : ni randomBytes, ni
-// timingSafeEqual. C'est bien le module Node qu'il faut ici.
-const crypto = require("crypto");
 
 // Désactive les Client Hints (Sec-CH-UA) qui trahissent Electron auprès de
 // Google OAuth même quand le user-agent est spoofé en Chrome standard.
@@ -56,20 +58,14 @@ let attenteAuth = null; // { nonce, expire }
 // passer une double authentification dépasse couramment ce délai, et l'aléa
 // expirait pendant que le joueur s'exécutait — le retour se faisait alors
 // refuser sans que rien ne l'explique.
-const ATTENTE_MS = 15 * 60 * 1000;
 let minuterieAttente = null;
 
 function ouvrirAttenteAuth() {
-  // Deux chemins mènent ici — le bouton de la page et l'interception de
-  // navigation — et ils peuvent se déclencher coup sur coup pour une SEULE
-  // intention de connexion. Chacun forgeait son aléa et écrasait l'autre : le
-  // premier retour se faisait alors refuser, et il fallait tout recommencer.
-  // Tant que l'attente en cours vaut encore, c'est elle qui sert.
-  if (attenteAuth && Date.now() < attenteAuth.expire) return attenteAuth.nonce;
-  attenteAuth = {
-    nonce: crypto.randomBytes(32).toString("base64url"),
-    expire: Date.now() + ATTENTE_MS,
-  };
+  // La règle vit dans `attenteAuth.js`, avec ses dix cas : elle ne dépend
+  // d'Electron par aucun bout, et c'est elle qui garde le canal de connexion.
+  const suivante = attenteCourante(attenteAuth, Date.now());
+  if (suivante === attenteAuth) return attenteAuth.nonce;
+  attenteAuth = suivante;
   // Une attente sans fin n'est pas une attente : passé le délai, on le dit.
   if (minuterieAttente) clearTimeout(minuterieAttente);
   minuterieAttente = setTimeout(abandonnerAttente, ATTENTE_MS);
@@ -88,9 +84,7 @@ function abandonnerAttente() {
 
 /** Vrai si cet aléa est bien celui que nous attendons, et qu'il vaut encore. */
 function nonceValide(recu) {
-  if (!attenteAuth || Date.now() > attenteAuth.expire) return false;
-  if (typeof recu !== "string" || recu.length !== attenteAuth.nonce.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(recu), Buffer.from(attenteAuth.nonce));
+  return validerNonce(attenteAuth, recu, Date.now());
 }
 
 const CHROME_UA =
@@ -537,49 +531,32 @@ function releveEcranActif() {
 // L'entrée « defaut » sert de repli : c'est elle qui reçoit l'ancien réglage
 // global, et elle s'applique à tout jeu qu'on n'a jamais réglé.
 
-const JEU_DEFAUT = "defaut";
 
 /** Réglage d'overlay tel qu'il vaut avant toute intervention. */
 function overlayNeutre() {
-  return { actif: true, coin: overlay.COINS[0], position: null };
+  return neutreOverlay(overlay.COINS);
 }
 
 /**
  * Table des réglages, reprise de l'ancien format si besoin.
  *
- * Les versions précédentes stockaient `overlay`, `overlayCoin` et
- * `overlayPosition` à plat. Les ignorer aurait remis tout le monde au coin par
- * défaut sans prévenir : ils deviennent donc le défaut de tous les jeux.
+ * La règle vit dans `reglagesOverlay.js`, avec ses onze cas : c'est la reprise
+ * de l'ANCIEN format qui compte, et elle n'était éprouvée par rien. L'ignorer
+ * remettrait tout le monde au coin par défaut sans prévenir.
  */
 function overlayTable() {
-  const reglages = lireReglages();
-  const table = reglages.overlayJeux && typeof reglages.overlayJeux === "object"
-    ? { ...reglages.overlayJeux }
-    : {};
-  if (!table[JEU_DEFAUT]) {
-    table[JEU_DEFAUT] = {
-      actif: reglages.overlay !== false,
-      coin: overlay.COINS.includes(reglages.overlayCoin) ? reglages.overlayCoin : overlay.COINS[0],
-      position: reglages.overlayPosition ?? null,
-    };
-  }
-  return table;
+  return tableOverlay(lireReglages(), overlay.COINS);
 }
 
 /** Réglage d'un jeu, complété par le défaut pour ce qu'il ne dit pas. */
 function overlayDuJeu(jeu) {
-  const table = overlayTable();
-  const defaut = { ...overlayNeutre(), ...table[JEU_DEFAUT] };
-  const propre = jeu && table[jeu] ? table[jeu] : {};
-  return { ...defaut, ...propre };
+  return reglageDuJeu(lireReglages(), overlay.COINS, jeu);
 }
 
 function ecrireOverlayJeu(jeu, patch) {
-  const table = overlayTable();
-  const cle = jeu || JEU_DEFAUT;
-  table[cle] = { ...overlayDuJeu(cle), ...patch };
+  const table = tableApresPatch(lireReglages(), overlay.COINS, jeu, patch);
   ecrireReglage("overlayJeux", table);
-  return table[cle];
+  return table[jeu || JEU_DEFAUT];
 }
 
 /**
