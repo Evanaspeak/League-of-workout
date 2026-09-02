@@ -250,15 +250,15 @@ l'être pour ce seul usage. Une date illisible ne montre rien plutôt que de
 faire vivre l'objectif à vie.
 
 ### Envois programmés
-`.github/workflows/envois-programmes.yml` appelle `/api/push/programme` toutes
-les heures ; la route regarde chez qui il est neuf heures **localement**, à
-partir de `User.fuseau` remonté par `ContexteNavigateur`. Deux envois en
-sortent :
+`.github/workflows/envois-programmes.yml` appelle `/api/push/programme` et
+`/api/mail/hebdo` ; les routes regardent chez qui c'est le **matin
+localement**, à partir de `User.fuseau` remonté par `ContexteNavigateur`.
+Trois envois en sortent :
 
 - **Le rappel du matin.** Une soirée qui finit à deux heures laisse une dette
   que personne ne paie avant d'aller dormir, et le rappel de seuil est déjà
   parti la veille au milieu d'une partie.
-- **Le bilan de la semaine**, par courriel, le lundi à neuf heures locales.
+- **Le bilan de la semaine**, par courriel, le lundi matin en heure locale.
   L'application ne sait dire que le présent — ce qu'on doit, là, maintenant.
   Sept jours mis bout à bout disent autre chose. Rien ne part sur une semaine
   vide : un courriel qui dit zéro est celui qu'on se désabonne en l'ouvrant, et
@@ -273,6 +273,25 @@ sortent :
   ne changerait rien et referait le tour de la base. L'absence se mesure sur
   `Game.createdAt` et non `Game.date` : une partie ajoutée à la main se date
   dans le passé.
+
+**Une FENÊTRE, et non une heure.** Le travail était réputé passer toutes les
+heures ; il passe trois à six fois par jour, à des heures imprévisibles, et sur
+huit jours d'observation jamais à celle qu'il fallait. Les trois envois n'ont
+donc jamais eu lieu, en répondant 200 à chaque passage. `src/lib/fenetreEnvoi.ts`
+porte la règle : la fenêtre va de neuf heures à midi local, et une marque par
+compte empêche d'envoyer plusieurs fois dans la même matinée — `User.rappelLe`
+pour le rappel, `User.bilanLe` et `User.relanceLe` qui existaient déjà. La
+marque se compare par JOUR LOCAL et non en heures écoulées, sinon elle dérive
+et l'envoi saute un jour sur deux.
+
+`src/envoisProgrammes.test.ts` refuse qu'une route appelée par un travail
+programmé compare l'heure locale à une valeur exacte, et exige une fenêtre d'au
+moins trois heures. La liste des routes se lit dans les workflows, pas à la
+main.
+
+Ça rend le système tolérant à un déclencheur irrégulier ; ça ne le rend pas
+ponctuel. Un déclencheur fiable est une décision d'infrastructure et figure
+dans `docs/lancement.md`.
 
 Un compte sans fuseau connu n'est jamais notifié : envoyer « bonjour » à trois
 heures du matin est pire que ne rien envoyer, et `heureLocale()` rend `null`
