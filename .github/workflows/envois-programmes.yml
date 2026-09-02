@@ -6,10 +6,21 @@
 # milieu d'une partie. Celui-ci arrive le lendemain, à une heure où on peut
 # réellement faire quelque chose.
 #
-# Il tourne toutes les heures parce que les comptes ne sont pas tous dans le
-# même fuseau : c'est la route qui regarde, à chaque passage, chez qui il est
-# neuf heures. Un compte dont le fuseau est inconnu n'est jamais notifié —
+# Il DEMANDE à tourner toutes les heures parce que les comptes ne sont pas tous
+# dans le même fuseau : c'est la route qui regarde, à chaque passage, chez qui
+# c'est le matin. Un compte dont le fuseau est inconnu n'est jamais notifié —
 # envoyer « bonjour » à trois heures du matin est pire que ne rien envoyer.
+#
+# Il ne l'obtient pas. Relevé sur huit jours : trois à six passages par jour, à
+# des heures imprévisibles, et jamais à celle qu'il fallait — le `schedule` de
+# GitHub Actions est au mieux disant, il décale et il saute. Les routes visent
+# donc une FENÊTRE (neuf heures à midi local) et retiennent ce qui est déjà
+# parti, plutôt qu'une heure exacte qu'on ne touche presque jamais.
+#
+# Ça rend le système tolérant ; ça ne le rend pas ponctuel. Trois passages par
+# jour restent une loterie à trois cases sur vingt-quatre. Un déclencheur
+# fiable — les tâches planifiées de Vercel appellent les mêmes adresses avec le
+# même secret — est une décision d'infrastructure, notée dans docs/lancement.md.
 #
 # Ce travail ne CRIE JAMAIS. Il tourne toutes les heures : un échec y vaut
 # vingt-quatre courriels par jour, tous identiques. Quand le site va mal, c'est
