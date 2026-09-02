@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1582 tests unitaires, 150 suites. Base et session doublées : aucune dépendance à
+1605 tests unitaires, 150 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -467,7 +467,8 @@ détection locale enregistre, et surtout ce qu'elle n'enregistre plus.
 
 L'application de bureau a ses propres tests, en `desktop/src/*.test.ts` :
 les deux lectures d'issue, l'attente de l'écran de fin, les trois boucles de
-détection, la comparaison d'origine, la langue et les textes. Ils tournent
+détection, la comparaison d'origine, la langue, les textes, et ce que la
+pastille fait quand personne ne regarde. Ils tournent
 avec les autres, sans Electron ni jeu ouvert, parce que tout ce qui dépend du
 monde extérieur s'y injecte.
 
@@ -721,6 +722,47 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Un test du mode placement passait pour la mauvaise raison
+`overlay.js` fait six cent onze lignes et n'avait qu'un test : le placement,
+écrit parce que c'est la seule partie qui puisse rendre la pastille INVISIBLE.
+Le reste se joue pendant qu'on joue, c'est-à-dire là où personne ne regarde.
+
+Quatre règles couvertes, choisies sur ce que leur erreur coûte :
+
+- **le temps de soirée**, compté de deux façons selon que le jeu se raconte ou
+  non. League publie son horloge ; Apex n'expose rien, et son temps se lit sur
+  celle du poste. Le recalcul dans `envoyerEtat` existe pour un défaut écrit
+  dans son commentaire — sans lui, `sessionSec` n'était mis à jour que par un
+  relevé qui n'arrive jamais, et le moindre envoi (une dette qui bouge, une
+  capture) renvoyait le chrono à « --:-- ». Rien ne le tenait ;
+- **la surveillance**, qui retire une pastille restée seule à l'écran. C'est le
+  défaut déjà corrigé sur la boucle de détection, à l'autre bout de la chaîne :
+  un seul événement de fin manqué la laissait au premier plan pour le reste de
+  la soirée ;
+- **le message de capture**, qui la montre SANS la vouloir. S'il posait `voulu`,
+  la surveillance croirait à un affichage demandé et la maintiendrait ;
+- **la chaîne de repli des raccourcis**, sans laquelle il n'y en a aucun —
+  Discord, GeForce et Steam tiennent couramment les combinaisons évidentes, et
+  un raccourci global échoue en silence.
+
+**Cinq sabotages, quatre échecs au premier essai**, et le cinquième est la
+trouvaille. « Ne retire pas la pastille pendant qu'on la déplace » restait vert
+avec `!enPlacement` retiré de la condition : le mode placement passe par
+`afficher({ parLUtilisateur: true })`, donc il était déjà protégé par `manuel`.
+Le test éprouvait `manuel` en croyant éprouver `enPlacement`.
+
+Le cas qui les distingue demande de PERDRE `manuel`, ce que fait une partie qui
+démarre. Quand elle s'achève, la pastille est encore attrapée à la souris et
+seul `enPlacement` la retient. Sabotage refait sur ce cas : il tombe.
+
+C'est la même leçon que les deux tests de champions de l'avant-veille, sous une
+autre forme : **une condition redondante sur le chemin qu'on emprunte n'est pas
+éprouvée, elle est seulement masquée par la précédente.**
+
+Et une annotation qui manquait : `definirEnPartie(valeur, jeu = null)` faisait
+déduire à TypeScript le type de sa valeur par défaut, donc `null` — le seul
+argument que cette fonction reçoive jamais était refusé. Le JSDoc le dit.
 
 ### Le pont de la pastille, et huit fichiers de test qui n'étaient pas des modules
 `overlay-preload.js` fait vingt-quatre lignes et c'est le seul chemin par
