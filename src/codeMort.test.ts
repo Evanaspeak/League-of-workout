@@ -74,6 +74,18 @@ describe("code mort", () => {
     }
   }
 
+  /**
+   * Sans témoin, un dossier renommé ou un motif d'import qui ne trouve plus
+   * rien rendrait ce fichier vert en n'examinant aucun module. C'est la règle
+   * que les vingt-deux autres gardes structurels du projet appliquent, et que
+   * celui-ci n'appliquait pas — alors qu'il est de ceux qui SUPPRIMENT du code
+   * sur la foi de ce qu'ils lisent.
+   */
+  it("regarde vraiment des fichiers, et voit leurs imports", () => {
+    expect(tous.length).toBeGreaterThan(200);
+    expect(cibles.size).toBeGreaterThan(100);
+  });
+
   it("aucun module de src/ n'est laissé sans lecteur", () => {
     const orphelins = fichiersSource(SRC)
       .map((f) => relative(SRC, f))

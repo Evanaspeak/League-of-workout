@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1653 tests unitaires, 155 suites. Base et session doublées : aucune dépendance à
+1659 tests unitaires, 156 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -722,6 +722,49 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Quatre gardes sur vingt-six pouvaient passer au vert en ne lisant rien
+Suite du défaut précédent, où le test d'une route vérifiait la FORME du jour
+stocké avec le motif même que le code employait. La question générale est :
+**quels tests ne peuvent pas échouer ?**
+
+Le recensement par motifs partagés entre un test et son code ne rend que
+quatre rapprochements, dont trois anodins — des sélecteurs d'ouverture de
+compte partagés entre parcours. La famille est ailleurs.
+
+**Elle est dans les gardes structurels.** Ils regardent un DOSSIER plutôt
+qu'une liste écrite à la main, ce qui est leur qualité : ils voient le fichier
+qu'on ajoutera demain. Le prix, c'est qu'un dossier renommé, un motif devenu
+aveugle ou une extension qui change les rend muets sans rien casser —
+`expect(fautifs).toEqual([])` est vrai sur une liste vide, et rien ne
+distingue « rien à signaler » de « rien regardé ».
+
+Vingt-deux sur vingt-six portaient déjà leur témoin. Les quatre autres :
+
+- **`codeMort.test.ts`**, et c'est le plus gênant : il SUPPRIME du code sur la
+  foi de ce qu'il lit ;
+- **`langueEnDur.test.ts`**, qui interdit un raccourci à l'étage au-dessus et
+  l'aurait laissé passer ;
+- **`pagesOrphelines.test.ts`**, à moitié : il prouve que la RECHERCHE cherche
+  — une page inventée doit ressortir orpheline — et ne dit rien du
+  recensement des pages, qui pouvait être vide ;
+- **`logosJeux.test.ts`**, qui est un faux positif : il DOUBLE `readdirSync`
+  au lieu de lire le disque, donc un témoin n'y aurait rien à mesurer. Exempté
+  avec sa raison.
+
+`src/gardesNonVides.test.ts` porte la règle pour la classe : tout test qui
+parcourt le disque doit contenir une assertion qui refuse d'avoir lu zéro
+chose. Il a le même angle mort que ceux qu'il surveille, d'où son propre
+témoin — au moins vingt gardes recensés.
+
+Et le test faible de `/api/dette` a été renforcé au passage : il vérifiait que
+le repli produit un jour de la bonne FORME, alors que le repli est
+`jourLocal()`, qui en produit toujours une juste. Il attend maintenant le jour
+LOCAL, ce qui distingue le repli d'un jour inventé.
+
+Quatre sabotages, quatre échecs : un témoin retiré, une exemption vidée, le
+recensement rendu aveugle, et le témoin partiel de `pagesOrphelines` remplacé
+par un `toBeDefined`.
 
 ### Une date qui n'existe pas s'écrivait en base, pour toujours
 Recensement systématique des règles écrites deux fois — c'était le septième cas

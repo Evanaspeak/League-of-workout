@@ -118,6 +118,16 @@ function estAtteignable(route: string): boolean {
 describe("les pages du site", () => {
   const routes = pages(RACINE).sort();
 
+  /**
+   * Le test suivant prouve que la RECHERCHE cherche ; il ne dit rien du
+   * recensement des pages. Un dossier renommé rendrait `routes` vide, et la
+   * liste des orphelines le serait aussi — vert sur rien.
+   */
+  it("recense vraiment des pages", () => {
+    expect(routes.length).toBeGreaterThan(10);
+    expect(CIBLES.length).toBeGreaterThan(50);
+  });
+
   it("sont toutes joignables par un chemin écrit quelque part", () => {
     const orphelines = routes.filter(
       (r) => !(r in ENTREES_EXTERNES) && !estAtteignable(r),
