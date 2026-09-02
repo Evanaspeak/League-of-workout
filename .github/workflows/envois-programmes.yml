@@ -101,6 +101,14 @@ jobs:
           jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
             || echo "::warning::Réponse inattendue de la route."
 
+          # « Zéro envoyé » disait deux choses très différentes sous la même
+          # forme : personne à prévenir ce matin, ou un déploiement sans clés
+          # VAPID où RIEN ne peut partir. La route les distingue maintenant ;
+          # sans cette lecture, la distinction ne servirait à personne.
+          if [ "$(jq -r '.push // "?"' < "$reponse")" = "absent" ]; then
+            echo "::warning::Notifications non configurées (VAPID) — aucun rappel ne peut partir."
+          fi
+
       - name: Bilan de la semaine
         if: steps.secrets.outputs.prets == 'oui'
         run: |
@@ -120,7 +128,11 @@ jobs:
           if [ "$code" != "200" ]; then
             echo "::warning::La route a répondu $code — aucun bilan envoyé."; exit 0
           fi
-          # Le bilan ne part que le lundi, à neuf heures locales : vingt-trois
-          # exécutions sur vingt-quatre n'envoient rien, et c'est normal.
+          # Le bilan ne part que le lundi matin, en heure locale : la plupart
+          # des exécutions n'envoient rien, et c'est normal.
           jq -e '.envoyes >= 0' < "$reponse" > /dev/null \
             || echo "::warning::Réponse inattendue de la route."
+
+          if [ "$(jq -r '.courriel // "?"' < "$reponse")" = "absent" ]; then
+            echo "::warning::Courriel non configuré (RESEND_API_KEY) — aucun bilan ne peut partir."
+          fi

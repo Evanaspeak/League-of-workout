@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { notifier } from "@/lib/push";
+import { notifier, pushConfigure } from "@/lib/push";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { heureLocale, jourDansFuseau } from "@/lib/fuseau";
 import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/fenetreEnvoi";
@@ -64,6 +64,27 @@ export async function POST(req: Request) {
   if (!autorise(req)) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
+  /**
+   * Sans clés VAPID, ce module est inerte : `notifier` rend zéro sans rien
+   * tenter. La route continuait quand même — elle parcourait toute la base,
+   * posait `rappelLe` et `relanceLe` sur chaque compte, et répondait
+   * `{ examines: N, envoyes: 0 }`, c'est-à-dire exactement ce que rend une
+   * matinée normale où personne n'a rien à payer.
+   *
+   * Ce n'est pas qu'une affaire de journal. Les marques sont CONSOMMÉES : une
+   * clé posée à dix heures ne rattrape pas le rappel déjà marqué à neuf, et la
+   * relance des absents, elle, se rejoue tous les quatre-vingt-dix jours. Le
+   * seul message que le produit adresse à quelqu'un qui a cessé de jouer était
+   * donc brûlé par un déploiement incapable de l'envoyer, en silence.
+   *
+   * On s'arrête avant d'écrire quoi que ce soit, et la réponse le dit — c'est
+   * la leçon de la sauvegarde muette : une exécution qui saute tout et une
+   * exécution qui travaille ne doivent pas rendre la même chose.
+   */
+  if (!pushConfigure()) {
+    return NextResponse.json({ examines: 0, envoyes: 0, relances: 0, push: "absent" });
+  }
+
   // La dette s'exprime en temps d'effort : sans les ratios réglés en
   // administration, la durée annoncée serait celle des valeurs d'origine.
   await chargerRatios();
@@ -104,7 +125,9 @@ export async function POST(req: Request) {
   }
 
   const relances = await relancerLesAbsents(maintenant);
-  return NextResponse.json({ examines: candidats.length, envoyes, relances });
+  return NextResponse.json({
+    examines: candidats.length, envoyes, relances, push: "configuré",
+  });
 }
 
 /**

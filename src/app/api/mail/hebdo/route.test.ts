@@ -3,7 +3,12 @@ import { requete } from "@/test/api";
 jest.mock("@/lib/prisma", () => ({
   prisma: { user: { findMany: jest.fn(), update: jest.fn() } },
 }));
-jest.mock("@/lib/email", () => ({ envoyerBilanHebdo: jest.fn().mockResolvedValue(true) }));
+// Doublure du module ENTIER : ce qu'on n'y met pas rend `undefined`.
+const configure = jest.fn(() => true);
+jest.mock("@/lib/email", () => ({
+  envoyerBilanHebdo: jest.fn().mockResolvedValue(true),
+  courrielConfigure: () => configure(),
+}));
 
 import { POST, HEURE_BILAN, JOUR_BILAN } from "./route";
 import { prisma } from "@/lib/prisma";
@@ -122,7 +127,7 @@ describe("envoi", () => {
   it("part à qui est lundi matin chez lui", async () => {
     const r = await appeler(SECRET);
     expect(envoi).toHaveBeenCalledTimes(1);
-    expect(await r.json()).toEqual({ examines: 1, envoyes: 1 });
+    expect(await r.json()).toEqual({ examines: 1, envoyes: 1, courriel: "configuré" });
   });
 
   it("dit qu'il reste quelque chose quand la dette n'est pas soldée", async () => {
@@ -202,5 +207,27 @@ describe("la fenêtre du lundi matin", () => {
     user.findMany.mockResolvedValue([compte({ bilanLe: new Date(LUNDI_MATIN) })]);
     const r = await appeler(SECRET);
     expect((await r.json()).envoyes).toBe(0);
+  });
+});
+
+/**
+ * Le déploiement sans clé Resend.
+ *
+ * `envoyerBilanHebdo` y rend `false` sans rien tenter, et la route posait
+ * quand même `bilanLe` sur chaque compte : elle marquait « bilan envoyé
+ * aujourd'hui » pour un envoi qui n'était jamais parti. C'est le défaut déjà
+ * corrigé sur la récupération de mot de passe, où l'on promettait un courriel
+ * qui ne partait pas.
+ */
+describe("sans clé de courriel", () => {
+  it("ne touche pas à la base et le dit dans sa réponse", async () => {
+    configure.mockReturnValueOnce(false);
+
+    const res = await appeler(SECRET);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ examines: 0, envoyes: 0, courriel: "absent" });
+    expect(user.update).not.toHaveBeenCalled();
+    expect(user.findMany).not.toHaveBeenCalled();
   });
 });

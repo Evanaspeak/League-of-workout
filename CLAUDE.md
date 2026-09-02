@@ -424,7 +424,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1605 tests unitaires, 150 suites. Base et session doublées : aucune dépendance à
+1608 tests unitaires, 150 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -722,6 +722,65 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Un canal muet brûlait la relance des absents pour quatre-vingt-dix jours
+Recherche d'autres cas de « répond juste, ne fait rien », la famille de la
+sauvegarde muette et des envois qui cherchaient une heure exacte. Deux
+trouvés, dans les deux routes d'envoi programmé, et le second se paie cher.
+
+`notifier` rend zéro sans rien tenter quand les clés VAPID manquent ;
+`envoyerBilanHebdo` rend `false` quand la clé Resend manque. C'est écrit dans
+les deux modules, c'est délibéré, et `pushConfigure()` comme
+`courrielConfigure()` existent pour le demander. **Les deux routes programmées
+ne les appelaient pas.**
+
+Elles parcouraient donc toute la base, posaient `rappelLe`, `relanceLe` et
+`bilanLe` sur chaque compte, et rendaient `{ examines: N, envoyes: 0 }` — soit
+exactement la réponse d'une matinée normale où il n'y a personne à prévenir.
+
+**Ce n'est pas qu'une affaire de journal, et c'est ce qui distingue ce cas des
+précédents : les marques sont CONSOMMÉES.** Une clé posée à dix heures ne
+rattrape pas un rappel déjà marqué à neuf. Et la relance des absents ne se
+rejoue qu'au bout de quatre-vingt-dix jours (`JOURS_ENTRE_RELANCES`) : le seul
+message que le produit adresse à quelqu'un qui a cessé de jouer était donc
+brûlé, pour un trimestre, par un déploiement incapable de l'envoyer. En
+silence, en répondant 200.
+
+C'est mot pour mot le défaut corrigé en août sur la récupération de mot de
+passe — « la seule porte de secours promettait un courriel qui ne partait
+pas ». La fonction écrite ce jour-là pour le dire n'a jamais été appelée
+ailleurs.
+
+Les deux routes s'arrêtent maintenant AVANT toute lecture et toute écriture,
+et leur réponse porte `push` ou `courriel` : `"absent"` ou `"configuré"`. Le
+workflow lit ce champ et le note en avertissement — sans cette lecture, la
+distinction ne servirait à personne. Un zéro redevient lisible.
+
+**Un garde pour la classe, pas pour la ligne.** `src/envoisProgrammes.test.ts`
+lit déjà les workflows pour savoir quelles routes un travail PROGRAMMÉ appelle.
+Il exige en plus, dans celles-là, que ce qui envoie demande d'abord à son canal
+s'il peut envoyer — **et que la question précède la première écriture**, sinon
+elle ne protège rien : un contrôle posé après la boucle constate les dégâts au
+lieu de les empêcher. Avec le témoin habituel : un renommage de `notifier`
+rendrait sinon le test vert en n'examinant aucun canal.
+
+Quatre sabotages, quatre échecs — dont l'écriture glissée avant la question,
+qui fait tomber le contrôle d'ordre et lui seul.
+
+Et le piège d'écriture déjà connu, retombé dedans : `jest.mock` remplace le
+MODULE ENTIER. Les deux fonctions ajoutées n'y figuraient pas, donc l'appel
+rendait `undefined`, et **trente et un tests sans rapport sont tombés d'un
+coup**. C'est le bon bruit — mais la cause ne ressemble jamais au symptôme.
+
+**Ce que ça ne dit pas** : si les deux clés sont réellement posées en
+production. Ça ne se lit pas d'ici. Ce qui change, c'est qu'à partir de
+maintenant le journal du travail programmé le dira, au lieu de rendre le même
+zéro dans les deux cas.
+
+Vérifié en passant, et sain : la construction de l'application de bureau a
+publié `desktop-v0.9.9` le 1er septembre, quarante-sept exécutions dont une
+seule en échec, remontant à V185. Le bouton de téléchargement a bien une
+release à désigner.
 
 ### Les neuf versions ne changent rien à l'écran, et l'outil a dû être réparé pour le dire
 Comparaison de rendu entre V321 et la tête — neuf versions, dont le
