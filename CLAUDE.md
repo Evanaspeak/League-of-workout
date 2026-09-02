@@ -405,7 +405,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1533 tests unitaires, 143 suites. Base et session doublées : aucune dépendance à
+1543 tests unitaires, 144 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -700,6 +700,42 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Un commentaire promettait ce que l'échantillonnage ne fait pas
+`estNoir` décide si la capture d'écran est noire — c'est ce qui distingue « le
+jeu tourne en plein écran exclusif » de « voilà l'écran de fin ». Elle
+échantillonne un pixel sur cent un, et le commentaire annonçait que c'était
+« assez serré pour qu'un petit élément lumineux sur fond noir — un écran de
+chargement — ne passe pas pour un écran vide ».
+
+Mesuré : sur un écran 1920×1080, une zone lumineuse de 100×20 pixels est vue,
+une de 50×10 ne l'est pas. La promesse est fausse en dessous d'une centaine de
+pixels de large.
+
+**Et le code a raison quand même**, ce qui est le point intéressant. La
+question posée n'est pas « y a-t-il un pixel allumé ? » mais « y a-t-il de quoi
+lire des chiffres ? ». Un écran où seule une pastille de cinquante pixels
+brille n'a rien à lire, et le refuser est le bon résultat ; le tableau de fin
+d'Apex, lui, occupe la moitié de l'écran. C'est le commentaire qui était faux,
+pas la fonction — et un commentaire faux se relit comme une garantie, ce qui
+est le défaut le plus souvent trouvé sur ce projet. Il dit le seuil réel
+maintenant, avec la raison pour laquelle il convient, et un test le pin.
+
+**Le test a trouvé autre chose au passage, et un vrai.** `raccourciActif`
+survivait à l'appel : une seconde pose où tous les candidats sont pris rendait
+quand même le raccourci de la première, et `lireRaccourciCapture` l'annonçait à
+l'écran alors qu'il n'appelait plus personne. L'ancien restait enregistré avec
+son rappel. Personne ne peut l'atteindre aujourd'hui — `main.js` appelle une
+seule fois au démarrage — et c'est corrigé quand même : une fonction qui
+annonce « le raccourci actif » doit annoncer celui de CET appel, et reposer les
+raccourcis après un changement de réglages est exactement le genre de chose
+qu'on ajoute sans relire ce fichier.
+
+La chaîne de repli des raccourcis est éprouvée avec : Discord, GeForce et Steam
+tiennent couramment `Control+Shift+S`, et si le repli casse il n'y a plus aucun
+raccourci de capture — on appuie, il ne se passe rien, et rien ne le dit.
+
+Quatre sabotages, quatre échecs.
 
 ### Le contrat du pont Electron n'était tenu par personne
 `preload.js` expose des méthodes à la page ; `src/types/electron.d.ts` déclare
