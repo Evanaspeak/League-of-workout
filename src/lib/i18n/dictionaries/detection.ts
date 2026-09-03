@@ -1,5 +1,16 @@
 export const detection = {
   fr: {
+    conduiteTitre: "Quand un jeu démarre",
+    conduiteAide: "L'application peut te demander si tu veux suivre la soirée. La question s'affiche par-dessus l'écran de chargement.",
+    conduites: { demander: "Me demander", auto: "Lancer la session", jamais: "Ne rien faire" },
+    conduiteErreur: "Le réglage n'a pas pu être enregistré.",
+    conduiteNoteApp: "La question demande l'application Windows en version 0.9.10 ou plus récente.",
+    // La question posée par-dessus l'écran de chargement, dans la langue
+    // du compte : c'est la page qui les écrit, la coquille Electron ne fait
+    // que les afficher.
+    demandeTexte: (jeu: string) => `${jeu} démarre. Lancer une session ?`,
+    demandeOui: "Lancer",
+    demandeNon: "Non merci",
     titre: "Détection des jeux",
     aide: "L'application repère quand un jeu se lance en lisant la liste des processus, comme le gestionnaire des tâches. Rien n'est injecté dans le jeu.",
     jeuSurveille: "Lancement surveillé",
@@ -19,6 +30,17 @@ export const detection = {
     indisponible: "La détection des jeux n'est disponible que sur Windows.",
   },
   en: {
+    conduiteTitre: "When a game starts",
+    conduiteAide: "The app can ask whether you want to track the session. The question appears over the loading screen.",
+    conduites: { demander: "Ask me", auto: "Start the session", jamais: "Do nothing" },
+    conduiteErreur: "The setting could not be saved.",
+    conduiteNoteApp: "The question needs the Windows app in version 0.9.10 or newer.",
+    // La question posée par-dessus l'écran de chargement, dans la langue
+    // du compte : c'est la page qui les écrit, la coquille Electron ne fait
+    // que les afficher.
+    demandeTexte: (jeu: string) => `${jeu} is starting. Start a session?`,
+    demandeOui: "Start",
+    demandeNon: "No thanks",
     titre: "Game detection",
     aide: "The app spots a game starting by reading the process list, like Task Manager does. Nothing is injected into the game.",
     jeuSurveille: "Launch watched",
@@ -38,6 +60,17 @@ export const detection = {
     indisponible: "Game detection is only available on Windows.",
   },
   es: {
+    conduiteTitre: "Cuando arranca un juego",
+    conduiteAide: "La app puede preguntarte si quieres seguir la sesión. La pregunta aparece sobre la pantalla de carga.",
+    conduites: { demander: "Preguntarme", auto: "Iniciar la sesión", jamais: "No hacer nada" },
+    conduiteErreur: "No se ha podido guardar el ajuste.",
+    conduiteNoteApp: "La pregunta necesita la app de Windows en versión 0.9.10 o posterior.",
+    // La question posée par-dessus l'écran de chargement, dans la langue
+    // du compte : c'est la page qui les écrit, la coquille Electron ne fait
+    // que les afficher.
+    demandeTexte: (jeu: string) => `${jeu} está arrancando. ¿Iniciar una sesión?`,
+    demandeOui: "Iniciar",
+    demandeNon: "No, gracias",
     titre: "Detección de juegos",
     aide: "La aplicación se da cuenta de que arrancas un juego leyendo la lista de procesos, como el administrador de tareas. No se inyecta nada en el juego.",
     jeuSurveille: "Arranque vigilado",
@@ -57,6 +90,17 @@ export const detection = {
     indisponible: "La detección de juegos solo está disponible en Windows.",
   },
   de: {
+    conduiteTitre: "Wenn ein Spiel startet",
+    conduiteAide: "Die App kann fragen, ob du den Abend mitzählen willst. Die Frage erscheint über dem Ladebildschirm.",
+    conduites: { demander: "Mich fragen", auto: "Session starten", jamais: "Nichts tun" },
+    conduiteErreur: "Die Einstellung konnte nicht gespeichert werden.",
+    conduiteNoteApp: "Die Frage braucht die Windows-App ab Version 0.9.10.",
+    // La question posée par-dessus l'écran de chargement, dans la langue
+    // du compte : c'est la page qui les écrit, la coquille Electron ne fait
+    // que les afficher.
+    demandeTexte: (jeu: string) => `${jeu} startet. Session starten?`,
+    demandeOui: "Starten",
+    demandeNon: "Nein danke",
     titre: "Spieleerkennung",
     aide: "Die Anwendung merkt am Prozessverzeichnis, wenn ein Spiel startet, so wie es der Task-Manager tut. Ins Spiel selbst wird nichts eingeschleust.",
     jeuSurveille: "Start wird beobachtet",
@@ -76,6 +120,17 @@ export const detection = {
     indisponible: "Die Spieleerkennung gibt es nur unter Windows.",
   },
   zh: {
+    conduiteTitre: "游戏启动时",
+    conduiteAide: "应用可以先问你要不要记录这一晚。问题会显示在加载画面上。",
+    conduites: { demander: "问我一下", auto: "直接开始记录", jamais: "什么都不做" },
+    conduiteErreur: "设置没能保存。",
+    conduiteNoteApp: "该提问需要 Windows 应用 0.9.10 或更新版本。",
+    // La question posée par-dessus l'écran de chargement, dans la langue
+    // du compte : c'est la page qui les écrit, la coquille Electron ne fait
+    // que les afficher.
+    demandeTexte: (jeu: string) => `${jeu} 正在启动。要开始一次记录吗？`,
+    demandeOui: "开始",
+    demandeNon: "不用了",
     titre: "游戏检测",
     aide: "应用通过读取进程列表来发现游戏启动，跟任务管理器一样。不会往游戏里注入任何东西。",
     jeuSurveille: "监视启动",
@@ -95,6 +150,17 @@ export const detection = {
     indisponible: "游戏检测只在 Windows 上可用。",
   },
   ja: {
+    conduiteTitre: "ゲームが起動したとき",
+    conduiteAide: "アプリが記録を始めるか確認できます。質問はロード画面の上に表示されます。",
+    conduites: { demander: "確認する", auto: "そのまま開始", jamais: "何もしない" },
+    conduiteErreur: "設定を保存できませんでした。",
+    conduiteNoteApp: "この確認には Windows アプリ 0.9.10 以降が必要です。",
+    // La question posée par-dessus l'écran de chargement, dans la langue
+    // du compte : c'est la page qui les écrit, la coquille Electron ne fait
+    // que les afficher.
+    demandeTexte: (jeu: string) => `${jeu} を起動中です。セッションを開始しますか？`,
+    demandeOui: "開始",
+    demandeNon: "やめておく",
     titre: "ゲームの検知",
     aide: "タスクマネージャーと同じように、プロセス一覧を読んでゲームの起動を見つけます。ゲームそのものには何も入れません。",
     jeuSurveille: "起動を監視する",

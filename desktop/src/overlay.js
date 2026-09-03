@@ -56,6 +56,9 @@ let protege = false;
 let positionLibre = null;
 /** Vrai pendant qu'on déplace la pastille : elle accepte alors la souris. */
 let enPlacement = false;
+/** La question en cours par-dessus le jeu, et de quoi y répondre. */
+let questionEnCours = null;
+let dernierIdQuestion = 0;
 /**
  * Ce qu'on veut afficher, indépendamment de ce que Windows accepte de dessiner.
  *
@@ -374,6 +377,70 @@ function definirPlacement(actif) {
   return lirePlacement();
 }
 
+/**
+ * Pose une question par-dessus le jeu, et rend la réponse.
+ *
+ * C'est la PAGE qui écrit les mots : elle connaît le compte, ses réglages et
+ * ses six langues. La coquille n'affiche que ce qu'on lui donne — la règle
+ * vaut ici comme ailleurs, et elle s'était déjà fait prendre à parler français
+ * à tout le monde.
+ *
+ * La fenêtre cesse de laisser passer les clics le temps de la question, comme
+ * en mode placement. Elle le redevient ensuite : une pastille qui intercepte
+ * la souris pendant une partie est pire que pas de pastille.
+ *
+ * La question se referme d'elle-même au bout du délai, sans réponse. C'est
+ * voulu : elle paraît sur l'écran de chargement, et si personne n'a cliqué
+ * quand la partie commence, on ne va pas retenir quelqu'un qui joue.
+ *
+ * Les quatre champs sont annotés : sans ça, TypeScript déduit le type du seul
+ * qui porte une valeur par défaut, et refuse les trois autres à l'appel.
+ *
+ * @param {{ texte?: string, oui?: string, non?: string, delaiMs?: number }} [q]
+ * @returns {Promise<boolean|null>} `null` si personne n'a répondu.
+ */
+function poserQuestion({ texte, oui, non, delaiMs = 45_000 } = {}) {
+  if (!fenetre || fenetre.isDestroyed()) creerOverlay();
+  // Une question chasse la précédente : deux questions empilées par-dessus un
+  // jeu n'ont aucun sens, et la plus ancienne n'intéresse plus personne.
+  if (questionEnCours) questionEnCours.repondre(null);
+
+  const id = ++dernierIdQuestion;
+  afficher({ parLUtilisateur: true });
+  fenetre.setIgnoreMouseEvents(false, { forward: true });
+  fenetre.setFocusable(true);
+  fenetre.webContents.send("overlay:question", { id, texte, oui, non });
+
+  return new Promise((resoudre) => {
+    let fini = false;
+    const repondre = (valeur) => {
+      if (fini) return;
+      fini = true;
+      clearTimeout(minuteur);
+      questionEnCours = null;
+      if (fenetre && !fenetre.isDestroyed()) {
+        fenetre.webContents.send("overlay:question", null);
+        // On ne retire la main qu'en dehors du mode placement : sinon on
+        // reprendrait à quelqu'un la pastille qu'il est en train de déplacer.
+        if (!enPlacement) {
+          fenetre.setIgnoreMouseEvents(true, { forward: true });
+          fenetre.setFocusable(false);
+        }
+        if (!enPartie && !enPlacement && !manuel) masquer();
+      }
+      resoudre(valeur);
+    };
+    const minuteur = setTimeout(() => repondre(null), delaiMs);
+    questionEnCours = { id, repondre };
+  });
+}
+
+/** Réponse venue de la fenêtre. Une question inconnue est ignorée. */
+function reponseQuestion(id, oui) {
+  if (!questionEnCours || questionEnCours.id !== id) return;
+  questionEnCours.repondre(Boolean(oui));
+}
+
 /** État du placement, tel que les réglages doivent l'afficher. */
 function lirePlacement() {
   return {
@@ -612,5 +679,6 @@ module.exports = {
   protegerDeLaCapture,
   definirCoin, coinSuivant, COINS, lireRaccourcis,
   definirPlacement, lirePlacement, appliquerConfig,
+  poserQuestion, reponseQuestion,
   definirLangue,
 };

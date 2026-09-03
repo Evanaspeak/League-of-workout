@@ -104,6 +104,16 @@ declare global {
        * cours.
        */
       overlayPlacement?: (actif: boolean, jeu?: string) => Promise<EtatOverlay>;
+      /**
+       * Pose une question par-dessus le jeu et rend la réponse (0.9.10+).
+       *
+       * Les mots viennent de la page : elle seule connaît le compte et ses six
+       * langues. `null` = personne n'a répondu à temps, ce qui se traite comme
+       * un refus.
+       */
+      overlayDemander?: (question: {
+        texte: string; oui: string; non: string; delaiMs?: number;
+      }) => Promise<boolean | null>;
       /** Rappel affiché par le système, sans passer par le push web (0.6.2+). */
       notifier?: (titre: string, corps: string) => void;
       ouvrirFenetre?: () => void;

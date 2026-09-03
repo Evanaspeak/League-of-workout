@@ -93,6 +93,14 @@ contextBridge.exposeInMainWorld("electronLOL", {
   // Placement libre de l'overlay : le mode saisie rend la pastille attrapable
   // à la souris, le temps de la poser où elle ne gêne pas.
   overlayPlacement: (actif, jeu) => ipcRenderer.invoke("overlay:placement", { actif, jeu }),
+  /**
+   * Pose une question par-dessus le jeu et rend la réponse (0.9.10+).
+   *
+   * Les mots viennent d'ici, donc de la page, qui connaît le compte et ses six
+   * langues. Rend `null` quand personne n'a répondu avant la fin du délai : à
+   * traiter comme un refus, jamais comme un accord.
+   */
+  overlayDemander: (question) => ipcRenderer.invoke("overlay:question", question),
 
   // Mise à jour. `majEtat()` interroge l'état courant, `onMajEtat()` suit ses
   // changements : le téléchargement peut se terminer avant qu'une page soit

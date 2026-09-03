@@ -161,6 +161,28 @@
   }
   .capture.ok    { display: block; background: rgba(47,217,138,0.15); color: #2FD98A; }
   .capture.echec { display: block; background: rgba(255,77,46,0.15);  color: #FF8A3D; }
+
+  /* La question posée par-dessus l'écran de chargement.
+     Elle REMPLACE la pastille au lieu de s'ajouter à côté : deux blocs
+     concurrents par-dessus un jeu, c'est un de trop, et celui qui demande
+     quelque chose doit être le seul à parler. */
+  .question { display: none; }
+  body.demande .pastille { display: none; }
+  body.demande .question { display: block; }
+  .question-texte {
+    font-size: 13px; line-height: 1.35; color: #ECEFF4;
+    margin-bottom: 10px; font-weight: 600;
+  }
+  .question-boutons { display: flex; gap: 8px; }
+  .question-boutons button {
+    flex: 1; padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 12px; font-weight: 700;
+    border: 1px solid rgba(152,162,176,0.35);
+    background: rgba(152,162,176,0.12); color: #ECEFF4;
+  }
+  .question-boutons button.oui {
+    background: #FF5A2E; border-color: #FF5A2E; color: #0C0E11;
+  }
 </style>
 </head>
 <body>
@@ -193,6 +215,21 @@
     <div class="capture" id="capture"></div>
 
     <div class="consigne" data-texte="overlayConsigne">Traîne-moi où tu veux, puis « Terminer ».</div>
+  </div>
+
+  <!-- Les mots viennent de la PAGE, qui connaît le compte et ses six langues.
+       Rien n'est écrit en dur ici : c'est la règle du projet, et la coquille
+       Electron s'était déjà fait prendre à parler français à tout le monde. -->
+  <div class="pastille question" id="question" role="dialog" aria-modal="true">
+    <div class="titre">
+      <span class="point"></span>
+      <span>Win // Workout</span>
+    </div>
+    <div class="question-texte" id="question-texte"></div>
+    <div class="question-boutons">
+      <button type="button" class="oui" id="question-oui"></button>
+      <button type="button" id="question-non"></button>
+    </div>
   </div>
 
 <script>
@@ -389,6 +426,60 @@
   if (window.overlayLOW && window.overlayLOW.onPlacement) {
     window.overlayLOW.onPlacement((actif) => {
       document.body.classList.toggle("placement", actif);
+    });
+  }
+
+  /**
+   * La question posée par-dessus le jeu.
+   *
+   * `null` la ferme sans réponse — c'est ce qui arrive quand la partie
+   * commence pour de bon sans qu'on ait cliqué : on ne va pas retenir
+   * quelqu'un qui joue.
+   *
+   * Une seule réponse part par question : `repondue` empêche qu'un double clic
+   * ou un clic sur les deux boutons en envoie deux, ce que le processus
+   * principal traiterait comme deux réponses contradictoires.
+   */
+  if (window.overlayLOW && window.overlayLOW.onQuestion) {
+    const bloc = document.getElementById("question");
+    const texte = document.getElementById("question-texte");
+    const oui = document.getElementById("question-oui");
+    const non = document.getElementById("question-non");
+    let idCourant = null;
+    let repondue = false;
+
+    const fermer = () => {
+      idCourant = null;
+      document.body.classList.remove("demande");
+    };
+
+    const repondre = (valeur) => {
+      if (idCourant === null || repondue) return;
+      repondue = true;
+      window.overlayLOW.repondre(idCourant, valeur);
+      fermer();
+    };
+
+    oui.addEventListener("click", () => repondre(true));
+    non.addEventListener("click", () => repondre(false));
+
+    window.overlayLOW.onQuestion((q) => {
+      if (!q) { fermer(); return; }
+      idCourant = q.id;
+      repondue = false;
+      texte.textContent = q.texte || "";
+      oui.textContent = q.oui || "";
+      non.textContent = q.non || "";
+      document.body.classList.add("demande");
+      // Le premier bouton prend le focus : la fenêtre est rendue focalisable
+      // le temps de la question, et une question qu'on ne peut pas traverser
+      // au clavier n'est pas une question pour tout le monde.
+      try { oui.focus(); } catch { /* la fenêtre n'a pas encore le focus */ }
+    });
+
+    bloc.addEventListener("keydown", (e) => {
+      // Échap vaut « non ». Refuser est le choix sûr : il ne démarre rien.
+      if (e.key === "Escape") repondre(false);
     });
   }
 </script>
