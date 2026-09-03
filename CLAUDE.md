@@ -41,9 +41,18 @@ ne figure PAS dans le plan : ça vit dans le journal, plus bas.
 ## Ce qu'on lance avant de publier (IMPORTANT)
 
 **Pas les 203 parcours.** La CI les joue déjà à chaque poussée sur `main`
-(`.github/workflows/tests.yml`, travail « Parcours »), en parallèle du
-déploiement Vercel. Les rejouer en local avant chaque fusion, c'est payer
-quinze minutes deux fois — ce qui a été fait toute la journée du 3 septembre.
+(`.github/workflows/tests.yml`, travail « parcours », six tronçons), en
+parallèle du déploiement Vercel. Les rejouer en local avant chaque fusion,
+c'est payer neuf minutes deux fois — ce qui a été fait toute la journée du
+3 septembre.
+
+**Et `npx jest` n'est pas optionnel, même quand on n'a touché à aucun `src/`.**
+Une CI restructurée a fait tomber quatre contrôles de `controleSchema.test.ts`
+— ils cherchaient une étape dans `tests.yml`, qui avait déménagé — et j'avais
+lancé `tsc` sans `jest`. Quinze secondes auraient remplacé une exécution de CI
+rouge. Les gardes de ce projet lisent les workflows, le schéma Prisma, les
+dossiers : ils tombent sur des changements qui ne touchent pas une ligne de
+TypeScript.
 
 Avant de publier :
 
@@ -60,7 +69,7 @@ là où une régression peut sortir n'importe où. C'est rare, et c'est justemen
 ce qui la rend supportable.
 
 Si la CI casse après une fusion, on corrige : le retard est de quelques
-minutes, pas de quinze, et il ne se paie que quand quelque chose a
+minutes, pas de neuf, et il ne se paie que quand quelque chose a
 effectivement cassé.
 
 ## La suite navigateur, et ce que le parallélisme lui coûte
@@ -1045,11 +1054,29 @@ processus de test et le serveur Next ne sature plus, et la contention disparaît
 au lieu d'être arbitrée. En local il n'y a qu'une machine, donc deux workers y
 restent le compromis mesuré.
 
+**Le résultat, en quatre exécutions mesurées :**
+
+| forme | chemin critique | préparation | état |
+|---|---|---|---|
+| deux travaux (V357) | 14 min 24 | 1 min 25 | vert |
+| quatre travaux, 2 workers | 11 min 54 | 3 min 24 à 8 min 01 | vert |
+| six travaux, 2 workers, avec caches | 10 min 20 | 0 min 49 à 5 min 45 | **un tronçon rouge** |
+| neuf travaux, 1 worker, six tronçons | **6 min 52** | 0 min 40 à 1 min 02 | vert |
+
+**52 % de moins**, et la préparation passe de trois à huit minutes à moins
+d'une. Le dernier découpage a demandé SIX tronçons et non quatre, et c'est
+l'équilibre qui l'a décidé : Playwright découpe au nombre de tests, qui ne dit
+rien de la durée. À quatre, `parcours.spec.ts` — deux trajets complets, poste
+et téléphone — partageait son tronçon avec `social.spec.ts`, qui fait jouer
+trois comptes : 7 min 35 pendant que les trois autres finissaient sous deux
+minutes et demie.
+
 Ce que ça apprend au-delà du cas : **paralléliser ne divise pas le temps, ça
 déplace le goulot.** Il est passé des tests à l'installation, puis de
-l'installation au processeur d'un runner. Chaque déplacement s'est vu à la
-mesure et à elle seule — aucun n'était visible dans le fichier qu'on venait
-d'écrire.
+l'installation au processeur d'un runner, puis au fichier le plus lent. Chaque
+déplacement s'est vu à la mesure et à elle seule — aucun n'était visible dans
+le fichier qu'on venait d'écrire, et le deuxième a failli passer pour un gain
+alors qu'il ne rapportait que deux minutes et demie sur cinq runners.
 
 ### Un fichier de test tenait 43 % de la suite, sur un seul worker
 `fullyParallel: false` enferme un FICHIER dans un worker : ses tests s'y
