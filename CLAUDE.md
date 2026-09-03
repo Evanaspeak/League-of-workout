@@ -125,6 +125,8 @@ src/
     [locale]/                       # Toutes les pages, une version par langue
       page.tsx                      # Dashboard (client) — stats, graphiques, mode session
       history/page.tsx              # Historique parties + pompes (client)
+      amis/page.tsx                 # Amis et groupes (server) — la porte
+      amis/AmisClient.tsx           # Amis et groupes (client) — l'écran entier
       admin/page.tsx                # Panel admin (server) — restreint à evantocquet@gmail.com
       admin/AdminChampionEditor.tsx # Éditeur liste champions (client)
       admin/AdminRatiosExercices.tsx # Réglage des ratios squats et boxe (client)
@@ -139,6 +141,11 @@ src/
       games/route.ts                # GET liste games, POST nouvelle game
       games/[id]/route.ts           # DELETE + PATCH (date, ou résultat rejoué)
       games/preview/route.ts        # POST preview scoring sans sauvegarder
+      amis/route.ts                 # GET liste + demandes + groupes, POST demande par pseudo
+      amis/[id]/route.ts            # PATCH accepter, DELETE refuser/annuler/retirer
+      groupes/route.ts              # POST créer un groupe (code tiré)
+      groupes/rejoindre/route.ts    # POST rejoindre par code
+      groupes/[id]/route.ts         # PATCH refaire le code, DELETE quitter
       champions/route.ts            # GET liste champions (DB override ou défaut)
       admin/config/champions/route.ts  # GET/PUT/DELETE liste champions (admin only)
       admin/config/exercices/route.ts  # GET/PUT/DELETE ratios entre exercices (admin only)
@@ -155,6 +162,7 @@ src/
     prisma.ts         # Client Prisma singleton
     auth-helpers.ts   # getCurrentUser() → User | null
     dette.ts          # Ajout et retrait de dette, atomiques
+    social.ts         # Les règles du social : demande croisée, code d'invitation, reprise
     i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
     i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
     i18n/metadonnees.ts     # Titres et descriptions des pages publiques, six langues
@@ -184,6 +192,9 @@ desktop/src/          # App Electron Windows
 - `LevelConfig` — niveaux 1-5, seuils gainage, multiplicateur, malusDefaite
 - `MasteryConfig` — surchargeMax (0.5), partiesPourMax (100)
 - `SystemConfig` — key/value JSON pour config admin (clés : "champions", "exercices")
+- `Amitie` — demandeur, receveur, etat (attente|acceptee). Un refus SUPPRIME la ligne
+- `Groupe` — nom, code d'invitation unique et régénérable
+- `MembreGroupe` — groupe, compte, role (proprietaire|membre)
 
 ## Fonctionnalités implémentées
 
@@ -206,6 +217,31 @@ pas, c'est de ne rien en dire — on cherchait où étaient passés les autres j
 demande l'application, et le lien pour l'installer.
 
 Une section qui promet plus qu'elle ne donne doit au moins dire pourquoi.
+
+### Amis et groupes (amis/page.tsx)
+Un écran, deux moitiés, et la même règle des deux côtés : **rien n'est
+explorable par un inconnu.** Elle vient de la réponse 127 — le propriétaire du
+produit n'est pas prêt à modérer un espace social, et un annuaire ou un champ
+de texte libre demanderait quelqu'un pour le surveiller.
+
+- **Une amitié** se demande à un pseudo EXACT et n'existe qu'après acceptation.
+  Deux homonymes font refuser plutôt que choisir : l'unicité des pseudos vit
+  dans l'application et pas en base, et envoyer la demande à la mauvaise
+  personne ne se rattrape pas.
+- **Un refus supprime la ligne.** La garder dirait à qui insiste qu'il a été
+  refusé, et personne n'arbitre ce qui suivrait.
+- **Redemander à qui vous a déjà demandé vaut acceptation**, sinon deux
+  demandes croisées s'installent et l'amitié ne peut plus se conclure.
+- **Un groupe** se rejoint avec son code, et seulement avec son code. Il n'est
+  listé nulle part. Le code part à TOUS les membres — c'est ce qui distingue un
+  groupe d'une liste : celui qu'on a invité peut inviter à son tour. Le
+  propriétaire garde ce qui répare : refaire le code, donc révoquer celui qui
+  circule.
+- **Retirer un ami et quitter un groupe demandent deux gestes**, comme la
+  correction d'un résultat de partie.
+
+`src/lib/social.ts` porte les décisions ; les plafonds y remplacent la
+modération.
 
 ### Historique (history/page.tsx)
 
@@ -481,7 +517,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1702 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
+1792 tests unitaires, 167 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -506,16 +542,18 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 188 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 192 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
-tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
-écrans connectés — tableau de bord, historique, réglages, saison — dans les six
+tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
+écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
 langues et à trois largeurs, sur un compte qu'il ouvre lui-même, en demandant
 chaque langue par son ADRESSE, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
-pourquoi il n'y a qu'un jeu hors application.
+pourquoi il n'y a qu'un jeu hors application, et `e2e/social.spec.ts` fait
+jouer deux comptes l'un contre l'autre — c'est la seule chose qu'un seul
+contexte de navigateur ne sait pas éprouver.
 
 `e2e/panne-serveur.spec.ts` est devenu le fichier des échecs : il coupe une
 route à la fois et vérifie que l'écran le dit ET que rien n'a bougé en base.
@@ -779,6 +817,140 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Les amis et les groupes, et la réponse qui décide de leur forme
+Première ligne de l'étape 02 du plan d'action, et la réponse 114 disait « les
+deux » : des amis qu'on ajoute ET des groupes qu'on rejoint. Ce n'est pas la
+réponse la plus importante du lot. **C'est la 127 qui décide de tout** :
+
+> Est-ce que tu es prêt à modérer un espace social ? → **Non**
+
+Une réponse à laquelle il faut obéir en architecture, pas en intention. Un
+annuaire de comptes, une recherche par début de pseudo, un champ de message
+joint à une demande : chacun demande quelqu'un pour le surveiller, et il n'y a
+personne. Donc :
+
+- **rien ne se cherche.** On ajoute un pseudo qu'on connaît déjà — pas de
+  recherche partielle, pas de suggestion, pas de liste. Un groupe se rejoint
+  avec son code, et le groupe n'est listé nulle part ;
+- **rien ne s'écrit.** Le seul texte qui circule est un pseudo et un nom de
+  groupe, tous deux passés par la classe de caractères d'`identite.ts`. Il n'y
+  a rien à modérer parce qu'il n'y a rien à écrire ;
+- **les plafonds remplacent la modération.** Vingt demandes en attente au
+  maximum : personne ne relit ce qui se passe ici, donc la seule protection
+  contre quelqu'un qui demanderait tout le monde est de rendre la chose
+  impossible. Ce que ça ne protège PAS est écrit dans le module — quelqu'un qui
+  redemande à la même personne après chaque refus. Un refus supprime la ligne,
+  donc rien ne s'en souvient. Le jour où ça arrivera il faudra un blocage.
+
+**Le défaut qu'il fallait éviter est la demande croisée.** Si B m'a déjà
+demandé et que je le demande à mon tour, créer une seconde ligne laisse deux
+demandes en attente, chacun voyant « en attente de sa réponse ». L'amitié ne
+peut plus se conclure, et **rien ne le signale** : les deux écrans disent
+quelque chose de parfaitement sensé. Redemander vaut donc acceptation, et
+`decisionDemande` porte la règle hors des routes — l'unicité en base porte sur
+un couple ORIENTÉ, elle n'empêche pas le doublon inverse.
+
+**Deux homonymes font refuser, jamais choisir.** L'unicité des pseudos vit
+dans l'application et pas en base — des doublons existent déjà, un index
+unique refuserait de se construire dessus. Prendre le premier enverrait la
+demande à la mauvaise personne, ce qui est le seul résultat qu'on ne peut pas
+rattraper : elle n'a aucun moyen de savoir qu'elle n'était pas la
+destinataire.
+
+**Un groupe plein rend la même réponse qu'un code inconnu.** Les distinguer
+dirait, par la différence des deux réponses, quels codes existent : essayer
+des codes au hasard deviendrait un moyen de trouver les groupes, c'est-à-dire
+exactement ce que le code d'invitation existe pour empêcher.
+
+**Pas de transaction, donc l'ordre est la seule protection**, et il est choisi
+deux fois :
+
+- créer un groupe écrit le GROUPE d'abord, l'appartenance ensuite. Une panne
+  entre les deux laisse un groupe que personne ne voit — son code n'a jamais
+  été rendu — et qui n'occupe qu'une ligne. L'inverse est impossible, la clé
+  étrangère refusant une appartenance sans groupe ;
+- quitter un groupe passe la propriété AVANT de partir. Un groupe sans
+  propriétaire ne peut plus refaire son code : c'est une porte qu'on ne peut
+  plus fermer, et rien ne la répare. Une panne entre les deux laisse deux
+  propriétaires, ce qui est sans conséquence et se règle en refaisant le
+  geste.
+
+**Le code d'invitation, et le test qui a failli ne rien prouver.** L'alphabet
+écarte les caractères qui se confondent à la lecture — ni O ni 0, ni I ni 1 ni
+L — parce qu'un code se dicte en vocal avant de se taper, et qu'un code retapé
+faux n'ouvre rien. Le tirage jette les octets hors d'un multiple de la taille
+de l'alphabet au lieu de prendre un modulo : 256 n'est pas divisible par 31,
+et un modulo direct rendrait les huit premières lettres neuf fois sur 256
+contre huit pour les autres.
+
+Mon premier test de ce rejet comptait les lettres sur quatre cents tirages
+aléatoires et exigeait qu'aucune ne manque. **Il passait avec le modulo** : un
+excès de douze pour cent se confond avec le bruit, et toutes les lettres
+apparaissent quand même. C'est le défaut déjà écrit ici trois fois — un test
+qui lit les vraies données éprouve les vraies données. La source d'octets
+s'injecte maintenant, et les 256 valeurs sont posées une fois chacune : la
+distribution attendue est exacte, huit fois chaque lettre. Avec un détail qui
+fait tout : **les huit valeurs à rejeter sont servies en PREMIER.** Servies en
+dernier, elles ne seraient jamais demandées — le tirage s'arrête dès qu'il a
+ses huit lettres — et le rejet ne serait pas sur le chemin.
+
+**Le garde du filtrage par compte a mordu sur les dix appels d'un coup**, et
+c'était sa coarseness plutôt qu'une faute : il cherche le mot `userId`, ce qui
+était vrai de toutes les tables du jour. `Amitie` porte DEUX colonnes de compte
+et aucune de ce nom — un lien a un demandeur et un receveur, et filtrer sur
+l'un ou l'autre est exactement le même geste. Les dispenser aurait été la pire
+réponse : une dispense de ROUTE rend le garde muet sur tout le fichier. Il
+connaît donc les colonnes par leur nom, et deux appels seulement sont dispensés
+un par un, avec leur raison — résoudre un pseudo en compte, et créer un groupe
+qui n'appartient encore à personne. Le contrôle habituel est là : une dispense
+qui ne désigne plus rien de vivant tombe.
+
+**Et la politique de confidentialité a dû recevoir deux lignes**, dans les six
+langues, parce que `politiqueComplete.test.ts` l'a exigé sur les trois
+relations ajoutées. C'est la bonne exigence : la liste d'amis est le
+renseignement le plus personnel que le social produise, et il ne dit pas
+seulement quelque chose de vous — il en dit sur quelqu'un d'autre. La politique
+dit donc ce qu'une amitié donne à voir (le pseudo et le volume d'effort) et
+qu'elle se retire.
+
+Douze sabotages, douze échecs — dont l'acceptation croisée remise en doublon,
+la recherche de liens dans un seul sens, l'acceptation ouverte au demandeur, le
+groupe écrit après l'appartenance, le départ avant la reprise, et les deux
+mécaniques ajoutées au garde du filtrage.
+
+**Un sabotage a d'abord paru passer**, et c'était une erreur de méthode : ma
+substitution laissait une erreur de SYNTAXE, la suite ne se chargeait plus, et
+la ligne `Tests:` ne comptait alors aucun échec — vingt et un tests passés sur
+vingt et un, parce que les dix de la suite morte n'y figuraient pas. Un
+`Test Suites: 1 failed` était pourtant écrit deux lignes au-dessus. La leçon
+est déjà ici sous une autre forme : lire le compte, pas la couleur — et lire
+les DEUX lignes.
+
+Au navigateur, `e2e/social.spec.ts` éprouve ce qu'aucun test unitaire ne peut
+voir : ce qui se joue entre DEUX comptes. La demande arrive vraiment chez
+l'autre, elle disparaît de chez soi quand il accepte, et un code tiré par l'un
+ouvre le groupe de l'autre — retapé en minuscules avec un tiret, comme on le
+lit. Chaque contrôle regarde l'écran ET la base : sans le second, un écran qui
+se contente d'afficher ce qu'on vient de taper passerait le test.
+
+**192 parcours au vert**, et les quatre nouveaux sabotés séparément — quatre
+échecs, chacun sur son propre test : la demande reçue rangée du côté des
+demandes envoyées, le premier clic qui retire l'ami tout de suite, le code qui
+n'accepte plus les minuscules ni les tirets, et le refus rendu muet. Chaque
+sabotage passe par une reconstruction et un redémarrage du serveur : sans eux,
+`next start` sert le `.next` d'avant et le sabotage ne sabote rien.
+
+Le quatrième a d'abord fait échouer la CONSTRUCTION plutôt qu'un test :
+retirer le `setErreur` rendait `translateApiError` inutilisé, et
+`noUnusedLocals` le nomme. Un échec de compilation n'est pas un test qui mord ;
+réécrit pour compiler, le test tombe.
+
+**Et `/amis` rejoint le balayage des six langues**, pour la raison qui a servi
+à y faire entrer « Ta saison » : c'est l'écran où le texte est le plus long —
+trois phrases pour expliquer qu'il n'y a pas d'annuaire — et où des libellés de
+boutons se serrent sur une ligne à côté d'un pseudo de vingt-quatre
+caractères. 87 passes, aucun débordement, aucune langue en retard.
 
 ### La session se lançait toute seule, et personne ne l'avait demandé
 Signalé en même temps que le reste : « je viens de remarquer que la session se

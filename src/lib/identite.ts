@@ -30,8 +30,15 @@ export function normaliserEmail(brut: unknown): string | null {
   return email;
 }
 
-/** Lettres, chiffres, espace et quelques signes. Pas de balises, pas de retours. */
-const PSEUDO_AUTORISE = /^[\p{L}\p{N} _.\-]+$/u;
+/**
+ * Lettres, chiffres, espace et quelques signes. Pas de balises, pas de retours.
+ *
+ * Exporté parce qu'un nom de groupe suit exactement la même règle : c'est du
+ * texte écrit par quelqu'un et lu par d'autres, et il n'y a personne pour
+ * modérer ce qui s'y écrirait. Recopier la classe de caractères en ferait une
+ * seconde, qui divergerait au premier signe ajouté.
+ */
+export const LIBELLE_AUTORISE = /^[\p{L}\p{N} _.\-]+$/u;
 export const PSEUDO_MIN = 2;
 export const PSEUDO_MAX = 24;
 
@@ -55,7 +62,7 @@ export function validerPseudo(brut: unknown): Verdict {
   if (pseudo.length > PSEUDO_MAX) {
     return { ok: false, erreur: `Pseudo trop long (max ${PSEUDO_MAX} caractères)`, statut: 400 };
   }
-  if (!PSEUDO_AUTORISE.test(pseudo)) {
+  if (!LIBELLE_AUTORISE.test(pseudo)) {
     return { ok: false, erreur: "Pseudo invalide (lettres, chiffres, espaces uniquement)", statut: 400 };
   }
   return { ok: true, valeur: pseudo };

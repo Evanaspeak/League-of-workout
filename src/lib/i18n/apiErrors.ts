@@ -384,6 +384,93 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "This session predates the request", es: "Esta sesión es anterior a la petición", de: "Diese Sitzung ist älter als die Anfrage",
     zh: "该会话早于本次请求", ja: "このセッションは要求より前のものです",
   },
+
+  // ─── Le social : amis et groupes ───────────────────────────────────────────
+  "Aucun joueur ne porte ce pseudo": {
+    en: "No player goes by that name", es: "Ningún jugador lleva ese apodo",
+    de: "Kein Spieler trägt diesen Namen",
+    zh: "没有玩家使用这个昵称", ja: "その名前のプレイヤーはいません",
+  },
+  "Plusieurs joueurs portent ce pseudo": {
+    en: "Several players go by that name", es: "Varios jugadores llevan ese apodo",
+    de: "Mehrere Spieler tragen diesen Namen",
+    zh: "有多位玩家使用这个昵称", ja: "その名前のプレイヤーが複数います",
+  },
+  "On ne s'ajoute pas soi-même": {
+    en: "You cannot add yourself", es: "No puede añadirse a sí mismo",
+    de: "Sie können sich nicht selbst hinzufügen",
+    zh: "不能添加自己", ja: "自分自身は追加できません",
+  },
+  "Vous êtes déjà amis": {
+    en: "You are already friends", es: "Ya son amigos", de: "Sie sind schon Freunde",
+    zh: "你们已经是好友了", ja: "すでにフレンドです",
+  },
+  "Demande déjà envoyée": {
+    en: "Request already sent", es: "Solicitud ya enviada", de: "Anfrage schon gesendet",
+    zh: "请求已经发送过了", ja: "すでに申請済みです",
+  },
+  "Liste d'amis pleine": {
+    en: "Friend list is full", es: "La lista de amigos está llena",
+    de: "Die Freundesliste ist voll",
+    zh: "好友列表已满", ja: "フレンド一覧がいっぱいです",
+  },
+  "Trop de demandes en attente": {
+    en: "Too many pending requests", es: "Demasiadas solicitudes pendientes",
+    de: "Zu viele offene Anfragen",
+    zh: "待回应的请求太多了", ja: "返答待ちの申請が多すぎます",
+  },
+  "Demande introuvable": {
+    en: "Request not found", es: "No se ha encontrado la solicitud",
+    de: "Anfrage nicht gefunden",
+    zh: "找不到这条请求", ja: "その申請が見つかりません",
+  },
+  "Nom de groupe manquant": {
+    en: "Group name is missing", es: "Falta el nombre del grupo",
+    de: "Der Gruppenname fehlt",
+    zh: "缺少群组名称", ja: "グループ名が入力されていません",
+  },
+  "Nom de groupe trop court (min 2 caractères)": {
+    en: "Group name too short (min 2 characters)",
+    es: "Nombre de grupo demasiado corto (mín. 2 caracteres)",
+    de: "Gruppenname zu kurz (min. 2 Zeichen)",
+    zh: "群组名称太短（至少 2 个字符）", ja: "グループ名が短すぎます（2文字以上）",
+  },
+  "Nom de groupe trop long (max 30 caractères)": {
+    en: "Group name too long (max 30 characters)",
+    es: "Nombre de grupo demasiado largo (máx. 30 caracteres)",
+    de: "Gruppenname zu lang (max. 30 Zeichen)",
+    zh: "群组名称太长（最多 30 个字符）", ja: "グループ名が長すぎます（30文字以内）",
+  },
+  "Nom de groupe invalide (lettres, chiffres, espaces uniquement)": {
+    en: "Invalid group name (letters, digits and spaces only)",
+    es: "Nombre de grupo no válido (solo letras, cifras y espacios)",
+    de: "Ungültiger Gruppenname (nur Buchstaben, Zahlen und Leerzeichen)",
+    zh: "群组名称无效（只能用字母、数字和空格）",
+    ja: "グループ名が正しくありません（文字・数字・空白のみ）",
+  },
+  "Trop de groupes": {
+    en: "Too many groups", es: "Demasiados grupos", de: "Zu viele Gruppen",
+    zh: "群组太多了", ja: "グループが多すぎます",
+  },
+  "Le groupe n'a pas pu être créé": {
+    en: "The group could not be created", es: "No se ha podido crear el grupo",
+    de: "Die Gruppe konnte nicht erstellt werden",
+    zh: "群组创建失败", ja: "グループを作成できませんでした",
+  },
+  "Code invalide": {
+    en: "Invalid code", es: "Código no válido", de: "Ungültiger Code",
+    zh: "邀请码无效", ja: "コードが正しくありません",
+  },
+  "Aucun groupe pour ce code": {
+    en: "No group for that code", es: "Ningún grupo con ese código",
+    de: "Keine Gruppe zu diesem Code",
+    zh: "没有对应这个邀请码的群组", ja: "そのコードのグループはありません",
+  },
+  "Groupe introuvable": {
+    en: "Group not found", es: "No se ha encontrado el grupo",
+    de: "Gruppe nicht gefunden",
+    zh: "找不到该群组", ja: "グループが見つかりません",
+  },
 };
 
 /**

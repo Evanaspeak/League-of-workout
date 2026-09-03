@@ -78,6 +78,18 @@ const ATTENDU: Record<string, RegExp> = {
   // s'exempte pas.
   signalements: /signalement de problème/i,
   paiements: /paiements de dette/i,
+  /**
+   * Qui sont vos amis et dans quels groupes vous êtes.
+   *
+   * Trois relations, et pas une exemption : c'est le renseignement le plus
+   * personnel que le social produise. Il ne dit pas seulement quelque chose de
+   * vous, il en dit sur quelqu'un d'autre — et il sort du compte, puisque
+   * c'est tout son objet. La politique dit donc ce qu'une amitié donne à voir,
+   * et qu'elle se retire.
+   */
+  amitiesEnvoyees: /liste d'amis/i,
+  amitiesRecues: /liste d'amis/i,
+  groupes: /groupes rejoints/i,
   // Date de début de la dette courante : elle sert au retard, et elle se
   // décrit avec l'historique des paiements plutôt que séparément.
   detteDepuis: /paiements de dette/i,
