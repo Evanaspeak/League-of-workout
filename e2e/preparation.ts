@@ -46,4 +46,5 @@ export default async function preparer() {
   } finally {
     await client.end().catch(() => {});
   }
+
 }

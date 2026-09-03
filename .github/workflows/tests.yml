@@ -39,21 +39,41 @@ jobs:
 
       - run: npm ci
 
-      # Le client Prisma est généré, pas versionné : sans lui, la compilation
-      # ne trouve pas les types des modèles.
-      - run: npx prisma generate
-
       - name: Types
         run: npx tsc --noEmit
 
       - name: Tests
         run: npx jest --ci
 
+  # Les parcours, découpés sur deux runners.
+  #
+  # Ils tenaient sur un seul, à deux workers, et prenaient dix minutes — 69 %
+  # d'un travail qui en durait quatorze. Quatre workers sur une SEULE machine
+  # ont déjà été essayés et refusés : quatre Chromium, quatre processus de test
+  # et le serveur Next qui hache en bcrypt coût 12 ne tiennent pas sur quatre
+  # cœurs, et les deux parcours morts expiraient sur la CONNEXION, jamais sur
+  # ce qu'ils éprouvaient. Deux runners, en revanche, ce sont deux machines
+  # entières : le processeur double au lieu de se partager.
+  #
+  # Et le dépôt est PUBLIC, donc aucune de ces minutes n'est facturée. Sur un
+  # dépôt privé l'arbitrage serait inverse — on paierait cinq préparations au
+  # lieu de deux pour gagner du temps d'attente.
   parcours:
-    # Les tests de bout en bout ne peuvent pas se passer d'une base ni d'un
-    # navigateur : ils vivent donc dans un travail séparé, pour que l'échec
-    # d'un parcours reste distinguable de l'échec d'un test unitaire.
     runs-on: ubuntu-latest
+    strategy:
+      # Sans quoi un tronçon qui casse annule l'autre, et on perd la moitié de
+      # ce qu'on était venu apprendre.
+      fail-fast: false
+      matrix:
+        troncon: [1, 2]
+    env:
+      DATABASE_URL: postgresql://wow:wow@localhost:5432/wow
+      DIRECT_URL: postgresql://wow:wow@localhost:5432/wow
+      AUTH_SECRET: integration-continue-non-secret-0000000000
+      AUTH_URL: http://127.0.0.1:3311
+      NEXTAUTH_URL: http://127.0.0.1:3311
+      AUTH_TRUST_HOST: "true"
+      E2E_PORT: "3311"
     services:
       postgres:
         image: postgres:16
@@ -67,6 +87,32 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/preparer
+
+      - name: Parcours
+        run: npx playwright test --project=chromium --shard=${{ matrix.troncon }}/2
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: rapport-parcours-${{ matrix.troncon }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  # `bareme-gele` écrit les ratios GLOBAUX dans `SystemConfig`.
+  #
+  # Il vivait dans un projet Playwright qui attendait la fin de tous les
+  # autres : lancé à côté d'eux, il changeait le barème sous leurs pieds et
+  # l'échec tombait n'importe où sauf chez lui. Sur son propre runner il a sa
+  # PROPRE base : la protection devient structurelle au lieu d'être un ordre
+  # d'exécution, et `--no-deps` évite de rejouer les 200 autres parcours pour
+  # satisfaire une dépendance qui ne sert plus ici.
+  bareme:
+    runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://wow:wow@localhost:5432/wow
       DIRECT_URL: postgresql://wow:wow@localhost:5432/wow
@@ -75,66 +121,70 @@ jobs:
       NEXTAUTH_URL: http://127.0.0.1:3311
       AUTH_TRUST_HOST: "true"
       E2E_PORT: "3311"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wow
+          POSTGRES_PASSWORD: wow
+          POSTGRES_DB: wow
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/actions/preparer
 
-      - uses: actions/setup-node@v4
+      - name: Barème gelé
+        run: npx playwright test --project=bareme --no-deps
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
         with:
-          node-version: 22
-          cache: npm
+          name: rapport-bareme
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
-      - run: npm ci
-      - run: npx prisma generate
+  # L'accessibilité se mesure, elle ne se devine pas.
+  #
+  # Elle vivait à la suite des parcours, sur le même runner, et ajoutait ses
+  # deux minutes quarante au chemin critique alors qu'elle ne dépend d'aucun
+  # d'eux : elle ouvre des pages publiques sur un serveur qu'elle démarre
+  # elle-même. Sans jeton de session elle s'en tient à ces pages-là, ce qui
+  # suffit — les écrans connectés partagent les mêmes composants et les mêmes
+  # couleurs.
+  accessibilite:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://wow:wow@localhost:5432/wow
+      DIRECT_URL: postgresql://wow:wow@localhost:5432/wow
+      AUTH_SECRET: integration-continue-non-secret-0000000000
+      AUTH_URL: http://127.0.0.1:3311
+      NEXTAUTH_URL: http://127.0.0.1:3311
+      AUTH_TRUST_HOST: "true"
+      E2E_PORT: "3311"
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wow
+          POSTGRES_PASSWORD: wow
+          POSTGRES_DB: wow
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/preparer
 
-      # La base se monte par les MIGRATIONS, comme en production.
-      #
-      # Elle se montait par un diff du schéma, parce que l'historique n'était
-      # pas rejouable depuis zéro : aucune migration ne créait « User ». Le
-      # raccourci cachait le défaut au lieu de le signaler — les parcours
-      # passaient au vert sur une base qu'aucune reprise après sinistre
-      # n'aurait pu reconstruire. Depuis le socle, `migrate deploy` part d'une
-      # base vide, et c'est ici que ça se vérifie à chaque poussée.
-      - name: Monter la base par les migrations
-        run: npx prisma migrate deploy
-
-      # Et le résultat doit correspondre au schéma, sans quoi les migrations
-      # construisent autre chose que ce que le code attend. Un diff vide est la
-      # seule preuve qui vaille.
-      # Trois issues, et il faut les distinguer : identique, différent, ou le
-      # contrôle lui-même en panne. La première version écrivait
-      # `... --script | grep ... || true` : `--from-url` a été retiré de
-      # Prisma 7, la commande sortait en erreur, grep ne recevait rien, l'écart
-      # était vide et l'étape passait au vert. Un contrôle qui ne sait pas
-      # échouer ne contrôle rien — celui-ci n'a jamais rien vérifié.
-      #
-      # `--exit-code` sépare les trois cas : 0 identique, 2 différent, 1 panne.
-      - name: Vérifier que la base correspond au schéma
-        run: |
-          set -uo pipefail
-          sortie=$(npx prisma migrate diff \
-            --from-config-datasource --to-schema ./prisma/schema.prisma \
-            --script --exit-code 2>&1)
-          code=$?
-          if [ "$code" = "0" ]; then exit 0; fi
-          if [ "$code" = "2" ]; then
-            echo "::error::La base montée par les migrations diffère du schéma."
-          else
-            echo "::error::Le contrôle de schéma n'a pas pu tourner (code $code)."
-          fi
-          echo "$sortie"
-          exit 1
-
-      - run: npm run build
-
-      - name: Installer le navigateur
-        run: npx playwright install --with-deps chromium
-
-      - name: Parcours
-        run: npm run e2e
-
-      # L'accessibilité se mesure, elle ne se devine pas. Sans jeton de session
-      # le script s'en tient aux pages publiques, ce qui suffit : les écrans
-      # connectés partagent les mêmes composants et les mêmes couleurs.
       - name: Accessibilité
         run: |
           npx next start -p 3311 &
@@ -143,12 +193,3 @@ jobs:
             sleep 1
           done
           npm run a11y
-
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: rapport-parcours
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 7
