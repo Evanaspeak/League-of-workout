@@ -69,6 +69,17 @@ export const amis = {
     retardDepuis: (n: number) => (n === 1 ? "en retard depuis 1 jour" : `en retard depuis ${n} jours`),
 
 
+    parrainageTitre: "Ton lien d'invitation",
+    parrainageAide: "Celui qui ouvre ce lien et crée son compte devient ton ami tout de suite. Rien n'est offert en pompes : ce serait un effort que personne n'a fait.",
+    parrainageCopier: "Copier le lien",
+    parrainageCopie: "Copié",
+    parrainageFilleuls: (n: number) =>
+      n === 0 ? "Personne n'est encore venu par ce lien."
+        : n === 1 ? "1 personne est venue par ce lien."
+        : `${n} personnes sont venues par ce lien.`,
+    parrainageIndisponible: "Le lien n'a pas pu être créé. Recharge la page.",
+
+
     chargement: "Chargement…",
     erreur: "La liste n'a pas pu être chargée. Rien n'est perdu : recharge la page.",
     reessayer: "Réessayer",
@@ -134,6 +145,17 @@ export const amis = {
     enTete: "You are leading this week.",
     ecartAuPremier: (n: number) => `You need ${n} more points to take first place.`,
     retardDepuis: (n: number) => (n === 1 ? "1 day late" : `${n} days late`),
+
+
+    parrainageTitre: "Your invite link",
+    parrainageAide: "Whoever opens this link and creates an account becomes your friend straight away. Nothing is handed out in push-ups: that would be effort nobody did.",
+    parrainageCopier: "Copy link",
+    parrainageCopie: "Copied",
+    parrainageFilleuls: (n: number) =>
+      n === 0 ? "Nobody has come through this link yet."
+        : n === 1 ? "1 person came through this link."
+        : `${n} people came through this link.`,
+    parrainageIndisponible: "The link could not be created. Reload the page.",
 
 
     chargement: "Loading…",
@@ -203,6 +225,17 @@ export const amis = {
     retardDepuis: (n: number) => (n === 1 ? "1 día de retraso" : `${n} días de retraso`),
 
 
+    parrainageTitre: "Tu enlace de invitación",
+    parrainageAide: "Quien abra este enlace y cree su cuenta pasa a ser tu amigo de inmediato. No se regala nada en flexiones: sería un esfuerzo que nadie ha hecho.",
+    parrainageCopier: "Copiar enlace",
+    parrainageCopie: "Copiado",
+    parrainageFilleuls: (n: number) =>
+      n === 0 ? "Todavía no ha venido nadie por este enlace."
+        : n === 1 ? "1 persona ha venido por este enlace."
+        : `${n} personas han venido por este enlace.`,
+    parrainageIndisponible: "No se ha podido crear el enlace. Recarga la página.",
+
+
     chargement: "Cargando…",
     erreur: "No se ha podido cargar la lista. No se ha perdido nada: recarga la página.",
     reessayer: "Reintentar",
@@ -268,6 +301,17 @@ export const amis = {
     enTete: "Du führst diese Woche.",
     ecartAuPremier: (n: number) => `Dir fehlen ${n} Punkte bis zum ersten Platz.`,
     retardDepuis: (n: number) => (n === 1 ? "seit 1 Tag im Rückstand" : `seit ${n} Tagen im Rückstand`),
+
+
+    parrainageTitre: "Dein Einladungslink",
+    parrainageAide: "Wer diesen Link öffnet und ein Konto anlegt, wird sofort dein Freund. Es gibt nichts in Liegestützen geschenkt: das wäre Aufwand, den niemand geleistet hat.",
+    parrainageCopier: "Link kopieren",
+    parrainageCopie: "Kopiert",
+    parrainageFilleuls: (n: number) =>
+      n === 0 ? "Über diesen Link ist noch niemand gekommen."
+        : n === 1 ? "1 Person ist über diesen Link gekommen."
+        : `${n} Personen sind über diesen Link gekommen.`,
+    parrainageIndisponible: "Der Link konnte nicht erstellt werden. Lade die Seite neu.",
 
 
     chargement: "Wird geladen…",
@@ -337,6 +381,15 @@ export const amis = {
     retardDepuis: (n: number) => `已拖欠 ${n} 天`,
 
 
+    parrainageTitre: "你的邀请链接",
+    parrainageAide: "打开这个链接并注册的人会立刻成为你的好友。不会赠送任何俯卧撑：那等于凭空多出没人做过的运动量。",
+    parrainageCopier: "复制链接",
+    parrainageCopie: "已复制",
+    parrainageFilleuls: (n: number) =>
+      n === 0 ? "还没有人通过这个链接注册。" : `已有 ${n} 人通过这个链接注册。`,
+    parrainageIndisponible: "链接创建失败，请刷新页面。",
+
+
     chargement: "加载中…",
     erreur: "列表加载失败。什么都没丢：刷新页面即可。",
     reessayer: "重试",
@@ -402,6 +455,15 @@ export const amis = {
     enTete: "今週はあなたが首位です。",
     ecartAuPremier: (n: number) => `1 位まであと ${n} ポイントです。`,
     retardDepuis: (n: number) => `${n} 日滞納中`,
+
+
+    parrainageTitre: "あなたの招待リンク",
+    parrainageAide: "このリンクを開いてアカウントを作った人は、すぐにあなたのフレンドになります。腕立ての数が贈られることはありません。誰もやっていない運動量になってしまうからです。",
+    parrainageCopier: "リンクをコピー",
+    parrainageCopie: "コピーしました",
+    parrainageFilleuls: (n: number) =>
+      n === 0 ? "このリンクから登録した人はまだいません。" : `このリンクから ${n} 人が登録しました。`,
+    parrainageIndisponible: "リンクを作成できませんでした。ページを再読み込みしてください。",
 
 
     chargement: "読み込み中…",

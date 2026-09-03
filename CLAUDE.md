@@ -44,6 +44,14 @@ Quand l'utilisateur annonce qu'il s'absente pour une durée donnée — « je pa
 huit heures », « je reviens demain matin » — cette durée est la durée du
 travail attendu, pas un délai maximal.
 
+**Et il n'a pas besoin d'annoncer une durée.** « Vas-y je te laisse enchaîner,
+je te ferai signe quand je suis de retour », ou n'importe quelle formule qui
+dit la même chose, veut dire : **travailler en continu jusqu'à son retour ou
+jusqu'à épuisement des jetons.** Rendre un bilan puis s'arrêter là n'est pas
+une réponse à cette demande — c'est s'arrêter au premier tour. La fenêtre est
+alors ouverte, donc les reprises s'arment de la même façon, et elles se
+réarment à chaque tour tant que personne n'a repris la main.
+
 Une réponse s'arrête quand elle se termine : il n'y a personne qui continue
 entre deux messages. Il faut donc **armer des reprises** au moment où
 l'absence est annoncée, sans quoi le travail s'arrête à la fin du premier tour.
@@ -55,7 +63,8 @@ Procédure :
 2. Programmer une reprise (`send_later`, ou une boucle programmée) avant de
    rendre la main.
 3. À chaque reprise : prendre le travail suivant, le finir, le publier, puis
-   reprogrammer la suivante.
+   reprogrammer la suivante. **Reprogrammer AVANT de rendre la main**, jamais
+   après : une fois le tour terminé, plus rien ne s'exécute.
 4. Ne rendre le bilan qu'à la fin de la fenêtre annoncée.
 
 Ce qui demande un arbitrage produit ne se décide pas seul : ça part dans les
@@ -143,6 +152,7 @@ src/
       games/preview/route.ts        # POST preview scoring sans sauvegarder
       amis/route.ts                 # GET liste + demandes + groupes, POST demande par pseudo
       classement/route.ts           # GET classement de la semaine entre amis, sur l'effort payé
+      parrainage/route.ts           # GET son lien d'invitation, et combien sont venus par lui
       amis/[id]/route.ts            # PATCH accepter, DELETE refuser/annuler/retirer
       groupes/route.ts              # POST créer un groupe (code tiré)
       groupes/rejoindre/route.ts    # POST rejoindre par code
@@ -165,6 +175,7 @@ src/
     dette.ts          # Ajout et retrait de dette, atomiques
     social.ts         # Les règles du social : demande croisée, code d'invitation, reprise
     classement.ts     # La fenêtre de sept jours, l'ordre, les rangs à égalité
+    parrainage.ts     # Ce qu'on fait d'un code reçu, et pourquoi l'avantage est une amitié
     i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
     i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
     i18n/metadonnees.ts     # Titres et descriptions des pages publiques, six langues
@@ -242,6 +253,11 @@ de texte libre demanderait quelqu'un pour le surveiller.
 - **Retirer un ami et quitter un groupe demandent deux gestes**, comme la
   correction d'un résultat de partie.
 
+- **Un lien de parrainage** vit sur le même écran. Celui qui l'ouvre et crée
+  son compte devient ami tout de suite : rien n'est offert en points d'effort,
+  ce serait une pompe que personne n'a faite. Le code se tire à la première
+  lecture, l'adresse partagée ne porte pas de préfixe de langue, et un code
+  fautif ne fait jamais échouer une inscription.
 - **Le classement de la semaine** vit sur le même écran : sept jours
   glissants, sur l'effort PAYÉ, avec le retard de chacun. Ni les parties
   jouées ni le classement en jeu — perdre beaucoup ne fait pas monter. Les
@@ -525,7 +541,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1819 tests unitaires, 169 suites. Base et session doublées : aucune dépendance à
+1845 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -550,7 +566,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 199 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 201 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -863,6 +879,101 @@ et la règle du propriétaire dit de publier dès qu'une modification touche
 exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
+
+### Le parrainage, et l'avantage qu'on ne pouvait pas donner
+Ligne 119, et c'est le seul canal d'acquisition du plan qui travaille sans
+qu'on s'en occupe. Le retour reçu de Reddit — « ça fait trop IA » — dit assez
+que la page seule ne suffit pas : ce qui amène du monde ici, c'est quelqu'un
+qui invite quelqu'un.
+
+**La question difficile n'était pas le lien, c'était l'avantage.** La réponse
+119 dit « avec un avantage pour les deux », et le produit n'a ni monnaie ni
+palier payant : l'avantage ne peut donc être qu'une chose qui existe déjà.
+Deux candidats ont été écartés, pour la même raison :
+
+- **offrir des points d'effort** — ils sont l'unité de la dette, et un point
+  donné est une pompe que personne n'a faite. Le classement, les paliers et le
+  bilan deviendraient faux d'un coup ;
+- **retirer de la dette** — même chose, à l'envers.
+
+Ce qui reste, et qui ne coûte rien au registre : **les deux comptes deviennent
+amis.** Le filleul arrive avec quelqu'un dans son classement au lieu de la
+phrase « tu es seul ici » — celle-là même que le classement affichait la veille
+— et le parrain gagne la personne qu'il a fait venir. C'est immédiat,
+réciproque, et ça se retire des deux côtés comme n'importe quelle amitié.
+
+Ce n'est pas un ajout non sollicité, et la distinction tient : le filleul a
+cliqué le lien, le parrain l'a publié. Les deux ont consenti à ce que ce lien
+fasse quelque chose. Le plafond de cent amis vaut toujours pour qui collerait
+son lien partout.
+
+**La règle qui gouverne tout le reste : un code fautif ne fait JAMAIS échouer
+l'inscription.** Un lien tronqué par un client de messagerie, recopié de
+travers, ou dont le parrain a supprimé son compte, laisse passer la création du
+compte. Refuser reviendrait à perdre exactement la personne qu'on venait de
+convaincre, en lui disant que c'est SA faute. C'est la décision déjà prise pour
+l'objectif par défaut : une décoration qui manque ne refuse pas un compte.
+
+**Le lien se pose dans la même écriture que le compte**, et pas après :
+`parrainId` est passé au `create`. Posé ensuite, une panne entre les deux
+laisserait un filleul sans parrain — et ça ne se rattrape pas, puisque le lien
+ne se pose qu'à la création. L'amitié, elle, vient après et son échec ne coûte
+que lui-même : le compte existe, le lien est posé, l'amitié se redemande à la
+main. C'est l'ordre déjà choisi pour le paiement de dette, avec le même
+raisonnement.
+
+**Le code réemploie celui des groupes** plutôt que d'en écrire un second :
+même problème — un code se dicte en vocal avant de se taper — donc même
+alphabet sans caractères qui se confondent, et même rejet des octets hors d'un
+multiple de sa taille. L'écrire une deuxième fois aurait été le septième cas de
+règle dupliquée de ce projet.
+
+**Il se tire à la PREMIÈRE LECTURE**, contrairement au jeton de diffusion qui
+attend qu'on le demande. La différence n'est pas un oubli : une adresse
+publique qui montre quelque chose de vous ne doit pas exister par défaut,
+alors qu'un code de parrainage ne révèle rien — il ne permet que de créer un
+compte en devenant votre ami. Le mettre derrière un bouton « engendrer »
+ajouterait un geste entre quelqu'un et la seule chose qu'il vient chercher.
+
+**Cinq collisions d'affilée valent un renoncement**, pas une boucle : sur
+31^8 c'est improbable, et si ça arrive le tirage est cassé plutôt que
+malchanceux. La route rend alors `null` et l'écran dit que le lien n'a pas pu
+être créé — ce qui est vrai — au lieu de tourner. Une panne qui n'est PAS une
+collision se laisse remonter : la masquer en « pas de code » enverrait chercher
+un défaut de tirage là où la base est hors service.
+
+**L'adresse partagée ne porte PAS de préfixe de langue.** `/beta?p=CODE` fait
+négocier la langue à celui qui l'ouvre, plutôt que d'imposer celle de celui qui
+a copié le lien. Quelqu'un qui partage sur un serveur international n'envoie
+pas tout le monde sur une page française.
+
+**Deux gardes ont mordu sur les colonnes ajoutées**, ce qui est leur travail.
+`compte.test.ts` a exigé qu'on range `codeParrain` et `parrainId` d'un côté ou
+de l'autre de ce qui sort du compte : les deux sont refusés, le code parce
+qu'il n'a rien à voyager à chaque chargement de page — c'est la leçon du jeton
+de diffusion — et `parrainId` parce que c'est un renseignement sur QUELQU'UN
+D'AUTRE, qui dirait à qui regarde l'onglet réseau par quel compte celui-ci est
+arrivé. Et `politiqueComplete.test.ts` a exigé une ligne de politique sur les
+quatre champs, dans les six langues.
+
+**`parrainId` a rejoint les colonnes de compte du garde de filtrage** :
+compter ses filleuls, c'est filtrer `User` sur son propre compte, par une
+colonne qui pointe vers lui.
+
+Neuf sabotages unitaires, neuf échecs. Au navigateur, deux tests et deux
+sabotages : le code retiré du corps de la requête, et un code fautif rendu
+bloquant.
+
+**Le premier sabotage n'a pas compilé**, et c'est noté comme tel plutôt que
+compté comme un test qui mord : retirer `parrain` de l'envoi rendait l'état
+inutilisé, et `noUnusedLocals` le nomme. Réécrit pour compiler — la valeur
+part vide — il fait tomber le parcours.
+
+**Ce que le parcours prouve et qu'aucun test unitaire ne peut voir** : que le
+code SURVIT au formulaire. Il entre par l'adresse, traverse un composant qui ne
+l'affiche jamais, et ressort dans le corps d'une requête — trois endroits où il
+peut se perdre sans que rien ne le dise, puisqu'une inscription sans parrain
+réussit exactement comme une inscription avec.
 
 ### V352 vérifiée, et le témoin qu'il a fallu chercher ailleurs
 Le réflexe était de pousser `/api/classement` et de conclure du 307 que la

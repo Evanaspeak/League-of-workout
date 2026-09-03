@@ -24,6 +24,20 @@ import type { LigneClassement } from "@/lib/classement";
  *    attend la réponse, et un refus se dit.
  */
 
+/**
+ * L'adresse d'invitation.
+ *
+ * Elle passe par `/beta` SANS préfixe de langue, et c'est délibéré : le
+ * middleware négocie alors la langue de celui qui l'ouvre, plutôt que
+ * d'imposer celle de celui qui a copié le lien. Quelqu'un qui partage sur un
+ * serveur international ne veut pas envoyer tout le monde sur une page
+ * française.
+ */
+function lienInvitation(code: string): string {
+  const origine = typeof window === "undefined" ? "" : window.location.origin;
+  return `${origine}/beta?p=${code}`;
+}
+
 type Personne = { lien: string; id: string; pseudo: string };
 type Groupe = {
   id: string; nom: string; code: string; membres: number; proprietaire: boolean;
@@ -53,6 +67,7 @@ export function AmisClient() {
    * disparaître les amis parce qu'une somme n'a pas pu se faire.
    */
   const [classement, setClassement] = useState<Classement | null>(null);
+  const [parrainage, setParrainage] = useState<{ code: string | null; filleuls: number } | null>(null);
   const [echecChargement, setEchecChargement] = useState(false);
   /** Le geste en cours, par identifiant : un seul bouton s'éteint à la fois. */
   const [occupe, setOccupe] = useState<string | null>(null);
@@ -102,7 +117,21 @@ export function AmisClient() {
     }
   }, []);
 
-  useEffect(() => { charger(); chargerClassement(); }, [charger, chargerClassement]);
+  const chargerParrainage = useCallback(async () => {
+    try {
+      const res = await fetch("/api/parrainage");
+      if (!res.ok) throw new Error(String(res.status));
+      setParrainage(await res.json());
+    } catch {
+      // Le lien manquant ne coûte que le lien : le reste de l'écran vit sa vie.
+    }
+  }, []);
+
+  useEffect(() => {
+    charger();
+    chargerClassement();
+    chargerParrainage();
+  }, [charger, chargerClassement, chargerParrainage]);
 
   /**
    * Payer sa dette change sa propre ligne, et le compteur qui sert à payer est
@@ -313,6 +342,53 @@ export function AmisClient() {
           ) : classement.ecart !== null && (
             <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>
               {classement.ecart === 0 ? t.enTete : t.ecartAuPremier(classement.ecart)}
+            </p>
+          )}
+        </section>
+      )}
+
+      {/*
+        Le lien d'invitation, sous le classement.
+        L'ordre raconte quelque chose : on voit d'abord ce qu'un classement
+        donne, puis les deux façons de le remplir — inviter quelqu'un du
+        dehors, ou ajouter quelqu'un qui est déjà là.
+      */}
+      {parrainage && (
+        <section className="lol-panel p-5 space-y-3">
+          <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.parrainageTitre}</h2>
+          <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
+            {t.parrainageAide}
+          </p>
+          {parrainage.code ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                {/*
+                  L'adresse se construit dans le navigateur : le serveur ne
+                  connaît pas le domaine sous lequel la page est servie, et une
+                  constante écrite en dur serait fausse en local comme sur un
+                  déploiement de contrôle.
+                */}
+                <code style={{
+                  fontFamily: "ui-monospace, monospace",
+                  overflowWrap: "anywhere", flex: "1 1 12rem", minWidth: 0,
+                }}>
+                  {lienInvitation(parrainage.code)}
+                </code>
+                <button
+                  type="button"
+                  className="lol-btn"
+                  onClick={() => copier(lienInvitation(parrainage.code!))}
+                >
+                  {copie === lienInvitation(parrainage.code) ? t.parrainageCopie : t.parrainageCopier}
+                </button>
+              </div>
+              <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>
+                {t.parrainageFilleuls(parrainage.filleuls)}
+              </p>
+            </>
+          ) : (
+            <p role="alert" style={{ color: "var(--loss)", fontSize: ".85rem" }}>
+              {t.parrainageIndisponible}
             </p>
           )}
         </section>

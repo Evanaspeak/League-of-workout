@@ -66,6 +66,14 @@ const NE_SORT_PAS: Record<string, string> = {
     "Condensat du mot de passe : la seule chose qui protège le compte.",
   jetonObs:
     "Laissez-passer sans session vers la dette en direct. Il se demande par /api/obs.",
+  codeParrain:
+    "Le code de parrainage n'est pas secret, il est fait pour être partagé — " +
+    "mais il n'a rien à voyager à chaque chargement de page. Un seul écran le " +
+    "consomme, et /api/parrainage le lui donne.",
+  parrainId:
+    "Qui m'a invité est un renseignement sur quelqu'un d'AUTRE. Le publier " +
+    "dans la réponse que la navigation lit à chaque page dirait, à qui regarde " +
+    "l'onglet réseau, par quel compte celui-ci est arrivé.",
   sessionEpoch:
     "Compteur de révocation des sessions. Il ne dit rien d'utile à l'écran et " +
     "renseigne un attaquant sur la fraîcheur des jetons qu'il détiendrait.",

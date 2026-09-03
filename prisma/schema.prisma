@@ -79,6 +79,24 @@ model User {
   // diffusion.
   jetonObs String? @unique
 
+  /**
+   * Le parrainage.
+   *
+   * `codeParrain` se tire à la demande, comme `jetonObs` : un compte qui n'a
+   * jamais ouvert l'écran des amis n'en a pas, et une colonne nulle vaut mieux
+   * qu'un code engendré pour tout le monde à l'inscription.
+   *
+   * `parrainId` ne se pose QU'À la création du compte et ne change jamais.
+   * Le rouvrir permettrait de se réattribuer à quelqu'un d'autre après coup,
+   * donc de faire compter une inscription deux fois. `SetNull` plutôt que
+   * `Cascade` : si le parrain s'en va, le filleul reste — son compte n'a rien
+   * à voir avec celui qui l'a invité.
+   */
+  codeParrain String? @unique
+  parrainId   String?
+  parrain     User?   @relation("Parrainage", fields: [parrainId], references: [id], onDelete: SetNull)
+  filleuls    User[]  @relation("Parrainage")
+
   // Exercices mis de côté, blessure ou gêne. Ils sortent d'`exercices` — la
   // liste active, que tout le reste de l'application lit déjà — et attendent
   // ici qu'on les reprenne. Les garder à part évite de toucher aux six

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Lien } from "@/components/Lien";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -61,6 +61,25 @@ export default function BetaPage() {
   const [code, setCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  /**
+   * Le code de parrainage, lu dans l'adresse.
+   *
+   * `useSearchParams` obligerait à envelopper la page dans un `Suspense` —
+   * elle est rendue au client, mais la lecture des paramètres force un rendu
+   * dynamique. `window.location` au montage suffit : le code ne sert qu'à
+   * l'envoi, pas à l'affichage, donc rien ne dépend de sa présence au premier
+   * peinturage. Et il ne s'affiche nulle part : quelqu'un qui arrive par un
+   * lien n'a pas à savoir qu'il porte un code, ni à pouvoir le modifier.
+   */
+  const [parrain, setParrain] = useState("");
+  useEffect(() => {
+    try {
+      setParrain(new URLSearchParams(window.location.search).get("p") ?? "");
+    } catch {
+      // Une adresse illisible ne coûte que le parrainage, jamais l'inscription.
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -69,7 +88,7 @@ export default function BetaPage() {
       const res = await fetch("/api/beta-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek }),
+        body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek, parrain }),
       });
       const data = await res.json();
       if (!res.ok) { setError(translateApiError(data.error, locale) || t.genericError); return; }

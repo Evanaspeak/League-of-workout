@@ -269,3 +269,73 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
 
   await ctxA.close();
 });
+
+/**
+ * Le parrainage, de bout en bout.
+ *
+ * Ce que les tests unitaires ne peuvent pas voir : que le code SURVIT au
+ * formulaire d'inscription. Il entre par l'adresse, traverse un composant qui
+ * ne l'affiche jamais, et ressort dans le corps d'une requête — trois endroits
+ * où il peut se perdre sans que rien ne le dise, puisqu'une inscription sans
+ * parrain réussit exactement comme une inscription avec.
+ */
+const LIEN_PARRAIN = `
+  SELECT f.pseudo AS filleul, p.pseudo AS parrain
+  FROM "User" f JOIN "User" p ON p.id = f."parrainId"
+  WHERE f.pseudo = $1`;
+
+test("un lien de parrainage rend les deux comptes amis", async ({ browser }) => {
+  const parrain = await ouvrirCompte(browser, "Parrain");
+
+  const { ctx: ctxP, page: pageP } = await ouvrirEcranAmis(browser, parrain.etat);
+  const lien = pageP.getByRole("heading", { name: /ton lien|your invite/i });
+  await expect(lien).toBeVisible();
+  const adresse = await pageP.locator("code").first().innerText();
+  const code = adresse.trim().split("p=")[1];
+  expect(code).toHaveLength(8);
+  await expect(pageP.getByText(/personne n'est encore venu|nobody has come/i)).toBeVisible();
+  await ctxP.close();
+
+  // Quelqu'un ouvre le lien et crée son compte.
+  const filleul = await ouvrirCompte(browser, "Filleul", { parrain: code });
+
+  // La base a gardé le lien, dans le bon sens.
+  const [enBase] = await requeteSql<{ filleul: string; parrain: string }>(
+    LIEN_PARRAIN, [filleul.compte.pseudo]);
+  expect(enBase?.parrain).toBe(parrain.compte.pseudo);
+
+  // Et les deux sont amis sans avoir eu à se demander quoi que ce soit.
+  const [amitie] = await requeteSql<{ etat: string }>(
+    LIEN, [parrain.compte.pseudo, filleul.compte.pseudo]);
+  expect(amitie?.etat).toBe("acceptee");
+
+  // L'écran du filleul le montre : son classement n'est pas vide au jour un.
+  const { ctx: ctxF, page: pageF } = await ouvrirEcranAmis(browser, filleul.etat);
+  await expect(pageF.getByRole("table")).toContainText(parrain.compte.pseudo);
+  await ctxF.close();
+
+  // Et le parrain compte une inscription.
+  const { ctx: ctxP2, page: pageP2 } = await ouvrirEcranAmis(browser, parrain.etat);
+  await expect(pageP2.getByText(/1 personne est venue|1 person came/i)).toBeVisible();
+  await ctxP2.close();
+});
+
+/**
+ * Et le cas qui ne doit RIEN casser : un lien tronqué.
+ *
+ * C'est le seul chemin d'acquisition du produit. Un code fautif qui refuserait
+ * l'inscription ferait perdre exactement la personne qu'on venait de
+ * convaincre, en lui disant que c'est sa faute.
+ */
+test("un lien de parrainage cassé n'empêche pas de créer un compte", async ({ browser }) => {
+  const filleul = await ouvrirCompte(browser, "Casse", { parrain: "PAS-UN-CODE" });
+
+  const [enBase] = await requeteSql<{ parrainId: string | null }>(
+    'SELECT "parrainId" FROM "User" WHERE pseudo = $1', [filleul.compte.pseudo]);
+  expect(enBase?.parrainId).toBeNull();
+
+  // Le compte existe et s'ouvre : c'est tout ce qui compte ici.
+  const { ctx, page } = await ouvrirEcranAmis(browser, filleul.etat);
+  await expect(page.getByRole("heading", { name: /tes amis|your friends/i })).toBeVisible();
+  await ctx.close();
+});
