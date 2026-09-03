@@ -1,15 +1,14 @@
 import { requete, requeteCassee, corps, utilisateur } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => {
-  const game = { findMany: jest.fn(), update: jest.fn() };
-  return {
-    prisma: {
-      game,
-      // Les mises à jour partent ensemble : la moitié appliquée serait pire
-      // que rien, puisqu'on ne saurait plus laquelle.
-      $transaction: jest.fn(async (travaux: unknown[]) => travaux),
-    },
+  // Les dates se posent une par une : le pilote HTTP de Neon refuse les
+  // transactions, et c'est celui de la production. Une doublure qui en
+  // porterait une ferait passer un code que la production rejette.
+  const game = {
+    findMany: jest.fn(),
+    updateMany: jest.fn(async () => ({ count: 1 })),
   };
+  return { prisma: { game } };
 });
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
@@ -29,7 +28,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   session.mockResolvedValue(utilisateur({ id: "u1" }));
   game.findMany.mockResolvedValue([{ id: "g1", date: LE_15 }, { id: "g2", date: new Date("2026-08-15T22:30:00Z") }]);
-  game.update.mockImplementation((a: unknown) => a);
+  // La route additionne les `count` : c'est ce qu'elle rend en compte rendu.
+  game.updateMany.mockResolvedValue({ count: 1 });
 });
 
 describe("accès", () => {
@@ -52,7 +52,7 @@ describe("décalage", () => {
     // C'est tout l'intérêt : une soirée datée du lendemain se recale d'un
     // bloc, sans écraser l'ordre ni les heures relatives.
     await corriger({ ids: ["g1", "g2"], decalageMinutes: -24 * 60 });
-    const dates = game.update.mock.calls.map((c) => c[0].data.date.toISOString());
+    const dates = game.updateMany.mock.calls.map((c) => c[0].data.date.toISOString());
     expect(dates[0]).toBe("2026-08-14T21:00:00.000Z");
     expect(dates[1]).toBe("2026-08-14T22:30:00.000Z");
   });
@@ -61,14 +61,14 @@ describe("décalage", () => {
     for (const decalageMinutes of [0, 400 * 24 * 60, -400 * 24 * 60, "hier", NaN]) {
       expect((await corriger({ ids: ["g1"], decalageMinutes })).status).toBe(400);
     }
-    expect(game.update).not.toHaveBeenCalled();
+    expect(game.updateMany).not.toHaveBeenCalled();
   });
 });
 
 describe("date commune", () => {
   it("pose toutes les parties au même instant", async () => {
     await corriger({ ids: ["g1", "g2"], date: "2026-08-10T18:00:00.000Z" });
-    const dates = game.update.mock.calls.map((c) => c[0].data.date.toISOString());
+    const dates = game.updateMany.mock.calls.map((c) => c[0].data.date.toISOString());
     expect(new Set(dates).size).toBe(1);
     expect(dates[0]).toBe("2026-08-10T18:00:00.000Z");
   });
@@ -94,7 +94,7 @@ describe("ce qui est refusé", () => {
     for (const ids of [[], [42], ["g1", null], new Array(201).fill("g")]) {
       expect((await corriger({ ids, decalageMinutes: -60 })).status).toBe(400);
     }
-    expect(game.update).not.toHaveBeenCalled();
+    expect(game.updateMany).not.toHaveBeenCalled();
   });
 
   it("un corps illisible", async () => {
@@ -104,7 +104,7 @@ describe("ce qui est refusé", () => {
   it("une sélection qui ne correspond à rien du compte", async () => {
     game.findMany.mockResolvedValue([]);
     expect((await corriger({ ids: ["ailleurs"], decalageMinutes: -60 })).status).toBe(400);
-    expect(game.update).not.toHaveBeenCalled();
+    expect(game.updateMany).not.toHaveBeenCalled();
   });
 });
 

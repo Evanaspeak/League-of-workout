@@ -445,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1689 tests unitaires, 159 suites. Base et session doublées : aucune dépendance à
+1693 tests unitaires, 160 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -743,6 +743,68 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Aucun paiement n'a jamais abouti en production, et 1689 tests passaient
+Le message posé la veille sur la pastille a donné la réponse en un mot : « Le
+serveur refuse pour l'instant ». Pas de réseau coupé, pas de session expirée —
+un 5xx sur `PATCH /api/dette`, à chaque fois, depuis toujours.
+
+**La production ne supporte pas les transactions.** `src/lib/prisma.ts` choisit
+son adaptateur d'après l'hôte : `PrismaPg` en TCP quand la base est locale,
+`PrismaNeonHttp` sinon. Et l'adaptateur HTTP rejette explicitement :
+
+```js
+async startTransaction() {
+  return Promise.reject(new Error("Transactions are not supported in HTTP mode"));
+}
+```
+
+`PATCH /api/dette` ouvrait une transaction interactive. C'est le paiement
+d'une séance, c'est-à-dire **la fonction principale du produit**. Elle
+échouait à chaque appel en ligne ; la file hors ligne retenait la séance,
+comme prévu ; et le seul symptôme visible était « six séances faites hors
+réseau, en attente » sur une machine parfaitement connectée.
+
+**C'est la divergence d'environnement la plus coûteuse qui soit** : celle que
+rien ne peut voir depuis la machine où l'on développe. 1689 tests unitaires et
+188 parcours navigateur passaient au vert, tous contre une base TCP. Le
+commentaire de `prisma.ts` décrit d'ailleurs très bien pourquoi l'adaptateur
+diffère en local — et personne n'en avait tiré la conséquence sur ce que le
+pilote de production sait faire.
+
+**Ce qui remplace la transaction, et pourquoi cet ordre-là.** Il n'y a plus
+rien pour rattraper une écriture qui passe et l'autre pas :
+
+- la TRACE d'abord (`Paiement`), le décompte ensuite. Une panne entre les deux
+  laisse l'effort enregistré et la dette due : on la refait, c'est désagréable
+  et rattrapable ;
+- l'inverse effacerait une dette sans trace, et le renvoi la décompterait une
+  seconde fois. Une dette qu'on ne doit plus sans savoir pourquoi ne se
+  rattrape pas.
+
+Le jeton d'unicité rend le renvoi sûr : `P2002` dit que cette séance-ci est
+déjà enregistrée, donc qu'il ne faut surtout pas décompter à nouveau. Un test
+tient l'ordre par `invocationCallOrder`, un autre tient le court-circuit.
+
+Le second appel, `PATCH /api/games/dates`, passait par la forme tableau —
+refusée de la même façon. Les dates se posent une par une, et le compte rendu
+dit ce qui a RÉELLEMENT bougé : annoncer soixante corrections quand douze ont
+abouti serait pire que d'échouer franchement.
+
+`src/transactionsInterdites.test.ts` refuse `$transaction` partout dans `src`,
+avec le témoin habituel. Sans exemption : il n'y a pas de cas où ça marche.
+
+Trois sabotages, trois échecs. Et le garde du filtrage par compte a mordu au
+passage, ce qui est exactement son travail : la boucle écrivait par `update`
+avec le seul identifiant, quand la lecture au-dessus filtrait déjà par compte.
+`updateMany` remet le compte dans le `where` — une écriture qui porte
+elle-même son filtre vaut mieux qu'une écriture qui compte sur celle d'avant.
+
+**Ce que ça apprend au-delà du cas.** Un test qui tourne contre une base d'un
+autre type que la production n'éprouve pas la production. Ça ne se corrige pas
+en changeant de base de test — ce serait payer très cher — mais en sachant ce
+que le pilote de production ne sait pas faire, et en l'interdisant par un
+garde. La liste est courte : les transactions.
 
 ### La même durée était calculée à quatre endroits, et les quatre divergeaient
 Signalé après la correction du cache : la pastille passait en ALERTE à

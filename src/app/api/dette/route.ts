@@ -107,43 +107,57 @@ export async function PATCH(req: Request) {
     if (deja?.userId === user.id) return NextResponse.json(reponseDette(user));
   }
 
-  let maj;
-  try {
-    maj = await prisma.$transaction(async (tx) => {
-      if (paye > 0) {
-        await tx.paiement.create({ data: { userId: user.id, points: paye, jour, jeton } });
+  /**
+   * Deux écritures, sans transaction, et dans cet ordre-là.
+   *
+   * **Le pilote HTTP de Neon refuse les transactions**, et c'est celui de la
+   * production : `PrismaNeonHttp.startTransaction()` rejette avec
+   * « Transactions are not supported in HTTP mode ». La base locale, elle,
+   * passe par `PrismaPg` en TCP, où tout fonctionne — donc les 1689 tests
+   * unitaires et les 188 parcours navigateur passaient tous pendant qu'AUCUN
+   * paiement n'aboutissait en ligne. La file hors ligne se remplissait, et son
+   * seul symptôme était « des séances faites hors réseau » sur une machine
+   * parfaitement connectée.
+   *
+   * L'ordre n'est pas indifférent, parce qu'il n'y a plus rien pour rattraper
+   * une écriture qui passe et l'autre pas :
+   *
+   * - la TRACE d'abord. Si le décompte échoue derrière, l'effort est
+   *   enregistré et la dette reste due : la personne la refait, ce qui est
+   *   désagréable et rattrapable.
+   * - l'inverse — décompter puis échouer à tracer — laisserait une dette
+   *   effacée sans trace, et le renvoi la décompterait une seconde fois. Une
+   *   dette qu'on ne doit plus sans savoir pourquoi ne se rattrape pas.
+   *
+   * Le jeton rend le renvoi sûr : `P2002` dit que cette séance-ci est déjà
+   * enregistrée, donc qu'il ne faut surtout pas décompter à nouveau.
+   */
+  if (paye > 0) {
+    try {
+      await prisma.paiement.create({ data: { userId: user.id, points: paye, jour, jeton } });
+    } catch (e) {
+      if (jeton && (e as { code?: string })?.code === "P2002") {
+        // Déjà enregistrée : la dette a déjà été décomptée pour cette
+        // séance-là, ou le sera par le renvoi qui a gagné la course. On rend
+        // la dette FRAÎCHE — celle portée par `user` date du début de la
+        // requête, donc d'avant le paiement jumeau.
+        const frais = await prisma.user.findUniqueOrThrow({
+          where: { id: user.id },
+          select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+        });
+        return NextResponse.json(reponseDette(frais));
       }
-      // Le retrait est atomique : lire puis écrire une valeur absolue perdait
-      // une partie enregistrée entre les deux. Voir `src/lib/dette.ts`.
-      //
-      // Cela vaut aussi pour « j'ai tout fait » : on paie tout ce qu'on avait
-      // sous les yeux, pas tout ce qui existe au moment où la requête arrive.
-      await retirerDeLaDette(tx, user.id, paye);
-
-      return tx.user.findUniqueOrThrow({
-        where: { id: user.id },
-        select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
-      });
-    });
-  } catch (e) {
-    // Deux renvois partis en même temps passent tous les deux le contrôle
-    // ci-dessus : c'est l'unicité en base qui tranche, et le perdant a déjà
-    // obtenu ce qu'il demandait. Une erreur ici ferait réessayer la file
-    // indéfiniment sur un paiement pourtant enregistré.
-    if (jeton && (e as { code?: string })?.code === "P2002") {
-      // La dette se relit : celle portée par `user` date du début de la
-      // requête, donc d'AVANT le paiement jumeau qui vient de passer. La
-      // rendre telle quelle annoncerait à l'écran une dette qu'on vient de
-      // solder, c'est-à-dire exactement ce que la file hors ligne existe pour
-      // éviter — la personne refait sa séance.
-      const frais = await prisma.user.findUniqueOrThrow({
-        where: { id: user.id },
-        select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
-      });
-      return NextResponse.json(reponseDette(frais));
+      throw e;
     }
-    throw e;
   }
+
+  // Le retrait reste atomique en lui-même : `decrement` côté base, pour qu'une
+  // partie enregistrée pendant le paiement ne se fasse pas écraser.
+  await retirerDeLaDette(prisma, user.id, paye);
+  const maj = await prisma.user.findUniqueOrThrow({
+    where: { id: user.id },
+    select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
+  });
   return NextResponse.json(reponseDette(maj));
 }
 

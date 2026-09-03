@@ -318,7 +318,7 @@ describe("le jeton d'un paiement rejoué", () => {
     // Deux envois partis en même temps passent tous deux le contrôle de
     // lecture : c'est l'unicité en base qui tranche. Une erreur ici ferait
     // réessayer la file indéfiniment sur un paiement pourtant enregistré.
-    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+    paiement.create.mockRejectedValueOnce(
       Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
     const r = await payer({ secondes: 60, jeton: "en-double" });
     expect(r.status).toBe(200);
@@ -329,7 +329,7 @@ describe("le jeton d'un paiement rejoué", () => {
     // a soldé entre-temps. La rendre telle quelle annoncerait à l'écran une
     // dette qu'on vient de payer, c'est-à-dire exactement ce que la file hors
     // ligne existe pour éviter.
-    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(
+    paiement.create.mockRejectedValueOnce(
       Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
     user.findUniqueOrThrow.mockResolvedValueOnce({
       dettePointsDus: 0, rappelSeuilSec: 300, exercices: ["boxe"],
@@ -339,8 +339,36 @@ describe("le jeton d'un paiement rejoué", () => {
   });
 
   it("ne masque pas une vraie panne de base", async () => {
-    (prisma.$transaction as jest.Mock).mockRejectedValueOnce(new Error("base injoignable"));
+    paiement.create.mockRejectedValueOnce(new Error("base injoignable"));
     await expect(payer({ secondes: 60, jeton: "x" })).rejects.toThrow("base injoignable");
+  });
+
+  /**
+   * L'ordre des deux écritures, maintenant qu'il n'y a plus de transaction.
+   *
+   * Le pilote HTTP de Neon les refuse — voir `transactionsInterdites`. Il n'y
+   * a donc plus rien pour rattraper une écriture qui passe et l'autre pas, et
+   * l'ordre décide de ce qu'on perd :
+   *
+   * - la trace d'abord, le décompte ensuite : la dette reste due, la personne
+   *   la refait. Désagréable, rattrapable ;
+   * - l'inverse effacerait une dette sans trace, et le renvoi la décompterait
+   *   une seconde fois. Ça ne se rattrape pas.
+   */
+  it("enregistre la trace AVANT de décompter", async () => {
+    await payer({ secondes: 60 });
+    const traceLe = paiement.create.mock.invocationCallOrder[0];
+    const decompteLe = user.update.mock.invocationCallOrder[0];
+    expect(traceLe).toBeLessThan(decompteLe);
+  });
+
+  it("ne décompte pas une séance déjà enregistrée", async () => {
+    // Le renvoi d'une séance dont la trace existe déjà ne doit surtout pas
+    // retirer les points une seconde fois : c'est le seul rôle du jeton.
+    paiement.create.mockRejectedValueOnce(
+      Object.assign(new Error("Unique constraint failed"), { code: "P2002" }));
+    await payer({ secondes: 60, jeton: "deja-fait" });
+    expect(user.update).not.toHaveBeenCalled();
   });
 
   it("tronque un jeton démesuré plutôt que de l'écrire tel quel", async () => {
