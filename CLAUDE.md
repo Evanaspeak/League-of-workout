@@ -864,6 +864,25 @@ exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
 
+### V352 vérifiée, et le témoin qu'il a fallu chercher ailleurs
+Le réflexe était de pousser `/api/classement` et de conclure du 307 que la
+route existe. **Il ne prouve rien** : `/api/inventee` rend exactement le même
+307 vers la connexion, puisque le middleware traite toute adresse d'API non
+publique comme protégée. Un code de réponse identique pour « existe et est
+gardée » et pour « n'existe pas » ne distingue rien — c'est la famille du
+défaut déjà corrigé sur les PAGES, où une adresse inventée partait vers la
+connexion au lieu de rendre 404.
+
+Le témoin est ailleurs, et il est public : la politique de confidentialité
+sert « en retard sur une dette », phrase qui n'existe que depuis V352. C'est
+une page statique, lisible sans session, et elle porte la preuve du
+déploiement.
+
+`/fr/amis` rend 307 vers `/fr/login`, `/fr/nimportequoi` rend 404. La
+construction de l'application a publié `desktop-v0.9.11` avec son installeur
+de 120 Mo et son `latest.yml` : quarante-neuf exécutions, une seule en échec,
+remontant à V185.
+
 ### Le classement, et le garde qui ne mordait pas sur un `groupBy`
 Lignes 115 et 116 du plan. La 115 dit sur QUOI classer, et c'est la seule
 décision qui compte : **sur l'effort payé, jamais sur les parties jouées.**
