@@ -18,7 +18,20 @@ export async function dernierInstalleur(): Promise<Installeur | null> {
   try {
     const res = await fetch(`https://api.github.com/repos/${DEPOT}/releases/latest`, {
       headers: { Accept: "application/vnd.github+json" },
-      next: { revalidate: 3600 },
+      /**
+       * Cinq minutes, et pas une heure.
+       *
+       * La release ne change qu'à une publication — mais depuis qu'on publie
+       * l'application dès qu'elle est modifiée, une heure de retard veut dire
+       * une heure pendant laquelle le bouton offre l'installeur PRÉCÉDENT. Ce
+       * n'est pas dramatique, les copies installées se mettant à jour toutes
+       * seules par `latest.yml` ; ça l'est pour qui installe pour la première
+       * fois dans cette fenêtre-là.
+       *
+       * Douze appels à l'API GitHub par heure au pire : très loin de la limite
+       * de soixante par heure et par adresse, et la page reste statique.
+       */
+      next: { revalidate: 300 },
     });
     if (!res.ok) return null;
     const release = await res.json();
