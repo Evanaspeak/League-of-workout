@@ -51,6 +51,8 @@ const PART_AU_NAVIGATEUR = new Set([
   "detteDepuis", "dettePointsDus",
   // Le mode fantôme est un réglage : l'écran des réglages le lit et l'écrit.
   "fantome",
+  // Ce qu'un ami a le droit de voir : même chose, c'est un réglage.
+  "partageAmis",
   "exercicesSuspendus", "suspensionDepuis",
   "langue", "bilanActif", "bilanLe", "relanceLe", "rappelLe", "fuseau",
   "variantePompes", "exercice", "exercices",

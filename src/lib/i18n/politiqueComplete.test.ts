@@ -110,6 +110,12 @@ const ATTENDU: Record<string, RegExp> = {
    */
   fantome: /mode fantôme|ghost mode|modo fantasma|geistmodus|隐身模式|ゴーストモード/i,
   /**
+   * Ce qu'un ami a le droit de voir. Décrit et non exempté, pour la même
+   * raison que le mode fantôme : c'est un contrôle de confidentialité, et la
+   * politique est l'endroit où l'on cherche à savoir s'il existe.
+   */
+  partageAmis: /réglage de partage|sharing setting|ajuste de compartición|freigabe-einstellung|分享设置|共有設定/i,
+  /**
    * Le parrainage. Quatre champs, une seule ligne de politique : qui vous a
    * invité et qui vous avez invité sont la même relation lue des deux bouts,
    * et la décrire deux fois ferait croire à deux traitements distincts.

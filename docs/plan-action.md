@@ -110,7 +110,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 026 | Une courte vidéo de forme par exercice | 1 nuit + tournage |
 
 ### Le social
-*7 à faire · 6 faits.* Tu as dit oui à absolument tout. Les amis, les groupes, le classement de la semaine, le lien de parrainage et le mode fantôme existent ; le reste attend.
+*6 à faire · 7 faits.* Tu as dit oui à absolument tout. Les amis, les groupes, le classement de la semaine, le lien de parrainage, le mode fantôme et le profil d'un ami existent ; le reste attend.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -121,7 +121,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 118 | Une équipe de cinq avec une dette commune | 2 nuits |
 | [ ] | 142 | La dette de groupe quand on joue à cinq ensemble | 1 nuit |
 | [x] | 119 | Un lien de parrainage, avantage pour les deux | 1 nuit |
-| [ ] | 120 | Voir les statistiques d'un ami selon ce qu'il autorise | 1 nuit |
+| [x] | 120 | Voir les statistiques d'un ami selon ce qu'il autorise | 1 nuit |
 | [ ] | 121 | Un profil public à adresse partageable, au choix | 1 nuit |
 | [x] | 129 | Un mode fantôme : participer sans apparaître | ½ nuit |
 | [ ] | 122 | Une image de partage après une grosse séance | 1 nuit |

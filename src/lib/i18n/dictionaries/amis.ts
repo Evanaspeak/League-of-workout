@@ -8,6 +8,13 @@
  */
 export const amis = {
   fr: {
+    voirProfil: "Voir",
+    profilFerme: "Cette personne ne partage que son total.",
+    profilParties: (n: number) => (n === 1 ? "1 partie" : `${n} parties`),
+    profilSerie: (n: number) => (n === 1 ? "série de 1 jour" : `série de ${n} jours`),
+    profilMeilleure: (n: number) => `meilleure série : ${n}`,
+    profilJeu: "jeu le plus joué",
+    profilErreur: "Le profil n'a pas pu être chargé.",
     titre: "Tes amis",
     sousTitre: "Ajoute quelqu'un dont tu connais le pseudo. Il n'y a pas d'annuaire : rien ne se cherche, et personne ne te trouve tout seul.",
 
@@ -86,6 +93,13 @@ export const amis = {
     erreurAction: "Le serveur a refusé. Rien n'a changé.",
   },
   en: {
+    voirProfil: "View",
+    profilFerme: "This person only shares their total.",
+    profilParties: (n: number) => (n === 1 ? "1 game" : `${n} games`),
+    profilSerie: (n: number) => (n === 1 ? "1 day streak" : `${n} day streak`),
+    profilMeilleure: (n: number) => `best streak: ${n}`,
+    profilJeu: "most played game",
+    profilErreur: "The profile could not be loaded.",
     titre: "Your friends",
     sousTitre: "Add someone whose display name you already know. There is no directory: nothing is searchable, and nobody finds you on their own.",
 
@@ -164,6 +178,13 @@ export const amis = {
     erreurAction: "The server refused. Nothing changed.",
   },
   es: {
+    voirProfil: "Ver",
+    profilFerme: "Esta persona solo comparte su total.",
+    profilParties: (n: number) => (n === 1 ? "1 partida" : `${n} partidas`),
+    profilSerie: (n: number) => (n === 1 ? "racha de 1 día" : `racha de ${n} días`),
+    profilMeilleure: (n: number) => `mejor racha: ${n}`,
+    profilJeu: "juego más jugado",
+    profilErreur: "No se ha podido cargar el perfil.",
     titre: "Tus amigos",
     sousTitre: "Añade a alguien cuyo apodo ya conozcas. No hay directorio: nada se puede buscar, y nadie te encuentra por su cuenta.",
 
@@ -242,6 +263,13 @@ export const amis = {
     erreurAction: "El servidor lo ha rechazado. Nada ha cambiado.",
   },
   de: {
+    voirProfil: "Ansehen",
+    profilFerme: "Diese Person teilt nur ihre Summe.",
+    profilParties: (n: number) => (n === 1 ? "1 Partie" : `${n} Partien`),
+    profilSerie: (n: number) => (n === 1 ? "Serie von 1 Tag" : `Serie von ${n} Tagen`),
+    profilMeilleure: (n: number) => `beste Serie: ${n}`,
+    profilJeu: "meistgespieltes Spiel",
+    profilErreur: "Das Profil konnte nicht geladen werden.",
     titre: "Deine Freunde",
     sousTitre: "Füge jemanden hinzu, dessen Anzeigenamen du schon kennst. Es gibt kein Verzeichnis: nichts lässt sich durchsuchen, und niemand findet dich von allein.",
 
@@ -320,6 +348,13 @@ export const amis = {
     erreurAction: "Der Server hat abgelehnt. Nichts hat sich geändert.",
   },
   zh: {
+    voirProfil: "查看",
+    profilFerme: "这位玩家只分享总量。",
+    profilParties: (n: number) => `${n} 局`,
+    profilSerie: (n: number) => `连续 ${n} 天`,
+    profilMeilleure: (n: number) => `最长连续：${n} 天`,
+    profilJeu: "最常玩的游戏",
+    profilErreur: "无法加载该资料。",
     titre: "你的好友",
     sousTitre: "添加你已经知道昵称的人。这里没有名录：什么都搜不到，也没人能自己找到你。",
 
@@ -396,6 +431,13 @@ export const amis = {
     erreurAction: "服务器拒绝了。什么都没有改变。",
   },
   ja: {
+    voirProfil: "見る",
+    profilFerme: "この人は合計のみを共有しています。",
+    profilParties: (n: number) => `${n} 試合`,
+    profilSerie: (n: number) => `${n} 日連続`,
+    profilMeilleure: (n: number) => `最長 ${n} 日`,
+    profilJeu: "最もよく遊ぶゲーム",
+    profilErreur: "プロフィールを読み込めませんでした。",
     titre: "フレンド",
     sousTitre: "名前を知っている相手を追加します。名簿はありません。検索はできず、誰かが勝手にあなたを見つけることもありません。",
 

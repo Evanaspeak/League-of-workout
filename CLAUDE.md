@@ -271,6 +271,7 @@ src/
     social.ts         # Les règles du social : demande croisée, code d'invitation, reprise
     classement.ts     # La fenêtre de sept jours, l'ordre, les rangs à égalité
     sansEnjeu.ts      # Le souvenir d'une partie refusée, entre les deux composants
+    profilAmi.ts      # Ce qu'un ami a le droit de voir, et qui en décide
     parrainage.ts     # Ce qu'on fait d'un code reçu, et pourquoi l'avantage est une amitié
     i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
     i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
@@ -354,6 +355,10 @@ de texte libre demanderait quelqu'un pour le surveiller.
   ce serait une pompe que personne n'a faite. Le code se tire à la première
   lecture, l'adresse partagée ne porte pas de préfixe de langue, et un code
   fautif ne fait jamais échouer une inscription.
+- **Le profil d'un ami** s'ouvre depuis la liste, et montre ce que la personne
+  autorise : son total d'effort et son retard toujours, sa série, son nombre de
+  parties et son jeu le plus joué si elle l'a choisi. Le défaut est le plus
+  fermé, et le filtre est en base.
 - **Le mode fantôme**, dans les réglages, retire entièrement sa ligne des
   classements de ses amis — pseudo, effort et retard compris. On continue de
   voir le sien, soi-même compris. Le filtre est en base : écarter la ligne à
@@ -641,7 +646,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1879 tests unitaires, 173 suites. Base et session doublées : aucune dépendance à
+1904 tests unitaires, 176 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -979,6 +984,45 @@ et la règle du propriétaire dit de publier dès qu'une modification touche
 exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
+
+### Le profil d'un ami, et qui décide de ce qu'on y voit
+Ligne 120. La réponse est « ce qu'il autorise » : la décision appartient donc à
+celui qu'on REGARDE, jamais à celui qui regarde.
+
+**Deux niveaux, pas trois.** La question opposait le détail au total ; ajouter
+un « rien du tout » aurait été inventer une réponse qu'on n'a pas. Qui ne veut
+rien montrer retire l'ami, et ce geste existe déjà.
+
+**Le défaut est le plus FERMÉ.** Quelqu'un qui n'ouvre jamais ses réglages ne
+doit pas se mettre à partager davantage parce qu'on a ajouté une
+fonctionnalité. C'est l'inverse de la règle du confort, et c'est la bonne pour
+tout ce qui sort du compte.
+
+**Le filtre est à la LECTURE**, comme pour le mode fantôme : au total, les
+champs du détail ne sont pas dans la réponse, même pas vides. Filtrer à
+l'affichage les ferait sortir de la base et traverser le réseau, donc figurer
+dans l'onglet réseau de qui les demande — exactement là où on a choisi qu'ils
+ne soient pas.
+
+**Une amitié EN ATTENTE ne donne aucun droit**, sinon demander suffirait à
+regarder et personne n'aurait à accepter. Et l'absence d'amitié rend 404, pas
+403 : distinguer « pas votre ami » de « n'existe pas » apprendrait, identifiant
+par identifiant, quels comptes existent. C'est la règle déjà posée pour le
+groupe plein, qui répond comme un code inconnu.
+
+**Une valeur non prévue est REFUSÉE côté écriture**, jamais ramenée au défaut.
+Le défaut étant le plus fermé, une conversion silencieuse serait sûre — mais
+elle enregistrerait « total » pour quelqu'un qui vient de demander « détail »,
+et il croirait avoir ouvert quand il a fermé. Un réglage qu'on ne vérifie
+jamais doit dire quand il n'a pas pris.
+
+**Indépendant du mode fantôme**, qui ne parle que des CLASSEMENTS. Les deux se
+combinent : visible au classement et fermé sur le détail, ou l'inverse.
+
+Sept sabotages. Le dernier est passé au vert, et c'était encore un trou de mes
+tests : je n'avais écrit aucun contrôle sur le REFUS d'une valeur inconnue à
+l'écriture. Six valeurs y passent maintenant, chacune séparément. Sept échecs
+après correction.
 
 ### Le mode fantôme, et le trou que le classement avait ouvert
 Ligne 129, et elle referme quelque chose que j'avais ouvert le matin même. Le

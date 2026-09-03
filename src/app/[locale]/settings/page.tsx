@@ -122,6 +122,7 @@ export default function SettingsPage() {
   /** Recevoir le bilan hebdomadaire par courriel. */
   const [bilanActif, setBilanActif] = useState(true);
   const [fantome, setFantome] = useState(false);
+  const [partage, setPartage] = useState("total");
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
   const [erreurExo, setErreurExo] = useState(false);
@@ -160,6 +161,7 @@ export default function SettingsPage() {
       setVariante(s.user?.variantePompes ?? null);
       setBilanActif(s.user?.bilanActif !== false);
       setFantome(s.user?.fantome === true);
+      setPartage(s.user?.partageAmis === "detail" ? "detail" : "total");
       setPompesMax(s.user?.pompesMax ?? 0);
       setPompesMaxLe(s.user?.pompesMaxLe ?? null);
     });
@@ -293,6 +295,19 @@ export default function SettingsPage() {
     const avant = fantome;
     setFantome(actif);
     await enregistrerReglage({ fantome: actif }, () => setFantome(avant));
+  };
+
+  /**
+   * Ce qu'un ami a le droit de voir.
+   *
+   * Retour en arrière sur échec, comme pour le mode fantôme : un réglage de
+   * confidentialité qui s'affiche sans avoir été enregistré fait croire qu'on
+   * a fermé quand on est resté ouvert, et personne ne le vérifie.
+   */
+  const handleSavePartage = async (valeur: string) => {
+    const avant = partage;
+    setPartage(valeur);
+    await enregistrerReglage({ partageAmis: valeur }, () => setPartage(avant));
   };
 
   /** Enregistre l'avertissement de volume quotidien, en points d'effort. */
@@ -639,6 +654,39 @@ export default function SettingsPage() {
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     minHeight: 44,
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {libelle}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Ce que les amis voient */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 className="titre-section">{t.partageLabel}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+            {t.partageAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {[
+              { valeur: "total", libelle: t.partageTotal },
+              { valeur: "detail", libelle: t.partageDetail },
+            ].map(({ valeur, libelle }) => {
+              const actif = valeur === partage;
+              return (
+                <button
+                  key={valeur}
+                  onClick={() => handleSavePartage(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px", borderRadius: 999, cursor: "pointer",
+                    fontSize: "0.8rem", minHeight: 44,
                     background: actif ? "rgba(255,180,84,0.1)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",

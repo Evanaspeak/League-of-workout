@@ -200,6 +200,28 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update).not.toHaveBeenCalled();
   });
 
+  it("enregistre ce qu'un ami a le droit de voir", async () => {
+    const r = await put({ userPrefs: { partageAmis: "detail" } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.partageAmis).toBe("detail");
+  });
+
+  /**
+   * Refusé plutôt que ramené au défaut. Le défaut est le plus FERMÉ, donc une
+   * conversion silencieuse serait sûre — mais elle enregistrerait « total »
+   * pour quelqu'un qui vient de demander « détail », et il croirait avoir
+   * ouvert quand il a fermé. Un réglage qu'on ne vérifie jamais doit dire
+   * quand il n'a pas pris.
+   */
+  it.each(["tout", "DETAIL", "", 42, true, null])(
+    "refuse %p comme valeur de partage",
+    async (valeur) => {
+      const r = await put({ userPrefs: { partageAmis: valeur } });
+      expect(r.status).toBe(400);
+      expect(p.user.update).not.toHaveBeenCalled();
+    },
+  );
+
   it("refuse une variante inconnue", async () => {
     const r = await put({ userPrefs: { variantePompes: "sur une main" } });
     expect(r.status).toBe(400);
