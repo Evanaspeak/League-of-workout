@@ -45,18 +45,21 @@ jobs:
       - name: Tests
         run: npx jest --ci
 
-  # Les parcours, découpés sur deux runners.
+  # Les parcours, découpés sur quatre runners d'un worker chacun.
   #
   # Ils tenaient sur un seul, à deux workers, et prenaient dix minutes — 69 %
-  # d'un travail qui en durait quatorze. Quatre workers sur une SEULE machine
-  # ont déjà été essayés et refusés : quatre Chromium, quatre processus de test
-  # et le serveur Next qui hache en bcrypt coût 12 ne tiennent pas sur quatre
-  # cœurs, et les deux parcours morts expiraient sur la CONNEXION, jamais sur
-  # ce qu'ils éprouvaient. Deux runners, en revanche, ce sont deux machines
-  # entières : le processeur double au lieu de se partager.
+  # d'un travail qui en durait quatorze.
+  #
+  # Un worker par runner, et non deux : quatre workers sur une SEULE machine
+  # avaient déjà été essayés et refusés, et le premier découpage a rendu le
+  # même échec. Un Chromium, un processus de test et le serveur Next qui hache
+  # en bcrypt coût 12 ne se partagent pas quatre cœurs sans que la CONNEXION
+  # perde sa place dans la file — et c'est toujours elle qui meurt, jamais ce
+  # que le test éprouvait. Quatre runners d'un worker chacun, c'est quatre
+  # machines entières : la contention disparaît au lieu d'être arbitrée.
   #
   # Et le dépôt est PUBLIC, donc aucune de ces minutes n'est facturée. Sur un
-  # dépôt privé l'arbitrage serait inverse — on paierait cinq préparations au
+  # dépôt privé l'arbitrage serait inverse — on paierait sept préparations au
   # lieu de deux pour gagner du temps d'attente.
   parcours:
     runs-on: ubuntu-latest
@@ -65,7 +68,7 @@ jobs:
       # ce qu'on était venu apprendre.
       fail-fast: false
       matrix:
-        troncon: [1, 2]
+        troncon: [1, 2, 3, 4]
     env:
       DATABASE_URL: postgresql://wow:wow@localhost:5432/wow
       DIRECT_URL: postgresql://wow:wow@localhost:5432/wow
@@ -92,7 +95,7 @@ jobs:
       - uses: ./.github/actions/preparer
 
       - name: Parcours
-        run: npx playwright test --project=chromium --shard=${{ matrix.troncon }}/2
+        run: npx playwright test --project=chromium --shard=${{ matrix.troncon }}/4
 
       - uses: actions/upload-artifact@v4
         if: failure()

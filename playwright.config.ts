@@ -57,7 +57,28 @@ export default defineConfig({
    * jamais sur ce qu'ils éprouvaient. Un banc d'essai qui sature la machine ne
    * mesure plus le produit, il mesure la file d'attente.
    */
-  workers: 2,
+  /**
+   * Deux workers en local, UN SEUL en intégration continue — et ce n'est pas
+   * une prudence, c'est la même mesure lue à l'endroit.
+   *
+   * Les tests de langue sont passés en mode parallèle, donc l'ordonnanceur
+   * fait tourner en permanence des chargements de page rendus au serveur à
+   * côté des parcours qui ouvrent un compte. Le haché bcrypt coût 12 de la
+   * connexion perd alors sa place dans la file : la CI a rendu le MÊME échec
+   * que les quatre workers d'août — `waitForURL` qui expire sur la connexion,
+   * jamais sur ce que le test éprouvait.
+   *
+   * La réponse n'est pas de baisser le coût du haché, qui est un choix de
+   * production et n'a pas à porter un bouton, ni d'allonger un délai en
+   * espérant. C'est de donner une MACHINE ENTIÈRE à chaque worker : quatre
+   * tronçons d'un worker chacun, sur quatre runners. Le dépôt est public, ces
+   * minutes ne se paient pas, et un runner qui héberge un seul Chromium, un
+   * seul processus de test et le serveur Next ne sature plus.
+   *
+   * En local il n'y a qu'une machine : deux workers y restent le compromis
+   * mesuré, quatre ayant déjà tué deux parcours sur la connexion.
+   */
+  workers: process.env.CI ? 1 : 2,
   fullyParallel: false,
   timeout: 60_000,
   expect: { timeout: 10_000 },
