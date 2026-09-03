@@ -35,7 +35,8 @@ export async function GET(req: Request) {
 
   const [agregat, paiements] = await Promise.all([
     prisma.game.aggregate({
-      where: { userId: user.id },
+      // Même raison que dans `/api/badges`, dont cette route reprend le calcul.
+      where: { userId: user.id, sansEnjeu: false },
       _sum: { pompesCalculees: true },
       _count: { _all: true },
     }),

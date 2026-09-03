@@ -5,6 +5,7 @@ import { getLevelParPompes } from "@/lib/scoring";
 import { toConduiteSession } from "@/lib/sessionAuto";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { detection } from "@/lib/i18n/dictionaries/detection";
+import { marquerSansEnjeu, oublierSansEnjeu } from "@/lib/sansEnjeu";
 
 /**
  * Ce qui se passe quand l'application détecte le lancement d'un jeu surveillé.
@@ -45,7 +46,19 @@ export function DetectionSession() {
     if (!pont?.onJeuDetecte) return;
 
     return pont.onJeuDetecte(async ({ type, jeu, session }) => {
-      if (type !== "jeu-demarre" || !session) return;
+      if (type !== "jeu-demarre") return;
+      /**
+       * Une partie qui commence efface le refus de la précédente, et ça se
+       * fait AVANT toute autre sortie.
+       *
+       * Placé plus bas, le souvenir survivrait à un jeu dont la détection ne
+       * lance pas de session, ou à une session déjà en cours — et la partie
+       * suivante s'enregistrerait sans enjeu sans que personne l'ait demandé.
+       * Le compteur de dette resterait alors muet, ce qui ne ressemble pas à
+       * sa cause.
+       */
+      oublierSansEnjeu();
+      if (!session) return;
       // Une session déjà en cours n'est pas remplacée : le joueur a peut-être
       // lancé le suivi lui-même, avec d'autres réglages.
       if (actifRef.current) return;
@@ -89,6 +102,19 @@ export function DetectionSession() {
              */
             if (oui === false) {
               await pont?.overlayMasquerPartie?.().catch(() => {});
+              /**
+               * Et la partie ne comptera pas.
+               *
+               * Elle s'enregistrera quand même — on a joué, la trace reste —
+               * avec un coût de zéro et hors de toute statistique. C'est ce
+               * qui distingue « je ne joue pas pour l'application ce soir » de
+               * « efface ce que je viens de faire ».
+               *
+               * Le souvenir vit dans le stockage : la question se pose ici et
+               * l'enregistrement se fait dans un AUTRE composant, à la fin de
+               * la partie, et la page peut se recharger entre les deux.
+               */
+              marquerSansEnjeu();
             }
             return;
           }

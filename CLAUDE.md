@@ -175,6 +175,7 @@ src/
     dette.ts          # Ajout et retrait de dette, atomiques
     social.ts         # Les règles du social : demande croisée, code d'invitation, reprise
     classement.ts     # La fenêtre de sept jours, l'ordre, les rangs à égalité
+    sansEnjeu.ts      # Le souvenir d'une partie refusée, entre les deux composants
     parrainage.ts     # Ce qu'on fait d'un code reçu, et pourquoi l'avantage est une amitié
     i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
     i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
@@ -541,7 +542,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1854 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
+1873 tests unitaires, 173 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -879,6 +880,75 @@ et la règle du propriétaire dit de publier dès qu'une modification touche
 exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
+
+### Une partie refusée comptait quand même
+Signalé dans la foulée de la question en plein écran : « il faut même pas que
+ça se mette dans l'historique si je dis non, ou ça peut m'annoter genre annulé
+ou sans enjeu ».
+
+Le refus n'empêchait que le mode SESSION. La partie, elle, s'enregistrait
+normalement — avec son coût et sa dette. Autrement dit, refuser ne refusait
+rien de ce qui compte.
+
+**Trois façons de faire, et c'est le propriétaire qui a tranché** : la partie
+s'enregistre, annotée « sans enjeu », à coût nul, ET hors de toute
+statistique. Les deux autres options avaient chacune leur défaut — ne rien
+enregistrer fait jouer cinq parties pour n'en montrer que deux sans que rien
+n'explique l'écart ; annoter sans écarter laisse ces parties fausser le
+winrate et les graphiques.
+
+**Six lectures filtrent, quatre gardent, et la liste est tenue par un garde.**
+Filtrent : le tableau de bord (winrate, champions, graphiques, progression), les
+paliers, la progression, le détail horaire, le bilan de saison, et — le moins
+évident — **le comptage de maîtrise du champion**. Sans ce dernier, une soirée
+refusée ferait monter la surcharge de maîtrise, donc changerait le coût des
+parties SUIVANTES : un défaut qui ne se voit jamais sur la partie qui l'a créé.
+Gardent, avec leur raison écrite : l'historique (c'est tout l'objet), la
+correction de date, l'export de données (l'article 20 couvre TOUT ce qu'on
+garde), et la liste des parties Riot déjà enregistrées — l'écarter la ferait
+proposer une seconde fois.
+
+**Le souvenir vit dans le stockage du navigateur, pas dans la coquille**,
+contrairement au silence de la pastille. Ce n'est pas une incohérence : le
+silence est une décision d'AFFICHAGE, que seule la coquille peut appliquer ; le
+sans-enjeu est une décision d'ENREGISTREMENT, prise et consommée par la page.
+Le faire passer par le pont aurait ajouté une méthode au contrat, donc une
+version à publier et un repli à tenir devant les copies installées, pour rien.
+
+Il s'efface à chaque démarrage de partie, **avant toute autre sortie** de la
+fonction. Placé plus bas, il survivrait à un jeu dont la détection ne lance pas
+de session ou à une session déjà en cours, et la partie suivante
+s'enregistrerait sans enjeu sans que personne l'ait demandé — le compteur de
+dette resterait muet, ce qui ne ressemble pas à sa cause. Une péremption de six
+heures rattrape le démarrage manqué.
+
+**Dans le doute, on ENREGISTRE.** Une marque illisible, datée du futur ou
+périmée ne vaut pas refus : perdre le coût d'une partie qu'on voulait compter
+se voit et se corrige à la main, l'inverse est une dette qu'on n'a pas méritée.
+
+Sept sabotages. **Trois sont passés au vert au premier essai, et ce sont eux
+qui apprennent quelque chose :**
+
+- « une partie sans enjeu coûte son prix » et « alimente la dette » ne
+  faisaient tomber aucun test : je n'avais écrit aucun contrôle sur le coût ni
+  sur la dette, les deux propriétés qui font tout l'objet du changement ;
+- pire, le contrôle que j'ai ajouté pour la dette était **vrai par accident**.
+  `accumulerDette` ne compte que les exercices mesurés en TEMPS, et le compte
+  du fichier de test paie en pompes : aucune partie n'y alimente jamais la
+  dette. Il a fallu donner la boxe au compte et ajouter le témoin — « une
+  partie ordinaire, elle, l'alimente » — sans lequel le contrôle reste vrai
+  quoi qu'il arrive ;
+- et « une marque illisible vaut refus » passait parce qu'aucun de mes six cas
+  ne distinguait le contrôle de TYPE : une date écrite en chaîne mais
+  numériquement valable traverse la comparaison et la soustraction, qui
+  coercent toutes les deux. Le cas manquant est `{"le":"1800000000000"}`.
+
+C'est la même leçon sous trois formes : un test qui passe ne dit pas qu'il
+éprouve quelque chose. Sept sabotages, sept échecs après correction.
+
+Au navigateur, le parcours refuse une partie, **recharge la page**, puis la
+termine — le rechargement est précisément ce qu'un état React ne survivrait
+pas, et c'est la raison pour laquelle le souvenir vit dans le stockage.
 
 ### La question tenait dans un coin, et personne ne la voyait
 Signalé dans la foulée : « je n'ai pas pensé à cocher et je n'ai pas vu le
@@ -1383,6 +1453,12 @@ rester à l'écran la seule chose qu'on venait d'écarter.
 230 pixels dans un coin par-dessus un écran de chargement : on ne la voyait
 pas, donc elle expirait, donc elle valait refus — le résultat exact qu'on
 aurait sans elle.
+
+**Et la partie s'enregistre SANS ENJEU.** Elle entre dans l'historique avec son
+annotation, à coût nul, sans dette, et hors de toute statistique — winrate,
+graphiques, paliers, bilan de saison, maîtrise du champion. Ne pas
+l'enregistrer du tout était l'autre option : on jouerait cinq parties pour n'en
+voir que deux, sans que rien n'explique l'écart.
 
 Six sabotages, six échecs — dont les deux qui comptent le plus : la fenêtre qui
 ne rend pas la souris, et la question qui ne se ferme jamais.

@@ -519,3 +519,73 @@ describe("le barème en vigueur", () => {
     for (const id of EXERCICE_IDS) expect(typeof ecrit[id]).toBe("number");
   });
 });
+
+/**
+ * Les parties jouées sans enjeu.
+ *
+ * Répondre « non » à l'écran de chargement enregistre quand même la partie —
+ * on a joué, la trace reste — mais elle ne coûte rien et ne compte nulle part.
+ * Trois choses se paient si l'une manque, et chacune a son cas :
+ *
+ *  - un coût non nul, et l'historique annonce une dette qu'on ne doit pas ;
+ *  - une dette alimentée, et le compteur réclame un effort qu'on a refusé ;
+ *  - la maîtrise du champion qui monte, et c'est le coût des parties SUIVANTES
+ *    qui change — celle-là ne se voit jamais.
+ */
+describe("une partie sans enjeu", () => {
+  /**
+   * Le compte paie EN TEMPS, et ce détail décide de tout.
+   *
+   * `accumulerDette` ne compte que les exercices mesurés en temps ; avec les
+   * pompes par défaut, aucune partie n'alimente jamais la dette dans ce
+   * fichier. Mon premier contrôle « n'alimente aucune dette » était donc vrai
+   * par accident, et le sabotage l'a dit : remettre la dette sur une partie
+   * sans enjeu ne le faisait pas tomber. Un test qui passe pour la mauvaise
+   * raison ne prouve rien.
+   */
+  beforeEach(() => {
+    session.mockResolvedValue(utilisateur({ id: "u1", exercices: ["boxe"] }));
+  });
+
+  it("s'enregistre, mais ne coûte rien", async () => {
+    const r = await post(partie({ sansEnjeu: true }));
+    expect(r.status).toBe(200);
+    const data = game.create.mock.calls[0][0].data;
+    expect({ sansEnjeu: data.sansEnjeu, points: data.pompesCalculees })
+      .toEqual({ sansEnjeu: true, points: 0 });
+  });
+
+  /** Le cas qui compte le plus : elle n'ajoute rien à la dette. */
+  it("n'alimente aucune dette", async () => {
+    await post(partie({ sansEnjeu: true }));
+    expect(user.update).not.toHaveBeenCalled();
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Le témoin de ce contrôle-là, et il est indispensable : sans lui, un compte
+   * dont les exercices ne se comptent pas en temps rendrait le test ci-dessus
+   * vrai quoi qu'il arrive.
+   */
+  it("alors qu'une partie ordinaire, elle, l'alimente", async () => {
+    await post(partie());
+    expect(user.update).toHaveBeenCalled();
+  });
+
+  it("ne fait pas monter la maîtrise du champion", async () => {
+    await post(partie({ sansEnjeu: true }));
+    expect(game.count.mock.calls[0][0].where.sansEnjeu).toBe(false);
+  });
+
+  /**
+   * Le témoin : sans lui, une route qui n'écrirait plus RIEN passerait les
+   * trois contrôles ci-dessus en ne prouvant rien.
+   */
+  it("et une partie ordinaire coûte toujours son prix", async () => {
+    const r = await post(partie());
+    expect(r.status).toBe(200);
+    const data = game.create.mock.calls[0][0].data;
+    expect(data.sansEnjeu).toBe(false);
+    expect(data.pompesCalculees).toBeGreaterThan(0);
+  });
+});

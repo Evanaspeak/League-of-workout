@@ -16,7 +16,10 @@ export async function GET() {
 
   const [agregat, paiements] = await Promise.all([
     prisma.game.aggregate({
-      where: { userId: user.id },
+      // Les parties sans enjeu sortent des paliers : elles ne coûtent rien,
+      // donc elles ne valent rien à un compteur d'effort — mais leur NOMBRE
+      // ferait quand même avancer les paliers qui comptent des parties.
+      where: { userId: user.id, sansEnjeu: false },
       _sum: { pompesCalculees: true },
       _count: { _all: true },
     }),

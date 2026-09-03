@@ -21,8 +21,24 @@ export async function GET(req: Request) {
   // afficher, et sur un téléphone bridé le premier rendu utile arrivait à
   // 3,8 secondes. Un aller-retour de moins, et tout arrive ensemble.
   const [toutesLesGames, goal, levelConfigs] = await Promise.all([
+    /**
+     * Les parties sans enjeu ne sont PAS ici, et c'est le filtre le plus
+     * important des six : cette route porte le winrate, les champions les plus
+     * joués, les graphiques par rôle et la progression cumulée. Une soirée
+     * refusée à l'écran de chargement ferait bouger tous ces chiffres sans
+     * avoir rien coûté — c'est exactement ce qu'un refus dit de ne pas faire.
+     *
+     * L'historique, lui, les garde : c'est sa raison d'être, et c'est la
+     * différence entre un registre et une statistique.
+     *
+     * La raison est écrite AVANT l'appel et non dedans : le garde de classe
+     * lit ce qui suit l'appel pour y trouver le `where`, et un commentaire
+     * intercalé l'en écartait. Un contrôle qu'on repousse par un commentaire
+     * n'est pas un contrôle qu'on trompe : il dit juste que le filtre doit se
+     * lire tout de suite.
+     */
     prisma.game.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, sansEnjeu: false },
       orderBy: { date: "asc" },
       /**
        * Les quinze colonnes que cette route lit, et pas les trente et une.

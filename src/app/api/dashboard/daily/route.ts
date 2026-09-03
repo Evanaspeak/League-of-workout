@@ -26,7 +26,9 @@ export async function GET(req: Request) {
   const end = new Date(`${date}T23:59:59.999Z`);
 
   const games = await prisma.game.findMany({
-    where: { userId: user.id, date: { gte: start, lte: end } },
+    // Le détail horaire est une statistique : les parties sans enjeu en
+    // sortent, comme du reste du tableau de bord.
+    where: { userId: user.id, sansEnjeu: false, date: { gte: start, lte: end } },
     orderBy: { date: "asc" },
   });
 

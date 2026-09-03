@@ -64,7 +64,9 @@ export async function POST(req: Request) {
   let partiesAvant = 0;
   if (capacites.champions && body.champion && roleWeights?.maitriseActive) {
     partiesAvant = await prisma.game.count({
-      where: { userId: user.id, champion: body.champion },
+      // Même filtre que dans `/api/games` : l'aperçu doit annoncer le coût que
+      // l'enregistrement calculera, sinon il ment.
+      where: { userId: user.id, sansEnjeu: false, champion: body.champion },
     });
   }
 
