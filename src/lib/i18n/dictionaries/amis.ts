@@ -56,6 +56,19 @@ export const amis = {
     quitterDernier: (nom: string) => `Tu es le dernier membre : quitter ${nom} le supprime.`,
     proprietaire: "Tu l'as créé",
 
+    classementTitre: "Classement de la semaine",
+    classementAide: (jours: number) =>
+      `Sur l'effort réellement PAYÉ ces ${jours} derniers jours, pas sur les parties jouées : perdre beaucoup ne fait pas monter. La semaine se rejoue à zéro, donc elle se rattrape.`,
+    classementSeul: "Tu es seul ici. Ajoute un ami : c'est à ce moment-là que le tableau sert à quelque chose.",
+    colRang: "Rang",
+    colJoueur: "Joueur",
+    colEffort: "Effort payé",
+    effortPaye: (n: number) => `${n} points d'effort`,
+    enTete: "Tu mènes cette semaine.",
+    ecartAuPremier: (n: number) => `Il te manque ${n} points pour la première place.`,
+    retardDepuis: (n: number) => (n === 1 ? "en retard depuis 1 jour" : `en retard depuis ${n} jours`),
+
+
     chargement: "Chargement…",
     erreur: "La liste n'a pas pu être chargée. Rien n'est perdu : recharge la page.",
     reessayer: "Réessayer",
@@ -109,6 +122,19 @@ export const amis = {
     quitterConfirme: (nom: string) => `Leave ${nom}?`,
     quitterDernier: (nom: string) => `You are the last member: leaving ${nom} deletes it.`,
     proprietaire: "You created it",
+
+    classementTitre: "This week's ranking",
+    classementAide: (jours: number) =>
+      `On effort actually PAID over the last ${jours} days, not on games played: losing a lot does not move you up. The week starts over, so it can be caught up.`,
+    classementSeul: "You are alone here. Add a friend: that is when this table starts being worth something.",
+    colRang: "Rank",
+    colJoueur: "Player",
+    colEffort: "Effort paid",
+    effortPaye: (n: number) => `${n} effort points`,
+    enTete: "You are leading this week.",
+    ecartAuPremier: (n: number) => `You need ${n} more points to take first place.`,
+    retardDepuis: (n: number) => (n === 1 ? "1 day late" : `${n} days late`),
+
 
     chargement: "Loading…",
     erreur: "The list could not be loaded. Nothing is lost: reload the page.",
@@ -164,6 +190,19 @@ export const amis = {
     quitterDernier: (nom: string) => `Eres el último miembro: salir de ${nom} lo elimina.`,
     proprietaire: "Lo has creado tú",
 
+    classementTitre: "Clasificación de la semana",
+    classementAide: (jours: number) =>
+      `Sobre el esfuerzo realmente PAGADO en los últimos ${jours} días, no sobre las partidas jugadas: perder mucho no te hace subir. La semana vuelve a empezar, así que se puede remontar.`,
+    classementSeul: "Estás solo aquí. Añade a un amigo: es entonces cuando esta tabla sirve de algo.",
+    colRang: "Puesto",
+    colJoueur: "Jugador",
+    colEffort: "Esfuerzo pagado",
+    effortPaye: (n: number) => `${n} puntos de esfuerzo`,
+    enTete: "Vas primero esta semana.",
+    ecartAuPremier: (n: number) => `Te faltan ${n} puntos para el primer puesto.`,
+    retardDepuis: (n: number) => (n === 1 ? "1 día de retraso" : `${n} días de retraso`),
+
+
     chargement: "Cargando…",
     erreur: "No se ha podido cargar la lista. No se ha perdido nada: recarga la página.",
     reessayer: "Reintentar",
@@ -217,6 +256,19 @@ export const amis = {
     quitterConfirme: (nom: string) => `${nom} verlassen?`,
     quitterDernier: (nom: string) => `Du bist das letzte Mitglied: ${nom} zu verlassen löscht die Gruppe.`,
     proprietaire: "Von dir erstellt",
+
+    classementTitre: "Rangliste der Woche",
+    classementAide: (jours: number) =>
+      `Nach dem tatsächlich BEZAHLTEN Aufwand der letzten ${jours} Tage, nicht nach gespielten Partien: viel zu verlieren bringt dich nicht nach oben. Die Woche beginnt neu, also lässt sie sich aufholen.`,
+    classementSeul: "Du bist hier allein. Füge jemanden hinzu: erst dann taugt diese Tabelle zu etwas.",
+    colRang: "Platz",
+    colJoueur: "Spieler",
+    colEffort: "Bezahlter Aufwand",
+    effortPaye: (n: number) => `${n} Aufwandspunkte`,
+    enTete: "Du führst diese Woche.",
+    ecartAuPremier: (n: number) => `Dir fehlen ${n} Punkte bis zum ersten Platz.`,
+    retardDepuis: (n: number) => (n === 1 ? "seit 1 Tag im Rückstand" : `seit ${n} Tagen im Rückstand`),
+
 
     chargement: "Wird geladen…",
     erreur: "Die Liste konnte nicht geladen werden. Nichts ist verloren: lade die Seite neu.",
@@ -272,6 +324,19 @@ export const amis = {
     quitterDernier: (nom: string) => `你是最后一名成员：退出 ${nom} 会把它删掉。`,
     proprietaire: "由你创建",
 
+    classementTitre: "本周排行",
+    classementAide: (jours: number) =>
+      `按最近 ${jours} 天真正完成的努力量排名，而不是按对局数：输得多并不会让你上升。每周重新开始，所以随时可以追上。`,
+    classementSeul: "这里只有你一个人。加个好友吧，这张表才有意义。",
+    colRang: "名次",
+    colJoueur: "玩家",
+    colEffort: "已完成努力",
+    effortPaye: (n: number) => `${n} 点努力值`,
+    enTete: "本周你领先。",
+    ecartAuPremier: (n: number) => `再有 ${n} 点就能拿到第一。`,
+    retardDepuis: (n: number) => `已拖欠 ${n} 天`,
+
+
     chargement: "加载中…",
     erreur: "列表加载失败。什么都没丢：刷新页面即可。",
     reessayer: "重试",
@@ -325,6 +390,19 @@ export const amis = {
     quitterConfirme: (nom: string) => `${nom} から抜けますか？`,
     quitterDernier: (nom: string) => `あなたが最後のメンバーです。${nom} から抜けるとグループは削除されます。`,
     proprietaire: "あなたが作成",
+
+    classementTitre: "今週のランキング",
+    classementAide: (jours: number) =>
+      `直近 ${jours} 日間に実際にこなした努力量で並びます。試合数ではないので、負けが多くても順位は上がりません。週ごとにゼロから始まるので、いつでも追いつけます。`,
+    classementSeul: "ここにはまだあなたしかいません。友だちを追加すると、この表が意味を持ちます。",
+    colRang: "順位",
+    colJoueur: "プレイヤー",
+    colEffort: "こなした努力",
+    effortPaye: (n: number) => `努力ポイント ${n}`,
+    enTete: "今週はあなたが首位です。",
+    ecartAuPremier: (n: number) => `1 位まであと ${n} ポイントです。`,
+    retardDepuis: (n: number) => `${n} 日滞納中`,
+
 
     chargement: "読み込み中…",
     erreur: "一覧を読み込めませんでした。何も失われていません。ページを再読み込みしてください。",

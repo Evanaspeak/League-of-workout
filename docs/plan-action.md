@@ -110,14 +110,14 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 026 | Une courte vidéo de forme par exercice | 1 nuit + tournage |
 
 ### Le social
-*11 à faire · 2 faits.* Tu as dit oui à absolument tout. Les amis et les groupes existent ; le reste attend.
+*9 à faire · 4 faits.* Tu as dit oui à absolument tout. Les amis, les groupes et le classement de la semaine existent ; le reste attend.
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 113 | Le principe : oui au social | — |
 | [x] | 114 | Des amis qu'on ajoute ET des groupes qu'on rejoint | 2 nuits |
-| [ ] | 115 | Un classement entre amis, sur le volume payé | 1 nuit |
-| [ ] | 116 | Le classement montre la dette en retard | ½ nuit |
+| [x] | 115 | Un classement entre amis, sur le volume payé | 1 nuit |
+| [x] | 116 | Le classement montre la dette en retard | ½ nuit |
 | [ ] | 118 | Une équipe de cinq avec une dette commune | 2 nuits |
 | [ ] | 142 | La dette de groupe quand on joue à cinq ensemble | 1 nuit |
 | [ ] | 119 | Un lien de parrainage, avantage pour les deux | 1 nuit |

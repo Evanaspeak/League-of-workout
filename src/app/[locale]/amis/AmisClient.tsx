@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
+import { jourLocal } from "@/lib/serie";
+import type { LigneClassement } from "@/lib/classement";
 
 /**
  * Les amis et les groupes.
@@ -26,6 +28,11 @@ type Personne = { lien: string; id: string; pseudo: string };
 type Groupe = {
   id: string; nom: string; code: string; membres: number; proprietaire: boolean;
 };
+type Classement = {
+  lignes: LigneClassement[];
+  jours: number;
+  ecart: number | null;
+};
 type Donnees = {
   amis: Personne[];
   recues: Personne[];
@@ -38,6 +45,14 @@ export function AmisClient() {
   const { locale } = useLocale();
 
   const [donnees, setDonnees] = useState<Donnees | null>(null);
+  /**
+   * Le classement vit à part de la liste, et son échec aussi.
+   *
+   * Les deux réponses n'ont pas la même conséquence : sans la liste il n'y a
+   * plus d'écran, sans le classement il manque un tableau. Les mêler ferait
+   * disparaître les amis parce qu'une somme n'a pas pu se faire.
+   */
+  const [classement, setClassement] = useState<Classement | null>(null);
   const [echecChargement, setEchecChargement] = useState(false);
   /** Le geste en cours, par identifiant : un seul bouton s'éteint à la fois. */
   const [occupe, setOccupe] = useState<string | null>(null);
@@ -76,7 +91,29 @@ export function AmisClient() {
     }
   }, []);
 
-  useEffect(() => { charger(); }, [charger]);
+  const chargerClassement = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/classement?jour=${jourLocal()}`);
+      if (!res.ok) throw new Error(String(res.status));
+      setClassement(await res.json());
+    } catch {
+      // On garde ce qu'on avait : un rafraîchissement raté n'efface pas un
+      // tableau juste. C'est la règle des trois mémoires de module.
+    }
+  }, []);
+
+  useEffect(() => { charger(); chargerClassement(); }, [charger, chargerClassement]);
+
+  /**
+   * Payer sa dette change sa propre ligne, et le compteur qui sert à payer est
+   * dans le rail de CETTE page. Sans cette reprise, on paie sa séance et le
+   * classement continue d'annoncer le total d'avant.
+   */
+  useEffect(() => {
+    const relire = () => { chargerClassement(); };
+    window.addEventListener("wow-dette-changee", relire);
+    return () => window.removeEventListener("wow-dette-changee", relire);
+  }, [chargerClassement]);
 
   /**
    * Un geste : envoyer, attendre, dire ce qui s'est passé, recharger.
@@ -107,7 +144,9 @@ export function AmisClient() {
         return false;
       }
       if (succes) setMessage(succes(data));
-      await charger();
+      // Accepter une demande ajoute une ligne au classement : recharger l'une
+      // sans l'autre laisserait un ami visible et absent du tableau.
+      await Promise.all([charger(), chargerClassement()]);
       return true;
     } catch {
       setErreur(t.erreurAction);
@@ -116,7 +155,7 @@ export function AmisClient() {
       setOccupe(null);
       setAConfirmer(null);
     }
-  }, [charger, locale, t.erreurAction]);
+  }, [charger, chargerClassement, locale, t.erreurAction]);
 
   const demander = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,6 +248,74 @@ export function AmisClient() {
       )}
       {echecChargement && (
         <p className="lol-panel p-4" role="alert" style={{ color: "var(--steel)" }}>{t.erreur}</p>
+      )}
+
+      {/*
+        Le classement passe AVANT le formulaire d'ajout : c'est ce pour quoi on
+        revient, quand l'ajout est ce qu'on fait une fois. Sur un compte neuf
+        il tient en une ligne, la sienne, et dit pourquoi il est vide — ce qui
+        est la meilleure explication de ce que le formulaire sert à faire.
+      */}
+      {classement && (
+        <section className="lol-panel p-5 space-y-3">
+          <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.classementTitre}</h2>
+          <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
+            {t.classementAide(classement.jours)}
+          </p>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ color: "var(--steel)", fontSize: ".8rem", textAlign: "left" }}>
+                  <th scope="col" style={{ padding: "4px 8px 4px 0", width: "3rem" }}>{t.colRang}</th>
+                  <th scope="col" style={{ padding: "4px 8px 4px 0" }}>{t.colJoueur}</th>
+                  <th scope="col" style={{ padding: "4px 0", textAlign: "right" }}>{t.colEffort}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classement.lignes.map((l) => (
+                  <tr
+                    key={l.id}
+                    style={{
+                      borderTop: "1px solid var(--panel-border, rgba(255,255,255,.08))",
+                      // Sa propre ligne se retrouve d'un coup d'œil dans une
+                      // liste de cent : c'est la seule qu'on vient y chercher.
+                      fontWeight: l.moi ? 700 : 400,
+                    }}
+                  >
+                    <td style={{ padding: "8px 8px 8px 0", fontVariantNumeric: "tabular-nums" }}>
+                      {l.rang}
+                    </td>
+                    <td style={{ padding: "8px 8px 8px 0", overflowWrap: "anywhere" }}>
+                      {l.pseudo}
+                      {l.enRetard && (
+                        /* La pression sociale de la réponse 116, et elle
+                           s'écrit sous le pseudo plutôt qu'à côté : à 320 px,
+                           deux textes sur la même ligne poussent la colonne
+                           des points hors de l'écran. */
+                        <span style={{ display: "block", color: "var(--loss)", fontSize: ".78rem" }}>
+                          {t.retardDepuis(l.joursDeRetard)}
+                        </span>
+                      )}
+                    </td>
+                    <td style={{
+                      padding: "8px 0", textAlign: "right",
+                      fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
+                    }}>
+                      {t.effortPaye(l.points)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {classement.lignes.length <= 1 ? (
+            <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.classementSeul}</p>
+          ) : classement.ecart !== null && (
+            <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>
+              {classement.ecart === 0 ? t.enTete : t.ecartAuPremier(classement.ecart)}
+            </p>
+          )}
+        </section>
       )}
 
       <section className="lol-panel p-5 space-y-3">
