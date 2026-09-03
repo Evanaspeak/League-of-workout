@@ -225,6 +225,10 @@ model User {
   amitiesEnvoyees Amitie[]       @relation("AmitiesEnvoyees")
   amitiesRecues   Amitie[]       @relation("AmitiesRecues")
   groupes         MembreGroupe[]
+
+  // Compter ses filleuls est la seule lecture qui parcoure `User` par une
+  // autre colonne que la clé.
+  @@index([parrainId])
 }
 
 model Account {
@@ -362,6 +366,9 @@ model Game {
   riotMatchId         String?
 
   @@index([userId])
+  // Les six lectures de statistiques filtrent sur le compte ET sur l'enjeu :
+  // c'est le `where` le plus fréquent de cette table.
+  @@index([userId, sansEnjeu])
   // Une partie Riot ne peut être enregistrée qu'une fois par joueur : deux
   // onglets ouverts ou un renvoi réseau ne doivent pas la facturer deux fois.
   // Les parties manuelles ont riotMatchId à null, que Postgres ne contraint

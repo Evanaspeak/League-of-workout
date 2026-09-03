@@ -63,6 +63,60 @@ Si la CI casse après une fusion, on corrige : le retard est de quelques
 minutes, pas de quinze, et il ne se paie que quand quelque chose a
 effectivement cassé.
 
+## La suite navigateur, et ce que le parallélisme lui coûte
+
+Deux workers, `bareme-gele.spec.ts` seul à la fin, une adresse IP par worker.
+Mesuré sur la même machine, même construction :
+
+| workers | durée | résultat |
+|---|---|---|
+| 1 | 14 min 30 à 15 min | 203 passés |
+| 4 | 6 min 24 | **2 échecs**, 7 non joués |
+| 2 | 9 min 55 | 203 passés |
+
+**Quatre est trop, et la raison est le PROCESSEUR, pas la base.** La machine a
+quatre cœurs ; il faut y loger quatre Chromium, quatre processus de test ET le
+serveur Next, qui hache les mots de passe en bcrypt coût 12 — du calcul pur,
+un quart de seconde par connexion. Les deux parcours morts expiraient tous
+deux sur la CONNEXION, jamais sur ce qu'ils éprouvaient. Un banc d'essai qui
+sature la machine ne mesure plus le produit, il mesure sa propre file
+d'attente.
+
+Les deux obstacles réels au parallélisme, tous deux levés :
+
+- `bareme-gele.spec.ts` écrit les ratios GLOBAUX dans `SystemConfig`. Il vit
+  dans un projet Playwright qui ne démarre qu'une fois le reste terminé —
+  lancé en parallèle, il changerait le barème sous les pieds des autres, et
+  l'échec tomberait n'importe où sauf chez lui ;
+- le limiteur d'inscription est indexé sur l'adresse IP, commune à tous les
+  workers. Chacun envoie la sienne par `x-forwarded-for`, que `getClientIp`
+  lit quand l'en-tête de plateforme est absent.
+
+`fullyParallel` reste à `false` : plusieurs parcours d'un même fichier
+partagent le compte ouvert par le premier test, et cette dépendance-là est
+voulue.
+
+## Lire la CI, et savoir qu'une étape ROUGE en SAUTE d'autres (IMPORTANT)
+
+Le travail `parcours` enchaîne : monter la base par les migrations, vérifier
+qu'elle correspond au schéma, construire, jouer les parcours, mesurer
+l'accessibilité. **Un échec à la deuxième étape saute les quatre suivantes.**
+
+C'est arrivé de V353 à V355 : deux index créés par une migration sans être
+déclarés dans `schema.prisma` faisaient échouer la correspondance, donc la
+suite navigateur ne tournait plus en CI — pendant que je m'appuyais sur elle
+pour ne plus la jouer en local. Trois versions publiées sans qu'aucun parcours
+ne soit joué nulle part.
+
+**Le témoin qui saute aux yeux, c'est la DURÉE.** Une exécution complète prend
+quinze à dix-huit minutes. Une exécution d'une minute n'a pas joué les
+parcours, quoi que dise sa couleur. Regarder la durée avant la pastille.
+
+`src/indexDeclares.test.ts` attrape désormais la cause exacte, statiquement,
+donc avant de publier : tout index créé par une migration doit être déclaré au
+schéma. Une seule exemption, l'index fonctionnel sur `lower(email)`, que le
+langage de schéma de Prisma ne sait pas exprimer.
+
 ## Diagnostiquer, et ne pas deviner (IMPORTANT)
 
 Quand un test échoue pour une raison qu'on ne sait pas NOMMER, on instrumente

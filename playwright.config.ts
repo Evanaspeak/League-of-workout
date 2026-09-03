@@ -30,9 +30,34 @@ const launchOptions = existsSync(CHROMIUM_FOURNI)
 export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/preparation.ts",
-  // Les parcours écrivent dans la même base : les faire tourner en parallèle
-  // les ferait se marcher dessus (compteur de dette, unicité des pseudos).
-  workers: 1,
+  /**
+   * Quatre workers, et non un.
+   *
+   * La raison d'origine — « les parcours écrivent dans la même base » — n'est
+   * plus vraie : chaque fichier ouvre son propre compte avec un suffixe
+   * aléatoire, et la dette comme les pseudos sont par compte. Il ne restait
+   * que deux obstacles réels, tous deux traités :
+   *
+   *  * `bareme-gele.spec.ts` écrit les ratios GLOBAUX dans `SystemConfig`. Il
+   *    est seul dans le projet `serie`, qui ne démarre qu'une fois le reste
+   *    terminé ;
+   *  * le limiteur d'inscription est indexé sur l'adresse IP, donc commun à
+   *    tous les workers. Chacun envoie maintenant la sienne — voir
+   *    `e2e/compte.ts`.
+   *
+   * `fullyParallel: false` garde l'ordre DANS un fichier : plusieurs parcours
+   * y partagent un compte ouvert par le premier test, et les paralléliser
+   * casserait cette dépendance-là, qui est voulue.
+   *
+   * **Deux et non quatre**, et la raison est le PROCESSEUR, pas la base. La
+   * machine a quatre cœurs ; à quatre workers il faut y loger quatre Chromium,
+   * quatre processus de test ET le serveur Next, qui hache les mots de passe
+   * en bcrypt coût 12 — du calcul pur, un quart de seconde par connexion. Deux
+   * parcours sont morts là-dessus, tous deux en expirant sur la connexion,
+   * jamais sur ce qu'ils éprouvaient. Un banc d'essai qui sature la machine ne
+   * mesure plus le produit, il mesure la file d'attente.
+   */
+  workers: 2,
   fullyParallel: false,
   timeout: 60_000,
   expect: { timeout: 10_000 },
@@ -45,7 +70,25 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], launchOptions } }],
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"], launchOptions },
+      testIgnore: /bareme-gele\.spec\.ts/,
+    },
+    {
+      /**
+       * `bareme-gele` est SEUL à écrire une configuration globale — les ratios
+       * entre exercices. Il attend donc que tout le reste soit terminé :
+       * lancé en parallèle, il changerait le barème sous les pieds des autres,
+       * et l'échec tomberait n'importe où sauf ici.
+       */
+      name: "bareme",
+      use: { ...devices["Desktop Chrome"], launchOptions },
+      testMatch: /bareme-gele\.spec\.ts/,
+      dependencies: ["chromium"],
+    },
+  ],
   webServer: {
     command: `npx next start -p ${PORT}`,
     url: `http://127.0.0.1:${PORT}/cgu`,
