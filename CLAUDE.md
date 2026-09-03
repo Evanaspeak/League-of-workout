@@ -38,6 +38,31 @@ une ligne du plan est ambiguë, la réponse fait foi.
 Ce qui relève de la correction, de l'audit, de la mesure ou d'un garde de test
 ne figure PAS dans le plan : ça vit dans le journal, plus bas.
 
+## Ce qu'on lance avant de publier (IMPORTANT)
+
+**Pas les 203 parcours.** La CI les joue déjà à chaque poussée sur `main`
+(`.github/workflows/tests.yml`, travail « Parcours »), en parallèle du
+déploiement Vercel. Les rejouer en local avant chaque fusion, c'est payer
+quinze minutes deux fois — ce qui a été fait toute la journée du 3 septembre.
+
+Avant de publier :
+
+1. `npx tsc --noEmit` et `npx jest` — dix secondes, et c'est ce qui attrape le
+   plus ;
+2. **les parcours qui couvrent le changement**, choisis à la main. Un
+   changement de l'historique appelle `historique.spec.ts`, un changement de
+   détection appelle `detection-partie.spec.ts`. Trente secondes à quatre
+   minutes.
+
+La suite ENTIÈRE en local reste, pour ce qui touche une fondation — middleware,
+authentification, schéma Prisma, plomberie des langues, mise en page racine —
+là où une régression peut sortir n'importe où. C'est rare, et c'est justement
+ce qui la rend supportable.
+
+Si la CI casse après une fusion, on corrige : le retard est de quelques
+minutes, pas de quinze, et il ne se paie que quand quelque chose a
+effectivement cassé.
+
 ## Diagnostiquer, et ne pas deviner (IMPORTANT)
 
 Quand un test échoue pour une raison qu'on ne sait pas NOMMER, on instrumente
