@@ -23,7 +23,22 @@ export async function ouvrirCompte(
   const marque = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
   const compte = { pseudo: `${prefixe}${marque}`, email: `${prefixe.toLowerCase()}-${marque}@example.test` };
 
-  const ctx = await browser.newContext();
+  /**
+   * Une adresse par worker, pour le limiteur d'inscription.
+   *
+   * Il autorise cinq inscriptions par quart d'heure et par ADRESSE IP. Tous
+   * les workers sortent de la même machine : à quatre en parallèle, ils se
+   * bloquaient les uns les autres, et le symptôme — « le compte ne s'ouvre
+   * pas » — ne ressemble pas à sa cause. `getClientIp` lit `x-forwarded-for`
+   * quand l'en-tête de plateforme est absent, ce qui est le cas en local.
+   *
+   * Lue à l'exécution et non au chargement de la configuration : c'est
+   * Playwright qui pose cette variable dans chaque worker.
+   */
+  const worker = process.env.TEST_PARALLEL_INDEX ?? "0";
+  const ctx = await browser.newContext({
+    extraHTTPHeaders: { "x-forwarded-for": `10.0.0.${Number(worker) + 1}` },
+  });
   const page = await ctx.newPage();
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
