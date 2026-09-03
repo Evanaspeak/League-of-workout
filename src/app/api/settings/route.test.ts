@@ -182,6 +182,24 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(r.status).toBe(400);
   });
 
+  it("enregistre le mode fantôme", async () => {
+    const r = await put({ userPrefs: { fantome: true } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.fantome).toBe(true);
+  });
+
+  /**
+   * Refusé plutôt que ramené à `false` par une conversion. C'est un réglage de
+   * confidentialité : enregistrer « visible » pour quelqu'un qui vient de
+   * demander l'inverse est le seul résultat qu'on ne peut pas rattraper — il
+   * croit s'être caché, et il ne le vérifiera jamais.
+   */
+  it("refuse autre chose qu'un booléen pour le mode fantôme", async () => {
+    const r = await put({ userPrefs: { fantome: "oui" } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
   it("refuse une variante inconnue", async () => {
     const r = await put({ userPrefs: { variantePompes: "sur une main" } });
     expect(r.status).toBe(400);

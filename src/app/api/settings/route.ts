@@ -67,6 +67,7 @@ export async function PUT(req: Request) {
       langue?: string;
       fuseau?: string;
       bilanActif?: boolean;
+      fantome?: boolean;
       sessionAuto?: string;
     } = {};
 
@@ -137,6 +138,21 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
       }
       data.bilanActif = body.userPrefs.bilanActif;
+    }
+
+    /**
+     * Mode fantôme : participer aux classements sans y apparaître.
+     *
+     * Refusé si ce n'est pas un booléen, plutôt que ramené à `false` par une
+     * conversion. C'est un réglage de confidentialité : enregistrer « visible »
+     * pour quelqu'un qui vient de demander l'inverse est le seul résultat
+     * qu'on ne peut pas rattraper — il croit s'être caché.
+     */
+    if (body.userPrefs.fantome !== undefined) {
+      if (typeof body.userPrefs.fantome !== "boolean") {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.fantome = body.userPrefs.fantome;
     }
 
     // Fuseau horaire, pour savoir quelle heure il est chez la personne. Le

@@ -259,6 +259,10 @@ de texte libre demanderait quelqu'un pour le surveiller.
   ce serait une pompe que personne n'a faite. Le code se tire à la première
   lecture, l'adresse partagée ne porte pas de préfixe de langue, et un code
   fautif ne fait jamais échouer une inscription.
+- **Le mode fantôme**, dans les réglages, retire entièrement sa ligne des
+  classements de ses amis — pseudo, effort et retard compris. On continue de
+  voir le sien, soi-même compris. Le filtre est en base : écarter la ligne à
+  l'affichage la ferait quand même traverser le réseau.
 - **Le classement de la semaine** vit sur le même écran : sept jours
   glissants, sur l'effort PAYÉ, avec le retard de chacun. Ni les parties
   jouées ni le classement en jeu — perdre beaucoup ne fait pas monter. Les
@@ -542,7 +546,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1873 tests unitaires, 173 suites. Base et session doublées : aucune dépendance à
+1879 tests unitaires, 173 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -880,6 +884,48 @@ et la règle du propriétaire dit de publier dès qu'une modification touche
 exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
+
+### Le mode fantôme, et le trou que le classement avait ouvert
+Ligne 129, et elle referme quelque chose que j'avais ouvert le matin même. Le
+classement publie le pseudo, le volume payé et l'état de retard à TOUS ses
+amis, et la seule façon d'en sortir était de retirer l'ami — c'est-à-dire de
+casser le lien pour éviter ce qu'il montre. Je l'avais écrit dans le journal en
+livrant le classement ; c'est réparé.
+
+**Ce qui est caché, c'est la LIGNE ENTIÈRE, pas seulement le nom.** La réponse
+129 dit « sans y apparaître nommément », et masquer le seul pseudo serait du
+théâtre : à trois amis, une place et un volume désignent quelqu'un aussi
+sûrement qu'un pseudo.
+
+**Le filtre est en base, pas à l'affichage.** Écarter la ligne après coup la
+ferait quand même sortir de la base et traverser le réseau : elle serait dans
+l'onglet réseau de qui regarde, c'est-à-dire exactement là où quelqu'un a
+demandé à ne pas être. La différence ne se voit pas à l'écran, et c'est toute
+la différence.
+
+**On se voit toujours soi-même**, d'où le `OR` plutôt qu'un simple
+`fantome: false`. Un classement où l'on ne figure pas n'est pas son classement,
+et se cacher des autres n'est pas se cacher de soi.
+
+**Une valeur qui n'est pas un booléen est REFUSÉE**, jamais convertie. C'est un
+réglage de confidentialité : enregistrer « visible » pour quelqu'un qui vient
+de demander l'inverse est le seul résultat qu'on ne peut pas rattraper — il
+croit s'être caché, et il ne le vérifiera jamais. Même raison pour le retour en
+arrière à l'écran quand le serveur refuse.
+
+**La politique le DÉCRIT plutôt que de l'exempter.** C'est un réglage
+d'affichage, donc exemptable au sens strict ; c'est surtout un contrôle de
+confidentialité, et une politique qui ne le mentionne pas rate l'endroit exact
+où quelqu'un cherche à savoir s'il existe. Il figure sur la ligne des amis,
+avec ce qu'une amitié donne à voir.
+
+Six sabotages. **Le dernier est passé au vert, et c'était mon test qui était
+faux** : j'avais fait pointer le garde de politique sur « liste d'amis », le
+libellé de la LIGNE, plutôt que sur la phrase du mode fantôme. Il serait donc
+resté vert si la mention disparaissait — c'est-à-dire précisément ce qu'il
+prétendait garder. C'est le motif déjà vu deux fois aujourd'hui, sous une
+troisième forme : un test qui passe ne dit pas qu'il éprouve quelque chose. Six
+échecs après correction.
 
 ### Une partie refusée comptait quand même
 Signalé dans la foulée de la question en plein écran : « il faut même pas que

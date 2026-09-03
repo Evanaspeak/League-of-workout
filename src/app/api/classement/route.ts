@@ -55,10 +55,25 @@ export async function GET(req: Request) {
   const ids = [user.id, ...liens.map((l) => (l.demandeurId === user.id ? l.receveurId : l.demandeurId))];
 
   const [comptes, sommes] = await Promise.all([
-    // Les identifiants viennent de la requête filtrée juste au-dessus : ce
-    // sont les amis acceptés du demandeur, et personne d'autre.
+    /**
+     * Les identifiants viennent de la requête filtrée juste au-dessus : ce
+     * sont les amis acceptés du demandeur, et personne d'autre.
+     *
+     * **Le mode fantôme se filtre ICI**, à la lecture, et pas à l'affichage.
+     * Écarter la ligne après coup la ferait quand même sortir de la base et
+     * traverser le réseau : elle serait dans l'onglet réseau de qui regarde,
+     * c'est-à-dire exactement là où quelqu'un a demandé à ne pas être. La
+     * différence ne se voit pas à l'écran, et c'est toute la différence.
+     *
+     * `OR` plutôt qu'un simple `fantome: false` : on se voit TOUJOURS
+     * soi-même. Un classement où l'on ne figure pas n'est pas son classement,
+     * et se cacher des autres n'est pas se cacher de soi.
+     */
     prisma.user.findMany({
-      where: { id: { in: ids } },
+      where: {
+        id: { in: ids },
+        OR: [{ fantome: false }, { id: user.id }],
+      },
       select: { id: true, pseudo: true, detteDepuis: true, dettePointsDus: true },
     }),
     prisma.paiement.groupBy({

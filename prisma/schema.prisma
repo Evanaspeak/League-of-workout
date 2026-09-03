@@ -92,6 +92,21 @@ model User {
    * `Cascade` : si le parrain s'en va, le filleul reste — son compte n'a rien
    * à voir avec celui qui l'a invité.
    */
+  /**
+   * Mode fantôme : participer aux classements sans y apparaître.
+   *
+   * Réponse 129. Il ferme un trou que le classement a ouvert : celui-ci publie
+   * le pseudo et l'état de retard à tous ses amis, et la seule façon d'en
+   * sortir était de retirer l'ami — c'est-à-dire de casser le lien pour éviter
+   * ce qu'il montre.
+   *
+   * Ce qui est caché, c'est la LIGNE ENTIÈRE chez les autres, pas seulement le
+   * nom. Masquer le pseudo en laissant la ligne serait du théâtre : à trois
+   * amis, une place et un volume désignent quelqu'un aussi sûrement qu'un
+   * pseudo. On voit toujours son propre classement, soi-même compris.
+   */
+  fantome     Boolean @default(false)
+
   codeParrain String? @unique
   parrainId   String?
   parrain     User?   @relation("Parrainage", fields: [parrainId], references: [id], onDelete: SetNull)
