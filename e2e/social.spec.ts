@@ -37,7 +37,10 @@ async function ouvrirEcranAmis(
   await page.goto("/dashboard");
   await viderLesFenetres(page);
   await page.goto("/amis");
-  await expect(page.getByRole("heading", { name: /tes amis|your friends/i })).toBeVisible();
+  // Si le titre manque, on dit OÙ l'on a atterri : « élément introuvable » sur
+  // une page de connexion envoie chercher un défaut de l'écran des amis.
+  await expect(page.getByRole("heading", { name: /tes amis|your friends/i }), 
+    `écran des amis introuvable — page rendue : ${page.url()}`).toBeVisible();
   return { ctx, page };
 }
 

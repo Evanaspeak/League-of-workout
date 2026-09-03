@@ -38,6 +38,22 @@ une ligne du plan est ambiguë, la réponse fait foi.
 Ce qui relève de la correction, de l'audit, de la mesure ou d'un garde de test
 ne figure PAS dans le plan : ça vit dans le journal, plus bas.
 
+## Diagnostiquer, et ne pas deviner (IMPORTANT)
+
+Quand un test échoue pour une raison qu'on ne sait pas NOMMER, on instrumente
+avant la deuxième tentative. Pas trois hypothèses essayées à la suite : une
+sonde qui relève l'état réel — la console de la page, la réponse d'une route,
+le nombre d'abonnés à un canal.
+
+Ça s'est payé le 3 septembre : quatre hypothèses formulées et essayées, neuf
+minutes, contre une exécution du script de diagnostic qui a donné la cause du
+premier coup — `/api/settings` rendait la page de connexion, donc la question
+n'était jamais posée. Aucune des quatre hypothèses n'était la bonne.
+
+Le corollaire pour l'outillage : **une sonde se lance contre le serveur qui
+tourne déjà.** Reconstruire pour diagnostiquer coûte une minute et demie à
+chaque essai, et ne sert que si la SOURCE a changé.
+
 ## Travail sur une fenêtre longue (IMPORTANT)
 
 Quand l'utilisateur annonce qu'il s'absente pour une durée donnée — « je pars

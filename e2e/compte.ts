@@ -62,6 +62,23 @@ export async function ouvrirCompte(
     await ctx.request.post("/api/consentement", { data: { accepte: true } });
   }
 
+  /**
+   * La session est vérifiée AVANT de rendre l'état.
+   *
+   * Sans ce contrôle, un compte dont la connexion a échoué rend un état sans
+   * cookie, et tous les tests qui s'en servent échouent bien plus loin, sur
+   * « élément introuvable » — un symptôme qui ne ressemble en rien à sa cause.
+   * C'est ce qui vient d'arriver deux fois : une session morte, et neuf
+   * minutes passées à chercher ailleurs.
+   */
+  const sonde = await ctx.request.get("/api/user");
+  if (!sonde.ok()) {
+    throw new Error(
+      `ouvrirCompte(${prefixe}) : la session n'est pas établie — /api/user rend ${sonde.status()}. `
+      + "Le compte a peut-être été refusé (limiteur, pseudo pris) ou la connexion n'a pas abouti.",
+    );
+  }
+
   const etat = await ctx.storageState();
   await ctx.close();
   return { etat, compte };
