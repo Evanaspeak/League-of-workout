@@ -445,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1707 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
+1702 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
