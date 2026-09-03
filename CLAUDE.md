@@ -61,6 +61,35 @@ Procédure :
 Ce qui demande un arbitrage produit ne se décide pas seul : ça part dans les
 questions, pas dans le code.
 
+## Publier l'application de bureau (IMPORTANT)
+
+**Dès qu'une modification touche `desktop/`, on publie une version.** C'est une
+consigne du propriétaire du produit, et elle a sa raison : le site se déploie
+en quelques minutes, l'application non. Une correction qui reste dans le dépôt
+n'existe pour personne — et pire, elle crée un écart entre ce que le site
+attend du pont et ce que les copies installées savent faire.
+
+Procédure :
+1. incrémenter `desktop/package.json` (le correctif suffit : 0.9.9 → 0.9.10) ;
+2. si le pont gagne une méthode, écrire la version dans son commentaire
+   (`(0.9.10+)`) des DEUX côtés — `desktop/src/preload.js` et
+   `src/types/electron.d.ts` — et prévoir ce que fait la page quand elle
+   tourne devant une application plus ancienne ;
+3. merger sur `main` ;
+4. déclencher `Build Desktop App` (`workflow_dispatch`) sur `main`. La version
+   vient du fichier, pas d'une saisie : une valeur tapée à la main pouvait ne
+   pas correspondre à ce qui venait d'être compilé.
+
+**Les étiquettes git ne servent pas ici** : `git push --tags` échoue côté
+proxy. Le déclenchement se fait à la main, jamais par `desktop-v*`.
+
+**Ce que la page doit toujours prévoir** : quelqu'un qui n'a pas mis à jour.
+Une méthode absente du pont ne se voit qu'à l'exécution, sur SA machine — ni
+TypeScript ni les parcours navigateur ne peuvent le dire, puisque les tests
+posent un faux pont. Le repli se choisit donc à l'écriture, et il ne doit
+jamais être plus permissif que ce qu'on demandait : le repli d'un réglage qui
+dit « demande-moi » ne peut pas être « fais-le sans demander ».
+
 ## Versionnage des déploiements Vercel (IMPORTANT)
 À chaque mise en prod (merge sur `main`), nommer le **commit de merge** avec un
 préfixe de version incrémental `Vx — description` (V1, V2, V3…) pour que la
@@ -445,7 +474,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1707 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
+1702 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
