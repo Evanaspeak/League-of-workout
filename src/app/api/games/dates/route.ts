@@ -77,12 +77,31 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Aucune partie choisie" }, { status: 400 });
   }
 
-  await prisma.$transaction(parties.map((p) => prisma.game.update({
-    where: { id: p.id },
-    data: {
-      date: poserA ?? new Date(p.date.getTime() + minutes * 60_000),
-    },
-  })));
+  /**
+   * Une par une, sans transaction : le pilote HTTP de Neon les refuse, et
+   * c'est celui de la production. Voir `src/transactionsInterdites.test.ts`.
+   *
+   * Ce qu'on perd est réel et supportable ici : une panne à mi-parcours
+   * laisserait une partie des dates corrigées. C'est un outil de correction en
+   * masse, relançable, et son résultat se relit dans l'historique — à la
+   * différence d'un paiement, dont la perte ne se voit nulle part.
+   *
+   * Le nombre rendu est celui des dates RÉELLEMENT posées, pas celui des
+   * parties choisies : annoncer soixante corrections quand douze ont abouti
+   * serait pire que d'échouer franchement.
+   */
+  let corrigees = 0;
+  for (const p of parties) {
+    // `updateMany` et non `update` : le compte revient dans le `where`. La
+    // liste est déjà filtrée par la lecture au-dessus, mais une écriture qui
+    // porte elle-même son filtre est une garantie de plus, et c'est ce que le
+    // garde structurel attend de chaque requête.
+    const { count } = await prisma.game.updateMany({
+      where: { id: p.id, userId: user.id },
+      data: { date: poserA ?? new Date(p.date.getTime() + minutes * 60_000) },
+    });
+    corrigees += count;
+  }
 
-  return NextResponse.json({ corrigees: parties.length });
+  return NextResponse.json({ corrigees });
 }
