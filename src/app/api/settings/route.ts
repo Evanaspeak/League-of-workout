@@ -9,6 +9,7 @@ import { estAdmin } from "@/lib/admin";
 import { toVariante } from "@/lib/variantes";
 import { estLocale } from "@/lib/i18n/langues";
 import { estFuseauValide } from "@/lib/fuseau";
+import { PARTAGES, type Partage } from "@/lib/profilAmi";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -68,6 +69,7 @@ export async function PUT(req: Request) {
       fuseau?: string;
       bilanActif?: boolean;
       fantome?: boolean;
+      partageAmis?: string;
       sessionAuto?: string;
     } = {};
 
@@ -153,6 +155,22 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
       }
       data.fantome = body.userPrefs.fantome;
+    }
+
+    /**
+     * Ce qu'un ami a le droit de voir.
+     *
+     * Refusé si la valeur n'est pas prévue, plutôt que ramené au défaut : le
+     * défaut est le plus FERMÉ, donc une conversion silencieuse serait sûre —
+     * mais elle enregistrerait « total » pour quelqu'un qui vient de demander
+     * « détail », et il croirait avoir ouvert quand il a fermé. Un réglage
+     * qu'on ne peut pas vérifier doit dire quand il n'a pas pris.
+     */
+    if (body.userPrefs.partageAmis !== undefined) {
+      if (!PARTAGES.includes(body.userPrefs.partageAmis as Partage)) {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.partageAmis = body.userPrefs.partageAmis;
     }
 
     // Fuseau horaire, pour savoir quelle heure il est chez la personne. Le

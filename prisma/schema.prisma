@@ -107,6 +107,20 @@ model User {
    */
   fantome     Boolean @default(false)
 
+  /**
+   * Ce qu'un ami a le droit de voir : "total" ou "detail".
+   *
+   * Réponse 120 — « ce qu'il autorise ». La décision appartient à celui qu'on
+   * regarde, et le défaut est le plus FERMÉ : quelqu'un qui n'ouvre jamais ses
+   * réglages ne doit pas se mettre à partager davantage parce qu'on a ajouté
+   * une fonctionnalité.
+   *
+   * Indépendant du mode fantôme, qui ne parle que des CLASSEMENTS. Les deux se
+   * combinent : on peut être visible au classement et fermé sur le détail, ou
+   * l'inverse.
+   */
+  partageAmis String  @default("total")
+
   codeParrain String? @unique
   parrainId   String?
   parrain     User?   @relation("Parrainage", fields: [parrainId], references: [id], onDelete: SetNull)

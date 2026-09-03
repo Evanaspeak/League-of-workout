@@ -38,6 +38,18 @@ function lienInvitation(code: string): string {
   return `${origine}/beta?p=${code}`;
 }
 
+type Profil = {
+  partage: "total" | "detail";
+  pseudo: string;
+  points: number;
+  enRetard: boolean;
+  joursDeRetard: number;
+  parties?: number;
+  serie?: number;
+  meilleureSerie?: number;
+  jeuFavori?: string | null;
+};
+
 type Personne = { lien: string; id: string; pseudo: string };
 type Groupe = {
   id: string; nom: string; code: string; membres: number; proprietaire: boolean;
@@ -68,6 +80,16 @@ export function AmisClient() {
    */
   const [classement, setClassement] = useState<Classement | null>(null);
   const [parrainage, setParrainage] = useState<{ code: string | null; filleuls: number } | null>(null);
+  /**
+   * Le profil ouvert, s'il y en a un.
+   *
+   * Un seul à la fois : deux panneaux dépliés côte à côte sur une liste de
+   * cent amis donnent un écran qu'on ne parcourt plus. `null` pendant le
+   * chargement, `"erreur"` quand il n'a pas pu être lu — l'absence de réponse
+   * se dit, elle ne se confond pas avec un profil vide.
+   */
+  const [profilOuvert, setProfilOuvert] = useState<string | null>(null);
+  const [profil, setProfil] = useState<Profil | "erreur" | null>(null);
   const [echecChargement, setEchecChargement] = useState(false);
   /** Le geste en cours, par identifiant : un seul bouton s'éteint à la fois. */
   const [occupe, setOccupe] = useState<string | null>(null);
@@ -116,6 +138,27 @@ export function AmisClient() {
       // tableau juste. C'est la règle des trois mémoires de module.
     }
   }, []);
+
+  /**
+   * Ouvre le profil d'un ami, ou le referme.
+   *
+   * Rechargé à chaque ouverture plutôt que mis en cache : le réglage de
+   * partage d'en face peut avoir changé entre-temps, et montrer un détail
+   * qu'on n'autorise plus serait le pire moment pour servir une valeur
+   * périmée.
+   */
+  const ouvrirProfil = useCallback(async (id: string) => {
+    if (profilOuvert === id) { setProfilOuvert(null); setProfil(null); return; }
+    setProfilOuvert(id);
+    setProfil(null);
+    try {
+      const res = await fetch(`/api/amis/${id}/profil`);
+      if (!res.ok) throw new Error(String(res.status));
+      setProfil(await res.json());
+    } catch {
+      setProfil("erreur");
+    }
+  }, [profilOuvert]);
 
   const chargerParrainage = useCallback(async () => {
     try {
@@ -476,11 +519,54 @@ export function AmisClient() {
         ) : (
           <ul className="space-y-2" style={{ listStyle: "none", padding: 0 }}>
             {donnees.amis.map((p) => (
-              <li key={p.lien} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <span style={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}>{p.pseudo}</span>
-                {boutonRetrait(
-                  `retire-${p.lien}`, `amis/${p.lien}`,
-                  t.retirerConfirme(p.pseudo), t.retirer,
+              <li key={p.lien} className="space-y-2">
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                  <span style={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}>{p.pseudo}</span>
+                  <button
+                    type="button"
+                    className="lol-btn"
+                    aria-expanded={profilOuvert === p.id}
+                    onClick={() => ouvrirProfil(p.id)}
+                  >
+                    {t.voirProfil}
+                  </button>
+                  {boutonRetrait(
+                    `retire-${p.lien}`, `amis/${p.lien}`,
+                    t.retirerConfirme(p.pseudo), t.retirer,
+                  )}
+                </div>
+                {profilOuvert === p.id && (
+                  <div style={{
+                    fontSize: ".85rem", color: "var(--steel)",
+                    paddingLeft: 4, borderLeft: "2px solid rgba(152,162,176,0.25)",
+                  }}>
+                    {profil === null && <span role="status">{t.chargement}</span>}
+                    {profil === "erreur" && <span role="alert">{t.profilErreur}</span>}
+                    {profil && profil !== "erreur" && (
+                      <div className="space-y-1">
+                        <div>{t.effortPaye(profil.points)}</div>
+                        {profil.enRetard && (
+                          <div style={{ color: "var(--loss)" }}>{t.retardDepuis(profil.joursDeRetard)}</div>
+                        )}
+                        {profil.partage === "detail" ? (
+                          <>
+                            <div>{t.profilParties(profil.parties ?? 0)}</div>
+                            <div>
+                              {t.profilSerie(profil.serie ?? 0)} · {t.profilMeilleure(profil.meilleureSerie ?? 0)}
+                            </div>
+                            {profil.jeuFavori && (
+                              <div>{profil.jeuFavori} · {t.profilJeu}</div>
+                            )}
+                          </>
+                        ) : (
+                          /* Le dire plutôt que d'afficher un panneau vide :
+                             un écran qui ne montre rien sans expliquer
+                             pourquoi passe pour une panne. */
+                          <div>{t.profilFerme}</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </li>
             ))}
