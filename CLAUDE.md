@@ -110,13 +110,23 @@ a des machines pour absorber le travail libéré, et ça équilibre le découpag
 tronçons au passage : 101/100 au lieu de 141/60, Playwright répartissant alors
 ces tests un par un au lieu du fichier entier.
 
-**En CI, ce sont quatre travaux et non un**, parce que le dépôt est public et
-qu'aucune de ces minutes n'est facturée : deux tronçons de parcours,
-`bareme-gele` seul avec sa propre base — la protection redevient structurelle
-au lieu d'être un ordre d'exécution — et l'accessibilité à côté. Le prix à
-surveiller est la PRÉPARATION : à cinq travaux simultanés, `npm ci` est monté
-de dix-huit secondes à sept minutes, ce qui mangeait presque tout le gain. D'où
-les caches de `node_modules`, du navigateur et de la construction.
+**En CI, ce sont six travaux et non un**, parce que le dépôt est public et
+qu'aucune de ces minutes n'est facturée : quatre tronçons de parcours **d'un
+worker chacun**, `bareme-gele` seul avec sa propre base — la protection
+redevient structurelle au lieu d'être un ordre d'exécution — et l'accessibilité
+à côté.
+
+Un worker par runner, et c'est la leçon la plus chère de la série : à deux
+workers par runner, la CI a rendu l'échec d'août — `waitForURL` qui expire sur
+la CONNEXION — parce que les tests de langue devenus parallèles chargent des
+pages sans interruption pendant que bcrypt coût 12 attend son tour. On ne
+baisse pas le coût du haché, on ne rallonge pas le délai : on donne une machine
+entière à chaque worker.
+
+L'autre prix à surveiller est la PRÉPARATION : à cinq travaux simultanés,
+`npm ci` est monté de dix-huit secondes à sept minutes, ce qui mangeait presque
+tout le gain. D'où les caches de `node_modules`, du navigateur et de la
+construction.
 
 ## Lire la CI, et savoir qu'une étape ROUGE en SAUTE d'autres (IMPORTANT)
 
@@ -1012,6 +1022,34 @@ tant qu'on installe ; un cache de `node_modules` retrouvé saute le
 `node_modules`. L'échec qu'une seconde évite ici est de ceux qu'on ne
 comprend pas : des types de modèles absents sur une machine qui n'a rien
 changé.
+
+**Et le deuxième essai a rendu l'échec d'août, en CI cette fois.** Deux
+tronçons de deux workers : `waitForURL` expire sur la CONNEXION dans
+`bilan.spec.ts`, jamais sur ce que le test éprouvait. La cause se nomme
+maintenant — les tests de langue passés en mode parallèle font tourner en
+permanence des chargements de page rendus au serveur à côté des parcours qui
+ouvrent un compte, et le haché bcrypt coût 12 perd sa place dans la file.
+
+Deux réponses ont été écartées, et il vaut mieux dire pourquoi :
+
+- **baisser le coût du haché en test.** C'est un choix de production ; lui
+  donner un bouton, c'est accepter qu'une variable oubliée produise un jour
+  des hachés faibles en ligne. La règle du projet vaut ici : un repli ne peut
+  pas être plus permissif que ce qu'on demandait ;
+- **allonger le délai de connexion.** C'est la façon la plus sûre de rendre un
+  test muet, et ça ne réparerait rien — la file resterait aussi longue.
+
+La réponse est de donner une MACHINE ENTIÈRE à chaque worker : **quatre
+tronçons d'un worker chacun**. Un runner qui héberge un seul Chromium, un seul
+processus de test et le serveur Next ne sature plus, et la contention disparaît
+au lieu d'être arbitrée. En local il n'y a qu'une machine, donc deux workers y
+restent le compromis mesuré.
+
+Ce que ça apprend au-delà du cas : **paralléliser ne divise pas le temps, ça
+déplace le goulot.** Il est passé des tests à l'installation, puis de
+l'installation au processeur d'un runner. Chaque déplacement s'est vu à la
+mesure et à elle seule — aucun n'était visible dans le fichier qu'on venait
+d'écrire.
 
 ### Un fichier de test tenait 43 % de la suite, sur un seul worker
 `fullyParallel: false` enferme un FICHIER dans un worker : ses tests s'y
