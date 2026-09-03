@@ -29,7 +29,8 @@ export async function GET() {
 
   const [parties, paiements] = await Promise.all([
     prisma.game.findMany({
-      where: { userId: user.id, date: { gte: depuis } },
+      // Le bilan de saison est un résumé de ce qui a compté.
+      where: { userId: user.id, sansEnjeu: false, date: { gte: depuis } },
       select: { date: true, result: true, pompesCalculees: true, jeu: true, champion: true },
     }),
     prisma.paiement.findMany({

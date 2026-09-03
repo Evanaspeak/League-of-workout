@@ -289,6 +289,21 @@ model Game {
   // Coût en POINTS D'EFFORT (1 point = 1 pompe). Le nom est historique :
   // la quantité réellement affichée dépend de `exercice` ci-dessous.
   pompesCalculees     Int
+
+  /**
+   * Partie jouée SANS ENJEU : refusée à l'écran de chargement.
+   *
+   * Elle entre quand même dans l'historique — on a joué, la trace reste — mais
+   * elle ne coûte rien (`pompesCalculees` vaut zéro), n'alimente aucune dette,
+   * et sort de TOUT ce qui agrège : winrate, graphiques, paliers, bilan de
+   * saison, maîtrise du champion. Sans ce dernier point, une soirée refusée
+   * ferait quand même bouger les chiffres qu'on vient regarder.
+   *
+   * Ne pas l'enregistrer du tout était l'autre option, et c'est celle qu'on
+   * n'a pas prise : on joue cinq parties, l'application en montre deux, et
+   * rien n'explique l'écart — ni sur le moment, ni trois semaines plus tard.
+   */
+  sansEnjeu           Boolean  @default(false)
   // Exercice actif au moment où la partie a été enregistrée. Quand la dette se
   // partage entre plusieurs exercices, c'est le premier d'entre eux.
   exercice            String   @default("pompes")

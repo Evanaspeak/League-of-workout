@@ -33,6 +33,8 @@ type Game = {
   malusCalcule: number;
   surchargeCalculee: number;
   pompesCalculees: number;
+  /** Partie refusée à l'écran de chargement : elle est là, elle ne compte pas. */
+  sansEnjeu?: boolean;
   exercice?: ExerciceId;
   source: string;
   // ── Multi-jeu ── (absents des lignes créées avant l'arrivée des jeux)
@@ -84,6 +86,33 @@ type TexteResultat = {
  * clic ferait d'une frappe malheureuse une dette qu'on ne doit pas, sur la
  * ligne d'à côté.
  */
+/**
+ * L'annotation d'une partie sans enjeu.
+ *
+ * Écrite une seule fois et rendue aux trois endroits où une ligne s'affiche —
+ * la carte sur téléphone et les deux cellules du tableau. C'est la règle de cet
+ * écran : les deux présentations lisent la même préparation, pour qu'une
+ * correction faite d'un côté ne manque pas de l'autre.
+ *
+ * `title` porte l'explication, et le texte visible reste court : la place est
+ * comptée à côté d'un nom de champion, et une phrase entière y pousserait la
+ * ligne hors de l'écran sur un téléphone.
+ */
+function BadgeSansEnjeu({ t }: { t: { sansEnjeu: string; sansEnjeuAide: string } }) {
+  return (
+    <span
+      title={t.sansEnjeuAide}
+      style={{
+        fontSize: ".68rem", textTransform: "uppercase", letterSpacing: ".06em",
+        padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap",
+        border: "1px solid rgba(152,162,176,0.35)", color: "var(--steel)",
+      }}
+    >
+      {t.sansEnjeu}
+    </span>
+  );
+}
+
 function ResultatCell({ result, t, correction }: {
   result: string;
   t: TexteResultat;
@@ -554,6 +583,7 @@ export default function HistoryPage() {
                               {type === "temps"
                                 ? <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span>
                                 : <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />}
+                              {g.sansEnjeu && <BadgeSansEnjeu t={t} />}
                             </div>
 
                             {editingDateId === g.id ? (
@@ -765,6 +795,7 @@ export default function HistoryPage() {
                                   )}
                                   <td className="px-3 py-2 text-center font-bold">
                                     <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />
+                                    {g.sansEnjeu && <BadgeSansEnjeu t={t} />}
                                   </td>
                                 </>
                               )}
@@ -807,6 +838,8 @@ export default function HistoryPage() {
                                         </span>
                                       )}
                                       <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />
+                                      {g.sansEnjeu && <BadgeSansEnjeu t={t} />}
+                                    {g.sansEnjeu && <BadgeSansEnjeu t={t} />}
                                     </div>
                                   )}
                                 </td>

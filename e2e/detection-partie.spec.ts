@@ -66,7 +66,10 @@ async function nombreDeParties(ctx: import("@playwright/test").BrowserContext) {
   expect(res.status()).toBe(200);
   const corps = await res.json();
   const liste = Array.isArray(corps) ? corps : (corps.games ?? []);
-  return liste as Array<{ result: string; champion: string | null; role: string | null }>;
+  return liste as Array<{
+    result: string; champion: string | null; role: string | null;
+    sansEnjeu?: boolean; pompesCalculees?: number;
+  }>;
 }
 
 test("ouvrir un compte", async ({ browser }) => {
@@ -216,5 +219,49 @@ test("une partie que le serveur refuse le dit, au lieu de disparaître", async (
   const dit = (await page.evaluate(() => (window as unknown as { __dits: string[] }).__dits)).join(" ");
   expect(dit).toMatch(/Rôle inconnu/);
   expect((await nombreDeParties(ctx)).length).toBe(avant);
+  await ctx.close();
+});
+
+/**
+ * Une partie refusée à l'écran de chargement.
+ *
+ * Ce que les tests unitaires ne voient pas : que le refus SURVIT entre les
+ * deux composants. La question se pose au démarrage, l'enregistrement se fait
+ * à la fin, et la page peut se recharger entre les deux. Le souvenir passe par
+ * le stockage — trois endroits où il peut se perdre sans que rien ne le dise,
+ * puisqu'une partie sans enjeu s'enregistre exactement comme une autre.
+ */
+test("une partie refusée s'enregistre sans enjeu, et ne crée pas de dette", async ({ browser }) => {
+  const { ctx, page } = await ouvrirSurLApplication(browser);
+
+  // Le refus, tel que `DetectionSession` l'écrit.
+  await page.evaluate(() => {
+    localStorage.setItem("low_partie_sans_enjeu", JSON.stringify({ le: Date.now() }));
+  });
+
+  // Et le rechargement, qui est précisément ce que l'état React ne survivrait
+  // pas — c'est la raison pour laquelle le souvenir vit dans le stockage.
+  await page.reload();
+  await page.waitForFunction(
+    () => typeof (window as unknown as { __finPartie?: unknown }).__finPartie === "function",
+    null, { timeout: 30_000 },
+  );
+
+  await page.evaluate((p) => {
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p);
+  }, partie("D", { score: { kills: 1, deaths: 9, assists: 2, cs: 40, champion: "Zed" } }));
+
+  await expect.poll(
+    async () => (await nombreDeParties(ctx)).some((g) => g.champion === "Zed"),
+    { timeout: 20_000 },
+  ).toBe(true);
+  const ligne = (await nombreDeParties(ctx)).find((g) => g.champion === "Zed")!;
+  expect({ sansEnjeu: ligne.sansEnjeu, points: ligne.pompesCalculees })
+    .toEqual({ sansEnjeu: true, points: 0 });
+
+  // Le souvenir est consommé : la partie suivante compte normalement.
+  const reste = await page.evaluate(() => localStorage.getItem("low_partie_sans_enjeu"));
+  expect(reste).toBeNull();
+
   await ctx.close();
 });

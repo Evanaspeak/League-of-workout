@@ -47,6 +47,7 @@ export async function GET() {
       kills: true, deaths: true, assists: true, result: true,
       niveauCalcule: true, scoreCalcule: true, malusCalcule: true,
       surchargeCalculee: true, pompesCalculees: true, exercice: true,
+      sansEnjeu: true,
       source: true, jeu: true, typeJeu: true, dureeSec: true,
       placement: true, joueurs: true, repartition: true, variante: true,
       ratios: true,
@@ -173,7 +174,10 @@ export async function POST(req: Request) {
   let partiesAvant = 0;
   if (capacites.champions && body.champion && roleWeights?.maitriseActive) {
     partiesAvant = await prisma.game.count({
-      where: { userId: user.id, champion: body.champion },
+      // La maîtrise se gagne sur les parties qui comptent. Sans ce filtre, une
+      // soirée refusée ferait quand même monter la surcharge de maîtrise du
+      // champion — c'est-à-dire changerait le coût des parties suivantes.
+      where: { userId: user.id, sansEnjeu: false, champion: body.champion },
     });
   }
 
@@ -200,6 +204,20 @@ export async function POST(req: Request) {
       );
   // `exercice` reste le premier : il porte l'unité d'affichage par défaut.
   const exercice = selection[0];
+
+  /**
+   * Partie jouée SANS ENJEU : on a répondu « non » à l'écran de chargement.
+   *
+   * Elle s'enregistre quand même — on a joué, la trace reste — et elle ne
+   * coûte rien : ni points, ni dette, ni maîtrise, ni statistique. Ne pas
+   * l'enregistrer du tout était l'autre option ; celle-ci garde une soirée
+   * lisible, où l'on voit huit parties dont trois qui ne comptaient pas.
+   *
+   * Le drapeau vient du navigateur, comme le reste du corps. Il n'y a rien à
+   * en craindre : mentir ici ne rapporte rien, ça retire de la dette qu'on
+   * s'est soi-même donnée.
+   */
+  const sansEnjeu = body.sansEnjeu === true;
 
   // Annotation d'exécution recopiée du compte vers la partie. Elle tombe si
   // les pompes ne sont pas de l'effort : elle ne qualifie qu'elles.
@@ -241,9 +259,14 @@ export async function POST(req: Request) {
         surchargeCalculee: 0,
         scoreCalcule: scoringTemps.pointsFinaux,
         malusCalcule: 0,
-        pompesCalculees: scoringTemps.pointsFinaux,
+        // Zéro pour une partie sans enjeu : l'historique montre ce qu'elle a
+        // coûté, et elle n'a rien coûté. Garder le vrai chiffre ferait
+        // afficher une dette qu'on ne doit pas, sur l'écran qui existe pour
+        // dire ce qu'on doit.
+        pompesCalculees: sansEnjeu ? 0 : scoringTemps.pointsFinaux,
+        sansEnjeu,
         exercice,
-        repartition: ventilation(scoringTemps.pointsFinaux),
+        repartition: ventilation(sansEnjeu ? 0 : scoringTemps.pointsFinaux),
         ratios: ratiosDuJour,
         variante,
         jeu,
@@ -255,7 +278,9 @@ export async function POST(req: Request) {
       },
     });
 
-    const dus = await accumulerDette(user.id, repartirPoints(scoringTemps.pointsFinaux, selection));
+    const dus = sansEnjeu
+      ? null
+      : await accumulerDette(user.id, repartirPoints(scoringTemps.pointsFinaux, selection));
     return NextResponse.json({
       game,
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
@@ -376,11 +401,12 @@ export async function POST(req: Request) {
       surchargeCalculee: scoring.surcharge,
       scoreCalcule: scoring.scoreBase,
       malusCalcule: scoring.malus,
-      pompesCalculees: scoring.pompesFinales,
+      pompesCalculees: sansEnjeu ? 0 : scoring.pompesFinales,
+      sansEnjeu,
       // Fige les exercices retenus : l'historique reste fidèle même si la
       // sélection change plus tard.
       exercice,
-      repartition: ventilation(scoring.pompesFinales),
+      repartition: ventilation(sansEnjeu ? 0 : scoring.pompesFinales),
       ratios: ratiosDuJour,
       variante,
       jeu,
@@ -403,7 +429,9 @@ export async function POST(req: Request) {
     },
   });
 
-  const dus = await accumulerDette(user.id, repartirPoints(scoring.pompesFinales, selection));
+  const dus = sansEnjeu
+    ? null
+    : await accumulerDette(user.id, repartirPoints(scoring.pompesFinales, selection));
   return NextResponse.json({
     game,
     scoring,

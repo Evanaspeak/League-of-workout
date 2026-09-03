@@ -6,6 +6,7 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import type { ScoreDirect } from "@/types/electron";
 import { ecrire, lire } from "@/lib/stockage";
+import { estSansEnjeu, oublierSansEnjeu } from "@/lib/sansEnjeu";
 
 /** Rôle retenu quand le jeu ne le dit pas : celui de la dernière saisie. */
 export const ROLE_DEFAUT = "Jungle";
@@ -86,6 +87,17 @@ export function PartieDetectee() {
       // regardait un objet global que le module ne lit plus.
       const role = contexte?.role || lire("lastRole") || ROLE_DEFAUT;
       if (contexte?.role) ecrire("lastRole", contexte.role);
+      /**
+       * La partie avait-elle été refusée à l'écran de chargement ?
+       *
+       * Lu ici et pas à l'envoi : le souvenir est consommé par CETTE partie,
+       * et le laisser traîner ferait passer la suivante pour refusée si un
+       * démarrage se perdait. Il s'efface donc dans la foulée, avant même de
+       * savoir si l'enregistrement aboutit — une partie refusée reste refusée
+       * même quand le serveur ne répond pas.
+       */
+      const sansEnjeu = estSansEnjeu();
+      oublierSansEnjeu();
       try {
         const res = await fetch("/api/games", {
           method: "POST",
@@ -93,6 +105,7 @@ export function PartieDetectee() {
           body: JSON.stringify({
             jeu: "League of Legends",
             typeJeu: "parties",
+            sansEnjeu,
             role,
             champion: score.champion ?? undefined,
             kills: score.kills,

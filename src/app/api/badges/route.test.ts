@@ -32,7 +32,9 @@ it("refuse sans session", async () => {
 
 it("ne compte que les parties et les paiements du demandeur", async () => {
   await GET();
-  expect(p.game.aggregate.mock.calls[0][0].where).toEqual({ userId: "u3" });
+  // Les parties sans enjeu sortent des paliers : elles ne coûtent rien, mais
+  // leur NOMBRE ferait avancer les paliers qui comptent des parties.
+  expect(p.game.aggregate.mock.calls[0][0].where).toEqual({ userId: "u3", sansEnjeu: false });
   expect(p.paiement.findMany.mock.calls[0][0].where).toEqual({ userId: "u3" });
 });
 

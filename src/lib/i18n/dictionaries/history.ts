@@ -1,5 +1,7 @@
 export const history = {
   fr: {
+    sansEnjeu: "sans enjeu",
+    sansEnjeuAide: "Session refusée au lancement : cette partie ne coûte rien et ne compte dans aucune statistique.",
     legendeTableau: "Toutes les activités enregistrées, la plus récente en premier",
     pageTitle: "HISTORIQUE",
     aramTitle: "L'ARAM du chaos n'apparaît pas ici.",
@@ -99,6 +101,8 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   en: {
+    sansEnjeu: "no stakes",
+    sansEnjeuAide: "Session declined at launch: this game costs nothing and counts in no statistic.",
     legendeTableau: "Every logged activity, most recent first",
     pageTitle: "HISTORY",
     aramTitle: "Chaos ARAM doesn't show up here.",
@@ -197,6 +201,8 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   es: {
+    sansEnjeu: "sin apuesta",
+    sansEnjeuAide: "Sesión rechazada al iniciar: esta partida no cuesta nada y no cuenta en ninguna estadística.",
     legendeTableau: "Todas las actividades registradas, la más reciente primero",
     pageTitle: "HISTORIAL",
     aramTitle: "El ARAM del caos no aparece aquí.",
@@ -295,6 +301,8 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   de: {
+    sansEnjeu: "ohne Einsatz",
+    sansEnjeuAide: "Sitzung beim Start abgelehnt: diese Partie kostet nichts und zählt in keiner Statistik.",
     legendeTableau: "Alle eingetragenen Aktivitäten, die neueste zuerst",
     pageTitle: "VERLAUF",
     aramTitle: "Das Chaos-ARAM taucht hier nicht auf.",
@@ -393,6 +401,8 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   zh: {
+    sansEnjeu: "不计入",
+    sansEnjeuAide: "开局时拒绝了本次记录：这局不产生任何负担，也不计入任何统计。",
     legendeTableau: "全部已记录的活动，最新的排在最前",
     pageTitle: "历史记录",
     aramTitle: "混乱大乱斗不会出现在这里。",
@@ -491,6 +501,8 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   ja: {
+    sansEnjeu: "カウントなし",
+    sansEnjeuAide: "開始時にセッションを断ったため、この試合は負担にならず、統計にも入りません。",
     legendeTableau: "記録したすべてのアクティビティ、新しい順",
     pageTitle: "履歴",
     aramTitle: "カオス ARAM はここには出ません。",

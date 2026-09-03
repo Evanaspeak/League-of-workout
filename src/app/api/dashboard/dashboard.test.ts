@@ -63,10 +63,15 @@ describe("GET /api/dashboard", () => {
     expect(game.findMany).not.toHaveBeenCalled();
   });
 
-  it("ne lit que les parties du demandeur", async () => {
+  it("ne lit que les parties du demandeur, et pas celles sans enjeu", async () => {
     session.mockResolvedValue(utilisateur({ id: "u42" }));
     await dash();
-    expect(game.findMany.mock.calls[0][0].where).toEqual({ userId: "u42" });
+    /**
+     * Deux conditions et pas une : le compte, et l'enjeu. Cette route porte le
+     * winrate, les champions et tous les graphiques — une soirée refusée à
+     * l'écran de chargement les ferait bouger sans avoir rien coûté.
+     */
+    expect(game.findMany.mock.calls[0][0].where).toEqual({ userId: "u42", sansEnjeu: false });
   });
 
   it("rend le test de force du demandeur, et rien d'autre", async () => {
