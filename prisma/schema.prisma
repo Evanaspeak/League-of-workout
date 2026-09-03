@@ -151,6 +151,19 @@ model User {
   dettePointsDus     Int      @default(0)
   // Seuil de rappel en SECONDES d'effort (300 = 5 min). 0 = désactivé.
   rappelSeuilSec     Int      @default(300)
+  /**
+   * Que faire quand l'application détecte qu'un jeu vient de démarrer.
+   *
+   *   "demander" → la question s'affiche par-dessus l'écran de chargement
+   *   "auto"     → la session démarre seule, comme avant
+   *   "jamais"   → rien, on lance la session à la main
+   *
+   * Le défaut est « demander » : une session qui se lance sans qu'on l'ait
+   * voulu est une surprise, et le propriétaire du produit l'a signalée comme
+   * telle. L'écran de chargement est le seul instant où l'on sait qu'une
+   * partie commence et où l'on n'est pas encore en jeu.
+   */
+  sessionAuto        String   @default("demander")
   // Volume d'effort quotidien au-delà duquel l'application prévient, en points.
   // Ce n'est pas un plafond dur : la dette continue de se calculer, on signale
   // seulement qu'on a dépassé ce qu'on s'était fixé pour la journée.

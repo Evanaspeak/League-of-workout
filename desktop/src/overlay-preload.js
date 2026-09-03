@@ -21,4 +21,18 @@ contextBridge.exposeInMainWorld("overlayLOW", {
     ipcRenderer.on("overlay:placement", handler);
     return () => ipcRenderer.removeListener("overlay:placement", handler);
   },
+  /**
+   * Une question posée par-dessus le jeu, avec ses deux réponses.
+   *
+   * Les mots viennent de la PAGE et non d'ici : c'est elle qui connaît le
+   * compte et ses six langues. La coquille ne fait qu'afficher et rendre la
+   * réponse. `null` ferme la question sans réponse.
+   */
+  onQuestion: (callback) => {
+    const handler = (_event, q) => callback(q);
+    ipcRenderer.on("overlay:question", handler);
+    return () => ipcRenderer.removeListener("overlay:question", handler);
+  },
+  /** La réponse, renvoyée au processus principal qui la relaie à la page. */
+  repondre: (id, oui) => ipcRenderer.send("overlay:reponse", { id, oui: Boolean(oui) }),
 });

@@ -29,6 +29,16 @@ const HORS_POLITIQUE: Record<string, string> = {
   createdAt: "horodatage de création du compte",
   betaRank: "rang d'inscription, dérivé de la date",
   exercice: "réglage d'affichage (ancienne version)",
+  /**
+   * Conduite au démarrage d'un jeu : demander, lancer seul, ne rien faire.
+   *
+   * C'est un réglage de comportement de l'application, pas une donnée sur la
+   * personne : il ne sort jamais du compte, ne part dans aucun courriel et ne
+   * dit rien de ce qu'elle fait. La langue et le fuseau, eux, ont dû entrer
+   * dans la politique parce qu'ils servent HORS de l'Application — à écrire un
+   * courriel, à choisir l'heure d'un envoi. Ce n'est pas le cas ici.
+   */
+  sessionAuto: "réglage de comportement de l'application",
   exercices: "réglage : exercices choisis pour payer",
   rappelSeuilPoints: "réglage de rappel (ancienne version)",
   rappelSeuilSec: "réglage de rappel",

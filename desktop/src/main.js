@@ -763,6 +763,33 @@ ipcMain.handle("overlay:placement", (_e, arg) => {
 });
 
 /**
+ * Une question posée par-dessus le jeu, et sa réponse.
+ *
+ * Les mots viennent de la page : elle seule connaît le compte, ses réglages et
+ * ses six langues. La coquille affiche et rend la réponse — c'est la même
+ * répartition que pour la détection de partie, où « l'application se contente
+ * de dire qu'un jeu vient de démarrer ».
+ *
+ * Rend `null` quand personne n'a répondu avant la fin du délai. La page doit
+ * traiter ce cas comme un refus : ne rien lancer.
+ */
+ipcMain.handle("overlay:question", (_e, { texte, oui, non, delaiMs } = {}) =>
+  overlay.poserQuestion({
+    texte: String(texte || ""),
+    oui: String(oui || ""),
+    non: String(non || ""),
+    // Borné : une question qui resterait des heures par-dessus un jeu à cause
+    // d'une valeur absurde vaudrait mieux ne jamais avoir été posée.
+    delaiMs: Number.isFinite(Number(delaiMs))
+      ? Math.min(120_000, Math.max(5_000, Number(delaiMs)))
+      : undefined,
+  }));
+
+ipcMain.on("overlay:reponse", (_e, { id, oui } = {}) => {
+  overlay.reponseQuestion(id, oui);
+});
+
+/**
  * Rappel affiché par le système. Le site s'appuie sur le push web, qui exige un
  * abonnement auprès du service de notification du navigateur ; Electron n'en a
  * pas, et l'abonnement échouait sans que rien ne le dise. Ici la notification

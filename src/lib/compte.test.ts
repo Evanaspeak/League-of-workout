@@ -53,6 +53,9 @@ const PART_AU_NAVIGATEUR = new Set([
   "langue", "bilanActif", "bilanLe", "relanceLe", "rappelLe", "fuseau",
   "variantePompes", "exercice", "exercices",
   "rappelSeuilPoints", "rappelSeuilSec", "plafondQuotidien",
+  // La conduite au démarrage d'un jeu : la page en a besoin pour savoir s'il
+  // faut poser la question, la lancer seule, ou ne rien faire.
+  "sessionAuto",
   "pompesMax", "pompesMaxLe",
   "betaRank", "createdAt",
 ]);

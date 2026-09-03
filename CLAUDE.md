@@ -445,7 +445,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1693 tests unitaires, 160 suites. Base et session doublées : aucune dépendance à
+1707 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -743,6 +743,62 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La session se lançait toute seule, et personne ne l'avait demandé
+Signalé en même temps que le reste : « je viens de remarquer que la session se
+lance toute seule dès que je lance une partie. Le but c'est pas ça. »
+
+Ce n'est pas une petite chose. Une session ouverte sonde Riot, chronomètre les
+jeux comptés au temps, et décide donc de ce qui entrera dans la dette. La
+démarrer à la place de quelqu'un est une surprise sur un compteur qui fait
+faire des pompes.
+
+**Où la question se pose.** L'écran de chargement est le seul instant où l'on
+sait qu'une partie commence et où l'on n'est pas encore en jeu. C'est aussi le
+moment où l'application détecte le processus du jeu — donc le même événement
+qu'avant, avec une question à la place d'un démarrage.
+
+**Une question générique, écrite par la PAGE.** `overlayDemander({ texte, oui,
+non })` : la coquille Electron affiche et rend la réponse, elle n'écrit rien.
+C'est la même répartition que pour la détection de partie — « l'application se
+contente de dire qu'un jeu vient de démarrer » — et c'est la seule qui tienne,
+puisque la page seule connaît le compte et ses six langues. La coquille s'était
+déjà fait prendre à parler français à tout le monde.
+
+**Ce que la pastille doit rendre en repartant.** Elle cesse de laisser passer
+les clics le temps de la question, comme en mode placement. Si elle ne les
+laissait pas repasser ensuite, elle intercepterait la souris pendant toute la
+partie — pire que pas de pastille du tout. Sauf en mode placement, où quelqu'un
+est justement en train de la déplacer : lui reprendre la main au milieu serait
+la deuxième façon de casser la même chose.
+
+**Sans réponse, on ne lance rien.** La question se ferme d'elle-même après
+quarante-cinq secondes : elle paraît sur l'écran de chargement, et si personne
+n'a cliqué quand la partie commence, on ne va pas retenir quelqu'un qui joue.
+`null` se traite comme un refus, jamais comme un accord — c'est écrit des deux
+côtés du pont.
+
+**Trois conduites, et le défaut est de demander** (`User.sessionAuto`) :
+demander, lancer seul, ne rien faire. Une valeur inconnue retombe sur
+« demander » côté lecture, mais la route de réglages la REFUSE côté écriture :
+« demander » et « auto » ne se ressemblent pas, et enregistrer l'un pour
+l'autre en silence rendrait le réglage inutile.
+
+Une application antérieure à 0.9.10 ne sait pas poser la question : on ne lance
+alors rien. Le repli d'un réglage qui dit « demande-moi » ne peut pas être
+« fais-le sans demander ».
+
+Six sabotages, six échecs — dont les deux qui comptent le plus : la fenêtre qui
+ne rend pas la souris, et la question qui ne se ferme jamais.
+
+**Et deux gardes ont mordu sur la colonne ajoutée**, ce qui est leur travail :
+`compte.test.ts` a exigé qu'on range `sessionAuto` d'un côté ou de l'autre de
+ce qui sort du compte, et `politiqueComplete.test.ts` qu'on la décrive dans la
+politique de confidentialité ou qu'on dise pourquoi elle en est absente. Elle
+en est absente parce que c'est un réglage de COMPORTEMENT de l'application : il
+ne sort jamais du compte, ne part dans aucun courriel, et ne dit rien de ce que
+la personne fait. La langue et le fuseau, eux, avaient dû y entrer parce qu'ils
+servent hors de l'Application.
 
 ### Aucun paiement n'a jamais abouti en production, et 1689 tests passaient
 Le message posé la veille sur la pastille a donné la réponse en un mot : « Le

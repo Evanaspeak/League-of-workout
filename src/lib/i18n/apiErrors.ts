@@ -272,6 +272,10 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "No time-based exercise selected", es: "No hay ningún ejercicio por tiempo seleccionado", de: "Keine zeitbasierte Übung ausgewählt",
     zh: "没有选择按时间计的运动", ja: "時間で数える種目が選ばれていません",
   },
+  "Conduite inconnue": {
+    en: "Unknown behaviour", es: "Conducta desconocida", de: "Unbekanntes Verhalten",
+    zh: "未知的行为", ja: "不明な動作です",
+  },
   "Exercice inconnu": {
     en: "Unknown exercise", es: "Ejercicio desconocido", de: "Unbekannte Übung",
     zh: "未知的运动", ja: "不明な種目です",

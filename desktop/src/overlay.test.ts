@@ -395,3 +395,77 @@ describe("les raccourcis", () => {
     avertir.mockRestore();
   });
 });
+
+/**
+ * La question posée par-dessus l'écran de chargement.
+ *
+ * C'est le seul moment où la pastille cesse de laisser passer les clics en
+ * dehors du mode placement, et c'est ce qui peut mal tourner : une pastille qui
+ * garderait la souris pendant une partie est pire que pas de pastille du tout.
+ *
+ * Les mots viennent de la page — la coquille ne fait qu'afficher — et une
+ * question sans réponse ne lance rien : quelqu'un qui joue ne se retient pas.
+ */
+describe("la question par-dessus le jeu", () => {
+  it("rend la fenêtre cliquable, puis lui reprend la souris", async () => {
+    const promesse = overlay.poserQuestion({ texte: "Lancer ?", oui: "Oui", non: "Non" });
+    expect(fenetre().ignoreSouris).toBe(false);
+    expect(fenetre().focusable).toBe(true);
+
+    const envoi = fenetre().envois.filter(([c]) => c === "overlay:question").pop()!;
+    overlay.reponseQuestion((envoi[1] as { id: number }).id, true);
+    await expect(promesse).resolves.toBe(true);
+
+    expect(fenetre().ignoreSouris).toBe(true);
+    expect(fenetre().focusable).toBe(false);
+  });
+
+  it("porte les mots qu'on lui donne, et rien d'autre", () => {
+    overlay.poserQuestion({ texte: "League of Legends démarre.", oui: "Lancer", non: "Non merci" });
+    const q = fenetre().envois.filter(([c]) => c === "overlay:question").pop()![1] as Record<string, string>;
+    expect(q.texte).toBe("League of Legends démarre.");
+    expect(q.oui).toBe("Lancer");
+    expect(q.non).toBe("Non merci");
+  });
+
+  it("rend null quand personne ne répond", async () => {
+    // La partie a commencé : on ne va pas retenir quelqu'un qui joue. La page
+    // traite ce cas comme un refus.
+    const promesse = overlay.poserQuestion({ texte: "?", oui: "o", non: "n", delaiMs: 1000 });
+    jest.advanceTimersByTime(1001);
+    await expect(promesse).resolves.toBeNull();
+    expect(fenetre().ignoreSouris).toBe(true);
+  });
+
+  it("ignore une réponse qui ne concerne pas la question en cours", async () => {
+    // Un identifiant périmé arrive quand une question en a chassé une autre.
+    // Le traiter reviendrait à lancer une session sur un clic destiné à une
+    // question qui n'est plus à l'écran.
+    const promesse = overlay.poserQuestion({ texte: "?", oui: "o", non: "n", delaiMs: 1000 });
+    overlay.reponseQuestion(9999, true);
+    jest.advanceTimersByTime(1001);
+    await expect(promesse).resolves.toBeNull();
+  });
+
+  it("une question chasse la précédente, qui se ferme sans réponse", async () => {
+    const premiere = overlay.poserQuestion({ texte: "1", oui: "o", non: "n", delaiMs: 10_000 });
+    const seconde = overlay.poserQuestion({ texte: "2", oui: "o", non: "n", delaiMs: 10_000 });
+    await expect(premiere).resolves.toBeNull();
+
+    const envoi = fenetre().envois.filter(([c]) => c === "overlay:question")
+      .map(([, q]) => q).filter(Boolean).pop() as { id: number };
+    overlay.reponseQuestion(envoi.id, false);
+    await expect(seconde).resolves.toBe(false);
+  });
+
+  it("ne reprend pas la souris à quelqu'un qui déplace la pastille", async () => {
+    // Le mode placement rend la fenêtre attrapable exprès. Une question qui se
+    // ferme ne doit pas lui retirer la main au milieu d'un déplacement.
+    overlay.definirPlacement(true);
+    const promesse = overlay.poserQuestion({ texte: "?", oui: "o", non: "n", delaiMs: 500 });
+    jest.advanceTimersByTime(501);
+    await promesse;
+    expect(fenetre().ignoreSouris).toBe(false);
+    expect(fenetre().focusable).toBe(true);
+  });
+});

@@ -4,6 +4,7 @@ import { chargerBareme, oublierBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { comptePublic } from "@/lib/compte";
 import { isExerciceId, toExerciceIds } from "@/lib/exercices";
+import { toConduiteSession } from "@/lib/sessionAuto";
 import { estAdmin } from "@/lib/admin";
 import { toVariante } from "@/lib/variantes";
 import { estLocale } from "@/lib/i18n/langues";
@@ -66,7 +67,22 @@ export async function PUT(req: Request) {
       langue?: string;
       fuseau?: string;
       bilanActif?: boolean;
+      sessionAuto?: string;
     } = {};
+
+    /**
+     * Ce qui se passe quand un jeu démarre : demander, lancer seul, ne rien
+     * faire. Une valeur inconnue se REFUSE plutôt que de retomber sur le
+     * défaut : « demander » et « auto » ne se ressemblent pas, et enregistrer
+     * l'un pour l'autre en silence rendrait le réglage inutile.
+     */
+    if (body.userPrefs.sessionAuto !== undefined) {
+      const brut = body.userPrefs.sessionAuto;
+      if (toConduiteSession(brut) !== brut) {
+        return NextResponse.json({ error: "Conduite inconnue" }, { status: 400 });
+      }
+      data.sessionAuto = brut;
+    }
 
     if (body.userPrefs.exercices !== undefined) {
       const bruts = body.userPrefs.exercices;

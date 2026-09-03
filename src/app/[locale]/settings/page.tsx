@@ -22,6 +22,7 @@ import { ReglageNotifications } from "@/components/ReglageNotifications";
 import { ReglageJeux } from "@/components/ReglageJeux";
 import { Icone } from "@/components/Icone";
 import { ReglageApplication } from "@/components/ReglageApplication";
+import { ReglageSessionAuto } from "@/components/ReglageSessionAuto";
 import { ReglageDetection } from "@/components/ReglageDetection";
 import { TestPompes } from "@/components/TestPompes";
 import { useValeurClient } from "@/lib/valeurClient";
@@ -684,6 +685,7 @@ export default function SettingsPage() {
       {rubrique === "application" && (
         <div className="lol-panel p-5 space-y-4">
           <ReglageDetection />
+          <ReglageSessionAuto />
           <ReglageApplication />
         </div>
       )}
