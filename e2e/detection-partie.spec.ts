@@ -32,6 +32,24 @@ const poserPont = () => {
       w.__finPartie = rappel;
       return () => {};
     },
+    /**
+     * Les phases du lanceur : c'est par là que la question arrive à CHAQUE
+     * partie de League, et non une seule fois au lancement du jeu.
+     *
+     * Une LISTE d'abonnés, et non un seul : deux composants écoutent ce canal
+     * — la détection de session et le calcul de dette en direct. Un emplacement
+     * unique gardait le dernier inscrit, donc le test poussait ses phases au
+     * mauvais composant et rien ne se passait. Le vrai pont diffuse à tous.
+     */
+    onPhase: (rappel: (p: unknown) => void) => {
+      const w2 = w as unknown as { __phases?: Array<(p: unknown) => void> };
+      w2.__phases = [...(w2.__phases ?? []), rappel];
+      return () => {};
+    },
+    /** La question, et la réponse qu'on lui fait dire depuis le test. */
+    overlayDemander: async () =>
+      (w as unknown as { __reponse?: boolean | null }).__reponse ?? null,
+    overlayMasquerPartie: async () => true,
     notifier: (titre: string, corps: string) => { w.__dits!.push(`${titre} | ${corps}`); },
   };
 };
@@ -262,6 +280,85 @@ test("une partie refusée s'enregistre sans enjeu, et ne crée pas de dette", as
   // Le souvenir est consommé : la partie suivante compte normalement.
   const reste = await page.evaluate(() => localStorage.getItem("low_partie_sans_enjeu"));
   expect(reste).toBeNull();
+
+  await ctx.close();
+});
+
+/**
+ * La question est posée à CHAQUE partie de League, et pas au lancement du jeu.
+ *
+ * `onJeuDetecte` regarde la liste des processus : il se déclenche quand League
+ * s'ouvre, une fois, et plus jamais tant que le client tourne. On enchaînait
+ * donc trois parties avec une seule question — un refus ne portait que sur la
+ * première, et les deux suivantes s'enregistraient normalement. C'est ce qui a
+ * été signalé, et aucun test ne l'aurait vu : celui du sans-enjeu posait la
+ * marque à la main au lieu de cliquer « non ».
+ */
+test("refuser vaut pour la partie refusée, et pour chacune séparément", async ({ browser }) => {
+  /**
+   * Un compte à lui : les huit tests qui précèdent partagent celui du fichier,
+   * et sa session ne répondait plus quand celui-ci s'exécutait — `/api/settings`
+   * rendait la page de connexion, donc la question n'était jamais posée. Un
+   * test qui dépend de l'état laissé par ceux d'avant échoue pour une raison
+   * qui n'a rien à voir avec ce qu'il éprouve.
+   */
+  const propre = (await ouvrirCompte(browser, "Phase")).etat;
+  const ctx = await browser.newContext({ storageState: propre });
+  const page = await ctx.newPage();
+  await page.addInitScript(poserPont);
+  await page.goto("/dashboard");
+  await page.waitForFunction(
+    () => ((window as unknown as { __phases?: unknown[] }).__phases ?? []).length >= 2,
+    null, { timeout: 30_000 },
+  );
+
+  const phase = (p: string) => page.evaluate((valeur) => {
+    for (const f of (window as unknown as { __phases: Array<(x: unknown) => void> }).__phases) {
+      f({ phase: valeur, file: null, role: "Mid" });
+    }
+  }, p);
+
+  const repondre = (v: boolean | null) => page.evaluate((valeur) => {
+    (window as unknown as { __reponse: boolean | null }).__reponse = valeur;
+  }, v);
+
+  // Première partie : refusée.
+  await repondre(false);
+  await phase("ChampSelect");
+  await phase("GameStart");
+  await page.waitForFunction(
+    () => localStorage.getItem("low_partie_sans_enjeu") !== null,
+    null, { timeout: 15_000 },
+  );
+  await page.evaluate((p) => {
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p);
+  }, partie("D", { score: { kills: 1, deaths: 9, assists: 2, cs: 40, champion: "Zed" } }));
+
+  await expect.poll(
+    async () => (await nombreDeParties(ctx)).find((g) => g.champion === "Zed")?.sansEnjeu,
+    { timeout: 20_000 },
+  ).toBe(true);
+
+  /**
+   * Seconde partie, SANS relancer le jeu : c'est le cas qui a été signalé. La
+   * phase repasse par le menu puis revient en partie ; la question doit être
+   * reposée, et une réponse différente doit produire un résultat différent.
+   */
+  await repondre(true);
+  await phase("None");
+  await phase("GameStart");
+  await page.waitForFunction(
+    () => localStorage.getItem("low_partie_sans_enjeu") === null,
+    null, { timeout: 15_000 },
+  );
+  await page.evaluate((p) => {
+    (window as unknown as { __finPartie: (x: unknown) => void }).__finPartie(p);
+  }, partie("D", { score: { kills: 3, deaths: 4, assists: 5, cs: 90, champion: "Jinx" } }));
+
+  await expect.poll(
+    async () => (await nombreDeParties(ctx)).find((g) => g.champion === "Jinx")?.sansEnjeu,
+    { timeout: 20_000 },
+  ).toBe(false);
 
   await ctx.close();
 });

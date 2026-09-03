@@ -91,6 +91,25 @@ const ATTENDU: Record<string, RegExp> = {
   amitiesRecues: /liste d'amis/i,
   groupes: /groupes rejoints/i,
   /**
+   * Le mode fantôme se décrit plutôt qu'il ne s'exempte.
+   *
+   * C'est un réglage d'affichage, donc exemptable au sens strict — mais c'est
+   * surtout un CONTRÔLE de confidentialité, et une politique qui ne le
+   * mentionne pas rate l'endroit exact où quelqu'un cherche à savoir s'il
+   * existe. Il figure sur la ligne des amis, avec ce qu'une amitié donne à
+   * voir : c'est là qu'on se pose la question.
+   */
+  /**
+   * Le motif désigne la PHRASE sur le mode fantôme, pas le libellé de la ligne
+   * qui la porte.
+   *
+   * Ma première version cherchait « liste d'amis » : elle passait tant que la
+   * ligne existait, donc elle serait restée verte si la mention du mode
+   * fantôme disparaissait — c'est-à-dire précisément ce qu'elle prétendait
+   * garder. Le sabotage l'a dit.
+   */
+  fantome: /mode fantôme|ghost mode|modo fantasma|geistmodus|隐身模式|ゴーストモード/i,
+  /**
    * Le parrainage. Quatre champs, une seule ligne de politique : qui vous a
    * invité et qui vous avez invité sont la même relation lue des deux bouts,
    * et la décrire deux fois ferait croire à deux traitements distincts.

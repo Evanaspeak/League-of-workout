@@ -1,5 +1,9 @@
 export const settings = {
   fr: {
+    fantomeOui: "Invisible",
+    fantomeNon: "Visible",
+    fantomeLabel: "Mode fantôme",
+    fantomeAide: "Ta ligne disparaît des classements de tes amis : ni pseudo, ni effort, ni retard. Tu continues de voir le tien, toi compris.",
     confirmPhraseAvant: "Cette action est irréversible. Pour confirmer, tapez ",
     confirmPhraseApres: " ci-dessous.",
     title: "RÉGLAGES",
@@ -75,6 +79,10 @@ export const settings = {
     supprimerDefinitivement: "Supprimer définitivement",
   },
   en: {
+    fantomeOui: "Hidden",
+    fantomeNon: "Visible",
+    fantomeLabel: "Ghost mode",
+    fantomeAide: "Your row disappears from your friends' standings: no name, no effort, no lateness. You still see your own, yourself included.",
     confirmPhraseAvant: "This action is irreversible. To confirm, type ",
     confirmPhraseApres: " below.",
     title: "SETTINGS",
@@ -148,6 +156,10 @@ export const settings = {
     supprimerDefinitivement: "Delete permanently",
   },
   es: {
+    fantomeOui: "Invisible",
+    fantomeNon: "Visible",
+    fantomeLabel: "Modo fantasma",
+    fantomeAide: "Tu línea desaparece de las clasificaciones de tus amigos: ni apodo, ni esfuerzo, ni retraso. Tú sigues viendo la tuya, incluido tú mismo.",
     confirmPhraseAvant: "Esta acción es irreversible. Para confirmarlo, escribe ",
     confirmPhraseApres: " abajo.",
     title: "AJUSTES",
@@ -221,6 +233,10 @@ export const settings = {
     supprimerDefinitivement: "Eliminar definitivamente",
   },
   de: {
+    fantomeOui: "Unsichtbar",
+    fantomeNon: "Sichtbar",
+    fantomeLabel: "Geistmodus",
+    fantomeAide: "Deine Zeile verschwindet aus den Ranglisten deiner Freunde: kein Name, kein Aufwand, kein Rückstand. Deine eigene siehst du weiterhin, dich eingeschlossen.",
     confirmPhraseAvant: "Diese Aktion ist unwiderruflich. Tippe zur Bestätigung ",
     confirmPhraseApres: " unten ein.",
     title: "EINSTELLUNGEN",
@@ -294,6 +310,10 @@ export const settings = {
     supprimerDefinitivement: "Endgültig löschen",
   },
   zh: {
+    fantomeOui: "隐身",
+    fantomeNon: "可见",
+    fantomeLabel: "隐身模式",
+    fantomeAide: "你的那一行会从好友排行中消失：昵称、运动量、拖欠情况都不再显示。你自己的排行照常可见，也包括你自己。",
     confirmPhraseAvant: "此操作无法撤销。请在下方输入 ",
     confirmPhraseApres: " 以确认。",
     title: "设置",
@@ -367,6 +387,10 @@ export const settings = {
     supprimerDefinitivement: "永久删除",
   },
   ja: {
+    fantomeOui: "非表示",
+    fantomeNon: "表示",
+    fantomeLabel: "ゴーストモード",
+    fantomeAide: "フレンドのランキングからあなたの行が消えます。表示名も運動量も遅れも出ません。自分のランキングは自分を含めて今までどおり見えます。",
     confirmPhraseAvant: "この操作は取り消せません。確認のため、下の欄に ",
     confirmPhraseApres: " と入力してください。",
     title: "設定",

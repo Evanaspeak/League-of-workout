@@ -95,6 +95,37 @@ describe("qui figure au classement", () => {
   });
 });
 
+/**
+ * Le mode fantôme.
+ *
+ * Il ferme un trou que le classement a ouvert : celui-ci publie le pseudo et
+ * l'état de retard à tous ses amis, et la seule façon d'en sortir était de
+ * retirer l'ami — c'est-à-dire de casser le lien pour éviter ce qu'il montre.
+ */
+describe("le mode fantôme", () => {
+  it("écarte les fantômes à la LECTURE, pas à l'affichage", async () => {
+    db.amitie.findMany.mockResolvedValue([{ demandeurId: "moi", receveurId: "a" }]);
+    await lire();
+    /**
+     * La condition part en base. Filtrée après coup, la ligne sortirait quand
+     * même de la base et traverserait le réseau : elle serait dans l'onglet
+     * réseau de qui regarde, c'est-à-dire exactement là où quelqu'un a demandé
+     * à ne pas être.
+     */
+    expect(db.user.findMany.mock.calls[0][0].where.OR)
+      .toEqual([{ fantome: false }, { id: "moi" }]);
+  });
+
+  it("se voit toujours soi-même, fantôme ou non", async () => {
+    db.amitie.findMany.mockResolvedValue([{ demandeurId: "moi", receveurId: "a" }]);
+    await lire();
+    const ou = db.user.findMany.mock.calls[0][0].where.OR as Array<Record<string, unknown>>;
+    // Un classement où l'on ne figure pas n'est pas son classement, et se
+    // cacher des autres n'est pas se cacher de soi.
+    expect(ou.some((c) => c.id === "moi")).toBe(true);
+  });
+});
+
 describe("la fenêtre", () => {
   it("va des sept derniers jours à aujourd'hui, bornée des deux côtés", async () => {
     const c = await lu("2026-09-03");

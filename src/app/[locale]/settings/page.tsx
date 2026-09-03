@@ -121,6 +121,7 @@ export default function SettingsPage() {
   const [variante, setVariante] = useState<string | null>(null);
   /** Recevoir le bilan hebdomadaire par courriel. */
   const [bilanActif, setBilanActif] = useState(true);
+  const [fantome, setFantome] = useState(false);
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
   const [erreurExo, setErreurExo] = useState(false);
@@ -158,6 +159,7 @@ export default function SettingsPage() {
       setPlafond(s.user?.plafondQuotidien ?? 0);
       setVariante(s.user?.variantePompes ?? null);
       setBilanActif(s.user?.bilanActif !== false);
+      setFantome(s.user?.fantome === true);
       setPompesMax(s.user?.pompesMax ?? 0);
       setPompesMaxLe(s.user?.pompesMaxLe ?? null);
     });
@@ -277,6 +279,20 @@ export default function SettingsPage() {
     const avant = bilanActif;
     setBilanActif(actif);
     await enregistrerReglage({ bilanActif: actif }, () => setBilanActif(avant));
+  };
+
+  /**
+   * Mode fantôme : participer aux classements sans y apparaître.
+   *
+   * Le retour en arrière sur échec compte plus ici qu'ailleurs. Un réglage de
+   * confidentialité qui s'affiche « activé » sans avoir été enregistré fait
+   * croire qu'on s'est caché — c'est le seul refus qu'on ne peut pas
+   * rattraper, puisqu'on ne le vérifie jamais.
+   */
+  const handleSaveFantome = async (actif: boolean) => {
+    const avant = fantome;
+    setFantome(actif);
+    await enregistrerReglage({ fantome: actif }, () => setFantome(avant));
   };
 
   /** Enregistre l'avertissement de volume quotidien, en points d'effort. */
@@ -576,6 +592,46 @@ export default function SettingsPage() {
                 <button
                   key={libelle}
                   onClick={() => handleSaveBilan(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    minHeight: 44,
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {libelle}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mode fantôme */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 className="titre-section">{t.fantomeLabel}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+            {t.fantomeAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {[
+              // Les libellés disent l'ÉTAT — visible, invisible — et non
+              // « activé / désactivé » : la question qu'on se pose ici est
+              // « est-ce qu'on me voit ? », pas « le réglage est-il en
+              // marche ? ».
+              { valeur: false, libelle: t.fantomeNon },
+              { valeur: true, libelle: t.fantomeOui },
+            ].map(({ valeur, libelle }) => {
+              const actif = valeur === fantome;
+              return (
+                <button
+                  key={libelle}
+                  onClick={() => handleSaveFantome(valeur)}
                   aria-pressed={actif}
                   style={{
                     padding: "7px 14px",

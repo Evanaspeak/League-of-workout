@@ -49,6 +49,8 @@ const PART_AU_NAVIGATEUR = new Set([
   "genre", "age", "poids", "taille", "sportsHoursPerWeek",
   "santeConsentiLe", "santeRefuseLe",
   "detteDepuis", "dettePointsDus",
+  // Le mode fantôme est un réglage : l'écran des réglages le lit et l'écrit.
+  "fantome",
   "exercicesSuspendus", "suspensionDepuis",
   "langue", "bilanActif", "bilanLe", "relanceLe", "rappelLe", "fuseau",
   "variantePompes", "exercice", "exercices",
