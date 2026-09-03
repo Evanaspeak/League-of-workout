@@ -517,7 +517,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1702 tests unitaires, 162 suites. Base et session doublées : aucune dépendance à
+1792 tests unitaires, 167 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -542,16 +542,18 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 188 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 192 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
-tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les quatre
-écrans connectés — tableau de bord, historique, réglages, saison — dans les six
+tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
+écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
 langues et à trois largeurs, sur un compte qu'il ouvre lui-même, en demandant
 chaque langue par son ADRESSE, et
 `e2e/installation.spec.ts` éprouve l'invitation à installer l'app et la page
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
-pourquoi il n'y a qu'un jeu hors application.
+pourquoi il n'y a qu'un jeu hors application, et `e2e/social.spec.ts` fait
+jouer deux comptes l'un contre l'autre — c'est la seule chose qu'un seul
+contexte de navigateur ne sait pas éprouver.
 
 `e2e/panne-serveur.spec.ts` est devenu le fichier des échecs : il coupe une
 route à la fois et vérifie que l'écran le dit ET que rien n'a bougé en base.
@@ -931,6 +933,24 @@ l'autre, elle disparaît de chez soi quand il accepte, et un code tiré par l'un
 ouvre le groupe de l'autre — retapé en minuscules avec un tiret, comme on le
 lit. Chaque contrôle regarde l'écran ET la base : sans le second, un écran qui
 se contente d'afficher ce qu'on vient de taper passerait le test.
+
+**192 parcours au vert**, et les quatre nouveaux sabotés séparément — quatre
+échecs, chacun sur son propre test : la demande reçue rangée du côté des
+demandes envoyées, le premier clic qui retire l'ami tout de suite, le code qui
+n'accepte plus les minuscules ni les tirets, et le refus rendu muet. Chaque
+sabotage passe par une reconstruction et un redémarrage du serveur : sans eux,
+`next start` sert le `.next` d'avant et le sabotage ne sabote rien.
+
+Le quatrième a d'abord fait échouer la CONSTRUCTION plutôt qu'un test :
+retirer le `setErreur` rendait `translateApiError` inutilisé, et
+`noUnusedLocals` le nomme. Un échec de compilation n'est pas un test qui mord ;
+réécrit pour compiler, le test tombe.
+
+**Et `/amis` rejoint le balayage des six langues**, pour la raison qui a servi
+à y faire entrer « Ta saison » : c'est l'écran où le texte est le plus long —
+trois phrases pour expliquer qu'il n'y a pas d'annuaire — et où des libellés de
+boutons se serrent sur une ligne à côté d'un pseudo de vingt-quatre
+caractères. 87 passes, aucun débordement, aucune langue en retard.
 
 ### La session se lançait toute seule, et personne ne l'avait demandé
 Signalé en même temps que le reste : « je viens de remarquer que la session se

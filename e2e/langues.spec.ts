@@ -198,7 +198,12 @@ test.describe("écrans connectés", () => {
     // « Ta saison » s'y ajoute : c'est le seul écran dont le plus grand
     // élément est une image, et son texte tient dans huit petites cartes où
     // un mot allemand a toute la place de déborder.
-    for (const chemin of ["/dashboard", "/history", "/settings", "/bilan"]) {
+    //
+    // « Amis » aussi, et pour une raison voisine : c'est l'écran où le texte
+    // est le plus long — trois phrases qui expliquent qu'il n'y a pas
+    // d'annuaire — et où des libellés de boutons se serrent sur une même
+    // ligne à côté d'un pseudo qui peut faire vingt-quatre caractères.
+    for (const chemin of ["/dashboard", "/history", "/settings", "/bilan", "/amis"]) {
       test(`${langue} · ${chemin}`, async ({ browser }) => {
         const ctx = await browser.newContext({ storageState: etat });
         const page = await ctx.newPage();
