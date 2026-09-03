@@ -83,6 +83,13 @@ Procédure :
 **Les étiquettes git ne servent pas ici** : `git push --tags` échoue côté
 proxy. Le déclenchement se fait à la main, jamais par `desktop-v*`.
 
+**Le bouton de téléchargement met cinq minutes à suivre.** `dernierInstalleur`
+lit l'API GitHub avec `revalidate: 300` : la page reste statique, et le retard
+après une publication est borné. Il était d'une heure, ce qui allait tant qu'on
+publiait une fois par mois. Les copies déjà installées, elles, se mettent à
+jour toutes seules par `latest.yml` — le retard ne concerne que qui installe
+pour la première fois.
+
 **Ce que la page doit toujours prévoir** : quelqu'un qui n'a pas mis à jour.
 Une méthode absente du pont ne se voit qu'à l'exécution, sur SA machine — ni
 TypeScript ni les parcours navigateur ne peuvent le dire, puisque les tests
