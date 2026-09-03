@@ -946,6 +946,17 @@ retirer le `setErreur` rendait `translateApiError` inutilisé, et
 `noUnusedLocals` le nomme. Un échec de compilation n'est pas un test qui mord ;
 réécrit pour compiler, le test tombe.
 
+**Vérifié en production, et par ce qui n'est PAS 404.** `/fr/amis` répond 307
+vers `/fr/login` : la page existe, elle est derrière la porte, et la langue
+survit à la porte. Avant V351 cette adresse ne figurait pas dans
+`PAGES_CONNUES` et rendait 404 — le 307 prouve donc que le déploiement est
+bien celui-ci. Et comme la migration tourne DANS la commande de construction
+de Vercel (`prisma migrate deploy && next build`), un échec y aurait fait
+échouer la construction et laissé V350 en service. Les trois tables existent
+donc, par déduction : elles ne se lisent pas d'ici, et l'annoncer comme une
+observation serait faux. `/fr/nimportequoi` rend toujours 404, ce qui est le
+témoin.
+
 **Et `/amis` rejoint le balayage des six langues**, pour la raison qui a servi
 à y faire entrer « Ta saison » : c'est l'écran où le texte est le plus long —
 trois phrases pour expliquer qu'il n'y a pas d'annuaire — et où des libellés de
