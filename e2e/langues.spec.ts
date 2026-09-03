@@ -100,6 +100,22 @@ async function refuserDebordement(page: Page, contexte: Record<string, string>) 
 
 for (const langue of LANGUES) {
   test.describe(`langue ${langue}`, () => {
+    /**
+     * Ces neuf pages sont PUBLIQUES et ne partagent rien : chacune ouvre son
+     * propre onglet, navigue, mesure, et s'en va. Rien ne justifiait qu'elles
+     * s'attendent les unes les autres — et elles s'attendaient, parce que
+     * `fullyParallel: false` enferme un FICHIER entier dans un seul worker.
+     *
+     * Ce fichier en porte 87 sur 201, soit 39 % de la suite, et il les jouait
+     * à la file pendant que l'autre worker finissait les quinze autres
+     * fichiers. Le second obstacle n'était donc pas le nombre de machines,
+     * c'était une chaîne série qu'aucune machine de plus ne raccourcit.
+     *
+     * Le bloc « écrans connectés » garde son mode série, et il le déclare
+     * lui-même : ses tests partagent le compte ouvert par le premier.
+     */
+    test.describe.configure({ mode: "parallel" });
+
     for (const chemin of PAGES) {
       test(`${chemin} s'affiche sans trou ni débordement`, async ({ page }) => {
         await ouvrirEn(page, langue, chemin);

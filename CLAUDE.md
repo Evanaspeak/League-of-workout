@@ -41,9 +41,18 @@ ne figure PAS dans le plan : ça vit dans le journal, plus bas.
 ## Ce qu'on lance avant de publier (IMPORTANT)
 
 **Pas les 203 parcours.** La CI les joue déjà à chaque poussée sur `main`
-(`.github/workflows/tests.yml`, travail « Parcours »), en parallèle du
-déploiement Vercel. Les rejouer en local avant chaque fusion, c'est payer
-quinze minutes deux fois — ce qui a été fait toute la journée du 3 septembre.
+(`.github/workflows/tests.yml`, travail « parcours », six tronçons), en
+parallèle du déploiement Vercel. Les rejouer en local avant chaque fusion,
+c'est payer neuf minutes deux fois — ce qui a été fait toute la journée du
+3 septembre.
+
+**Et `npx jest` n'est pas optionnel, même quand on n'a touché à aucun `src/`.**
+Une CI restructurée a fait tomber quatre contrôles de `controleSchema.test.ts`
+— ils cherchaient une étape dans `tests.yml`, qui avait déménagé — et j'avais
+lancé `tsc` sans `jest`. Quinze secondes auraient remplacé une exécution de CI
+rouge. Les gardes de ce projet lisent les workflows, le schéma Prisma, les
+dossiers : ils tombent sur des changements qui ne touchent pas une ligne de
+TypeScript.
 
 Avant de publier :
 
@@ -60,7 +69,7 @@ là où une régression peut sortir n'importe où. C'est rare, et c'est justemen
 ce qui la rend supportable.
 
 Si la CI casse après une fusion, on corrige : le retard est de quelques
-minutes, pas de quinze, et il ne se paie que quand quelque chose a
+minutes, pas de neuf, et il ne se paie que quand quelque chose a
 effectivement cassé.
 
 ## La suite navigateur, et ce que le parallélisme lui coûte
@@ -95,6 +104,38 @@ Les deux obstacles réels au parallélisme, tous deux levés :
 `fullyParallel` reste à `false` : plusieurs parcours d'un même fichier
 partagent le compte ouvert par le premier test, et cette dépendance-là est
 voulue.
+
+**Mais un fichier peut lever la règle pour lui-même, et l'un devait.**
+`langues.spec.ts` porte 87 tests sur 201 — 43 % de la suite — et ses six blocs
+de pages PUBLIQUES ne partagent rien : chacun ouvre son onglet, navigue,
+mesure, et s'en va. `test.describe.configure({ mode: "parallel" })` les
+libère, et le fichier seul passe de 234 à 123 s. Le bloc « écrans connectés »,
+lui, déclare son mode série lui-même : c'est la bonne façon de dire la
+dépendance, à l'endroit où elle existe.
+
+Ça ne raccourcit PAS la suite locale — 549 s avant, 550 s après — parce que le
+second worker était déjà le long pole. Ça sert en intégration continue, où il y
+a des machines pour absorber le travail libéré, et ça équilibre le découpage en
+tronçons au passage : 101/100 au lieu de 141/60, Playwright répartissant alors
+ces tests un par un au lieu du fichier entier.
+
+**En CI, ce sont six travaux et non un**, parce que le dépôt est public et
+qu'aucune de ces minutes n'est facturée : quatre tronçons de parcours **d'un
+worker chacun**, `bareme-gele` seul avec sa propre base — la protection
+redevient structurelle au lieu d'être un ordre d'exécution — et l'accessibilité
+à côté.
+
+Un worker par runner, et c'est la leçon la plus chère de la série : à deux
+workers par runner, la CI a rendu l'échec d'août — `waitForURL` qui expire sur
+la CONNEXION — parce que les tests de langue devenus parallèles chargent des
+pages sans interruption pendant que bcrypt coût 12 attend son tour. On ne
+baisse pas le coût du haché, on ne rallonge pas le délai : on donne une machine
+entière à chaque worker.
+
+L'autre prix à surveiller est la PRÉPARATION : à cinq travaux simultanés,
+`npm ci` est monté de dix-huit secondes à sept minutes, ce qui mangeait presque
+tout le gain. D'où les caches de `node_modules`, du navigateur et de la
+construction.
 
 ## Lire la CI, et savoir qu'une étape ROUGE en SAUTE d'autres (IMPORTANT)
 
@@ -947,6 +988,161 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La parallélisation de la CI s'était presque entièrement mangée elle-même
+Mesuré sur V357 avant d'y toucher, étape par étape : le travail `parcours`
+durait 14 min 24, dont **9 min 53 de parcours et 2 min 40 d'accessibilité** —
+87 % du temps dans deux étapes qui se suivent sur un seul runner. Le reste
+tient en 1 min 25.
+
+Le dépôt est **public**, ce qui décide de l'arbitrage : `billable.total_ms`
+vaut zéro, donc paralléliser ne coûte aucune minute. Sur un dépôt privé le
+raisonnement serait l'inverse — on paierait cinq préparations pour gagner du
+temps d'attente, et à cinq exécutions par jour le quota gratuit y passerait.
+
+Quatre travaux au lieu de deux : les parcours sur deux runners, `bareme-gele`
+sur le sien, l'accessibilité à côté. Deux choses valent d'être notées :
+
+- **`bareme-gele` n'a plus besoin d'un ordre d'exécution.** Il écrit les
+  ratios GLOBAUX ; il attendait donc la fin de tous les autres, par un projet
+  Playwright avec `dependencies`. Sur son propre runner il a sa PROPRE base :
+  la protection devient structurelle. `--no-deps` empêche de rejouer les deux
+  cents autres parcours pour satisfaire une dépendance qui ne sert plus là.
+- **La préparation vit dans une action composite**, pas recopiée quatre fois.
+  C'est le motif que ce projet paie régulièrement : ce n'est pas la copie
+  qu'on remarque, c'est qu'une correction n'en répare qu'un quart.
+
+**Et le premier résultat était mauvais, pour une raison que seule la mesure
+pouvait dire.** Chemin critique 11 min 54 au lieu de 14 min 24 : deux minutes
+et demie pour cinq runners. `npm ci` était passé de **dix-huit secondes à deux
+travaux à SEPT MINUTES à cinq**, et la préparation variait de 3 min 24 à
+8 min 01 d'un runner à l'autre. Le goulot avait changé de place — les tests
+n'étaient plus le sujet, l'installation l'était.
+
+D'où le cache de `node_modules` (et non seulement celui de npm), du navigateur
+et de la construction Next. La première exécution après un changement de
+verrous repaie l'installation ; les suivantes restaurent une archive depuis le
+cache de GitHub, qui est bien plus près que le registre.
+
+**`prisma generate` redevient une étape à part, et inconditionnelle.** Je
+l'avais retirée en constatant que `postinstall` la faisait déjà. C'est vrai
+tant qu'on installe ; un cache de `node_modules` retrouvé saute le
+`postinstall`, et le client vit dans `src/generated/prisma`, **hors** de
+`node_modules`. L'échec qu'une seconde évite ici est de ceux qu'on ne
+comprend pas : des types de modèles absents sur une machine qui n'a rien
+changé.
+
+**Et le deuxième essai a rendu l'échec d'août, en CI cette fois.** Deux
+tronçons de deux workers : `waitForURL` expire sur la CONNEXION dans
+`bilan.spec.ts`, jamais sur ce que le test éprouvait. La cause se nomme
+maintenant — les tests de langue passés en mode parallèle font tourner en
+permanence des chargements de page rendus au serveur à côté des parcours qui
+ouvrent un compte, et le haché bcrypt coût 12 perd sa place dans la file.
+
+Deux réponses ont été écartées, et il vaut mieux dire pourquoi :
+
+- **baisser le coût du haché en test.** C'est un choix de production ; lui
+  donner un bouton, c'est accepter qu'une variable oubliée produise un jour
+  des hachés faibles en ligne. La règle du projet vaut ici : un repli ne peut
+  pas être plus permissif que ce qu'on demandait ;
+- **allonger le délai de connexion.** C'est la façon la plus sûre de rendre un
+  test muet, et ça ne réparerait rien — la file resterait aussi longue.
+
+La réponse est de donner une MACHINE ENTIÈRE à chaque worker : **quatre
+tronçons d'un worker chacun**. Un runner qui héberge un seul Chromium, un seul
+processus de test et le serveur Next ne sature plus, et la contention disparaît
+au lieu d'être arbitrée. En local il n'y a qu'une machine, donc deux workers y
+restent le compromis mesuré.
+
+**Le résultat, en quatre exécutions mesurées :**
+
+| forme | chemin critique | préparation | état |
+|---|---|---|---|
+| deux travaux (V357) | 14 min 24 | 1 min 25 | vert |
+| quatre travaux, 2 workers | 11 min 54 | 3 min 24 à 8 min 01 | vert |
+| six travaux, 2 workers, avec caches | 10 min 20 | 0 min 49 à 5 min 45 | **un tronçon rouge** |
+| neuf travaux, 1 worker, six tronçons | **6 min 52** | 0 min 40 à 1 min 02 | vert |
+
+**52 % de moins**, et la préparation passe de trois à huit minutes à moins
+d'une. Le dernier découpage a demandé SIX tronçons et non quatre, et c'est
+l'équilibre qui l'a décidé : Playwright découpe au nombre de tests, qui ne dit
+rien de la durée. À quatre, `parcours.spec.ts` — deux trajets complets, poste
+et téléphone — partageait son tronçon avec `social.spec.ts`, qui fait jouer
+trois comptes : 7 min 35 pendant que les trois autres finissaient sous deux
+minutes et demie.
+
+Ce que ça apprend au-delà du cas : **paralléliser ne divise pas le temps, ça
+déplace le goulot.** Il est passé des tests à l'installation, puis de
+l'installation au processeur d'un runner, puis au fichier le plus lent. Chaque
+déplacement s'est vu à la mesure et à elle seule — aucun n'était visible dans
+le fichier qu'on venait d'écrire, et le deuxième a failli passer pour un gain
+alors qu'il ne rapportait que deux minutes et demie sur cinq runners.
+
+### Un fichier de test tenait 43 % de la suite, sur un seul worker
+`fullyParallel: false` enferme un FICHIER dans un worker : ses tests s'y
+suivent, et c'est voulu — plusieurs parcours d'un même fichier partagent le
+compte ouvert par le premier. Sauf que `langues.spec.ts` porte **87 tests sur
+201**, et que ses six blocs de pages PUBLIQUES ne partagent rien du tout :
+chacun ouvre son onglet, navigue, mesure, et s'en va. Le bloc « écrans
+connectés », lui, déclare son mode série lui-même.
+
+`test.describe.configure({ mode: "parallel" })` sur les six : le fichier seul
+passe de **234 à 123 s**, 87 passés des deux côtés. Et le découpage en
+tronçons s'équilibre au passage — **101/100 au lieu de 141/60** — parce que
+Playwright répartit alors ces tests un par un au lieu du fichier entier.
+
+**Ce que ça ne fait PAS, et il faut le dire.** La suite entière ne bouge pas
+en local : 549 s avant, 550 s après, mesuré des deux côtés. Le second worker
+était le long pole depuis le début, et libérer 111 s de travail ne raccourcit
+rien tant qu'il n'y a pas une machine de plus pour l'absorber. Annoncer « la
+suite est deux fois plus rapide » parce qu'un fichier l'est serait exactement
+l'erreur que ce journal reproche ailleurs aux outils de mesure.
+
+### Le premier test tombait, et je n'ai pas trouvé pourquoi
+Quatre exécutions complètes sur six ont échoué sur le MÊME test, toujours en
+position 1/203 — `clavier-modales`, toujours sur la connexion, `waitForURL`
+expirant après trente secondes avec « Pseudo ou code incorrect » à l'écran.
+
+Ce qui est établi, et qui suffit à ne pas s'en servir comme d'un prétexte :
+
+- **c'est antérieur à mes modifications.** Le témoin, sans elles, tombe de la
+  même façon, au même endroit ;
+- **ça ne se produit pas en intégration continue**, où la suite passe ;
+- **le message ne vient pas du client.** `LoginButtons` n'écrit
+  `erreurPseudoCode` que sur `result?.error` — une panne réseau donnerait
+  `erreurConnexion`. Donc `authorize` a bien rendu `null` ;
+- **et pourtant la sonde posée dans `authorize` n'a jamais rien vu.** Les deux
+  exécutions où elle était en place sont passées, 203 sur 203, sans une seule
+  ligne « limite », « introuvable » ou « motdepasse ».
+
+Autrement dit la sonde déplace le défaut, ce qui le range dans les courses.
+Deux hypothèses ont été essayées et **démenties par la mesure**, ce qui vaut
+mieux que de les garder :
+
+- « le serveur est froid, Playwright le déclare prêt dès que `/cgu` répond, et
+  `/login` n'est pas encore compilé ». Un réchauffage des trois chemins dans
+  la préparation n'a rien changé. La ligne a été retirée : une ligne qui ne
+  fait pas ce qu'elle annonce se relit comme une garantie ;
+- « c'est le limiteur ». Impossible : sa clé porte le pseudo, qui est unique
+  par test.
+
+Rien n'est donc corrigé, et surtout rien n'est maquillé. Ce qui est fait :
+c'est écrit ici avec le tableau des six exécutions, et la CI reste le juge —
+elle est verte, elle joue la suite entière, et c'est elle qui garde `main`.
+Un délai qu'on allonge sans savoir ce qu'on attend est la façon la plus sûre
+de rendre un test muet ; une reprise posée sur la connexion masquerait un vrai
+refus le jour où il arriverait.
+
+**Et un rappel d'outillage, retombé dedans pour la troisième fois** :
+`pkill -f "next-server"` tue le shell qui lance la commande, parce que le motif
+figure dans sa propre ligne de commande. Sortie 144, aucun journal. On trouve
+le processus par `ps -eo pid,args` et on le tue par son numéro.
+
+**Un piège d'environnement, aussi** : la base locale écoutait sur 5432 quand
+`.env` demande 5433. Toute requête authentifiée échouait, et le symptôme était
+« le code ne s'affiche pas » — le troisième déguisement de cette panne-là
+recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
+l'application demande.
 
 ### Dépendances, au 3 septembre : une haute réellement corrigée
 `fast-uri` 3.0.0 à 3.1.5, quatre avis dont deux de falsification de requête

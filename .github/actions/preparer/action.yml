@@ -1,0 +1,116 @@
+# La préparation commune aux travaux qui ont besoin d'un serveur.
+#
+# Elle vit ici et pas recopiée dans chaque travail : depuis que les parcours
+# sont découpés en plusieurs runners, la même séquence servait QUATRE fois, et
+# c'est le motif que ce projet paie régulièrement — ce n'est pas la copie qu'on
+# remarque, c'est qu'une correction n'en répare qu'un quart.
+name: Préparer
+description: Dépendances, base montée par les migrations, construction.
+
+inputs:
+  navigateur:
+    description: Installer Chromium (les travaux qui pilotent un navigateur).
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    # `node_modules` en cache, et non seulement le cache npm.
+    #
+    # Mesuré : à deux travaux, `npm ci` prenait dix-huit secondes ; à cinq
+    # travaux simultanés il est monté à SEPT MINUTES, et la préparation entière
+    # variait de 3 min 24 à 8 min 01 d'un runner à l'autre. C'est le prix de la
+    # parallélisation, et il mangeait presque tout ce qu'elle rapportait — le
+    # goulot n'était plus les tests mais l'installation.
+    #
+    # La clé porte le verrou : une dépendance qui bouge invalide tout le monde,
+    # et la première exécution qui suit repaie l'installation. Les suivantes
+    # restaurent une archive depuis le cache de GitHub, qui est bien plus près
+    # que le registre.
+    - id: modules
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
+
+    - if: steps.modules.outputs.cache-hit != 'true'
+      run: npm ci
+      shell: bash
+
+    # Toujours, et pas seulement sur un cache manqué.
+    #
+    # Le client est engendré dans `src/generated/prisma`, qui ne vit PAS dans
+    # `node_modules` : un cache retrouvé saute le `postinstall`, et la
+    # compilation comme la construction ne trouveraient plus les types des
+    # modèles. Une seconde, et l'échec qu'elle évite est incompréhensible.
+    - run: npx prisma generate
+      shell: bash
+
+    # Le navigateur pèse cent cinquante méga-octets et ne change qu'avec
+    # Playwright. `--with-deps` installe en plus des paquets système qui, eux,
+    # ne se cachent pas — d'où l'étape qui reste, bien plus courte.
+    - if: inputs.navigateur == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+    # La base se monte par les MIGRATIONS, comme en production.
+    #
+    # Elle se montait par un diff du schéma, parce que l'historique n'était pas
+    # rejouable depuis zéro : aucune migration ne créait « User ». Le raccourci
+    # cachait le défaut au lieu de le signaler — les parcours passaient au vert
+    # sur une base qu'aucune reprise après sinistre n'aurait pu reconstruire.
+    - name: Monter la base par les migrations
+      run: npx prisma migrate deploy
+      shell: bash
+
+    # Et le résultat doit correspondre au schéma, sans quoi les migrations
+    # construisent autre chose que ce que le code attend. Un diff vide est la
+    # seule preuve qui vaille.
+    #
+    # Trois issues, et il faut les distinguer : identique, différent, ou le
+    # contrôle lui-même en panne. La première version écrivait
+    # `... --script | grep ... || true` : `--from-url` a été retiré de Prisma 7,
+    # la commande sortait en erreur, grep ne recevait rien, l'écart était vide
+    # et l'étape passait au vert. Un contrôle qui ne sait pas échouer ne
+    # contrôle rien — celui-ci n'a jamais rien vérifié.
+    - name: Vérifier que la base correspond au schéma
+      shell: bash
+      run: |
+        set -uo pipefail
+        sortie=$(npx prisma migrate diff \
+          --from-config-datasource --to-schema ./prisma/schema.prisma \
+          --script --exit-code 2>&1)
+        code=$?
+        if [ "$code" = "0" ]; then exit 0; fi
+        if [ "$code" = "2" ]; then
+          echo "::error::La base montée par les migrations diffère du schéma."
+        else
+          echo "::error::Le contrôle de schéma n'a pas pu tourner (code $code)."
+        fi
+        echo "$sortie"
+        exit 1
+
+    # Le cache de construction de Next. La clé porte le commit pour qu'un
+    # changement de source reparte du plus proche parent plutôt que de rien.
+    - uses: actions/cache@v4
+      with:
+        path: .next/cache
+        key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+        restore-keys: |
+          next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+    - run: npm run build
+      shell: bash
+
+    - name: Installer le navigateur
+      if: inputs.navigateur == 'true'
+      run: npx playwright install --with-deps chromium
+      shell: bash
