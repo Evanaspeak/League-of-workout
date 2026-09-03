@@ -469,3 +469,79 @@ describe("la question par-dessus le jeu", () => {
     expect(fenetre().focusable).toBe(true);
   });
 });
+
+/**
+ * Le silence d'une partie.
+ *
+ * Refuser la session à l'écran de chargement doit retirer la pastille pour
+ * CETTE partie et pour elle seule. L'erreur se paie dans les deux sens : ne
+ * rien retirer laisse à l'écran la seule chose qu'on venait d'écarter, et
+ * retirer pour toujours coupe une fonction que personne n'a demandé à couper.
+ */
+describe("le silence d'une partie", () => {
+  it("l'affichage automatique ne ramène pas une pastille tue", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(true);
+
+    overlay.masquerJusquALaProchainePartie();
+    expect(fenetre().isVisible()).toBe(false);
+
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(false);
+  });
+
+  /**
+   * Le cas qui distingue « cette partie » de « pour toujours ». Sans le
+   * relèvement à l'OUVERTURE d'une partie, la pastille resterait absente le
+   * reste de la soirée, et rien ne le dirait.
+   */
+  it("la partie suivante la ramène", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+
+    overlay.definirEnPartie(false);
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(true);
+  });
+
+  /**
+   * Le silence se lève à l'ouverture et non à la fermeture. Posé sur la fin de
+   * partie, il sauterait dès qu'on quitte — donc AVANT l'écran de chargement
+   * où la question se repose, et la pastille reviendrait entre deux parties.
+   */
+  it("la fin de la partie en cours ne le lève pas", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+    overlay.definirEnPartie(false);
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(false);
+  });
+
+  /**
+   * Un raccourci pressé exprès est une demande, pas un affichage automatique.
+   * Sans ce passage, on aurait une pastille qu'on ne peut plus rappeler avant
+   * la partie suivante : le contraire d'un réglage.
+   *
+   * Il PASSE OUTRE le silence, il ne le lève pas — la nuance vient d'un
+   * sabotage. J'avais écrit une remise à zéro sur cette branche ; la retirer
+   * ne faisait tomber aucun test, parce que le garde laisse déjà passer toute
+   * demande explicite et qu'une partie qui commence lève le silence de toute
+   * façon. La ligne est partie avec sa fausse garantie.
+   */
+  it("un geste explicite passe outre le silence", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+    overlay.afficher({ parLUtilisateur: true });
+    expect(fenetre().isVisible()).toBe(true);
+  });
+
+  /** Et il ne touche à aucun réglage : c'est un silence, pas une coupure. */
+  it("ne modifie pas le réglage d'affichage du jeu", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    const avant = overlay.lirePlacement();
+    overlay.masquerJusquALaProchainePartie();
+    expect(overlay.lirePlacement()).toEqual(avant);
+  });
+});

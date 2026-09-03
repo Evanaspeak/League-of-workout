@@ -88,6 +88,19 @@ let enPartie = false;
  * lancé. Seul l'affichage automatique est repris.
  */
 let manuel = false;
+
+/**
+ * Silence demandé pour LA partie en cours.
+ *
+ * Refuser la session à l'écran de chargement veut dire « pas ce soir, pas
+ * cette partie » : laisser la pastille à l'écran ferait rester la seule chose
+ * qu'on venait d'écarter. Elle se tait donc jusqu'à la partie SUIVANTE — pas
+ * pour toujours, ce qui serait le réglage `actif` et se règle ailleurs.
+ *
+ * L'état vit ici et non dans la page : la page se recharge, la coquille non,
+ * et c'est elle qui sait quand une partie commence.
+ */
+let muet = false;
 /**
  * Dernier état poussé. La fenêtre d'overlay peut être recréée après une
  * fermeture, ou chargée alors qu'une partie tourne déjà : sans mémoire, elle
@@ -261,6 +274,20 @@ function creerOverlay() {
 }
 
 function afficher({ parLUtilisateur = false } = {}) {
+  /**
+   * Le silence ne vaut que contre l'affichage AUTOMATIQUE.
+   *
+   * Un raccourci pressé exprès est une demande, et elle passe : sinon on
+   * aurait une pastille qu'on ne peut plus rappeler avant la partie suivante.
+   *
+   * Il n'y a rien à remettre à zéro ici. J'avais ajouté un `muet = false` sur
+   * la branche explicite, et le sabotage l'a démenti : aucun test ne le
+   * distingue, parce que le garde ci-dessus laisse déjà passer toute demande
+   * explicite, et qu'une partie qui commence lève le silence de toute façon.
+   * Une ligne qu'on peut retirer sans qu'un test tombe ne tient rien — et elle
+   * se relit comme une garantie.
+   */
+  if (muet && !parLUtilisateur) return;
   voulu = true;
   manuel = parLUtilisateur;
   if (!fenetre || fenetre.isDestroyed()) creerOverlay();
@@ -274,6 +301,17 @@ function masquer() {
   voulu = false;
   manuel = false;
   if (fenetre && !fenetre.isDestroyed()) fenetre.hide();
+}
+
+/**
+ * Tait la pastille pour la partie en cours, et pour elle seule.
+ *
+ * Appelée quand on répond « non » à la question de l'écran de chargement.
+ * Elle ne touche à aucun réglage : la partie suivante la ramène.
+ */
+function masquerJusquALaProchainePartie() {
+  muet = true;
+  masquer();
 }
 
 function basculer() {
@@ -299,6 +337,11 @@ function definirEnPartie(valeur, jeu = null) {
   if (enPartie) manuel = false;
 
   if (enPartie && !avant) {
+    // Une partie qui COMMENCE lève le silence de la précédente : c'est
+    // exactement la portée demandée — « caché jusqu'au prochain écran de
+    // chargement ». Posé sur la fin de partie, le silence sauterait dès
+    // qu'on quitte, donc avant l'écran où la question se repose.
+    muet = false;
     partieEnCoursSec = 0;
     const releve = JEUX_AVEC_RELEVE.has(jeu);
     // Sans relevé, personne ne viendra dire combien de temps s'est écoulé :
@@ -673,7 +716,7 @@ const _placement = { positionDuCoin, dansLEcran, LARGEUR, HAUTEUR, MARGE };
 
 module.exports = {
   _placement,
-  initOverlay, afficher, masquer, basculer,
+  initOverlay, afficher, masquer, masquerJusquALaProchainePartie, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
   definirReleveApex,
   protegerDeLaCapture,

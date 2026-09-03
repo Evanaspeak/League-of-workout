@@ -773,6 +773,11 @@ ipcMain.handle("overlay:placement", (_e, arg) => {
  * Rend `null` quand personne n'a répondu avant la fin du délai. La page doit
  * traiter ce cas comme un refus : ne rien lancer.
  */
+ipcMain.handle("overlay:muet", () => {
+  overlay.masquerJusquALaProchainePartie();
+  return true;
+});
+
 ipcMain.handle("overlay:question", (_e, { texte, oui, non, delaiMs } = {}) =>
   overlay.poserQuestion({
     texte: String(texte || ""),

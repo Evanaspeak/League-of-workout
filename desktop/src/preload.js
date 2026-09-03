@@ -102,6 +102,19 @@ contextBridge.exposeInMainWorld("electronLOL", {
    */
   overlayDemander: (question) => ipcRenderer.invoke("overlay:question", question),
 
+  /**
+   * Tait la pastille pour la partie EN COURS, et pour elle seule (0.9.12+).
+   *
+   * Appelée quand on répond « non » à la question de l'écran de chargement :
+   * laisser la pastille ferait rester à l'écran la seule chose qu'on venait
+   * d'écarter. Elle revient d'elle-même à la partie suivante — c'est la
+   * coquille qui le sait, pas la page, qui se recharge.
+   *
+   * Aucun réglage n'est touché : couper la pastille pour de bon est un autre
+   * geste, dans les réglages.
+   */
+  overlayMasquerPartie: () => ipcRenderer.invoke("overlay:muet"),
+
   // Mise à jour. `majEtat()` interroge l'état courant, `onMajEtat()` suit ses
   // changements : le téléchargement peut se terminer avant qu'une page soit
   // là pour l'entendre, l'un sans l'autre laisserait passer l'information.

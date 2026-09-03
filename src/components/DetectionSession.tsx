@@ -70,7 +70,28 @@ export function DetectionSession() {
             non: t.demandeNon,
           });
           // `null` = personne n'a répondu avant la fin du délai. C'est un refus.
-          if (oui !== true) return;
+          if (oui !== true) {
+            /**
+             * Un refus EXPLICITE tait la pastille pour cette partie.
+             *
+             * Laisser la pastille par-dessus le jeu ferait rester à l'écran la
+             * seule chose qu'on venait d'écarter. Elle revient d'elle-même à
+             * l'écran de chargement suivant : c'est la coquille qui tient
+             * cette portée, pas la page, qui se recharge.
+             *
+             * Seulement sur un « non » cliqué. Une question expirée veut dire
+             * que personne ne l'a vue — retirer alors la pastille enlèverait
+             * quelque chose que rien n'a demandé à enlever.
+             *
+             * Une application antérieure à 0.9.12 ne connaît pas la méthode :
+             * la pastille reste, ce qui est le comportement d'avant. Jamais un
+             * réglage coupé à l'insu de quelqu'un.
+             */
+            if (oui === false) {
+              await pont?.overlayMasquerPartie?.().catch(() => {});
+            }
+            return;
+          }
           // La question a duré : la session a pu être lancée à la main
           // entre-temps, ou une autre partie avoir commencé.
           if (actifRef.current) return;

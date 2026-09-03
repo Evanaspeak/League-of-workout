@@ -541,7 +541,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1845 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
+1850 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -879,6 +879,56 @@ et la règle du propriétaire dit de publier dès qu'une modification touche
 exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
+
+### Refuser la session laissait la pastille par-dessus le jeu
+Signalé par le propriétaire du produit : « quand on met non pour lancer une
+session quand la partie se lance, il faudrait que la pastille soit cachée
+jusqu'au prochain écran de chargement ».
+
+C'est juste, et l'oubli est de la même famille que celui d'avant : on avait
+traité ce que le refus ne DOIT PAS faire — ne pas lancer de session — sans
+traiter ce qu'il doit faire. La pastille restait donc à l'écran, c'est-à-dire
+exactement la chose qu'on venait d'écarter.
+
+**Un silence, pas une coupure.** `masquerJusquALaProchainePartie()` ne touche à
+aucun réglage : couper la pastille pour de bon est un autre geste, dans les
+réglages, et le confondre avec un refus ponctuel reviendrait à retirer une
+fonction que personne n'a demandé à retirer.
+
+**Le silence se lève à l'OUVERTURE d'une partie, pas à sa fermeture.** C'est la
+portée demandée — « jusqu'au prochain écran de chargement ». Posé sur la fin de
+partie, il sauterait dès qu'on quitte, donc AVANT l'écran où la question se
+repose, et la pastille reviendrait entre deux parties. Un test tient ce cas
+précis.
+
+**L'état vit dans la COQUILLE, pas dans la page.** La page se recharge, la
+coquille non, et c'est elle qui sait quand une partie commence. Un silence
+tenu par la page disparaîtrait au premier changement d'écran.
+
+**Seul un « non » cliqué tait la pastille.** Une question expirée se traite
+comme un refus pour le LANCEMENT de session — c'est écrit des deux côtés du
+pont — mais pas pour l'affichage : personne ne l'a vue, et retirer alors la
+pastille enlèverait quelque chose que rien n'a demandé à enlever.
+
+**Une ligne a été écrite, sabotée, et retirée.** J'avais ajouté un
+`muet = false` sur la branche explicite d'`afficher`, en croyant que « un geste
+explicite lève le silence ». Le sabotage l'a démenti : la retirer ne faisait
+tomber aucun test, parce que le garde laisse déjà passer toute demande
+explicite et qu'une partie qui commence lève le silence de toute façon. C'est
+le défaut déjà écrit ici pour le module de stockage — **une ligne qu'on peut
+retirer sans qu'un test tombe ne tient rien, et elle se relit comme une
+garantie.** Elle est partie ; le test qui l'accompagnait dit maintenant ce
+qu'il prouve vraiment : la demande PASSE OUTRE le silence, elle ne le lève pas.
+
+Cinq tests, quatre sabotages, trois échecs — le quatrième est celui qui a fait
+retirer la ligne. Et le garde du contrat du pont a mordu comme prévu quand la
+méthode a été retirée de `preload.js` en la laissant déclarée : c'est
+exactement le défaut qu'il existe pour attraper, « undefined is not a function »
+dans l'application installée seulement.
+
+Application de bureau en **0.9.12**, publiée dans la foulée : la page appelle
+une méthode que les copies antérieures n'ont pas, et le repli est écrit — la
+pastille reste, ce qui est le comportement d'avant.
 
 ### Le parrainage, et l'avantage qu'on ne pouvait pas donner
 Ligne 119, et c'est le seul canal d'acquisition du plan qui travaille sans
@@ -1293,6 +1343,10 @@ l'autre en silence rendrait le réglage inutile.
 Une application antérieure à 0.9.10 ne sait pas poser la question : on ne lance
 alors rien. Le repli d'un réglage qui dit « demande-moi » ne peut pas être
 « fais-le sans demander ».
+
+**Et un « non » tait la pastille pour cette partie** (0.9.12+), jusqu'à
+l'écran de chargement suivant. Laisser la pastille par-dessus le jeu ferait
+rester à l'écran la seule chose qu'on venait d'écarter.
 
 Six sabotages, six échecs — dont les deux qui comptent le plus : la fenêtre qui
 ne rend pas la souris, et la question qui ne se ferme jamais.
