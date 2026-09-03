@@ -101,6 +101,21 @@ let manuel = false;
  * et c'est elle qui sait quand une partie commence.
  */
 let muet = false;
+
+/**
+ * Vrai pendant qu'une question occupe l'écran entier.
+ *
+ * La question tenait dans la pastille — 230 pixels dans un coin, par-dessus un
+ * écran de chargement. Signalé par le propriétaire du produit : « je n'ai pas
+ * vu le message ». Une question qu'on ne voit pas ne pose rien ; elle expire,
+ * et l'expiration vaut refus.
+ *
+ * Elle prend donc tout l'écran le temps d'être posée, et la fenêtre reprend sa
+ * taille de pastille juste après. Sans ce drapeau, `replacer()` — appelé par
+ * les réglages d'un jeu qui démarre — la ramènerait à 230 pixels au milieu de
+ * la question.
+ */
+let questionPleinEcran = false;
 /**
  * Dernier état poussé. La fenêtre d'overlay peut être recréée après une
  * fermeture, ou chargée alors qu'une partie tourne déjà : sans mémoire, elle
@@ -178,6 +193,9 @@ function positionVoulue() {
 /** Remet la fenêtre là où les réglages courants la veulent. */
 function replacer() {
   if (!fenetre || fenetre.isDestroyed()) return;
+  // Une question occupe l'écran : la replacer la rendrait minuscule au pire
+  // moment. Elle retrouvera sa place en se refermant.
+  if (questionPleinEcran) return;
   const { x, y } = positionVoulue();
   fenetre.setBounds({ x, y, width: LARGEUR, height: HAUTEUR });
 }
@@ -450,6 +468,20 @@ function poserQuestion({ texte, oui, non, delaiMs = 45_000 } = {}) {
 
   const id = ++dernierIdQuestion;
   afficher({ parLUtilisateur: true });
+  /**
+   * La question prend TOUT l'écran.
+   *
+   * Dans la pastille, elle faisait 230 pixels dans un coin par-dessus un écran
+   * de chargement : on ne la voyait pas, donc on n'y répondait pas, donc elle
+   * expirait — et une expiration vaut refus. Autant ne pas la poser.
+   *
+   * La fenêtre reprend sa taille en se refermant, y compris quand personne
+   * n'a répondu : une pastille restée plein écran intercepterait la souris
+   * pendant toute la partie, ce qui est bien pire que pas de pastille.
+   */
+  questionPleinEcran = true;
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  fenetre.setBounds({ x: 0, y: 0, width, height });
   fenetre.setIgnoreMouseEvents(false, { forward: true });
   fenetre.setFocusable(true);
   fenetre.webContents.send("overlay:question", { id, texte, oui, non });
@@ -463,6 +495,10 @@ function poserQuestion({ texte, oui, non, delaiMs = 45_000 } = {}) {
       questionEnCours = null;
       if (fenetre && !fenetre.isDestroyed()) {
         fenetre.webContents.send("overlay:question", null);
+        // La taille se rend AVANT tout le reste : c'est la seule chose dont
+        // l'oubli laisserait une fenêtre plein écran par-dessus le jeu.
+        questionPleinEcran = false;
+        replacer();
         // On ne retire la main qu'en dehors du mode placement : sinon on
         // reprendrait à quelqu'un la pastille qu'il est en train de déplacer.
         if (!enPlacement) {

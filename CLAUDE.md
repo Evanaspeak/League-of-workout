@@ -541,7 +541,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1850 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
+1854 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -879,6 +879,37 @@ et la règle du propriétaire dit de publier dès qu'une modification touche
 exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
+
+### La question tenait dans un coin, et personne ne la voyait
+Signalé dans la foulée : « je n'ai pas pensé à cocher et je n'ai pas vu le
+message ».
+
+**C'est le pire genre de défaut : tout fonctionne.** La question EST posée, le
+pont répond, le délai court, la réponse revient. Simplement, elle fait 230
+pixels dans un coin par-dessus un écran de chargement — donc on ne la voit pas,
+donc on n'y répond pas, donc elle expire. Et une expiration vaut refus. Le
+résultat est exactement celui qu'on aurait sans la question, et rien ne le
+signale.
+
+Elle prend maintenant tout l'écran : voile sombre sur le jeu, texte en
+`clamp(28px, 4.2vw, 64px)` — la même question doit rester lisible sur un
+portable de treize pouces et sur un ultra-large —, deux boutons qu'on ne rate
+pas.
+
+**Ce qui compte le plus n'est pas l'agrandissement, c'est le retour.** Une
+pastille restée plein écran intercepte la souris pendant toute la partie, ce
+qui est bien pire que pas de pastille du tout. La taille se rend donc AVANT
+tout le reste dans la fermeture, et deux tests le tiennent : à la réponse, et
+à l'expiration — ce second cas étant précisément celui qui a motivé le
+changement.
+
+**Un troisième cas, qui ne se serait vu qu'en jouant** : un jeu qui démarre
+applique ses réglages de position, ce qui appelle `replacer()`. Pendant une
+question, ça la réduisait à 230 pixels au pire moment — et la question restait
+parfaitement fonctionnelle, donc rien ne l'aurait dit. Un drapeau fait passer
+`replacer()` son tour tant qu'une question occupe l'écran.
+
+Quatre tests, trois sabotages, trois échecs.
 
 ### Refuser la session laissait la pastille par-dessus le jeu
 Signalé par le propriétaire du produit : « quand on met non pour lancer une
@@ -1347,6 +1378,11 @@ alors rien. Le repli d'un réglage qui dit « demande-moi » ne peut pas être
 **Et un « non » tait la pastille pour cette partie** (0.9.12+), jusqu'à
 l'écran de chargement suivant. Laisser la pastille par-dessus le jeu ferait
 rester à l'écran la seule chose qu'on venait d'écarter.
+
+**La question occupe tout l'écran** (0.9.12+). Dans la pastille, elle faisait
+230 pixels dans un coin par-dessus un écran de chargement : on ne la voyait
+pas, donc elle expirait, donc elle valait refus — le résultat exact qu'on
+aurait sans elle.
 
 Six sabotages, six échecs — dont les deux qui comptent le plus : la fenêtre qui
 ne rend pas la souris, et la question qui ne se ferme jamais.

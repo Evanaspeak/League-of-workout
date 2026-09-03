@@ -87,6 +87,20 @@ function etat(): any {
   return dernier ? (dernier[1] as any) : null;
 }
 
+/**
+ * L'identifiant de la dernière question posée.
+ *
+ * Il est incrémenté par le module et voyage dans le message : le lire sur
+ * l'envoi plutôt que de le deviner évite qu'un test réponde à une question
+ * qui n'est pas celle qu'il vient de poser.
+ */
+function dernierIdQuestion(): number {
+  const f = mockFenetres[mockFenetres.length - 1];
+  const dernier = [...f.envois].reverse()
+    .find(([canal, charge]) => canal === "overlay:question" && charge);
+  return (dernier?.[1] as { id: number }).id;
+}
+
 function fenetre(): MockFenetre {
   return mockFenetres[mockFenetres.length - 1];
 }
@@ -467,6 +481,61 @@ describe("la question par-dessus le jeu", () => {
     await promesse;
     expect(fenetre().ignoreSouris).toBe(false);
     expect(fenetre().focusable).toBe(true);
+  });
+});
+
+/**
+ * La question, et la taille qu'elle prend.
+ *
+ * Dans la pastille, elle faisait 230 pixels dans un coin par-dessus un écran
+ * de chargement : on ne la voyait pas, donc on n'y répondait pas, donc elle
+ * expirait — et une expiration vaut refus. Le défaut ne se voit d'aucune
+ * autre façon : la question EST posée, la mécanique marche, et le résultat est
+ * le même que si elle n'existait pas.
+ */
+describe("la question occupe l'écran", () => {
+  it("prend tout l'écran le temps d'être posée", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.poserQuestion({ texte: "Lancer une session ?", oui: "Oui", non: "Non" });
+    expect(fenetre().getBounds()).toEqual({ x: 0, y: 0, width: 1920, height: 1080 });
+  });
+
+  /**
+   * Ce qui compte le plus : la fenêtre reprend sa taille. Une pastille restée
+   * plein écran intercepte la souris pendant toute la partie — bien pire que
+   * pas de pastille du tout.
+   */
+  it("reprend sa taille de pastille dès qu'on répond", async () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    const reponse = overlay.poserQuestion({ texte: "?", oui: "Oui", non: "Non" });
+    const id = dernierIdQuestion();
+    overlay.reponseQuestion(id, false);
+    await reponse;
+    const b = fenetre().getBounds();
+    expect({ width: b.width, height: b.height }).toEqual({ width: 230, height: 210 });
+  });
+
+  /** Et aussi quand PERSONNE ne répond : c'est le cas qui a motivé tout ça. */
+  it("reprend sa taille quand la question expire", async () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    const reponse = overlay.poserQuestion({ texte: "?", oui: "O", non: "N", delaiMs: 1000 });
+    jest.advanceTimersByTime(1001);
+    await expect(reponse).resolves.toBeNull();
+    const b = fenetre().getBounds();
+    expect({ width: b.width, height: b.height }).toEqual({ width: 230, height: 210 });
+  });
+
+  /**
+   * Un jeu qui démarre applique ses réglages de position, ce qui appelle
+   * `replacer()`. Pendant une question, ça la réduirait à 230 pixels au pire
+   * moment — et rien ne le dirait, la question restant parfaitement
+   * fonctionnelle.
+   */
+  it("les réglages d'un jeu ne la réduisent pas en cours de route", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.poserQuestion({ texte: "?", oui: "O", non: "N" });
+    overlay.appliquerConfig({ coin: "bas-gauche", position: null });
+    expect(fenetre().getBounds().width).toBe(1920);
   });
 });
 
