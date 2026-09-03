@@ -88,6 +88,34 @@ let enPartie = false;
  * lancé. Seul l'affichage automatique est repris.
  */
 let manuel = false;
+
+/**
+ * Silence demandé pour LA partie en cours.
+ *
+ * Refuser la session à l'écran de chargement veut dire « pas ce soir, pas
+ * cette partie » : laisser la pastille à l'écran ferait rester la seule chose
+ * qu'on venait d'écarter. Elle se tait donc jusqu'à la partie SUIVANTE — pas
+ * pour toujours, ce qui serait le réglage `actif` et se règle ailleurs.
+ *
+ * L'état vit ici et non dans la page : la page se recharge, la coquille non,
+ * et c'est elle qui sait quand une partie commence.
+ */
+let muet = false;
+
+/**
+ * Vrai pendant qu'une question occupe l'écran entier.
+ *
+ * La question tenait dans la pastille — 230 pixels dans un coin, par-dessus un
+ * écran de chargement. Signalé par le propriétaire du produit : « je n'ai pas
+ * vu le message ». Une question qu'on ne voit pas ne pose rien ; elle expire,
+ * et l'expiration vaut refus.
+ *
+ * Elle prend donc tout l'écran le temps d'être posée, et la fenêtre reprend sa
+ * taille de pastille juste après. Sans ce drapeau, `replacer()` — appelé par
+ * les réglages d'un jeu qui démarre — la ramènerait à 230 pixels au milieu de
+ * la question.
+ */
+let questionPleinEcran = false;
 /**
  * Dernier état poussé. La fenêtre d'overlay peut être recréée après une
  * fermeture, ou chargée alors qu'une partie tourne déjà : sans mémoire, elle
@@ -165,6 +193,9 @@ function positionVoulue() {
 /** Remet la fenêtre là où les réglages courants la veulent. */
 function replacer() {
   if (!fenetre || fenetre.isDestroyed()) return;
+  // Une question occupe l'écran : la replacer la rendrait minuscule au pire
+  // moment. Elle retrouvera sa place en se refermant.
+  if (questionPleinEcran) return;
   const { x, y } = positionVoulue();
   fenetre.setBounds({ x, y, width: LARGEUR, height: HAUTEUR });
 }
@@ -261,6 +292,20 @@ function creerOverlay() {
 }
 
 function afficher({ parLUtilisateur = false } = {}) {
+  /**
+   * Le silence ne vaut que contre l'affichage AUTOMATIQUE.
+   *
+   * Un raccourci pressé exprès est une demande, et elle passe : sinon on
+   * aurait une pastille qu'on ne peut plus rappeler avant la partie suivante.
+   *
+   * Il n'y a rien à remettre à zéro ici. J'avais ajouté un `muet = false` sur
+   * la branche explicite, et le sabotage l'a démenti : aucun test ne le
+   * distingue, parce que le garde ci-dessus laisse déjà passer toute demande
+   * explicite, et qu'une partie qui commence lève le silence de toute façon.
+   * Une ligne qu'on peut retirer sans qu'un test tombe ne tient rien — et elle
+   * se relit comme une garantie.
+   */
+  if (muet && !parLUtilisateur) return;
   voulu = true;
   manuel = parLUtilisateur;
   if (!fenetre || fenetre.isDestroyed()) creerOverlay();
@@ -274,6 +319,17 @@ function masquer() {
   voulu = false;
   manuel = false;
   if (fenetre && !fenetre.isDestroyed()) fenetre.hide();
+}
+
+/**
+ * Tait la pastille pour la partie en cours, et pour elle seule.
+ *
+ * Appelée quand on répond « non » à la question de l'écran de chargement.
+ * Elle ne touche à aucun réglage : la partie suivante la ramène.
+ */
+function masquerJusquALaProchainePartie() {
+  muet = true;
+  masquer();
 }
 
 function basculer() {
@@ -299,6 +355,11 @@ function definirEnPartie(valeur, jeu = null) {
   if (enPartie) manuel = false;
 
   if (enPartie && !avant) {
+    // Une partie qui COMMENCE lève le silence de la précédente : c'est
+    // exactement la portée demandée — « caché jusqu'au prochain écran de
+    // chargement ». Posé sur la fin de partie, le silence sauterait dès
+    // qu'on quitte, donc avant l'écran où la question se repose.
+    muet = false;
     partieEnCoursSec = 0;
     const releve = JEUX_AVEC_RELEVE.has(jeu);
     // Sans relevé, personne ne viendra dire combien de temps s'est écoulé :
@@ -407,6 +468,20 @@ function poserQuestion({ texte, oui, non, delaiMs = 45_000 } = {}) {
 
   const id = ++dernierIdQuestion;
   afficher({ parLUtilisateur: true });
+  /**
+   * La question prend TOUT l'écran.
+   *
+   * Dans la pastille, elle faisait 230 pixels dans un coin par-dessus un écran
+   * de chargement : on ne la voyait pas, donc on n'y répondait pas, donc elle
+   * expirait — et une expiration vaut refus. Autant ne pas la poser.
+   *
+   * La fenêtre reprend sa taille en se refermant, y compris quand personne
+   * n'a répondu : une pastille restée plein écran intercepterait la souris
+   * pendant toute la partie, ce qui est bien pire que pas de pastille.
+   */
+  questionPleinEcran = true;
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  fenetre.setBounds({ x: 0, y: 0, width, height });
   fenetre.setIgnoreMouseEvents(false, { forward: true });
   fenetre.setFocusable(true);
   fenetre.webContents.send("overlay:question", { id, texte, oui, non });
@@ -420,6 +495,10 @@ function poserQuestion({ texte, oui, non, delaiMs = 45_000 } = {}) {
       questionEnCours = null;
       if (fenetre && !fenetre.isDestroyed()) {
         fenetre.webContents.send("overlay:question", null);
+        // La taille se rend AVANT tout le reste : c'est la seule chose dont
+        // l'oubli laisserait une fenêtre plein écran par-dessus le jeu.
+        questionPleinEcran = false;
+        replacer();
         // On ne retire la main qu'en dehors du mode placement : sinon on
         // reprendrait à quelqu'un la pastille qu'il est en train de déplacer.
         if (!enPlacement) {
@@ -673,7 +752,7 @@ const _placement = { positionDuCoin, dansLEcran, LARGEUR, HAUTEUR, MARGE };
 
 module.exports = {
   _placement,
-  initOverlay, afficher, masquer, basculer,
+  initOverlay, afficher, masquer, masquerJusquALaProchainePartie, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
   definirReleveApex,
   protegerDeLaCapture,

@@ -114,6 +114,15 @@ declare global {
       overlayDemander?: (question: {
         texte: string; oui: string; non: string; delaiMs?: number;
       }) => Promise<boolean | null>;
+      /**
+       * Tait la pastille pour la partie en cours, et pour elle seule (0.9.12+).
+       *
+       * Appelée sur un refus explicite de session. Elle revient à la partie
+       * suivante, et aucun réglage n'est touché. Absente d'une application
+       * plus ancienne : la pastille reste alors affichée, ce qui est le
+       * comportement d'avant — jamais un réglage coupé à l'insu de quelqu'un.
+       */
+      overlayMasquerPartie?: () => Promise<boolean>;
       /** Rappel affiché par le système, sans passer par le push web (0.6.2+). */
       notifier?: (titre: string, corps: string) => void;
       ouvrirFenetre?: () => void;

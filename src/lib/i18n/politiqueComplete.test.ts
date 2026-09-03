@@ -90,6 +90,15 @@ const ATTENDU: Record<string, RegExp> = {
   amitiesEnvoyees: /liste d'amis/i,
   amitiesRecues: /liste d'amis/i,
   groupes: /groupes rejoints/i,
+  /**
+   * Le parrainage. Quatre champs, une seule ligne de politique : qui vous a
+   * invité et qui vous avez invité sont la même relation lue des deux bouts,
+   * et la décrire deux fois ferait croire à deux traitements distincts.
+   */
+  codeParrain: /parrainage/i,
+  parrainId: /parrainage/i,
+  parrain: /parrainage/i,
+  filleuls: /parrainage/i,
   // Date de début de la dette courante : elle sert au retard, et elle se
   // décrit avec l'historique des paiements plutôt que séparément.
   detteDepuis: /paiements de dette/i,

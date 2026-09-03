@@ -39,6 +39,17 @@ const NE_SORTENT_PAS = [
   // construire dessus, et ce qui est construit dessus devient à corriger le
   // jour où le rouage change.
   "sessionEpoch",
+  // Le code de parrainage. Il n'est pas secret — il est fait pour être
+  // partagé — mais il n'a rien à voyager à chaque chargement de page : c'est
+  // la leçon du jeton de diffusion, et elle vaut pour tout ce qu'un seul écran
+  // consomme. Il se demande par `/api/parrainage`, qui le tire à la première
+  // lecture.
+  "codeParrain",
+  // Qui m'a invité. C'est un renseignement sur QUELQU'UN D'AUTRE : le publier
+  // dans la réponse que la navigation lit à chaque page dirait, à qui regarde
+  // l'onglet réseau, par quel compte celui-ci est arrivé. Aucun écran ne le
+  // demande.
+  "parrainId",
 ] as const;
 
 type Secret = (typeof NE_SORTENT_PAS)[number];

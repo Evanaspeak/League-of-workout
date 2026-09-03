@@ -49,8 +49,12 @@ const HORS_COMPTE: Record<string, string> = {
  * exactement le même geste. Les nommer évite de devoir dispenser une route qui
  * filtre correctement — la dispense la plus dangereuse qui soit, puisqu'elle
  * rend le garde muet sur tout le fichier.
+ *
+ * `parrainId` a rejoint la liste avec le parrainage : compter ses filleuls,
+ * c'est filtrer `User` sur son propre compte, par une colonne qui pointe vers
+ * lui.
  */
-const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId"];
+const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId", "parrainId"];
 
 /**
  * Appels qui ne portent légitimement aucun compte, un par un.

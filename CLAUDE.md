@@ -44,6 +44,14 @@ Quand l'utilisateur annonce qu'il s'absente pour une durée donnée — « je pa
 huit heures », « je reviens demain matin » — cette durée est la durée du
 travail attendu, pas un délai maximal.
 
+**Et il n'a pas besoin d'annoncer une durée.** « Vas-y je te laisse enchaîner,
+je te ferai signe quand je suis de retour », ou n'importe quelle formule qui
+dit la même chose, veut dire : **travailler en continu jusqu'à son retour ou
+jusqu'à épuisement des jetons.** Rendre un bilan puis s'arrêter là n'est pas
+une réponse à cette demande — c'est s'arrêter au premier tour. La fenêtre est
+alors ouverte, donc les reprises s'arment de la même façon, et elles se
+réarment à chaque tour tant que personne n'a repris la main.
+
 Une réponse s'arrête quand elle se termine : il n'y a personne qui continue
 entre deux messages. Il faut donc **armer des reprises** au moment où
 l'absence est annoncée, sans quoi le travail s'arrête à la fin du premier tour.
@@ -55,7 +63,8 @@ Procédure :
 2. Programmer une reprise (`send_later`, ou une boucle programmée) avant de
    rendre la main.
 3. À chaque reprise : prendre le travail suivant, le finir, le publier, puis
-   reprogrammer la suivante.
+   reprogrammer la suivante. **Reprogrammer AVANT de rendre la main**, jamais
+   après : une fois le tour terminé, plus rien ne s'exécute.
 4. Ne rendre le bilan qu'à la fin de la fenêtre annoncée.
 
 Ce qui demande un arbitrage produit ne se décide pas seul : ça part dans les
@@ -143,6 +152,7 @@ src/
       games/preview/route.ts        # POST preview scoring sans sauvegarder
       amis/route.ts                 # GET liste + demandes + groupes, POST demande par pseudo
       classement/route.ts           # GET classement de la semaine entre amis, sur l'effort payé
+      parrainage/route.ts           # GET son lien d'invitation, et combien sont venus par lui
       amis/[id]/route.ts            # PATCH accepter, DELETE refuser/annuler/retirer
       groupes/route.ts              # POST créer un groupe (code tiré)
       groupes/rejoindre/route.ts    # POST rejoindre par code
@@ -165,6 +175,7 @@ src/
     dette.ts          # Ajout et retrait de dette, atomiques
     social.ts         # Les règles du social : demande croisée, code d'invitation, reprise
     classement.ts     # La fenêtre de sept jours, l'ordre, les rangs à égalité
+    parrainage.ts     # Ce qu'on fait d'un code reçu, et pourquoi l'avantage est une amitié
     i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
     i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
     i18n/metadonnees.ts     # Titres et descriptions des pages publiques, six langues
@@ -242,6 +253,11 @@ de texte libre demanderait quelqu'un pour le surveiller.
 - **Retirer un ami et quitter un groupe demandent deux gestes**, comme la
   correction d'un résultat de partie.
 
+- **Un lien de parrainage** vit sur le même écran. Celui qui l'ouvre et crée
+  son compte devient ami tout de suite : rien n'est offert en points d'effort,
+  ce serait une pompe que personne n'a faite. Le code se tire à la première
+  lecture, l'adresse partagée ne porte pas de préfixe de langue, et un code
+  fautif ne fait jamais échouer une inscription.
 - **Le classement de la semaine** vit sur le même écran : sept jours
   glissants, sur l'effort PAYÉ, avec le retard de chacun. Ni les parties
   jouées ni le classement en jeu — perdre beaucoup ne fait pas monter. Les
@@ -525,7 +541,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1819 tests unitaires, 169 suites. Base et session doublées : aucune dépendance à
+1854 tests unitaires, 171 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -550,7 +566,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 199 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 201 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -864,6 +880,201 @@ exception se tient, une règle avec des exceptions qu'on invente au cas par cas
 finit par ne plus rien garder. Le coût est une exécution de construction ; les
 copies installées se mettent à jour toutes seules et ne verront rien.
 
+### La question tenait dans un coin, et personne ne la voyait
+Signalé dans la foulée : « je n'ai pas pensé à cocher et je n'ai pas vu le
+message ».
+
+**C'est le pire genre de défaut : tout fonctionne.** La question EST posée, le
+pont répond, le délai court, la réponse revient. Simplement, elle fait 230
+pixels dans un coin par-dessus un écran de chargement — donc on ne la voit pas,
+donc on n'y répond pas, donc elle expire. Et une expiration vaut refus. Le
+résultat est exactement celui qu'on aurait sans la question, et rien ne le
+signale.
+
+Elle prend maintenant tout l'écran : voile sombre sur le jeu, texte en
+`clamp(28px, 4.2vw, 64px)` — la même question doit rester lisible sur un
+portable de treize pouces et sur un ultra-large —, deux boutons qu'on ne rate
+pas.
+
+**Ce qui compte le plus n'est pas l'agrandissement, c'est le retour.** Une
+pastille restée plein écran intercepte la souris pendant toute la partie, ce
+qui est bien pire que pas de pastille du tout. La taille se rend donc AVANT
+tout le reste dans la fermeture, et deux tests le tiennent : à la réponse, et
+à l'expiration — ce second cas étant précisément celui qui a motivé le
+changement.
+
+**Un troisième cas, qui ne se serait vu qu'en jouant** : un jeu qui démarre
+applique ses réglages de position, ce qui appelle `replacer()`. Pendant une
+question, ça la réduisait à 230 pixels au pire moment — et la question restait
+parfaitement fonctionnelle, donc rien ne l'aurait dit. Un drapeau fait passer
+`replacer()` son tour tant qu'une question occupe l'écran.
+
+Quatre tests, trois sabotages, trois échecs.
+
+### Refuser la session laissait la pastille par-dessus le jeu
+Signalé par le propriétaire du produit : « quand on met non pour lancer une
+session quand la partie se lance, il faudrait que la pastille soit cachée
+jusqu'au prochain écran de chargement ».
+
+C'est juste, et l'oubli est de la même famille que celui d'avant : on avait
+traité ce que le refus ne DOIT PAS faire — ne pas lancer de session — sans
+traiter ce qu'il doit faire. La pastille restait donc à l'écran, c'est-à-dire
+exactement la chose qu'on venait d'écarter.
+
+**Un silence, pas une coupure.** `masquerJusquALaProchainePartie()` ne touche à
+aucun réglage : couper la pastille pour de bon est un autre geste, dans les
+réglages, et le confondre avec un refus ponctuel reviendrait à retirer une
+fonction que personne n'a demandé à retirer.
+
+**Le silence se lève à l'OUVERTURE d'une partie, pas à sa fermeture.** C'est la
+portée demandée — « jusqu'au prochain écran de chargement ». Posé sur la fin de
+partie, il sauterait dès qu'on quitte, donc AVANT l'écran où la question se
+repose, et la pastille reviendrait entre deux parties. Un test tient ce cas
+précis.
+
+**L'état vit dans la COQUILLE, pas dans la page.** La page se recharge, la
+coquille non, et c'est elle qui sait quand une partie commence. Un silence
+tenu par la page disparaîtrait au premier changement d'écran.
+
+**Seul un « non » cliqué tait la pastille.** Une question expirée se traite
+comme un refus pour le LANCEMENT de session — c'est écrit des deux côtés du
+pont — mais pas pour l'affichage : personne ne l'a vue, et retirer alors la
+pastille enlèverait quelque chose que rien n'a demandé à enlever.
+
+**Une ligne a été écrite, sabotée, et retirée.** J'avais ajouté un
+`muet = false` sur la branche explicite d'`afficher`, en croyant que « un geste
+explicite lève le silence ». Le sabotage l'a démenti : la retirer ne faisait
+tomber aucun test, parce que le garde laisse déjà passer toute demande
+explicite et qu'une partie qui commence lève le silence de toute façon. C'est
+le défaut déjà écrit ici pour le module de stockage — **une ligne qu'on peut
+retirer sans qu'un test tombe ne tient rien, et elle se relit comme une
+garantie.** Elle est partie ; le test qui l'accompagnait dit maintenant ce
+qu'il prouve vraiment : la demande PASSE OUTRE le silence, elle ne le lève pas.
+
+Cinq tests, quatre sabotages, trois échecs — le quatrième est celui qui a fait
+retirer la ligne. Et le garde du contrat du pont a mordu comme prévu quand la
+méthode a été retirée de `preload.js` en la laissant déclarée : c'est
+exactement le défaut qu'il existe pour attraper, « undefined is not a function »
+dans l'application installée seulement.
+
+Application de bureau en **0.9.12**, publiée dans la foulée : la page appelle
+une méthode que les copies antérieures n'ont pas, et le repli est écrit — la
+pastille reste, ce qui est le comportement d'avant.
+
+### Le parrainage, et l'avantage qu'on ne pouvait pas donner
+Ligne 119, et c'est le seul canal d'acquisition du plan qui travaille sans
+qu'on s'en occupe. Le retour reçu de Reddit — « ça fait trop IA » — dit assez
+que la page seule ne suffit pas : ce qui amène du monde ici, c'est quelqu'un
+qui invite quelqu'un.
+
+**La question difficile n'était pas le lien, c'était l'avantage.** La réponse
+119 dit « avec un avantage pour les deux », et le produit n'a ni monnaie ni
+palier payant : l'avantage ne peut donc être qu'une chose qui existe déjà.
+Deux candidats ont été écartés, pour la même raison :
+
+- **offrir des points d'effort** — ils sont l'unité de la dette, et un point
+  donné est une pompe que personne n'a faite. Le classement, les paliers et le
+  bilan deviendraient faux d'un coup ;
+- **retirer de la dette** — même chose, à l'envers.
+
+Ce qui reste, et qui ne coûte rien au registre : **les deux comptes deviennent
+amis.** Le filleul arrive avec quelqu'un dans son classement au lieu de la
+phrase « tu es seul ici » — celle-là même que le classement affichait la veille
+— et le parrain gagne la personne qu'il a fait venir. C'est immédiat,
+réciproque, et ça se retire des deux côtés comme n'importe quelle amitié.
+
+Ce n'est pas un ajout non sollicité, et la distinction tient : le filleul a
+cliqué le lien, le parrain l'a publié. Les deux ont consenti à ce que ce lien
+fasse quelque chose. Le plafond de cent amis vaut toujours pour qui collerait
+son lien partout.
+
+**La règle qui gouverne tout le reste : un code fautif ne fait JAMAIS échouer
+l'inscription.** Un lien tronqué par un client de messagerie, recopié de
+travers, ou dont le parrain a supprimé son compte, laisse passer la création du
+compte. Refuser reviendrait à perdre exactement la personne qu'on venait de
+convaincre, en lui disant que c'est SA faute. C'est la décision déjà prise pour
+l'objectif par défaut : une décoration qui manque ne refuse pas un compte.
+
+**Le lien se pose dans la même écriture que le compte**, et pas après :
+`parrainId` est passé au `create`. Posé ensuite, une panne entre les deux
+laisserait un filleul sans parrain — et ça ne se rattrape pas, puisque le lien
+ne se pose qu'à la création. L'amitié, elle, vient après et son échec ne coûte
+que lui-même : le compte existe, le lien est posé, l'amitié se redemande à la
+main. C'est l'ordre déjà choisi pour le paiement de dette, avec le même
+raisonnement.
+
+**Le code réemploie celui des groupes** plutôt que d'en écrire un second :
+même problème — un code se dicte en vocal avant de se taper — donc même
+alphabet sans caractères qui se confondent, et même rejet des octets hors d'un
+multiple de sa taille. L'écrire une deuxième fois aurait été le septième cas de
+règle dupliquée de ce projet.
+
+**Il se tire à la PREMIÈRE LECTURE**, contrairement au jeton de diffusion qui
+attend qu'on le demande. La différence n'est pas un oubli : une adresse
+publique qui montre quelque chose de vous ne doit pas exister par défaut,
+alors qu'un code de parrainage ne révèle rien — il ne permet que de créer un
+compte en devenant votre ami. Le mettre derrière un bouton « engendrer »
+ajouterait un geste entre quelqu'un et la seule chose qu'il vient chercher.
+
+**Cinq collisions d'affilée valent un renoncement**, pas une boucle : sur
+31^8 c'est improbable, et si ça arrive le tirage est cassé plutôt que
+malchanceux. La route rend alors `null` et l'écran dit que le lien n'a pas pu
+être créé — ce qui est vrai — au lieu de tourner. Une panne qui n'est PAS une
+collision se laisse remonter : la masquer en « pas de code » enverrait chercher
+un défaut de tirage là où la base est hors service.
+
+**L'adresse partagée ne porte PAS de préfixe de langue.** `/beta?p=CODE` fait
+négocier la langue à celui qui l'ouvre, plutôt que d'imposer celle de celui qui
+a copié le lien. Quelqu'un qui partage sur un serveur international n'envoie
+pas tout le monde sur une page française.
+
+**Deux gardes ont mordu sur les colonnes ajoutées**, ce qui est leur travail.
+`compte.test.ts` a exigé qu'on range `codeParrain` et `parrainId` d'un côté ou
+de l'autre de ce qui sort du compte : les deux sont refusés, le code parce
+qu'il n'a rien à voyager à chaque chargement de page — c'est la leçon du jeton
+de diffusion — et `parrainId` parce que c'est un renseignement sur QUELQU'UN
+D'AUTRE, qui dirait à qui regarde l'onglet réseau par quel compte celui-ci est
+arrivé. Et `politiqueComplete.test.ts` a exigé une ligne de politique sur les
+quatre champs, dans les six langues.
+
+**`parrainId` a rejoint les colonnes de compte du garde de filtrage** :
+compter ses filleuls, c'est filtrer `User` sur son propre compte, par une
+colonne qui pointe vers lui.
+
+Neuf sabotages unitaires, neuf échecs. Au navigateur, deux tests et deux
+sabotages : le code retiré du corps de la requête, et un code fautif rendu
+bloquant.
+
+**Le premier sabotage n'a pas compilé**, et c'est noté comme tel plutôt que
+compté comme un test qui mord : retirer `parrain` de l'envoi rendait l'état
+inutilisé, et `noUnusedLocals` le nomme. Réécrit pour compiler — la valeur
+part vide — il fait tomber le parcours.
+
+**Ce que le parcours prouve et qu'aucun test unitaire ne peut voir** : que le
+code SURVIT au formulaire. Il entre par l'adresse, traverse un composant qui ne
+l'affiche jamais, et ressort dans le corps d'une requête — trois endroits où il
+peut se perdre sans que rien ne le dise, puisqu'une inscription sans parrain
+réussit exactement comme une inscription avec.
+
+### V352 vérifiée, et le témoin qu'il a fallu chercher ailleurs
+Le réflexe était de pousser `/api/classement` et de conclure du 307 que la
+route existe. **Il ne prouve rien** : `/api/inventee` rend exactement le même
+307 vers la connexion, puisque le middleware traite toute adresse d'API non
+publique comme protégée. Un code de réponse identique pour « existe et est
+gardée » et pour « n'existe pas » ne distingue rien — c'est la famille du
+défaut déjà corrigé sur les PAGES, où une adresse inventée partait vers la
+connexion au lieu de rendre 404.
+
+Le témoin est ailleurs, et il est public : la politique de confidentialité
+sert « en retard sur une dette », phrase qui n'existe que depuis V352. C'est
+une page statique, lisible sans session, et elle porte la preuve du
+déploiement.
+
+`/fr/amis` rend 307 vers `/fr/login`, `/fr/nimportequoi` rend 404. La
+construction de l'application a publié `desktop-v0.9.11` avec son installeur
+de 120 Mo et son `latest.yml` : quarante-neuf exécutions, une seule en échec,
+remontant à V185.
+
 ### Le classement, et le garde qui ne mordait pas sur un `groupBy`
 Lignes 115 et 116 du plan. La 115 dit sur QUOI classer, et c'est la seule
 décision qui compte : **sur l'effort payé, jamais sur les parties jouées.**
@@ -1163,6 +1374,15 @@ l'autre en silence rendrait le réglage inutile.
 Une application antérieure à 0.9.10 ne sait pas poser la question : on ne lance
 alors rien. Le repli d'un réglage qui dit « demande-moi » ne peut pas être
 « fais-le sans demander ».
+
+**Et un « non » tait la pastille pour cette partie** (0.9.12+), jusqu'à
+l'écran de chargement suivant. Laisser la pastille par-dessus le jeu ferait
+rester à l'écran la seule chose qu'on venait d'écarter.
+
+**La question occupe tout l'écran** (0.9.12+). Dans la pastille, elle faisait
+230 pixels dans un coin par-dessus un écran de chargement : on ne la voyait
+pas, donc elle expirait, donc elle valait refus — le résultat exact qu'on
+aurait sans elle.
 
 Six sabotages, six échecs — dont les deux qui comptent le plus : la fenêtre qui
 ne rend pas la souris, et la question qui ne se ferme jamais.

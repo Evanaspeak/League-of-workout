@@ -18,7 +18,7 @@ import { sansLangue } from "./chemin";
 export async function ouvrirCompte(
   browser: Browser,
   prefixe: string,
-  options: { consentement?: boolean } = {},
+  options: { consentement?: boolean; parrain?: string } = {},
 ): Promise<{ etat: Awaited<ReturnType<BrowserContext["storageState"]>>; compte: { pseudo: string; email: string } }> {
   const marque = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
   const compte = { pseudo: `${prefixe}${marque}`, email: `${prefixe.toLowerCase()}-${marque}@example.test` };
@@ -30,7 +30,12 @@ export async function ouvrirCompte(
   });
   await purgerTentatives();
 
-  await page.goto("/beta");
+  /**
+   * Le code de parrainage passe par l'ADRESSE, comme pour quelqu'un qui suit
+   * un lien reçu. Le poser dans le corps de la requête éprouverait la route et
+   * non le chemin : c'est la traversée du formulaire qui peut se perdre.
+   */
+  await page.goto(options.parrain ? `/beta?p=${options.parrain}` : "/beta");
   const envoyer = page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first();
   await remplirJusquACeQueCaPrenne(page, envoyer, compte);
   await envoyer.click();

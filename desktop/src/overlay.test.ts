@@ -87,6 +87,20 @@ function etat(): any {
   return dernier ? (dernier[1] as any) : null;
 }
 
+/**
+ * L'identifiant de la dernière question posée.
+ *
+ * Il est incrémenté par le module et voyage dans le message : le lire sur
+ * l'envoi plutôt que de le deviner évite qu'un test réponde à une question
+ * qui n'est pas celle qu'il vient de poser.
+ */
+function dernierIdQuestion(): number {
+  const f = mockFenetres[mockFenetres.length - 1];
+  const dernier = [...f.envois].reverse()
+    .find(([canal, charge]) => canal === "overlay:question" && charge);
+  return (dernier?.[1] as { id: number }).id;
+}
+
 function fenetre(): MockFenetre {
   return mockFenetres[mockFenetres.length - 1];
 }
@@ -467,5 +481,136 @@ describe("la question par-dessus le jeu", () => {
     await promesse;
     expect(fenetre().ignoreSouris).toBe(false);
     expect(fenetre().focusable).toBe(true);
+  });
+});
+
+/**
+ * La question, et la taille qu'elle prend.
+ *
+ * Dans la pastille, elle faisait 230 pixels dans un coin par-dessus un écran
+ * de chargement : on ne la voyait pas, donc on n'y répondait pas, donc elle
+ * expirait — et une expiration vaut refus. Le défaut ne se voit d'aucune
+ * autre façon : la question EST posée, la mécanique marche, et le résultat est
+ * le même que si elle n'existait pas.
+ */
+describe("la question occupe l'écran", () => {
+  it("prend tout l'écran le temps d'être posée", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.poserQuestion({ texte: "Lancer une session ?", oui: "Oui", non: "Non" });
+    expect(fenetre().getBounds()).toEqual({ x: 0, y: 0, width: 1920, height: 1080 });
+  });
+
+  /**
+   * Ce qui compte le plus : la fenêtre reprend sa taille. Une pastille restée
+   * plein écran intercepte la souris pendant toute la partie — bien pire que
+   * pas de pastille du tout.
+   */
+  it("reprend sa taille de pastille dès qu'on répond", async () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    const reponse = overlay.poserQuestion({ texte: "?", oui: "Oui", non: "Non" });
+    const id = dernierIdQuestion();
+    overlay.reponseQuestion(id, false);
+    await reponse;
+    const b = fenetre().getBounds();
+    expect({ width: b.width, height: b.height }).toEqual({ width: 230, height: 210 });
+  });
+
+  /** Et aussi quand PERSONNE ne répond : c'est le cas qui a motivé tout ça. */
+  it("reprend sa taille quand la question expire", async () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    const reponse = overlay.poserQuestion({ texte: "?", oui: "O", non: "N", delaiMs: 1000 });
+    jest.advanceTimersByTime(1001);
+    await expect(reponse).resolves.toBeNull();
+    const b = fenetre().getBounds();
+    expect({ width: b.width, height: b.height }).toEqual({ width: 230, height: 210 });
+  });
+
+  /**
+   * Un jeu qui démarre applique ses réglages de position, ce qui appelle
+   * `replacer()`. Pendant une question, ça la réduirait à 230 pixels au pire
+   * moment — et rien ne le dirait, la question restant parfaitement
+   * fonctionnelle.
+   */
+  it("les réglages d'un jeu ne la réduisent pas en cours de route", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.poserQuestion({ texte: "?", oui: "O", non: "N" });
+    overlay.appliquerConfig({ coin: "bas-gauche", position: null });
+    expect(fenetre().getBounds().width).toBe(1920);
+  });
+});
+
+/**
+ * Le silence d'une partie.
+ *
+ * Refuser la session à l'écran de chargement doit retirer la pastille pour
+ * CETTE partie et pour elle seule. L'erreur se paie dans les deux sens : ne
+ * rien retirer laisse à l'écran la seule chose qu'on venait d'écarter, et
+ * retirer pour toujours coupe une fonction que personne n'a demandé à couper.
+ */
+describe("le silence d'une partie", () => {
+  it("l'affichage automatique ne ramène pas une pastille tue", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(true);
+
+    overlay.masquerJusquALaProchainePartie();
+    expect(fenetre().isVisible()).toBe(false);
+
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(false);
+  });
+
+  /**
+   * Le cas qui distingue « cette partie » de « pour toujours ». Sans le
+   * relèvement à l'OUVERTURE d'une partie, la pastille resterait absente le
+   * reste de la soirée, et rien ne le dirait.
+   */
+  it("la partie suivante la ramène", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+
+    overlay.definirEnPartie(false);
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(true);
+  });
+
+  /**
+   * Le silence se lève à l'ouverture et non à la fermeture. Posé sur la fin de
+   * partie, il sauterait dès qu'on quitte — donc AVANT l'écran de chargement
+   * où la question se repose, et la pastille reviendrait entre deux parties.
+   */
+  it("la fin de la partie en cours ne le lève pas", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+    overlay.definirEnPartie(false);
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(false);
+  });
+
+  /**
+   * Un raccourci pressé exprès est une demande, pas un affichage automatique.
+   * Sans ce passage, on aurait une pastille qu'on ne peut plus rappeler avant
+   * la partie suivante : le contraire d'un réglage.
+   *
+   * Il PASSE OUTRE le silence, il ne le lève pas — la nuance vient d'un
+   * sabotage. J'avais écrit une remise à zéro sur cette branche ; la retirer
+   * ne faisait tomber aucun test, parce que le garde laisse déjà passer toute
+   * demande explicite et qu'une partie qui commence lève le silence de toute
+   * façon. La ligne est partie avec sa fausse garantie.
+   */
+  it("un geste explicite passe outre le silence", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+    overlay.afficher({ parLUtilisateur: true });
+    expect(fenetre().isVisible()).toBe(true);
+  });
+
+  /** Et il ne touche à aucun réglage : c'est un silence, pas une coupure. */
+  it("ne modifie pas le réglage d'affichage du jeu", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    const avant = overlay.lirePlacement();
+    overlay.masquerJusquALaProchainePartie();
+    expect(overlay.lirePlacement()).toEqual(avant);
   });
 });

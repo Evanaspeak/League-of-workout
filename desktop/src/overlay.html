@@ -165,13 +165,46 @@
   /* La question posée par-dessus l'écran de chargement.
      Elle REMPLACE la pastille au lieu de s'ajouter à côté : deux blocs
      concurrents par-dessus un jeu, c'est un de trop, et celui qui demande
-     quelque chose doit être le seul à parler. */
+     quelque chose doit être le seul à parler.
+
+     Et elle prend TOUT L'ÉCRAN. Dans la pastille, elle faisait 230 pixels
+     dans un coin par-dessus un écran de chargement : on ne la voyait pas,
+     donc on n'y répondait pas, donc elle expirait — et une expiration vaut
+     refus. Une question qu'on ne voit pas ne pose rien. */
   .question { display: none; }
   body.demande .pastille { display: none; }
-  body.demande .question { display: block; }
+  body.demande {
+    /* La fenêtre occupe l'écran le temps de la question : le voile assombrit
+       le jeu derrière, ce qui est la façon la plus courte de dire « ceci
+       attend une réponse ». */
+    background: rgba(6, 8, 11, 0.72);
+  }
+  body.demande .question {
+    display: flex;
+    position: fixed; inset: 0;
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px; padding: 6vh 6vw;
+    /* Le cadre de la pastille n'a rien à faire ici : c'est le voile qui porte
+       le fond, et un liseré au bord de l'écran ferait bricolage. */
+    background: none; border: none; box-shadow: none; backdrop-filter: none;
+  }
+  /* Le titre reprend sa taille : à cette échelle, un logo de 11 px ressemble
+     à une poussière sur l'écran. */
+  body.demande .question .titre {
+    font-size: 18px; letter-spacing: .18em; opacity: .8;
+  }
+  body.demande .question .point { width: 10px; height: 10px; }
   .question-texte {
     font-size: 13px; line-height: 1.35; color: #ECEFF4;
     margin-bottom: 10px; font-weight: 600;
+  }
+  body.demande .question-texte {
+    /* Une taille qui suit l'écran : la même question doit rester lisible sur
+       un portable de 13 pouces et sur un ultra-large. */
+    font-size: clamp(28px, 4.2vw, 64px);
+    line-height: 1.2; text-align: center; margin: 0;
+    max-width: 22ch; text-wrap: balance;
+    text-shadow: 0 2px 24px rgba(0,0,0,.7);
   }
   .question-boutons { display: flex; gap: 8px; }
   .question-boutons button {
@@ -182,6 +215,17 @@
   }
   .question-boutons button.oui {
     background: #FF5A2E; border-color: #FF5A2E; color: #0C0E11;
+  }
+  body.demande .question-boutons {
+    gap: clamp(16px, 2vw, 32px); flex-wrap: wrap; justify-content: center;
+  }
+  body.demande .question-boutons button {
+    /* Des cibles qu'on ne rate pas : c'est tout l'objet du changement. */
+    flex: 0 0 auto;
+    min-width: clamp(180px, 18vw, 320px);
+    padding: clamp(14px, 1.6vw, 24px) clamp(24px, 3vw, 48px);
+    font-size: clamp(18px, 1.8vw, 30px);
+    border-radius: 12px;
   }
 </style>
 </head>

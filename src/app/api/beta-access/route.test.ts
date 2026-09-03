@@ -4,6 +4,7 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     user: { count: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn(), create: jest.fn() },
     goal: { create: jest.fn() },
+    amitie: { create: jest.fn() },
   },
 }));
 jest.mock("@/lib/rate-limit", () => ({
@@ -26,6 +27,74 @@ beforeEach(() => {
   user.findFirst.mockResolvedValue(null);
   user.create.mockImplementation(async ({ data }: { data: unknown }) => ({ id: "u9", ...(data as object) }));
   (prisma.goal.create as jest.Mock).mockResolvedValue({});
+  (prisma.amitie.create as jest.Mock).mockResolvedValue({});
+});
+
+/**
+ * Le parrainage, à la seule occasion où il se pose.
+ *
+ * `findUnique` sert déjà à chercher une adresse : la doublure répond donc au
+ * `where` qu'on lui donne, sinon un test du parrainage rendrait un compte pour
+ * une recherche d'e-mail et l'inverse.
+ */
+describe("le parrainage", () => {
+  const parParrain = (parrain: { id: string } | null) => {
+    (prisma.user.findUnique as jest.Mock).mockImplementation(
+      async ({ where }: { where: { codeParrain?: string } }) =>
+        (where.codeParrain ? parrain : null));
+  };
+  const amitie = () => prisma.amitie.create as jest.Mock;
+
+  it("lie le compte au parrain et les rend amis tout de suite", async () => {
+    parParrain({ id: "parrain" });
+    const r = await acceder({ pseudo: "Filleul", parrain: "ABCD2345" });
+    expect(r.status).toBe(200);
+    expect(user.create.mock.calls[0][0].data.parrainId).toBe("parrain");
+    expect(amitie().mock.calls[0][0].data).toEqual({
+      demandeurId: "parrain", receveurId: "u9",
+      etat: "acceptee", accepteeLe: expect.any(Date),
+    });
+  }, 20_000);
+
+  it("cherche le parrain par son code, jamais par autre chose", async () => {
+    parParrain({ id: "parrain" });
+    await acceder({ pseudo: "Filleul", parrain: "abcd-2345" });
+    const appels = (prisma.user.findUnique as jest.Mock).mock.calls
+      .map((a) => a[0].where)
+      .filter((w) => "codeParrain" in w);
+    expect(appels).toEqual([{ codeParrain: "ABCD2345" }]);
+  }, 20_000);
+
+  /**
+   * La règle qui gouverne toutes les autres : un code fautif ne fait jamais
+   * échouer l'inscription. Un lien tronqué par un client de messagerie doit
+   * laisser passer le compte — refuser reviendrait à perdre exactement celui
+   * qu'on venait de convaincre.
+   */
+  it.each([
+    ["absent", undefined],
+    ["illisible", "trop-court"],
+    ["inconnu", "ZZZZ9999"],
+  ])("un code %s crée quand même le compte, sans parrain ni amitié", async (_, code) => {
+    parParrain(null);
+    const r = await acceder({ pseudo: "Filleul", parrain: code });
+    expect(r.status).toBe(200);
+    expect(user.create.mock.calls[0][0].data.parrainId).toBeNull();
+    expect(amitie()).not.toHaveBeenCalled();
+  }, 20_000);
+
+  /**
+   * L'amitié qui ne s'écrit pas ne coûte qu'elle-même : le compte existe, le
+   * lien est posé, et l'amitié se redemande à la main. L'inverse — refuser le
+   * compte — serait la pire des deux.
+   */
+  it("une amitié qui échoue ne fait pas échouer l'inscription", async () => {
+    parParrain({ id: "parrain" });
+    amitie().mockRejectedValue(new Error("base HS"));
+    const r = await acceder({ pseudo: "Filleul", parrain: "ABCD2345" });
+    expect(r.status).toBe(200);
+    expect(user.create.mock.calls[0][0].data.parrainId).toBe("parrain");
+  }, 20_000);
 });
 
 /**
