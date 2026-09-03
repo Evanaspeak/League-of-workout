@@ -32,6 +32,7 @@ export default function Nav() {
   const links = [
     { href: "/dashboard", label: t.dashboard },
     { href: "/history", label: t.historique },
+    { href: "/amis", label: t.amis },
     { href: "/bilan", label: t.bilan },
     { href: "/settings", label: t.reglages },
   ];

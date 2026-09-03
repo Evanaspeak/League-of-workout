@@ -40,6 +40,32 @@ const HORS_COMPTE: Record<string, string> = {
   "push/programme": "Même chose pour le rappel du matin et la relance des absents.",
 };
 
+/**
+ * Les colonnes qui portent le compte.
+ *
+ * Le contrôle ne cherchait que `userId`, ce qui était vrai de toutes les
+ * tables du jour. `Amitie` en porte DEUX et n'en porte aucune de ce nom : un
+ * lien a un demandeur et un receveur, et filtrer sur l'un ou sur l'autre est
+ * exactement le même geste. Les nommer évite de devoir dispenser une route qui
+ * filtre correctement — la dispense la plus dangereuse qui soit, puisqu'elle
+ * rend le garde muet sur tout le fichier.
+ */
+const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId"];
+
+/**
+ * Appels qui ne portent légitimement aucun compte, un par un.
+ *
+ * Plus fin qu'une dispense de route, et c'est le but : dispenser `amis` en
+ * entier rendrait le garde aveugle aux neuf autres requêtes du même fichier,
+ * qui doivent toutes filtrer.
+ */
+const APPELS_HORS_COMPTE: Record<string, string> = {
+  "amis : user.findMany":
+    "Résoudre un pseudo en compte, c'est regarder chez quelqu'un d'autre : c'est tout l'objet d'« ajouter un ami ». Le `select` ne rend que l'identifiant et le pseudo, et deux homonymes font refuser au lieu de choisir.",
+  "groupes : groupe.create":
+    "Un groupe qu'on vient de créer n'appartient encore à personne. L'appartenance s'écrit à la ligne suivante, et c'est elle qui porte le compte.",
+};
+
 const OPERATIONS = [
   "findMany", "findFirst", "findUnique", "findUniqueOrThrow", "update",
   "updateMany", "delete", "deleteMany", "count", "aggregate", "groupBy",
@@ -86,12 +112,34 @@ describe("filtrage par compte", () => {
       for (const m of r.texte.matchAll(motif)) {
         const modele = m[2];
         if (SANS_PROPRIETAIRE.has(modele)) continue;
+        const appel = `${r.nom} : ${modele}.${m[3]}`;
+        if (appel in APPELS_HORS_COMPTE) continue;
         const autour = r.texte.slice(Math.max(0, m.index! - 400), m.index! + m[0].length + 400);
-        if (/userId/.test(autour) || /\bid:\s*(user|me|moi)\.id/.test(autour)) continue;
-        nus.push(`${r.nom} : ${modele}.${m[3]}`);
+        if (COLONNES_DE_COMPTE.some((c) => autour.includes(c))) continue;
+        if (/\bid:\s*(user|me|moi)\.id/.test(autour)) continue;
+        nus.push(appel);
       }
     }
     expect(nus).toEqual([]);
+  });
+
+  it("chaque appel dispensé désigne encore un appel qui existe", () => {
+    // Une dispense qui ne désigne plus rien est du code mort qu'on a fini par
+    // admettre — et elle ouvre un nom que la prochaine route pourrait reprendre.
+    const motif = new RegExp(`(prisma|tx)\\.([a-zA-Z]+)\\.(${OPERATIONS})\\b`, "g");
+    const vus = new Set<string>();
+    for (const r of toutes) {
+      for (const m of r.texte.matchAll(motif)) vus.add(`${r.nom} : ${m[2]}.${m[3]}`);
+    }
+    const mortes = Object.keys(APPELS_HORS_COMPTE).filter((a) => !vus.has(a));
+    expect(mortes).toEqual([]);
+  });
+
+  it("chaque appel dispensé porte sa raison", () => {
+    for (const [appel, raison] of Object.entries(APPELS_HORS_COMPTE)) {
+      expect(raison.length).toBeGreaterThan(40);
+      expect(appel).toMatch(/ : \w+\.\w+$/);
+    }
   });
 
   it("le motif trouve réellement des appels : sinon il ne contrôle rien", () => {

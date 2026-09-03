@@ -185,6 +185,13 @@ model User {
   pushSubs PushSubscription[]
   accounts Account[]
   sessions Session[]
+
+  // Le graphe social. Deux relations pour une seule notion : une amitié a un
+  // demandeur et un receveur, et il faut savoir lequel on est pour afficher
+  // « en attente de sa réponse » plutôt que « répondre ».
+  amitiesEnvoyees Amitie[]       @relation("AmitiesEnvoyees")
+  amitiesRecues   Amitie[]       @relation("AmitiesRecues")
+  groupes         MembreGroupe[]
 }
 
 model Account {
@@ -467,4 +474,88 @@ model BetaApplication {
   discovery    String
   engagement   Int
   status       String   @default("pending") // pending | accepted | rejected
+}
+
+// ─── Le social ───────────────────────────────────────────────────────────────
+
+/**
+ * Une amitié, demandée puis acceptée.
+ *
+ * **Rien n'est explorable.** Le propriétaire du produit a répondu non à
+ * « es-tu prêt à modérer un espace social ? » (réponse 127), et cette réponse
+ * décide de la forme : pas d'annuaire, pas de recherche, aucun texte libre
+ * échangé. On ajoute quelqu'un dont on connaît déjà le pseudo, et la relation
+ * n'existe que s'il l'accepte. Il n'y a donc rien à modérer : le seul contenu
+ * qui circule est un pseudo, déjà validé par `validerPseudo`.
+ *
+ * **Un refus supprime la ligne.** Le marquer laisserait à qui insiste le moyen
+ * de savoir qu'il a été refusé — et il n'y a personne pour arbitrer ce qui
+ * suivrait. Refuser rend donc l'état d'avant : il pourra redemander, et ce
+ * sera à nouveau une demande ordinaire.
+ */
+model Amitie {
+  id String @id @default(cuid())
+
+  demandeurId String
+  receveurId  String
+
+  /** attente | acceptee */
+  etat String @default("attente")
+
+  createdAt  DateTime  @default(now())
+  accepteeLe DateTime?
+
+  demandeur User @relation("AmitiesEnvoyees", fields: [demandeurId], references: [id], onDelete: Cascade)
+  receveur  User @relation("AmitiesRecues", fields: [receveurId], references: [id], onDelete: Cascade)
+
+  /**
+   * Une seule ligne par couple ORIENTÉ. L'autre sens — B demande à A alors que
+   * A a déjà demandé à B — n'est pas empêché par la base : c'est la route qui
+   * regarde les deux sens avant d'écrire, et qui accepte au lieu de créer un
+   * doublon. Un index sur un couple non ordonné n'existe pas en SQL.
+   */
+  @@unique([demandeurId, receveurId])
+  @@index([receveurId, etat])
+  @@index([demandeurId, etat])
+}
+
+/**
+ * Un groupe qu'on rejoint par un code.
+ *
+ * Même raison que pour les amitiés : le code est la seule porte. Sans lui le
+ * groupe n'existe pour personne, ce qui évite d'avoir à surveiller ce que des
+ * inconnus y feraient. Le nom est validé comme un pseudo — c'est le seul texte
+ * qu'un membre lira, autant qu'il passe par la règle qui existe déjà.
+ */
+model Groupe {
+  id        String   @id @default(cuid())
+  nom       String
+  /** Le code d'invitation, régénérable : c'est la seule façon de le révoquer. */
+  code      String   @unique
+  createdAt DateTime @default(now())
+
+  membres MembreGroupe[]
+}
+
+model MembreGroupe {
+  id       String @id @default(cuid())
+  groupeId String
+  userId   String
+
+  /**
+   * proprietaire | membre
+   *
+   * Le propriétaire renomme le groupe et refait le code. Un groupe qui perd le
+   * sien ne peut plus révoquer un code déjà partagé, d'où la reprise : quand
+   * le propriétaire part, le plus ancien membre restant hérite du rôle.
+   */
+  role String @default("membre")
+
+  createdAt DateTime @default(now())
+
+  groupe Groupe @relation(fields: [groupeId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupeId, userId])
+  @@index([userId])
 }

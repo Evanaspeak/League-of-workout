@@ -45,7 +45,7 @@ produit** : poser les tâches planifiées Vercel. Sans elles, le rappel du matin
 et la relance des absents restent suspendus au `schedule` de GitHub Actions,
 qui passe trois à six fois par jour à des heures imprévisibles.
 
-### [ ] 02 — Le social minimal — amis, classement, parrainage
+### [~] 02 — Le social minimal — amis, classement, parrainage
 *5 à 6 nuits*
 
 C'est le seul bloc qui agit à la fois sur la rétention et sur l'acquisition : le parrainage amène des gens, le classement entre amis les fait revenir. Tu as dit oui à tout, et c'est ce qui manque le plus à un produit dont le sujet est de rendre des comptes.
@@ -110,12 +110,12 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 026 | Une courte vidéo de forme par exercice | 1 nuit + tournage |
 
 ### Le social
-*13 à faire · 0 faits.* Tu as dit oui à absolument tout. Rien n'est construit. C'est le deuxième gros bloc.
+*11 à faire · 2 faits.* Tu as dit oui à absolument tout. Les amis et les groupes existent ; le reste attend.
 
 | | réf | | effort |
 |---|---|---|---|
-| [ ] | 113 | Le principe : oui au social | — |
-| [ ] | 114 | Des amis qu'on ajoute ET des groupes qu'on rejoint | 2 nuits |
+| [x] | 113 | Le principe : oui au social | — |
+| [x] | 114 | Des amis qu'on ajoute ET des groupes qu'on rejoint | 2 nuits |
 | [ ] | 115 | Un classement entre amis, sur le volume payé | 1 nuit |
 | [ ] | 116 | Le classement montre la dette en retard | ½ nuit |
 | [ ] | 118 | Une équipe de cinq avec une dette commune | 2 nuits |

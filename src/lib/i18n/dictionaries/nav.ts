@@ -2,6 +2,7 @@ export const nav = {
   fr: {
     dashboard: "Dashboard",
     historique: "Historique",
+    amis: "Amis",
     bilan: "Ta saison",
     reglages: "Réglages",
     admin: "Admin",
@@ -15,6 +16,7 @@ export const nav = {
   en: {
     dashboard: "Dashboard",
     historique: "History",
+    amis: "Friends",
     bilan: "Your season",
     reglages: "Settings",
     admin: "Admin",
@@ -28,6 +30,7 @@ export const nav = {
   es: {
     dashboard: "Panel",
     historique: "Historial",
+    amis: "Amigos",
     bilan: "Tu temporada",
     reglages: "Ajustes",
     admin: "Admin",
@@ -41,6 +44,7 @@ export const nav = {
   de: {
     dashboard: "Übersicht",
     historique: "Verlauf",
+    amis: "Freunde",
     bilan: "Deine Saison",
     reglages: "Einstellungen",
     admin: "Admin",
@@ -54,6 +58,7 @@ export const nav = {
   zh: {
     dashboard: "总览",
     historique: "记录",
+    amis: "好友",
     bilan: "你的赛季",
     reglages: "设置",
     admin: "管理",
@@ -67,6 +72,7 @@ export const nav = {
   ja: {
     dashboard: "ダッシュボード",
     historique: "履歴",
+    amis: "フレンド",
     bilan: "あなたのシーズン",
     reglages: "設定",
     admin: "管理",

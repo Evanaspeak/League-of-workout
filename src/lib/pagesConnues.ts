@@ -31,6 +31,7 @@ import { tousLesSlugs } from "@/lib/slugJeu";
 export const PAGES_CONNUES = [
   "/",
   "/admin",
+  "/amis",
   "/beta",
   "/bilan",
   "/calculateur",
