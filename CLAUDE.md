@@ -63,6 +63,39 @@ Si la CI casse après une fusion, on corrige : le retard est de quelques
 minutes, pas de quinze, et il ne se paie que quand quelque chose a
 effectivement cassé.
 
+## La suite navigateur, et ce que le parallélisme lui coûte
+
+Deux workers, `bareme-gele.spec.ts` seul à la fin, une adresse IP par worker.
+Mesuré sur la même machine, même construction :
+
+| workers | durée | résultat |
+|---|---|---|
+| 1 | 14 min 30 à 15 min | 203 passés |
+| 4 | 6 min 24 | **2 échecs**, 7 non joués |
+| 2 | 9 min 55 | 203 passés |
+
+**Quatre est trop, et la raison est le PROCESSEUR, pas la base.** La machine a
+quatre cœurs ; il faut y loger quatre Chromium, quatre processus de test ET le
+serveur Next, qui hache les mots de passe en bcrypt coût 12 — du calcul pur,
+un quart de seconde par connexion. Les deux parcours morts expiraient tous
+deux sur la CONNEXION, jamais sur ce qu'ils éprouvaient. Un banc d'essai qui
+sature la machine ne mesure plus le produit, il mesure sa propre file
+d'attente.
+
+Les deux obstacles réels au parallélisme, tous deux levés :
+
+- `bareme-gele.spec.ts` écrit les ratios GLOBAUX dans `SystemConfig`. Il vit
+  dans un projet Playwright qui ne démarre qu'une fois le reste terminé —
+  lancé en parallèle, il changerait le barème sous les pieds des autres, et
+  l'échec tomberait n'importe où sauf chez lui ;
+- le limiteur d'inscription est indexé sur l'adresse IP, commune à tous les
+  workers. Chacun envoie la sienne par `x-forwarded-for`, que `getClientIp`
+  lit quand l'en-tête de plateforme est absent.
+
+`fullyParallel` reste à `false` : plusieurs parcours d'un même fichier
+partagent le compte ouvert par le premier test, et cette dépendance-là est
+voulue.
+
 ## Lire la CI, et savoir qu'une étape ROUGE en SAUTE d'autres (IMPORTANT)
 
 Le travail `parcours` enchaîne : monter la base par les migrations, vérifier
