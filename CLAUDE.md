@@ -142,6 +142,7 @@ src/
       games/[id]/route.ts           # DELETE + PATCH (date, ou résultat rejoué)
       games/preview/route.ts        # POST preview scoring sans sauvegarder
       amis/route.ts                 # GET liste + demandes + groupes, POST demande par pseudo
+      classement/route.ts           # GET classement de la semaine entre amis, sur l'effort payé
       amis/[id]/route.ts            # PATCH accepter, DELETE refuser/annuler/retirer
       groupes/route.ts              # POST créer un groupe (code tiré)
       groupes/rejoindre/route.ts    # POST rejoindre par code
@@ -163,6 +164,7 @@ src/
     auth-helpers.ts   # getCurrentUser() → User | null
     dette.ts          # Ajout et retrait de dette, atomiques
     social.ts         # Les règles du social : demande croisée, code d'invitation, reprise
+    classement.ts     # La fenêtre de sept jours, l'ordre, les rangs à égalité
     i18n/cheminLocalise.ts  # La langue dans l'adresse : préfixe, retrait, négociation
     i18n/useChemin.ts       # Le chemin SANS la langue, pour tout le reste du projet
     i18n/metadonnees.ts     # Titres et descriptions des pages publiques, six langues
@@ -239,6 +241,12 @@ de texte libre demanderait quelqu'un pour le surveiller.
   circule.
 - **Retirer un ami et quitter un groupe demandent deux gestes**, comme la
   correction d'un résultat de partie.
+
+- **Le classement de la semaine** vit sur le même écran : sept jours
+  glissants, sur l'effort PAYÉ, avec le retard de chacun. Ni les parties
+  jouées ni le classement en jeu — perdre beaucoup ne fait pas monter. Les
+  décisions sont dans `src/lib/classement.ts`, la lecture dans
+  `/api/classement`.
 
 `src/lib/social.ts` porte les décisions ; les plafonds y remplacent la
 modération.
@@ -517,7 +525,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1792 tests unitaires, 167 suites. Base et session doublées : aucune dépendance à
+1819 tests unitaires, 169 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -542,7 +550,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 192 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 199 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -552,7 +560,8 @@ chaque langue par son ADRESSE, et
 de secours hors ligne, `e2e/historique.spec.ts` regarde l'historique sur un
 écran de téléphone, et `e2e/reglages.spec.ts` vérifie que « Tes jeux » explique
 pourquoi il n'y a qu'un jeu hors application, et `e2e/social.spec.ts` fait
-jouer deux comptes l'un contre l'autre — c'est la seule chose qu'un seul
+jouer deux comptes l'un contre l'autre — trois pour le classement, dont un
+tiers qui ne doit apparaître nulle part — c'est la seule chose qu'un seul
 contexte de navigateur ne sait pas éprouver.
 
 `e2e/panne-serveur.spec.ts` est devenu le fichier des échecs : il coupe une
@@ -818,6 +827,154 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dépendances, au 3 septembre : une haute réellement corrigée
+`fast-uri` 3.0.0 à 3.1.5, quatre avis dont deux de falsification de requête
+côté serveur. Elle arrive par `prisma` → `@prisma/dev` → `ajv`, c'est-à-dire
+par l'outillage de la ligne de commande, et non par le client d'accès aux
+données. Le correctif est un saut de correctif — 3.1.5 → 3.1.7 — donc il se
+prend : c'est la première fois depuis longtemps qu'`npm audit` propose autre
+chose qu'un retour de version majeure.
+
+Le même paquet, plus `@xmldom/xmldom`, vivait dans l'application de bureau par
+`electron-builder`. Les deux sont partis d'un `npm audit fix` : **zéro
+vulnérabilité** côté bureau, contre une haute et une modérée avant.
+
+**Ce qui reste est `mysql2`, et le raisonnement n'a pas bougé** — il a même
+gagné un second avis, une bombe de décompression dans le protocole compressé.
+Les deux exigent une connexion MySQL, ce projet parle à PostgreSQL, et le seul
+« correctif » proposé est de revenir à `prisma@6.19.3`, un retour de version
+majeure sur le client d'accès aux données. `src/dependanceMysql.test.ts` garde
+le raisonnement plutôt que la conclusion : il tient à deux conditions — la base
+est PostgreSQL, aucun code ne charge un pilote MySQL — et le jour où l'une
+tombe, l'exemption tombe avec elle.
+
+Deux mises à jour appliquées en plus, toutes deux mineures : `lucide-react`
+1.39 → 1.40 et `@types/react-dom` 19.2.5 → 19.2.7. Les majeures écartées le
+restent — `typescript` 7, `eslint` 10, `@types/node` 26, `prisma` 8 en version
+candidate, `@libsql/client` 0.18 — et `electron` 43 → 44 avec elles : un saut
+majeur se relit, il ne se prend pas de nuit. `next-auth` continue de s'afficher
+« en retard » sur 4.24.15, ce qui est faux à chaque audit : c'est l'ancienne
+branche stable, le projet est sur la 5 en préversion.
+
+**L'application de bureau passe en 0.9.11 pour un fichier de verrous.** Rien de
+ce qui s'installe ne change — `desktop/src` est intact, le pont est le même —
+et la règle du propriétaire dit de publier dès qu'une modification touche
+`desktop/`. Elle est suivie à la lettre plutôt qu'interprétée : une règle sans
+exception se tient, une règle avec des exceptions qu'on invente au cas par cas
+finit par ne plus rien garder. Le coût est une exécution de construction ; les
+copies installées se mettent à jour toutes seules et ne verront rien.
+
+### Le classement, et le garde qui ne mordait pas sur un `groupBy`
+Lignes 115 et 116 du plan. La 115 dit sur QUOI classer, et c'est la seule
+décision qui compte : **sur l'effort payé, jamais sur les parties jouées.**
+Quelqu'un qui perd beaucoup accumule beaucoup de dette ; classer sur les
+parties reviendrait donc à récompenser la défaite, sur un produit dont le sujet
+est de la payer. Le seul chiffre qui dise « j'ai fait l'effort » est celui des
+séances acquittées.
+
+**Sept jours glissants, et pas le total de toujours.** Un classement cumulatif
+est décidé par la DATE D'INSCRIPTION : le premier arrivé a un total que
+personne ne rattrape, et le dernier venu regarde un tableau où sa place ne
+dépend plus de ce qu'il fait. C'est l'inverse d'une raison de revenir. Sept
+jours se rejouent chaque semaine, et c'est la maille d'un rythme de jeu — on ne
+joue pas tous les jours, on joue certains soirs. La fenêtre est bornée des DEUX
+côtés : sans borne haute, un paiement daté du futur entrerait dans la semaine.
+
+**Le jour vient du navigateur, et c'est le MIEN qui borne la semaine de tout le
+monde.** Un classement où chacun mesurerait sa propre fenêtre ne comparerait
+rien. C'est une approximation assumée pour un ami à l'autre bout du monde, et
+la seule qui produise un tableau qui ait un sens.
+
+**Deux règles d'ordre qui ne vont pas de soi.** À égalité le rang est le même
+(1, 2, 2, 4) : le cas courant d'un groupe qui vient de se former est que tout
+le monde est à zéro, et les numéroter de un à dix désignerait un dernier pour
+rien — c'est-à-dire exactement celui qu'on veut voir revenir. Et à égalité
+l'ordre est celui des pseudos : sans second critère, c'est celui que la base
+rend, qui n'est garanti par rien, et la liste saute d'un rechargement à
+l'autre. On croit alors avoir été dépassé.
+
+**Soi-même figure toujours dans la liste**, même sans un seul ami. Un classement
+où l'on n'est pas n'est pas son classement, et un compte neuf verrait un
+tableau vide là où il devrait au moins se voir à zéro. C'est ce qui rend la
+phrase « tu es seul ici » possible — et cette phrase explique mieux que le
+formulaire à quoi sert le formulaire.
+
+**La 116 ajoute le retard**, qui est la pression sociale la plus forte du lot.
+Elle réemploie `etatRetard` sans le recalculer : une dette de quelques heures
+n'est pas un retard, et une dette SOLDÉE ne l'est jamais, même quand sa date
+traîne derrière elle. Marquer en retard quelqu'un qui ne doit plus rien est
+l'accusation la plus désagréable que ce tableau puisse porter, et elle serait
+fausse.
+
+**Le garde du filtrage par compte ne mordait pas, et c'est la trouvaille.**
+Sabotage fait — la somme des paiements privée de son `where` — le test de la
+route est tombé, et `filtreParCompte` est resté vert. Il cherchait le NOM de la
+colonne dans les quatre cents caractères autour de l'appel. Or `userId` y
+figure deux fois sans rien filtrer : `groupBy({ by: ["userId"] })` le donne
+comme axe de regroupement, et `sommes.map((s) => s.userId)` le lit dans le
+résultat. Une somme portant sur toute la base passait donc au vert.
+
+Ce qui précède le nom suffit à trancher : un point en fait une lecture de
+résultat, un guillemet une chaîne. Le reste est une position de clé. **Exiger
+les deux-points aurait été le réflexe et aurait été faux** : `games/[id]` écrit
+`where: { id, userId }`, le raccourci d'objet, qui est un filtre parfaitement
+juste — et il est tombé au premier essai, ce qui a évité de publier un garde
+qui recale ce qu'il devrait accepter.
+
+Une dispense d'appel ajoutée, avec sa raison : lire le pseudo et la dette de
+ses amis est tout l'objet d'un classement. Elle porte sur `user.findMany` et
+sur lui seul — la somme des paiements, elle, reste gardée, et le sabotage la
+fait toujours tomber.
+
+**Ce que ce tableau publie, et à qui.** Un pseudo, des points payés sur sept
+jours, un état de retard — aux seuls comptes avec lesquels l'amitié a été
+acceptée des deux côtés. La politique de confidentialité annonçait déjà le
+pseudo et le volume d'effort ; le retard s'y ajoute, dans les six langues,
+parce que c'est un renseignement sur quelqu'un d'autre que celui qui le lit.
+
+**Ce qu'il ne fait PAS.** Participer sans y figurer — la réponse 129 — n'existe
+pas encore : la seule façon de sortir d'un classement est de retirer l'ami.
+C'est ordonné plus loin dans le plan, et ça se dit plutôt que de laisser croire
+le contraire. Et rien ne vérifie que l'effort déclaré a été fourni : la réponse
+130 demande une validation par vidéo, qui est un chantier de trois nuits. Entre
+amis qui se connaissent, le contrôle est social ; il ne l'est plus le jour où
+le classement s'ouvre.
+
+Neuf sabotages, neuf échecs — dont les deux qui portent : l'ordre alphabétique
+retiré (avec l'ordre d'entrée INVERSE de l'ordre attendu, sans quoi le tri
+stable de V8 rendrait le bon résultat en ne comparant aucun pseudo) et le rang
+par compétition remplacé par un simple 1..n.
+
+Au navigateur, le test fait jouer TROIS comptes : deux amis et un tiers. Ce
+qu'aucun test unitaire ne peut voir, c'est que l'effort payé par quelqu'un
+d'autre remonte vraiment jusqu'à mon écran — et que celui d'un inconnu n'y
+remonte pas, malgré ses neuf mille points. Un paiement de trente jours prouve
+la borne basse : sans lui, une route qui ignorerait la fenêtre rendrait le même
+classement et le test passerait en n'éprouvant rien. Deux sabotages, deux
+échecs.
+
+**Un échec que je n'explique pas, et qui ne se maquille pas.** La première
+exécution complète a rendu 5150 au lieu de 150 sur une ligne — le paiement de
+trente jours compté malgré la borne basse. Le test repasse seul sur une
+reconstruction propre, et l'exécution complète suivante rend **199 sur 199**.
+Mais « ça repasse » n'est pas un diagnostic. Deux choses sont sûres : j'ai
+lancé deux `npm install` PENDANT cette exécution, ce que ce journal interdit
+depuis longtemps — ça invalide la course comme preuve dans les deux sens — et
+les traces ont été effacées par l'exécution suivante, donc la pièce à
+conviction n'existe plus.
+
+Ce qui en reste est un contrôle : la borne se lit désormais à la SOURCE avant
+qu'on regarde l'écran. Une récidive nommera la cause — borne déplacée, jour
+mal envoyé, `.next` d'avant — au lieu de montrer un nombre. C'est la leçon
+déjà écrite pour `performance.mjs` : un chiffre sans nom ne se diagnostique
+pas.
+
+**Et les identifiants semés sont uniques par exécution.** Des identifiants
+fixes marchent tant que la préparation purge les comptes `@example.test` avant
+chaque suite — ce qu'elle fait. L'insertion tomberait sur une clé en double le
+jour où l'ordre change, et l'échec ressemblerait à un défaut du classement
+plutôt qu'à un reste de la veille.
+
 ### Les amis et les groupes, et la réponse qui décide de leur forme
 Première ligne de l'étape 02 du plan d'action, et la réponse 114 disait « les
 deux » : des amis qu'on ajoute ET des groupes qu'on rejoint. Ce n'est pas la
@@ -945,6 +1102,17 @@ Le quatrième a d'abord fait échouer la CONSTRUCTION plutôt qu'un test :
 retirer le `setErreur` rendait `translateApiError` inutilisé, et
 `noUnusedLocals` le nomme. Un échec de compilation n'est pas un test qui mord ;
 réécrit pour compiler, le test tombe.
+
+**Vérifié en production, et par ce qui n'est PAS 404.** `/fr/amis` répond 307
+vers `/fr/login` : la page existe, elle est derrière la porte, et la langue
+survit à la porte. Avant V351 cette adresse ne figurait pas dans
+`PAGES_CONNUES` et rendait 404 — le 307 prouve donc que le déploiement est
+bien celui-ci. Et comme la migration tourne DANS la commande de construction
+de Vercel (`prisma migrate deploy && next build`), un échec y aurait fait
+échouer la construction et laissé V350 en service. Les trois tables existent
+donc, par déduction : elles ne se lisent pas d'ici, et l'annoncer comme une
+observation serait faux. `/fr/nimportequoi` rend toujours 404, ce qui est le
+témoin.
 
 **Et `/amis` rejoint le balayage des six langues**, pour la raison qui a servi
 à y faire entrer « Ta saison » : c'est l'écran où le texte est le plus long —

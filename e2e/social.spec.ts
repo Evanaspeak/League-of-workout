@@ -172,3 +172,100 @@ test("un code refusé ne change rien, et l'écran le dit", async ({ browser }) =
 
   await ctx.close();
 });
+
+/**
+ * Le classement, et ce qu'il faut DEUX comptes pour éprouver.
+ *
+ * Les tests unitaires disent ce que `classer` ordonne et ce que la route lit.
+ * Ils ne disent rien de la seule chose qui compte ici : que l'effort payé par
+ * QUELQU'UN D'AUTRE remonte bien jusqu'à mon écran, et que celui d'un inconnu
+ * n'y remonte pas.
+ *
+ * Les paiements sont posés en base plutôt que faits à l'écran. Ce que ce test
+ * éprouve est la lecture croisée, pas le décompte de dette — qui a son propre
+ * parcours, et qui coûterait ici deux séances chronométrées.
+ */
+const PAYER = `INSERT INTO "Paiement" (id, "userId", points, jour)
+  SELECT $1, id, $2, $3 FROM "User" WHERE pseudo = $4`;
+
+/**
+ * Un identifiant par exécution.
+ *
+ * Des identifiants fixes marchent tant que la préparation purge les comptes
+ * `@example.test` avant chaque suite — ce qu'elle fait. Mais l'insertion
+ * tomberait sur une clé en double le jour où l'ordre change, et l'échec
+ * ressemblerait à un défaut du classement plutôt qu'à un reste de la veille.
+ */
+const jeton = () => `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+const jourLocalTest = (recul = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() - recul);
+  const deux = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${deux(d.getMonth() + 1)}-${deux(d.getDate())}`;
+};
+
+test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu", async ({ browser }) => {
+  const a = await ouvrirCompte(browser, "Rang");
+  const b = await ouvrirCompte(browser, "Duel");
+  const c = await ouvrirCompte(browser, "Tiers");
+
+  // A et B deviennent amis : B demande, A accepte.
+  const { ctx: ctxB, page: pageB } = await ouvrirEcranAmis(browser, b.etat);
+  await pageB.getByLabel(/son pseudo|their display name/i).fill(a.compte.pseudo);
+  await pageB.getByRole("button", { name: /envoyer la demande|send request/i }).click();
+  await expect(pageB.getByText(/en attente de sa réponse|waiting for their answer/i)).toBeVisible();
+  await ctxB.close();
+
+  const { ctx: ctxA, page: pageA } = await ouvrirEcranAmis(browser, a.etat);
+  await pageA.getByRole("button", { name: /^accepter$|^accept$/i }).click();
+  await expect(pageA.getByRole("button", { name: /^accepter$|^accept$/i })).toHaveCount(0);
+
+  // B paie plus que A ; C, qui n'est l'ami de personne, paie davantage encore.
+  await requeteSql(PAYER, [jeton(), 40, jourLocalTest(), a.compte.pseudo]);
+  await requeteSql(PAYER, [jeton(), 150, jourLocalTest(2), b.compte.pseudo]);
+  await requeteSql(PAYER, [jeton(), 9000, jourLocalTest(), c.compte.pseudo]);
+  /**
+   * Et un paiement de B hors fenêtre. Sans lui, une route qui ignorerait la
+   * borne basse rendrait exactement le même classement : le test passerait en
+   * n'éprouvant pas la fenêtre.
+   */
+  await requeteSql(PAYER, [jeton(), 5000, jourLocalTest(30), b.compte.pseudo]);
+
+  await pageA.reload();
+  const tableau = pageA.getByRole("table");
+  await expect(tableau).toBeVisible();
+
+  /**
+   * La borne est lue à la source AVANT de regarder l'écran, et c'est un choix
+   * de diagnostic.
+   *
+   * Une exécution complète a rendu une fois « 5150 » ici — le paiement hors
+   * fenêtre compté — sans que l'échec dise si la borne basse avait bougé, si
+   * le jour envoyé était le bon, ou si le serveur servait un `.next` d'avant.
+   * Un nombre faux à l'écran ne se diagnostique pas ; la borne qui l'a produit,
+   * si. C'est la leçon déjà écrite pour `performance.mjs` : un chiffre sans
+   * nom n'apprend rien.
+   */
+  const brut = await pageA.evaluate(async (jour: string) => {
+    const res = await fetch(`/api/classement?jour=${jour}`);
+    return res.json() as Promise<{ debut: string; jours: number }>;
+  }, jourLocalTest());
+  expect({ debut: brut.debut, jours: brut.jours })
+    .toEqual({ debut: jourLocalTest(6), jours: 7 });
+
+  // L'ordre est celui de l'effort payé sur la fenêtre : B (150) devant A (40).
+  const lignes = tableau.locator("tbody tr");
+  await expect(lignes).toHaveCount(2);
+  await expect(lignes.nth(0)).toContainText(b.compte.pseudo);
+  await expect(lignes.nth(0)).toContainText("150");
+  await expect(lignes.nth(1)).toContainText(a.compte.pseudo);
+  await expect(lignes.nth(1)).toContainText("40");
+
+  // Le tiers n'a rien demandé à personne : il n'apparaît nulle part.
+  await expect(tableau).not.toContainText(c.compte.pseudo);
+  // Et les cinq mille points hors fenêtre ne sont pas comptés.
+  await expect(tableau).not.toContainText("5150");
+
+  await ctxA.close();
+});
