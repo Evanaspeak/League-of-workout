@@ -63,6 +63,27 @@ Si la CI casse après une fusion, on corrige : le retard est de quelques
 minutes, pas de quinze, et il ne se paie que quand quelque chose a
 effectivement cassé.
 
+## Lire la CI, et savoir qu'une étape ROUGE en SAUTE d'autres (IMPORTANT)
+
+Le travail `parcours` enchaîne : monter la base par les migrations, vérifier
+qu'elle correspond au schéma, construire, jouer les parcours, mesurer
+l'accessibilité. **Un échec à la deuxième étape saute les quatre suivantes.**
+
+C'est arrivé de V353 à V355 : deux index créés par une migration sans être
+déclarés dans `schema.prisma` faisaient échouer la correspondance, donc la
+suite navigateur ne tournait plus en CI — pendant que je m'appuyais sur elle
+pour ne plus la jouer en local. Trois versions publiées sans qu'aucun parcours
+ne soit joué nulle part.
+
+**Le témoin qui saute aux yeux, c'est la DURÉE.** Une exécution complète prend
+quinze à dix-huit minutes. Une exécution d'une minute n'a pas joué les
+parcours, quoi que dise sa couleur. Regarder la durée avant la pastille.
+
+`src/indexDeclares.test.ts` attrape désormais la cause exacte, statiquement,
+donc avant de publier : tout index créé par une migration doit être déclaré au
+schéma. Une seule exemption, l'index fonctionnel sur `lower(email)`, que le
+langage de schéma de Prisma ne sait pas exprimer.
+
 ## Diagnostiquer, et ne pas deviner (IMPORTANT)
 
 Quand un test échoue pour une raison qu'on ne sait pas NOMMER, on instrumente

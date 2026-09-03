@@ -48,8 +48,16 @@ export default defineConfig({
    * `fullyParallel: false` garde l'ordre DANS un fichier : plusieurs parcours
    * y partagent un compte ouvert par le premier test, et les paralléliser
    * casserait cette dépendance-là, qui est voulue.
+   *
+   * **Deux et non quatre**, et la raison est le PROCESSEUR, pas la base. La
+   * machine a quatre cœurs ; à quatre workers il faut y loger quatre Chromium,
+   * quatre processus de test ET le serveur Next, qui hache les mots de passe
+   * en bcrypt coût 12 — du calcul pur, un quart de seconde par connexion. Deux
+   * parcours sont morts là-dessus, tous deux en expirant sur la connexion,
+   * jamais sur ce qu'ils éprouvaient. Un banc d'essai qui sature la machine ne
+   * mesure plus le produit, il mesure la file d'attente.
    */
-  workers: 4,
+  workers: 2,
   fullyParallel: false,
   timeout: 60_000,
   expect: { timeout: 10_000 },
