@@ -236,6 +236,24 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
   const tableau = pageA.getByRole("table");
   await expect(tableau).toBeVisible();
 
+  /**
+   * La borne est lue à la source AVANT de regarder l'écran, et c'est un choix
+   * de diagnostic.
+   *
+   * Une exécution complète a rendu une fois « 5150 » ici — le paiement hors
+   * fenêtre compté — sans que l'échec dise si la borne basse avait bougé, si
+   * le jour envoyé était le bon, ou si le serveur servait un `.next` d'avant.
+   * Un nombre faux à l'écran ne se diagnostique pas ; la borne qui l'a produit,
+   * si. C'est la leçon déjà écrite pour `performance.mjs` : un chiffre sans
+   * nom n'apprend rien.
+   */
+  const brut = await pageA.evaluate(async (jour: string) => {
+    const res = await fetch(`/api/classement?jour=${jour}`);
+    return res.json() as Promise<{ debut: string; jours: number }>;
+  }, jourLocalTest());
+  expect({ debut: brut.debut, jours: brut.jours })
+    .toEqual({ debut: jourLocalTest(6), jours: 7 });
+
   // L'ordre est celui de l'effort payé sur la fenêtre : B (150) devant A (40).
   const lignes = tableau.locator("tbody tr");
   await expect(lignes).toHaveCount(2);

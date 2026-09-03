@@ -953,6 +953,22 @@ la borne basse : sans lui, une route qui ignorerait la fenêtre rendrait le mêm
 classement et le test passerait en n'éprouvant rien. Deux sabotages, deux
 échecs.
 
+**Un échec que je n'explique pas, et qui ne se maquille pas.** La première
+exécution complète a rendu 5150 au lieu de 150 sur une ligne — le paiement de
+trente jours compté malgré la borne basse. Le test repasse seul sur une
+reconstruction propre, et l'exécution complète suivante rend **199 sur 199**.
+Mais « ça repasse » n'est pas un diagnostic. Deux choses sont sûres : j'ai
+lancé deux `npm install` PENDANT cette exécution, ce que ce journal interdit
+depuis longtemps — ça invalide la course comme preuve dans les deux sens — et
+les traces ont été effacées par l'exécution suivante, donc la pièce à
+conviction n'existe plus.
+
+Ce qui en reste est un contrôle : la borne se lit désormais à la SOURCE avant
+qu'on regarde l'écran. Une récidive nommera la cause — borne déplacée, jour
+mal envoyé, `.next` d'avant — au lieu de montrer un nombre. C'est la leçon
+déjà écrite pour `performance.mjs` : un chiffre sans nom ne se diagnostique
+pas.
+
 **Et les identifiants semés sont uniques par exécution.** Des identifiants
 fixes marchent tant que la préparation purge les comptes `@example.test` avant
 chaque suite — ce qu'elle fait. L'insertion tomberait sur une clé en double le
