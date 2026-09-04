@@ -90,7 +90,7 @@ export const landing = {
     heroVersion: (v: string) => `Version ${v}`,
     heroBeta: "Create my account",
     heroApercuTitre: "Win or Workout · Dashboard",
-    heroApercuAlt: "The Win or Workout dashboard: 105 activities, 55% win rate, 2,203 points owed and progress toward the goal.",
+    heroApercuAlt: "The Win or Workout dashboard: 105 games, 55% win rate, 2,203 points owed and progress toward the goal.",
 
     jeuxLegende: "Supported games",
     boucleTitre: "How it works",

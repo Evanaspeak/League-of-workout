@@ -19,6 +19,15 @@ type Textes = {
   matin: (duree: string) => { titre: string; corps: string };
   /** Après deux semaines sans une partie. Une fois, et une seule. */
   relance: (jours: number) => { titre: string; corps: string };
+  /**
+   * Le rappel de pesée hebdomadaire (réponse 022, optionnel).
+   *
+   * Il ne dit RIEN du poids, ni d'une tendance, ni d'un objectif : c'est un
+   * rappel de geste, pas un jugement. Quelqu'un qui suit son poids sait déjà
+   * ce qu'il en pense, et une notification qui commente est une notification
+   * qu'on coupe.
+   */
+  pesee: () => { titre: string; corps: string };
 };
 
 const TEXTES: Record<Locale, Textes> = {
@@ -35,6 +44,10 @@ const TEXTES: Record<Locale, Textes> = {
       titre: `${j} jours sans une partie`,
       corps: "Soit tu as arrêté de perdre, soit tu as arrêté de compter.",
     }),
+    pesee: () => ({
+      titre: "Une semaine depuis ta dernière pesée",
+      corps: "Trente secondes, et la courbe reprend.",
+    }),
   },
   en: {
     seuil: (d) => ({
@@ -48,6 +61,10 @@ const TEXTES: Record<Locale, Textes> = {
     relance: (j) => ({
       titre: `${j} days without a game`,
       corps: "Either you stopped losing, or you stopped counting.",
+    }),
+    pesee: () => ({
+      titre: "A week since your last weigh-in",
+      corps: "Thirty seconds, and the curve picks up again.",
     }),
   },
   es: {
@@ -63,6 +80,10 @@ const TEXTES: Record<Locale, Textes> = {
       titre: `${j} días sin una partida`,
       corps: "O has dejado de perder, o has dejado de contarlo.",
     }),
+    pesee: () => ({
+      titre: "Una semana desde tu último pesaje",
+      corps: "Treinta segundos y la curva sigue.",
+    }),
   },
   de: {
     seuil: (d) => ({
@@ -76,6 +97,10 @@ const TEXTES: Record<Locale, Textes> = {
     relance: (j) => ({
       titre: `${j} Tage ohne eine Runde`,
       corps: "Entweder hast du aufgehört zu verlieren, oder aufgehört zu zählen.",
+    }),
+    pesee: () => ({
+      titre: "Eine Woche seit deiner letzten Wiegung",
+      corps: "Dreißig Sekunden, und die Kurve geht weiter.",
     }),
   },
   zh: {
@@ -91,6 +116,10 @@ const TEXTES: Record<Locale, Textes> = {
       titre: `${j} 天没打一局`,
       corps: "要么你不再输了，要么你不再记了。",
     }),
+    pesee: () => ({
+      titre: "距离上次称重已经一周",
+      corps: "三十秒，曲线就能接上。",
+    }),
   },
   ja: {
     seuil: (d) => ({
@@ -104,6 +133,10 @@ const TEXTES: Record<Locale, Textes> = {
     relance: (j) => ({
       titre: `${j} 日、一試合もなし`,
       corps: "負けるのをやめたのか、数えるのをやめたのか。",
+    }),
+    pesee: () => ({
+      titre: "前回の計測から 1 週間",
+      corps: "30 秒で、グラフの続きが描けます。",
     }),
   },
 };

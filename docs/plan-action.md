@@ -89,20 +89,20 @@ Catalogue d'exercices élargi, Overwatch, deux tons au choix, exercices adaptés
 Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'écriture du plan.
 
 ### Le corps, les calories, la santé
-*11 à faire · 4 faits.* Tu as dit oui à un pilier entier qui n'existe pas encore. C'est le plus gros bloc non construit.
+*1 à faire · 14 faits.* Le pilier est construit (V407) : calculateur Mifflin-St Jeor, trois modes, poids cible, courbe de pesées, rappel hebdomadaire optionnel, masse grasse au mètre-ruban, et les deux avertissements qui n'empêchent jamais d'afficher. Reste la vidéo de forme par exercice (026), qui demande un tournage.
 
 | | réf | | effort |
 |---|---|---|---|
-| [ ] | 015 | Le calculateur d'objectif calorique, formule Mifflin-St Jeor | 2 nuits |
-| [ ] | 019 | Les trois modes : perte, maintien, prise de masse | 1 nuit |
-| [ ] | 020 | Un poids cible, pas seulement une direction | ½ nuit |
-| [ ] | 016 | Aucune date d'objectif promise — la règle des 7 700 kcal est fausse | — |
-| [ ] | 017 | Un avertissement plutôt qu'un plancher bloquant sous 1 500 / 1 200 kcal | ½ nuit |
-| [ ] | 018 | Afficher l'objectif même sous 18,5 d'IMC, avec avertissement | ½ nuit |
-| [ ] | 021 | Le suivi du poids dans le temps, avec un graphique | 1 nuit |
-| [ ] | 022 | Un rappel de pesée hebdomadaire, optionnel | ½ nuit |
-| [ ] | 023 | L'estimation de masse grasse au mètre-ruban, en option | 1 nuit |
-| [ ] | 013 | Le tout activable, visible mais discret | ½ nuit |
+| [x] | 015 | Le calculateur d'objectif calorique, formule Mifflin-St Jeor | 2 nuits |
+| [x] | 019 | Les trois modes : perte, maintien, prise de masse | 1 nuit |
+| [x] | 020 | Un poids cible, pas seulement une direction | ½ nuit |
+| [x] | 016 | Aucune date d'objectif promise — la règle des 7 700 kcal est fausse | — |
+| [x] | 017 | Un avertissement plutôt qu'un plancher bloquant sous 1 500 / 1 200 kcal | ½ nuit |
+| [x] | 018 | Afficher l'objectif même sous 18,5 d'IMC, avec avertissement | ½ nuit |
+| [x] | 021 | Le suivi du poids dans le temps, avec un graphique | 1 nuit |
+| [x] | 022 | Un rappel de pesée hebdomadaire, optionnel | ½ nuit |
+| [x] | 023 | L'estimation de masse grasse au mètre-ruban, en option | 1 nuit |
+| [x] | 013 | Le tout activable, visible mais discret | ½ nuit |
 | [x] | 002 | Poids, taille, âge modifiables dans les réglages | — |
 | [x] | 003 | Le consentement RGPD pour les données de santé | — |
 | [x] | 027 | Le mode genou au sol, annoté dans l'historique | — |

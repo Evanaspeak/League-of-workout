@@ -54,6 +54,63 @@ model User {
   taille             Int?
   sportsHoursPerWeek Int?
 
+  // ── Le corps et les calories (étape 05 du plan) ────────────────────────────
+  //
+  // Tout est ÉTEINT par défaut : la réponse 013 dit « une option qu'on active »,
+  // et la 014 « visible mais discret ». Quelqu'un qui vient pour le jeu ne doit
+  // pas se retrouver devant un suivi de poids qu'il n'a pas demandé.
+  //
+  // Ces colonnes sont des données de santé au sens de l'article 9, comme celles
+  // du dessus, et couvertes par le même consentement.
+
+  /**
+   * Quelle VARIANTE de Mifflin-St Jeor employer : « h » ou « f ».
+   * Distinct de `genre`, et ce n'est pas une pudeur de nommage. `genre` vient
+   * du formulaire bêta, en texte libre parmi des options qui peuvent changer :
+   * s'en servir pour une arithmétique casserait le jour où quelqu'un écrit
+   * « Autre », et le calcul retomberait en silence sur une des deux formules.
+   * Et le champ dit ce qu'il fait : il choisit une formule, il ne déclare pas
+   * une identité. Sans lui, aucun objectif calorique n'est proposé — c'est le
+   * seul repli honnête, puisque les deux variantes diffèrent de 166 kcal.
+   */
+  formuleCalorique String?
+
+  /**
+   * Multiplicateur d'activité : sedentaire | leger | modere | actif | intense.
+   */
+  niveauActivite String?
+
+  /**
+   * Le mode poursuivi : perte | maintien | prise. Nul = la fonctionnalité est
+   * éteinte, ce qui est le défaut.
+   */
+  modeCalorique String?
+
+  /**
+   * Poids visé, en kilos (réponse 020 : un poids cible, pas une direction).
+   */
+  poidsCible Int?
+
+  /**
+   * Les trois mesures du mètre-ruban, en centimètres (réponse 023, en option).
+   * Le tour de hanches sert à la variante féminine de la formule US Navy ; la
+   * réponse 024 l'a explicitement accepté.
+   */
+  tourTaille  Int?
+  tourCou     Int?
+  tourHanches Int?
+
+  /**
+   * Rappel de pesée hebdomadaire (réponse 022 : optionnel). Éteint par défaut.
+   */
+  rappelPeseeActif Boolean   @default(false)
+  /**
+   * Marque du dernier rappel envoyé, comme `rappelLe` et `bilanLe`.
+   */
+  rappelPeseeLe    DateTime?
+
+  pesees Pesee[]
+
   // Consentement au traitement des données de santé ci-dessus.
   //
   // Deux dates plutôt qu'un booléen : il faut pouvoir distinguer trois états —
@@ -100,6 +157,7 @@ model User {
    * à voir avec celui qui l'a invité.
    */
   /**
+   * /**
    * /**
    * /**
    * /**
@@ -507,6 +565,38 @@ model SystemConfig {
 // Le compteur `dettePointsDus` ne dit que l'état courant : il ne garde aucune
 // trace de ce qui a été fait. Sans historique, une série de jours consécutifs
 // ne se calcule pas, et elle ne se rattrape pas après coup.
+/**
+ * Une pesée, un jour.
+ * Réponse 021 : « un suivi du poids dans le temps, avec un graphique », à la
+ * fréquence que la personne veut. Des LIGNES, jamais un total : c'est la règle
+ * de tout ce qui se déduit sur ce projet, et ici elle va de soi — une courbe
+ * EST la suite des lignes.
+ * Le poids se range en GRAMMES et le nom le dit. `User.poids` est en kilos
+ * entiers, et deux unités sous un même mot est exactement le malentendu qui a
+ * coûté une soirée sur « activité » : quelqu'un qui se pèse à 78,4 kg doit
+ * pouvoir l'écrire, et un entier de kilos le perdrait.
+ * Une pesée par JOUR au maximum, posée en base : se peser deux fois dans la
+ * journée est courant, et c'est la seconde qui compte — la première a été
+ * faite avant le petit déjeuner ou après, on ne sait pas. L'unicité évite en
+ * plus qu'un double clic fabrique deux points sur la courbe.
+ */
+model Pesee {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /**
+   * Jour LOCAL, « AAAA-MM-JJ », comme `Paiement.jour`.
+   */
+  jour    String
+  grammes Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jour])
+  @@index([userId, jour])
+}
+
 model Paiement {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())

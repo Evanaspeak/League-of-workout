@@ -32,6 +32,7 @@ import {
 } from "@/components/ListeReglages";
 import type { NomIcone } from "@/components/Icone";
 import { ReglagesAvances, type LevelConfig } from "./ReglagesAvances";
+import { ReglagesCorps, type CorpsPrefs } from "./ReglagesCorps";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ import { ReglagesAvances, type LevelConfig } from "./ReglagesAvances";
  * Rubriques des réglages, dans l'ordre de la liste. L'identifiant est aussi le
  * fragment d'adresse : `/settings#jeux` ouvre les jeux.
  */
-const RUBRIQUES = ["profil", "effort", "jeux", "application", "donnees", "avance"] as const;
+const RUBRIQUES = ["profil", "corps", "effort", "jeux", "application", "donnees", "avance"] as const;
 type Rubrique = (typeof RUBRIQUES)[number];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -139,6 +140,19 @@ export default function SettingsPage() {
   const [savedExo, setSavedExo] = useState(false);
   const [erreurExo, setErreurExo] = useState(false);
 
+  /**
+   * Le corps et les calories (étape 05). Tout est nul au départ : la
+   * fonctionnalité est éteinte tant qu'aucun mode n'est choisi (réponse 013).
+   */
+  const [corps, setCorps] = useState<CorpsPrefs>({
+    formuleCalorique: null, niveauActivite: null, modeCalorique: null,
+    poidsCible: null, tourTaille: null, tourCou: null, tourHanches: null,
+    rappelPeseeActif: false,
+  });
+  const [mensurations, setMensurations] = useState<{
+    poids: number | null; taille: number | null; age: number | null;
+  }>({ poids: null, taille: null, age: null });
+
   // ── Test de pompes maximales (fixe le niveau) ──
   const [pompesMax, setPompesMax] = useState(0);
   const [pompesMaxLe, setPompesMaxLe] = useState<string | null>(null);
@@ -167,6 +181,21 @@ export default function SettingsPage() {
       // afficher le niveau — emportait alors toute la page.
       setLevelConfigs(Array.isArray(s.levelConfigs) ? s.levelConfigs : []);
       setExercicesSel(toExerciceIds(s.user?.exercices));
+      setCorps({
+        formuleCalorique: s.user?.formuleCalorique ?? null,
+        niveauActivite: s.user?.niveauActivite ?? null,
+        modeCalorique: s.user?.modeCalorique ?? null,
+        poidsCible: s.user?.poidsCible ?? null,
+        tourTaille: s.user?.tourTaille ?? null,
+        tourCou: s.user?.tourCou ?? null,
+        tourHanches: s.user?.tourHanches ?? null,
+        rappelPeseeActif: Boolean(s.user?.rappelPeseeActif),
+      });
+      setMensurations({
+        poids: s.user?.poids ?? null,
+        taille: s.user?.taille ?? null,
+        age: s.user?.age ?? null,
+      });
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
       setPlafond(s.user?.plafondQuotidien ?? 0);
@@ -425,6 +454,12 @@ export default function SettingsPage() {
     id: Rubrique; icone: NomIcone; titre: string; aide: string; valeur?: string;
   }[] = [
     { id: "profil", icone: "personne", titre: t.profil, aide: t.rubriqueProfilAide, valeur: profileForm.pseudo || undefined },
+    {
+      id: "corps", icone: "coeur", titre: t.corpsTitre, aide: t.corpsAide,
+      // Le résumé dit ce qui est ALLUMÉ, pas ce qui est réglable : c'est la
+      // seule chose qu'on veut savoir sans ouvrir (réponse 014).
+      valeur: corps.modeCalorique ? t.corpsModes[corps.modeCalorique] : undefined,
+    },
     {
       id: "effort", icone: "muscle", titre: t.sectionEffort, aide: t.rubriqueEffortAide,
       valeur: niveauActuel ? t.valeurNiveau(niveauActuel) : t.valeurTestAFaire,
@@ -995,6 +1030,22 @@ export default function SettingsPage() {
           verront jamais ce panneau. */}
       {rubrique === "avance" && estAdmin && (
         <ReglagesAvances niveaux={levelConfigs} setNiveaux={setLevelConfigs} />
+      )}
+
+      {/* ── Le corps et les calories (étape 05) ────────────────────────── */}
+      {/* `enregistrerReglage` est passé plutôt que recopié : il porte le
+          `try`, le message d'échec, le retour à la valeur d'avant et
+          l'indicateur d'attente — quatre règles qui ont chacune leur raison
+          écrite plus haut, et qu'un second enregistrement aurait dupliquées. */}
+      {rubrique === "corps" && (
+        <ReglagesCorps
+          prefs={corps}
+          setPrefs={setCorps}
+          poids={mensurations.poids}
+          taille={mensurations.taille}
+          age={mensurations.age}
+          enregistrer={enregistrerReglage}
+        />
       )}
 
       {/* ── Compte et données ──────────────────────────────────────────── */}

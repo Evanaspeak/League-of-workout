@@ -69,7 +69,7 @@ export const visite = {
     detteTexte: "Your debt piles up here, match after match. As soon as you owe something a badge follows you everywhere in the app: tap it when you're ready. A countdown walks you through the effort, and if you stop halfway only the part you actually did is taken off.",
 
     statsTitre: "Where you stand",
-    statsTexte: "Your activity count, your win rate and the total built up since day one. These three never get filtered: they describe everything, so you always have a fixed reference point.",
+    statsTexte: "Your game count, your win rate and the total built up since day one. These three never get filtered: they describe everything, so you always have a fixed reference point.",
 
     graphiqueTitre: "The number that really counts",
     graphiqueTexte: "The total can only go up, so it says nothing about your progress. The AVERAGE cost per match does drop when you play better: it's the only figure in the app that can go down. It shows up here, with the others, from your first matches on.",
@@ -78,7 +78,7 @@ export const visite = {
     navHistoriqueTexte: "Let's go there. History keeps every match you've played, with its cost and the maths behind it.",
 
     historiqueTitre: "Every match, its cost",
-    historiqueTexte: "One row per activity: date, game, your score, and what it cost you, with the exercise named, so push-ups and seconds of boxing never get confused. The arrow on the right unfolds the full calculation, and the cross deletes a row that's wrong.",
+    historiqueTexte: "One row per game: date, game, your score, and what it cost you, with the exercise named, so push-ups and seconds of boxing never get confused. The arrow on the right unfolds the full calculation, and the cross deletes a row that's wrong.",
 
     navReglagesTitre: "Set it to your size",
     navReglagesTexte: "Last stop. Settings are filed by section, like on a phone: you open the one you want and come back.",

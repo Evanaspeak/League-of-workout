@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { notifier, pushConfigure } from "@/lib/push";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { heureLocale, jourDansFuseau } from "@/lib/fuseau";
+import { rappelerPesee } from "@/lib/rappelPesee";
 import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/fenetreEnvoi";
 import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
@@ -82,7 +83,7 @@ export async function POST(req: Request) {
    * exécution qui travaille ne doivent pas rendre la même chose.
    */
   if (!pushConfigure()) {
-    return NextResponse.json({ examines: 0, envoyes: 0, relances: 0, push: "absent" });
+    return NextResponse.json({ examines: 0, envoyes: 0, relances: 0, pesees: 0, push: "absent" });
   }
 
   // La dette s'exprime en temps d'effort : sans les ratios réglés en
@@ -128,8 +129,9 @@ export async function POST(req: Request) {
   }
 
   const relances = await relancerLesAbsents(maintenant);
+  const pesees = await rappelerLesPesees(maintenant);
   return NextResponse.json({
-    examines: candidats.length, envoyes, relances, push: "configuré",
+    examines: candidats.length, envoyes, relances, pesees, push: "configuré",
   });
 }
 
@@ -167,6 +169,48 @@ async function relancerLesAbsents(maintenant: Date): Promise<number> {
     // La date se pose même si l'envoi n'a atteint personne : sans abonnement,
     // réessayer chaque jour ne changerait rien et referait le tour de la base.
     await prisma.user.update({ where: { id: u.id }, data: { relanceLe: maintenant } })
+      .catch(() => {});
+    if (partis > 0) envoyees += 1;
+  }
+  return envoyees;
+}
+
+/**
+ * Le rappel de pesée hebdomadaire (réponse 022, optionnel).
+ *
+ * Même fenêtre que les deux autres, et pour la même raison : c'est le matin
+ * qu'on se pèse, à jeun, avant que la journée ne fausse le chiffre.
+ *
+ * La requête est resserrée sur `rappelPeseeActif` — le réglage est éteint par
+ * défaut, donc cette boucle ne parcourt que les comptes qui l'ont demandé, et
+ * pas toute la base comme les deux précédentes.
+ */
+async function rappelerLesPesees(maintenant: Date): Promise<number> {
+  const comptes = await prisma.user.findMany({
+    where: { rappelPeseeActif: true, fuseau: { not: null } },
+    select: {
+      id: true, langue: true, fuseau: true, rappelPeseeLe: true, createdAt: true,
+      pesees: { orderBy: { jour: "desc" }, take: 1, select: { jour: true } },
+    },
+  });
+
+  let envoyees = 0;
+  for (const u of comptes) {
+    if (!dansLaFenetreDuMatin(heureLocale(maintenant, u.fuseau))) continue;
+    const etat = {
+      actif: true,
+      dernierePesee: u.pesees[0]?.jour ?? null,
+      dernierRappel: u.rappelPeseeLe,
+      creeLe: u.createdAt,
+    };
+    if (!rappelerPesee(etat, maintenant)) continue;
+
+    const { titre, corps } = textesNotification(u.langue).pesee();
+    const partis = await notifier(u.id, { titre, corps, tag: "wow-pesee" }).catch(() => 0);
+    // La marque se pose même si l'envoi n'a atteint personne, comme pour les
+    // deux autres : sans abonnement, réessayer demain matin ne changerait rien
+    // et referait le tour de la base.
+    await prisma.user.update({ where: { id: u.id }, data: { rappelPeseeLe: maintenant } })
       .catch(() => {});
     if (partis > 0) envoyees += 1;
   }

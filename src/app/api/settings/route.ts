@@ -12,6 +12,7 @@ import { estFuseauValide } from "@/lib/fuseau";
 import { PARTAGES, type Partage } from "@/lib/profilAmi";
 import { decisionProfilPublic } from "@/lib/profilPublic";
 import { NOMS, type ChoixNom } from "@/lib/nomAffiche";
+import { MULTIPLICATEURS } from "@/lib/objectifCalorique";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -82,6 +83,18 @@ export async function PUT(req: Request) {
       partageAmis?: string;
       nomAffiche?: string;
       sessionAuto?: string;
+      /**
+       * Le corps et les calories (étape 05). `null` est une valeur, pas une
+       * absence : c'est ainsi qu'on éteint la fonctionnalité.
+       */
+      formuleCalorique?: string | null;
+      niveauActivite?: string | null;
+      modeCalorique?: string | null;
+      poidsCible?: number | null;
+      tourTaille?: number | null;
+      tourCou?: number | null;
+      tourHanches?: number | null;
+      rappelPeseeActif?: boolean;
     } = {};
 
     /**
@@ -161,6 +174,86 @@ export async function PUT(req: Request) {
      * pour quelqu'un qui vient de demander l'inverse est le seul résultat
      * qu'on ne peut pas rattraper — il croit s'être caché.
      */
+    /**
+     * Le corps et les calories (étape 05).
+     *
+     * Neuf réglages, et la même règle pour tous : une valeur qu'on ne
+     * reconnaît pas est REFUSÉE, jamais ramenée à un défaut. Ce sont des
+     * données de santé, et enregistrer « perte de masse » pour quelqu'un qui
+     * demandait « maintien » est le genre de résultat qu'on ne rattrape pas —
+     * il ne le vérifiera jamais.
+     *
+     * `null` est une valeur légitime et distincte : c'est ainsi qu'on ÉTEINT
+     * la fonctionnalité, qui est son état par défaut (réponse 013).
+     */
+    const enum_ = (v: unknown, permis: readonly string[]) =>
+      v === null || (typeof v === "string" && permis.includes(v));
+
+    if (body.userPrefs.formuleCalorique !== undefined) {
+      if (!enum_(body.userPrefs.formuleCalorique, ["h", "f"])) {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.formuleCalorique = body.userPrefs.formuleCalorique;
+    }
+
+    if (body.userPrefs.niveauActivite !== undefined) {
+      if (!enum_(body.userPrefs.niveauActivite, Object.keys(MULTIPLICATEURS))) {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.niveauActivite = body.userPrefs.niveauActivite;
+    }
+
+    if (body.userPrefs.modeCalorique !== undefined) {
+      if (!enum_(body.userPrefs.modeCalorique, ["perte", "maintien", "prise"])) {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.modeCalorique = body.userPrefs.modeCalorique;
+    }
+
+    /**
+     * Le poids cible et les trois mesures, en unités entières.
+     *
+     * Bornes larges — c'est l'impossible qu'on attrape, pas un corps qu'on
+     * discute. `null` efface la valeur, ce qui doit rester possible : quelqu'un
+     * qui a saisi son tour de taille par curiosité doit pouvoir le retirer.
+     */
+    /**
+     * Une mesure entière, ou `null` pour l'effacer.
+     *
+     * Rend `undefined` quand le champ est absent — ce qui ne se distingue pas
+     * d'un `null` par la valeur rendue, d'où le contrôle de présence chez
+     * l'appelant. Le type se vérifie AVANT toute conversion : `Number(null)`
+     * vaut zéro, et `JSON.stringify(NaN)` rend `null`, donc une valeur que le
+     * navigateur n'a pas su écrire entrerait comme un chiffre.
+     */
+    const mesure = (brut: unknown, min: number, max: number): number | null | false => {
+      if (brut === null) return null;
+      if (typeof brut !== "number" || !Number.isFinite(brut) || brut < min || brut > max) return false;
+      return Math.round(brut);
+    };
+    const MESURES = [
+      ["poidsCible", 20, 500],
+      ["tourTaille", 20, 300],
+      ["tourCou", 15, 150],
+      ["tourHanches", 20, 300],
+    ] as const;
+    for (const [champ, min, max] of MESURES) {
+      const brut = body.userPrefs[champ];
+      if (brut === undefined) continue;
+      const v = mesure(brut, min, max);
+      if (v === false) {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data[champ] = v;
+    }
+
+    if (body.userPrefs.rappelPeseeActif !== undefined) {
+      if (typeof body.userPrefs.rappelPeseeActif !== "boolean") {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.rappelPeseeActif = body.userPrefs.rappelPeseeActif;
+    }
+
     if (body.userPrefs.fantome !== undefined) {
       if (typeof body.userPrefs.fantome !== "boolean") {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });

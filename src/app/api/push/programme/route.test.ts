@@ -30,9 +30,22 @@ const user = prisma.user as unknown as { findMany: jest.Mock; update: jest.Mock 
  * ce qu'elles demandent, ce qui est aussi la seule façon de vérifier qu'elles
  * demandent bien deux choses différentes.
  */
-function repondre({ matin = [] as unknown[], absents = [] as unknown[] } = {}) {
-  user.findMany.mockImplementation(async (args: { select?: { games?: unknown } }) =>
-    args?.select?.games ? absents : matin);
+/**
+ * Trois boucles lisent `user.findMany`, et la doublure répond selon ce que
+ * chacune DEMANDE plutôt que selon l'ordre des appels.
+ *
+ * C'est le piège déjà écrit au journal pour le mur des records : une doublure
+ * qui rend la même chose aux trois ferait lire des comptes de pesée comme des
+ * comptes en dette, et l'échec tomberait n'importe où sauf à sa cause.
+ */
+function repondre({
+  matin = [] as unknown[], absents = [] as unknown[], pesees = [] as unknown[],
+} = {}) {
+  user.findMany.mockImplementation(async (args: { select?: { games?: unknown; pesees?: unknown } }) => {
+    if (args?.select?.games) return absents;
+    if (args?.select?.pesees) return pesees;
+    return matin;
+  });
 }
 const envoi = notifier as jest.Mock;
 
@@ -108,7 +121,7 @@ describe("choix des comptes", () => {
   it("envoie à qui est au matin chez lui", async () => {
     const r = await appeler(SECRET);
     expect(envoi).toHaveBeenCalledTimes(1);
-    expect(await r.json()).toEqual({ examines: 1, envoyes: 1, relances: 0, push: "configuré" });
+    expect(await r.json()).toEqual({ examines: 1, envoyes: 1, relances: 0, pesees: 0, push: "configuré" });
   });
 
   it("ne réveille personne ailleurs dans le monde", async () => {
@@ -287,6 +300,60 @@ describe("la fenêtre du matin", () => {
  * quelqu'un qui a cessé de jouer était brûlé par un déploiement incapable de
  * l'envoyer. Et la réponse était celle d'une matinée normale.
  */
+describe("le rappel de pesée", () => {
+  /** Un compte qui a demandé le rappel et ne s'est pas pesé depuis dix jours. */
+  const aRappeler = (fuseau: string) => ({
+    id: "p1", langue: "fr", fuseau,
+    rappelPeseeLe: null,
+    createdAt: new Date(Date.now() - 60 * 24 * 3600_000),
+    pesees: [{ jour: jourIlYA(10) }],
+  });
+
+  function jourIlYA(n: number): string {
+    const d = new Date(Date.now() - n * 24 * 3600_000);
+    const p = (x: number) => String(x).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  it("ne demande à la base que les comptes qui l'ont demandé", async () => {
+    /**
+     * Le réglage est éteint par défaut, donc cette boucle ne doit PAS
+     * parcourir toute la base comme les deux autres : c'est une requête
+     * resserrée, et sans elle on lirait chaque compte pour n'en retenir
+     * presque aucun.
+     */
+    repondre({ matin: [], absents: [], pesees: [] });
+    await appeler(SECRET);
+    const appels = user.findMany.mock.calls.map((c: unknown[]) => c[0] as { where?: Record<string, unknown> });
+    const celui = appels.find((a) => a?.where?.rappelPeseeActif !== undefined);
+    expect(celui?.where).toEqual({ rappelPeseeActif: true, fuseau: { not: null } });
+  });
+
+  it("part le matin, et pose sa marque", async () => {
+    repondre({ matin: [], absents: [], pesees: [aRappeler(fuseauOuIlEst(9))] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).pesees).toBe(1);
+    // La marque se pose même si personne n'était abonné : réessayer demain
+    // referait le tour de la base pour rien.
+    const maj = user.update.mock.calls.map((c: unknown[]) => c[0] as { data: Record<string, unknown> });
+    expect(maj.some((m) => "rappelPeseeLe" in m.data)).toBe(true);
+  });
+
+  it("se tait quand il n'est pas le matin chez la personne", async () => {
+    repondre({ matin: [], absents: [], pesees: [aRappeler(fuseauOuIlEst(22))] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).pesees).toBe(0);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("se tait pour qui s'est pesé cette semaine", async () => {
+    const recent = { ...aRappeler(fuseauOuIlEst(9)), pesees: [{ jour: jourIlYA(2) }] };
+    repondre({ matin: [], absents: [], pesees: [recent] });
+    const r = await appeler(SECRET);
+    expect((await r.json()).pesees).toBe(0);
+  });
+});
+
 describe("sans clés de notification", () => {
   it("ne touche pas à la base et le dit dans sa réponse", async () => {
     configure.mockReturnValueOnce(false);
@@ -296,7 +363,7 @@ describe("sans clés de notification", () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
-      examines: 0, envoyes: 0, relances: 0, push: "absent",
+      examines: 0, envoyes: 0, relances: 0, pesees: 0, push: "absent",
     });
     // Rien de marqué : une clé posée à dix heures rattrape encore la matinée.
     expect(user.update).not.toHaveBeenCalled();

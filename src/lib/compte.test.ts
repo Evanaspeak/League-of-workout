@@ -72,6 +72,47 @@ const PART_AU_NAVIGATEUR = new Set([
 
 /** Ce qui ne sort jamais, et pourquoi. */
 const NE_SORT_PAS: Record<string, string> = {
+  formuleCalorique:
+    "Quelle variante de Mifflin-St Jeor employer. Donnée de SANTÉ au sens de "
+    + "l'article 9, comme le poids et la taille : elle n'a aucune raison de "
+    + "traverser la réponse que la navigation lit à chaque page, et "
+    + "`comptePublic` sert les routes de DIFFUSION — la source OBS s'affiche "
+    + "devant le public de quelqu'un d'autre. Elle se demande par "
+    + "`/api/settings`, derrière la porte.",
+  niveauActivite:
+    "Le multiplicateur d'activité du calcul calorique. Donnée de santé, même "
+    + "raison que la variante de formule : derrière la porte, jamais en "
+    + "diffusion, et présente à l'export de l'article 20.",
+  modeCalorique:
+    "Perte, maintien ou prise de masse. C'est le renseignement le plus "
+    + "personnel du lot — il dit ce que quelqu'un cherche à faire de son "
+    + "corps — et il n'a rien à faire dans une réponse lue par une source de "
+    + "diffusion. Derrière la porte, avec le reste des réglages.",
+  poidsCible:
+    "Le poids visé (réponse 020). Donnée de santé, et de la même famille que "
+    + "le mode : elle dit une intention sur son propre corps. Elle ne sort "
+    + "que par les réglages et par l'export.",
+  tourTaille:
+    "Mesure au mètre-ruban pour l'estimation de masse grasse (réponse 023, "
+    + "en option). Donnée de santé : jamais en diffusion, jamais dans la "
+    + "réponse lue à chaque page.",
+  tourCou:
+    "Mesure au mètre-ruban, même famille et même raison que le tour de "
+    + "taille : elle ne sert qu'à la formule US Navy, derrière la porte.",
+  tourHanches:
+    "Mesure au mètre-ruban, acceptée en réponse 024 parce que la variante "
+    + "féminine de la formule ne peut pas s'en passer. Donnée de santé, "
+    + "traitée exactement comme les deux autres.",
+  rappelPeseeActif:
+    "Le rappel de pesée hebdomadaire est-il allumé (réponse 022, optionnel). "
+    + "Un réglage de notification qui dit qu'on suit son poids : c'est un "
+    + "renseignement de santé sous une autre forme, et il reste derrière la "
+    + "porte.",
+  rappelPeseeLe:
+    "Marque du dernier rappel de pesée envoyé, comme `rappelLe` et "
+    + "`bilanLe`. Mécanique interne d'envoi : aucun écran ne la lit, et une "
+    + "donnée qui voyage sans lecteur est du gaspillage avant d'être un "
+    + "risque.",
   paiementEclairLe:
     "La première dette soldée dans l'heure. Elle sort bien, mais transformée : " +
     "`/api/progression` en rend un BOOLÉEN, qui est tout ce que l'écran " +
