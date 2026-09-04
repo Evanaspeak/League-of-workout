@@ -1098,6 +1098,54 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La tolérance datée, et le faux positif que le garde aurait fabriqué
+Le journal avait laissé cet angle mort ouvert hier, avec sa raison écrite : un
+module dont le seul lecteur est son propre test passe pour vivant, parce que
+`codeMort.test.ts` écarte les fichiers de test de la liste des CANDIDATS mais
+pas de celle des LECTEURS. Ce qui manquait n'était pas la détection mais une
+**tolérance datée**, et « ça ne se décide pas en huit minutes ».
+
+**La forme retenue, et pourquoi celle-là.** L'entrée porte le jour où le module
+a été commis sans lecteur, et **le délai vit une seule fois**, en constante :
+sept jours. Une tolérance dont chaque ligne porterait sa propre échéance se
+prolongerait indéfiniment, une ligne après l'autre, sans que rien ne le montre —
+c'est ainsi que meurent les listes de dispenses. Et la date est celle du COMMIT,
+pas celle de l'ajout de la ligne, sinon il suffirait de la réécrire pour
+repousser l'échéance.
+
+**Elle mord toute seule.** C'est ce qui la distingue d'un commentaire : passé le
+délai, le test tombe sur une poussée sans rapport, et le fichier se rouvre. Sans
+ça il faudrait penser à y revenir, ce que personne ne fait — le journal le
+reproche déjà à la réserve de 420 pixels et aux trois numéros de PostgreSQL.
+
+**Une tolérance qui ne désigne plus rien tombe aussi.** Le module a reçu son
+écran ou il a été supprimé ; la ligne devient à son tour du code mort dans le
+garde qui existe pour l'attraper.
+
+**Le sabotage a confirmé un faux positif que j'avais prévu, et c'est le plus
+instructif.** `middleware.ts` vit à la RACINE du dépôt, hors du balayage — et
+c'est le seul lecteur de `lib/pagesConnues.ts`. Compter les lecteurs sans la
+racine fait donc déclarer « lu par ses seuls tests » un module parfaitement
+branché, et le garde envoie alors supprimer ou câbler quelque chose qui l'est
+déjà. C'est le pire sens de l'erreur pour ce garde-ci : il fait SUPPRIMER du
+code sur la foi de ce qu'il lit.
+
+**Et le témoin qui décide de tout est le DÉCOUPAGE**, pas le nombre de fichiers.
+Si `estCoteTest` cessait de reconnaître quoi que ce soit, les deux ensembles de
+lecteurs seraient identiques, plus aucun module ne pourrait être « lu par ses
+seuls tests », et le contrôle passerait au vert en ne cherchant rien. Le test
+exige donc que le premier ensemble soit STRICTEMENT plus grand que le second.
+
+Six sabotages : le module ajouté sans lecteur, le même toléré depuis dix jours,
+le même toléré depuis hier (qui doit **passer** — c'est tout l'objet de la
+tolérance), la tolérance devenue caduque, le découpage rendu aveugle, la racine
+retirée des lecteurs. Cinq échecs et un passage, chacun là où il fallait.
+
+**Aujourd'hui la liste est vide**, ce qui est le bon état : `conversionDette.ts`
+a reçu son écran la nuit dernière. `src/test/api.ts` rejoint les tolérances
+permanentes avec sa raison — c'est de l'outillage de test, ses lecteurs sont
+exactement ceux qu'on attend.
+
 ### Un avertissement que GitHub compense, et la fois où on l'a lu avant d'agir
 Le journal portait cet avertissement depuis le 3 septembre, avec sa raison de
 ne PAS y toucher : « le jour où GitHub cessera de compenser, les quatre travaux
@@ -1325,6 +1373,11 @@ détection mais une TOLÉRANCE datée, et ça ne se décide pas en huit minutes.
 
 En attendant : un module commis sans lecteur reste sur la branche, jamais
 fusionné sur `main`. C'est ce qui a été fait ici.
+
+**Fermé depuis** — voir « La tolérance datée, et le faux positif que le garde
+aurait fabriqué », plus haut. La règle de branche ci-dessus ne vaut plus : la
+tolérance porte une date, donc un module peut traverser `main` sans lecteur
+pendant une semaine, et le garde le réclame ensuite tout seul.
 
 ### Le jeu que je venais d'ajouter était invisible à l'application, et je l'ai trouvé en cherchant autre chose
 Troisième divergence de la même famille en une heure, et celle-ci est la
