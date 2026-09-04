@@ -1098,6 +1098,48 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les sept rôles étaient écrits trois fois, et l'écran pouvait proposer ce que le serveur refuse
+Recensement lancé dans la foulée de la bande de jeux : d'autres listes écrites
+deux fois. Il en rend une, et elle est plus dangereuse que la première.
+
+Les sept rôles — Top, Jungle, Mid, ADC, Support, ARAM, Arena — vivaient à la
+main dans le formulaire d'ajout, dans le simulateur de dette et dans le filtre
+de l'historique, en plus du barème qui les sème dans `RoleWeight`.
+
+**Les quatre coïncidaient**, ce qui est le cas normal : une duplication ne se
+remarque jamais tant qu'elle n'a pas divergé, et c'est exactement ce qui la
+rend chère.
+
+**Ce que la divergence coûterait.** `/api/games` rend « Rôle inconnu » quand le
+rôle envoyé n'a pas de ligne au barème — c'est une correction déjà faite ici,
+le jour où « MID » ne trouvait pas « Mid ». Un écran qui proposerait un rôle
+absent ferait donc refuser une saisie parfaitement conforme à ce qu'il venait
+de demander, et le message accuserait la personne. C'est le défaut du champion
+refusé, une table plus loin.
+
+`ROLES` se déduit maintenant de `ROLES_DEFAUT`, et les trois écrans le lisent.
+La LISTE appartient au barème ; les POIDS restent réglables par le panneau
+d'administration, qui ne touche pas à la première. « Tous », dans le filtre,
+n'est pas un rôle mais l'absence de filtre : il est préfixé à l'affichage et
+n'a rien à faire au barème.
+
+**Le garde ne peut pas se contenter de l'import**, parce qu'un composant qui
+réécrirait les sept noms compilerait parfaitement. Il cherche donc DEUX rôles
+VOISINS entre guillemets — la forme qu'une liste réécrite prend forcément, et
+ce qui la distingue d'un nom mentionné seul, comme la valeur par défaut
+mémorisée du formulaire. Il exige en plus que les trois écrans lisent
+vraiment la source : le premier contrôle est un refus, pas une exigence, et
+retirer la liste sans la remplacer y passerait.
+
+Trois sabotages, trois échecs — dont le barème vidé, qui doit faire tomber le
+témoin plutôt que de rendre les comparaisons vertes sur des listes vides.
+
+**Ce que le recensement n'a PAS trouvé, et qui vaut d'être dit** : les six
+langues sont bien écrites deux fois — dans `src/lib/i18n/` et dans
+`desktop/src/langue.js` — mais c'est le seul cas VOULU du projet, la coquille
+Electron étant construite sans le paquet du site, et un test compare déjà les
+deux. Les exercices, eux, n'ont qu'une liste.
+
 ### La partie refusée levait son propre silence
 Signalé par le propriétaire, en une phrase : « je viens de mettre non à la
 question de démarrer une session ou pas et j'ai quand même la pastille ».
