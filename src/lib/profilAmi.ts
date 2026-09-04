@@ -37,12 +37,23 @@ export type ProfilTotal = {
   joursDeRetard: number;
 };
 
-/** Ce qui s'ajoute quand la personne l'autorise. */
+/**
+ * Ce qui s'ajoute quand la personne l'autorise.
+ *
+ * **Le titre est ici et pas dans le total**, ce qui n'allait pas de soi : il
+ * ne fait qu'un mot, il est flatteur par construction, et on pourrait le
+ * croire anodin. Il ne l'est pas — « Increvable » DIT une série de trente
+ * jours, c'est-à-dire précisément le chiffre que le mode « total » existe pour
+ * taire. Un résumé d'un renseignement reste ce renseignement, et le publier
+ * sous une autre forme est la façon la plus discrète de défaire un réglage.
+ */
 export type ProfilDetail = ProfilTotal & {
   parties: number;
   serie: number;
   meilleureSerie: number;
   jeuFavori: string | null;
+  niveau: number;
+  titre: string | null;
 };
 
 export type Profil =

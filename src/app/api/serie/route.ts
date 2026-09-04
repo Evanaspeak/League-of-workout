@@ -31,7 +31,9 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json(reponseSerie(
-    { totalPoints: 0, parties: 0, jours: paiements.map((p) => p.jour) },
+    // La série ne lit ni le volume ni le niveau : zéro dit ici « sans objet »,
+    // et pas « rien payé ». `reponseSerie` n'en regarde aucun.
+    { totalPoints: 0, parties: 0, pointsPayes: 0, jours: paiements.map((p) => p.jour) },
     aujourdhui,
     user,
   ));

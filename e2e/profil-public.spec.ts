@@ -56,6 +56,22 @@ test("l'ouvrir donne un lien, qui montre l'effort et jamais la dette", async ({ 
   await expect(vue.getByRole("heading", { name: pseudo })).toBeVisible();
   expect(await vue.content()).not.toContain("4242");
 
+  /**
+   * Le niveau part du HTML SERVI, pas d'un appel qui suivrait.
+   *
+   * La page est rendue au serveur et le niveau se déduit de ce qu'elle lit
+   * déjà : il n'y a aucune raison qu'il arrive après. Lire la RÉPONSE plutôt
+   * que le DOM est ce qui le prouve — une fois hydratée, la page l'afficherait
+   * dans les deux cas.
+   *
+   * L'adresse porte la LANGUE, et pas par confort : sans préfixe, la réponse
+   * négocie, et une requête faite hors du navigateur n'emporte pas forcément
+   * l'en-tête de langue du contexte. Le premier jet cherchait « Niveau » dans
+   * une page rendue en anglais.
+   */
+  const servi = await (await vue.request.get(`/fr/p/${jeton}`)).text();
+  expect(servi).toMatch(/Niveau\s*\d/);
+
   await anonyme.close();
   await ctx.close();
 });

@@ -3,6 +3,7 @@ import { nomPublie } from "@/lib/nomAffiche";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { composerProfil, toPartage } from "@/lib/profilAmi";
+import { niveauPourPoints, titrePorte } from "@/lib/niveauCompte";
 import { etatRetard, longueurSerie, meilleureSerie, jourLocal } from "@/lib/serie";
 import { debutFenetre } from "@/lib/classement";
 
@@ -62,7 +63,10 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     prisma.game.count({ where: { userId: id, sansEnjeu: false } }),
     prisma.paiement.findMany({
       where: { userId: id },
-      select: { jour: true },
+      // `points` s'ajoute au MÊME select : le niveau a besoin du total payé,
+      // et une colonne de plus sur une requête qu'on fait déjà ne coûte rien,
+      // là où un `aggregate` séparé serait un aller-retour de plus vers Neon.
+      select: { jour: true, points: true },
       orderBy: { jour: "desc" },
       take: 800,
     }),
@@ -78,6 +82,14 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const retard = etatRetard(compte.detteDepuis, compte.dettePointsDus);
   const listeJours = jours.map((p) => p.jour);
+  const sourceNiveau = {
+    pointsPayes: jours.reduce((somme, p) => somme + p.points, 0),
+    parties,
+    meilleureSerie: meilleureSerie(listeJours),
+    // Un même jour peut porter plusieurs paiements : ce qui compte est le
+    // nombre de JOURS où l'on a fait quelque chose.
+    joursPayes: new Set(listeJours).size,
+  };
 
   return NextResponse.json(composerProfil(
     toPartage(compte.partageAmis),
@@ -93,6 +105,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       serie: longueurSerie(listeJours, aujourdhui),
       meilleureSerie: meilleureSerie(listeJours),
       jeuFavori: favori[0]?.jeu ?? null,
+      niveau: niveauPourPoints(sourceNiveau.pointsPayes),
+      titre: titrePorte(sourceNiveau),
     },
   ));
 }

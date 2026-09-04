@@ -13,6 +13,7 @@ import { GET as GET_BADGES } from "../badges/route";
 import { GET as GET_SERIE } from "../serie/route";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { niveauPourPoints } from "@/lib/niveauCompte";
 
 const session = getCurrentUser as jest.Mock;
 const base = prisma as unknown as {
@@ -25,8 +26,11 @@ const JOURS = ["2026-09-02", "2026-09-01", "2026-08-31", "2026-08-29"];
 beforeEach(() => {
   jest.clearAllMocks();
   session.mockResolvedValue(utilisateur({ dettePointsDus: 0, detteDepuis: null }));
-  base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 4200 }, _count: { _all: 57 } });
-  base.paiement.findMany.mockResolvedValue(JOURS.map((jour) => ({ jour })));
+  base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 9000 }, _count: { _all: 57 } });
+  // Trente points payés par jour, quatre jours : 120 payés contre 4 200
+  // générés. Les deux chiffres sont volontairement TRÈS différents, sans quoi
+  // rien ne dirait lequel des deux le niveau emploie.
+  base.paiement.findMany.mockResolvedValue(JOURS.map((jour) => ({ jour, points: 30 })));
 });
 
 describe("sans session", () => {
@@ -53,13 +57,52 @@ describe("la progression", () => {
     const reponse = await GET(requete("/api/progression?jour=2026-09-02"));
     const fusion = await corps(reponse) as Record<string, unknown>;
     jest.clearAllMocks();
-    base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 4200 }, _count: { _all: 57 } });
-    base.paiement.findMany.mockResolvedValue(JOURS.map((jour) => ({ jour })));
+    base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 9000 }, _count: { _all: 57 } });
+    base.paiement.findMany.mockResolvedValue(JOURS.map((jour) => ({ jour, points: 30 })));
     const badges = await corps(await GET_BADGES());
     const serie = await corps(await GET_SERIE(requete("/api/serie?jour=2026-09-02")));
 
     expect(fusion.badges).toEqual(badges);
     expect(fusion.serie).toEqual(serie);
+  });
+
+  it("rend le niveau et le titre SANS lire une ligne de plus", async () => {
+    /**
+     * Le niveau et le titre se déduisent exactement de ce que cette route
+     * compose déjà. Leur donner une route à eux ferait un aller-retour de
+     * plus vers Neon pour relire les mêmes paiements — c'est le défaut que
+     * cette route existe pour avoir corrigé, et il se referait en silence.
+     */
+    const corpsRep = await corps(await GET(requete("/api/progression?jour=2026-09-02"))) as {
+      badges: { niveau: { niveau: number; restant: number; part: number }; titre: string | null };
+    };
+    expect(base.paiement.findMany).toHaveBeenCalledTimes(1);
+    expect(corpsRep.badges.niveau.part).toBeGreaterThanOrEqual(0);
+    expect(corpsRep.badges.niveau.part).toBeLessThanOrEqual(1);
+    // 120 payés : premier pas, et rien de plus. 9 000 GÉNÉRÉS donneraient
+    // « endurant » — c'est ce que ce contrôle refuse.
+    expect(corpsRep.badges.titre).toBe("premierPas");
+  });
+
+  it("calcule le niveau sur ce qui a été PAYÉ, pas sur ce que les parties ont coûté", () => {
+    /**
+     * La décision de fond, et la seule que ce fichier puisse tenir.
+     *
+     * Le double rend 4 200 points GÉNÉRÉS et 120 PAYÉS : deux chiffres qui
+     * donnent deux niveaux très éloignés. Prendre le mauvais ferait monter
+     * celui qui perd sans jamais payer — sur un produit dont le sujet est de
+     * payer, c'est le contresens exact, et il ne se verrait pas : le niveau
+     * monterait, simplement plus vite qu'il ne devrait.
+     */
+    return GET(requete("/api/progression?jour=2026-09-02"))
+      .then((r) => corps(r) as Promise<{ badges: { niveau: { niveau: number } } }>)
+      .then((c) => {
+        // 120 payés : seuil du niveau 2 à 50, du niveau 3 à 150.
+        expect(c.badges.niveau.niveau).toBe(2);
+        // Le témoin : 9 000 générés donneraient le niveau 19. Sans lui, un
+        // niveau figé à 2 passerait le contrôle en ne prouvant rien.
+        expect(niveauPourPoints(9000)).toBe(19);
+      });
   });
 
   it("filtre par compte des deux côtés", async () => {

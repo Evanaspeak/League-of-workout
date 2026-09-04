@@ -1,4 +1,5 @@
 import { prochainPalier, tousLesBadges } from "@/lib/badges";
+import { avancementNiveau, titrePorte } from "@/lib/niveauCompte";
 import { etatRetard, longueurSerie, meilleureSerie } from "@/lib/serie";
 
 /**
@@ -22,9 +23,20 @@ import { etatRetard, longueurSerie, meilleureSerie } from "@/lib/serie";
 
 /** Ce qu'on lit en base, et rien d'autre. */
 export type SourceProgression = {
+  /** Effort GÉNÉRÉ, c'est-à-dire ce que les parties ont coûté. Les paliers. */
   totalPoints: number;
   parties: number;
   jours: string[];
+  /**
+   * Effort PAYÉ, pour le niveau et le titre.
+   *
+   * Ce n'est pas le même chiffre que `totalPoints`, et c'est toute la raison
+   * pour laquelle il porte un autre nom : les paliers récompensent le volume
+   * joué, le niveau récompense ce qui a été fait. Confondre les deux ferait
+   * monter de niveau celui qui perd sans jamais payer, sur un produit dont le
+   * sujet est de payer.
+   */
+  pointsPayes: number;
 };
 
 export function reponseBadges(src: SourceProgression) {
@@ -40,6 +52,21 @@ export function reponseBadges(src: SourceProgression) {
     source,
     badges: tousLesBadges(source),
     prochain: prochainPalier(source),
+    /**
+     * Le niveau et le titre partent d'ici, et pas d'une route à eux.
+     *
+     * Ils se déduisent EXACTEMENT de `source`, que cette route compose déjà :
+     * leur donner une adresse ferait un aller-retour de plus vers Neon pour
+     * relire les mêmes lignes. C'est le défaut corrigé en fusionnant
+     * `/api/badges` et `/api/serie`, et il ne se refait pas.
+     */
+    niveau: avancementNiveau(src.pointsPayes),
+    titre: titrePorte({
+      pointsPayes: src.pointsPayes,
+      parties: source.parties,
+      meilleureSerie: source.meilleureSerie,
+      joursPayes: source.joursPayes,
+    }),
   };
 }
 
