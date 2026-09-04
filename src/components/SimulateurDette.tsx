@@ -1,7 +1,7 @@
 "use client";
 import { ROLES } from "@/lib/scoringDefaut";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { simulateur as dict } from "@/lib/i18n/dictionaries/simulateur";
 import { capacitesDuJeu, JEUX, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 import { ventiler, type Repartition } from "@/lib/exercices";
@@ -22,6 +22,7 @@ type Apercu = {
 
 export function SimulateurDette() {
   const t = useT(dict);
+  const etiquette = useDateLocale();
 
   const [jeu, setJeu] = useState("League of Legends");
   const [role, setRole] = useState("Mid");
@@ -90,7 +91,7 @@ export function SimulateurDette() {
     </div>
   );
 
-  const lignes = apercu ? ventiler(apercu.repartition ?? {}) : [];
+  const lignes = apercu ? ventiler(apercu.repartition ?? {}, null, etiquette) : [];
 
   return (
     <div className="lol-panel p-5 space-y-4">

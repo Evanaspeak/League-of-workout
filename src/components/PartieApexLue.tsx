@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { ventiler } from "@/lib/exercices";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 
 /**
@@ -17,6 +17,7 @@ import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
  */
 export function PartieApexLue() {
   const t = useT(enJeu);
+  const etiquette = useDateLocale();
   /**
    * Dernière partie enregistrée, pour ne pas la compter deux fois.
    *
@@ -62,7 +63,7 @@ export function PartieApexLue() {
         // La quantité réelle plutôt qu'un nombre de points : « 30 s de boxe »
         // n'est pas « 30 pompes », et c'est la page qui connaît l'exercice
         // choisi. Sans ventilation, on retombe sur le total.
-        const du = ventiler(repartition ?? {}).map((v) => v.valeur).join(" · ")
+        const du = ventiler(repartition ?? {}, null, etiquette).map((v) => v.valeur).join(" · ")
           || String(Number(scoring?.pompesFinales) || 0);
         // Le doute de la lecture se dit : si les modes ne se sont pas accordés,
         // le chiffre mérite d'être vérifié dans l'historique.

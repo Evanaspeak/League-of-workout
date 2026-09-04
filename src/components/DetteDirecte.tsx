@@ -6,6 +6,7 @@ import {
 import { ROLE_DEFAUT } from "@/components/PartieDetectee";
 import type { ContextePartie, ScoreDirect } from "@/types/electron";
 import { lire } from "@/lib/stockage";
+import { useDateLocale } from "@/lib/i18n/LocaleContext";
 
 /**
  * Ce que la partie en cours est en train de coûter, poussé vers l'overlay.
@@ -52,13 +53,14 @@ export function DetteDirecte() {
   /** KDA du dernier calcul : inutile de refaire l'aperçu s'il n'a pas bougé. */
   const derniereCleRef = useRef("");
   const minuteurRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const etiquette = useDateLocale();
 
   /** « 11 », ou « 8 · 30 s » quand plusieurs exercices se partagent l'effort. */
   const libelle = useCallback((points: number) => {
     const liste = exercicesRef.current;
-    if (liste.length === 1) return formaterCompact(points, liste[0]);
-    return ventiler(repartirPoints(points, liste)).map((v) => v.valeur).join(" · ");
-  }, []);
+    if (liste.length === 1) return formaterCompact(points, liste[0], null, etiquette);
+    return ventiler(repartirPoints(points, liste), null, etiquette).map((v) => v.valeur).join(" · ");
+  }, [etiquette]);
 
   const publier = useCallback((projection: Projection) => {
     window.electronLOL?.publierDette?.(projection);
@@ -85,7 +87,7 @@ export function DetteDirecte() {
       const dette = await res.json();
       const points = Number(dette?.points) || 0;
       enAttenteRef.current = points > 0
-        ? ventiler(dette.repartition ?? {}).map((v) => v.valeur).join(" · ")
+        ? ventiler(dette.repartition ?? {}, null, etiquette).map((v) => v.valeur).join(" · ")
         : "";
     } catch { /* la prochaine partie relira */ }
   }, []);

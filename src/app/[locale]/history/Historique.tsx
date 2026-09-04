@@ -188,6 +188,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
+  const dateLocale = useDateLocale();
   /**
    * « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité.
    *
@@ -198,10 +199,9 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const resumeParExo = (parExercice: Record<string, number>) => {
     const parts = EXERCICE_IDS
       .filter((id) => (parExercice[id] ?? 0) > 0)
-      .map((id) => `${nomsExo[id]} ${formaterQuantite(parExercice[id], id)}`);
+      .map((id) => `${nomsExo[id]} ${formaterQuantite(parExercice[id], id, dateLocale)}`);
     return parts.length > 0 ? parts.join(" · ") : "—";
   };
-  const dateLocale = useDateLocale();
 
   // ── Lignes de dette ──
   const [games, setGames] = useState<Game[]>([]);
@@ -415,7 +415,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
           id: toExerciceId(id),
           pts: pts ?? 0,
           // La valeur affichée est calculée ICI, sous le barème de la partie.
-          valeur: formaterCompact(pts ?? 0, toExerciceId(id), ratiosDe(g)),
+          valeur: formaterCompact(pts ?? 0, toExerciceId(id), ratiosDe(g), dateLocale),
         })),
       type: typeDeLaLigne(g),
       // Une séance au temps n'a pas de résultat, et un battle royale déduit le
@@ -668,7 +668,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                   <span className="carte-activite-variante">{tExo.varianteBadge}</span>
                                 )}
                                 <span style={{ marginLeft: 8, fontSize: "0.72rem", color: "var(--faint)" }}>
-                                  {minuscule(t.tableCumul)} {formaterQuantite(cumul[part.id] ?? 0, part.id)}
+                                  {minuscule(t.tableCumul)} {formaterQuantite(cumul[part.id] ?? 0, part.id, dateLocale)}
                                 </span>
                               </div>
                             ))}
@@ -906,7 +906,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                               </td>
                               <td className="px-3 py-2 text-right" style={{ color: "var(--steel)", whiteSpace: "nowrap" }}>
                                 {parts.map((part) => (
-                                  <div key={part.id}>{formaterQuantite(cumul[part.id] ?? 0, part.id)}</div>
+                                  <div key={part.id}>{formaterQuantite(cumul[part.id] ?? 0, part.id, dateLocale)}</div>
                                 ))}
                               </td>
                               <td className="px-3 py-2 text-center" style={{ whiteSpace: "nowrap" }}>

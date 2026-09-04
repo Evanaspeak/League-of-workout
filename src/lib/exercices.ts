@@ -244,22 +244,49 @@ export function quantite(points: number, exercice: ExerciceId, ratios?: RatiosEx
   return arrondi;
 }
 
+/**
+ * L'étiquette de langue au sens BCP 47 — « fr-FR », « ja-JP ».
+ *
+ * Elle est OPTIONNELLE partout, et son absence garde exactement le rendu
+ * d'avant. C'est ce qui permet de reprendre les appelants un par un sans
+ * qu'aucun écran ne change avant d'avoir été vérifié — le nombre en jeu est
+ * la dette, c'est-à-dire le chiffre le plus important du produit, et une
+ * erreur ici serait pire que le défaut qu'on corrige.
+ */
+export type EtiquetteLangue = string | undefined;
+
+/** Un nombre dans la langue de l'écran, ou tel quel si on ne la connaît pas. */
+function nombre(v: number, etiquette: EtiquetteLangue, decimales = 0): string {
+  if (!etiquette) return decimales > 0 ? String(v) : String(Math.round(v));
+  return new Intl.NumberFormat(etiquette, {
+    maximumFractionDigits: decimales,
+  }).format(v);
+}
+
 /** Formate une durée en secondes : 45 → « 45 s », 850 → « 14 min 10 ». */
-export function formaterDuree(totalSecondes: number): string {
+export function formaterDuree(totalSecondes: number, etiquette?: EtiquetteLangue): string {
   const s = Math.max(0, Math.round(totalSecondes));
   if (s < 60) return `${s} s`;
   const minutes = Math.floor(s / 60);
   const reste = s % 60;
-  if (reste === 0) return `${minutes} min`;
-  return `${minutes} min ${String(reste).padStart(2, "0")}`;
+  // Les secondes gardent leurs deux chiffres : « 5 min 07 » et non « 5 min 7 »,
+  // qui se lit comme cinq minutes et sept minutes. Ce n'est pas un nombre à
+  // grouper, c'est un cadran.
+  if (reste === 0) return `${nombre(minutes, etiquette)} min`;
+  return `${nombre(minutes, etiquette)} min ${String(reste).padStart(2, "0")}`;
 }
 
 /**
  * Valeur compacte, sans nom d'exercice — pour les tableaux et les compteurs.
  * Reps → « 38 ». Temps → « 4 min 26 ».
  */
-export function formaterCompact(points: number, exercice: ExerciceId, ratios?: RatiosExercices | null): string {
-  return formaterQuantite(quantite(points, exercice, ratios), exercice);
+export function formaterCompact(
+  points: number,
+  exercice: ExerciceId,
+  ratios?: RatiosExercices | null,
+  etiquette?: EtiquetteLangue,
+): string {
+  return formaterQuantite(quantite(points, exercice, ratios), exercice, etiquette);
 }
 
 /**
@@ -273,13 +300,24 @@ export function formaterCompact(points: number, exercice: ExerciceId, ratios?: R
  * corrige. On convertit donc partie par partie, puis on additionne des
  * quantités.
  */
-export function formaterQuantite(q: number, exercice: ExerciceId): string {
+export function formaterQuantite(
+  q: number,
+  exercice: ExerciceId,
+  etiquette?: EtiquetteLangue,
+): string {
   const unite = EXERCICES[exercice].unite;
-  if (unite === "temps") return formaterDuree(q);
-  // La distance porte son unité : « 2,4 » seul ne dit pas des kilomètres, et
-  // c'est le seul exercice dont la quantité ne se compte pas en répétitions.
-  if (unite === "distance") return `${q.toLocaleString("fr-FR")} km`;
-  return String(Math.round(q));
+  if (unite === "temps") return formaterDuree(q, etiquette);
+  /**
+   * La distance porte son unité : « 2,4 » seul ne dit pas des kilomètres, et
+   * c'est le seul exercice dont la quantité ne se compte pas en répétitions.
+   *
+   * Elle codait « fr-FR » en dur, donc « 2,4 km » s'affichait ainsi en
+   * anglais et en japonais, où il faut « 2.4 km ». Un séparateur décimal n'est
+   * pas une coquetterie : le point est le séparateur des MILLIERS en français
+   * et en allemand, et la virgule l'est en anglais.
+   */
+  if (unite === "distance") return `${nombre(q, etiquette ?? "fr-FR", 1)} km`;
+  return nombre(q, etiquette);
 }
 
 /**
@@ -290,13 +328,14 @@ export function formaterQuantite(q: number, exercice: ExerciceId): string {
 export function ventiler(
   parExercice: Record<string, number>,
   ratios?: RatiosExercices | null,
+  etiquette?: EtiquetteLangue,
 ): { id: ExerciceId; points: number; valeur: string }[] {
   return EXERCICE_IDS
     .filter((id) => (parExercice[id] ?? 0) > 0)
     .map((id) => ({
       id,
       points: parExercice[id],
-      valeur: formaterCompact(parExercice[id], id, ratios),
+      valeur: formaterCompact(parExercice[id], id, ratios, etiquette),
     }));
 }
 

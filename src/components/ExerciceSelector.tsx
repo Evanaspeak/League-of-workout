@@ -1,5 +1,5 @@
 "use client";
-import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useMinuscule, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { nomsExercices, descriptionsExercices } from "@/lib/nomsExercices";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
@@ -25,6 +25,7 @@ export function ExerciceSelector({
 }) {
   const t = useT(exercicesDict);
   const minuscule = useMinuscule();
+  const etiquette = useDateLocale();
   const noms: Record<ExerciceId, string> = nomsExercices(t);
   const descs: Record<ExerciceId, string> = descriptionsExercices(t);
 
@@ -128,8 +129,8 @@ export function ExerciceSelector({
                 display: "block", fontSize: "0.78rem", color: "var(--amber)", marginTop: compact ? 2 : 8,
               }}>
                 {EXERCICES[id].unite === "reps"
-                  ? `${formaterCompact(exemplePoints, id)} ${minuscule(noms[id])}`
-                  : formaterCompact(exemplePoints, id)}
+                  ? `${formaterCompact(exemplePoints, id, null, etiquette)} ${minuscule(noms[id])}`
+                  : formaterCompact(exemplePoints, id, null, etiquette)}
               </span>
             </span>
           </button>

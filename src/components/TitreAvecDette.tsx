@@ -5,6 +5,7 @@ import { formaterCompact, toExerciceIds, ventiler, type Repartition } from "@/li
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { titreAvecDette } from "@/lib/titreOnglet";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
+import { useDateLocale } from "@/lib/i18n/LocaleContext";
 
 /**
  * Le compteur de dette dans le titre de l'onglet.
@@ -28,6 +29,7 @@ export function TitreAvecDette() {
    * L'événement est écouté une seule fois, dans le fournisseur.
    */
   const { dette } = useContexteConnecte();
+  const etiquette = useDateLocale();
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -46,23 +48,49 @@ export function TitreAvecDette() {
     // puis la vraie valeur ferait clignoter le titre de l'onglet.
     if (dette === undefined) return;
 
-    if (!dette || (Number(dette.points) || 0) <= 0) { poser(null); return; }
-    const lignes = ventiler((dette.repartition ?? {}) as Repartition);
-    // Un seul exercice : sa valeur suffit. Plusieurs : on prend le premier
-    // plutôt que d'écrire « 19 · 2 min 10 » dans un onglet large de six
-    // caractères.
-    poser(lignes.length > 0
-      ? lignes[0].valeur
-      : formaterCompact(dette.points, toExerciceIds([])[0]));
+    let valeur: string | null = null;
+    if (dette && (Number(dette.points) || 0) > 0) {
+      const lignes = ventiler((dette.repartition ?? {}) as Repartition, null, etiquette);
+      // Un seul exercice : sa valeur suffit. Plusieurs : on prend le premier
+      // plutôt que d'écrire « 19 · 2 min 10 » dans un onglet large de six
+      // caractères.
+      valeur = lignes.length > 0
+        ? lignes[0].valeur
+        : formaterCompact(dette.points, toExerciceIds([])[0], null, etiquette);
+    }
+    poser(valeur);
+
+    /**
+     * Et on le repose quand Next réécrit le titre.
+     *
+     * C'est le défaut qui rendait ce compteur invisible quatre fois sur cinq :
+     * l'effet ne passe QU'UNE fois, à l'arrivée de la dette, et Next rend ses
+     * métadonnées de son côté — donc écrit `document.title` à un instant qu'on
+     * ne commande pas. Quand cette écriture tombe après la nôtre, le compteur
+     * disparaît pour de bon, et rien ne le repose avant la prochaine
+     * navigation. Mesuré avant correction sur cinq chargements du même écran :
+     * une fois présent, quatre fois absent.
+     *
+     * L'observateur ne peut pas boucler : reposer le compteur rend le titre
+     * conforme, donc la mutation suivante ne demande plus rien.
+     */
+    if (valeur === null) return;
+    const attendu = valeur;
+    const observateur = new MutationObserver(() => {
+      if (document.title === titreAvecDette(document.title, attendu)) return;
+      document.title = titreAvecDette(document.title, attendu);
+    });
+    observateur.observe(document.head, { childList: true, subtree: true, characterData: true });
 
     return () => {
+      observateur.disconnect();
       // On retire le compteur en partant : laisser « (38) » sur une page qui
       // ne le met plus à jour est pire que ne rien afficher.
       if (typeof document !== "undefined") {
         document.title = titreAvecDette(document.title, null);
       }
     };
-  }, [publique, chemin, dette]);
+  }, [publique, chemin, dette, etiquette]);
 
   return null;
 }

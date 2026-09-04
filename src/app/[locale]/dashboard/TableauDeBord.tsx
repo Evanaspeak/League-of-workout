@@ -461,7 +461,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     .filter(([, pts]) => pts > 0)
     .map(([ex, pts]) => ({
       nom: nomsExo[toExerciceId(ex)],
-      valeur: formaterCompact(pts, toExerciceId(ex)),
+      valeur: formaterCompact(pts, toExerciceId(ex), null, dateLocale),
     }));
   const exerciceRecord = toExerciceId(data.recordExercice ?? exercice);
   const globalStats = data.global ?? {
@@ -479,7 +479,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const vueTemps = typeConsulte === "temps";
   const aDuTemps = (data.global?.tempsJoueSec ?? 0) > 0;
 
-  const fmt = (points: number) => formaterCompact(points, exercice);
+  const fmt = (points: number) => formaterCompact(points, exercice, null, dateLocale);
   const fmtAxe = (points: number) => formaterAxe(points, exercice);
 
   const progress = data.objectifTotalPompes > 0
@@ -838,7 +838,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
                 {t.recordPerGame}
               </span>
               <span className="mono-num" style={{ fontSize: "1rem", fontWeight: 600, color: "var(--amber)" }}>
-                {formaterCompact(data.recordPompes, exerciceRecord)}
+                {formaterCompact(data.recordPompes, exerciceRecord, null, dateLocale)}
               </span>
               {EXERCICES[exerciceRecord].unite === "reps" && (
                 <span style={{ fontSize: "0.72rem", color: "var(--faint)" }}>{minuscule(nomsExo[exerciceRecord])}</span>

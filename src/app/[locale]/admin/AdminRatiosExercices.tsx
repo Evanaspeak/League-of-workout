@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { adminRatios } from "@/lib/i18n/dictionaries/adminRatios";
 import {
   RATIOS_DEFAUT, RATIO_BORNES, formaterDuree, type ExerciceId,
@@ -19,6 +19,7 @@ const EXEMPLE = 38;
  */
 export default function AdminRatiosExercices() {
   const t = useT(adminRatios);
+  const etiquette = useDateLocale();
 
   const [squats, setSquats] = useState(String(RATIOS_DEFAUT.squats));
   const [boxe, setBoxe] = useState(String(RATIOS_DEFAUT.boxe));
@@ -153,7 +154,7 @@ export default function AdminRatiosExercices() {
         <div className="flex gap-5 flex-wrap text-sm" style={{ color: "var(--bone)" }}>
           <span>{EXEMPLE} {t.pompesUnite}</span>
           <span>{Math.round(EXEMPLE * rSquats)} {t.squatsUnite}</span>
-          <span>{formaterDuree(Math.round((EXEMPLE * rBoxe) / 5) * 5)}</span>
+          <span>{formaterDuree(Math.round((EXEMPLE * rBoxe) / 5) * 5, etiquette)}</span>
         </div>
       </div>
 

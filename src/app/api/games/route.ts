@@ -20,6 +20,7 @@ import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
+import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -493,7 +494,7 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
           // français et partait tel quel à tout le monde, y compris à qui
           // n'a jamais vu un écran français.
           const { titre, corps } = textesNotification(avant.langue)
-            .seuil(formaterDuree(apresSec));
+            .seuil(formaterDuree(apresSec, etiquetteLocale(toLocale(avant.langue))));
           // Sans await : une notification lente ne doit pas retarder la réponse.
           notifier(userId, { titre, corps, tag: "wow-dette" }).catch(() => {});
         }

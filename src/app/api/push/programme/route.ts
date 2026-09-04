@@ -8,6 +8,7 @@ import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/f
 import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { dureeAffichee, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
+import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 
 /**
  * Les envois programmés : ce que l'application dit d'elle-même, sans que
@@ -116,7 +117,7 @@ export async function POST(req: Request) {
     const sec = Math.round(dureeAffichee(u.dettePointsDus, exercices));
     if (sec < MINIMUM_SEC) continue;
 
-    const { titre, corps } = textesNotification(u.langue).matin(formaterDuree(sec));
+    const { titre, corps } = textesNotification(u.langue).matin(formaterDuree(sec, etiquetteLocale(toLocale(u.langue))));
     // Un envoi raté ne doit pas empêcher les suivants : c'est une boucle sur
     // tous les comptes, et le premier abonnement périmé les arrêterait tous.
     const partis = await notifier(u.id, { titre, corps, tag: "wow-matin" }).catch(() => 0);
