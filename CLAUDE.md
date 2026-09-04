@@ -1098,6 +1098,40 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le jeu que je venais d'ajouter était invisible à l'application, et je l'ai trouvé en cherchant autre chose
+Troisième divergence de la même famille en une heure, et celle-ci est la
+meilleure démonstration du problème : **c'est moi qui venais de la créer.**
+
+Overwatch est entré au catalogue en V402 — page de calculateur, plan du site,
+bande de l'accueil, tout se déduit automatiquement. La table des processus de
+l'application de bureau, elle, ne se déduit de rien : elle vit dans
+`desktop/src/jeuxProcessus.js`, et la coquille Electron se construit sans le
+paquet du site, donc elle ne peut pas importer le catalogue.
+
+**Il a donc manqué quarante minutes sans qu'aucun contrôle ne le dise.** Le
+symptôme aurait été l'ABSENCE : le jeu figure partout sur le site, on le
+choisit, et l'application ne le voit jamais démarrer. Pas de pastille, pas de
+session, pas d'enregistrement automatique. C'est le pire genre de défaut —
+celui qui n'a aucun signe sauf que rien ne se passe.
+
+`src/jeuxDetectables.test.ts` compare les deux, comme le test qui compare
+depuis longtemps les six langues du site à celles recopiées dans
+`desktop/src/langue.js`. C'est le motif à retenir : **ce qui ne peut pas
+s'importer se compare.** Deux sabotages, deux échecs.
+
+Il tient aussi l'autre sens — un processus surveillé pour un jeu retiré du
+catalogue ouvre une session sur un nom que le site refusera, et c'est du code
+mort dans un fichier qu'on n'ouvre presque jamais.
+
+**Ce que le recensement des listes a rendu en tout, ce jour-là** : les jeux de
+la bande (V402), les sept rôles (V404), les processus de détection (celle-ci).
+Rien du côté des exercices — `src/lib/exercices.ts` est seul, et les
+identifiants isolés trouvés ailleurs sont des valeurs par défaut ou des clés de
+graphique, pas des listes. Les six langues restent le seul doublon VOULU du
+projet, et il porte déjà son test.
+
+Application de bureau en **0.9.15**.
+
 ### Les sept rôles étaient écrits trois fois, et l'écran pouvait proposer ce que le serveur refuse
 Recensement lancé dans la foulée de la bande de jeux : d'autres listes écrites
 deux fois. Il en rend une, et elle est plus dangereuse que la première.
