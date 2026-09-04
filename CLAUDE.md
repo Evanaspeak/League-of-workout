@@ -989,6 +989,94 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 4 septembre, et l'historique d'un compte NEUF
+Passée après les six versions de la nuit, sur un compte de mesure fraîchement
+ouvert.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues,
+**aucune page laissée de côté**. C'est le second chiffre qui compte : un
+rapport qui annonce zéro sur des pages qu'il n'a pas ouvertes est l'inverse
+d'un audit.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/fr/bilan` | 128 ms | 912 ms | 0,000 | la mention Riot, en pied |
+| `/fr/settings` | 144 ms | 912 ms | 0,000 | la mention Riot, en pied |
+| `/fr/dashboard` | 296 ms | 1116 ms | 0,001 | le bandeau d'attente Riot |
+| `/fr/calculateur/league-of-legends` | 476 ms | 1124 ms | 0,000 | le titre |
+| `/fr/telechargement` | 480 ms | 1076 ms | 0,000 | le paragraphe SmartScreen |
+| `/fr/confidentialite` | 500 ms | 1172 ms | 0,000 | le titre |
+| `/fr/cgu` | 504 ms | 1140 ms | 0,000 | le premier paragraphe |
+| `/fr/login` | 520 ms | 1128 ms | 0,000 | la mention des CGU |
+| `/fr/beta` | 548 ms | 1124 ms | 0,000 | le titre |
+| `/fr` | 956 ms | 1324 ms | 0,000 | « Comment ça marche » |
+| **`/fr/history`** | 480 ms | **2984 ms** | 0,031 | **le message d'historique vide** |
+
+**Onze écrans sur douze tiennent largement. Le douzième mérite d'être nommé
+plutôt qu'arrondi.**
+
+Sur `/fr/history`, le plus grand élément n'est pas le titre — c'est le
+paragraphe « C'est depuis le tableau de bord qu'on enregistre… », celui qui
+s'affiche quand il n'y a AUCUNE partie. Il ne paraît qu'une fois `/api/games`
+revenu, donc après le paquet JavaScript, l'hydratation et un aller-retour. Sur
+un réseau moyen et un processeur quatre fois plus lent, ça fait 2 940 ms,
+mesuré trois fois de suite à quarante millisecondes près.
+
+**Ça ne concernait qu'un compte NEUF**, et c'est ce qui le rendait gênant :
+dès qu'il y a des parties, c'est le titre qui l'emporte à 480 ms. Autrement dit
+l'écran était lent exactement pour la personne qu'on cherche le plus à garder,
+et rapide pour celles qui sont déjà là. Le tableau de bord a eu ce défaut mot
+pour mot, et sa correction était déjà écrite : rendre le premier écran AU
+SERVEUR.
+
+**Corrigé de la même façon, et sans convertir la page.** `/history` reste
+cliente — la convertir serait un chantier, et le défaut ne portait que sur UNE
+information : y a-t-il au moins une partie. C'est un comptage, il tient dans une
+page serveur, et il se passe en `depart` au composant :
+
+```tsx
+const parties = await prisma.game.count({ where: { userId: user.id }, take: 1 });
+return <Historique depart={{ aucuneActivite: parties === 0 }} />;
+```
+
+**2 984 ms → 900 ms**, mesuré sur le même compte et la même construction. Et le
+`take: 1` n'est pas une coquetterie : la question est « y en a-t-il », pas
+« combien », et compter toutes les parties de quelqu'un pour répondre oui ou non
+est ce que la page faisait déjà par un autre chemin.
+
+**Le squelette reste pour les comptes qui ont des parties.** Un écran vide
+montré à quelqu'un qui a soixante parties serait un mensonge d'une seconde — et
+c'est le pire moment pour en dire un, puisque c'est l'écran qui existe pour
+prouver qu'on n'a rien perdu. Les deux états sont donc distincts, et c'est le
+départ serveur qui tranche entre eux.
+
+**Le garde regarde le HTML SERVI, pas la page rendue.** Une fois hydratée, la
+page affiche le message dans les deux cas : le sabotage ne se verrait pas.
+`e2e/historique.spec.ts` lit donc `response.text()`. C'est la leçon déjà écrite
+pour le premier écran du tableau de bord, retombée telle quelle — et un détail
+qui a coûté une exécution : le HTML servi échappe l'apostrophe en `&#x27;`, donc
+l'extrait cherché n'en contient aucune.
+
+**Le premier sabotage n'a pas compilé**, et c'est noté comme tel plutôt que
+compté comme un test qui mord : retirer la condition rendait `depart` inutilisé,
+et `noUnusedLocals` le nomme. Réécrit pour compiler — la branche devient
+inatteignable sans que la valeur cesse d'être lue — il fait tomber le nouveau
+test et lui seul, les douze autres du fichier passant.
+
+**Et un garde a mordu sur le renommage**, ce qui est son travail :
+`colonnesHistorique.test.ts` désignait l'écran par son CHEMIN, et le composant
+venait de déménager sous un autre nom. Son témoin de non-vacuité a tenu — il
+n'est pas passé au vert sur zéro colonne. Il cherche maintenant l'écran par sa
+FORME : l'unique `.tsx` du dossier qui déclare `type Game`, et il lève si ce
+n'est pas exactement un. Un garde épinglé sur un chemin devient muet le jour où
+le fichier bouge, ce qui est précisément le jour où l'on aurait besoin de lui.
+
+**Une note d'outillage :** `performance.mjs` mesure UNE page par appel
+(`process.argv[3]`). Le lancer sans argument rend un rapport parfaitement
+valable sur `/` et sur rien d'autre — et un rapport d'une page ressemble
+beaucoup à une campagne quand on ne compte pas les blocs. Douze appels, douze
+blocs comptés.
+
 ### Pseudo Riot ou pseudo interne, et le garde qui vaut plus que le réglage
 Ligne 128, réponse « Au choix ». La question elle-même portait la raison : le
 pseudo Riot est une donnée personnelle. Il relie un compte d'ici à une identité

@@ -16,12 +16,39 @@
  * une colonne envoyée que personne ne lit est le gaspillage qu'on vient de
  * retirer, et elle reviendrait sans bruit.
  */
-import { readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
 const RACINE = join(__dirname, "..");
 const ROUTE = join(RACINE, "src/app/api/games/route.ts");
-const ECRAN = join(RACINE, "src/app/[locale]/history/page.tsx");
+
+/**
+ * L'écran d'historique se CHERCHE, il ne se nomme pas.
+ *
+ * Il s'appelait `history/page.tsx` ; le jour où la page a été coupée en deux —
+ * une coquille serveur qui sait si le compte est vide, et le composant client —
+ * le fichier est devenu `Historique.tsx`, et ce garde s'est mis à lire un
+ * chemin qui n'existait plus. Il est tombé, ce qui est le bon comportement,
+ * grâce au témoin de non-vacuité. Mais c'est la troisième fois cette nuit
+ * qu'un garde est accroché à un CHEMIN plutôt qu'à ce qu'il garde.
+ *
+ * Il cherche donc, dans le dossier de l'historique, le fichier qui DÉCLARE le
+ * type `Game` : c'est lui l'écran, quel que soit son nom.
+ */
+const DOSSIER = join(RACINE, "src/app/[locale]/history");
+const ECRAN = (() => {
+  const candidats = readdirSync(DOSSIER)
+    .filter((f) => /\.tsx$/.test(f))
+    .map((f) => join(DOSSIER, f))
+    .filter((f) => /\ntype Game = \{/.test(readFileSync(f, "utf8")));
+  if (candidats.length !== 1) {
+    throw new Error(
+      `Un seul fichier de ${DOSSIER} doit déclarer « type Game » ; ${candidats.length} trouvé(s). ` +
+        "Si l'écran a été renommé ou découpé, c'est ici qu'on le retrouve.",
+    );
+  }
+  return candidats[0];
+})();
 
 /** Les clés du `select` de la requête de liste. */
 function colonnesEnvoyees(): string[] {

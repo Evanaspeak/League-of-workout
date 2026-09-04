@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
 import { sansLangue } from "./chemin";
+import { ouvrirCompte } from "./compte";
 
 /**
  * L'historique sur téléphone.
@@ -432,5 +433,31 @@ test("la liste réserve sa place pendant le chargement", async ({ browser }) => 
   // pied saute de plusieurs centaines de pixels. La marge est large à dessein :
   // c'est l'ordre de grandeur qui compte, pas une hauteur au pixel.
   expect(enAttente).toBeGreaterThan(remplie * 0.6);
+  await ctx.close();
+});
+
+/**
+ * Le message d'historique vide part AVEC LA RÉPONSE, pas après hydratation.
+ *
+ * Mesuré le 4 septembre : pour un compte NEUF, ce message était le plus grand
+ * élément de la page, et il attendait le paquet JavaScript puis un aller-retour
+ * vers `/api/games` — 2 940 ms sur téléphone bridé, contre 900 une fois rendu
+ * au serveur.
+ *
+ * Le contrôle lit le HTML SERVI et non la page rendue : une fois hydratée, elle
+ * afficherait le message dans les deux cas, et le test ne prouverait rien. C'est
+ * la leçon déjà écrite pour le premier écran du tableau de bord.
+ */
+test("un historique vide dit quoi faire dès le HTML servi", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Vide");
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  const reponse = await page.goto("/fr/history");
+  const html = await reponse!.text();
+  // Sans apostrophe : le HTML servi les échappe en `&#x27;`, et un contrôle
+  // écrit avec le caractère lisible échouerait sur du texte pourtant présent.
+  expect(html).toContain("depuis le tableau de bord");
+
   await ctx.close();
 });
