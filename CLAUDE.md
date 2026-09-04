@@ -1126,6 +1126,68 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### Campagne allemande entre V421 et V423 : vingt-quatre différences, toutes voulues
+Passée en allemand, sur un compte semé à soixante parties et une dette de 1 543
+points — c'est-à-dire un compte où le changement de la veille a quelque chose à
+montrer. Un compte vide n'aurait rien prouvé : sous mille, aucun séparateur ne
+se pose.
+
+**Cinq pages publiques identiques au pixel** aux trois largeurs. **Vingt-quatre
+écrans connectés différents**, et le relevé bande par bande dit lesquels :
+
+| écran | pixels | bandes |
+|---|---|---|
+| `/history` et les six vues de `/settings`, ×3 largeurs | 910 à 916 | **1** |
+| `/dashboard`, ×3 largeurs | 1710 à 1867 | 3 à 5 |
+
+**La bande unique est toujours la même** : dix-huit lignes de haut, cent dix
+colonnes de large, dans le coin du rail. C'est la pastille de dette, passée de
+« 1543 » à « 1.543 ». Vingt et un écrans sur vingt-quatre ne diffèrent que par
+ce caractère.
+
+Les bandes supplémentaires du tableau de bord ont été LUES plutôt que
+supposées, en demandant à la page quel élément occupe ces lignes : « Ziel:
+1.000 » et « 480 / 1.000 · noch 520 ». C'est l'objectif et sa barre, exactement
+les deux endroits que la correction visait.
+
+**Aucune différence inattendue.** C'est la conclusion qu'on attendait, et elle
+ne vaut que parce que le relevé nomme chaque bande : « vingt-quatre captures
+différentes » se lit comme une alerte tant qu'on n'a pas regardé où.
+
+**Accessibilité : 0 constat sur 15 pages en allemand, aucune page laissée de
+côté.** C'est le second chiffre qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | script |
+|---|---|---|---|---|
+| `/de/settings` | 160 ms | 928 ms | 0,000 | 284 ko |
+| `/de/dashboard` | 268 ms | 1136 ms | 0,000 | 377 ko |
+| `/de/history` | 500 ms | 1112 ms | 0,000 | 230 ko |
+
+**Et la mesure de charge, avec ce qu'elle ne dit PAS.** Sur le compte semé, à
+quarante simultanés : `/api/contexte` 163 req/s, `/api/dette` 142,
+`/api/progression` 110. Le même build sur un compte NEUF rend 171 et 129 — donc
+soixante parties coûtent bien quelque chose à la lecture de la dette, et
+presque rien à la progression.
+
+Le journal porte 147 req/s pour `/api/progression` sur un compte neuf, relevé
+un autre jour. Aujourd'hui : **129, 129, 128** sur trois exécutions
+consécutives — l'écart de mesure est donc d'un point, et celui avec le chiffre
+d'origine de douze pour cent. **Ce n'est pas une comparaison à conditions
+égales** : machine différente au sens de l'occupation, soirée passée à
+construire, et un seul relevé de l'autre côté. Aucune régression n'est
+annoncée ; le chiffre du jour est écrit avec sa méthode, pour que la prochaine
+campagne ait trois points au lieu d'un.
+
+**Le contrôle d'atterrissage a mordu trois fois**, ce qui est son travail :
+`/api/dette`, `/api/progression` et `/api/contexte` redirigent vers la
+connexion sans cookie, et l'outil a refusé de chronométrer une redirection au
+lieu de rendre trois chiffres flatteurs sur la page de connexion.
+
+**Le piège de l'arbre de travail est contourné, pas résolu**, comme le
+3 septembre : on bascule le MÊME arbre sur V421, on construit, on capture, on
+revient. Aucune dépendance n'avait bougé entre les deux — vérifié en une
+commande avant de commencer, et c'est la condition.
+
 ### Le garde des textes en dur ne lisait pas les gabarits, et deux écrans y vivaient
 Recensement lancé dans la foulée des nombres : la même question, posée hors de
 la couche d'affichage. Il rend une correction attendue et trois trouvailles qui
