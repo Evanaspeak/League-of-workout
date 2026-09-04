@@ -77,6 +77,55 @@ function fichiers(dossier: string): string[] {
   return trouves;
 }
 
+/**
+ * Les phrases françaises d'un fichier, quelle que soit la forme qu'elles
+ * prennent : chaîne double, chaîne simple, GABARIT, ou texte JSX nu.
+ *
+ * Elle vit hors de la boucle pour être ÉPROUVÉE. Les fichiers réels n'en
+ * contiennent aucune — c'est tout l'objet du garde — donc ils ne distinguent
+ * pas ces quatre motifs d'un motif cassé : blinder celui des gabarits laissait
+ * le test au vert avec le défaut remis, et c'est exactement comme ça que le
+ * trou avait survécu.
+ */
+export function phrasesFrancaises(source: string): string[] {
+  const texte = sansCommentaires(source)
+    // Un message d'erreur interne n'est jamais montré : il finit dans un
+    // `catch` qui affiche autre chose. Le traduire n'ajouterait rien.
+    .replace(/new Error\([^)]*\)/g, "");
+  const trouves: string[] = [];
+  for (const m of texte.matchAll(/"([^"\n]*[éèêàçûôîïœ][^"\n]*)"/g)) trouves.push(m[1]);
+  for (const m of texte.matchAll(/'([^'\n]*[éèêàçûôîïœ][^'\n]*)'/g)) trouves.push(m[1]);
+  /**
+   * Les GABARITS, entre accents graves.
+   *
+   * C'était le trou du garde, et ce n'est pas un détail de motif : un gabarit
+   * est précisément l'endroit où l'on écrit une phrase qui porte une valeur,
+   * donc l'endroit où l'on écrit une phrase. Deux textes vivants s'y
+   * cachaient — la ligne de la pastille après une partie d'Apex, et l'écran de
+   * départ de la connexion depuis l'application Windows, c'est-à-dire le
+   * PREMIER écran de l'application installée. Les deux étaient couverts par une
+   * correction déjà faite ailleurs : `enJeu` existe depuis qu'on a traduit la
+   * pastille, et personne n'avait repris cette ligne-là.
+   */
+  for (const m of texte.matchAll(/`([^`\n]*[éèêàçûôîïœ][^`\n]*)`/g)) trouves.push(m[1]);
+  /**
+   * Le texte JSX NU, qui n'est entouré d'aucun guillemet.
+   *
+   * C'est la forme qu'avaient les deux titres du calculateur, et les motifs
+   * précédents ne la voient pas : ils ne cherchent que des littéraux. Une ligne
+   * de texte JSX ne porte ni balise, ni accolade, ni guillemet, ni signe
+   * d'affectation. C'est grossier, comme le reste de ce fichier, et c'est ce
+   * qui le rend applicable.
+   */
+  for (const ligne of texte.split("\n")) {
+    const nu = ligne.trim();
+    if (!/[éèêàçûôîïœÉÈÊÀÇÛÔÎÏŒ]/.test(nu)) continue;
+    if (/[<>{}"'`=]/.test(nu)) continue;
+    trouves.push(nu);
+  }
+  return trouves;
+}
+
 describe("aucun texte français en dur dans un composant", () => {
   const tous = DOSSIERS.flatMap(fichiers);
 
@@ -90,38 +139,30 @@ describe("aucun texte français en dur dans un composant", () => {
       .toBeGreaterThan(20);
   });
 
+  it("reconnaît les quatre formes qu'une phrase peut prendre", () => {
+    // Éprouvé sur des cas FABRIQUÉS, parce que les fichiers réels n'en
+    // contiennent aucun : sans ça, un motif blindé rend le garde muet sans
+    // qu'aucun contrôle ne bouge. Vérifié en le sabotant — le motif des
+    // gabarits neutralisé et le défaut remis, tout restait vert.
+    expect(phrasesFrancaises('const a = "déjà fait";')).toContain("déjà fait");
+    expect(phrasesFrancaises("const a = 'déjà fait';")).toContain("déjà fait");
+    expect(phrasesFrancaises("const a = `${n} élim`;")).toContain("${n} élim");
+    expect(phrasesFrancaises("  Combien de pompes après une défaite")).toContain(
+      "Combien de pompes après une défaite",
+    );
+    // Et ce qu'elle laisse passer, volontairement : un commentaire, et une
+    // erreur interne que personne ne lit.
+    expect(phrasesFrancaises("// une défaite coûte cher")).toEqual([]);
+    expect(phrasesFrancaises('throw new Error("réponse illisible");')).toEqual([]);
+  });
+
   it("n'en trouve aucun", () => {
     const fautifs: string[] = [];
     for (const complet of tous) {
       const nom = path.basename(complet);
       if (EXEMPTS.has(nom)) continue;
-      const texte = sansCommentaires(fs.readFileSync(complet, "utf8"))
-        // Un message d'erreur interne n'est jamais montré : il finit dans un
-        // `catch` qui affiche autre chose. Le traduire n'ajouterait rien.
-        .replace(/new Error\([^)]*\)/g, "");
-      for (const m of texte.matchAll(/"([^"\n]*[éèêàçûôîïœ][^"\n]*)"/g)) {
-        fautifs.push(`${nom} : ${m[1]}`);
-      }
-      for (const m of texte.matchAll(/'([^'\n]*[éèêàçûôîïœ][^'\n]*)'/g)) {
-        fautifs.push(`${nom} : ${m[1]}`);
-      }
-      /**
-       * Le texte JSX NU, qui n'est entouré d'aucun guillemet.
-       *
-       * C'est la forme qu'avaient les deux titres du calculateur, et le motif
-       * précédent ne la voyait pas : il ne cherche que des chaînes littérales.
-       * Le garde aurait donc laissé passer exactement ce qu'il existe pour
-       * empêcher, et il l'aurait laissé passer en restant vert.
-       *
-       * Une ligne de texte JSX ne porte ni balise, ni accolade, ni guillemet,
-       * ni signe d'affectation. C'est grossier, comme le reste de ce fichier,
-       * et c'est ce qui le rend applicable.
-       */
-      for (const ligne of texte.split("\n")) {
-        const nu = ligne.trim();
-        if (!/[éèêàçûôîïœÉÈÊÀÇÛÔÎÏŒ]/.test(nu)) continue;
-        if (/[<>{}"'=`]/.test(nu)) continue;
-        fautifs.push(`${nom} : ${nu}`);
+      for (const p of phrasesFrancaises(fs.readFileSync(complet, "utf8"))) {
+        fautifs.push(`${nom} : ${p}`);
       }
     }
     expect(fautifs).toEqual([]);
