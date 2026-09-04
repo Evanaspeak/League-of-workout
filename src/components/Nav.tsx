@@ -4,7 +4,8 @@ import { Lien } from "@/components/Lien";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/SessionContext";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useNombre, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { formaterDuree } from "@/lib/exercices";
 import { estCheminPublic } from "@/lib/routesPubliques";
 import { nav as navDict } from "@/lib/i18n/dictionaries/nav";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -52,6 +53,8 @@ export default function Nav() {
   const setMenuOuvert = (f: (o: boolean) => boolean) =>
     setMenu((m) => ({ ...m, ouvert: f(m.ouvert) }));
   const t = useT(navDict);
+  const nombre = useNombre();
+  const etiquette = useDateLocale();
 
   const links = [
     { href: "/dashboard", label: t.dashboard },
@@ -174,9 +177,16 @@ export default function Nav() {
                 display: "inline-block",
               }} />
               <span style={{ fontSize: "0.7rem", color: "var(--victory)", fontWeight: 700, letterSpacing: "0.06em" }}>{t.live}</span>
-              <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--bone)" }}>{sessionGames.length}G</span>
+              {/* « G » est l'abréviation anglaise de « games », et « s » celle
+                  des secondes : les deux partaient telles quelles dans les six
+                  langues, au milieu d'une pastille qui dit « 進行中 » juste à
+                  côté. L'initiale vit dans le dictionnaire, comme celles de
+                  victoire et de défaite ; l'unité de temps vient d'`Intl`. */}
+              <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--bone)" }}>
+                {t.partiesCourt(nombre(sessionGames.length))}
+              </span>
               <span className="mono-num" style={{ fontSize: "0.7rem", color: "var(--faint)" }}>
-                {polling ? <Icone nom="recharger" taille={13} /> : `${countdown}s`}
+                {polling ? <Icone nom="recharger" taille={13} /> : formaterDuree(countdown, etiquette)}
               </span>
             </div>
             <button

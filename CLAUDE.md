@@ -1114,6 +1114,87 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 2 min から » : les unités recollées à la main, et les quatre qui restaient
+Trouvé en lisant l'écran des réglages en japonais. La rubrique « Ton effort »
+propose quatre seuils de rappel :
+
+```
+オフ
+2 min から     ← une abréviation latine au milieu des idéogrammes
+5 min から
+```
+
+Et quinze lignes plus haut, sur le MÊME écran, l'exemple de dette rend
+« 1分55秒 » — correctement, depuis qu'on a fait passer l'unité de la dette par
+`Intl`. **C'est la moitié non réparée de cette correction, sur l'écran même
+qui la montre.**
+
+**Le recensement en a trouvé trois autres**, et il fallait le motif des
+gabarits pour les voir — le garde des textes en dur cherche les ACCENTS, et
+« min », « s », « kg », « cm » n'en portent aucun :
+
+- **la notification envoyée quand l'issue d'une partie n'a pas pu être lue.**
+  C'est le seul message que le produit envoie PENDANT qu'on joue, donc le seul
+  moment où l'on ne peut pas aller chercher le texte ailleurs. Elle écrivait
+  « 23 min » dans les six langues ;
+- **la pastille de session en cours**, dans la barre : « 2G » et « 45s ».
+  « G » est l'abréviation anglaise de *games*, à côté d'un libellé qui dit
+  « 進行中 ». C'est le défaut de « 20V / 40D », sous une lettre de plus ;
+- **les trois mesures physiques du panneau d'administration** — kg, cm, h.
+
+**`Intl` sait ce qu'une table écrite à la main ne saura jamais**, et c'est
+mesuré plutôt que supposé : le chinois écrit « 2,4公里 » et « 180厘米 » là où
+le japonais garde « 2.4 km » et « 180 cm » ; l'allemand abrège les heures en
+« Std. » et les secondes en « Sek. » ; l'anglais préfère « hr » à « h ». Six
+langues, six unités, aucune écrite ici.
+
+`src/lib/i18n/unite.ts` porte la fonction, à part de `duree.ts` : le poids, la
+taille et la distance n'ont rien à faire dans un module de cadran.
+
+**Et le français a changé, ce que je croyais impossible.** `Intl` pose une
+espace INSÉCABLE devant l'unité — étroite (U+202F) devant « km » et « s »,
+normale (U+00A0) devant « min » — là où le code recollait une espace ordinaire.
+C'est invisible et c'est juste : le français exige l'insécable devant une
+unité. Mais c'est un changement, **et aucun test ne l'attrapait** — le seul
+contrôle sur la distance lisait `/km$/`, vrai des deux côtés. Il est écrit en
+points de code maintenant. C'est la deuxième fois que ce module apprend la
+même leçon : un test écrit sur les VALEURS attrape ce qu'un test écrit sur
+l'intention laisse passer.
+
+**Le japonais a ensuite montré une divergence INTERNE au module.** Une fois le
+seuil branché sur `Intl`, il rendait « 2 分から » — avec une espace, parce que
+c'est la donnée CLDR — au-dessus d'un « 1分55秒 » qui n'en a pas. Deux
+typographies pour la même unité, sur le même écran, à quinze lignes d'écart.
+
+La règle qui en sort tient en une phrase : **la langue qui écrit son composé à
+la main écrit aussi sa forme ronde.** Le composé est écrit à la main pour le
+chinois et le japonais parce qu'`Intl` ne sait pas faire un cadran
+(`Intl.DurationFormat` n'existe pas dans le Node de ce projet) ; laisser la
+forme ronde à `Intl` pour ces deux-là fait diverger les deux moitiés d'un même
+module. Les quatre langues européennes n'ont besoin de rien : `Intl` y rend les
+deux formes d'accord entre elles, et un test le vérifie plutôt que de
+l'affirmer.
+
+**Ce que le recensement laisse en place, avec sa raison.** `formaterDelai`
+(`src/lib/mesures.ts`) compose « 2 h 10 » et « 4 j 3 h » à la main : c'est un
+cadran, `Intl` ne sait pas le faire, et son unique lecteur est le panneau de
+mesures de l'administration. Et les étiquettes horaires des graphiques —
+`label: \`${h}h\`` — sont construites dans une route d'API, au serveur, sans la
+langue de qui lit : les corriger demande de la faire descendre jusque-là ou de
+déplacer la mise en forme au navigateur. Ni l'un ni l'autre n'est une retouche.
+Le recensement porte donc sur la couche d'affichage seule, et le dit.
+
+Six sabotages, six échecs : le « min » remis dans les réglages, le « s » remis
+dans la pastille, `Intl` remplacé par une table écrite à la main, le motif du
+recensement rendu aveugle, l'insécable du français remplacé par une espace
+ordinaire, et la forme ronde reprise à `Intl` pour le japonais.
+
+Vérifié à l'écran dans les six langues : « À partir de 2 min », « From 2 min »,
+« A partir de 2 min », « Ab 2 Min. », « 2分から », « 2分钟起 » ; et sur le même
+écran « 1 Min. 55 » et « 0,8 km » en allemand, « 1分55秒 » et « 0.8公里 » en
+chinois — cette dernière étant ce qu'un « km » recollé à la main ne pouvait pas
+donner.
+
 ### « Pompes 480 » au-dessus de « 8 pompes », sur la même page
 Trouvé en lisant l'historique en japonais sur le compte semé. Le résumé, en
 haut du tableau, écrivait :

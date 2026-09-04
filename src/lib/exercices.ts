@@ -12,6 +12,7 @@
  */
 
 import { dureeLocalisee } from "./i18n/duree";
+import { uniteLocalisee } from "./i18n/unite";
 
 export type ExerciceId =
   | "pompes" | "squats" | "boxe"
@@ -327,7 +328,7 @@ export function formaterQuantite(
    * pas une coquetterie : le point est le séparateur des MILLIERS en français
    * et en allemand, et la virgule l'est en anglais.
    */
-  if (unite === "distance") return `${nombre(q, etiquette ?? "fr-FR", 1)} km`;
+  if (unite === "distance") return uniteLocalisee(q, "kilometer", etiquette ?? "fr-FR", 1);
   return nombre(q, etiquette);
 }
 

@@ -1,3 +1,5 @@
+import { uniteLocalisee as unite } from "./unite";
+
 /**
  * Une durée d'effort, écrite dans la langue de qui la lit.
  *
@@ -23,12 +25,6 @@ function langueDe(etiquette: string): string {
   return etiquette.split("-")[0];
 }
 
-/** Un nombre et son unité, tels qu'`Intl` les écrit dans cette langue. */
-function unite(valeur: number, unit: "minute" | "second", etiquette: string): string {
-  return new Intl.NumberFormat(etiquette, {
-    style: "unit", unit, unitDisplay: "short", maximumFractionDigits: 0,
-  }).format(valeur);
-}
 
 /**
  * Les secondes gardent leurs deux chiffres : « 5 min 07 » et non « 5 min 7 »,
@@ -50,6 +46,24 @@ const COMPOSE: Record<string, (min: number, sec: number, etiquette: string) => s
   ja: (min, sec) => `${min}分${pad(sec)}秒`,
 };
 
+/**
+ * Les minutes RONDES, pour les deux langues qui portent leur propre composé.
+ *
+ * `Intl` rend « 2 分 » en japonais — c'est la donnée CLDR, et elle porte une
+ * espace. Le composé juste au-dessus écrit « 1分55秒 » sans espace, parce
+ * qu'un cadran ne s'écrit pas autrement. Les deux formes se croisent sur le
+ * même écran : les réglages proposent un seuil rond au-dessus d'un exemple de
+ * dette composée, et l'œil voit deux typographies pour la même unité.
+ *
+ * La règle qui en sort : la langue qui écrit son composé à la main écrit
+ * aussi sa forme ronde. Les quatre langues européennes n'en ont pas besoin —
+ * `Intl` y rend les deux formes d'accord entre elles.
+ */
+const ROND: Record<string, (min: number) => string> = {
+  zh: (min) => `${min}分钟`,
+  ja: (min) => `${min}分`,
+};
+
 const composeParDefaut = (min: number, sec: number, etiquette: string) =>
   `${unite(min, "minute", etiquette)} ${pad(sec)}`;
 
@@ -59,6 +73,6 @@ export function dureeLocalisee(totalSecondes: number, etiquette: string): string
   if (s < 60) return unite(s, "second", etiquette);
   const minutes = Math.floor(s / 60);
   const reste = s % 60;
-  if (reste === 0) return unite(minutes, "minute", etiquette);
+  if (reste === 0) return (ROND[langueDe(etiquette)] ?? ((m: number) => unite(m, "minute", etiquette)))(minutes);
   return (COMPOSE[langueDe(etiquette)] ?? composeParDefaut)(minutes, reste, etiquette);
 }
