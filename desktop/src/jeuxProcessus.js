@@ -35,6 +35,7 @@ const EXECUTABLES = {
   "PUBG": ["TslGame.exe"],
   "Call of Duty: Warzone": ["cod.exe"],
   "Call of Duty": ["cod.exe"],
+  "Overwatch": ["Overwatch.exe"],
   "Rocket League": ["RocketLeague.exe"],
   "Minecraft": ["Minecraft.Windows.exe"],
   "World of Warcraft": ["Wow.exe"],
