@@ -1030,16 +1030,49 @@ contenu, donc leur remplacement déplace un peu. C'est sous le seuil, et
 l'échange se fait dans le bon sens — du vrai texte tout de suite contre un
 seizième de point de décalage.
 
-**Le LCP de téléphone bridé reste au-dessus, et il est NOMMÉ plutôt que
-supposé.** L'hypothèse évidente était que React remplace le paragraphe à
-l'hydratation, donc que le repeint tardif devient le nouveau plus grand
-élément — c'est le raisonnement qui avait déjà été tenu, puis démenti, sur
-l'image du bilan de saison. Éprouvé ici de la même façon : une sonde qui
-BLOQUE `/api/amis` rend 6320 ms, la même sonde qui la laisse passer rend
-6340 ms. Vingt millisecondes d'écart : **l'attente des données n'y est pour
-rien.** Ce qui reste à chercher est le poids du paquet de cet écran et ce qu'il
-occupe du fil principal ; ce n'est pas fait cette nuit, et c'est écrit comme
-tel plutôt que rangé sous une explication qui n'a pas été vérifiée.
+**Le LCP de téléphone bridé, et une sonde qui m'a menti avant de me servir.**
+3068 ms pour un seuil de 2500. J'ai d'abord écrit une sonde qui bloquait
+`/api/amis` : 6320 ms bloquée contre 6340 ms passante, donc « l'attente des
+données n'y est pour rien ». **C'était faux, et la sonde était cassée** — elle
+ne neutralisait pas les fenêtres d'accueil, donc son plus grand élément était
+le pied de page, et elle mesurait autre chose que ce qu'elle annonçait. Le
+script, lui, pose `low_onboarded` et compagnie avant de mesurer ; ma sonde
+écrite à côté ne l'avait pas.
+
+Refaite aux MÊMES conditions que le script : **1652 ms route bloquée, 2964 ms
+route passante**. L'attente des données est bien la cause, et l'hypothèse
+écartée une heure plus tôt était la bonne.
+
+**Le mécanisme est la réconciliation de React, et il se corrige par le RANG.**
+Deux `<main>` dont les enfants ne s'alignent pas font démonter puis remonter
+tout ce qui est dedans : les paragraphes déjà peints sont recréés, et le
+repeint tardif devient un nouveau candidat au plus grand élément. Le rendu
+d'attente miroite donc le rendu chargé, position par position — en-tête, trois
+messages, panneau du classement, panneau du parrainage — et les deux panneaux
+sont TOUJOURS rendus, seul leur contenu attendant la réponse.
+
+Trois itérations, chacune mesurée, et les deux premières ont appris quelque
+chose :
+
+- panneaux toujours rendus, mais la phrase d'aide descendue d'un cran dans un
+  conditionnel : **3040 ms**, aucun gain. Une profondeur qui change vaut un
+  rang qui change ;
+- phrase ressortie du conditionnel, mais la liste d'onglets absente du rendu
+  d'attente : **2976 ms**. La phrase était deuxième enfant d'un côté et
+  troisième de l'autre, donc appariée à autre chose, donc recréée ;
+- onglets miroités eux aussi (désactivés, faute de tableau à basculer) :
+  **1116 ms**.
+
+**3068 → 1116 ms, et CLS 0,145 → 0,009.** Ce qui rend la correction possible
+est que la phrase la plus grande de l'écran ne dépend d'aucune donnée : elle
+dit ce que le classement EST, pas ce qu'il contient. Le nombre de jours vient
+du classement quand il est là, de la constante sinon — c'est la même valeur.
+
+**Accessibilité : 0 constat sur 90 passes**, refaite après. Une première
+exécution en annonçait 18 non mesurées, et c'était mon erreur d'enchaînement :
+je l'avais lancée EN MÊME TEMPS que la suite navigateur, qui purge les comptes
+`@example.test` — donc celui de la mesure. L'ordre est écrit depuis longtemps
+ici : la suite d'abord, le compte ensuite, la mesure enfin.
 
 **Un piège d'outillage, à moi, et il vaut d'être noté.** J'ai lancé
 `performance.mjs http://… /fr/dashboard` — avec le préfixe de langue. Le script
