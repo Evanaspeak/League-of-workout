@@ -19,7 +19,7 @@ export const dashboard = {
     retardTitre: (n: number) => `En retard depuis ${n} jours`,
     retardTexte: "Ta dette court depuis trois jours. Elle ne s'efface pas toute seule.",
     energieLabel: "Énergie dépensée",
-    energieSub: (min: number) => `soit ${min} min de marche`,
+    energieSub: (formate: string) => `soit ${formate} min de marche`,
     energieEstimation: "Estimation d'après ton poids et le temps d'effort.",
     // Résumés lus par les lecteurs d'écran : un graphique ne dit rien à qui
     // ne le voit pas, le texte porte donc les chiffres eux-mêmes.
@@ -142,7 +142,7 @@ export const dashboard = {
     retardTitre: (n: number) => `Late for ${n} days`,
     retardTexte: "Your debt has been running for three days. It does not clear itself.",
     energieLabel: "Energy spent",
-    energieSub: (min: number) => `about ${min} min of walking`,
+    energieSub: (formate: string) => `about ${formate} min of walking`,
     energieEstimation: "Estimate based on your weight and time under effort.",
     grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
       `Chart "${titre}": ${n} points, from ${debut} to ${fin}.`,
@@ -253,7 +253,7 @@ export const dashboard = {
     retardTitre: (n: number) => `Con ${n} días de retraso`,
     retardTexte: "Tu deuda lleva tres días corriendo. No se borra sola.",
     energieLabel: "Energía gastada",
-    energieSub: (min: number) => `unos ${min} min de caminata`,
+    energieSub: (formate: string) => `unos ${formate} min de caminata`,
     energieEstimation: "Estimación según tu peso y el tiempo de esfuerzo.",
     grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
       `Gráfico «${titre}»: ${n} puntos, de ${debut} a ${fin}.`,
@@ -364,7 +364,7 @@ export const dashboard = {
     retardTitre: (n: number) => `Seit ${n} Tagen im Rückstand`,
     retardTexte: "Deine Schuld läuft seit drei Tagen. Sie löscht sich nicht von selbst.",
     energieLabel: "Verbrauchte Energie",
-    energieSub: (min: number) => `etwa ${min} min Gehen`,
+    energieSub: (formate: string) => `etwa ${formate} min Gehen`,
     energieEstimation: "Schätzung anhand deines Gewichts und der Belastungsdauer.",
     grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
       `Diagramm „${titre}“: ${n} Punkte, von ${debut} bis ${fin}.`,
@@ -473,7 +473,7 @@ export const dashboard = {
     retardTitre: (n: number) => `已拖欠 ${n} 天`,
     retardTexte: "你的欠账已经拖了三天，它不会自己消失。",
     energieLabel: "消耗的能量",
-    energieSub: (min: number) => `约合步行 ${min} 分钟`,
+    energieSub: (formate: string) => `约合步行 ${formate} 分钟`,
     energieEstimation: "根据你的体重和用力时长估算。",
     grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
       `图表「${titre}」：${n} 个数据点，从 ${debut} 到 ${fin}。`,
@@ -582,7 +582,7 @@ export const dashboard = {
     retardTitre: (n: number) => `${n} 日の遅れ`,
     retardTexte: "負債が3日続いています。放っておいても消えません。",
     energieLabel: "消費エネルギー",
-    energieSub: (min: number) => `徒歩 約${min} 分ぶん`,
+    energieSub: (formate: string) => `徒歩 約${formate} 分ぶん`,
     energieEstimation: "体重と運動時間からの概算です。",
     grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
       `グラフ「${titre}」：${n} 点、${debut} から ${fin} まで。`,

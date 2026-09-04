@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Lien } from "@/components/Lien";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useNombre } from "@/lib/i18n/LocaleContext";
 import { calculateur as dict } from "@/lib/i18n/dictionaries/calculateur";
 import { calculerPublic } from "@/lib/calculateurPublic";
 import { capacitesDuJeu, typeDuJeu } from "@/lib/jeux";
@@ -16,6 +16,15 @@ import { ROLES_DEFAUT } from "@/lib/scoringDefaut";
  */
 export function Calculateur({ jeu }: { jeu: string }) {
   const t = useT(dict);
+  /**
+   * Une décimale, et elle passe par `Intl`.
+   *
+   * `${n}` rend « 24.7 » dans les six langues. Le français et
+   * l'espagnol écrivent « 24,7 », et en allemand le POINT est le
+   * séparateur des milliers : « 24.7 » s'y lit comme vingt-quatre mille
+   * sept. Ce n'est pas de la typographie, c'est un chiffre faux.
+   */
+  const decimal = useNombre({ maximumFractionDigits: 1 });
   const capacites = useMemo(() => capacitesDuJeu(jeu), [jeu]);
   const type = useMemo(() => typeDuJeu(jeu), [jeu]);
 
@@ -138,7 +147,7 @@ export function Calculateur({ jeu }: { jeu: string }) {
           </>
         )}
         <span className="text-xs" style={{ color: "var(--steel)" }}>
-          {t.niveau(resultat.niveau)} · {t.multiplicateur(resultat.multiplicateur)}
+          {t.niveau(resultat.niveau)} · {t.multiplicateur(decimal(resultat.multiplicateur))}
         </span>
       </div>
 

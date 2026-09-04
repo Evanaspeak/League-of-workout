@@ -7,7 +7,7 @@ import { nomsExercices } from "@/lib/nomsExercices";
 import { CorrectionDates } from "@/components/CorrectionDates";
 import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { useT, useDateLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useMinuscule, useNombre } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import {
   EXERCICE_IDS, formaterCompact, formaterQuantite, parseRepartition,
@@ -189,6 +189,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
   const dateLocale = useDateLocale();
+  const nombre = useNombre();
   /**
    * « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité.
    *
@@ -535,7 +536,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                     </select>
                   </div>
                   <span className="ml-auto text-sm gold-text font-semibold">
-                    {t.activitesAndTotal(filtered.length, resumeParExo(totauxParExo))}
+                    {t.activitesAndTotal(nombre(filtered.length), filtered.length, resumeParExo(totauxParExo))}
                   </span>
                 </div>
               </div>

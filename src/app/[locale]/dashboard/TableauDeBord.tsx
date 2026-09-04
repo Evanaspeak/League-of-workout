@@ -732,7 +732,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
               {fmt(data.calories.total)} kcal
             </b>
             <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
-              {t.energieSub(data.calories.marcheMin)}
+              {t.energieSub(nombre(data.calories.marcheMin))}
             </div>
           </div>
         </div>

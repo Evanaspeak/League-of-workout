@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useNombre } from "@/lib/i18n/LocaleContext";
 import { testPompes as dict } from "@/lib/i18n/dictionaries/testPompes";
 import { getLevelParPompes, testAFaire, type LevelCfg } from "@/lib/scoring";
 
@@ -40,6 +40,15 @@ export function TestPompes({
   autonome?: boolean;
 }) {
   const t = useT(dict);
+  /**
+   * Une décimale, et elle passe par `Intl`.
+   *
+   * `${n}` rend « 24.7 » dans les six langues. Le français et
+   * l'espagnol écrivent « 24,7 », et en allemand le POINT est le
+   * séparateur des milliers : « 24.7 » s'y lit comme vingt-quatre mille
+   * sept. Ce n'est pas de la typographie, c'est un chiffre faux.
+   */
+  const decimal = useNombre({ maximumFractionDigits: 1 });
   const [saisie, setSaisie] = useState("");
   const [ouvert, setOuvert] = useState(false);
   const [occupe, setOccupe] = useState(false);
@@ -88,7 +97,7 @@ export function TestPompes({
             {pompesMax}
           </span>
           <span className="text-xs" style={{ color: "var(--faint)" }}>
-            {t.resume(niveau.niveau, niveau.multiplicateur)}
+            {t.resume(niveau.niveau, decimal(niveau.multiplicateur))}
           </span>
         </div>
       )}
@@ -134,7 +143,7 @@ export function TestPompes({
 
           {apercu && (
             <p className="text-xs" style={{ color: "var(--amber)" }}>
-              {t.apercu(apercu.niveau, apercu.multiplicateur)}
+              {t.apercu(apercu.niveau, decimal(apercu.multiplicateur))}
             </p>
           )}
 
