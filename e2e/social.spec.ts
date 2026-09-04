@@ -257,18 +257,38 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
   expect({ debut: brut.debut, jours: brut.jours })
     .toEqual({ debut: jourLocalTest(6), jours: 7 });
 
-  // L'ordre est celui de l'effort payé sur la fenêtre : B (150) devant A (40).
   const lignes = tableau.locator("tbody tr");
   await expect(lignes).toHaveCount(2);
+
+  /**
+   * Les chiffres se lisent DANS LEUR CELLULE, et jamais dans le texte d'une
+   * ligne. Trois façons d'être vrai — ou faux — sans rien prouver se croisent
+   * ici, et les trois ont été rencontrées :
+   *
+   * - « 150 » est contenu dans « 5150 » : le contrôle du retour à la semaine
+   *   passerait sur un onglet resté bloqué sur le cumul ;
+   * - le pseudo porte une marque tirée au hasard, qui peut contenir les mêmes
+   *   chiffres ;
+   * - et `toContainText` COLLE les textes des descendants sans séparateur. La
+   *   ligne rend « 1Duelmtmj7qi83c5150 points » : un pseudo qui finit par un
+   *   chiffre se soude à la valeur, et même une frontière de mot y échoue —
+   *   dans les deux sens, puisqu'un `not` deviendrait faussement rouge.
+   *
+   * La troisième colonne ne porte que l'effort. On y lit le NOMBRE, ce qui est
+   * exact, indépendant de la langue, et impossible à satisfaire par accident.
+   */
+  const effortsPayes = async () =>
+    (await tableau.locator("tbody tr td:nth-child(3)").allInnerTexts())
+      .map((t) => Number(t.trim().split(/\s/)[0]));
+
   await expect(lignes.nth(0)).toContainText(b.compte.pseudo);
-  await expect(lignes.nth(0)).toContainText("150");
   await expect(lignes.nth(1)).toContainText(a.compte.pseudo);
-  await expect(lignes.nth(1)).toContainText("40");
+  // L'ordre est celui de l'effort payé sur la fenêtre : B (150) devant A (40),
+  // et les cinq mille points hors fenêtre ne sont comptés nulle part.
+  expect(await effortsPayes()).toEqual([150, 40]);
 
   // Le tiers n'a rien demandé à personne : il n'apparaît nulle part.
   await expect(tableau).not.toContainText(c.compte.pseudo);
-  // Et les cinq mille points hors fenêtre ne sont pas comptés.
-  await expect(tableau).not.toContainText("5150");
 
   /**
    * L'onglet du cumul, et pourquoi il se prouve ICI.
@@ -279,13 +299,12 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
    * exactement le même tableau, et rien à l'écran ne le dirait.
    */
   await pageA.getByRole("tab", { name: /depuis toujours|all time/i }).click();
-  await expect(lignes.nth(0)).toContainText("5150");
+  await expect.poll(effortsPayes).toEqual([5150, 40]);
 
   // Et le retour à la semaine les reperd : sans ce second sens, un onglet qui
   // resterait bloqué sur le cumul passerait le contrôle ci-dessus.
   await pageA.getByRole("tab", { name: /la semaine|this week/i }).click();
-  await expect(lignes.nth(0)).toContainText("150");
-  await expect(tableau).not.toContainText("5150");
+  await expect.poll(effortsPayes).toEqual([150, 40]);
 
   await ctxA.close();
 });
