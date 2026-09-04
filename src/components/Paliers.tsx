@@ -80,7 +80,7 @@ export function Paliers() {
 
   const nommer = (badge: Badge): string => {
     const famille = badge.cle.replace(/\d+$/, "");
-    if (famille === "volume") return t.volume(badge.seuil);
+    if (famille === "volume") return t.volume(nombre.format(badge.seuil));
     if (famille === "parties") return t.parties(badge.seuil);
     return t.serie(badge.seuil);
   };

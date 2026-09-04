@@ -80,7 +80,22 @@ export const amis = {
     colRang: "Rang",
     colJoueur: "Joueur",
     colEffort: "Effort payé",
-    effortPaye: (n: number) => `${n} points d'effort`,
+    /**
+     * Le nombre arrive DÉJÀ mis en forme, et le compte sert à l'accord.
+     *
+     * Deux choses se jouaient ici et aucune n'était faite : « 5150 points »
+     * au lieu de « 5 150 », et « 0 points d'effort » au lieu de « 0 point »
+     * — le français met le singulier à zéro comme à un, l'anglais et
+     * l'allemand le mettent à un seulement. C'est le classement, donc le
+     * chiffre que tout le monde regarde en premier, et zéro est la valeur
+     * qu'on y lit le lundi matin.
+     *
+     * Deux paramètres, parce qu'un dictionnaire ne peut pas appeler un
+     * crochet React : la mise en forme vient de l'écran, l'accord reste ici,
+     * où vit la règle de chaque langue.
+     */
+    effortPaye: (formate: string, n: number) =>
+      `${formate} point${n > 1 ? "s" : ""} d'effort`,
     enTete: "Tu mènes cette semaine.",
     ecartAuPremier: (n: number) => `Il te manque ${n} points pour la première place.`,
     retardDepuis: (n: number) => (n === 1 ? "en retard depuis 1 jour" : `en retard depuis ${n} jours`),
@@ -186,7 +201,7 @@ export const amis = {
     colRang: "Rank",
     colJoueur: "Player",
     colEffort: "Effort paid",
-    effortPaye: (n: number) => `${n} effort points`,
+    effortPaye: (formate: string, n: number) => `${formate} effort point${n !== 1 ? "s" : ""}`,
     enTete: "You are leading this week.",
     ecartAuPremier: (n: number) => `You need ${n} more points to take first place.`,
     retardDepuis: (n: number) => (n === 1 ? "1 day late" : `${n} days late`),
@@ -292,7 +307,7 @@ export const amis = {
     colRang: "Puesto",
     colJoueur: "Jugador",
     colEffort: "Esfuerzo pagado",
-    effortPaye: (n: number) => `${n} puntos de esfuerzo`,
+    effortPaye: (formate: string, n: number) => `${formate} punto${n !== 1 ? "s" : ""} de esfuerzo`,
     enTete: "Vas primero esta semana.",
     ecartAuPremier: (n: number) => `Te faltan ${n} puntos para el primer puesto.`,
     retardDepuis: (n: number) => (n === 1 ? "1 día de retraso" : `${n} días de retraso`),
@@ -398,7 +413,7 @@ export const amis = {
     colRang: "Platz",
     colJoueur: "Spieler",
     colEffort: "Bezahlter Aufwand",
-    effortPaye: (n: number) => `${n} Aufwandspunkte`,
+    effortPaye: (formate: string, n: number) => `${formate} Aufwandspunkt${n !== 1 ? "e" : ""}`,
     enTete: "Du führst diese Woche.",
     ecartAuPremier: (n: number) => `Dir fehlen ${n} Punkte bis zum ersten Platz.`,
     retardDepuis: (n: number) => (n === 1 ? "seit 1 Tag im Rückstand" : `seit ${n} Tagen im Rückstand`),
@@ -504,7 +519,7 @@ export const amis = {
     colRang: "名次",
     colJoueur: "玩家",
     colEffort: "已完成努力",
-    effortPaye: (n: number) => `${n} 点努力值`,
+    effortPaye: (formate: string, _n: number) => `${formate} 点努力值`,
     enTete: "本周你领先。",
     ecartAuPremier: (n: number) => `再有 ${n} 点就能拿到第一。`,
     retardDepuis: (n: number) => `已拖欠 ${n} 天`,
@@ -606,7 +621,7 @@ export const amis = {
     colRang: "順位",
     colJoueur: "プレイヤー",
     colEffort: "こなした努力",
-    effortPaye: (n: number) => `努力ポイント ${n}`,
+    effortPaye: (formate: string, _n: number) => `努力ポイント ${formate}`,
     enTete: "今週はあなたが首位です。",
     ecartAuPremier: (n: number) => `1 位まであと ${n} ポイントです。`,
     retardDepuis: (n: number) => `${n} 日滞納中`,

@@ -1098,6 +1098,46 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 0 points d'effort » au classement, et les soixante-dix-sept gabarits
+Trouvé en lisant l'écran des amis en allemand, puis en français. Le classement
+affichait **« 0 points d'effort »** — le français met le singulier à zéro comme
+à un — et il aurait affiché « 5150 » là où il faut « 5 150 ».
+
+Ces gabarits n'avaient AUCUNE règle de pluriel : ils écrivaient toujours la
+forme plurielle, dans les six langues. « 1 points d'effort » et
+« 1 Aufwandspunkte » étaient donc faux eux aussi.
+
+**Un dictionnaire ne peut pas appeler un crochet React**, donc il ne peut pas
+mettre un nombre en forme. Le gabarit reçoit maintenant DEUX choses : le nombre
+DÉJÀ formaté, pour l'afficher, et le compte, pour l'accord — qui reste dans le
+dictionnaire, parce que c'est là que vit la règle de chaque langue. Les noms
+les distinguent (`formate`, `n`), comme `pointsPayes` et `totalPoints`.
+
+**Et c'est le compilateur qui a désigné les trois appelants**, pas moi : changer
+la signature les a tous nommés. C'est ce qu'un changement de type fait de mieux,
+et c'est pour ça qu'il valait mieux que d'ajouter un paramètre optionnel.
+
+**Ce qui n'est PAS fait, avec sa taille.** Le bloc français des dictionnaires
+porte **soixante-dix-sept** gabarits qui interpolent un nombre, soit plus de
+quatre cents entrées sur six langues. Les reprendre toutes est un chantier, pas
+une correction de nuit, et la plupart ne sont jamais atteints par un nombre
+supérieur au millier ni par zéro : ce sont des seuils, des rangs, des compteurs
+de jours. Deux ont été repris — l'effort du classement, où zéro est ce que tout
+le monde lit le lundi matin, et le seuil des paliers, qui monte à vingt-cinq
+mille. Le reste est écrit ici plutôt que laissé à redécouvrir.
+
+**Et mon changement a fait tomber un parcours, ce qui est exactement son
+travail.** `e2e/social.spec.ts` lisait l'effort payé en découpant la cellule sur
+l'espace : « 5 150 points d'effort » y devenait **5**. Le commentaire au-dessus
+disait déjà la bonne chose — « on y lit le NOMBRE, ce qui est exact, indépendant
+de la langue » — et la lecture ne l'était plus depuis que le nombre porte un
+séparateur. Elle retient les chiffres de la cellule maintenant, ce qui vaut dans
+les six langues, y compris en japonais où le nombre se place APRÈS l'unité.
+
+La leçon est petite et vaut d'être notée : **mettre un nombre en forme change la
+façon dont un test doit le lire.** Un parcours qui compare des chaînes est lié à
+la typographie de la langue où il a été écrit.
+
 ### La comparaison de rendu ne regardait pas dans les rubriques des réglages
 Campagne passée entre V407 et la tête, dix versions plus loin. Le premier
 passage rend **trois captures différentes sur vingt-quatre**, toutes le tableau

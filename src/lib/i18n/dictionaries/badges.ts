@@ -10,7 +10,12 @@ export const badges = {
     titre: "Paliers",
     aide: "Ce que tu as déjà fait, et ce qui vient ensuite.",
     prochain: "Prochain palier",
-    volume: (n: number) => `${n} points d'effort`,
+    /*
+      Le seuil arrive DÉJÀ mis en forme : « 25 000 points » et non « 25000 ».
+      Pas d'accord à faire — les paliers valent 100, 500, 1 000, 5 000, 10 000
+      et 25 000, jamais zéro ni un.
+    */
+    volume: (formate: string) => `${formate} points d'effort`,
     parties: (n: number) => (n === 1 ? "Première partie" : `${n} parties`),
     serie: (n: number) => `${n} jours payés d'affilée`,
     obtenus: (n: number, total: number) => `${n} sur ${total}`,
@@ -20,7 +25,7 @@ export const badges = {
     titre: "Milestones",
     aide: "What you have already done, and what comes next.",
     prochain: "Next milestone",
-    volume: (n: number) => `${n} effort points`,
+    volume: (formate: string) => `${formate} effort points`,
     parties: (n: number) => (n === 1 ? "First match" : `${n} matches`),
     serie: (n: number) => `${n} days paid in a row`,
     obtenus: (n: number, total: number) => `${n} of ${total}`,
@@ -30,7 +35,7 @@ export const badges = {
     titre: "Hitos",
     aide: "Lo que ya has hecho, y lo que viene después.",
     prochain: "Próximo hito",
-    volume: (n: number) => `${n} puntos de esfuerzo`,
+    volume: (formate: string) => `${formate} puntos de esfuerzo`,
     parties: (n: number) => (n === 1 ? "Primera partida" : `${n} partidas`),
     serie: (n: number) => `${n} días pagados seguidos`,
     obtenus: (n: number, total: number) => `${n} de ${total}`,
@@ -40,7 +45,7 @@ export const badges = {
     titre: "Meilensteine",
     aide: "Was du schon geschafft hast, und was als Nächstes kommt.",
     prochain: "Nächster Meilenstein",
-    volume: (n: number) => `${n} Aufwandspunkte`,
+    volume: (formate: string) => `${formate} Aufwandspunkte`,
     parties: (n: number) => (n === 1 ? "Erste Partie" : `${n} Partien`),
     serie: (n: number) => `${n} Tage in Folge bezahlt`,
     obtenus: (n: number, total: number) => `${n} von ${total}`,
@@ -50,7 +55,7 @@ export const badges = {
     titre: "里程碑",
     aide: "你已经做到的，以及接下来的目标。",
     prochain: "下一个里程碑",
-    volume: (n: number) => `${n} 点努力值`,
+    volume: (formate: string) => `${formate} 点努力值`,
     parties: (n: number) => (n === 1 ? "第一场对局" : `${n} 场对局`),
     serie: (n: number) => `连续 ${n} 天还清`,
     obtenus: (n: number, total: number) => `${total} 个中的 ${n} 个`,
@@ -60,7 +65,7 @@ export const badges = {
     titre: "マイルストーン",
     aide: "これまでの実績と、次の目標です。",
     prochain: "次のマイルストーン",
-    volume: (n: number) => `努力ポイント ${n}`,
+    volume: (formate: string) => `努力ポイント ${formate}`,
     parties: (n: number) => (n === 1 ? "初めての試合" : `${n} 試合`),
     serie: (n: number) => `${n} 日連続で返済`,
     obtenus: (n: number, total: number) => `${total} 個中 ${n} 個`,
