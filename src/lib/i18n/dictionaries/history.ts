@@ -203,7 +203,7 @@ export const history = {
   es: {
     sansEnjeu: "sin apuesta",
     sansEnjeuAide: "Sesión rechazada al iniciar: esta partida no cuesta nada y no cuenta en ninguna estadística.",
-    legendeTableau: "Todas las actividades registradas, la más reciente primero",
+    legendeTableau: "Todas las partidas registradas, la más reciente primero",
     pageTitle: "HISTORIAL",
     aramTitle: "El ARAM del caos no aparece aquí.",
     aramDesc: "La API de Riot no devuelve ese modo: esas partidas hay que añadirlas a mano.",
@@ -248,8 +248,8 @@ export const history = {
     date: "Fecha",
     pompes: "Deuda",
     noGameToDisplay: "Ninguna partida que mostrar.",
-    chargementRate: "No se han podido cargar tus actividades. Siguen ahí.",
-    ouAjouter: "Las actividades se registran desde el panel.",
+    chargementRate: "No se han podido cargar tus partidas. Siguen ahí.",
+    ouAjouter: "Las partidas se registran desde el panel.",
     allerAuTableauDeBord: "Ir al panel",
     erreurAction: "La operación no se ha completado. No se ha cambiado nada: inténtalo de nuevo.",
     reessayer: "Reintentar",
@@ -303,7 +303,7 @@ export const history = {
   de: {
     sansEnjeu: "ohne Einsatz",
     sansEnjeuAide: "Sitzung beim Start abgelehnt: diese Partie kostet nichts und zählt in keiner Statistik.",
-    legendeTableau: "Alle eingetragenen Aktivitäten, die neueste zuerst",
+    legendeTableau: "Alle eingetragenen Runden, die neueste zuerst",
     pageTitle: "VERLAUF",
     aramTitle: "Das Chaos-ARAM taucht hier nicht auf.",
     aramDesc: "Die Riot-API liefert diesen Modus nicht: solche Partien müssen von Hand eingetragen werden.",
@@ -403,7 +403,7 @@ export const history = {
   zh: {
     sansEnjeu: "不计入",
     sansEnjeuAide: "开局时拒绝了本次记录：这局不产生任何负担，也不计入任何统计。",
-    legendeTableau: "全部已记录的活动，最新的排在最前",
+    legendeTableau: "全部已记录的对局，最新的排在最前",
     pageTitle: "历史记录",
     aramTitle: "混乱大乱斗不会出现在这里。",
     aramDesc: "Riot 的 API 不返回这个模式：这类对局需要手动添加。",
@@ -503,7 +503,7 @@ export const history = {
   ja: {
     sansEnjeu: "カウントなし",
     sansEnjeuAide: "開始時にセッションを断ったため、この試合は負担にならず、統計にも入りません。",
-    legendeTableau: "記録したすべてのアクティビティ、新しい順",
+    legendeTableau: "記録したすべての試合、新しい順",
     pageTitle: "履歴",
     aramTitle: "カオス ARAM はここには出ません。",
     aramDesc: "Riot の API はこのモードを返しません。こうした試合は手で追加してください。",

@@ -112,7 +112,7 @@ export const visite = {
     detteTexte: "Tu deuda se acumula aquí, partida tras partida. En cuanto debes algo, una insignia te sigue por toda la aplicación: púlsala cuando estés listo. Una cuenta atrás te acompaña durante el esfuerzo, y si te paras a medias solo se descuenta la parte que realmente hiciste.",
 
     statsTitre: "Por dónde vas",
-    statsTexte: "Tu número de actividades, tu porcentaje de victorias y el total acumulado desde el principio. Estas tres cifras nunca se filtran: lo describen todo, para que siempre tengas un punto de referencia fijo.",
+    statsTexte: "Tu número de partidas, tu porcentaje de victorias y el total acumulado desde el principio. Estas tres cifras nunca se filtran: lo describen todo, para que siempre tengas un punto de referencia fijo.",
 
     graphiqueTitre: "La cifra que de verdad cuenta",
     graphiqueTexte: "El total solo puede subir, así que no dice nada de tu progreso. El coste MEDIO de una partida, en cambio, baja cuando juegas mejor: es el único indicador de la aplicación que puede descender. Aparece aquí, junto a los demás, desde tus primeras partidas.",
@@ -121,7 +121,7 @@ export const visite = {
     navHistoriqueTexte: "Vamos allá. El historial guarda cada partida que has jugado, con su coste y el cálculo que lo explica.",
 
     historiqueTitre: "Cada partida, su coste",
-    historiqueTexte: "Una fila por actividad: la fecha, el juego, tu marcador y lo que te ha costado, con el nombre del ejercicio, para no confundir flexiones con segundos de boxeo. La flecha de la derecha despliega el cálculo completo, y la cruz borra la fila si está mal.",
+    historiqueTexte: "Una fila por partida: la fecha, el juego, tu marcador y lo que te ha costado, con el nombre del ejercicio, para no confundir flexiones con segundos de boxeo. La flecha de la derecha despliega el cálculo completo, y la cruz borra la fila si está mal.",
 
     navReglagesTitre: "Ajústala a tu medida",
     navReglagesTexte: "Última parada. Los ajustes están ordenados por apartados, como en un móvil: abres el que buscas y vuelves.",
@@ -155,7 +155,7 @@ export const visite = {
     detteTexte: "Deine Schuld sammelt sich hier, Partie für Partie. Sobald du etwas schuldest, folgt dir ein Abzeichen durch die ganze App: tipp darauf, wenn du so weit bist. Ein Countdown begleitet dich durch die Anstrengung, und wenn du unterwegs aufhörst, wird nur der wirklich geleistete Teil abgezogen.",
 
     statsTitre: "Wo du stehst",
-    statsTexte: "Deine Zahl an Aktivitäten, deine Siegquote und die Gesamtsumme seit dem ersten Tag. Diese drei Zahlen werden nie gefiltert: sie beschreiben alles, damit du immer einen festen Bezugspunkt hast.",
+    statsTexte: "Deine Zahl an Runden, deine Siegquote und die Gesamtsumme seit dem ersten Tag. Diese drei Zahlen werden nie gefiltert: sie beschreiben alles, damit du immer einen festen Bezugspunkt hast.",
 
     graphiqueTitre: "Die Zahl, auf die es wirklich ankommt",
     graphiqueTexte: "Die Summe kann nur steigen und sagt daher nichts über deinen Fortschritt. Der DURCHSCHNITTSPREIS einer Partie dagegen sinkt, wenn du besser spielst: er ist der einzige Wert der App, der nach unten gehen kann. Er erscheint hier, neben den anderen, ab deinen ersten Partien.",
@@ -164,7 +164,7 @@ export const visite = {
     navHistoriqueTexte: "Auf geht's. Der Verlauf bewahrt jede Partie auf, die du gespielt hast, mit ihrem Preis und der Rechnung dahinter.",
 
     historiqueTitre: "Jede Partie, ihr Preis",
-    historiqueTexte: "Eine Zeile pro Aktivität: Datum, Spiel, dein Ergebnis und was es gekostet hat, mit dem Namen der Übung, damit Liegestütze und Sekunden Boxen nie durcheinandergeraten. Der Pfeil rechts klappt die vollständige Rechnung auf, das Kreuz löscht eine Zeile, wenn sie falsch ist.",
+    historiqueTexte: "Eine Zeile pro Runde: Datum, Spiel, dein Ergebnis und was es gekostet hat, mit dem Namen der Übung, damit Liegestütze und Sekunden Boxen nie durcheinandergeraten. Der Pfeil rechts klappt die vollständige Rechnung auf, das Kreuz löscht eine Zeile, wenn sie falsch ist.",
 
     navReglagesTitre: "Stell sie auf dich ein",
     navReglagesTexte: "Letzte Station. Die Einstellungen sind nach Rubriken sortiert, wie auf einem Handy: du öffnest die, die du suchst, und gehst zurück.",
@@ -198,7 +198,7 @@ export const visite = {
     detteTexte: "欠账在这里一局一局累积。只要你欠着，一个小标记就会跟着你走遍整个应用：准备好了就点它。做的过程中有倒计时陪着你，中途停下也没关系，只扣掉真正做完的那部分。",
 
     statsTitre: "你的现状",
-    statsTexte: "你的活动次数、胜率，以及从第一天累积到现在的总数。这三个数字从不被筛选：它们描述全部，好让你始终有一个不动的参照点。",
+    statsTexte: "你的对局次数、胜率，以及从第一天累积到现在的总数。这三个数字从不被筛选：它们描述全部，好让你始终有一个不动的参照点。",
 
     graphiqueTitre: "真正要看的那个数",
     graphiqueTexte: "总数只会往上走，所以它说明不了你的进步。而每局的平均代价会在你打得更好时下降：这是整个应用里唯一能往下走的指标。从你的头几局起，它就和其他数字一起出现在这里。",
@@ -207,7 +207,7 @@ export const visite = {
     navHistoriqueTexte: "我们过去看看。历史记录保留你打过的每一局，连同它的代价和背后的算法。",
 
     historiqueTitre: "每一局，各自的代价",
-    historiqueTexte: "一次活动一行：日期、游戏、你的比分，以及它花了你多少，并写明是哪个动作，免得把俯卧撑和拳击的秒数搞混。右边的箭头展开完整算式，叉号可以删掉记错的那一行。",
+    historiqueTexte: "一场对局一行：日期、游戏、你的比分，以及它花了你多少，并写明是哪个动作，免得把俯卧撑和拳击的秒数搞混。右边的箭头展开完整算式，叉号可以删掉记错的那一行。",
 
     navReglagesTitre: "调成你的尺寸",
     navReglagesTexte: "最后一站。设置按板块归类，跟手机一样：打开你要找的那个，然后退回来。",
@@ -241,7 +241,7 @@ export const visite = {
     detteTexte: "負債は試合ごとにここへ積み上がります。何か残っているあいだ、バッジがアプリ中どこまでもついてきます。準備ができたら押してください。運動中はカウントダウンが付き添い、途中でやめても、実際にやった分だけが差し引かれます。",
 
     statsTitre: "いまの位置",
-    statsTexte: "アクティビティの数、勝率、そして最初の日からの累計。この三つだけは決して絞り込まれません。全体を表す数字であり、いつでも動かない目印になるからです。",
+    statsTexte: "試合数、勝率、そして最初の日からの累計。この三つだけは決して絞り込まれません。全体を表す数字であり、いつでも動かない目印になるからです。",
 
     graphiqueTitre: "本当に見るべき数字",
     graphiqueTexte: "累計は増える一方なので、上達については何も語りません。一試合あたりの平均費用は、うまくなると下がります。このアプリで唯一、下がりうる数字です。最初の数試合から、ほかの数字と並んでここに出ます。",
@@ -250,7 +250,7 @@ export const visite = {
     navHistoriqueTexte: "行ってみましょう。履歴には、遊んだ試合が費用と計算の根拠つきで残ります。",
 
     historiqueTitre: "試合ごとの費用",
-    historiqueTexte: "アクティビティ一件につき一行。日付、タイトル、スコア、そしていくらかかったか。種目名も添えてあるので、腕立ての回数とボクシングの秒数を取り違えることはありません。右の矢印で計算全体が開き、バツ印で間違った行を消せます。",
+    historiqueTexte: "一試合につき一行。日付、タイトル、スコア、そしていくらかかったか。種目名も添えてあるので、腕立ての回数とボクシングの秒数を取り違えることはありません。右の矢印で計算全体が開き、バツ印で間違った行を消せます。",
 
     navReglagesTitre: "自分に合わせる",
     navReglagesTexte: "最後です。設定はスマートフォンと同じように項目ごとにまとまっています。探しているものを開いて、また戻ってください。",
