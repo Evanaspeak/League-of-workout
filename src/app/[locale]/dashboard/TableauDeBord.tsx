@@ -12,7 +12,7 @@ import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
 import { useSession } from "@/lib/SessionContext";
-import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -163,6 +163,7 @@ export type DepartServeur = {
 };
 
 export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
+  const pourcent = usePourcentage();
   const t = useT(dashboard);
   const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
@@ -576,7 +577,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         <StatCard label={t.gamesPlayed} value={globalStats.totalGames} i={0} />
         <StatCard
           label={t.winrate}
-          value={`${globalStats.winrate}%`}
+          value={pourcent(globalStats.winrate)}
           // Le dénominateur est le nombre de parties compétitives : les
           // sessions au temps n'ont pas de résultat et n'entrent pas au compte.
           sub={`${globalStats.wins}V / ${(globalStats.totalParties ?? globalStats.totalGames) - globalStats.wins}D`}

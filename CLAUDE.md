@@ -1098,6 +1098,55 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 33% » : le pourcentage recollé à la main, et un trou dans mon propre garde
+Suite du recensement des règles de langue. Le journal portait déjà cette
+correction — « le pourcentage passe maintenant par `Intl`, qui connaît la règle
+de chaque langue, là où un « % » recollé à la main en aurait une seule » — et
+elle n'avait été faite que pour l'IMAGE du bilan de saison. Cinq autres endroits
+collaient le signe à la main, dont le winrate du tableau de bord, qui affichait
+« 33% » en français où il faut « 33 % ».
+
+C'est le motif que ce projet paie en boucle, sous sa forme la plus discrète :
+une correction juste, écrite au journal, appliquée à un seul de ses lieux.
+
+**Le recensement sépare proprement**, et c'est ce qui rend le garde possible :
+sur douze gabarits `${x}%` dans les `.tsx`, six sont des LONGUEURS CSS
+(`width: ${p}%`) et cinq de l'affichage. Une longueur se reconnaît au nom de
+propriété qui la précède — ce n'est pas une heuristique, c'est la grammaire de
+CSS.
+
+`usePourcentage` rejoint `useNombre` et `enMinuscule`. Elle prend un nombre de
+0 à 100, comme on l'écrit et comme le produit le calcule ; `Intl` attend une
+fraction, et la division vit dans la fonction pour qu'aucun appelant n'ait à
+s'en souvenir. C'est la leçon des grammes et des kilos, appliquée avant qu'elle
+ne coûte quelque chose.
+
+**Ce qui a été trouvé, ce sont les DATES et le reste — et il n'y avait rien.**
+Les `getFullYear()` du dépôt construisent tous des clés `AAAA-MM-JJ` internes,
+jamais un affichage : les interdire n'aurait aucun sens. Aucune composition
+partagée avec « : » non plus. Le dire évite d'aller rechercher une famille qui
+n'existe pas.
+
+**Et le sabotage a trouvé un trou dans le garde que je venais d'écrire**, ce qui
+est la trouvaille de l'heure. La dispense des longueurs CSS élargie à TOUT
+laissait le test au vert : il n'y avait alors plus rien à examiner, et rien ne
+distinguait « aucun fautif » de « aucun regardé ». C'est exactement le défaut
+que ce fichier existe pour attraper ailleurs, et il était chez moi.
+
+Deux choses le referment, et il fallait les deux : le discriminant sort de la
+boucle pour être ÉPROUVÉ sur quatre cas fabriqués — deux longueurs, deux
+affichages — parce que les fichiers réels ne le distinguent pas (ils ne
+contiennent que des cas qu'il accepte) ; et le motif doit trouver au moins
+quatre gabarits, sinon il n'y a rien à trier. C'est la méthode de
+`porteUnFiltre`, où trois cas fabriqués avaient déjà donné ses dents à un
+resserrement qu'aucun test ne pouvait voir.
+
+Trois sabotages après correction, trois échecs — dont celui qui passait.
+
+Vérifié à l'écran : « 33 % » en français ET en allemand, « 33% » en anglais.
+Le français et l'allemand veulent l'espace, l'anglais non : c'est précisément
+ce qu'`Intl` sait et qu'un signe collé ne saura jamais.
+
 ### « 0 / 100000 » et « 3.25 » : les nombres ne passaient pas par Intl
 Suite du pluriel de zéro : si une règle de langue avait été appliquée
 uniformément aux six blocs, il y en avait peut-être d'autres. Recherche sur les

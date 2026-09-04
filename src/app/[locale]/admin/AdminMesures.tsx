@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { adminMesures } from "@/lib/i18n/dictionaries/adminMesures";
 import { formaterDelai, type Mesures } from "@/lib/mesures";
 
@@ -17,6 +17,7 @@ type Reponse = Mesures & {
  * le produit sert à quelque chose. Les deux étaient inconnus.
  */
 export default function AdminMesures() {
+  const pourcent = usePourcentage();
   const t = useT(adminMesures);
   const [m, setM] = useState<Reponse | null>(null);
   const [erreur, setErreur] = useState(false);
@@ -57,7 +58,7 @@ export default function AdminMesures() {
       {m && m.comptes > 0 && (
         <div className="flex flex-col">
           {ligne(t.comptes, String(m.comptes))}
-          {ligne(t.avecPartie, `${m.avecPartie} (${m.partActifs} %)`)}
+          {ligne(t.avecPartie, `${m.avecPartie} (${pourcent(m.partActifs)})`)}
           {ligne(t.delaiMedian, formaterDelai(m.delai.median))}
           {ligne(t.delaiQuartiles, `${formaterDelai(m.delai.p25)} · ${formaterDelai(m.delai.p75)}`)}
           {ligne(t.dansLaJournee, String(m.dansLaJournee))}

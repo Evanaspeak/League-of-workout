@@ -40,6 +40,23 @@ function fichiersAffichage(dossier: string, out: string[] = []): string[] {
 }
 
 /** Le texte sans ses commentaires : la règle s'y cite, elle ne s'y viole pas. */
+/**
+ * Ce gabarit est-il une LONGUEUR CSS plutôt qu'un pourcentage affiché ?
+ *
+ * Il vit hors de la boucle pour être ÉPROUVÉ. Sur les fichiers réels, une
+ * dispense élargie à tout laisse le test au vert : il n'y a alors plus rien à
+ * examiner, et rien ne distingue « aucun fautif » de « aucun regardé ». C'est
+ * le défaut que ce fichier existe pour attraper ailleurs, et mon premier
+ * sabotage l'a trouvé ici.
+ *
+ * Une longueur est la VALEUR d'une propriété de style : elle se reconnaît au
+ * nom qui la précède, pas à une heuristique.
+ */
+export function estLongueurCss(debutLigne: string): boolean {
+  return /(width|height|top|left|right|bottom|flexBasis|inset|translate|transform)\s*:\s*`?$/
+    .test(debutLigne);
+}
+
 function sansCommentaires(source: string): string {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -62,6 +79,49 @@ describe("les nombres montrés passent par Intl", () => {
     // rien à employer à la place, et l'interdiction serait un mur.
     const contexte = readFileSync(join(SRC, PORTE_LA_REGLE), "utf8");
     expect(contexte).toContain("export function useNombre(");
+  });
+
+  /**
+   * Le signe « % » recollé à la main n'a qu'une règle, donc cinq de fausses.
+   *
+   * Le français veut une espace insécable devant — « 33 % » — et l'anglais
+   * n'en veut pas. Le winrate du tableau de bord affichait « 33% » dans les
+   * six langues, alors que la correction avait DÉJÀ été faite pour le bilan de
+   * saison : c'est la moitié non réparée, motif que ce projet paie en boucle.
+   *
+   * Ce qui n'est PAS visé : `width: ${p}%`, qui est une longueur CSS. Le
+   * discriminant n'est pas une heuristique — une longueur est la valeur d'une
+   * propriété de style, et elle se reconnaît au nom qui la précède.
+   */
+  it("ne recolle aucun % à la main dans un composant ou une page", () => {
+    // Le discriminant, éprouvé sur des cas fabriqués : sans ça, l'élargir à
+    // tout laisse le test au vert. Les fichiers réels ne le distinguent pas —
+    // ils ne contiennent que des cas qu'il accepte.
+    expect(estLongueurCss("              width: `")).toBe(true);
+    expect(estLongueurCss("                width: ")).toBe(true);
+    expect(estLongueurCss("          value={`")).toBe(false);
+    expect(estLongueurCss("          {j.winrate === null ? t.sansObjet : `")).toBe(false);
+
+    const fautifs: string[] = [];
+    let trouves = 0;
+    for (const f of tous) {
+      const rel = relative(SRC, f).split("\\").join("/");
+      if (rel === PORTE_LA_REGLE) continue;
+      const texte = sansCommentaires(readFileSync(f, "utf8"));
+      for (const m of texte.matchAll(/\$\{[^}]*\}\s?%/g)) {
+        trouves += 1;
+        const avant = texte.slice(0, m.index);
+        const debutLigne = avant.slice(avant.lastIndexOf("\n") + 1);
+        if (estLongueurCss(debutLigne)) continue;
+        const ligne = avant.split("\n").length;
+        fautifs.push(`${rel}:${ligne}`);
+      }
+    }
+
+    // Et le motif doit trouver quelque chose : s'il ne voyait plus aucun
+    // gabarit, il n'y aurait rien à trier.
+    expect(trouves).toBeGreaterThan(3);
+    expect(fautifs).toEqual([]);
   });
 
   it("n'emploie aucun toFixed dans un composant ou une page", () => {
