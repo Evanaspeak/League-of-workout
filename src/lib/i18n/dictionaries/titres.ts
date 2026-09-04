@@ -17,7 +17,21 @@ export const titres = {
     eclairAide: "Dette soldée dans l'heure",
     niveau: "Niveau",
     souffrance: "Niveau de souffrance",
-    souffranceAide: (n: number) => `${n} points d'effort avant le suivant`,
+    /**
+     * « Payés », et pas « d'effort », parce que le panneau en porte DEUX.
+     *
+     * Quatre lignes plus bas, « Prochain palier · 500 points d'effort » compte
+     * l'effort GÉNÉRÉ — ce que les parties ont coûté — quand celui-ci compte le
+     * PAYÉ. Sur un compte à soixante défaites et zéro pompe faite, l'écran
+     * disait « 100 points d'effort avant le suivant » juste au-dessus de
+     * « 480 / 500 » : les mêmes trois mots pour deux quantités, et rien pour
+     * les distinguer. C'est le défaut d'« activité » et celui des deux
+     * « niveau », sous une troisième forme.
+     *
+     * « Payés » est déjà le mot du palier de série voisin — « 3 jours payés
+     * d'affilée » — donc il ne demande rien à apprendre.
+     */
+    souffranceAide: (n: number) => `${n} points payés avant le suivant`,
     versLeNiveau: "vers le niveau",
     points: "points",
     xp: "XP",
@@ -34,7 +48,7 @@ export const titres = {
     eclairAide: "Debt cleared within the hour",
     niveau: "Level",
     souffrance: "Pain level",
-    souffranceAide: (n: number) => `${n} effort points to the next one`,
+    souffranceAide: (n: number) => `${n} points paid to the next one`,
     versLeNiveau: "to level",
     points: "points",
     xp: "XP",
@@ -51,7 +65,7 @@ export const titres = {
     eclairAide: "Deuda saldada en una hora",
     niveau: "Nivel",
     souffrance: "Nivel de sufrimiento",
-    souffranceAide: (n: number) => `${n} puntos de esfuerzo hasta el siguiente`,
+    souffranceAide: (n: number) => `${n} puntos pagados hasta el siguiente`,
     versLeNiveau: "para el nivel",
     points: "puntos",
     xp: "XP",
@@ -68,7 +82,7 @@ export const titres = {
     eclairAide: "Schuld binnen einer Stunde beglichen",
     niveau: "Stufe",
     souffrance: "Leidensstufe",
-    souffranceAide: (n: number) => `${n} Aufwandspunkte bis zur nächsten`,
+    souffranceAide: (n: number) => `${n} bezahlte Punkte bis zur nächsten`,
     versLeNiveau: "bis Stufe",
     points: "Punkte",
     xp: "XP",
@@ -85,7 +99,7 @@ export const titres = {
     eclairAide: "一小时内还清",
     niveau: "等级",
     souffrance: "受苦等级",
-    souffranceAide: (n: number) => `距离下一级还差 ${n} 点努力值`,
+    souffranceAide: (n: number) => `距离下一级还差 ${n} 点已付出的努力`,
     versLeNiveau: "升至等级",
     points: "点",
     xp: "XP",
@@ -102,7 +116,7 @@ export const titres = {
     eclairAide: "一時間以内に完済",
     niveau: "レベル",
     souffrance: "苦痛レベル",
-    souffranceAide: (n: number) => `次のレベルまで努力ポイント ${n}`,
+    souffranceAide: (n: number) => `次のレベルまで支払い済みポイント ${n}`,
     versLeNiveau: "次のレベルまで",
     points: "ポイント",
     xp: "XP",
