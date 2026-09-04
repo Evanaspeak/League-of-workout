@@ -152,6 +152,18 @@ model User {
    */
   nomAffiche String @default("pseudo")
 
+  /**
+   * La première fois qu'une dette a été SOLDÉE dans l'heure qui a suivi sa
+   * naissance (ligne 147).
+   * C'est la seule chose de la progression qui se range en base, et c'est
+   * délibéré : un palier est un TOTAL, qui se recalcule à tout instant, alors
+   * qu'un délai est un MOMENT — la dette d'hier soir n'existe plus, et rien ne
+   * dira jamais après coup en combien de temps elle a été payée.
+   * Elle ne se réécrit pas : on garde la première fois, sinon l'exploit dirait
+   * « la dernière fois que » au lieu de « une fois, j'ai ».
+   */
+  paiementEclairLe DateTime?
+
   codeParrain String? @unique
   parrainId   String?
   parrain     User?   @relation("Parrainage", fields: [parrainId], references: [id], onDelete: SetNull)

@@ -3,7 +3,7 @@ import { jourLocal } from "@/lib/serie";
 
 jest.mock("@/lib/prisma", () => {
   const paiement = { create: jest.fn(), findUnique: jest.fn() };
-  const user = { update: jest.fn(), findUnique: jest.fn(), findUniqueOrThrow: jest.fn() };
+  const user = { update: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn(), findUniqueOrThrow: jest.fn() };
   return {
     prisma: {
       user, paiement,
@@ -23,7 +23,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { appliquerRatios, RATIOS_DEFAUT } from "@/lib/exercices";
 
 const session = getCurrentUser as jest.Mock;
-const user = prisma.user as unknown as { update: jest.Mock; findUnique: jest.Mock; findUniqueOrThrow: jest.Mock };
+const user = prisma.user as unknown as { update: jest.Mock; updateMany: jest.Mock; findUnique: jest.Mock; findUniqueOrThrow: jest.Mock };
 const paiement = (prisma as unknown as
   { paiement: { create: jest.Mock; findUnique: jest.Mock } }).paiement;
 
@@ -38,6 +38,7 @@ beforeEach(() => {
   appliquerRatios(RATIOS_DEFAUT);
   session.mockResolvedValue(joueur());
   paiement.findUnique.mockResolvedValue(null);
+  user.updateMany.mockResolvedValue({ count: 1 });
   // Le retrait passe par `decrement`, qui est atomique côté base : la doublure
   // le simule. `compteur` tient lieu de valeur en base entre deux appels.
   compteur = 100;
@@ -433,5 +434,59 @@ describe("la course entre un paiement et une partie", () => {
     expect((await corps(r) as { points: number }).points).toBe(0);
     expect(user.update.mock.calls.map((c) => c[0].data))
       .toContainEqual({ dettePointsDus: 0, detteDepuis: null });
+  });
+});
+
+describe("l'exploit de la dette payée dans l'heure", () => {
+  const ilYA = (ms: number) => new Date(Date.now() - ms);
+
+  it("se pose quand la dette est SOLDÉE dans l'heure qui a suivi sa naissance", async () => {
+    session.mockResolvedValue(joueur({ detteDepuis: ilYA(10 * 60 * 1000), paiementEclairLe: null }));
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(user.updateMany).toHaveBeenCalledTimes(1);
+    const appel = user.updateMany.mock.calls[0][0];
+    // La condition est posée à la BASE, pas après lecture : deux paiements
+    // partis ensemble liraient tous deux « pas encore d'exploit », et le
+    // second écraserait la date du premier.
+    expect(appel.where).toMatchObject({ paiementEclairLe: null });
+    expect(appel.where.id).toBeDefined();
+    expect(appel.data.paiementEclairLe).toBeInstanceOf(Date);
+  });
+
+  it("ne se pose pas quand la dette n'est qu'ENTAMÉE", async () => {
+    // « Payée dans l'heure » veut dire payée. Cinq secondes de boxe sur cent
+    // points dus laissent la dette courir.
+    session.mockResolvedValue(joueur({ detteDepuis: ilYA(60 * 1000), paiementEclairLe: null }));
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { secondes: 5 } }));
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("ne se pose pas au-delà de l'heure", async () => {
+    session.mockResolvedValue(joueur({ detteDepuis: ilYA(3 * 60 * 60 * 1000), paiementEclairLe: null }));
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("ne se REPOSE pas quand il est déjà gagné", async () => {
+    session.mockResolvedValue(joueur({
+      detteDepuis: ilYA(60 * 1000),
+      paiementEclairLe: new Date("2026-01-01T00:00:00Z"),
+    }));
+    await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(user.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("un exploit qui échoue ne fait PAS échouer le paiement", async () => {
+    /**
+     * L'ordre de ce fichier : la trace, le décompte, puis le badge. Ce qui
+     * peut se refaire à la main passe en dernier, et son échec ne coûte que
+     * lui-même. Un badge manqué se rattrape au prochain soir ; un paiement
+     * refusé après que la dette a été décomptée, non.
+     */
+    session.mockResolvedValue(joueur({ detteDepuis: ilYA(60 * 1000), paiementEclairLe: null }));
+    user.updateMany.mockRejectedValue(new Error("base indisponible"));
+    const r = await PATCH(requete("/api/dette", { method: "PATCH", body: { tout: true } }));
+    expect(r.status).toBe(200);
+    expect(paiement.create).toHaveBeenCalledTimes(1);
   });
 });

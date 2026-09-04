@@ -83,6 +83,15 @@ export async function GET() {
     },
     detteEnAttentePoints: user.dettePointsDus,
     detteDepuis: user.detteDepuis,
+    /**
+     * La première dette soldée dans l'heure.
+     *
+     * Elle ne voyage pas dans les réponses ordinaires — l'écran n'a besoin que
+     * d'un booléen — mais l'article 20 couvre TOUT ce qu'on garde, pas
+     * seulement ce qu'on affiche. Une donnée qu'on ne montre pas est
+     * précisément celle qu'on oublie d'exporter.
+     */
+    premierPaiementEclairLe: user.paiementEclairLe,
     // On ne sort que la date d'inscription de chaque appareil : les clés
     // permettraient de lui envoyer des notifications.
     appareilsNotifies: abonnements.map((a) => ({ ajouteLe: a.createdAt })),

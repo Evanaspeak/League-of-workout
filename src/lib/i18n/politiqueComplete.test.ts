@@ -151,6 +151,16 @@ const ATTENDU: Record<string, RegExp> = {
    * profil public.
    */
   nomAffiche: /nom montré aux autres|pseudo Riot ou pseudo/i,
+  /**
+   * La date du premier paiement éclair (ligne 147).
+   *
+   * Elle ne sort jamais du compte et ne paraît devant personne — c'est un
+   * booléen que l'écran reçoit. On la DÉCRIT quand même plutôt que de
+   * l'exempter : c'est une donnée qu'on garde, elle dit quelque chose de ce
+   * que la personne a fait un soir, et une politique qui ne mentionne que ce
+   * qui s'affiche rate exactement ce qu'on vient chercher en la lisant.
+   */
+  paiementEclairLe: /soldée en moins d'une heure|première dette soldée/i,
   // Mettre un exercice de côté frôle la santé sans en être : on le décrit
   // plutôt que de l'exempter, et la politique dit qu'aucune raison médicale
   // n'est demandée.

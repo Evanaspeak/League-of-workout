@@ -15,6 +15,7 @@
 export type Progression = {
   badges: unknown;
   serie: unknown;
+  exploits?: unknown;
 };
 
 let enCours: Promise<Progression | null> | null = null;

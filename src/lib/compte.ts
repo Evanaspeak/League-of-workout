@@ -43,6 +43,12 @@ const NE_SORTENT_PAS = [
   // raison de connaître. Un compte public qui publie les rouages invite à
   // construire dessus, et ce qui est construit dessus devient à corriger le
   // jour où le rouage change.
+  // La date du premier paiement éclair. Elle sort bien, mais transformée :
+  // `/api/progression` en rend un BOOLÉEN, qui est tout ce que l'écran montre.
+  // La date elle-même n'a aucun lecteur, et une donnée qui voyage à chaque
+  // chargement de page sans que personne ne la lise est du gaspillage avant
+  // d'être un risque. L'export de l'article 20 la porte, lui.
+  "paiementEclairLe",
   "sessionEpoch",
   // Le code de parrainage. Il n'est pas secret — il est fait pour être
   // partagé — mais il n'a rien à voyager à chaque chargement de page : c'est
