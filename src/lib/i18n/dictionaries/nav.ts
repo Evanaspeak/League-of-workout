@@ -11,6 +11,7 @@ export const nav = {
     railReplier: "Replier les actions",
     fermerMenu: "Fermer le menu",
     live: "LIVE",
+    partiesCourt: (n: string) => `${n}P`,
     stopSession: "Arrêter la session",
   },
   en: {
@@ -25,6 +26,7 @@ export const nav = {
     railReplier: "Collapse actions",
     fermerMenu: "Close menu",
     live: "LIVE",
+    partiesCourt: (n: string) => `${n}G`,
     stopSession: "Stop session",
   },
   es: {
@@ -39,6 +41,7 @@ export const nav = {
     railReplier: "Ocultar acciones",
     fermerMenu: "Cerrar el menú",
     live: "EN VIVO",
+    partiesCourt: (n: string) => `${n}P`,
     stopSession: "Detener la sesión",
   },
   de: {
@@ -53,6 +56,7 @@ export const nav = {
     railReplier: "Aktionen einklappen",
     fermerMenu: "Menü schließen",
     live: "LIVE",
+    partiesCourt: (n: string) => `${n}P`,
     stopSession: "Sitzung beenden",
   },
   zh: {
@@ -67,6 +71,7 @@ export const nav = {
     railReplier: "收起操作",
     fermerMenu: "关闭菜单",
     live: "进行中",
+    partiesCourt: (n: string) => `${n}局`,
     stopSession: "结束本次会话",
   },
   ja: {
@@ -81,6 +86,7 @@ export const nav = {
     railReplier: "操作を隠す",
     fermerMenu: "メニューを閉じる",
     live: "進行中",
+    partiesCourt: (n: string) => `${n}件`,
     stopSession: "セッションを終了",
   },
 };

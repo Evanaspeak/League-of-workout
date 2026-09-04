@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useT, useDateLocale, useNombre, usePourcentage } from "@/lib/i18n/LocaleContext";
+import { uniteLocalisee } from "@/lib/i18n/unite";
 import { adminUserList } from "@/lib/i18n/dictionaries/adminUserList";
 import { Icone } from "@/components/Icone";
 
@@ -260,9 +261,9 @@ export default function AdminUserList() {
                     <Stat label={t.registeredOn} value={new Date(u.createdAt).toLocaleDateString(dateLocale)} />
                     <Stat label={t.gender} value={u.genre ?? t.notProvided} />
                     <Stat label={t.age} value={u.age != null ? `${u.age}` : t.notProvided} />
-                    <Stat label={t.weight} value={u.poids != null ? `${u.poids} kg` : t.notProvided} />
-                    <Stat label={t.height} value={u.taille != null ? `${u.taille} cm` : t.notProvided} />
-                    <Stat label={t.sportPerWeek} value={u.sportsHoursPerWeek != null ? `${u.sportsHoursPerWeek} h` : t.notProvided} />
+                    <Stat label={t.weight} value={u.poids != null ? uniteLocalisee(u.poids, "kilogram", dateLocale) : t.notProvided} />
+                    <Stat label={t.height} value={u.taille != null ? uniteLocalisee(u.taille, "centimeter", dateLocale) : t.notProvided} />
+                    <Stat label={t.sportPerWeek} value={u.sportsHoursPerWeek != null ? uniteLocalisee(u.sportsHoursPerWeek, "hour", dateLocale, 1) : t.notProvided} />
                   </div>
                   {newPasswords[u.id] ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(47,217,138,0.08)", border: "1px solid rgba(47,217,138,0.3)" }}>

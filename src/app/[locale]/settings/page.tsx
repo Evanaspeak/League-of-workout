@@ -10,7 +10,7 @@ import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT,
-  PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, toExerciceIds, type ExerciceId,
+  PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, formaterDuree, toExerciceIds, type ExerciceId,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
@@ -678,7 +678,14 @@ export default function SettingsPage() {
                 >
                   {seuil === 0
                     ? tExo.rappelDesactive
-                    : tExo.rappelSeuilValeur(seuil % 60 === 0 ? `${seuil / 60} min` : `${seuil} s`)}
+                    /* La durée passe par `formaterDuree`, qui donne l'unité à
+                       `Intl`. Elle s'écrivait ici « min » et « s » à la main,
+                       donc en français dans les six langues : « 2 min から »
+                       au milieu d'un écran japonais, deux blocs en dessous de
+                       « 1分55秒 » que le même écran rend correctement. C'est
+                       la moitié non réparée de la correction de l'unité de la
+                       dette, sur l'écran même qui la montre. */
+                    : tExo.rappelSeuilValeur(formaterDuree(seuil, etiquette))}
                 </button>
               );
             })}

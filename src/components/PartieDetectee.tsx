@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { ventiler } from "@/lib/exercices";
+import { ventiler, formaterDuree } from "@/lib/exercices";
 import { notifierSysteme } from "@/lib/notifier";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
@@ -63,11 +63,15 @@ export function PartieDetectee() {
         // Les chiffres partent avec le message : sans eux, « ajoute la partie
         // à la main » demande de se rappeler un KDA qu'on vient de quitter.
         // On les a sous la main, c'est le moment de les donner.
+        // Des minutes ENTIÈRES : les secondes d'une partie sont du bruit, et
+        // l'unité vient d'`Intl` plutôt que d'un « min » recollé à la main —
+        // celui-ci partait en français dans les six langues, sur le seul
+        // message que le produit envoie pendant qu'on joue.
         const minutes = Math.max(1, Math.round((dureeSec ?? 0) / 60));
         const details = [
           score.champion,
           `${score.kills}/${score.deaths}/${score.assists}`,
-          `${minutes} min`,
+          formaterDuree(minutes * 60, etiquette),
         ].filter(Boolean).join(" · ");
         notifierSysteme(t.issueIllisible, t.issueIllisibleCorps(details), "wow-partie");
         return;
