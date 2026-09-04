@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { PartageSeance } from "@/components/PartageSeance";
-import { duree, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
+import { aChronometrer, duree, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -9,7 +9,9 @@ import { jourLocal } from "@/lib/serie";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
-import { formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId } from "@/lib/exercices";
+import {
+  formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId,
+} from "@/lib/exercices";
 import type { DettePourEcran } from "@/lib/contexteConnecte";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { notifierSysteme } from "@/lib/notifier";
@@ -120,6 +122,17 @@ export function CompteurDette() {
     : [];
 
   /**
+   * Y a-t-il quelque chose à CHRONOMÉTRER ?
+   *
+   * Depuis que la dette monte aussi pour les pompes, elle peut n'être faite
+   * que de répétitions — et un décompte de secondes n'a alors aucun sens : on
+   * fait ses trente pompes et on le dit. Le chrono reste dès qu'un exercice au
+   * temps est concerné, y compris mélangé à des pompes : c'est cette part-là
+   * qui demande qu'on réunisse quelques minutes, et c'est elle qui commande.
+   */
+  const aDuTemps = aChronometrer(lignesDette);
+
+  /**
    * Renvoi de ce qui attend : au chargement, et dès que le réseau revient.
    *
    * `online` n'est pas fiable seul — il se déclenche sur une connexion au
@@ -205,7 +218,7 @@ export function CompteurDette() {
 
   // Décompte : il s'arrête seul à zéro, l'effort est alors entièrement payé.
   useEffect(() => {
-    if (!chronoOuvert || enPause || fini) { arreterTick(); return; }
+    if (!chronoOuvert || !aDuTemps || enPause || fini) { arreterTick(); return; }
     tickRef.current = setInterval(() => {
       setRestantSec((r) => {
         if (r <= 1) { setFini(true); return 0; }
@@ -213,7 +226,7 @@ export function CompteurDette() {
       });
     }, 1000);
     return arreterTick;
-  }, [chronoOuvert, enPause, fini]);
+  }, [chronoOuvert, aDuTemps, enPause, fini]);
 
   /** Acquitte la part réellement faite, puis referme. */
   /**
@@ -294,6 +307,7 @@ export function CompteurDette() {
   };
 
   const lignes = lignesDette;
+
 
   // Rien en attente, ou page publique : la pastille ne s'affiche pas.
   if (surPagePubliqueRef.current) return null;
@@ -398,7 +412,7 @@ export function CompteurDette() {
         </div>
 
         <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilAtteint ? "var(--ember)" : "var(--faint)" }}>
-          {seuilAtteint ? t.detteFaireBtn : t.detteSeuil(duree(dette.seuilSec))}
+          {seuilAtteint ? (aDuTemps ? t.detteFaireBtn : t.detteFaitBtn) : t.detteSeuil(duree(dette.seuilSec))}
         </div>
       </button>
 
@@ -492,35 +506,62 @@ export function CompteurDette() {
             </div>
           )}
 
-          <div>
-            <div
-              className="mono-num font-bold"
-              style={{
-                fontSize: "clamp(3rem, 18vw, 4.5rem)", lineHeight: 1,
-                color: fini ? "var(--victory)" : "#ECEFF4",
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {horloge(restantSec)}
-            </div>
-            <div className="text-xs mt-2" style={{ color: "var(--faint)" }}>
-              {t.detteChronoRestant}
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            {!fini && (
-              <button
-                className="py-2 px-4 rounded text-sm flex-1"
-                style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
-                onClick={() => setEnPause((p) => !p)}
+          {aDuTemps && (
+            <div>
+              <div
+                className="mono-num font-bold"
+                style={{
+                  fontSize: "clamp(3rem, 18vw, 4.5rem)", lineHeight: 1,
+                  color: fini ? "var(--victory)" : "#ECEFF4",
+                  fontVariantNumeric: "tabular-nums",
+                }}
               >
-                {enPause ? t.detteChronoReprendre : t.detteChronoPause}
-              </button>
+                {horloge(restantSec)}
+              </div>
+              <div className="text-xs mt-2" style={{ color: "var(--faint)" }}>
+                {t.detteChronoRestant}
+              </div>
+            </div>
+          )}
+
+          {/*
+            Deux formes, et la différence n'est pas cosmétique. Avec un chrono,
+            le bouton principal n'acquitte que ce qui a RÉELLEMENT été fait —
+            d'où `cloturer(fini)`, qui paie tout à zéro et le prorata sinon.
+            Sans chrono, il n'y a rien à mesurer : on a fait ses pompes ou on
+            ne les a pas faites, donc `cloturer(true)` et un second bouton pour
+            remettre à plus tard sans rien acquitter.
+          */}
+          <div className="flex gap-2">
+            {aDuTemps ? (
+              <>
+                {!fini && (
+                  <button
+                    className="py-2 px-4 rounded text-sm flex-1"
+                    style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                    onClick={() => setEnPause((p) => !p)}
+                  >
+                    {enPause ? t.detteChronoReprendre : t.detteChronoPause}
+                  </button>
+                )}
+                <button className="lol-btn flex-1" onClick={() => cloturer(fini)}>
+                  {fini ? t.detteChronoTermine : t.detteChronoAbandon}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="py-2 px-4 rounded text-sm flex-1"
+                  style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                  onClick={() => setChronoOuvert(false)}
+                >
+                  {t.detteChronoAbandon}
+                </button>
+                <button className="lol-btn flex-1" onClick={() => cloturer(true)}>
+                  {t.detteChronoTermine}
+                </button>
+              </>
             )}
-            <button className="lol-btn flex-1" onClick={() => cloturer(fini)}>
-              {fini ? t.detteChronoTermine : t.detteChronoAbandon}
-            </button>
           </div>
         </div>
       </div>

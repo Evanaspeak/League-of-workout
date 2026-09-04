@@ -769,7 +769,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2115 tests unitaires, 191 suites. Base et session doublées : aucune dépendance à
+2119 tests unitaires, 191 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -794,7 +794,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 212 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 213 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -2286,6 +2286,71 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 « le code ne s'affiche pas » — le troisième déguisement de cette panne-là
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
+
+### Avec les pompes, le produit n'enregistrait jamais rien
+Trouvé en poursuivant une question du propriétaire qui partait d'une prémisse
+fausse — « pourquoi le cumul ne court que depuis le 2 septembre ? ». Il court
+depuis toujours : le cumul lit `jour <= aujourd'hui`, sans borne basse. S'il ne
+montrait que le 2 septembre, c'est qu'il n'y avait **rien** avant.
+
+Et la raison est structurelle. Une ligne `Paiement` n'est écrite que par un seul
+chemin, `PATCH /api/dette`, le compteur de dette. Or la dette ne s'accumulait
+que pour les exercices comptés en TEMPS (`pointsEnTemps`), et les pompes sont en
+répétitions. Donc, pour qui joue avec l'exercice par défaut : la dette ne montait
+jamais, la pastille n'apparaissait pas, le compteur était inatteignable, et
+**aucun paiement n'était jamais enregistré**. Classement, mur des records et
+niveau de compte restaient vides par construction, quoi qu'on joue. Neuf cent
+soixante parties, deux points payés.
+
+**Le raisonnement d'origine était juste et la conclusion ne l'était pas.** Il
+est écrit dans le code : « des pompes se font tout de suite après la partie ;
+un round de boxe n'a d'intérêt qu'une fois quelques minutes réunies ». C'est
+vrai. Mais on en avait tiré « donc on n'enregistre rien », et c'est là que la
+boucle du produit ne se refermait pas — celle qui fait tout son objet.
+
+**Deux filtres se tenaient l'un l'autre**, et il fallait lever les deux :
+l'accumulation (`pointsEnTemps` dans `/api/games`) et l'affichage
+(`exercicesEnTemps` dans `reponseDette`). Chacun seul aurait donné un état
+incohérent — une dette qui monte sans s'afficher, ou une pastille qui montre
+zéro.
+
+**Ce qui reste du raisonnement est désormais une affaire d'ÉCRAN.** Le registre
+enregistre les deux ; c'est la fenêtre qui diffère. Une dette faite uniquement
+de répétitions n'affiche aucun chrono et se solde d'une tape ; dès qu'un
+exercice au temps est concerné, y compris mélangé à des pompes, le décompte
+revient — c'est cette part-là qui demande qu'on réunisse quelques minutes, et
+c'est elle qui commande. La décision vit dans `aChronometrer`, hors du
+composant, parce qu'elle gouverne DEUX choses qu'on ne veut pas voir diverger :
+ce que la fenêtre montre, et si un `setInterval` démarre.
+
+**Le rattrapage, et pourquoi il est idempotent par construction.** Décision du
+propriétaire : ce qui a déjà été enregistré a été fait. La migration écrit donc
+un paiement par partie, daté du JOUR DE LA PARTIE — pas d'aujourd'hui, sans quoi
+une seule journée porterait des mois d'effort et le mur des records n'aurait
+plus de sens. Elle ne rattrape QUE la part non comptée en temps : la part en
+temps avait déjà son chemin, et la reprendre la paierait deux fois. Le jeton
+dérive de l'identifiant de la partie et il est unique en base, donc un second
+passage ne peut rien insérer — éprouvé sur une vraie base : un passage insère,
+le second rend zéro.
+
+**Le seul trou connu, et il est petit** : une partie enregistrée entre le moment
+où la migration passe et celui où le nouveau code sert n'est ni rattrapée ni
+accumulée. Ça vaut quelques minutes de déploiement, et c'est écrit plutôt que
+découvert plus tard.
+
+**Deux tests tenaient l'ancienne règle, et ils l'ont tenue jusqu'au bout** —
+« ne retient que les exercices comptés en temps » et « n'ajoute au compteur que
+la part comptée en temps ». Ils sont tombés tous les deux, ce qui est exactement
+leur travail : une règle de fond ne change pas en silence. Ils disent maintenant
+la nouvelle, avec l'ancienne écrite au-dessus et la raison du changement.
+
+**Et le parcours qui manquait était celui du cas par défaut.** Tous les
+parcours qui touchaient à la dette commençaient par choisir la BOXE, avec un
+commentaire expliquant pourquoi. C'était exact, c'était documenté, et personne
+n'a demandé ce qui se passait pour les autres. `e2e/dette-pompes.spec.ts` suit
+le chemin entier sans toucher aux réglages, et son dernier contrôle est le seul
+qui compte : une ligne en base. Sabotage — le défaut d'origine remis à
+l'identique — le parcours tombe.
 
 ### Une photo de l'écran a trouvé deux défauts que rien ne regardait
 Le propriétaire a envoyé une capture pour trancher d'où venait un « 2 » qu'il
