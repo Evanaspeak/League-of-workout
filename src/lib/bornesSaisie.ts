@@ -16,6 +16,18 @@
 export const DUREE_MAX_SEC = 36 * 3600;
 
 /**
+ * Une quantité d'exercice acquittée d'un coup, dans son unité.
+ *
+ * Elle sert au compteur du « convertir en », où l'on tape un nombre à la main.
+ * Cent mille couvre très large dans les trois unités du catalogue — cent mille
+ * pompes, cent mille secondes de gainage, cent mille kilomètres — et c'est
+ * exactement ce qu'on veut : attraper la frappe impossible, jamais discuter la
+ * performance. Sans borne, `1e308` passerait, la proportion serait plafonnée à
+ * un, et la dette entière disparaîtrait — le défaut déjà corrigé sur la durée.
+ */
+export const QUANTITE_MAX = 100_000;
+
+/**
  * Éliminations, morts, assistances.
  *
  * Le record connu sur une partie de League tourne autour de la centaine ;

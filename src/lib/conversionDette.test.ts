@@ -1,4 +1,4 @@
-import { convertirDette, conversionsPossibles } from "@/lib/conversionDette";
+import { convertirDette, conversionsPossibles, conversionsProposees, partPayeeQuantite } from "@/lib/conversionDette";
 import { EXERCICES, quantite, type ExerciceId } from "@/lib/exercices";
 
 describe("convertir sa dette dans un autre exercice", () => {
@@ -60,5 +60,64 @@ describe("convertir sa dette dans un autre exercice", () => {
     const offerts = conversionsPossibles(["boxe", "pompes"]);
     expect(offerts).toContain("boxe");
     expect(offerts.length).toBe(Object.keys(EXERCICES).length);
+  });
+});
+
+describe("ce qu'une quantité faite paie", () => {
+  it("paie au prorata de la quantité convertie", () => {
+    // 100 points valent 100 pompes ; 40 pompes en paient 40 %.
+    expect(partPayeeQuantite(40, 100, "pompes")).toBeCloseTo(0.4, 6);
+  });
+
+  it("plafonne à un : avoir fait plus n'est pas une erreur", () => {
+    expect(partPayeeQuantite(500, 100, "pompes")).toBe(1);
+  });
+
+  it("divise par la quantité PLANCHÉE, jamais par la brute", () => {
+    /**
+     * La raison d'être de cette fonction. Une dette d'un point convertie en
+     * course rend zéro par arrondi — le pas est de cent mètres — et
+     * `convertirDette` la relève à un pas. Diviser par la valeur brute donnerait
+     * `1 / 0`, donc l'infini, donc une dette soldée par un mètre parcouru.
+     */
+    const brut = quantite(1, "course");
+    expect(brut).toBe(0);
+    expect(Number.isFinite(partPayeeQuantite(0.1, 1, "course"))).toBe(true);
+    expect(partPayeeQuantite(0.1, 1, "course")).toBe(1);
+  });
+
+  it("ne paie rien pour zéro fait, et tout pour une dette nulle", () => {
+    expect(partPayeeQuantite(0, 100, "pompes")).toBe(0);
+    // Rien à devoir : la part est entière, et le décrément portera sur zéro.
+    expect(partPayeeQuantite(0, 0, "pompes")).toBe(1);
+  });
+
+  it("traite une quantité aberrante comme zéro plutôt que comme tout", () => {
+    // Le sens de l'erreur compte : dans le doute on ne paie RIEN, sinon une
+    // valeur illisible effacerait une dette que personne n'a acquittée.
+    expect(partPayeeQuantite(Number.NaN, 100, "pompes")).toBe(0);
+    expect(partPayeeQuantite(-50, 100, "pompes")).toBe(0);
+  });
+});
+
+describe("ce qu'on propose de convertir", () => {
+  it("n'offre jamais un exercice compté au temps", () => {
+    /**
+     * Limite de portée écrite : le bouton n'ouvrirait rien de construit. Le
+     * besoin va dans l'autre sens — échapper à une dette au temps.
+     */
+    for (const e of conversionsProposees(["boxe"])) {
+      expect(EXERCICES[e].unite).not.toBe("temps");
+    }
+  });
+
+  it("propose quand même quelque chose : le témoin", () => {
+    // Sans ce contrôle, un filtre qui rendrait la liste vide passerait le test
+    // précédent en n'examinant rien.
+    expect(conversionsProposees(["boxe"]).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("n'offre pas l'exercice qu'on doit déjà", () => {
+    expect(conversionsProposees(["pompes"])).not.toContain("pompes");
   });
 });

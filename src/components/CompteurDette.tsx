@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PartageSeance } from "@/components/PartageSeance";
 import { aChronometrer, duree, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
+import { conversionsProposees, surLePas } from "@/lib/conversionDette";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -10,7 +11,7 @@ import { useChemin } from "@/lib/i18n/useChemin";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
-  formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId,
+  EXERCICES, formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId,
 } from "@/lib/exercices";
 import type { DettePourEcran } from "@/lib/contexteConnecte";
 import { estPagePublique } from "@/lib/pagesPubliques";
@@ -60,6 +61,15 @@ export function CompteurDette() {
    * dette qu'on doit encore.
    */
   usePiegeFocus(chronoRef, { actif: chronoOuvert, onEchap: () => setChronoOuvert(false) });
+  /**
+   * L'exercice vers lequel on convertit, et ce qu'on a fait dedans.
+   *
+   * Ils vivent ici et nulle part ailleurs : convertir vaut pour CE paiement,
+   * jamais pour le compte. Une fenêtre qui réécrirait en silence une
+   * préférence durable est le défaut que ce projet corrige en boucle.
+   */
+  const [conversion, setConversion] = useState<ExerciceId | null>(null);
+  const [faits, setFaits] = useState(0);
   const [restantSec, setRestantSec] = useState(0);
   const [enPause, setEnPause] = useState(false);
   const [fini, setFini] = useState(false);
@@ -238,8 +248,17 @@ export function CompteurDette() {
    */
   const [partage, setPartage] = useState<number | null>(null);
 
-  const cloturer = async (toutFait: boolean) => {
-    const secondesFaites = Math.max(0, totalRef.current - restantSec);
+  /**
+   * Le SEUL chemin de paiement, quelle que soit la forme de la charge.
+   *
+   * Trois formes y passent — tout, un temps, une quantité — et quatre règles
+   * s'y appliquent qui ont chacune leur raison écrite : la file hors ligne, le
+   * rejeu d'un 500 ou d'un 401, la proposition de partage, et le jour local.
+   * Écrire un second `cloturer` pour le compteur aurait recopié les quatre, et
+   * c'est le motif que ce projet paie en boucle — ce n'est pas la copie qu'on
+   * remarque, c'est qu'une correction n'en répare qu'une moitié.
+   */
+  const payer = async (charge: Record<string, unknown>) => {
     try {
       const res = await fetch("/api/dette", {
         method: "PATCH",
@@ -247,10 +266,7 @@ export function CompteurDette() {
         // Le jour part d'ici : le serveur ne connaît que l'heure UTC, et la
         // série d'un paiement fait à une heure du matin basculerait sur la
         // veille ou le lendemain selon le fuseau de la personne.
-        body: JSON.stringify({
-          ...(toutFait ? { tout: true } : { secondes: secondesFaites }),
-          jour: jourLocal(),
-        }),
+        body: JSON.stringify({ ...charge, jour: jourLocal() }),
       });
       if (res.ok) {
         contexte.poserDette(await res.json());
@@ -287,8 +303,7 @@ export function CompteurDette() {
          * Mêmes règles que la file : 401 et 5xx se rejouent, le reste non —
          * un 4xx ne passera jamais, et le garder bloquerait la file derrière.
          */
-        enfiler(toutFait ? { tout: true, jour: jourLocal() }
-                         : { secondes: secondesFaites, jour: jourLocal() });
+        enfiler({ ...charge, jour: jourLocal() });
       }
     } catch {
       /**
@@ -298,13 +313,19 @@ export function CompteurDette() {
        * restait entière. C'est la pire façon de se tromper : celui qui vient
        * de faire ses pompes en conclut que l'application ne marche pas.
        */
-      enfiler(toutFait ? { tout: true, jour: jourLocal() }
-                       : { secondes: secondesFaites, jour: jourLocal() });
+      enfiler({ ...charge, jour: jourLocal() });
     }
     setChronoOuvert(false);
     setFini(false);
+    setConversion(null);
+    setFaits(0);
     notifieRef.current = false;
   };
+
+  /** Le chrono : tout à zéro, le prorata des secondes faites sinon. */
+  const cloturer = (toutFait: boolean) =>
+    payer(toutFait ? { tout: true }
+                   : { secondes: Math.max(0, totalRef.current - restantSec) });
 
   const lignes = lignesDette;
 
@@ -525,6 +546,112 @@ export function CompteurDette() {
           )}
 
           {/*
+            « Convertir en », et le compteur qui va avec.
+            ---------------------------------------------------------------
+            Demandé par le propriétaire, en deux temps. D'abord le bouton :
+            « il faudrait un bouton convertir en quand on clique sur le rappel
+            de la boxe ». Puis la forme du contrôle : « si on sélectionne les
+            pompes, on met un cliqueur qu'on peut éditer manuellement aussi
+            pour dire le nombre de pompes qu'on a pu faire, si on convertit
+            10 min de boxe ça peut faire beaucoup de pompes à faire en une
+            fois ».
+
+            C'est la deuxième phrase qui décide de tout : la quantité convertie
+            peut être hors de portée d'une seule série, donc le contrôle doit
+            accepter un paiement PARTIEL — exactement ce que le chrono fait
+            avec les secondes. Un simple « c'est fait » mentirait dans les deux
+            sens : il paierait tout pour qui n'a fait que la moitié, et il
+            n'offrirait rien à qui a fait la moitié.
+
+            Le cliqueur ET la saisie, pas l'un ou l'autre : on tape sur le plus
+            pendant la série, et on corrige à la main quand on a compté dans sa
+            tête.
+          */}
+          {!conversion && conversionsProposees(dette?.exercices ?? []).length > 0 && (
+            <div>
+              <div className="text-xs mb-2" style={{ color: "var(--faint)" }}>
+                {t.detteConvertirEn}
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {conversionsProposees(dette?.exercices ?? []).map((e) => (
+                  <button
+                    key={e}
+                    className="py-2 px-3 rounded text-sm"
+                    style={{
+                      background: "rgba(152,162,176,0.1)", color: "var(--muted)",
+                      border: "1px solid rgba(152,162,176,0.2)",
+                    }}
+                    onClick={() => { setConversion(e); setFaits(0); }}
+                  >
+                    {nomsExo[e]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {conversion && (
+            <div>
+              <div className="text-xs mb-1" style={{ color: "var(--faint)" }}>
+                {t.detteConvertiObjectif(
+                  formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion),
+                  nomsExo[conversion],
+                )}
+              </div>
+              <div className="flex items-center justify-center gap-3 my-2">
+                <button
+                  className="py-2 px-4 rounded text-lg"
+                  aria-label={t.detteRetirerUn}
+                  style={{
+                    background: "rgba(152,162,176,0.1)", color: "var(--muted)",
+                    border: "1px solid rgba(152,162,176,0.2)", minWidth: 52,
+                  }}
+                  onClick={() => setFaits((n) => Math.max(0, surLePas(n - EXERCICES[conversion].pas, conversion)))}
+                >
+                  −
+                </button>
+                {/*
+                  Le nombre EST le champ : un chiffre affiché à côté d'un champ
+                  de saisie fait deux vérités à l'écran, et c'est le défaut déjà
+                  payé sur la pastille et le décompte. On tape dessus, on
+                  corrige, c'est le même objet.
+                */}
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step={EXERCICES[conversion].pas}
+                  value={faits}
+                  aria-label={t.detteFaitsLabel}
+                  onChange={(ev) => {
+                    const v = Number(ev.target.value);
+                    // Dans le doute on ne crédite RIEN : une saisie illisible
+                    // qui vaudrait « tout » effacerait une dette non payée.
+                    setFaits(Number.isFinite(v) && v > 0 ? Math.min(v, 100_000) : 0);
+                  }}
+                  className="mono-num font-bold text-center"
+                  style={{
+                    fontSize: "clamp(2.2rem, 12vw, 3.2rem)", lineHeight: 1,
+                    width: "4.5em", background: "transparent", border: "none",
+                    color: "#ECEFF4", fontVariantNumeric: "tabular-nums",
+                  }}
+                />
+                <button
+                  className="py-2 px-4 rounded text-lg"
+                  aria-label={t.detteAjouterUn}
+                  style={{
+                    background: "rgba(152,162,176,0.1)", color: "var(--muted)",
+                    border: "1px solid rgba(152,162,176,0.2)", minWidth: 52,
+                  }}
+                  onClick={() => setFaits((n) => surLePas(n + EXERCICES[conversion].pas, conversion))}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/*
             Deux formes, et la différence n'est pas cosmétique. Avec un chrono,
             le bouton principal n'acquitte que ce qui a RÉELLEMENT été fait —
             d'où `cloturer(fini)`, qui paie tout à zéro et le prorata sinon.
@@ -533,7 +660,32 @@ export function CompteurDette() {
             remettre à plus tard sans rien acquitter.
           */}
           <div className="flex gap-2">
-            {aDuTemps ? (
+            {conversion ? (
+              /*
+                En conversion, le bouton principal paie ce qu'on a COMPTÉ, pas
+                la dette entière : c'est tout l'objet du compteur. Zéro fait
+                n'est pas une erreur — c'est un abandon, comme un chrono qu'on
+                arrête tout de suite — mais on ne va pas l'envoyer au serveur
+                pour rien : on referme la conversion et on ne touche à rien.
+              */
+              <>
+                <button
+                  className="py-2 px-4 rounded text-sm flex-1"
+                  style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                  onClick={() => { setConversion(null); setFaits(0); }}
+                >
+                  {t.detteConvertiAnnuler}
+                </button>
+                <button
+                  className="lol-btn flex-1"
+                  onClick={() => (faits > 0
+                    ? payer({ quantite: faits, exercice: conversion })
+                    : (setConversion(null), setFaits(0)))}
+                >
+                  {t.detteChronoTermine}
+                </button>
+              </>
+            ) : aDuTemps ? (
               <>
                 {!fini && (
                   <button

@@ -244,6 +244,10 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Invalid duration", es: "Duración no válida", de: "Ungültige Dauer",
     zh: "时长不正确", ja: "時間が正しくありません",
   },
+  "Quantité invalide": {
+    en: "Invalid amount", es: "Cantidad no válida", de: "Ungültige Menge",
+    zh: "数量不正确", ja: "数量が正しくありません",
+  },
   "Date manquante": {
     en: "Missing date", es: "Falta la fecha", de: "Datum fehlt",
     zh: "缺少日期", ja: "日付がありません",

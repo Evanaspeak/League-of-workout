@@ -139,6 +139,64 @@ describe("PATCH /api/dette", () => {
     expect((await corps(r) as { points: number }).points).toBe(0);
   });
 
+  it("paie au COMPTEUR ce qu'on a fait dans un autre exercice", async () => {
+    /**
+     * Le « convertir en » : on doit cent points, affichés en boxe, et on fait
+     * des pompes à la place. Un point vaut une pompe, donc la dette entière
+     * fait cent pompes, et quarante en paient quarante pour cent.
+     *
+     * C'est le geste que le propriétaire a demandé : « si on convertit 10 min
+     * de boxe ça peut faire beaucoup de pompes à faire en une fois » — on n'en
+     * fait pas forcément le compte, et ce qu'on a fait doit compter.
+     */
+    const r = await patch({ quantite: 40, exercice: "pompes" });
+    expect(user.update.mock.calls[0][0].data.dettePointsDus).toEqual({ decrement: 40 });
+    expect((await corps(r) as { points: number }).points).toBe(60);
+  });
+
+  it("solde la dette quand on a fait plus que le compte", async () => {
+    // Avoir fait mieux que ce qu'on devait est légitime ; la dette ne devient
+    // pas négative pour autant.
+    const r = await patch({ quantite: 500, exercice: "pompes" });
+    expect((await corps(r) as { points: number }).points).toBe(0);
+  });
+
+  it("refuse une quantité sans exercice : « 40 » ne veut rien dire", async () => {
+    /**
+     * Quarante pompes, quarante secondes ou quarante kilomètres ne coûtent pas
+     * le même prix. Retomber sur un exercice par défaut paierait au mauvais
+     * tarif, en silence — c'est la règle déjà posée pour les réglages : une
+     * valeur qu'on ne comprend pas se refuse, elle ne se convertit pas.
+     */
+    const r = await patch({ quantite: 40 });
+    expect(r.status).toBe(400);
+    expect(user.update).not.toHaveBeenCalled();
+  });
+
+  it("refuse un exercice qui n'existe pas", async () => {
+    const r = await patch({ quantite: 40, exercice: "trampoline" });
+    expect(r.status).toBe(400);
+    expect(user.update).not.toHaveBeenCalled();
+  });
+
+  it("refuse une quantité absurde, et ne solde rien", async () => {
+    /**
+     * Sans borne, `1e308` passerait, la proportion serait plafonnée à un, et
+     * cent points disparaîtraient d'une frappe. C'est le défaut déjà corrigé
+     * sur la durée, sous sa forme suivante.
+     */
+    /**
+     * `Number.NaN` figure ici sous la forme que le RÉSEAU en fait :
+     * `JSON.stringify(NaN)` rend `null`, et `Number(null)` vaut zéro. Écrit
+     * autrement, ce cas n'éprouverait pas ce qui arrive vraiment.
+     */
+    for (const q of [1e308, -5, null, "beaucoup", [], {}]) {
+      const r = await patch({ quantite: q, exercice: "pompes" });
+      expect(r.status).toBe(400);
+    }
+    expect(user.update).not.toHaveBeenCalled();
+  });
+
   it("ne crédite rien pour un temps absurde, et le dit", async () => {
     /**
      * Le refus a remplacé le silence.

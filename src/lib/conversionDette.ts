@@ -1,4 +1,4 @@
-import { EXERCICES, quantite, type ExerciceId, type RatiosExercices } from "@/lib/exercices";
+import { EXERCICES, estEnTemps, quantite, type ExerciceId, type RatiosExercices } from "@/lib/exercices";
 
 /**
  * Voir sa dette dans un autre exercice, et la payer ainsi.
@@ -71,4 +71,73 @@ export function conversionsPossibles(dus: ExerciceId[]): ExerciceId[] {
   const tous = Object.keys(EXERCICES) as ExerciceId[];
   if (dus.length === 1) return tous.filter((e) => e !== dus[0]);
   return tous;
+}
+
+/**
+ * Ce qu'une quantité FAITE paie de la dette, entre 0 et 1.
+ *
+ * Le pendant du chrono, et il existe pour la raison que le propriétaire a
+ * donnée : « si on convertit 10 min de boxe ça peut faire beaucoup de pompes à
+ * faire en une fois ». On ne les fait donc pas toutes, et ce qu'on a fait doit
+ * compter — exactement comme un décompte interrompu n'acquitte que les
+ * secondes faites.
+ *
+ * **Le dénominateur est la quantité CONVERTIE, plancher compris.** C'est la
+ * seule subtilité, et elle est la raison d'être de cette fonction : `quantite`
+ * peut rendre zéro sur une petite dette, et `convertirDette` la relève à un
+ * pas pour ne pas afficher « tu ne dois rien ». Diviser par la valeur brute
+ * donnerait une division par zéro ; diviser par deux valeurs différentes de
+ * part et d'autre de l'écran donnerait deux vérités — c'est le défaut déjà
+ * payé où la pastille et le décompte annonçaient deux durées pour la même
+ * dette, parce que l'un convertissait au navigateur et l'autre au serveur.
+ *
+ * Plafonnée à un : avoir fait plus que ce qu'on devait est un cas légitime, et
+ * la dette ne devient pas négative pour autant.
+ */
+export function partPayeeQuantite(
+  faite: number,
+  points: number,
+  exercice: ExerciceId,
+  ratios?: RatiosExercices | null,
+): number {
+  const due = convertirDette(points, exercice, ratios).quantite;
+  if (!(due > 0)) return 1;
+  const f = Number.isFinite(faite) ? Math.max(0, faite) : 0;
+  return Math.min(1, f / due);
+}
+
+/**
+ * Ce qu'on PROPOSE réellement à l'écran, parmi ce qui est possible.
+ *
+ * Les exercices comptés en TEMPS sont écartés, et c'est une limite de portée
+ * assumée plutôt qu'un oubli. Le besoin exprimé va dans l'autre sens — « je
+ * dois dix minutes de boxe, je n'ai pas la place, je ferais bien des pompes » —
+ * et convertir vers un second exercice au temps demanderait de recibler le
+ * chrono sur une autre durée : c'est un autre écran, pas un bouton de plus.
+ *
+ * Proposer le bouton sans avoir construit ce qu'il ouvre serait pire que ne
+ * pas le proposer : on clique, et on tombe sur un décompte qui parle de
+ * l'exercice qu'on voulait justement éviter.
+ */
+export function conversionsProposees(dus: ExerciceId[]): ExerciceId[] {
+  return conversionsPossibles(dus).filter((e) => !estEnTemps(e));
+}
+
+/**
+ * Le nombre suivant sur le pas de l'exercice, sans traîner de flottant.
+ *
+ * Le compteur avance d'un pas par tape — une pompe, cent mètres. Additionner
+ * naïvement laisse la trace que `quantite` évite déjà de son côté : trois fois
+ * 0,1 vaut 0,30000000000000004, et le compteur afficherait ça en gros au
+ * milieu de la fenêtre. On recale sur le nombre de décimales du pas, comme là
+ * -bas, plutôt que d'écrire une deuxième arithmétique qui divergerait.
+ *
+ * Jamais négatif : on ne peut pas avoir fait moins que rien.
+ */
+export function surLePas(valeur: number, exercice: ExerciceId): number {
+  const pas = EXERCICES[exercice].pas;
+  const v = Number.isFinite(valeur) ? Math.max(0, valeur) : 0;
+  if (Number.isInteger(pas)) return Math.round(v / pas) * pas;
+  const decimales = String(pas).split(".")[1]?.length ?? 1;
+  return Number((Math.round(v / pas) * pas).toFixed(decimales));
 }
