@@ -918,8 +918,8 @@ l'état, faute d'un gain qui justifie la retouche.
 
 ## Scripts de mesure
 
-Trois scripts pilotent un Chromium sur l'application lancée en local. Ils ne
-tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
+Six scripts, dont trois pilotent un Chromium sur l'application lancée en local.
+Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
 ```bash
 node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
@@ -931,7 +931,10 @@ node scripts/semer-parties.mjs   # de quoi mesurer autre chose qu'un compte vide
 ```
 
 Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
-(français par défaut) et `scripts/langue.mjs` porte la règle. Sans ça, `/cgu`
+(français par défaut) et `scripts/langue.mjs` porte la règle — le drapeau ET le
+découpage des arguments de position, qui l'écarte : posé avant l'adresse, il en
+tenait lieu, et l'outil mesurait n'importe quoi en rendant un rapport d'allure
+normale. Sans ça, `/cgu`
 répond 308 vers `/fr/cgu` et les trois premiers refusent de chronométrer une
 redirection : ils se seraient arrêtés net, ce qui est le bon comportement mais
 pas un usage. L'audit d'accessibilité, lui, n'a plus besoin de poser la langue
@@ -1094,6 +1097,51 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Un drapeau posé avant l'adresse devenait l'adresse, et le rapport avait l'air d'un rapport
+Retombé dedans pour la deuxième fois, la seconde après l'avoir écrit ici.
+`node scripts/accessibilite.mjs --langue=fr http://…` rend **quinze pages
+« injoignables »** puis une pile d'appels sur une URL invalide. La cause tient
+en un rang : `BASE` se lisait `process.argv[2]`, donc le drapeau devenait
+l'adresse.
+
+**Ce n'était pas un défaut d'un script, c'était une divergence entre quatre.**
+Trois prenaient la langue par `--langue=xx` et un la prenait NUE, en troisième
+position ; trois lisaient en plus leur adresse par le rang. C'est le motif que
+ce projet paie en boucle — une règle écrite en plusieurs exemplaires finit par
+avoir une version en retard, et c'est celle qu'on emploie le moins souvent qui
+la garde.
+
+**Et le contrôle d'atterrissage NE PEUT PAS voir ce défaut.** Il compare le
+chemin d'arrivée au chemin transformé, c'est-à-dire à lui-même : c'est déjà
+écrit ici pour `/fr/fr/dashboard`, mesuré à d'excellents chiffres sur « Cette
+adresse ne mène nulle part ». Il faut donc l'empêcher à l'écriture, pas le
+détecter à l'exécution.
+
+`positionnels(argv)` rejoint `langueDemandee` et `enLangue` dans
+`scripts/langue.mjs` : le rang se compte sur ce qui n'est pas un drapeau, et
+l'ordre des arguments cesse d'être une source d'erreur. Les quatre outils
+prennent maintenant le MÊME drapeau, où l'on veut.
+
+`src/scriptsMesure.test.ts` tient les deux règles, avec le témoin habituel — un
+dossier renommé rendrait les contrôles verts en n'ouvrant aucun fichier — et la
+seule dispense est `langue.mjs`, qui PORTE la règle. Trois sabotages, trois
+échecs.
+
+**Ce que la campagne a dit une fois l'outil réparé.** Le tableau de bord vient
+de recevoir une section au milieu de son panneau de paliers, et le journal dit
+depuis le mur des records que toute section ajoutée au milieu se paie en temps
+d'affichage. Mesurée sur un compte à soixante parties et quatre cent quatre-vingts
+points payés : **LCP 228 ms sur poste, 1144 ms sur téléphone bridé, CLS 0,000**
+— c'est-à-dire exactement les chiffres d'avant. Le plus grand élément reste le
+bandeau d'attente Riot, ce qui confirme que la section ajoutée n'entre pas dans
+la course.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**aucune page laissée de côté** ; c'est le second chiffre qui compte, et c'est
+lui que le drapeau cassé rendait faux. La ligne du niveau de souffrance est en
+rouge (`--loss`) avec une opacité de 0,8 sur son second chiffre, ce qui est
+précisément le genre de choix qui casse un contraste sans qu'on le voie.
 
 ### Un mot juste devenu faux, et le niveau qu'il a fallu couper en deux
 Signalé par le propriétaire, en deux messages qui disent la même chose sous
@@ -5937,11 +5985,13 @@ premier écran est rendu au serveur.
 **Deux gardes ont mordu pendant cette campagne, et c'est le plus intéressant.**
 
 - L'audit d'accessibilité a d'abord rendu « 0 constat, 15 pages NON MESURÉES »
-  six fois de suite. Ce n'était pas le produit : `accessibilite.mjs` prend la
-  langue en argument NU quand les trois autres la prennent en option, et mon
-  `--langue=de` était devenu un chemin. Sans le décompte séparé des pages non
-  mesurées — posé le 23 août précisément pour ça — j'aurais publié « zéro
-  constat sur six langues » en n'ayant rien regardé du tout.
+  six fois de suite. Ce n'était pas le produit : `accessibilite.mjs` prenait
+  alors la langue en argument NU quand les trois autres la prenaient en option,
+  et mon `--langue=de` était devenu un chemin. Sans le décompte séparé des pages
+  non mesurées — posé le 23 août précisément pour ça — j'aurais publié « zéro
+  constat sur six langues » en n'ayant rien regardé du tout. *(La divergence est
+  fermée depuis le 4 septembre : les quatre outils prennent le même drapeau, et
+  `src/scriptsMesure.test.ts` refuse qu'elle revienne.)*
 - Le contrôle d'atterrissage de `performance.mjs` a refusé de chronométrer
   `/fr/dashboard` en annonçant qu'il avait abouti sur `/fr/login`. Le compte de
   mesure venait d'être effacé par la préparation de la suite navigateur, qui

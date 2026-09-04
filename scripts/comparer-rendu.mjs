@@ -10,12 +10,11 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { enLangue, langueDemandee } from "./langue.mjs";
+import { enLangue, langueDemandee, positionnels } from "./langue.mjs";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 
-const MODE = process.argv[2] ?? "avant";
-const RACINE = process.argv[3] ?? "/tmp/rendu";
+const [MODE = "avant", RACINE = "/tmp/rendu"] = positionnels(process.argv);
 const BASE = process.env.BASE_RENDU ?? "http://127.0.0.1:3311";
 const CHROMIUM = "/opt/pw-browsers/chromium";
 
