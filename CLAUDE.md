@@ -1098,6 +1098,53 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Recensement des dispenses de garde : une vingtaine de raisons, une périmée
+La dispense du simulateur — « page publique d'acquisition », factuellement
+fausse — ressemblait au premier cas d'une classe. Elle a donc été cherchée :
+toutes les listes d'exemptions du projet, chaque raison confrontée aux faits.
+
+**Le résultat est plus petit que prévu, et il vaut d'être écrit tel quel.**
+Sur une vingtaine de raisons vérifiées, une seule avait vieilli, et aucune
+autre n'était fausse.
+
+Ce qui a été vérifié, et comment :
+
+| dispense | ce qu'elle affirme | vérifié |
+|---|---|---|
+| `mail/hebdo`, `push/programme` | gardées par le secret partagé | `RAPPEL_SECRET` présent dans les deux |
+| `auth/desktop-token` | vérifie la session par `auth()` | l'appel y est |
+| `auth/desktop-complete` | efface la session et redirige | `NextResponse.redirect` vers `/login?transferred=1` |
+| `auth/forgot-code` | limitée par adresse IP et par adresse | trois occurrences du limiteur |
+| `SplashScreen` | ne pose aucune question | aucun bouton, aucun `onClick` |
+| `lib/exercices.ts` | définit les deux fonctions de durée | les deux `export function` y sont |
+| `/connexion-app` | ouverte par l'application de bureau | deux occurrences dans `desktop/src/main.js` |
+| `/recuperation/valider` | atteinte par le lien du courriel | le lien se construit dans `forgot-code/route.ts` |
+
+**La seule périmée est celle de la source de diffusion.** Elle affirmait que la
+réponse « ne porte qu'un nombre d'exercices dus et une série de jours ». Elle
+porte aussi l'état de retard et, depuis qu'on a cessé de parler français au
+public d'un stream, les libellés traduits. La dispense reste juste — le jeton
+fait office de filtre, et la politique de confidentialité promet que ce lien ne
+révèle ni le nom ni les parties, ce qui est toujours vrai. C'est sa DESCRIPTION
+qui avait vieilli, et une description périmée est ce qui fait cesser de
+vérifier.
+
+**Une fausse alerte, écartée en la mesurant.** `auth/desktop-complete` redirige
+vers `/login` NU, sans préfixe de langue — ce que `liensLocalises.test.ts`
+refuse ailleurs. Ce n'en est pas un : `/login` se RÉÉCRIT au lieu de se
+rediriger, exception écrite dans le middleware pour que les copies déjà
+installées de l'application continuent de fonctionner. Vérifier avant de
+« corriger » aura évité de casser une décision documentée, pour la deuxième
+fois de la semaine.
+
+**Ce que ça apprend au-delà du décompte.** Le cas du simulateur n'a pas été
+trouvé par ce recensement mais en OUVRANT l'écran ; et il n'a pu être fermé que
+parce que sa prémisse était mécaniquement vérifiable — une page est publique ou
+elle ne l'est pas. Les raisons qui ne se vérifient qu'à la lecture vieillissent
+sans bruit. La leçon pratique est donc d'écrire des raisons qu'une machine peut
+reprendre, et à défaut d'accepter qu'elles se relisent à la main de temps en
+temps, ce qui est ce qui vient d'être fait.
+
 ### Un titre rendu deux fois, et un reproche à la première ouverture
 Suite de la lecture d'écrans, sur la rubrique « Ton corps » — celle que je
 venais d'écrire la nuit précédente. Les deux défauts sont les miens, et aucun

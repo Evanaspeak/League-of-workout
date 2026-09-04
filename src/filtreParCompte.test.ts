@@ -35,7 +35,7 @@ const HORS_COMPTE: Record<string, string> = {
   "admin": "Le panneau d'administration agit sur les autres comptes : c'est sa raison d'être. C'est `estAdmin` qui le garde, et un autre test l'exige sur chaque route du dossier.",
   "auth": "L'inscription et la récupération n'ont pas encore de session : c'est justement ce qu'elles créent. Le limiteur par adresse et le jeton reçu par courriel y tiennent lieu de verrou.",
   "beta-access": "Même chose : la route qui ouvre un compte ne peut pas le filtrer sur un compte qui n'existe pas encore.",
-  "obs/[jeton]": "L'adresse EST le laissez-passer, et le jeton fait office de filtre. La réponse ne porte qu'un nombre d'exercices dus et une série de jours.",
+  "obs/[jeton]": "L'adresse EST le laissez-passer, et le jeton fait office de filtre. La réponse ne porte que ce que le compteur affiche : les quantités dues, la série de jours, l'état de retard, et les libellés dans la langue du compte. Ni le nom, ni les parties, ce que la politique de confidentialité promet.",
   "mail/hebdo": "Un envoi programmé parcourt tous les comptes : c'est le travail. Il est gardé par le secret partagé du déclencheur.",
   "push/programme": "Même chose pour le rappel du matin et la relance des absents.",
 };
