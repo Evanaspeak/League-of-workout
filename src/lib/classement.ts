@@ -1,3 +1,4 @@
+import { nomPublie } from "@/lib/nomAffiche";
 /**
  * Le classement entre amis, sur le volume PAYÉ.
  *
@@ -36,7 +37,9 @@ export function debutFenetre(aujourdhui: Jour, jours: number = JOURS_CLASSEMENT)
 
 export type CompteClasse = {
   id: string;
-  pseudo: string;
+  pseudo: string | null;
+  riotId?: string | null;
+  nomAffiche?: string | null;
   detteDepuis: Date | null;
   dettePointsDus: number;
 };
@@ -76,7 +79,8 @@ export function classer(
     const retard = etatRetard(c.detteDepuis, c.dettePointsDus, maintenant);
     return {
       id: c.id,
-      pseudo: c.pseudo,
+      // Le nom montré aux autres, pas celui du compte : réponse 128.
+      pseudo: nomPublie(c),
       points: Math.max(0, Math.round(points.get(c.id) ?? 0)),
       rang: 0,
       moi: c.id === moiId,

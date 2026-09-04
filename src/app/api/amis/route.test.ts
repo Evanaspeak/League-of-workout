@@ -83,14 +83,54 @@ describe("la liste", () => {
     expect(r.amis[0].id).toBe("x");
   });
 
-  it("ne publie du compte de l'autre que son identifiant et son pseudo", async () => {
-    // Une amitié donne accès à un pseudo, pas à un compte. C'est le `select`
-    // qui l'empêche : `include` publierait l'adresse électronique, le Riot ID
-    // et le jeton de diffusion de quelqu'un d'autre.
+  it("ne lit du compte de l'autre que de quoi le NOMMER", async () => {
+    // Une amitié donne accès à un nom, pas à un compte. C'est le `select` qui
+    // l'empêche : `include` publierait l'adresse électronique et le jeton de
+    // diffusion de quelqu'un d'autre.
+    //
+    // `riotId` et `nomAffiche` en font partie depuis la réponse 128 : sans eux,
+    // impossible d'appliquer le choix de celui qu'on nomme. Ils sont LUS, et
+    // c'est le contrôle suivant qui garantit qu'ils ne sortent pas.
     await GET();
     const select = db.amitie.findMany.mock.calls[0][0].select;
-    expect(select.demandeur).toEqual({ select: { id: true, pseudo: true } });
-    expect(select.receveur).toEqual({ select: { id: true, pseudo: true } });
+    const attendu = { select: { id: true, pseudo: true, riotId: true, nomAffiche: true } };
+    expect(select.demandeur).toEqual(attendu);
+    expect(select.receveur).toEqual(attendu);
+  });
+
+  it("et n'en PUBLIE que l'identifiant et le nom choisi", async () => {
+    /**
+     * Le contrôle qui compte depuis la réponse 128.
+     *
+     * La réponse était construite par `{ lien: l.id, ...autre(l) }` — un
+     * étalement, donc tout ce que le `select` ramène. Élargir le `select` pour
+     * appliquer le choix aurait donc publié le pseudo Riot de tout le monde, y
+     * compris de ceux qui viennent de demander l'inverse. C'est le défaut déjà
+     * corrigé sur le compte par `comptePublic`, un modèle plus bas.
+     */
+    db.amitie.findMany.mockResolvedValue([
+      {
+        id: "l1", etat: "acceptee", demandeurId: "moi", receveurId: "x",
+        demandeur: { id: "moi", pseudo: "Moi", riotId: "MoiLoL#EUW", nomAffiche: "pseudo" },
+        receveur: { id: "x", pseudo: "Ana", riotId: "AnaLoL#EUW", nomAffiche: "pseudo" },
+      },
+    ]);
+    const rendu = JSON.stringify(await corps(await GET()));
+    expect(rendu).toContain("Ana");
+    expect(rendu).not.toContain("AnaLoL");
+    expect(rendu).not.toContain("nomAffiche");
+  });
+
+  it("et publie le pseudo Riot de qui l'a choisi, sans son discriminant", async () => {
+    db.amitie.findMany.mockResolvedValue([
+      {
+        id: "l1", etat: "acceptee", demandeurId: "moi", receveurId: "x",
+        demandeur: { id: "moi", pseudo: "Moi", riotId: null, nomAffiche: "pseudo" },
+        receveur: { id: "x", pseudo: "Ana", riotId: "AnaLoL#EUW", nomAffiche: "riot" },
+      },
+    ]);
+    const r = await corps(await GET()) as { amis: { pseudo: string }[] };
+    expect(r.amis[0].pseudo).toBe("AnaLoL");
   });
 
   it("dit qui est propriétaire de chaque groupe", async () => {

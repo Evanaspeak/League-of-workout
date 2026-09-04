@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { jetonPlausible } from "@/lib/profilPublic";
+import { nomPublie } from "@/lib/nomAffiche";
 import { longueurSerie, meilleureSerie } from "@/lib/serie";
 import { textes } from "@/lib/i18n/textes";
 import { profilPublic as dict } from "@/lib/i18n/dictionaries/profilPublic";
@@ -39,7 +40,7 @@ export default async function PageProfilPublic(
   const compte = jetonPlausible(jeton)
     ? await prisma.user.findUnique({
         where: { jetonProfil: jeton },
-        select: { id: true, pseudo: true },
+        select: { id: true, pseudo: true, riotId: true, nomAffiche: true },
       })
     : null;
 
@@ -82,7 +83,7 @@ export default async function PageProfilPublic(
   return (
     <main className="lol-panel space-y-4" style={{ maxWidth: 560, margin: "8vh auto", padding: 24 }}>
       <h1 className="titre-page" style={{ fontSize: "1.6rem", overflowWrap: "anywhere" }}>
-        {compte.pseudo}
+        {nomPublie(compte)}
       </h1>
       <p style={{ color: "var(--steel)", maxWidth: "55ch" }}>{t.sousTitre}</p>
 

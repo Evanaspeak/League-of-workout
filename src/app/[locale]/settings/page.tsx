@@ -122,6 +122,8 @@ export default function SettingsPage() {
   /** Recevoir le bilan hebdomadaire par courriel. */
   const [bilanActif, setBilanActif] = useState(true);
   const [fantome, setFantome] = useState(false);
+  /** Le nom montré aux autres : « pseudo » ou « riot » (réponse 128). */
+  const [nomAffiche, setNomAffiche] = useState("pseudo");
   /**
    * Le lien du profil public. Nul = le profil est fermé : la PRÉSENCE du lien
    * est le réglage, et l'éteindre le révoque.
@@ -170,6 +172,7 @@ export default function SettingsPage() {
       setVariante(s.user?.variantePompes ?? null);
       setBilanActif(s.user?.bilanActif !== false);
       setFantome(s.user?.fantome === true);
+      setNomAffiche(s.user?.nomAffiche === "riot" ? "riot" : "pseudo");
       setLienProfil(typeof s.user?.jetonProfil === "string" ? s.user.jetonProfil : null);
       setPartage(s.user?.partageAmis === "detail" ? "detail" : "total");
       setPompesMax(s.user?.pompesMax ?? 0);
@@ -323,6 +326,12 @@ export default function SettingsPage() {
    * affiché avant que le serveur l'ait gardé serait le pire des deux — on le
    * colle quelque part, et il n'ouvre rien.
    */
+  const handleSaveNomAffiche = async (valeur: string) => {
+    const avant = nomAffiche;
+    setNomAffiche(valeur);
+    await enregistrerReglage({ nomAffiche: valeur }, () => setNomAffiche(avant));
+  };
+
   const handleSaveProfilPublic = async (actif: boolean) => {
     const avant = lienProfil;
     const reponse = await enregistrerReglage({ profilPublic: actif }, () => setLienProfil(avant));
@@ -681,6 +690,42 @@ export default function SettingsPage() {
                 <button
                   key={libelle}
                   onClick={() => handleSaveFantome(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    minHeight: 44,
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {libelle}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Le nom montré aux autres */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 className="titre-section">{t.nomAfficheLabel}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+            {t.nomAfficheAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {[
+              { valeur: "pseudo", libelle: t.nomAffichePseudo },
+              { valeur: "riot", libelle: t.nomAfficheRiot },
+            ].map(({ valeur, libelle }) => {
+              const actif = valeur === nomAffiche;
+              return (
+                <button
+                  key={valeur}
+                  onClick={() => handleSaveNomAffiche(valeur)}
                   aria-pressed={actif}
                   style={{
                     padding: "7px 14px",

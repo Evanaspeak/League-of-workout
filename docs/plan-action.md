@@ -126,7 +126,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 129 | Un mode fantôme : participer sans apparaître | ½ nuit |
 | [x] | 122 | Une image de partage après une grosse séance | 1 nuit |
 | [ ] | 130 | Validation par vidéo pour apparaître dans les classements | 3 nuits |
-| [ ] | 128 | Pseudo Riot ou pseudo interne, au choix | ½ nuit |
+| [x] | 128 | Pseudo Riot ou pseudo interne, au choix | ½ nuit |
 
 ### Défis, saisons, événements
 *10 à faire · 0 faits.* Même chose : tout validé, rien construit.

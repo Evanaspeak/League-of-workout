@@ -102,6 +102,7 @@ model User {
    * /**
    * /**
    * /**
+   * /**
    * Mode fantôme : participer aux classements sans y apparaître.
    * Réponse 129. Il ferme un trou que le classement a ouvert : celui-ci publie
    * le pseudo et l'état de retard à tous ses amis, et la seule façon d'en
@@ -138,6 +139,18 @@ model User {
    * l'inverse.
    */
   partageAmis String @default("total")
+
+  /**
+   * Le nom montré aux AUTRES : « pseudo » ou « riot » (réponse 128, « au
+   * choix »).
+   * Le défaut est le pseudo interne, et c'est la règle du plus fermé : le
+   * pseudo Riot relie un compte d'ici à une identité extérieure, que quelqu'un
+   * peut chercher ailleurs. Personne ne doit se mettre à le publier parce
+   * qu'on a ajouté un réglage.
+   * Sans identifiant Riot rattaché, le choix n'a rien à désigner et on retombe
+   * sur le pseudo : ne rien afficher serait pire que d'afficher l'autre nom.
+   */
+  nomAffiche String @default("pseudo")
 
   codeParrain String? @unique
   parrainId   String?

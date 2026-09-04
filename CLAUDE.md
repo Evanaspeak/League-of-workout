@@ -989,6 +989,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Pseudo Riot ou pseudo interne, et le garde qui vaut plus que le réglage
+Ligne 128, réponse « Au choix ». La question elle-même portait la raison : le
+pseudo Riot est une donnée personnelle. Il relie un compte d'ici à une identité
+qu'on peut chercher AILLEURS — historiques de parties, classements, forums —
+là où le pseudo interne ne vaut que dans cette application.
+
+**Le défaut est donc le pseudo interne**, comme pour le partage aux amis et le
+profil public. Et le repli l'est aussi : une valeur inconnue retombe sur le
+pseudo, jamais sur Riot. Un repli de réglage de confidentialité ne peut pas
+être plus permissif que ce qu'on demandait.
+
+**Sans compte Riot rattaché, on retombe sur le pseudo.** Le choix n'a alors
+rien à désigner, et ne rien afficher serait bien pire : une ligne de classement
+sans nom. Le discriminant ne s'affiche pas non plus — « Nom#EUW » se lit mal
+dans une liste, et ce qui suit le dièse ne distingue rien entre gens qui se
+connaissent.
+
+**Le réglage ne vaut que s'il vaut PARTOUT, et c'est là que le travail était.**
+Cinq surfaces publient un nom : la liste d'amis, le classement, la dette
+d'équipe, le profil d'un ami, le profil public. Un seul endroit oublié publie
+le pseudo Riot de quelqu'un qui ne l'a jamais demandé. `src/nomChoisi.test.ts`
+regarde donc le DOSSIER : tout fichier de `src/app` qui lit `pseudo` dans un
+`select` applique `nomPublie`, ou figure dans une liste de dispenses avec sa
+raison — l'administration, qui doit reconnaître les comptes, et ce qui
+s'adresse à VOUS, où le nom montré aux autres n'a rien à faire.
+
+**Le garde suit UN saut d'import**, pas davantage : une route peut confier la
+mise en forme à un module de `src/lib`, et c'est ce que font le classement et
+la dette d'équipe. Au-delà d'un saut, il ne dirait plus rien de précis.
+
+**Élargir le `select` a failli créer exactement le défaut qu'on corrigeait.**
+La liste d'amis construisait sa réponse par `{ lien: l.id, ...autre(l) }` — un
+étalement, donc tout ce que la requête ramène. Ajouter `riotId` et `nomAffiche`
+au `select` pour appliquer le choix aurait publié le pseudo Riot de TOUT LE
+MONDE, y compris de ceux qui viennent de demander l'inverse. C'est le défaut
+déjà corrigé sur le compte par `comptePublic`, un modèle plus bas et pour la
+même raison : un `{ ...ligne }` publie tout ce qu'on lui remet. Le test qui
+gardait cette réponse a mordu, et il en garde deux choses maintenant : ce que
+la requête LIT, et ce que la réponse PUBLIE.
+
+**Un sabotage est passé au vert, et c'était la troisième fois de la nuit.**
+Retirer l'appel à `nomPublie` du classement laissait le garde satisfait :
+il cherchait le mot, et la ligne d'IMPORT le contient. `nomPublie\s*\(`
+distingue les deux. C'est le même défaut que le garde du piège de focus et que
+celui de la porte des routes — **un garde qui reconnaît un import reconnaît une
+intention, pas un comportement** — et j'y suis retombé trois fois en une nuit,
+dans trois fichiers différents. Deux tests de comportement ont été ajoutés en
+plus, dans `classement.test.ts` et `detteGroupe.test.ts` : un garde structurel
+dit qu'on a appelé la fonction, pas qu'elle fait ce qu'il faut.
+
+Six sabotages, six échecs après correction.
+
 ### Trois routes en `.tsx` étaient invisibles à TOUS les gardes structurels
 Trouvé par un sabotage qui n'a rien fait tomber, ce qui est la seule façon de
 trouver ça. J'avais neutralisé le verrou de session de `/api/seance/image` —

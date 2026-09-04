@@ -144,6 +144,13 @@ const ATTENDU: Record<string, RegExp> = {
    * de dire ce qu'elle publie.
    */
   jetonProfil: /profil public/i,
+  /**
+   * Le nom montré aux autres. Il se décrit et ne s'exempte pas : c'est lui qui
+   * décide si votre pseudo Riot — une identité que n'importe qui peut chercher
+   * ailleurs — paraît devant vos amis, dans les classements et sur votre
+   * profil public.
+   */
+  nomAffiche: /nom montré aux autres|pseudo Riot ou pseudo/i,
   // Mettre un exercice de côté frôle la santé sans en être : on le décrit
   // plutôt que de l'exempter, et la politique dit qu'aucune raison médicale
   // n'est demandée.

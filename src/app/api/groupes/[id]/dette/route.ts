@@ -33,7 +33,7 @@ async function membresDuGroupe(groupeId: string, moiId: string) {
   // pour le compte qui demande.
   return prisma.user.findMany({
     where: { groupes: { some: { groupeId } } },
-    select: { id: true, pseudo: true, dettePointsDus: true, fantome: true },
+    select: { id: true, pseudo: true, riotId: true, nomAffiche: true, dettePointsDus: true, fantome: true },
   });
 }
 
