@@ -289,6 +289,22 @@ Si aucun commit `Vx` n'existe encore, commencer à V1. **Ne pas** utiliser de
 tags git (`git push --tags` échoue côté proxy) — le numéro vit dans le message
 du commit de merge.
 
+**Et fusionner n'est PAS déployer.** Huit versions ont traversé `main` dans la
+nuit du 4 septembre, CI verte, sans qu'aucune n'arrive en ligne — voir « Huit
+versions fusionnées sur `main`, aucune en ligne » au journal. Le geste qui
+l'attrape coûte trente secondes : pousser **un témoin public de la version
+qu'on vient de publier**. Pas `/fr` qui rend 200 — ça répondait 200 pendant
+toute la panne — mais la chaîne exacte que la version a changée :
+
+```bash
+curl -s https://winorworkout.com/de | grep -o "Runden"   # V428
+```
+
+Une version qui ne touche aucune page publique n'a pas de témoin, et c'est
+précisément ce qui a laissé le trou s'ouvrir. Dans ce cas, on prend le témoin
+de la dernière version qui en avait un : constater que celui-ci est encore
+absent dit que le retard dure toujours.
+
 ## Architecture fichiers clés
 
 ```
@@ -1097,6 +1113,80 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Huit versions fusionnées sur `main`, aucune en ligne
+Trouvé en vérifiant V422 à V430 en production, ce qui est le geste ordinaire de
+fin de série. Le site est en parfaite santé — `/fr` rend 200, `/api/sante`
+répond `{"ok":true,"base":"ok"}`, `/fr/dashboard` redirige vers la connexion,
+`/fr/nimportequoi` rend 404 — et **il sert une construction antérieure à
+V423.**
+
+**Deux témoins publics, indépendants, tous deux vérifiés contre le serveur
+local construit sur la branche :**
+
+| adresse | production | branche | version qui l'a changé |
+|---|---|---|---|
+| `/de/connexion-app?fournisseur=google` | « Cette page se lance » | « Diese Seite wird » | V423 |
+| `/de` | « Aktivitäten » | « Runden » | V428 |
+
+**Ce n'est pas un cache**, et c'était la première chose à écarter : les deux
+réponses reviennent en `x-vercel-cache: MISS`, `age: 0`, avec le
+`x-matched-path` de la route — un rendu neuf, pas une copie gardée. Un
+paramètre de requête ajouté pour forcer la clé ne change rien.
+
+**Le bracket, par quatre témoins publics.** `/fr` dit « parties » (V400 a
+renommé « activité »), `/fr/calculateur/overwatch` rend 200 (V402 l'a ajouté
+au catalogue) : la production est donc **entre V402 et V422**, c'est-à-dire
+entre deux et neuf heures en retard. Aucun témoin public ne vit entre les deux
+— les huit versions de la soirée qui précèdent V423 ne touchent que des écrans
+derrière la porte — donc on ne peut pas resserrer davantage d'ici.
+
+**Et l'intégration continue était VERTE.** V423, V425, V427 et V428 sont
+passées en huit minutes chacune, ce qui dit que les parcours ont réellement
+joué. V424 et V426 sont annulées, ce qui est écrit plus bas : une rafale
+n'est jugée que sur sa dernière. V429 est rouge sur le seul tronçon de
+`corps.spec.ts`, que V430 corrige. Rien là-dedans n'explique une production
+figée : la CI juge le code, elle ne déploie pas.
+
+**Ce que cette session ne peut PAS trancher, et il vaut mieux l'écrire que de
+deviner.** Deux causes produisent exactement ce qu'on observe :
+
+- les constructions Vercel échouent depuis un moment, et le dernier
+  déploiement réussi reste servi ;
+- une construction est bien produite à chaque poussée, mais l'adresse de
+  production est **épinglée** sur un déploiement plus ancien.
+
+Le tableau de bord Vercel n'est pas lisible d'ici, et **le préréglage
+canonique du middleware ferme la seule autre porte** : toute adresse en
+`.vercel.app` qui n'est pas l'hôte canonique est redirigée en 308
+(`middleware.ts`, ligne 29). Une adresse de prévisualisation ne rendrait donc
+jamais son contenu, et on ne peut pas comparer un déploiement de branche à la
+production. La règle est bonne — elle empêche d'indexer six copies du site —
+et son effet de bord est qu'on ne peut plus diagnostiquer un déploiement de
+l'extérieur.
+
+**Ce que ça apprend au-delà du cas, et c'est la troisième fois que ce projet
+le paie sous une forme ou une autre : une pastille verte ne dit pas qu'une
+correction est arrivée chez quelqu'un.** Le journal porte déjà « la durée
+avant la pastille » pour la CI, et « publier une correction et vérifier une
+correction sont deux gestes différents » pour la 404 localisée. Il manquait le
+troisième maillon : **fusionner n'est pas déployer.** Neuf corrections de
+langue écrites cette nuit, toutes éprouvées, toutes fusionnées, et aucune
+lisible par qui que ce soit.
+
+**Le geste qui l'attrape coûte trente secondes**, et il est ajouté à ce qu'on
+fait après une fusion : pousser UN témoin public de la version qu'on vient de
+publier. Pas `/fr` qui rend 200 — ça répondait 200 toute la nuit — mais la
+chaîne exacte que la version a changée. Une version qui ne touche aucune page
+publique n'a pas de témoin, et c'est précisément ce qui a laissé le trou
+s'ouvrir : les huit versions d'avant V423 étaient toutes derrière la porte.
+
+**Ce qui n'est PAS fait, et pourquoi ça part dans les questions.** Relancer un
+déploiement, dépingler une adresse de production ou lire le journal de
+construction demandent l'accès au tableau de bord Vercel, qui appartient au
+propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
+constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
+est épinglée, quelqu'un l'a fait pour une raison.
 
 ### Une phrase assemblée dans le composant, et le japonais qu'elle produisait
 Trouvé en lisant le tableau de bord en japonais. La ligne du niveau de compte
