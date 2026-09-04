@@ -1,4 +1,5 @@
 import { langueDuCompte } from "./notifications";
+import { resultat } from "./dictionaries/resultat";
 import type { Bilan } from "../bilanHebdo";
 
 /**
@@ -46,12 +47,11 @@ export type TextesBilan = {
   arret: string;
 };
 
-const TEXTES: Record<string, TextesBilan> = {
+const TEXTES: Record<string, Omit<TextesBilan, "victoire" | "defaite">> = {
   fr: {
     sujet: "Ta semaine",
     titre: (p) => `Ta semaine, ${p}`,
     parties: "Parties", effort: "Effort généré", paye: "Effort payé", jours: "Jours payés",
-    victoire: "V", defaite: "D",
     cloture: (reste) => reste
       ? "Il reste quelque chose à solder. Ça ne s'efface pas tout seul."
       : "Rien en attente. C'est rare, et ça se note.",
@@ -62,7 +62,6 @@ const TEXTES: Record<string, TextesBilan> = {
     sujet: "Your week",
     titre: (p) => `Your week, ${p}`,
     parties: "Games", effort: "Effort owed", paye: "Effort paid", jours: "Paid days",
-    victoire: "W", defaite: "L",
     cloture: (reste) => reste
       ? "Something is still outstanding. It does not clear itself."
       : "Nothing waiting. That is rare, and worth noting.",
@@ -73,7 +72,6 @@ const TEXTES: Record<string, TextesBilan> = {
     sujet: "Tu semana",
     titre: (p) => `Tu semana, ${p}`,
     parties: "Partidas", effort: "Esfuerzo generado", paye: "Esfuerzo pagado", jours: "Días pagados",
-    victoire: "V", defaite: "D",
     cloture: (reste) => reste
       ? "Queda algo por saldar. No se borra solo."
       : "Nada pendiente. Es raro, y merece anotarse.",
@@ -84,7 +82,6 @@ const TEXTES: Record<string, TextesBilan> = {
     sujet: "Deine Woche",
     titre: (p) => `Deine Woche, ${p}`,
     parties: "Runden", effort: "Angefallener Aufwand", paye: "Bezahlter Aufwand", jours: "Bezahlte Tage",
-    victoire: "S", defaite: "N",
     cloture: (reste) => reste
       ? "Es steht noch etwas offen. Von allein verschwindet das nicht."
       : "Nichts offen. Das ist selten und darf notiert werden.",
@@ -95,7 +92,6 @@ const TEXTES: Record<string, TextesBilan> = {
     sujet: "你的一周",
     titre: (p) => `${p}，这是你的一周`,
     parties: "场次", effort: "产生的量", paye: "已还的量", jours: "已还的天数",
-    victoire: "胜", defaite: "负",
     cloture: (reste) => reste
       ? "还有没还的。它不会自己消失。"
       : "没有欠着的。这不常见，值得记一笔。",
@@ -106,7 +102,6 @@ const TEXTES: Record<string, TextesBilan> = {
     sujet: "今週のまとめ",
     titre: (p) => `${p} さんの一週間`,
     parties: "試合数", effort: "発生した量", paye: "返した量", jours: "返した日数",
-    victoire: "勝", defaite: "敗",
     cloture: (reste) => reste
       ? "まだ残っています。ひとりでに消えることはありません。"
       : "残りはありません。めずらしいことなので、書いておきます。",
@@ -116,7 +111,11 @@ const TEXTES: Record<string, TextesBilan> = {
 };
 
 export function textesBilan(langue: unknown): TextesBilan {
-  return TEXTES[langueDuCompte(langue)];
+  const l = langueDuCompte(langue);
+  // Les initiales viennent du dictionnaire PARTAGÉ : le tableau de bord les
+  // affiche aussi, et deux exemplaires de deux lettres divergent au premier
+  // qui les corrige.
+  return { ...TEXTES[l], ...resultat[l as keyof typeof resultat] };
 }
 
 /** Les quatre chiffres du bilan, dans l'ordre où ils se lisent. */
