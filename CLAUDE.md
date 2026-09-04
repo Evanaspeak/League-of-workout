@@ -1095,6 +1095,82 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un mot juste devenu faux, et le niveau qu'il a fallu couper en deux
+Signalé par le propriétaire, en deux messages qui disent la même chose sous
+deux angles : « comment ça se fait que j'ai plus de 900pt d'activité et que je
+suis que niveau 5 », puis « attend mais quand tu dis activité ce n'est pas le
+nombre de pompe et de boxe ect ?! ».
+
+**Rien n'était cassé, et c'est ce qui rend le cas instructif.** Le mot
+« activité » désignait une PARTIE dans tout le produit — c'est ainsi qu'il avait
+été écrit, et c'était exact le jour où il l'a été. Le chiffre qu'il regardait
+sur son tableau de bord, lui, était de la DETTE, exprimée en pompes. Deux
+unités, un seul mot, et un compteur qui semblait ne pas suivre. Il a lu son
+propre écran de travers pendant des semaines, et aucun test ne pouvait le voir :
+tous les chiffres étaient justes.
+
+Deux corrections, et la seconde est de sa main.
+
+**« Activité » devient « partie », partout où le mot désigne une partie.**
+Onze clés dans six dictionnaires. Ce qui n'a PAS bougé : `cgu.ts` et
+`confidentialite.ts`, où « activité physique » veut dire l'exercice — le même
+mot, l'autre sens, et le renommer là aurait fabriqué le malentendu inverse.
+
+**Un second niveau, qui compte ce qu'il croyait compter.** Le niveau de COMPTE
+répond à « depuis combien de temps tu es là » : dix d'XP par partie, un par
+point payé. Le niveau de SOUFFRANCE répond à « qu'est-ce que tu as vraiment
+fait » : l'effort PAYÉ, et lui seul. `50 × n × (n−1)` points — cent pompes pour
+le niveau 2, mille pour le 5.
+
+Les deux se recouvrent sur l'effort payé, et c'est assumé : ce qui les sépare
+est qu'un compte qui joue sans jamais payer monte sur le premier et reste au
+plancher sur le second. C'est exactement la distinction demandée.
+
+**Rien n'est stocké**, comme pour le niveau de compte : le chiffre se recalcule
+depuis les paiements à chaque lecture, donc il ne peut pas diverger de ce qui le
+produit.
+
+**Le piège du niveau de compte se rejoue ici, en pire.** Il avait coûté une nuit
+en juillet : le module annonçait « l'effort PAYÉ » et la route lui passait
+l'effort GÉNÉRÉ, les deux chiffres portant le même nom. Ici les deux niveaux
+vivent CÔTE À CÔTE dans la même réponse, ce qui rend la confusion plus facile,
+pas moins. Sabotage fait — `source.totalPoints` à la place de
+`sourceNiveau.pointsPayes` : **aucun test unitaire ne tombe**, exactement comme
+la première fois. Le contrôle qui manquait est celui de la route, sur le double
+qui rend 9 000 générés contre 120 payés : niveau 13 contre niveau 2, onze
+paliers d'écart qu'aucun arrondi ne confond.
+
+**Une garde a été écrite, sabotée, et retirée.** J'avais posé
+`if (!Number.isFinite(points) || points <= 0) return 1;` en tête de
+`souffrancePourPoints`. La retirer ne fait tomber aucun test, et la raison est
+arithmétique : zéro donne `n = 1`, un négatif donne `NaN` par la racine,
+l'infini donne `Infinity`, et les trois retombent sur 1 par la condition
+FINALE — qui, elle, mord quand on la sabote. C'est le troisième cas de ce motif
+au journal, après le `muet = false` de la pastille et les deux boucles de
+comparaison du niveau de compte : **une ligne qu'on peut retirer sans qu'un test
+tombe ne tient rien, et elle se relit comme une garantie.**
+
+**Et le parcours ne regardait que l'API, ce qui laissait le trou qui compte.**
+Le composant déclare `souffrance?:` — optionnel, comme les deux champs voisins —
+donc un champ renommé côté route ne fait échouer ni la compilation ni une
+lecture d'API : la section disparaît du panneau, sans erreur et sans test rouge.
+C'est le défaut déjà écrit sous « un champ renommé vidait un panneau entier », et
+`contratJson.test.ts` ne l'attrape pas ici : il garde les champs de PREMIER
+niveau des routes fusionnées, et celui-ci vit sous `badges`, déclaré `unknown`.
+Le parcours recharge donc la page et lit la ligne à l'écran.
+
+Sept sabotages. Deux passés au vert — la garde morte, et la source du niveau —
+et ce sont les deux qui ont appris quelque chose. Un n'a pas compilé plutôt que
+de faire tomber un test (`false && etat.souffrance` fait perdre à TypeScript la
+restriction de `etat`) : réécrit en `niveau > 9999`, il fait tomber le parcours.
+
+**Ce que ça apprend au-delà du cas**, et c'est la troisième fois cette semaine :
+le défaut n'a été trouvé ni par un test, ni par un audit, ni par une relecture,
+mais par le propriétaire du produit qui REGARDE son écran. Les tests éprouvent
+ce que le code fait ; ils ne disent rien de ce que les mots veulent dire pour
+celui qui les lit. Un mot juste le jour où on l'écrit devient faux quand le
+produit bouge sous lui, et rien ne le signale jamais.
+
 ### Le panneau des ratios pouvait écraser la configuration par les valeurs d'origine
 Trouvé en recensant les `catch` silencieux des fichiers touchés cette semaine.
 La règle du projet est écrite depuis longtemps : une lecture au montage qui

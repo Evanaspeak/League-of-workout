@@ -24,7 +24,7 @@ export const visite = {
     detteTexte: "Ta dette s'accumule ici, partie après partie. Dès que tu dois quelque chose, une pastille te suit partout dans l'application : clique dessus quand tu es prêt. Un décompte t'accompagne pendant l'effort, et si tu t'arrêtes en route, seule la part réellement faite est déduite.",
 
     statsTitre: "Où tu en es",
-    statsTexte: "Ton nombre d'activités, ton taux de victoire et le total accumulé depuis le début. Ces trois chiffres ne se filtrent jamais : ils décrivent tout, pour que tu aies toujours un point de repère fixe.",
+    statsTexte: "Ton nombre de parties, ton taux de victoire et le total accumulé depuis le début. Ces trois chiffres ne se filtrent jamais : ils décrivent tout, pour que tu aies toujours un point de repère fixe.",
 
     graphiqueTitre: "Le chiffre qui compte vraiment",
     graphiqueTexte: "Le total ne peut que monter : il ne dit donc rien de tes progrès. Le coût MOYEN d'une partie, lui, baisse quand tu joues mieux : c'est le seul indicateur de l'application qui peut descendre. Il apparaît ici, avec les autres, dès tes premières parties.",
@@ -34,7 +34,7 @@ export const visite = {
     navHistoriqueTexte: "On y va. L'historique garde chaque partie que tu as jouée, avec son coût et le calcul qui l'explique.",
 
     historiqueTitre: "Chaque partie, son coût",
-    historiqueTexte: "Une ligne par activité : la date, le jeu, ton score, et ce que ça t'a coûté, avec le nom de l'exercice, pour ne pas confondre des pompes et des secondes de boxe. La flèche à droite déplie le calcul complet, et la croix supprime la ligne si elle est fausse.",
+    historiqueTexte: "Une ligne par partie : la date, le jeu, ton score, et ce que ça t'a coûté, avec le nom de l'exercice, pour ne pas confondre des pompes et des secondes de boxe. La flèche à droite déplie le calcul complet, et la croix supprime la ligne si elle est fausse.",
 
     // ── Réglages ──
     navReglagesTitre: "Règle-la à ta mesure",

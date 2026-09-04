@@ -15,6 +15,7 @@ import { GET as GET_SERIE } from "../serie/route";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { niveauPourXp, XP_PAR_ACTIVITE } from "@/lib/niveauCompte";
+import { souffrancePourPoints } from "@/lib/niveauSouffrance";
 import { defiDuJour } from "@/lib/defiQuotidien";
 import { XP_DEFI_JOUR } from "@/lib/xpDefis";
 
@@ -116,6 +117,33 @@ describe("la progression", () => {
          * figé à 4 passerait en ne prouvant rien.
          */
         expect(niveauPourXp(57 * XP_PAR_ACTIVITE + 9000)).toBe(14);
+      });
+  });
+
+  it("le niveau de SOUFFRANCE se calcule sur le PAYÉ, jamais sur le généré", () => {
+    /**
+     * Le même piège que le niveau de compte, un cran plus loin — et il est
+     * plus facile d'y retomber ici, puisque les deux niveaux vivent
+     * maintenant côte à côte dans la même réponse. Les deux sources sont des
+     * nombres, elles se ressemblent trait pour trait, et rien dans le type ne
+     * les distingue.
+     *
+     * Ce que la souffrance mesure est l'effort FOURNI : des pompes qu'on a
+     * faites. Lui passer ce que les parties ont COÛTÉ ferait monter celui qui
+     * perd sans jamais payer, c'est-à-dire exactement le contraire de ce que
+     * la ligne veut dire.
+     */
+    return GET(requete("/api/progression?jour=2026-09-02"))
+      .then((r) => corps(r) as Promise<{ badges: { souffrance: { niveau: number } } }>)
+      .then((c) => {
+        // 120 points payés : le premier palier est à 100, le second à 300.
+        expect(c.badges.souffrance.niveau).toBe(2);
+        /**
+         * Le témoin. Les 9 000 points GÉNÉRÉS du double donneraient le niveau
+         * 13 — onze paliers d'écart, qu'aucun arrondi ne peut confondre. Sans
+         * lui, un niveau figé à 2 passerait en ne prouvant rien.
+         */
+        expect(souffrancePourPoints(9000)).toBe(13);
       });
   });
 

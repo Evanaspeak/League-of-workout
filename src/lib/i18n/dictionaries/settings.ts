@@ -85,7 +85,7 @@ export const settings = {
     rejouerIntro: "Rejouer l'intro (écran d'ouverture, accueil, visite guidée)",
     seDeconnecter: "Se déconnecter",
     exportTitre: "Tes données",
-    exportAide: "Télécharge tout ce qu'on garde sur toi, en JSON lisible : ton profil, tes réglages et l'intégralité de tes activités. Ni mot de passe ni jeton n'en sortent.",
+    exportAide: "Télécharge tout ce qu'on garde sur toi, en JSON lisible : ton profil, tes réglages et l'intégralité de tes parties. Ni mot de passe ni jeton n'en sortent.",
     exportBouton: "Télécharger mes données",
     zoneDeDanger: "Zone de danger",
     suppressionExplication: "La suppression de ton compte est définitive. Toutes tes données (profil, parties, statistiques, objectifs) seront effacées immédiatement et ne pourront pas être récupérées.",

@@ -136,3 +136,74 @@ test("un défi du jour rempli se retient une fois, et son XP revient de la base"
 
   await ctx.close();
 });
+
+test("jouer fait monter le niveau de COMPTE, payer fait monter celui de SOUFFRANCE", async ({ browser }) => {
+  /**
+   * La distinction demandée par le propriétaire, et elle vient d'un vrai
+   * malentendu : il a lu « 900 » sur son tableau de bord, cru que c'étaient
+   * ses pompes, et n'a pas compris pourquoi il restait niveau 5. Le mot
+   * « activité » désignait une PARTIE ; le chiffre qu'il regardait était de la
+   * dette, en pompes.
+   *
+   * Ce qu'aucun test unitaire ne peut voir, c'est que les deux chiffres
+   * partent de sources différentes DANS LA MÊME RÉPONSE. Un module qui
+   * calculerait bien les deux, branché sur le même nombre, passerait tous ses
+   * tests et rendrait deux fois la même chose à l'écran.
+   */
+  const { etat } = await ouvrirCompte(browser, "Souffr", { consentement: true });
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.goto("/dashboard");
+  await viderLesFenetres(page);
+
+  const jour = jourLocal();
+  const niveaux = async () => {
+    const p = await progression(page, jour) as unknown as {
+      badges: { niveau: { niveau: number }; souffrance: { niveau: number; points: number } };
+    };
+    return { compte: p.badges.niveau.niveau, souffrance: p.badges.souffrance.niveau,
+             payes: p.badges.souffrance.points };
+  };
+
+  // Un compte neuf : les deux au plancher, et rien de payé.
+  expect(await niveaux()).toEqual({ compte: 1, souffrance: 1, payes: 0 });
+
+  // Dix parties, aucune payée. Le niveau de COMPTE monte — dix parties valent
+  // cent d'XP, soit exactement le seuil du niveau 2 — et la souffrance ne
+  // bouge pas d'un pouce : on ne souffre pas de ce qu'on doit.
+  for (let i = 0; i < 10; i += 1) await partie(page, "League of Legends", "D");
+  expect(await niveaux()).toEqual({ compte: 2, souffrance: 1, payes: 0 });
+
+  /**
+   * Puis on paie tout. La dette de dix défaites dépasse largement les cent
+   * points du niveau 2 de souffrance, donc les deux montent — mais seul le
+   * second dépend de ce geste.
+   */
+  const dette = await (await page.request.get("/api/dette")).json() as { points: number };
+  expect(dette.points, "dix défaites doivent avoir créé une dette").toBeGreaterThan(100);
+  const paye = await page.request.patch("/api/dette", { data: { tout: true, jour } });
+  expect(paye.status(), await paye.text()).toBe(200);
+
+  const apres = await niveaux();
+  expect(apres.payes).toBe(dette.points);
+  expect(apres.souffrance, "payer doit faire monter la souffrance").toBeGreaterThan(1);
+
+  /**
+   * Et le chiffre doit ARRIVER À L'ÉCRAN, ce qui n'est pas la même question.
+   *
+   * Le composant déclare `souffrance?:` — optionnel, comme les deux champs
+   * voisins — donc un champ renommé côté route ne fait échouer NI la
+   * compilation NI le contrôle ci-dessus, qui lit l'API directement. La
+   * section disparaîtrait simplement du panneau, sans erreur et sans test
+   * rouge. C'est le défaut déjà écrit au journal sous « un champ renommé
+   * vidait un panneau entier », et `contratJson.test.ts` ne l'attrape pas
+   * ici : il garde les champs de PREMIER niveau des routes fusionnées, et
+   * celui-ci vit sous `badges`, déclaré `unknown`.
+   */
+  await page.reload();
+  await viderLesFenetres(page);
+  const ligne = page.getByText(new RegExp(`Niveau de souffrance\\s+${apres.souffrance}`));
+  await expect(ligne, "le niveau de souffrance doit s'afficher dans les paliers").toBeVisible();
+
+  await ctx.close();
+});
