@@ -989,6 +989,68 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne du 4 septembre : l'écran des amis sautait de 0,145
+Passée après les six versions de la nuit, sur un compte de mesure neuf. Douze
+écrans mesurés ; un seul défaut, et il est sur l'écran que je venais
+d'enrichir.
+
+| écran | LCP poste | LCP téléphone bridé | CLS |
+|---|---|---|---|
+| `/fr/dashboard` | 256 ms | 1096 ms | 0,003 |
+| `/fr/history` | 136 ms | 908 ms | 0,000 |
+| `/fr/settings` | 140 ms | 908 ms | 0,000 |
+| **`/fr/amis`** | 136 ms | **3068 ms** | **0,145** |
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues,
+**aucune page laissée de côté**. C'est le second chiffre qui compte : un
+rapport qui annonce zéro sur des pages qu'il n'a pas ouvertes est l'inverse
+d'un audit.
+
+**Un CLS de 0,145 pour un seuil de 0,1**, et la cause est une réserve qui a
+vieilli. L'écran portait depuis longtemps un bloc d'attente de 420 pixels,
+posé en s'inspirant de l'historique. Il a gagné depuis le classement, le
+parrainage, les groupes et deux onglets : la page mesure 1883 pixels, la
+réserve en tenait 420, et tout ce qui est visible sautait encore. Une réserve
+écrite comme un NOMBRE vieillit avec l'écran ; personne ne pense à la
+rouvrir quand on ajoute un panneau.
+
+Elle est remplacée par la STRUCTURE — cinq panneaux, chacun gardant à peu près
+la place du sien. Mesuré : la page d'attente passe de 900 à 1592 pixels sur
+1883, soit de 48 % à 85 % de la hauteur finale. **CLS 0,145 → 0,000.**
+
+**Puis les deux panneaux ont reçu leurs vrais textes**, et c'est ce qui compte
+le plus. Le titre du classement, sa phrase d'explication, le titre du
+parrainage et la sienne ne dépendent d'AUCUNE donnée : ils disent ce que
+l'écran fait, pas ce qu'il contient. Ce composant étant rendu au serveur avant
+d'être hydraté, ils partent dans le HTML — et le plus grand élément de la page
+cesse d'attendre `/api/amis`. Vérifié dans la réponse servie, pas dans le DOM.
+
+Le prix est un CLS qui remonte à **0,076** : les panneaux ont maintenant du
+contenu, donc leur remplacement déplace un peu. C'est sous le seuil, et
+l'échange se fait dans le bon sens — du vrai texte tout de suite contre un
+seizième de point de décalage.
+
+**Le LCP de téléphone bridé reste au-dessus, et il est NOMMÉ plutôt que
+supposé.** L'hypothèse évidente était que React remplace le paragraphe à
+l'hydratation, donc que le repeint tardif devient le nouveau plus grand
+élément — c'est le raisonnement qui avait déjà été tenu, puis démenti, sur
+l'image du bilan de saison. Éprouvé ici de la même façon : une sonde qui
+BLOQUE `/api/amis` rend 6320 ms, la même sonde qui la laisse passer rend
+6340 ms. Vingt millisecondes d'écart : **l'attente des données n'y est pour
+rien.** Ce qui reste à chercher est le poids du paquet de cet écran et ce qu'il
+occupe du fil principal ; ce n'est pas fait cette nuit, et c'est écrit comme
+tel plutôt que rangé sous une explication qui n'a pas été vérifiée.
+
+**Un piège d'outillage, à moi, et il vaut d'être noté.** J'ai lancé
+`performance.mjs http://… /fr/dashboard` — avec le préfixe de langue. Le script
+le pose LUI-MÊME (`scripts/langue.mjs`), donc il a mesuré `/fr/fr/dashboard`,
+qui rend un 404. Et **son contrôle d'atterrissage ne peut pas le voir** : il
+compare le chemin d'arrivée au chemin transformé, c'est-à-dire à lui-même. Le
+rapport annonçait de très bons chiffres sur « Cette adresse ne mène nulle
+part », ce qui est exactement le premier piège écrit pour ces outils — mesurer
+la mauvaise page — sous une forme que le garde posé pour lui ne couvre pas. Le
+chemin se passe SANS préfixe.
+
 ### Les défis du mois, et une ligne qu'on ne peut pas faire seul
 Ligne 131, réponse « en volume ET en nombre de parties » : deux objectifs
 mensuels, montrés ensemble. C'est ce qui les distingue du défi du jour, qui
