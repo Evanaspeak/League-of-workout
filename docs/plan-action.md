@@ -239,14 +239,14 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 100 | Des notifications moins fades | ½ nuit |
 
 ### Le multi-jeu et la détection
-*5 à faire · 4 faits.* 
+*4 à faire · 5 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 195 | Un journal de synchronisation dans les réglages | — |
 | [x] | 183 | Le scoring battle royale validé | — |
 | [x] | 184 | Rocket League : buts, passes, arrêts | — |
-| [ ] | 179 | Ajouter Overwatch au catalogue | ½ nuit |
+| [x] | 179 | Ajouter Overwatch au catalogue | ½ nuit |
 | [ ] | 180 | Laisser déclarer un jeu absent, et compter les demandes | 1 nuit |
 | [ ] | 185 | Surveiller si un jeu paie deux fois plus qu'un autre | 1 nuit |
 | [ ] | 176 | Tester TFT, jamais vérifié | ½ nuit |

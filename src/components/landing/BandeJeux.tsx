@@ -1,5 +1,6 @@
 "use client";
 import { useMouvementReduit } from "@/lib/valeurClient";
+import { JEUX as CATALOGUE } from "@/lib/jeux";
 
 /**
  * La bande des jeux pris en charge.
@@ -22,8 +23,7 @@ import { useMouvementReduit } from "@/lib/valeurClient";
  * manque, et le dépôt ne contient aucune marque qui ne nous appartienne pas.
  */
 
-type Jeu = {
-  nom: string;
+type Decor = {
   court: string;
   /** Nom du fichier attendu dans `public/images/jeux/`, sans extension. */
   code: string;
@@ -32,21 +32,57 @@ type Jeu = {
   genre: "moba" | "fps" | "br" | "temps" | "sport" | "tactique";
 };
 
-const JEUX: Jeu[] = [
-  { nom: "League of Legends", court: "League", code: "league", teinte: "#C89B3C", genre: "moba" },
-  { nom: "Valorant",          court: "Valorant", code: "valorant", teinte: "#FF4655", genre: "fps" },
-  { nom: "Counter-Strike 2",  court: "CS2", code: "cs2", teinte: "#F0A83C", genre: "fps" },
-  { nom: "Fortnite",          court: "Fortnite", code: "fortnite", teinte: "#8E6BFF", genre: "br" },
-  { nom: "Apex Legends",      court: "Apex", code: "apex", teinte: "#DA292A", genre: "br" },
-  { nom: "PUBG",              court: "PUBG", code: "pubg", teinte: "#F4B942", genre: "br" },
-  { nom: "Call of Duty: Warzone", court: "Warzone", code: "warzone", teinte: "#9BAE6B", genre: "br" },
-  { nom: "Rocket League",     court: "Rocket League", code: "rocket-league", teinte: "#3AA7F0", genre: "sport" },
-  { nom: "Teamfight Tactics", court: "TFT", code: "tft", teinte: "#B389FF", genre: "tactique" },
-  { nom: "Minecraft",         court: "Minecraft", code: "minecraft", teinte: "#5FA83C", genre: "temps" },
-  { nom: "World of Warcraft", court: "WoW", code: "wow", teinte: "#F4C542", genre: "temps" },
-  { nom: "Grand Theft Auto V", court: "GTA V", code: "gta5", teinte: "#4FBF7F", genre: "temps" },
-  { nom: "Elden Ring",        court: "Elden Ring", code: "elden-ring", teinte: "#D6B15C", genre: "temps" },
-];
+type Jeu = Decor & { nom: string };
+
+/**
+ * La parure de chaque jeu, indexée sur le nom du CATALOGUE.
+ *
+ * Cette table était une seconde liste de jeux, écrite à la main à côté de
+ * `src/lib/jeux.ts` — et elle avait déjà divergé : treize entrées contre
+ * quinze au catalogue, « Call of Duty » et « Les Sims » manquants. Personne
+ * ne l'avait vu, parce qu'une bande de treize pastilles ressemble beaucoup à
+ * une bande de quinze. C'est le motif que ce projet paie en boucle : ce n'est
+ * pas la copie qu'on remarque, c'est qu'une correction n'en répare qu'une
+ * moitié.
+ *
+ * Elle ne peut PAS se déduire du catalogue — l'abréviation, la teinte et le
+ * genre n'y sont pas, et n'y ont rien à faire : le catalogue décide de ce
+ * qu'une partie coûte, pas de ce à quoi elle ressemble. Ce qu'on peut faire,
+ * c'est cesser d'en refaire la liste : le catalogue donne les jeux et leur
+ * ordre, cette table les habille, et `src/bandeJeux.test.ts` refuse qu'un jeu
+ * arrive sans parure.
+ */
+const DECORS: Record<string, Decor> = {
+  "League of Legends":      { court: "League", code: "league", teinte: "#C89B3C", genre: "moba" },
+  "Valorant":               { court: "Valorant", code: "valorant", teinte: "#FF4655", genre: "fps" },
+  "Counter-Strike 2":       { court: "CS2", code: "cs2", teinte: "#F0A83C", genre: "fps" },
+  "Fortnite":               { court: "Fortnite", code: "fortnite", teinte: "#8E6BFF", genre: "br" },
+  "Apex Legends":           { court: "Apex", code: "apex", teinte: "#DA292A", genre: "br" },
+  "PUBG":                   { court: "PUBG", code: "pubg", teinte: "#F4B942", genre: "br" },
+  "Call of Duty: Warzone":  { court: "Warzone", code: "warzone", teinte: "#9BAE6B", genre: "br" },
+  "Call of Duty":           { court: "Call of Duty", code: "cod", teinte: "#A9B4C2", genre: "fps" },
+  "Overwatch":              { court: "Overwatch", code: "overwatch", teinte: "#F99E1A", genre: "fps" },
+  "Rocket League":          { court: "Rocket League", code: "rocket-league", teinte: "#3AA7F0", genre: "sport" },
+  "Teamfight Tactics":      { court: "TFT", code: "tft", teinte: "#B389FF", genre: "tactique" },
+  "Minecraft":              { court: "Minecraft", code: "minecraft", teinte: "#5FA83C", genre: "temps" },
+  "World of Warcraft":      { court: "WoW", code: "wow", teinte: "#F4C542", genre: "temps" },
+  "Grand Theft Auto V":     { court: "GTA V", code: "gta5", teinte: "#4FBF7F", genre: "temps" },
+  "Elden Ring":             { court: "Elden Ring", code: "elden-ring", teinte: "#D6B15C", genre: "temps" },
+  "Les Sims":               { court: "Les Sims", code: "sims", teinte: "#6FCF3F", genre: "temps" },
+};
+
+/**
+ * L'ordre est celui du catalogue, et un jeu sans parure est SAUTÉ.
+ *
+ * Le sauter plutôt que de le rendre sans couleur est le bon repli : une
+ * pastille grise sans glyphe se lit comme un défaut d'affichage sur la page
+ * qui existe pour faire venir du monde. Le test, lui, refuse ce cas à
+ * l'écriture — donc ce repli ne doit jamais servir, et c'est écrit ici pour
+ * qu'on ne le prenne pas pour une tolérance.
+ */
+const JEUX: Jeu[] = CATALOGUE
+  .filter((j) => DECORS[j.nom])
+  .map((j) => ({ nom: j.nom, ...DECORS[j.nom] }));
 
 /** Un glyphe par genre : ce que le jeu demande, dessiné. */
 function Glyphe({ genre, teinte }: { genre: Jeu["genre"]; teinte: string }) {
