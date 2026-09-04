@@ -66,6 +66,17 @@ export const dashboard = {
     objectiveProgressLibre: (total: string, objectif: string) => `${total} / ${objectif}`,
     objectiveRemainingLibre: (valeur: string) => ` · ${valeur} restant`,
     objectiveReached: " · Objectif atteint !",
+    /*
+      « Perfect » était écrit en dur dans le composant, donc en anglais dans
+      les six langues. Le garde des textes en dur ne cherche que le FRANÇAIS —
+      il repère les accents, et un mot anglais est indistinguable d'un
+      identifiant. C'est son angle mort par construction.
+
+      Le terme reste anglais là où le jeu l'emploie ainsi, et se traduit
+      ailleurs : c'est justement ce qu'un dictionnaire permet de décider langue
+      par langue, et qu'une chaîne en dur interdit.
+    */
+    kdaParfait: "Parfait",
     mostPlayedBadge: "Plus joué",
     leastEfficientBadge: "Plus difficile",
     gamesCount: (n: number) => `${n} partie${n > 1 ? "s" : ""}`,
@@ -176,6 +187,7 @@ export const dashboard = {
     objectiveProgressLibre: (total: string, objectif: string) => `${total} / ${objectif}`,
     objectiveRemainingLibre: (valeur: string) => ` · ${valeur} left`,
     objectiveReached: " · Goal reached!",
+    kdaParfait: "Perfect",
     mostPlayedBadge: "Most played",
     leastEfficientBadge: "Hardest",
     gamesCount: (n: number) => `${n} game${n !== 1 ? "s" : ""}`,
@@ -286,6 +298,7 @@ export const dashboard = {
     objectiveProgressLibre: (total: string, objectif: string) => `${total} / ${objectif}`,
     objectiveRemainingLibre: (valeur: string) => ` · queda ${valeur}`,
     objectiveReached: " · ¡Objetivo alcanzado!",
+    kdaParfait: "Perfecto",
     mostPlayedBadge: "Más jugado",
     leastEfficientBadge: "Más difícil",
     gamesCount: (n: number) => `${n} partida${n !== 1 ? "s" : ""}`,
@@ -396,6 +409,7 @@ export const dashboard = {
     objectiveProgressLibre: (total: string, objectif: string) => `${total} / ${objectif}`,
     objectiveRemainingLibre: (valeur: string) => ` · noch ${valeur}`,
     objectiveReached: " · Ziel erreicht!",
+    kdaParfait: "Perfekt",
     mostPlayedBadge: "Am meisten gespielt",
     leastEfficientBadge: "Am schwersten",
     gamesCount: (n: number) => `${n} ${n !== 1 ? "Partien" : "Partie"}`,
@@ -504,6 +518,7 @@ export const dashboard = {
     objectiveProgressLibre: (total: string, objectif: string) => `${total} / ${objectif}`,
     objectiveRemainingLibre: (valeur: string) => ` · 还差 ${valeur}`,
     objectiveReached: " · 目标达成！",
+    kdaParfait: "完美",
     mostPlayedBadge: "玩得最多",
     leastEfficientBadge: "最难对付",
     gamesCount: (n: number) => `${n} 局`,
@@ -612,6 +627,7 @@ export const dashboard = {
     objectiveProgressLibre: (total: string, objectif: string) => `${total} / ${objectif}`,
     objectiveRemainingLibre: (valeur: string) => ` · あと ${valeur}`,
     objectiveReached: " · 目標達成",
+    kdaParfait: "パーフェクト",
     mostPlayedBadge: "最もプレー",
     leastEfficientBadge: "最も手強い",
     gamesCount: (n: number) => `${n} 試合`,

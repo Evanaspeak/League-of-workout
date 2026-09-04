@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { journalSynchro as dict } from "@/lib/i18n/dictionaries/journalSynchro";
 import { charger, enregistrer, type Entree } from "@/lib/journalSynchro";
 
@@ -14,6 +14,7 @@ import { charger, enregistrer, type Entree } from "@/lib/journalSynchro";
 export function JournalSynchro() {
   const t = useT(dict);
   const etiquette = useDateLocale();
+  const nombre = useNombre();
   const [journal, setJournal] = useState<Entree[]>([]);
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export function JournalSynchro() {
                     aria-label={t.repetitions(e.repetitions!)}
                     style={{ color: "var(--faint)", flex: "0 0 auto", fontSize: "0.72rem" }}
                   >
-                    ×{new Intl.NumberFormat(etiquette).format(e.repetitions!)}
+                    ×{nombre(e.repetitions!)}
                   </span>
                 )}
                 <span style={{ color: "var(--faint)", flex: "0 0 auto", fontSize: "0.72rem" }}>

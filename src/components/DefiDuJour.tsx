@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { jourLocal } from "@/lib/serie";
 import { chargerProgression, rafraichirProgression, type Progression } from "@/lib/chargerProgression";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useNombre, useT } from "@/lib/i18n/LocaleContext";
 import { defis as dict } from "@/lib/i18n/dictionaries/defis";
 import type { AvancementDefi } from "@/lib/defiQuotidien";
 import type { AvancementMensuel } from "@/lib/defiMensuel";
@@ -28,6 +28,7 @@ export function DefiDuJour() {
   const t = useT(dict);
   const [defi, setDefi] = useState<AvancementDefi | null>(null);
   const [mois, setMois] = useState<AvancementMensuel[] | null>(null);
+  const nombre = useNombre();
   const [collectif, setCollectif] = useState<Collectif | null>(null);
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export function DefiDuJour() {
             >
               {t.gain(xp)}
             </span>
-            <b className="mono-num" style={{ fontSize: "0.8rem" }}>{`${ou} / ${cible}`}</b>
+            <b className="mono-num" style={{ fontSize: "0.8rem" }}>{`${nombre(ou)} / ${nombre(cible)}`}</b>
           </span>
         </div>
         <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
@@ -151,7 +152,7 @@ export function DefiDuJour() {
                 {collectif.atteint ? t.collectifAtteint : "\u00a0"}
               </span>
               <b className="mono-num" style={{ fontSize: "0.8rem" }}>
-                {`${collectif.points} / ${collectif.cible}`}
+                {`${nombre(collectif.points)} / ${nombre(collectif.cible)}`}
               </b>
             </div>
             <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
