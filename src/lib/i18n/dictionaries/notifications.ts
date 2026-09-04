@@ -1,7 +1,7 @@
 export const notifications = {
   fr: {
     titre: "Notifications",
-    aide: "Quand ta dette de boxe franchit ton seuil, l'app te prévient sur cet appareil, même si l'onglet est fermé. L'idée est de te le dire au bon moment : entre deux parties, quand tu es dans la file d'attente et que tu as deux minutes.",
+    aide: "Quand ta dette franchit ton seuil, l'app te prévient sur cet appareil, même si l'onglet est fermé. L'idée est de te le dire au bon moment : entre deux parties, quand tu es dans la file d'attente et que tu as deux minutes.",
     indisponible: "Ce navigateur ne gère pas les notifications, ou elles ne sont pas configurées sur ce déploiement.",
     refuse: "Tu as refusé les notifications pour ce site. Il faut les réautoriser dans les réglages de ton navigateur.",
     activer: "Activer les notifications",
@@ -19,7 +19,7 @@ export const notifications = {
   },
   en: {
     titre: "Notifications",
-    aide: "When your boxing debt crosses your threshold, the app tells you on this device, even with the tab closed. The point is to catch you at the right moment: between two matches, sat in queue with two minutes to spare.",
+    aide: "When your debt crosses your threshold, the app tells you on this device, even with the tab closed. The point is to catch you at the right moment: between two matches, sat in queue with two minutes to spare.",
     indisponible: "This browser doesn't support notifications, or they aren't configured on this deployment.",
     refuse: "You blocked notifications for this site. You'll need to re-allow them in your browser settings.",
     activer: "Turn on notifications",
@@ -35,7 +35,7 @@ export const notifications = {
   },
   es: {
     titre: "Notificaciones",
-    aide: "Cuando tu deuda de boxeo cruza el umbral, la app te avisa en este dispositivo, aunque la pestaña esté cerrada. La idea es pillarte en el momento justo: entre dos partidas, en la cola, cuando tienes dos minutos.",
+    aide: "Cuando tu deuda cruza el umbral, la app te avisa en este dispositivo, aunque la pestaña esté cerrada. La idea es pillarte en el momento justo: entre dos partidas, en la cola, cuando tienes dos minutos.",
     indisponible: "Este navegador no admite notificaciones, o no están configuradas en este despliegue.",
     refuse: "Has bloqueado las notificaciones para este sitio. Hay que volver a permitirlas en los ajustes del navegador.",
     activer: "Activar las notificaciones",
@@ -51,7 +51,7 @@ export const notifications = {
   },
   de: {
     titre: "Benachrichtigungen",
-    aide: "Wenn deine Box-Schuld deine Schwelle überschreitet, sagt es dir die App auf diesem Gerät, auch bei geschlossenem Tab. Der Sinn ist, dich im richtigen Moment zu erwischen: zwischen zwei Partien, in der Warteschlange, wenn du zwei Minuten hast.",
+    aide: "Wenn deine Schuld deine Schwelle überschreitet, sagt es dir die App auf diesem Gerät, auch bei geschlossenem Tab. Der Sinn ist, dich im richtigen Moment zu erwischen: zwischen zwei Partien, in der Warteschlange, wenn du zwei Minuten hast.",
     indisponible: "Dieser Browser kann keine Benachrichtigungen, oder sie sind auf dieser Installation nicht eingerichtet.",
     refuse: "Du hast Benachrichtigungen für diese Seite blockiert. Du musst sie in den Browsereinstellungen wieder erlauben.",
     activer: "Benachrichtigungen einschalten",
@@ -67,7 +67,7 @@ export const notifications = {
   },
   zh: {
     titre: "通知",
-    aide: "当你的拳击欠账越过设定的阈值时，应用会在这台设备上提醒你，哪怕标签页已经关掉。目的是在合适的时机找到你：两局之间，排队的时候，你正好有两分钟。",
+    aide: "当你的欠账越过设定的阈值时，应用会在这台设备上提醒你，哪怕标签页已经关掉。目的是在合适的时机找到你：两局之间，排队的时候，你正好有两分钟。",
     indisponible: "这个浏览器不支持通知，或者本次部署没有配置通知。",
     refuse: "你为这个站点屏蔽了通知。需要到浏览器设置里重新允许。",
     activer: "开启通知",
@@ -83,7 +83,7 @@ export const notifications = {
   },
   ja: {
     titre: "通知",
-    aide: "ボクシングの負債がしきい値を超えると、この端末にお知らせします。タブを閉じていても届きます。ねらいは、ちょうどいい瞬間に伝えることです。試合と試合のあいだ、キューに並んでいて二分空いているときに。",
+    aide: "負債がしきい値を超えると、この端末にお知らせします。タブを閉じていても届きます。ねらいは、ちょうどいい瞬間に伝えることです。試合と試合のあいだ、キューに並んでいて二分空いているときに。",
     indisponible: "このブラウザーは通知に対応していないか、この環境では設定されていません。",
     refuse: "このサイトの通知をブロックしています。ブラウザーの設定で、もう一度許可してください。",
     activer: "通知を有効にする",

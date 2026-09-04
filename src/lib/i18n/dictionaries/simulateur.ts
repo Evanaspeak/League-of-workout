@@ -4,11 +4,18 @@
  * Il répond à une question qu'on ne peut pas poser autrement : « qu'est-ce que
  * ça me coûterait ? ». Sans lui, la seule façon de comprendre le barème est de
  * perdre une partie.
+ *
+ * Il TUTOIE, comme tout ce qui est derrière la porte. Le français vouvoyait
+ * seul — l'espagnol disait déjà « te costaría », l'allemand « was dich eine
+ * Partie kosten würde » — ce qui suffit à dire que c'était un oubli et non une
+ * décision. Le garde de registre le laissait passer sur une dispense dont la
+ * RAISON était fausse : « page publique d'acquisition », alors que
+ * `SimulateurDette` n'est monté que dans `/settings`.
  */
 export const simulateur = {
   fr: {
     titre: "Simulateur",
-    aide: "Ce qu'une partie vous coûterait, avec votre niveau et vos exercices. Rien n'est enregistré.",
+    aide: "Ce qu'une partie te coûterait, avec ton niveau et tes exercices. Rien n'est enregistré.",
     jeu: "Jeu",
     role: "Rôle",
     resultat: "Résultat",
@@ -23,7 +30,7 @@ export const simulateur = {
     placement: "Classement",
     duree: "Durée (minutes)",
     classee: "Partie classée",
-    verdict: "Vous devriez",
+    verdict: "Tu devrais",
     rien: "Rien à faire pour cette partie.",
     remake: "Partie annulée : elle ne compte pas.",
     calcul: "Calcul…",
