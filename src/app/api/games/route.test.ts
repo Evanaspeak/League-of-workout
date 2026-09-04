@@ -329,9 +329,16 @@ describe("POST /api/games", () => {
     expect(game.create.mock.calls[0][0].data.repartition).toBeNull();
   });
 
-  it("n'ajoute au compteur que la part comptée en temps", async () => {
+  it("ajoute au compteur une partie payée en POMPES", async () => {
+    /**
+     * L'inverse était vrai jusqu'à V387, et c'est le défaut qui a rendu tout
+     * l'étage social vide : la dette ne montait que pour les exercices comptés
+     * en temps, donc jamais pour les pompes, donc rien ne passait par le
+     * compteur et aucune ligne `Paiement` n'était jamais écrite. Neuf cent
+     * soixante parties enregistrées, deux points payés.
+     */
     await post(partie({ exercice: "pompes" }));
-    expect(user.update).not.toHaveBeenCalled();
+    expect(user.update.mock.calls[0][0].data.dettePointsDus.increment).toBeGreaterThan(0);
   });
 
   it("ajoute au compteur la part de boxe", async () => {

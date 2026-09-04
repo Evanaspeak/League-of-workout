@@ -9,7 +9,7 @@ import {
 } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  dureeAffichee, exercicesEnTemps, formaterDuree, isExerciceId, pointsEnTemps, ratiosActuels,
+  dureeAffichee, exercicesEnTemps, formaterDuree, isExerciceId, ratiosActuels,
   repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
@@ -441,15 +441,29 @@ export async function POST(req: Request) {
 }
 
 /**
- * Ajoute à la dette en attente la seule part qui se compte en temps. Les
- * pompes et les squats se font dans la foulée de la partie ; la boxe, elle,
- * n'a d'intérêt qu'une fois quelques minutes accumulées.
+ * Ajoute à la dette en attente TOUT ce que la partie a coûté.
+ *
+ * **Elle ne comptait que la part mesurée en temps**, au motif que des pompes
+ * se font dans la foulée de la partie tandis qu'un round de boxe n'a d'intérêt
+ * qu'une fois quelques minutes réunies. Le raisonnement est juste sur le
+ * confort ; il en avait été tiré « donc on n'enregistre rien », et c'est là
+ * que la boucle du produit ne se refermait pas.
+ *
+ * La conséquence ne s'est vue qu'à l'usage, et elle était totale : avec les
+ * pompes — le cas par défaut — la dette ne montait jamais, donc rien ne
+ * passait par le compteur, donc AUCUNE ligne `Paiement` n'était jamais écrite.
+ * Classement, mur des records et niveau restaient vides par construction,
+ * quoi qu'on joue. Neuf cent soixante parties enregistrées, deux points payés.
+ *
+ * Tout s'accumule donc maintenant, et ce qui se fait dans la foulée se solde
+ * d'une tape plutôt que d'un chrono — c'est l'écran qui fait la différence,
+ * pas le registre.
  *
  * Un échec ici ne doit pas faire perdre la partie déjà écrite : le compteur
  * se rattrapera à la partie suivante.
  */
 async function accumulerDette(userId: string, repartition: Repartition): Promise<number | null> {
-  const points = pointsEnTemps(repartition);
+  const points = Object.values(repartition).reduce((t, p) => t + (p ?? 0), 0);
   if (points <= 0) return null;
   try {
     const avant = await prisma.user.findUnique({

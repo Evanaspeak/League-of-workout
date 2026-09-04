@@ -71,12 +71,37 @@ describe("GET /api/dette", () => {
     expect(d.dureeSec).toBe(700); // 100 points × 7 s de boxe
   });
 
-  it("ne retient que les exercices comptés en temps", async () => {
-    // Les pompes se font dans la foulée : elles n'ont rien à faire dans un
-    // compteur d'attente, sinon la dette resterait due deux fois.
+  it("retient TOUS les exercices choisis, pas seulement ceux au temps", async () => {
+    /**
+     * Ce contrôle disait l'inverse jusqu'à V387, et il tenait l'ancienne règle
+     * exactement comme il fallait : seuls les exercices au temps entraient
+     * dans le compteur, parce que des pompes se font dans la foulée.
+     *
+     * Ce que le raisonnement ne disait pas, c'est que rien ne les enregistrait
+     * alors JAMAIS. Avec les pompes — le cas par défaut — la dette ne montait
+     * pas, donc rien ne passait par le compteur, donc aucune ligne `Paiement`
+     * n'était écrite, et tout l'étage social restait vide quoi qu'on joue.
+     */
     session.mockResolvedValue(joueur({ exercices: ["pompes", "boxe"] }));
-    const d = await corps(await GET()) as { exercices: string[] };
-    expect(d.exercices).toEqual(["boxe"]);
+    const d = await corps(await GET()) as { exercices: string[]; points: number };
+    expect(d.exercices).toEqual(["pompes", "boxe"]);
+    // Et la dette est bien répartie sur les deux, pas mise de côté.
+    expect(d.points).toBe(100);
+  });
+
+  it("répartit aussi une dette faite de pompes seules", async () => {
+    /**
+     * Le cas qui n'existait pas : un compte sur les pompes voyait `points: 0`
+     * et une liste d'exercices vide, quelle que soit sa dette. C'est ce qui
+     * rendait la pastille invisible et le compteur inatteignable.
+     */
+    session.mockResolvedValue(joueur({ exercices: ["pompes"] }));
+    const d = await corps(await GET()) as {
+      exercices: string[]; points: number; quantites: Record<string, number>;
+    };
+    expect(d.exercices).toEqual(["pompes"]);
+    expect(d.points).toBe(100);
+    expect(d.quantites.pompes).toBeGreaterThan(0);
   });
 
   it("suit les ratios en vigueur", async () => {

@@ -1,5 +1,5 @@
 import {
-  dureeAffichee, exercicesEnTemps, quantite, repartirPoints, toExerciceId, toExerciceIds,
+  dureeAffichee, quantite, repartirPoints, toExerciceId, toExerciceIds,
 } from "@/lib/exercices";
 
 /**
@@ -19,17 +19,28 @@ import {
  */
 
 /**
- * Dette en attente. Seuls les exercices comptés en temps s'y accumulent : des
- * pompes se font tout de suite après la partie, tandis qu'un round de boxe n'a
- * d'intérêt qu'une fois quelques minutes réunies.
+ * Dette en attente, sur TOUS les exercices choisis.
+ *
+ * **Elle ne montrait que ceux comptés en temps**, en miroir de l'accumulation
+ * qui ne comptait qu'eux. Les deux filtres se tenaient l'un l'autre, et
+ * ensemble ils rendaient le produit muet pour qui fait des pompes : rien ne
+ * montait, donc rien ne s'affichait, donc rien ne se payait, donc aucune ligne
+ * `Paiement` n'existait — et tout l'étage social restait vide par
+ * construction.
+ *
+ * Ce qui reste vrai du raisonnement d'origine — des pompes se font dans la
+ * foulée, un round de boxe demande qu'on en réunisse quelques minutes — est
+ * maintenant une affaire d'ÉCRAN : ce qui se compte en répétitions se solde
+ * d'une tape, ce qui se compte en temps garde son chrono. Le registre, lui,
+ * enregistre les deux.
  */
 export function reponseDette(user: {
   dettePointsDus: number;
   rappelSeuilSec: number;
   exercices: string[];
 }) {
-  const exercices = exercicesEnTemps(toExerciceIds(user.exercices));
-  // Sans exercice au temps sélectionné, il n'y a rien à cumuler.
+  const exercices = toExerciceIds(user.exercices);
+  // Sans exercice sélectionné du tout, il n'y a rien à répartir.
   const points = exercices.length > 0 ? Math.max(0, user.dettePointsDus) : 0;
   return {
     points,

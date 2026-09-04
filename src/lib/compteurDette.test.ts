@@ -1,4 +1,4 @@
-import { duree, horloge, secondesAnnoncees, seuilFranchi } from "./compteurDette";
+import { aChronometrer, duree, horloge, secondesAnnoncees, seuilFranchi } from "./compteurDette";
 
 describe("l'horloge du décompte", () => {
   it("écrit les minutes et les secondes", () => {
@@ -104,5 +104,29 @@ describe("les secondes annoncées", () => {
 
   it("ne rend jamais de durée négative", () => {
     expect(secondesAnnoncees([], -10)).toBe(0);
+  });
+});
+
+describe("aChronometrer", () => {
+  /**
+   * La règle qui décide si un minuteur tourne. Elle est ici et pas dans le
+   * composant précisément pour qu'un test puisse l'atteindre : elle gouverne à
+   * la fois ce que la fenêtre montre et si un `setInterval` démarre, et ces
+   * deux-là ne doivent pas diverger.
+   */
+  it("ne chronomètre rien quand la dette n'est faite que de répétitions", () => {
+    expect(aChronometrer([{ id: "pompes" }])).toBe(false);
+    expect(aChronometrer([{ id: "pompes" }, { id: "squats" }])).toBe(false);
+  });
+
+  it("chronomètre dès qu'un exercice au temps est concerné", () => {
+    expect(aChronometrer([{ id: "boxe" }])).toBe(true);
+    // Mélangé : c'est la part au temps qui commande, parce que c'est elle qui
+    // demande qu'on réunisse quelques minutes.
+    expect(aChronometrer([{ id: "pompes" }, { id: "boxe" }])).toBe(true);
+  });
+
+  it("ne chronomètre rien sur une dette vide", () => {
+    expect(aChronometrer([])).toBe(false);
   });
 });

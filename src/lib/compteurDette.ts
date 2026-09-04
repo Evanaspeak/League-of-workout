@@ -1,3 +1,4 @@
+import { estEnTemps, type ExerciceId } from "@/lib/exercices";
 /**
  * Ce que la pastille de dette affiche, et quand elle prévient.
  *
@@ -70,4 +71,21 @@ export function secondesAnnoncees(
 ): number {
   const total = lignes.reduce((s, l) => s + (l.secondes ?? 0), 0);
   return total > 0 ? Math.round(total) : Math.max(0, Math.round(dureeSec));
+}
+
+/**
+ * Y a-t-il quelque chose à CHRONOMÉTRER dans cette dette ?
+ *
+ * Depuis que la dette monte aussi pour les pompes, elle peut n'être faite que
+ * de répétitions — et un décompte de secondes n'a alors aucun sens : on fait
+ * ses trente pompes et on le dit. Le chrono reste dès qu'un exercice au temps
+ * est concerné, y compris mélangé à des pompes : c'est cette part-là qui
+ * demande qu'on réunisse quelques minutes, et c'est elle qui commande.
+ *
+ * La décision vit ici et pas dans le composant parce qu'elle décide de deux
+ * choses qu'on ne veut pas voir diverger : ce que la fenêtre montre, et si un
+ * minuteur tourne.
+ */
+export function aChronometrer(lignes: { id: ExerciceId }[]): boolean {
+  return lignes.some((l) => estEnTemps(l.id));
 }
