@@ -63,6 +63,12 @@ export type SourceNiveau = {
   meilleureSerie: number;
   /** Nombre de jours distincts où quelque chose a été payé. */
   joursPayes: number;
+  /**
+   * XP déjà gagnée sur des défis personnels remplis, sommée depuis les lignes
+   * de `DefiAccompli`. Facultative : les écrans qui ne la lisent pas encore
+   * rendent un niveau un peu bas plutôt qu'un `NaN`.
+   */
+  xpDefis?: number;
 };
 
 /** Un compte n'a pas d'XP négative, et une source incomplète vaut zéro. */
@@ -73,14 +79,19 @@ function entierSain(valeur: number): number {
 /**
  * L'XP d'un compte, déduite et jamais stockée.
  *
- * Les deux termes ne mesurent pas la même chose et c'est voulu : le premier
- * compte ce qu'on a JOUÉ, le second ce qu'on a PAYÉ. Les additionner donne un
- * compteur qui avance quoi qu'il arrive, et qui avance beaucoup plus vite
- * quand on s'acquitte.
+ * Les trois termes ne mesurent pas la même chose et c'est voulu : le premier
+ * compte ce qu'on a JOUÉ, le deuxième ce qu'on a PAYÉ, le troisième ce qu'on a
+ * RELEVÉ. Les additionner donne un compteur qui avance quoi qu'il arrive, et
+ * qui avance beaucoup plus vite quand on s'acquitte.
+ *
+ * Le troisième est le seul qui vienne d'une table plutôt que d'un calcul, et
+ * la raison est écrite dans `xpDefis.ts` : un défi rempli ne se recalcule pas
+ * après coup.
  */
 export function xpDuCompte(source: SourceNiveau): number {
   return XP_PAR_ACTIVITE * entierSain(source.parties)
-    + XP_PAR_POINT_PAYE * entierSain(source.pointsPayes);
+    + XP_PAR_POINT_PAYE * entierSain(source.pointsPayes)
+    + entierSain(source.xpDefis ?? 0);
 }
 
 /**

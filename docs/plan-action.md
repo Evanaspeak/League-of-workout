@@ -129,13 +129,13 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 128 | Pseudo Riot ou pseudo interne, au choix | ½ nuit |
 
 ### Défis, saisons, événements
-*3 à faire · 7 faits.* Le défi quotidien (V366), les deux onglets du classement (V367), les deux défis mensuels (V368), l'objectif collectif (V371) le mur des records (V372) et son choix public ou entre amis (V373) — donc des défis individuels ET communs, ce que demandait la 132. La 137 est bloquée : elle demande des récompenses, et la réponse 139 dit « à voir ».
+*3 à faire · 7 faits.* Le défi quotidien (V366), les deux onglets du classement (V367), les deux défis mensuels (V368), l'objectif collectif (V371) le mur des records (V372) et son choix public ou entre amis (V373) — donc des défis individuels ET communs, ce que demandait la 132. La 137 n'est plus bloquée sur sa récompense : le propriétaire a tranché, un défi personnel rapporte de l'XP (V388). Ce qui reste d'elle sont les trois niveaux de difficulté, le malus, et les défis PARTAGÉS, qu'il a explicitement remis à plus tard.
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 131 | Des défis mensuels, en volume ET en nombre de parties | 2 nuits |
 | [x] | 132 | Individuels et communs | — |
-| [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué — **la récompense est tranchée (de l'XP, défis personnels), restent les trois niveaux, le malus, et les défis PARTAGÉS remis à plus tard** | 1 nuit |
+| [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué — **la récompense est POSÉE depuis V388 : un défi du jour rempli vaut 50 d'XP, un défi du mois 300. Restent les trois niveaux, le malus, et les défis PARTAGÉS remis à plus tard par le propriétaire** | 1 nuit |
 | [x] | 138 | Un défi quotidien tiré au sort, valable 24 h | 1 nuit |
 | [x] | 133 | Un objectif collectif à l'échelle de l'application | 1 nuit |
 | [ ] | 135 | Un événement au lancement d'un patch | 1 nuit |

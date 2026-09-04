@@ -7,6 +7,7 @@ import { composerExploits } from "@/lib/exploits";
 import { avancementDefi, defiDuJour } from "@/lib/defiQuotidien";
 import { debutDuMois, defisDuMois, moisDuJour } from "@/lib/defiMensuel";
 import { composerCollectif } from "@/lib/objectifCollectif";
+import { defisAAcquitter } from "@/lib/xpDefis";
 
 /**
  * Les paliers et la série, en un seul aller-retour.
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
 
   const prefixeDuMois = moisDuJour(aujourdhui);
 
-  const [agregat, paiements, collectif, partiesDuMois] = await Promise.all([
+  const [agregat, paiements, collectif, partiesDuMois, defisFaits] = await Promise.all([
     prisma.game.aggregate({
       // Même raison que dans `/api/badges`, dont cette route reprend le calcul.
       where: { userId: user.id, sansEnjeu: false },
@@ -103,6 +104,17 @@ export async function GET(req: Request) {
       },
       select: { result: true, jeu: true, date: true },
     }),
+    /**
+     * L'XP déjà gagnée sur des défis, sommée depuis les LIGNES.
+     *
+     * Jamais un total rangé quelque part : une somme ne peut pas diverger de
+     * ce qui la produit, un compteur si. C'est le raisonnement de `Paiement`,
+     * appliqué à la seconde chose de la progression qui se stocke.
+     */
+    prisma.defiAccompli.aggregate({
+      where: { userId: user.id },
+      _sum: { xp: true },
+    }),
   ]);
 
   const source = {
@@ -110,7 +122,59 @@ export async function GET(req: Request) {
     parties: agregat._count._all ?? 0,
     jours: paiements.map((p) => p.jour),
     pointsPayes: paiements.reduce((somme, p) => somme + p.points, 0),
+    xpDefis: defisFaits._sum.xp ?? 0,
   };
+
+  const paiementsDuJour = paiements.filter((p) => p.jour === aujourdhui);
+  const partiesDuJour = partiesDuMois.filter(
+    (g) => g.date.toISOString().slice(0, 10) === aujourdhui,
+  );
+  const defi = avancementDefi(defiDuJour(aujourdhui), {
+    partiesDuJour: partiesDuJour.length,
+    victoiresDuJour: partiesDuJour.filter((g) => g.result === "V").length,
+    jeuxDuJour: new Set(partiesDuJour.map((g) => g.jeu).filter(Boolean)).size,
+    pointsPayesDuJour: paiementsDuJour.reduce((somme, p) => somme + p.points, 0),
+    seancesDuJour: paiementsDuJour.length,
+  });
+  const defisMois = defisDuMois({
+    pointsPayesDuMois: prefixeDuMois
+      ? paiements
+        .filter((p) => p.jour.startsWith(prefixeDuMois) && p.jour <= aujourdhui)
+        .reduce((somme, p) => somme + p.points, 0)
+      : 0,
+    partiesDuMois: partiesDuMois.length,
+  });
+
+  /**
+   * Retenir les défis qui viennent d'être remplis.
+   *
+   * **C'est une écriture depuis un GET, et ça se justifie.** L'alternative
+   * serait d'écrire depuis `/api/games` et `/api/dette`, les deux routes qui
+   * font bouger les chiffres — mais il faudrait y recalculer l'avancement des
+   * défis, donc écrire une seconde fois une règle qui vit ici. C'est le défaut
+   * que ce projet paie le plus souvent, et il coûte plus cher qu'un `INSERT`
+   * sur une route de lecture.
+   *
+   * Elle est inoffensive parce qu'elle est IDEMPOTENTE en base : l'unicité
+   * porte sur (compte, défi, période), donc deux onglets ouverts en même temps
+   * n'écrivent qu'une ligne. `skipDuplicates` en fait un geste sans effet dès
+   * le second passage.
+   *
+   * Elle se pose en DERNIER et son échec ne coûte que lui-même : ce qui se
+   * rattrape au prochain chargement passe après ce qui ne se rattrape pas.
+   * C'est un `try` et non un `.catch()`, qui ne rattraperait qu'une promesse
+   * rejetée et pas un jet synchrone — exactement ce que produirait une méthode
+   * absente d'une doublure.
+   */
+  const aRetenir = defisAAcquitter(aujourdhui, prefixeDuMois ?? "", defi, defisMois);
+  if (aRetenir.length > 0) {
+    try {
+      await prisma.defiAccompli.createMany({
+        data: aRetenir.map((d) => ({ userId: user.id, ...d })),
+        skipDuplicates: true,
+      });
+    } catch { /* le défi se reretiendra au prochain chargement */ }
+  }
 
   return NextResponse.json({
     badges: reponseBadges(source),
@@ -131,21 +195,14 @@ export async function GET(req: Request) {
      * série, parce qu'un défi de vingt-quatre heures se compte sur les
      * vingt-quatre heures de celui qui le fait.
      */
-    defi: (() => {
-      const paiementsDuJour = paiements.filter((p) => p.jour === aujourdhui);
-      const partiesDuJour = partiesDuMois.filter(
-        (g) => g.date.toISOString().slice(0, 10) === aujourdhui,
-      );
-      return {
-        ...avancementDefi(defiDuJour(aujourdhui), {
-          partiesDuJour: partiesDuJour.length,
-          victoiresDuJour: partiesDuJour.filter((g) => g.result === "V").length,
-          jeuxDuJour: new Set(partiesDuJour.map((g) => g.jeu).filter(Boolean)).size,
-          pointsPayesDuJour: paiementsDuJour.reduce((somme, p) => somme + p.points, 0),
-          seancesDuJour: paiementsDuJour.length,
-        }),
-      };
-    })(),
+    /**
+     * Calculé PLUS HAUT, une seule fois, et lu ici comme par l'écriture qui
+     * retient les défis remplis. Deux calculs du même avancement finiraient
+     * par diverger — c'est le défaut que ce projet a payé huit fois — et ici
+     * la divergence serait invisible : l'écran montrerait un défi rempli
+     * pendant qu'aucune ligne ne serait écrite, ou l'inverse.
+     */
+    defi,
     /**
      * Les deux défis du mois (ligne 131).
      *
@@ -165,16 +222,7 @@ export async function GET(req: Request) {
       points: collectif.reduce((somme, g) => somme + (g._sum.points ?? 0), 0),
       contributeurs: collectif.filter((g) => (g._sum.points ?? 0) > 0).length,
     }),
-    defisMois: (() => {
-      const prefixe = prefixeDuMois;
-      return defisDuMois({
-        pointsPayesDuMois: prefixe
-          ? paiements
-            .filter((p) => p.jour.startsWith(prefixe) && p.jour <= aujourdhui)
-            .reduce((somme, p) => somme + p.points, 0)
-          : 0,
-        partiesDuMois: partiesDuMois.length,
-      });
-    })(),
+    // Même raison que le défi du jour : calculés une fois, lus deux.
+    defisMois,
   });
 }

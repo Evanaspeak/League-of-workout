@@ -4,6 +4,7 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     game: { aggregate: jest.fn(), findMany: jest.fn() },
     paiement: { findMany: jest.fn(), groupBy: jest.fn() },
+    defiAccompli: { aggregate: jest.fn(), createMany: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
@@ -15,11 +16,13 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { niveauPourXp, XP_PAR_ACTIVITE } from "@/lib/niveauCompte";
 import { defiDuJour } from "@/lib/defiQuotidien";
+import { XP_DEFI_JOUR } from "@/lib/xpDefis";
 
 const session = getCurrentUser as jest.Mock;
 const base = prisma as unknown as {
   game: { aggregate: jest.Mock; findMany: jest.Mock };
   paiement: { findMany: jest.Mock; groupBy: jest.Mock };
+  defiAccompli: { aggregate: jest.Mock; createMany: jest.Mock };
 };
 
 const JOURS = ["2026-09-02", "2026-09-01", "2026-08-31", "2026-08-29"];
@@ -30,6 +33,8 @@ beforeEach(() => {
   base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 9000 }, _count: { _all: 57 } });
   base.game.findMany.mockResolvedValue([]);
   base.paiement.groupBy.mockResolvedValue([]);
+  base.defiAccompli.aggregate.mockResolvedValue({ _sum: { xp: null } });
+  base.defiAccompli.createMany.mockResolvedValue({ count: 0 });
   // Trente points payés par jour, quatre jours : 120 payés contre 4 200
   // générés. Les deux chiffres sont volontairement TRÈS différents, sans quoi
   // rien ne dirait lequel des deux le niveau emploie.
@@ -251,5 +256,89 @@ describe("la progression", () => {
     // glisser au lieu de le refuser, ce qu'un contrôle de forme ne voit pas.
     const glissant = await corps(await GET(requete("/api/progression?jour=2026-02-30")));
     expect(glissant).toEqual(sansJour);
+  });
+});
+
+describe("l'XP des défis personnels", () => {
+  /**
+   * Le 8 septembre 2026 tombe sur « enregistre 3 parties » : trois parties ce
+   * jour-là remplissent le défi du jour, et le défi mensuel de parties reste
+   * loin de sa cible. C'est ce qui rend le contrôle discriminant — une route
+   * qui retiendrait tout ce qu'elle calcule écrirait aussi les deux défis du
+   * mois, et la différence se verrait.
+   */
+  const troisParties = [
+    { result: "V", jeu: "League of Legends", date: new Date("2026-09-08T20:00:00.000Z") },
+    { result: "D", jeu: "Apex Legends", date: new Date("2026-09-08T21:00:00.000Z") },
+    { result: "V", jeu: "League of Legends", date: new Date("2026-09-08T22:00:00.000Z") },
+  ];
+
+  it("retient le défi du jour REMPLI, sur la période du jour", async () => {
+    base.game.findMany.mockResolvedValue(troisParties);
+    await GET(requete("/api/progression?jour=2026-09-08"));
+
+    expect(base.defiAccompli.createMany).toHaveBeenCalledTimes(1);
+    const appel = base.defiAccompli.createMany.mock.calls[0][0];
+    expect(appel.data).toEqual([
+      { userId: expect.any(String), cle: "parties3", periode: "2026-09-08", xp: XP_DEFI_JOUR },
+    ]);
+    /**
+     * `skipDuplicates` est ce qui rend l'écriture sûre : deux chargements
+     * simultanés lisent tous deux « pas encore retenu », et sans lui le
+     * second ferait tomber la route sur une violation d'unicité. C'est le
+     * même raisonnement que pour la date de début de dette.
+     */
+    expect(appel.skipDuplicates).toBe(true);
+  });
+
+  it("n'écrit RIEN quand aucun défi n'est rempli", async () => {
+    /**
+     * Le cas courant, et de loin : la route est appelée à chaque chargement
+     * d'un écran connecté. Une écriture inconditionnelle coûterait un
+     * aller-retour vers Neon à chaque page, pour ne rien changer.
+     */
+    base.game.findMany.mockResolvedValue([troisParties[0]]);
+    await GET(requete("/api/progression?jour=2026-09-08"));
+    expect(base.defiAccompli.createMany).not.toHaveBeenCalled();
+  });
+
+  it("compte l'XP déjà retenue dans le niveau de compte", async () => {
+    /**
+     * Le témoin est l'ÉCART entre les deux appels : sans défis, 57 activités
+     * et 120 payés donnent le niveau 4 ; avec 30 000 d'XP de défis, le même
+     * compte passe très au-dessus. Sans cet écart, un niveau qui ignorerait
+     * la somme rendrait le même chiffre et le contrôle ne prouverait rien.
+     */
+    const niveau = async () => (await corps(await GET(requete("/api/progression?jour=2026-09-02"))) as {
+      badges: { niveau: { niveau: number; xp: number } };
+    }).badges.niveau;
+
+    expect((await niveau()).niveau).toBe(4);
+    base.defiAccompli.aggregate.mockResolvedValue({ _sum: { xp: 30000 } });
+    const avec = await niveau();
+    expect(avec.xp).toBe(57 * XP_PAR_ACTIVITE + 120 + 30000);
+    expect(avec.niveau).toBe(niveauPourXp(57 * XP_PAR_ACTIVITE + 120 + 30000));
+    expect(avec.niveau).toBeGreaterThan(4);
+  });
+
+  it("ne lit l'XP des défis que pour son propre compte", async () => {
+    await GET(requete("/api/progression?jour=2026-09-02"));
+    const ou = base.defiAccompli.aggregate.mock.calls[0][0].where;
+    expect(ou.userId).toBeDefined();
+  });
+
+  it("un échec de l'écriture ne fait pas tomber la réponse", async () => {
+    /**
+     * Ce qui se rattrape passe après ce qui ne se rattrape pas : un défi non
+     * retenu se reretiendra au prochain chargement, une page de progression
+     * qui tombe en 500 ne se rattrape pas. C'est l'ordre déjà choisi pour le
+     * badge du paiement éclair.
+     */
+    base.game.findMany.mockResolvedValue(troisParties);
+    base.defiAccompli.createMany.mockRejectedValue(new Error("base indisponible"));
+    const r = await GET(requete("/api/progression?jour=2026-09-08"));
+    expect(r.status).toBe(200);
+    const c = await corps(r) as { defi: { fait: boolean } };
+    expect(c.defi.fait).toBe(true);
   });
 });

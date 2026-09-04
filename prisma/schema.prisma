@@ -64,8 +64,9 @@ model User {
   santeConsentiLe DateTime?
   santeRefuseLe   DateTime?
 
-  signalements Signalement[]
-  paiements    Paiement[]
+  signalements   Signalement[]
+  paiements      Paiement[]
+  defisAccomplis DefiAccompli[]
   /**
    * Les paiements que d'AUTRES ont faits pour acquitter cette dette-ci.
    * Une équipe a une dette commune : un membre peut faire l'effort à la place
@@ -73,7 +74,7 @@ model User {
    * que rien ne dise pourquoi — et une dette qu'on ne doit plus sans savoir
    * pourquoi ne se rattrape pas.
    */
-  relaisRecus  Paiement[]    @relation("Relais")
+  relaisRecus    Paiement[]     @relation("Relais")
 
   // Depuis quand une dette non payée court. Posée quand le compteur passe de
   // zéro à positif, effacée quand il retombe à zéro. Sans elle, « en retard
@@ -99,6 +100,7 @@ model User {
    * à voir avec celui qui l'a invité.
    */
   /**
+   * /**
    * /**
    * /**
    * /**
@@ -696,5 +698,45 @@ model MembreGroupe {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupeId, userId])
+  @@index([userId])
+}
+
+/**
+ * Un défi personnel rempli, retenu pour l'XP qu'il rapporte.
+ * **C'est la seconde chose de la progression qui se range en base**, après la
+ * date du paiement éclair, et pour la même raison : ça ne se recalcule pas. Le
+ * tirage d'un défi est une fonction pure du jour, mais savoir s'il a été REMPLI
+ * le 12 août demanderait les parties et les paiements de ce jour-là, qu'on ne
+ * relit jamais.
+ * Ce sont des LIGNES et pas un total, exactement comme `Paiement` : l'XP se
+ * déduit par somme, donc elle ne peut pas diverger de ce qui la produit.
+ * `periode` porte le jour (AAAA-MM-JJ) pour un défi quotidien et le mois
+ * (AAAA-MM) pour un défi mensuel. C'est elle qui rend l'écriture idempotente :
+ * l'unicité est posée EN BASE parce que deux chargements simultanés de la même
+ * page liraient tous deux « pas encore retenu ».
+ */
+model DefiAccompli {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /**
+   * Clé du défi, telle qu'elle vit dans `defiQuotidien.ts` / `defiMensuel.ts`.
+   */
+  cle String
+
+  /**
+   * Jour (AAAA-MM-JJ) pour un défi quotidien, mois (AAAA-MM) pour un mensuel.
+   */
+  periode String
+
+  /**
+   * Ce que ce défi a rapporté, gelé ici : le barème peut changer, pas le passé.
+   */
+  xp Int
+
+  @@unique([userId, cle, periode])
   @@index([userId])
 }

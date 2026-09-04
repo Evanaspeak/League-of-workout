@@ -79,6 +79,16 @@ const ATTENDU: Record<string, RegExp> = {
   signalements: /signalement de problème/i,
   paiements: /paiements de dette/i,
   /**
+   * Les défis personnels que vous avez remplis.
+   *
+   * Des lignes, comme les paiements, et pour la même raison : l'XP se déduit
+   * de leur somme plutôt que d'être rangée en total. Elles se décrivent plutôt
+   * qu'elles ne s'exemptent — elles disent ce que vous avez fait quel jour, ce
+   * qui est un renseignement sur votre activité, même s'il ne sort jamais du
+   * compte.
+   */
+  defisAccomplis: /défis relevés/i,
+  /**
    * Les efforts que d'AUTRES ont faits pour acquitter votre dette.
    *
    * C'est la dette commune d'une équipe. Elle se décrit et ne s'exempte pas,
