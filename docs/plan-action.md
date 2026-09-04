@@ -129,7 +129,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 128 | Pseudo Riot ou pseudo interne, au choix | ½ nuit |
 
 ### Défis, saisons, événements
-*9 à faire · 1 fait.* Le défi quotidien existe depuis V366 ; le reste est validé et non construit.
+*8 à faire · 2 faits.* Le défi quotidien (V366) et les deux onglets du classement (V367).
 
 | | réf | | effort |
 |---|---|---|---|
@@ -141,7 +141,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 135 | Un événement au lancement d'un patch | 1 nuit |
 | [ ] | 140 | Un mur des records par exercice et par période | 1 nuit |
 | [ ] | 141 | Records publics ou entre amis, au choix | ½ nuit |
-| [ ] | 144 | Classement hebdomadaire et cumul, deux onglets | ½ nuit |
+| [x] | 144 | Classement hebdomadaire et cumul, deux onglets | ½ nuit |
 | [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
 
 ### Progression et récompenses

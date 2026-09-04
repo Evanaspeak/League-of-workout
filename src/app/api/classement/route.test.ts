@@ -180,3 +180,42 @@ describe("ce que le classement dit", () => {
     expect(alice.joursDeRetard).toBe(5);
   });
 });
+
+describe("les deux onglets", () => {
+  const bornes = async (adresse: string) => {
+    await GET(requete(adresse));
+    const appels = db.paiement.groupBy.mock.calls;
+    return appels[appels.length - 1][0].where.jour;
+  };
+
+  it("la semaine borne des DEUX côtés", async () => {
+    const jour = await bornes("/api/classement?jour=2026-09-04");
+    expect(jour.gte).toBeDefined();
+    expect(jour.lte).toBe("2026-09-04");
+  });
+
+  it("le cumul ne borne QUE le haut", async () => {
+    /**
+     * La borne haute reste dans les deux cas : sans elle, un paiement daté du
+     * futur entrerait au cumul comme il entrait dans la semaine. La borne
+     * basse, elle, disparaît — c'est ce qui fait le cumul.
+     */
+    const jour = await bornes("/api/classement?jour=2026-09-04&periode=total");
+    expect(jour.gte).toBeUndefined();
+    expect(jour.lte).toBe("2026-09-04");
+  });
+
+  it("une période inconnue retombe sur la SEMAINE, pas sur le cumul", async () => {
+    // Un paramètre mal écrit ne doit pas ouvrir l'onglet qui décourage un
+    // compte neuf.
+    const jour = await bornes("/api/classement?jour=2026-09-04&periode=cumul");
+    expect(jour.gte).toBeDefined();
+  });
+
+  it("la réponse dit quelle période elle porte", async () => {
+    // Sans ça, l'écran ne pourrait pas savoir si la réponse qui arrive est
+    // celle de l'onglet qu'on vient d'ouvrir ou celle d'avant.
+    const r = await corps(await GET(requete("/api/classement?jour=2026-09-04&periode=total")));
+    expect(r.periode).toBe("total");
+  });
+});

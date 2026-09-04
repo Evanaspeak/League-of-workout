@@ -1,10 +1,11 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
-import type { LigneClassement } from "@/lib/classement";
+import type { LigneClassement, Periode } from "@/lib/classement";
+import { PERIODE_DEFAUT, PERIODES } from "@/lib/classement";
 import DetteEquipe from "./DetteEquipe";
 
 /**
@@ -59,6 +60,7 @@ type Classement = {
   lignes: LigneClassement[];
   jours: number;
   ecart: number | null;
+  periode?: Periode;
 };
 type Donnees = {
   amis: Personne[];
@@ -80,6 +82,25 @@ export function AmisClient() {
    * disparaître les amis parce qu'une somme n'a pas pu se faire.
    */
   const [classement, setClassement] = useState<Classement | null>(null);
+  /**
+   * La SEMAINE au départ, jamais le cumul (réponse 144).
+   *
+   * Un cumul est décidé par la date d'inscription : le premier arrivé a un
+   * total que personne ne rattrape, et le dernier venu regarde un tableau où
+   * sa place ne dépend plus de ce qu'il fait. Ouvrir dessus reviendrait à
+   * montrer d'abord celui des deux qui décourage.
+   */
+  const [periode, setPeriode] = useState<Periode>(PERIODE_DEFAUT);
+  /**
+   * L'onglet ouvert, lisible depuis un rappel stable.
+   *
+   * Le classement se recharge de trois autres endroits — au montage, au
+   * rafraîchissement de la dette, après avoir accepté une demande — et tous
+   * trois passeraient sinon la période par DÉFAUT. Le tableau reviendrait à la
+   * semaine sous un onglet qui dit « cumul », ce qui est le pire des deux
+   * mondes : l'écran se contredit lui-même et rien ne le signale.
+   */
+  const periodeRef = useRef<Periode>(PERIODE_DEFAUT);
   const [parrainage, setParrainage] = useState<{ code: string | null; filleuls: number } | null>(null);
   /**
    * Le profil ouvert, s'il y en a un.
@@ -129,9 +150,9 @@ export function AmisClient() {
     }
   }, []);
 
-  const chargerClassement = useCallback(async () => {
+  const chargerClassement = useCallback(async (quelle: Periode = periodeRef.current) => {
     try {
-      const res = await fetch(`/api/classement?jour=${jourLocal()}`);
+      const res = await fetch(`/api/classement?jour=${jourLocal()}&periode=${quelle}`);
       if (!res.ok) throw new Error(String(res.status));
       setClassement(await res.json());
     } catch {
@@ -332,8 +353,31 @@ export function AmisClient() {
       {classement && (
         <section className="lol-panel p-5 space-y-3">
           <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.classementTitre}</h2>
+          {/*
+            Deux onglets, et le libellé d'aide suit celui qui est ouvert : une
+            phrase qui parle de sept jours sous un tableau cumulatif serait
+            fausse, et c'est le genre de faux qu'on ne relit jamais.
+          */}
+          <div role="tablist" aria-label={t.classementTitre} style={{ display: "flex", gap: 8 }}>
+            {PERIODES.map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="tab"
+                aria-selected={periode === p}
+                onClick={() => { setPeriode(p); periodeRef.current = p; void chargerClassement(p); }}
+                className="lol-btn"
+                style={{
+                  fontSize: ".8rem", padding: "4px 12px",
+                  opacity: periode === p ? 1 : 0.55,
+                }}
+              >
+                {p === "semaine" ? t.ongletSemaine : t.ongletTotal}
+              </button>
+            ))}
+          </div>
           <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
-            {t.classementAide(classement.jours)}
+            {periode === "total" ? t.classementAideTotal : t.classementAide(classement.jours)}
           </p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>

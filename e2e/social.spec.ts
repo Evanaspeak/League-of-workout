@@ -270,6 +270,23 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
   // Et les cinq mille points hors fenêtre ne sont pas comptés.
   await expect(tableau).not.toContainText("5150");
 
+  /**
+   * L'onglet du cumul, et pourquoi il se prouve ICI.
+   *
+   * Les cinq mille points de B datent d'il y a trente jours : la semaine les
+   * ignore, le cumul les compte. C'est le seul contrôle qui distingue les deux
+   * onglets pour de bon — un onglet qui rechargerait la même période rendrait
+   * exactement le même tableau, et rien à l'écran ne le dirait.
+   */
+  await pageA.getByRole("tab", { name: /depuis toujours|all time/i }).click();
+  await expect(lignes.nth(0)).toContainText("5150");
+
+  // Et le retour à la semaine les reperd : sans ce second sens, un onglet qui
+  // resterait bloqué sur le cumul passerait le contrôle ci-dessus.
+  await pageA.getByRole("tab", { name: /la semaine|this week/i }).click();
+  await expect(lignes.nth(0)).toContainText("150");
+  await expect(tableau).not.toContainText("5150");
+
   await ctxA.close();
 });
 

@@ -28,6 +28,29 @@ import { ecartEnJours, etatRetard, jourPrecedent, type Jour } from "@/lib/serie"
  */
 export const JOURS_CLASSEMENT = 7;
 
+/**
+ * Les deux périodes, et laquelle est le défaut (réponse 144 : « les deux
+ * onglets »).
+ *
+ * **La semaine reste le défaut**, et ce n'est pas un détail d'affichage. Le
+ * raisonnement ci-dessus vaut toujours : un cumul est décidé par la date
+ * d'inscription, et le dernier venu regarde un tableau où sa place ne dépend
+ * plus de ce qu'il fait. Ouvrir sur le cumul reviendrait à montrer d'abord
+ * celui des deux qui décourage.
+ *
+ * Le cumul a pourtant sa raison, et c'est l'inverse : au bout de six mois, la
+ * semaine ne dit plus rien de ce qu'on a fait. Les deux répondent à deux
+ * questions différentes, et c'est pour ça qu'il en faut deux.
+ */
+export const PERIODES = ["semaine", "total"] as const;
+export type Periode = (typeof PERIODES)[number];
+export const PERIODE_DEFAUT: Periode = "semaine";
+
+/** Une valeur inconnue retombe sur la semaine, jamais sur le cumul. */
+export function toPeriode(brut: unknown): Periode {
+  return PERIODES.includes(brut as Periode) ? (brut as Periode) : PERIODE_DEFAUT;
+}
+
 /** Le premier jour compté, aujourd'hui inclus dans la fenêtre. */
 export function debutFenetre(aujourdhui: Jour, jours: number = JOURS_CLASSEMENT): Jour {
   let curseur = aujourdhui;

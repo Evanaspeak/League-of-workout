@@ -66,6 +66,10 @@ export const amis = {
     classementTitre: "Classement de la semaine",
     classementAide: (jours: number) =>
       `Sur l'effort réellement PAYÉ ces ${jours} derniers jours, pas sur les parties jouées : perdre beaucoup ne fait pas monter. La semaine se rejoue à zéro, donc elle se rattrape.`,
+    ongletSemaine: "La semaine",
+    ongletTotal: "Depuis toujours",
+    classementAideTotal:
+      "Tout l'effort payé depuis l'inscription. Il ne se rejoue pas : celui qui est arrivé le premier garde son avance, et c'est pour ça que la semaine reste l'onglet par défaut.",
     classementSeul: "Tu es seul ici. Ajoute un ami : c'est à ce moment-là que le tableau sert à quelque chose.",
     colRang: "Rang",
     colJoueur: "Joueur",
@@ -162,6 +166,10 @@ export const amis = {
     classementTitre: "This week's ranking",
     classementAide: (jours: number) =>
       `On effort actually PAID over the last ${jours} days, not on games played: losing a lot does not move you up. The week starts over, so it can be caught up.`,
+    ongletSemaine: "This week",
+    ongletTotal: "All time",
+    classementAideTotal:
+      "All effort paid since signing up. It never starts over: whoever arrived first keeps their lead, which is why the week stays the default tab.",
     classementSeul: "You are alone here. Add a friend: that is when this table starts being worth something.",
     colRang: "Rank",
     colJoueur: "Player",
@@ -258,6 +266,10 @@ export const amis = {
     classementTitre: "Clasificación de la semana",
     classementAide: (jours: number) =>
       `Sobre el esfuerzo realmente PAGADO en los últimos ${jours} días, no sobre las partidas jugadas: perder mucho no te hace subir. La semana vuelve a empezar, así que se puede remontar.`,
+    ongletSemaine: "La semana",
+    ongletTotal: "Desde siempre",
+    classementAideTotal:
+      "Todo el esfuerzo pagado desde el registro. No vuelve a empezar: quien llegó primero conserva su ventaja, y por eso la semana sigue siendo la pestaña por defecto.",
     classementSeul: "Estás solo aquí. Añade a un amigo: es entonces cuando esta tabla sirve de algo.",
     colRang: "Puesto",
     colJoueur: "Jugador",
@@ -354,6 +366,10 @@ export const amis = {
     classementTitre: "Rangliste der Woche",
     classementAide: (jours: number) =>
       `Nach dem tatsächlich BEZAHLTEN Aufwand der letzten ${jours} Tage, nicht nach gespielten Partien: viel zu verlieren bringt dich nicht nach oben. Die Woche beginnt neu, also lässt sie sich aufholen.`,
+    ongletSemaine: "Diese Woche",
+    ongletTotal: "Seit Beginn",
+    classementAideTotal:
+      "Der gesamte seit der Anmeldung bezahlte Aufwand. Er beginnt nie neu: wer zuerst da war, behält seinen Vorsprung, und deshalb bleibt die Woche der voreingestellte Reiter.",
     classementSeul: "Du bist hier allein. Füge jemanden hinzu: erst dann taugt diese Tabelle zu etwas.",
     colRang: "Platz",
     colJoueur: "Spieler",
@@ -450,6 +466,10 @@ export const amis = {
     classementTitre: "本周排行",
     classementAide: (jours: number) =>
       `按最近 ${jours} 天真正完成的努力量排名，而不是按对局数：输得多并不会让你上升。每周重新开始，所以随时可以追上。`,
+    ongletSemaine: "本周",
+    ongletTotal: "全部时间",
+    classementAideTotal:
+      "注册以来偿还的全部努力量。它不会重新开始：先来的人会一直保持领先，所以默认仍然是本周。",
     classementSeul: "这里只有你一个人。加个好友吧，这张表才有意义。",
     colRang: "名次",
     colJoueur: "玩家",
@@ -542,6 +562,10 @@ export const amis = {
     classementTitre: "今週のランキング",
     classementAide: (jours: number) =>
       `直近 ${jours} 日間に実際にこなした努力量で並びます。試合数ではないので、負けが多くても順位は上がりません。週ごとにゼロから始まるので、いつでも追いつけます。`,
+    ongletSemaine: "今週",
+    ongletTotal: "累計",
+    classementAideTotal:
+      "登録以来に返した努力量の合計です。リセットされないため、先に始めた人が有利なままになります。だから既定は今週のままです。",
     classementSeul: "ここにはまだあなたしかいません。友だちを追加すると、この表が意味を持ちます。",
     colRang: "順位",
     colJoueur: "プレイヤー",
