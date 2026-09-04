@@ -22,6 +22,18 @@ const db = prisma as unknown as {
   paiement: { groupBy: jest.Mock };
 };
 
+/**
+ * Ce que les deux `groupBy` rendent, séparément.
+ *
+ * La route en fait deux : les sommes de la fenêtre, et les jours payés du mur
+ * des records. Une doublure qui rendrait la même chose aux deux ferait lire
+ * des sommes comme des jours — et le mur planterait sur un `jour` absent.
+ * `poserSommes` remplace donc `mockResolvedValue` dans les tests.
+ */
+let sommes: unknown[] = [];
+let joursRecords: unknown[] = [];
+const poserSommes = (v: unknown[]) => { sommes = v; };
+
 const personne = (id: string, pseudo: string, extra = {}) =>
   ({ id, pseudo, detteDepuis: null, dettePointsDus: 0, ...extra });
 
@@ -30,7 +42,13 @@ beforeEach(() => {
   session.mockResolvedValue(utilisateur({ id: "moi" }));
   db.amitie.findMany.mockResolvedValue([]);
   db.user.findMany.mockResolvedValue([personne("moi", "Moi")]);
-  db.paiement.groupBy.mockResolvedValue([]);
+  sommes = [];
+  joursRecords = [];
+  // Deux `groupBy` partent maintenant : les sommes, puis les jours du mur des
+  // records. Une doublure qui rend la même chose aux deux ferait lire des
+  // sommes comme des jours.
+  db.paiement.groupBy.mockImplementation(async (a: { by: string[] }) =>
+    (a.by.includes("jour") ? joursRecords : sommes));
 });
 
 type Ligne = {
@@ -148,7 +166,7 @@ describe("la fenêtre", () => {
   });
 
   it("une fenêtre sans paiement rend zéro, pas une absence", async () => {
-    db.paiement.groupBy.mockResolvedValue([{ userId: "moi", _sum: { points: null } }]);
+    poserSommes([{ userId: "moi", _sum: { points: null } }]);
     const c = await lu();
     expect(c.lignes[0].points).toBe(0);
   });
@@ -158,7 +176,7 @@ describe("ce que le classement dit", () => {
   it("ordonne sur le volume payé et donne l'écart au premier", async () => {
     db.amitie.findMany.mockResolvedValue([{ demandeurId: "moi", receveurId: "a" }]);
     db.user.findMany.mockResolvedValue([personne("moi", "Moi"), personne("a", "Alice")]);
-    db.paiement.groupBy.mockResolvedValue([
+    poserSommes([
       { userId: "moi", _sum: { points: 40 } },
       { userId: "a", _sum: { points: 150 } },
     ]);
@@ -184,8 +202,16 @@ describe("ce que le classement dit", () => {
 describe("les deux onglets", () => {
   const bornes = async (adresse: string) => {
     await GET(requete(adresse));
-    const appels = db.paiement.groupBy.mock.calls;
-    return appels[appels.length - 1][0].where.jour;
+    // La requête des SOMMES, pas celle du mur : les deux partent maintenant, et
+    // celle du mur borne toujours de la même façon. Prendre le dernier appel
+    // ferait passer les deux onglets pour identiques.
+    type Appel = { by: string[]; where: { jour: { gte?: string; lte?: string } } };
+    const appels: Appel[] = db.paiement.groupBy.mock.calls.map((c: [Appel]) => c[0]);
+    const somme = appels.find((a) => !a.by.includes("jour"));
+    // Le témoin : sans lui, une route qui cesserait de sommer rendrait un
+    // `undefined` que les contrôles ci-dessous liraient comme « pas de borne ».
+    expect(somme).toBeDefined();
+    return (somme as Appel).where.jour;
   };
 
   it("la semaine borne des DEUX côtés", async () => {
@@ -217,5 +243,64 @@ describe("les deux onglets", () => {
     // celle de l'onglet qu'on vient d'ouvrir ou celle d'avant.
     const r = await corps(await GET(requete("/api/classement?jour=2026-09-04&periode=total")));
     expect(r.periode).toBe("total");
+  });
+});
+
+describe("le mur des records", () => {
+  it("retient le plus gros JOUR du cercle, et pas la plus grosse somme", async () => {
+    /**
+     * Ce qui le distingue du classement, dans la même réponse : celui-ci
+     * additionne la fenêtre, celui-là prend une pointe. Alice paie plus au
+     * total sur la semaine, Moi a fait la plus grosse soirée.
+     */
+    db.amitie.findMany.mockResolvedValue([{ demandeurId: "moi", receveurId: "a" }]);
+    db.user.findMany.mockResolvedValue([personne("moi", "Moi"), personne("a", "Alice")]);
+    poserSommes([
+      { userId: "moi", _sum: { points: 400 } },
+      { userId: "a", _sum: { points: 900 } },
+    ]);
+    joursRecords = [
+      { userId: "moi", jour: "2026-09-02", _sum: { points: 400 } },
+      { userId: "a", jour: "2026-09-01", _sum: { points: 300 } },
+      { userId: "a", jour: "2026-09-02", _sum: { points: 300 } },
+      { userId: "a", jour: "2026-09-03", _sum: { points: 300 } },
+    ];
+    const c = await corps(await GET(requete("/api/classement?jour=2026-09-04"))) as {
+      lignes: { pseudo: string }[];
+      records: { mois: { pseudo: string; points: number } | null };
+    };
+    expect(c.lignes[0].pseudo).toBe("Alice");
+    expect(c.records.mois).toMatchObject({ pseudo: "Moi", points: 400 });
+  });
+
+  it("regroupe par compte ET par jour, sans borne basse", async () => {
+    // Le record de toujours n'a pas de fenêtre ; celui du mois se découpe
+    // ensuite sur le préfixe. Une borne basse ici les couperait tous les deux.
+    await GET(requete("/api/classement?jour=2026-09-04"));
+    type Appel = { by: string[]; where: { jour: { gte?: string; lte?: string } } };
+    const appels: Appel[] = db.paiement.groupBy.mock.calls.map((c: [Appel]) => c[0]);
+    const mur = appels.find((a) => a.by.includes("jour"));
+    expect(mur).toBeDefined();
+    expect((mur as Appel).by).toEqual(["userId", "jour"]);
+    expect((mur as Appel).where.jour.gte).toBeUndefined();
+    expect((mur as Appel).where.jour.lte).toBe("2026-09-04");
+  });
+
+  it("ne fait pas réapparaître quelqu'un qui s'est retiré des classements", async () => {
+    /**
+     * Le mur lit les pseudos des LIGNES, déjà passées par le filtre du mode
+     * fantôme. Sans ça, se cacher du classement laisserait le record en haut
+     * de l'écran, ce qui est le pire endroit possible.
+     */
+    db.amitie.findMany.mockResolvedValue([{ demandeurId: "moi", receveurId: "f" }]);
+    db.user.findMany.mockResolvedValue([personne("moi", "Moi")]);
+    joursRecords = [
+      { userId: "f", jour: "2026-09-01", _sum: { points: 9000 } },
+      { userId: "moi", jour: "2026-09-02", _sum: { points: 40 } },
+    ];
+    const c = await corps(await GET(requete("/api/classement?jour=2026-09-04"))) as {
+      records: { toujours: { pseudo: string; points: number } | null };
+    };
+    expect(c.records.toujours).toMatchObject({ pseudo: "Moi", points: 40 });
   });
 });
