@@ -37,3 +37,24 @@ export const NIVEAUX_DEFAUT = [
 ];
 
 export const MAITRISE_DEFAUT = { surchargeMax: 0.5, partiesPourMax: 100 };
+
+/**
+ * Les rôles qu'on peut choisir, dans l'ordre où on les montre.
+ *
+ * Ils se DÉDUISENT du barème plutôt que de s'écrire à côté, et la raison est
+ * un refus : `/api/games` rend « Rôle inconnu » quand le rôle envoyé n'a pas
+ * de ligne dans `RoleWeight`. Un écran qui proposerait un rôle absent du
+ * barème ferait donc refuser une saisie parfaitement conforme à ce qu'il
+ * venait de demander — c'est le défaut du champion refusé, une table plus
+ * loin, et il se corrigerait ici en une ligne le jour où quelqu'un ajoute un
+ * rôle en oubliant un des trois écrans.
+ *
+ * Ils étaient écrits TROIS fois à la main : le formulaire d'ajout, le
+ * simulateur de dette et le filtre de l'historique. Les trois coïncidaient, ce
+ * qui est le cas normal — la duplication ne se remarque jamais tant qu'elle
+ * n'a pas divergé, et c'est précisément ce qui la rend chère.
+ *
+ * C'est la LISTE que le barème décide, pas les poids : le panneau
+ * d'administration règle les seconds et ne touche pas à la première.
+ */
+export const ROLES = ROLES_DEFAUT.map((r) => r.role);

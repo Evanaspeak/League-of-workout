@@ -1,4 +1,5 @@
 "use client";
+import { ROLES } from "@/lib/scoringDefaut";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { simulateur as dict } from "@/lib/i18n/dictionaries/simulateur";
@@ -113,7 +114,7 @@ export function SimulateurDette() {
             {t.role}
           </label>
           <select id="sim-role" className="lol-select" value={role} onChange={(e) => setRole(e.target.value)}>
-            {["Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"].map((r) => (
+            {ROLES.map((r) => (
               <option key={r} value={r}>{r}</option>
             ))}
           </select>

@@ -1,4 +1,5 @@
 "use client";
+import { ROLES } from "@/lib/scoringDefaut";
 import { useEffect, useState } from "react";
 import { dureeEnSecondes as dureeSaisie, saisieComplete } from "@/lib/saisiePartie";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -64,7 +65,9 @@ type PreviewResult = {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ROLES_FORM = ["Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"];
+// La liste vient du barème : un rôle qui n'y figure pas ferait refuser
+// l'enregistrement par « Rôle inconnu », après l'avoir proposé.
+const ROLES_FORM = ROLES;
 
 // ─── Composant ───────────────────────────────────────────────────────────────
 

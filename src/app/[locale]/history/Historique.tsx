@@ -1,4 +1,5 @@
 "use client";
+import { ROLES } from "@/lib/scoringDefaut";
 import { Icone } from "@/components/Icone";
 import { Squelette } from "./Squelette";
 import { Lien } from "@/components/Lien";
@@ -53,7 +54,9 @@ type Game = {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const ROLES_FILTER = ["Tous", "Top", "Jungle", "Mid", "ADC", "Support", "ARAM", "Arena"];
+// « Tous » n'est pas un rôle : c'est l'absence de filtre, et elle n'a rien
+// à faire dans le barème.
+const ROLES_FILTER = ["Tous", ...ROLES];
 /**
  * Cellule de résultat. Une session au temps n'a ni victoire ni défaite : sans
  * ce cas neutre, elle s'affichait « Défaite » en rouge, ce qui est faux.
