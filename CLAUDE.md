@@ -794,7 +794,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 216 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 217 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1078,6 +1078,74 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Une icône cassée faisait sauter l'historique, et seule la lenteur le montrait
+Campagne passée après V387, sur un compte de mesure à neuf parties et une
+dette — c'est-à-dire un compte qui ressemble enfin à celui de quelqu'un. Quatre
+écrans sur cinq tiennent largement ; `/fr/history` rend **CLS 0,102** pour un
+seuil de 0,1, trois fois de suite, à trois millièmes près.
+
+**La sonde a nommé la cause du premier coup, et ce n'était pas ce que je
+cherchais.** J'allais regarder du côté de la pastille de dette, qui paraît
+désormais pour tout le monde depuis V387. Les deux gros déplacements sont
+ailleurs : toutes les lignes du tableau grandissent de dix pixels, puis
+rapetissent de dix pixels **douze millisecondes plus tard**, à la toute fin du
+chargement.
+
+**Une image cassée n'est pas une image vide.** Le navigateur y rend le texte de
+remplacement, qui passe à la ligne dans trente-huit pixels de large et fait
+grandir la ligne. React reprend la main quelques millisecondes après et pose le
+repli — la lettre du champion dans un carré — donc la ligne redescend. Deux
+déplacements successifs, l'un dans chaque sens, et aucune mutation du DOM entre
+les deux : l'observateur de mutations n'a rien vu du tout, ce qui est
+exactement ce qui a écarté les fausses pistes.
+
+**Le CDN coupé net ne reproduit RIEN**, et c'est le contrôle qui a tranché :
+
+| Data Dragon | CLS | déplacements |
+|---|---|---|
+| coupé tout de suite | 0,020 | le seul pied de page |
+| lent (3 s) puis en échec | **0,102** | pied de page + lignes, dans les deux sens |
+| lent, après correction | 0,020 | le seul pied de page |
+
+Il faut donc des lignes ET une réponse LENTE. Un compte vide ne le montre
+jamais, un CDN qui répond vite non plus, et un CDN qu'on coupe pour mesurer —
+la parade écrite pour `comparer-rendu.mjs` — le masque complètement. C'est la
+combinaison de quelqu'un sur un réseau moyen, c'est-à-dire le cas courant.
+
+**La correction est de poser la boîte en STYLE et pas seulement en attributs**,
+avec `overflow: hidden` : le texte de remplacement ne peut plus l'agrandir, et
+la ligne garde sa hauteur dans les trois états de l'icône. **0,102 → 0,020**,
+mesuré sur le même compte et la même construction.
+
+**Le garde a d'abord passé au vert, et le chiffre qui le sauve est un DÉLAI.**
+À une seconde et demie d'attente avant l'échec, le sabotage ne faisait rien
+tomber : le navigateur n'a pas peint l'état cassé avant que React ne pose le
+repli, donc il n'y avait rien à mesurer. À trois secondes et demie, le
+déplacement des lignes vaut 0,034 sans la correction et **exactement zéro**
+avec. Un test qui éprouve une course doit laisser à la course le temps d'avoir
+lieu.
+
+**Et il compte les LIGNES, pas la page.** Le pied de page se pose après le
+premier rendu et déplace tout ce qui est sous lui : il vaut à lui seul 0,072
+dans les conditions du parcours, donc plus que le seuil qu'on veut tenir. Le
+mêler à la mesure noierait ce qu'on éprouve. Il est écarté par la source du
+déplacement, pas par un seuil relevé — un seuil qu'on relève pour faire passer
+un test ne garde plus rien.
+
+**Les chiffres de clôture, sur un compte à neuf parties et une dette.**
+
+| écran | LCP poste | LCP téléphone bridé | CLS |
+|---|---|---|---|
+| `/fr/settings` | 152 ms | 936 ms | 0,000 |
+| `/fr/dashboard` | 268 ms | 1144 ms | 0,000 |
+| `/fr/amis` | 240 ms | 1636 ms | 0,027 |
+| `/fr/history` | 516 ms | 1124 ms | **0,020** |
+| `/fr/bilan` | 272 ms | 2216 ms | 0,000 |
+
+`/fr/bilan` reste le plus proche du seuil sur téléphone bridé, pour la raison
+déjà écrite : son plus grand élément est l'image de saison, et 2216 ms est à
+peu près l'instant où elle finit d'arriver.
 
 ### L'XP des défis, et la seule chose du produit qui ne peut pas se recalculer
 Réponse à la question 139 — « qu'est-ce qu'on gagne à finir un défi ? » — restée
