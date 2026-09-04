@@ -1,5 +1,5 @@
 /**
- * Le niveau de compte, et le titre qui va avec.
+ * Le niveau de compte, le titre qui va avec, et l'XP qui les nourrit.
  *
  * Lignes 148 et 149 du plan, toutes deux répondues « oui ». Elles vont
  * ensemble : le niveau dit COMBIEN, le titre dit QUOI — et les deux se
@@ -11,13 +11,34 @@
  * personne ne saurait recalculer. La contrepartie est qu'un niveau peut
  * BAISSER — c'est le prix, il est assumé, et c'est déjà le cas des paliers.
  *
- * **Le niveau se calcule sur l'effort PAYÉ**, jamais sur les parties jouées ni
- * sur la dette due. C'est la décision déjà prise pour le classement (réponse
- * 115) et elle vaut pour la même raison : quelqu'un qui perd beaucoup accumule
- * beaucoup de dette, donc classer sur les parties reviendrait à faire monter
- * celui qui ne paie pas. Sur un produit dont le sujet est de payer, ce serait
- * l'exact contresens.
+ * ## Le niveau vient de l'XP, et plus du seul effort payé
+ *
+ * La première version calculait le niveau sur l'effort PAYÉ et sur lui seul,
+ * pour une raison qui reste bonne : quelqu'un qui perd beaucoup accumule
+ * beaucoup de dette, et faire monter celui qui ne paie jamais serait le
+ * contresens d'un produit dont le sujet est de payer.
+ *
+ * Elle avait un défaut que seul l'usage pouvait montrer : **à neuf cent
+ * soixante parties enregistrées et deux points payés, on restait niveau un.**
+ * Le compteur ne bougeait donc jamais pour la personne la plus assidue du
+ * produit, et un niveau qui ne bouge pas n'est pas un niveau. C'est le
+ * propriétaire du produit qui l'a constaté sur son propre compte, et qui a
+ * tranché : le niveau se calcule sur de l'XP, « ça fait plus jeu vidéo ».
+ *
+ * **Ce que ça coûte, et il faut le dire.** Jouer rapporte maintenant de l'XP
+ * quel que soit le résultat : perdre fait donc monter. Ce n'est plus le garde
+ * que la première version posait. Ce qui le remplace est un RAPPORT plutôt
+ * qu'une porte — un point d'effort payé rapporte autant qu'un dixième
+ * d'activité, donc une défaite de vingt points payée rapporte trente d'XP
+ * contre dix si on ne la paie jamais. Payer reste de très loin le chemin le
+ * plus rapide ; ça n'est simplement plus le seul.
  */
+
+/** Ce que rapporte une activité enregistrée, quel qu'en soit le résultat. */
+export const XP_PAR_ACTIVITE = 10;
+
+/** Ce que rapporte, EN PLUS, chaque point d'effort réellement payé. */
+export const XP_PAR_POINT_PAYE = 1;
 
 /**
  * **`pointsPayes`, et surtout pas `totalPoints`.**
@@ -30,13 +51,13 @@
  * puisse les distinguer, puisqu'ils portaient le même nom.
  *
  * Deux formes identiques ne sont pas la même chose quand l'une compte ce
- * qu'on doit et l'autre ce qu'on a fait. Le champ est donc renommé : c'est le
+ * qu'on doit et l'autre ce qu'on a fait. Le champ est donc nommé : c'est le
  * NOM qui empêche la confusion, pas le commentaire.
  */
 export type SourceNiveau = {
   /** Points d'effort réellement PAYÉS, depuis toujours. */
   pointsPayes: number;
-  /** Parties enregistrées. */
+  /** Activités enregistrées, sans enjeu exclues. */
   parties: number;
   /** Plus longue série de jours payés. */
   meilleureSerie: number;
@@ -44,22 +65,41 @@ export type SourceNiveau = {
   joursPayes: number;
 };
 
+/** Un compte n'a pas d'XP négative, et une source incomplète vaut zéro. */
+function entierSain(valeur: number): number {
+  return Number.isFinite(valeur) && valeur > 0 ? valeur : 0;
+}
+
+/**
+ * L'XP d'un compte, déduite et jamais stockée.
+ *
+ * Les deux termes ne mesurent pas la même chose et c'est voulu : le premier
+ * compte ce qu'on a JOUÉ, le second ce qu'on a PAYÉ. Les additionner donne un
+ * compteur qui avance quoi qu'il arrive, et qui avance beaucoup plus vite
+ * quand on s'acquitte.
+ */
+export function xpDuCompte(source: SourceNiveau): number {
+  return XP_PAR_ACTIVITE * entierSain(source.parties)
+    + XP_PAR_POINT_PAYE * entierSain(source.pointsPayes);
+}
+
 /**
  * Le pas de la courbe.
  *
- * Le niveau n coûte `25 × n × (n−1)` points au total : 0, 50, 150, 300, 500,
- * puis 2 250 au niveau 10, 9 500 au niveau 20, 24 800 au niveau 32. La forme
- * est quadratique, et c'est le seul choix qui tienne aux deux bouts — un pas
- * constant rend les niveaux tardifs gratuits, une courbe exponentielle les
- * rend inatteignables et le compteur s'arrête de bouger.
+ * Le niveau n coûte `50 × n × (n−1)` d'XP au total. Traduit en activités, à
+ * dix d'XP l'unité, ça donne exactement les repères demandés : **dix activités
+ * pour le niveau 2, trente pour le 3, soixante pour le 4, cent pour le 5.**
+ * Les paliers s'écartent ensuite de dix activités à chaque fois, ce qui garde
+ * un niveau atteignable très longtemps sans les rendre gratuits.
  *
- * Le repère : 25 000 points est le dernier palier de volume, et il tombe au
- * niveau 32. Les deux échelles disent donc la même chose, ce qui n'est pas un
- * hasard mais un calage.
+ * La forme reste quadratique, et c'est le seul choix qui tienne aux deux
+ * bouts — un pas constant rend les niveaux tardifs gratuits, une courbe
+ * exponentielle les rend inatteignables et le compteur s'arrête de bouger,
+ * c'est-à-dire précisément le défaut qu'on vient de corriger.
  */
-export const PAS_NIVEAU = 25;
+export const PAS_NIVEAU = 50;
 
-/** Ce qu'il faut avoir payé, en tout, pour ATTEINDRE le niveau n. */
+/** Ce qu'il faut avoir d'XP, en tout, pour ATTEINDRE le niveau n. */
 export function seuilDuNiveau(n: number): number {
   if (!Number.isFinite(n) || n <= 1) return 0;
   const entier = Math.floor(n);
@@ -67,7 +107,7 @@ export function seuilDuNiveau(n: number): number {
 }
 
 /**
- * Le niveau que valent ces points.
+ * Le niveau que vaut cette XP.
  *
  * **La forme fermée suffit, et c'est l'algèbre qui le dit.** Le réflexe était
  * d'ajouter une correction par comparaison, au motif qu'une racine carrée
@@ -76,43 +116,45 @@ export function seuilDuNiveau(n: number): number {
  * retirer ne faisait tomber aucun test. Elle ne tenait rien, et elle se
  * relisait comme une garantie.
  *
- * La raison est que ce cas ne peut pas se produire ici. Au seuil du niveau n,
- * `points` vaut `25 n (n−1)`, donc `1 + 4 points / 25` vaut `4n² − 4n + 1`,
- * c'est-à-dire `(2n − 1)²` : un carré parfait entier. La division par 25 est
- * exacte (le quotient est représentable), et la racine d'un carré parfait est
- * exacte en IEEE 754. Il n'y a donc pas d'erreur à rattraper AU seuil, et
- * entre deux seuils l'erreur ne peut pas atteindre la borne du plancher.
+ * La raison est que ce cas ne peut pas se produire ici, et le changement de
+ * pas n'y change rien. Au seuil du niveau n, l'XP vaut `PAS × n (n−1)`, donc
+ * `1 + 4 xp / PAS` vaut `4n² − 4n + 1`, c'est-à-dire `(2n − 1)²` : un carré
+ * parfait entier, quel que soit le pas. La racine d'un carré parfait est
+ * exacte en IEEE 754.
  *
  * Ce n'est pas un raisonnement qu'on croit sur parole : le test le vérifie sur
  * trois cent mille niveaux, et c'est LUI la garantie.
  */
-export function niveauPourPoints(points: number): number {
-  if (!Number.isFinite(points) || points <= 0) return 1;
-  const n = Math.floor((1 + Math.sqrt(1 + (4 * points) / PAS_NIVEAU)) / 2);
+export function niveauPourXp(xp: number): number {
+  if (!Number.isFinite(xp) || xp <= 0) return 1;
+  const n = Math.floor((1 + Math.sqrt(1 + (4 * xp) / PAS_NIVEAU)) / 2);
   return Number.isFinite(n) && n > 1 ? n : 1;
 }
 
 export type Avancement = {
   niveau: number;
+  /** L'XP totale du compte, pour l'afficher telle quelle. */
+  xp: number;
   /** Ce que valait l'entrée dans le niveau courant. */
   seuil: number;
   /** Ce qu'il faudra pour le suivant. */
   prochain: number;
-  /** Ce qu'il reste à payer. */
+  /** L'XP qu'il reste à gagner. */
   restant: number;
   /** Où l'on en est dans le niveau, entre 0 et 1. */
   part: number;
 };
 
-/** De quoi dessiner une barre sans refaire le calcul à l'écran. */
-export function avancementNiveau(points: number): Avancement {
-  const propres = Number.isFinite(points) ? Math.max(0, points) : 0;
-  const niveau = niveauPourPoints(propres);
+/** L'arithmétique seule, sur une XP déjà calculée. */
+export function avancementPourXp(xp: number): Avancement {
+  const propres = Number.isFinite(xp) ? Math.max(0, xp) : 0;
+  const niveau = niveauPourXp(propres);
   const seuil = seuilDuNiveau(niveau);
   const prochain = seuilDuNiveau(niveau + 1);
   const largeur = prochain - seuil;
   return {
     niveau,
+    xp: propres,
     seuil,
     prochain,
     restant: Math.max(0, prochain - propres),
@@ -120,6 +162,19 @@ export function avancementNiveau(points: number): Avancement {
     // zéro rendrait NaN, et NaN traverse une barre de progression sans bruit.
     part: largeur > 0 ? Math.min(1, Math.max(0, (propres - seuil) / largeur)) : 0,
   };
+}
+
+/**
+ * De quoi dessiner une barre sans refaire le calcul à l'écran.
+ *
+ * **Elle prend la SOURCE et pas un nombre**, et c'est délibéré. La version
+ * d'avant recevait un nombre, et le sabotage avait montré qu'on pouvait lui
+ * passer l'effort généré à la place de l'effort payé sans qu'aucun test ne
+ * puisse les distinguer. Avec la source entière, il n'y a plus de mauvais
+ * nombre à passer : c'est le module qui décide ce que vaut un compte.
+ */
+export function avancementNiveau(source: SourceNiveau): Avancement {
+  return avancementPourXp(xpDuCompte(source));
 }
 
 /**
@@ -134,6 +189,11 @@ export function avancementNiveau(points: number): Avancement {
  * sept jours d'affilée sont plus durs que dix jours épars, et c'est ce qui les
  * sépare. C'est aussi ce qui rend l'ordre stable : sans lui, on afficherait le
  * dernier gagné, et le titre changerait à chaque partie.
+ *
+ * **Ils restent sur l'effort PAYÉ là où ils en emploient un**, alors que le
+ * niveau n'en dépend plus. Ce n'est pas une incohérence : le niveau dit qu'on
+ * est là depuis longtemps, le titre dit ce qu'on a fait de dur. « Endurant »
+ * doit rester quelque chose qu'on ne gagne pas en perdant.
  */
 export const TITRES = [
   { cle: "premierPas", tient: (s: SourceNiveau) => s.parties >= 1 },

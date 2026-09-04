@@ -48,6 +48,12 @@ export function reponseBadges(src: SourceProgression) {
     // nombre de JOURS où l'on a fait quelque chose.
     joursPayes: new Set(src.jours).size,
   };
+  const sourceNiveau = {
+    pointsPayes: src.pointsPayes,
+    parties: source.parties,
+    meilleureSerie: source.meilleureSerie,
+    joursPayes: source.joursPayes,
+  };
   return {
     source,
     badges: tousLesBadges(source),
@@ -60,13 +66,15 @@ export function reponseBadges(src: SourceProgression) {
      * relire les mêmes lignes. C'est le défaut corrigé en fusionnant
      * `/api/badges` et `/api/serie`, et il ne se refait pas.
      */
-    niveau: avancementNiveau(src.pointsPayes),
-    titre: titrePorte({
-      pointsPayes: src.pointsPayes,
-      parties: source.parties,
-      meilleureSerie: source.meilleureSerie,
-      joursPayes: source.joursPayes,
-    }),
+    /**
+     * La source est composée UNE fois et passée aux deux. Elle l'était déjà
+     * pour le titre ; le niveau recevait, lui, un nombre — et c'est par là que
+     * le sabotage avait fait entrer l'effort généré à la place du payé. Les
+     * deux lisent maintenant la même chose, et il n'y a plus de nombre à
+     * passer de travers.
+     */
+    niveau: avancementNiveau(sourceNiveau),
+    titre: titrePorte(sourceNiveau),
   };
 }
 

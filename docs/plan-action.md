@@ -135,7 +135,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 |---|---|---|---|
 | [x] | 131 | Des défis mensuels, en volume ET en nombre de parties | 2 nuits |
 | [x] | 132 | Individuels et communs | — |
-| [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué — **attend la réponse 139** | 1 nuit |
+| [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué — **la récompense est tranchée (de l'XP, défis personnels), restent les trois niveaux, le malus, et les défis PARTAGÉS remis à plus tard** | 1 nuit |
 | [x] | 138 | Un défi quotidien tiré au sort, valable 24 h | 1 nuit |
 | [x] | 133 | Un objectif collectif à l'échelle de l'application | 1 nuit |
 | [ ] | 135 | Un événement au lancement d'un patch | 1 nuit |
@@ -151,7 +151,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 |---|---|---|---|
 | [x] | 146 | Les paliers cumulés, annoncés au franchissement | — |
 | [x] | 147 | Des badges | 1 nuit |
-| [x] | 148 | Un niveau de compte, séparé du niveau de force | 1 nuit |
+| [x] | 148 | Un niveau de compte, séparé du niveau de force — **sur de l'XP depuis V385**, l'effort payé seul laissait à niveau 1 après 960 parties | 1 nuit |
 | [x] | 149 | Un titre affiché à côté du pseudo, gagné par l'usage | 1 nuit |
 | [ ] | 150 | Des cosmétiques : couleurs, cadres, thèmes | 2 nuits |
 | [ ] | 151 | Un thème visuel par jeu | 1 nuit |
