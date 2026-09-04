@@ -769,7 +769,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2119 tests unitaires, 191 suites. Base et session doublées : aucune dépendance à
+2130 tests unitaires, 192 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -794,7 +794,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 213 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 216 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1078,6 +1078,74 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### L'XP des défis, et la seule chose du produit qui ne peut pas se recalculer
+Réponse à la question 139 — « qu'est-ce qu'on gagne à finir un défi ? » — restée
+« à voir » depuis l'écriture des défis, et tranchée par le propriétaire : de
+l'XP, et rien d'autre, pour les défis **personnels**. Les défis PARTAGÉS restent
+en suspens, il les a explicitement remis à plus tard, et rien n'est inventé à
+leur place.
+
+**Ça se STOCKE, alors que rien d'autre de la progression ne se stocke.** Les
+paliers, le niveau et le titre se déduisent à tout instant de ce que la base
+contient déjà, et c'est ce qui les empêche de diverger. Un défi fini ne peut pas
+se déduire après coup : le tirage du jour est une fonction pure du jour, mais
+savoir s'il a été REMPLI le 12 août demanderait les parties et les paiements de
+ce jour-là, qu'on ne relit pas et qu'on ne relira jamais. C'est la deuxième
+exception du produit, après `paiementEclairLe`, et pour la même raison — un
+MOMENT ne se recalcule pas.
+
+**Des LIGNES, jamais un total.** `DefiAccompli` porte le compte, la clé du défi,
+la période et ce qu'il vaut ; l'XP se déduit par somme. Un total rangé en base
+finirait par diverger de ce qui le produit, ce qui est exactement le défaut que
+tout le reste de la progression évite en ne stockant rien.
+
+**La PÉRIODE fait partie de l'identité de la ligne**, et c'est elle qui rend
+l'écriture idempotente : un défi du jour se regagne un autre jour, un défi du
+mois le mois suivant, aucun des deux deux fois dans la même période. L'unicité
+est posée EN BASE (`@@unique([userId, cle, periode])`) et non dans le code : deux
+chargements simultanés de la même page lisent tous deux « pas encore retenu »,
+et c'est le raisonnement déjà tenu pour la date de début de dette.
+
+**L'écriture passe en DERNIER, et son échec ne coûte que lui-même.** Un défi non
+retenu se reretiendra au prochain chargement ; une route de progression qui tombe
+en 500 vide le tableau de bord. C'est l'ordre déjà choisi pour le badge du
+paiement éclair, et c'est un `try` et non un `.catch()`, qui ne rattraperait
+qu'une promesse rejetée.
+
+**Et une limite écrite plutôt que découverte** : la ligne s'écrit quand la route
+CONSTATE que le défi est rempli, donc au prochain chargement d'un écran connecté.
+Un défi rempli un jour où l'on n'ouvre jamais l'application n'est pas retenu. Le
+rattraper demanderait de relire l'historique de chaque journée, ce qui coûte plus
+que ça ne rapporte — et le cas est rare : on remplit un défi en jouant, et on
+joue avec l'application ouverte.
+
+**Le parcours navigateur éprouve ce qu'aucun test unitaire ne peut voir**, et il
+tient à un décalage : le premier appel lit la somme d'XP AVANT d'écrire la ligne,
+donc son chiffre ne porte pas encore les cinquante points ; le deuxième les
+porte ; le troisième ne redonne rien. Trois lectures dont la seule différence est
+un aller-retour par PostgreSQL — c'est-à-dire par l'index unique, qui est une
+propriété de la migration et non du code.
+
+**Le sabotage de cet index a laissé sa propre preuve.** Index supprimé, le
+troisième chargement fait passer l'XP de 455 à 505 : le niveau monterait tout
+seul tant qu'on laisse un onglet ouvert. Et l'index refusait ensuite de se
+recréer — `Key ("userId", cle, periode)=(…, paye300, 2026-09-04) is duplicated` —
+ce qui est la meilleure démonstration possible qu'il servait à quelque chose.
+
+**Le défi du jour change tous les jours, donc le parcours ne peut pas s'écrire
+contre un défi précis** : il passerait au vert cinq jours sur six en n'éprouvant
+rien. Il lit le défi du jour et le remplit, quelle que soit sa mesure — parties,
+victoires, jeux distincts, ou une dette qu'on fait monter puis qu'on solde.
+
+**Deux sabotages n'ont pas compilé, et c'est noté comme tel** plutôt que compté
+comme un test qui mord. `if (false && …)` fait perdre à TypeScript la
+restriction de `user` posée plus haut ; `[] && …` est nommé « toujours vrai ».
+Le sabotage qui compile est de passer des entrées vides à `defisAAcquitter` —
+la route cesse alors de constater ce qui est rempli, et le parcours tombe sur
+« aucune ligne DefiAccompli écrite ».
+
+Sept sabotages unitaires, sept échecs. Deux au navigateur, deux échecs.
 
 ### Un parcours tombé une fois en CI, et ce qu'on en sait vraiment
 V373 est **rouge**, en 7 min 42 — donc les parcours ont bien tourné, ce que la

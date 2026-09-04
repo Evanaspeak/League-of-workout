@@ -37,6 +37,8 @@ export type SourceProgression = {
    * sujet est de payer.
    */
   pointsPayes: number;
+  /** XP gagnée sur des défis remplis. Elle vient d'une table, pas d'un calcul. */
+  xpDefis?: number;
 };
 
 export function reponseBadges(src: SourceProgression) {
@@ -53,6 +55,7 @@ export function reponseBadges(src: SourceProgression) {
     parties: source.parties,
     meilleureSerie: source.meilleureSerie,
     joursPayes: source.joursPayes,
+    xpDefis: src.xpDefis ?? 0,
   };
   return {
     source,
