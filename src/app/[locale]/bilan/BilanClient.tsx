@@ -227,7 +227,7 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
           gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
         }}>
           <Case legende={t.parties} valeur={nombre(bilan.parties)} />
-          <Case legende={t.victoires}
+          <Case legende={t.winrate}
                 valeur={bilan.winrate === null ? t.aucun : pourcent(bilan.winrate)} />
           <Case legende={t.paye} valeur={effortPaye} />
           <Case legende={t.serie} valeur={nombre(bilan.meilleureSerie)} />

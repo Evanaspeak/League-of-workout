@@ -13,7 +13,7 @@ describe("les mots de l'image", () => {
   test("les six langues sont servies", () => {
     for (const langue of LANGUES) {
       const m = motsImage(langue);
-      for (const cle of ["parties", "victoires", "paye", "serie"] as const) {
+      for (const cle of ["parties", "winrate", "paye", "serie"] as const) {
         expect(typeof m[cle]).toBe("string");
         expect(m[cle].length).toBeGreaterThan(0);
       }

@@ -266,7 +266,7 @@ export const dashboard = {
     syncBannerTitle: "Sincronización con League disponible pronto",
     syncBannerBody: "A la espera de la autorización de Riot Games para sincronizar desde la web. Mientras tanto, la aplicación de Windows ya detecta tus partidas de League y las registra sola; los demás juegos se añaden a mano, justo debajo.",
     gamesPlayed: "Partidas",
-    winrate: "Victorias",
+    winrate: "% de victorias",
     totalPompes: "Deuda total",
     parRoleDe: (nom: string, view: "avg" | "total") => `${nom} por rol${view === "avg" ? " · media/partida" : " · total"}`,
     parModeDe: (nom: string, view: "avg" | "total") => `${nom} por modo${view === "avg" ? " · media/partida" : " · total"}`,
