@@ -1098,6 +1098,52 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La comparaison de rendu ne regardait pas dans les rubriques des réglages
+Campagne passée entre V407 et la tête, dix versions plus loin. Le premier
+passage rend **trois captures différentes sur vingt-quatre**, toutes le tableau
+de bord, aux trois largeurs. Et `/settings` **identique** — ce qui ne peut pas
+être vrai : deux versions de la soirée n'ont touché que cet écran.
+
+**`/settings` ne rend que la LISTE des rubriques.** Tout ce qu'elles
+contiennent — la force, les exercices, les rappels, le corps, les jeux, les
+données — s'ouvre par un FRAGMENT, et l'outil ne visitait que l'adresse nue.
+Autrement dit : la moitié de l'écran de réglages n'a jamais été comparée, sur
+aucune campagne, depuis que l'outil existe. Le simulateur qui vouvoyait et le
+titre rendu deux fois y ont vécu sans qu'une seule campagne puisse les voir.
+
+**C'est le pire silence d'un outil de mesure** : il ne dit pas « je n'ai pas
+regardé », il dit « rien à signaler ». Le contrôle d'atterrissage ne pouvait
+pas aider — la page visitée EST celle demandée, elle montre simplement autre
+chose que ce qu'on croyait.
+
+Les cinq rubriques entrent dans la liste : **24 captures deviennent 39**. Deux
+détails ont dû suivre, et ils valent d'être notés parce qu'ils auraient rendu
+l'ajout inutile :
+
+- **le fragment ne fait pas partie du chemin.** Le contrôle d'atterrissage
+  compare le `pathname` d'arrivée au chemin demandé ; avec `#effort`, les cinq
+  rubriques auraient été déclarées « non représentatives » à chaque passage. Un
+  contrôle qui crie sur ce qui va bien finit par ne plus se lire ;
+- le `#` devient un tiret dans le nom de fichier.
+
+**Le second passage trie exactement.** Neuf captures différentes sur
+trente-neuf : le tableau de bord (les nombres et la ligne du niveau de
+souffrance), `settings#corps` (le titre rendu deux fois, le reproche du
+mètre-ruban) et `settings#effort` (les notifications, le simulateur). Les trois
+autres rubriques, `/history`, et les cinq pages publiques sont **identiques au
+pixel**.
+
+C'est la conclusion qu'on attendait de cette campagne : les trente gabarits de
+pluriel et les six conversions de nombres n'ont rien déplacé ailleurs, et
+chaque différence est une correction voulue.
+
+**Et le piège du 3 septembre est contourné plutôt que résolu.** Le journal note
+qu'un arbre de travail git avec `node_modules` en lien symbolique est refusé par
+Turbopack. Il suffit de ne pas en créer : on bascule le MÊME arbre sur l'ancien
+commit, on construit, on capture, on revient. Aucune dépendance n'avait bougé
+entre les deux, donc `node_modules` reste valable — c'est la condition, et elle
+se vérifie en une commande avant de commencer.
+
 ### Campagne de clôture du 4 septembre au soir, après neuf versions
 Passée sur un compte semé à soixante parties, après V408 à V416 — dont cinq qui
 ont touché des libellés dans les six langues, et deux qui ont changé la façon
