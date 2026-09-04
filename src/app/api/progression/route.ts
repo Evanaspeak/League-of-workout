@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { estJourValide, jourLocal } from "@/lib/serie";
 import { reponseBadges, reponseSerie } from "@/lib/progression";
 import { composerExploits } from "@/lib/exploits";
+import { avancementDefi, defiDuJour } from "@/lib/defiQuotidien";
 
 /**
  * Les paliers et la série, en un seul aller-retour.
@@ -34,7 +35,7 @@ export async function GET(req: Request) {
   const demande = new URL(req.url).searchParams.get("jour");
   const aujourdhui = estJourValide(demande) ? demande : jourLocal();
 
-  const [agregat, paiements] = await Promise.all([
+  const [agregat, paiements, partiesDuJour] = await Promise.all([
     prisma.game.aggregate({
       // Même raison que dans `/api/badges`, dont cette route reprend le calcul.
       where: { userId: user.id, sansEnjeu: false },
@@ -51,6 +52,26 @@ export async function GET(req: Request) {
       // ce qu'on lit : deux ans de paiements quotidiens tiennent largement.
       orderBy: { jour: "desc" },
       take: 800,
+    }),
+    /**
+     * Les parties du jour, et elles seules : c'est le seul aller-retour que le
+     * défi quotidien ajoute, et il porte sur une poignée de lignes.
+     *
+     * Les bornes sont en UTC, comme dans `/api/dashboard/daily` qui découpe
+     * déjà les journées ainsi. C'est une approximation pour qui joue loin du
+     * méridien — et c'est la MÊME dans les deux endroits, ce qui vaut mieux
+     * qu'une seconde règle qui divergerait à la première correction.
+     */
+    prisma.game.findMany({
+      where: {
+        userId: user.id,
+        sansEnjeu: false,
+        date: {
+          gte: new Date(`${aujourdhui}T00:00:00.000Z`),
+          lte: new Date(`${aujourdhui}T23:59:59.999Z`),
+        },
+      },
+      select: { result: true, jeu: true },
     }),
   ]);
 
@@ -71,5 +92,26 @@ export async function GET(req: Request) {
      * et jamais à la lecture.
      */
     exploits: composerExploits(user),
+    /**
+     * Le défi du jour, avec son avancement.
+     *
+     * Il vit ici et pas dans une route à lui pour la raison déjà écrite trois
+     * fois dans ce fichier : il se mesure sur des lignes qu'on vient de lire.
+     * Le tirage, lui, ne dépend que du JOUR — donc du navigateur, comme la
+     * série, parce qu'un défi de vingt-quatre heures se compte sur les
+     * vingt-quatre heures de celui qui le fait.
+     */
+    defi: (() => {
+      const paiementsDuJour = paiements.filter((p) => p.jour === aujourdhui);
+      return {
+        ...avancementDefi(defiDuJour(aujourdhui), {
+          partiesDuJour: partiesDuJour.length,
+          victoiresDuJour: partiesDuJour.filter((g) => g.result === "V").length,
+          jeuxDuJour: new Set(partiesDuJour.map((g) => g.jeu).filter(Boolean)).size,
+          pointsPayesDuJour: paiementsDuJour.reduce((somme, p) => somme + p.points, 0),
+          seancesDuJour: paiementsDuJour.length,
+        }),
+      };
+    })(),
   });
 }

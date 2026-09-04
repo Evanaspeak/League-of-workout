@@ -4,6 +4,7 @@ import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { SerieEtRetard } from "@/components/SerieEtRetard";
 import { Paliers } from "@/components/Paliers";
+import { DefiDuJour } from "@/components/DefiDuJour";
 import { PremiersPas } from "@/components/PremiersPas";
 import { OBJECTIF_PARTIES } from "@/lib/premiereSemaine";
 import dynamic from "next/dynamic";
@@ -692,6 +693,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
 
       {/* Ce qui a déjà été fait, à côté de ce qui reste dû : l'application ne
           savait dire que la seconde moitié. */}
+      <DefiDuJour />
       <Paliers />
 
       {/* La série ne paraît qu'une fois lancée, et le retard qu'une fois

@@ -989,6 +989,86 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le défi du jour, et une couture qu'on ne peut pas rattraper après coup
+Ligne 138, première de l'étape 04 : « un défi quotidien tiré au sort, différent
+chaque jour, valable 24 heures ».
+
+**Ce qu'on gagne à le finir : rien de matériel, et c'est écrit.** Le produit
+n'a ni monnaie ni objet, et en inventer un reviendrait à offrir des points
+d'effort que personne n'a faits — ce qui fausserait la dette, le classement et
+les paliers d'un coup. C'est le raisonnement déjà tenu pour le parrainage. Ce
+qu'un défi quotidien apporte est une RAISON D'OUVRIR, et c'est déjà ce qu'on
+cherche.
+
+**Le même pour tout le monde.** La réponse dit « différent chaque jour », pas
+« différent par personne ». Un défi commun se raconte ; un défi personnel ne se
+raconte à personne. Faute d'une raison de faire autrement, c'est le jour qui
+décide, et lui seul — ce qui a l'avantage de rendre le tirage entièrement
+déductible, donc sans table ni écriture.
+
+**Chaque défi demande un GESTE.** Un défi qu'on remplit sans rien faire — «
+solder ta dette » quand on ne doit rien — se lit comme une flatterie, et une
+flatterie quotidienne finit par ne plus rien vouloir dire. Un test le tient sur
+les six.
+
+**La vraie difficulté était la couture, et le premier jet la traitait par
+rattrapage.** Tirer au hasard chaque jour ferait tomber deux fois le même défi
+une fois sur six, ce qui contredit la seule chose que la ligne promette. J'ai
+donc mélangé les six défis par blocs de six — chacun paraît une fois par bloc —
+puis fait tourner le bloc d'un cran quand son premier valait le dernier du bloc
+d'avant.
+
+**Ça ne marche pas, et le contrôle sur une année entière l'a dit : treize
+répétitions.** Le bloc d'avant a peut-être tourné lui aussi, donc son dernier
+n'est pas celui du mélange brut, et la question remonte de proche en proche
+sans jamais se refermer. Un rattrapage qui a besoin de connaître le résultat du
+rattrapage précédent n'est pas un rattrapage.
+
+La construction remplace la correction : le premier et le dernier de chaque
+bloc sont FIXÉS par une rotation simple, et seuls les quatre du milieu sont
+mélangés. La couture ne peut alors plus se produire — le premier du bloc
+suivant vaut `DEFIS[(b + 1) % n]`, qui ne peut égaler `DEFIS[(b + 3) % n]` que
+si 3 ≡ 1 modulo n, c'est-à-dire pour n = 2. Un test tient cette condition,
+parce qu'ajouter un septième défi la remettrait en jeu.
+
+**Deux de mes témoins ne discriminaient rien, et le sabotage les a nommés.**
+
+- « l'ordre n'est pas celui de la déclaration » comparait le premier bloc à
+  `DEFIS`. Ça passe SANS aucun mélange : la construction déplace déjà le
+  quatrième défi à la fin, donc l'ordre diffère de toute façon. Ce qui
+  distingue vraiment, ce sont deux blocs dont les BOUTS coïncident — les blocs
+  0 et 6, puisque premier et dernier se prennent modulo six — et dont seuls les
+  milieux peuvent différer.
+- le contrôle de route vérifiait que le défi a bien une cible et un
+  avancement borné. Ça passe aussi quand le défi compte TOUS les paiements au
+  lieu de ceux du jour. Il fallait choisir une date dont le défi est un défi de
+  paiement — le 2 septembre 2026 tombe sur « paie 300 points » — et poser cent
+  vingt points ce jour-là contre neuf mille un autre jour. Les deux chiffres
+  encadrent la cible : c'est ce qui rend le contrôle discriminant.
+
+C'est la même leçon que celle de la veille sur le niveau, sous une autre forme :
+**un test qui vérifie qu'une valeur est plausible n'éprouve pas d'où elle
+vient.**
+
+**Un aller-retour de plus, assumé et nommé.** Le défi a besoin des parties du
+JOUR, que `/api/progression` ne lisait pas — elle n'avait qu'un agrégat de
+toujours. Une requête étroite s'y ajoute, sur une poignée de lignes. Ses bornes
+sont en UTC, comme celles de `/api/dashboard/daily` qui découpe déjà les
+journées ainsi : c'est une approximation pour qui joue loin du méridien, et
+c'est la MÊME dans les deux endroits, ce qui vaut mieux qu'une seconde règle
+qui divergerait à la première correction.
+
+**Et un garde pour les clés construites**, la famille déjà rencontrée deux
+fois : le libellé se lit par la clé du défi, donc le recensement des clés
+mortes ne peut pas garantir qu'elle existe, et une clé absente écrirait
+« undefined » en travers du tableau de bord. Un test exige les six clés dans
+les six langues, et qu'aucune phrase n'ignore la cible qu'on lui passe — un
+gabarit qui la laisserait tomber dirait « gagne 2 parties » quel que soit le
+seuil, alors que le seuil vit dans le code.
+
+Sept sabotages, sept échecs après correction — dont les deux qui ont d'abord
+passé au vert, et qui étaient les deux témoins.
+
 ### Un badge qui ne se déduit pas, et la seule chose de la progression qui se range en base
 Ligne 147, la dernière de l'étape 03 : « des badges. Le premier 100, la
 première semaine complète, la première défaite payée dans l'heure ». Les deux

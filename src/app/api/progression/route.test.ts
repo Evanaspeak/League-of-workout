@@ -2,7 +2,7 @@ import { corps, requete, utilisateur } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    game: { aggregate: jest.fn() },
+    game: { aggregate: jest.fn(), findMany: jest.fn() },
     paiement: { findMany: jest.fn() },
   },
 }));
@@ -14,10 +14,11 @@ import { GET as GET_SERIE } from "../serie/route";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { niveauPourPoints } from "@/lib/niveauCompte";
+import { defiDuJour } from "@/lib/defiQuotidien";
 
 const session = getCurrentUser as jest.Mock;
 const base = prisma as unknown as {
-  game: { aggregate: jest.Mock };
+  game: { aggregate: jest.Mock; findMany: jest.Mock };
   paiement: { findMany: jest.Mock };
 };
 
@@ -27,6 +28,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   session.mockResolvedValue(utilisateur({ dettePointsDus: 0, detteDepuis: null }));
   base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 9000 }, _count: { _all: 57 } });
+  base.game.findMany.mockResolvedValue([]);
   // Trente points payés par jour, quatre jours : 120 payés contre 4 200
   // générés. Les deux chiffres sont volontairement TRÈS différents, sans quoi
   // rien ne dirait lequel des deux le niveau emploie.
@@ -103,6 +105,43 @@ describe("la progression", () => {
         // niveau figé à 2 passerait le contrôle en ne prouvant rien.
         expect(niveauPourPoints(9000)).toBe(19);
       });
+  });
+
+  it("mesure le défi du jour sur le JOUR demandé, et sur lui seul", async () => {
+    /**
+     * Deux paiements, un seul dans la journée demandée. Sans le filtre, le
+     * défi serait rempli par l'effort d'un autre jour — ce qui est le défaut
+     * exact qu'un défi de vingt-quatre heures ne peut pas se permettre.
+     */
+    base.paiement.findMany.mockResolvedValue([
+      { jour: "2026-09-02", points: 120 },
+      { jour: "2026-08-14", points: 9000 },
+    ]);
+    base.game.findMany.mockResolvedValue([
+      { result: "V", jeu: "League of Legends" },
+      { result: "D", jeu: "Apex Legends" },
+    ]);
+    const c = await corps(await GET(requete("/api/progression?jour=2026-09-02"))) as {
+      defi: { cle: string; cible: number; ou: number; fait: boolean };
+    };
+    /**
+     * Le 2 septembre 2026 tombe sur « paie 300 points », ce qui n'est pas un
+     * détail : c'est ce qui rend le contrôle DISCRIMINANT. Cent vingt points
+     * payés ce jour-là ne suffisent pas ; les neuf mille du 14 août
+     * suffiraient largement, et c'est exactement ce qu'un défi qui compterait
+     * tous les paiements laisserait passer.
+     */
+    expect(c.defi.cle).toBe(defiDuJour("2026-09-02").cle);
+    expect(c.defi.cle).toBe("paye300");
+    expect(c.defi.ou).toBe(120);
+    expect(c.defi.fait).toBe(false);
+
+    // Le témoin : la borne du jour est bien passée à la requête sur les
+    // parties, sinon celles d'hier compteraient.
+    const ou = base.game.findMany.mock.calls[0][0].where;
+    expect(ou.userId).toBeDefined();
+    expect(ou.date.gte.toISOString()).toBe("2026-09-02T00:00:00.000Z");
+    expect(ou.sansEnjeu).toBe(false);
   });
 
   it("filtre par compte des deux côtés", async () => {
