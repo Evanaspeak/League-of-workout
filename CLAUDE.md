@@ -257,7 +257,18 @@ git log main --grep='^V[0-9]' --pretty='%s' | head -1   # ex: "V3 — ..."
 git checkout main && git merge --no-ff claude/excel-app-conversion-5hk2fg \
   -m "V4 — description courte du changement"
 git push origin main
+# 3. REVENIR SUR LA BRANCHE, tout de suite
+git checkout claude/excel-app-conversion-5hk2fg && git merge main
 ```
+
+**La fusion laisse sur `main`, et c'est là qu'on se fait prendre.** Le travail
+suivant s'écrit alors directement sur `main` sans que rien ne le signale : la
+fusion d'après se fait en avance rapide — `--no-ff` n'y peut rien, il n'y a
+plus rien à fusionner — donc **le commit part sans son numéro de version**, et
+le tableau Vercel n'a plus de `Vx` à montrer. Arrivé sur V378. Le marqueur se
+repose alors par un commit vide plutôt qu'en réécrivant `main`, qui est déjà
+poussée : additif et réversible, contre une force qui ne l'est pas.
+`git branch --show-current` avant de committer coûte une seconde.
 Si aucun commit `Vx` n'existe encore, commencer à V1. **Ne pas** utiliser de
 tags git (`git push --tags` échoue côté proxy) — le numéro vit dans le message
 du commit de merge.
@@ -758,7 +769,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2101 tests unitaires, 190 suites. Base et session doublées : aucune dépendance à
+2107 tests unitaires, 190 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -2296,6 +2307,32 @@ une route appelée à chaque chargement. Une troisième route fusionnée s'ajout
 tableau en une ligne — sans quoi elle naîtrait sans garde, comme les deux
 premières.
 
+**Le recensement dit treize, pas deux, et ma phrase était trop large.** Autant
+d'écrans appellent une route en déclarant leur propre type en face. Quatre sont
+gardés — `/api/games` par `colonnesHistorique.test.ts`, plus les trois du
+tableau. Les neuf autres ne le sont pas, et c'est un choix écrit plutôt qu'un
+oubli : ce sont des formulaires et des panneaux d'administration, où un champ
+perdu se voit tout de suite parce qu'on vient de le saisir. Le danger est sur ce
+qu'on LIT sans l'avoir écrit, et qu'on ne recalcule pas de mémoire.
+
+**Le troisième contrat a trouvé un champ mort, puis un second ailleurs.**
+`/api/classement` envoyait `fenetre` — une constante — que personne ne lit ;
+`/api/seance` faisait exactement pareil. Deux fois le même petit gaspillage, sur
+deux routes écrites à deux moments différents, et c'est précisément ce qu'un
+garde attrape mieux qu'une relecture. `debut`, lui, reste et se déclare comme
+toléré : `e2e/social.spec.ts` le lit pour vérifier la borne basse de la fenêtre
+AVANT de regarder le tableau. Un champ qui sert à diagnostiquer ne se supprime
+pas au motif qu'aucun composant ne l'affiche — il se déclare, et un test refuse
+qu'une tolérance cesse de désigner quelque chose de vivant.
+
+**Deux motifs trop étroits, tous deux déjà écrits ici sous une autre forme.**
+Le type d'un écran n'est pas `export`é — il ne sert qu'à lui. Et une route
+écrit `lignes,` en RACCOURCI d'objet : exiger les deux-points l'aurait rendue
+invisible côté route, donc « déclarée mais non envoyée » côté écran, et le
+garde aurait accusé un champ parfaitement présent. C'est la faute évitée de
+justesse sur `filtreParCompte`, où la même exigence recalait
+`where: { id, userId }`.
+
 **Le premier `NextResponse.json` d'une route est presque toujours le 401.** Mon
 extraction partait de lui — il est écrit sur une ligne — et balayait donc tout
 ce qui suit, l'objet `source` compris : dix champs annoncés au lieu de six. Le
@@ -2303,9 +2340,9 @@ garde tombait, ce qui est le bon comportement, mais pour la mauvaise raison, et
 un garde qui échoue pour la mauvaise raison envoie corriger ce qui n'a rien. Il
 s'ancre maintenant sur la forme MULTILIGNE.
 
-Six sabotages, six échecs : un champ renommé de chaque côté, un champ ajouté
-sans lecteur, un champ retiré du type, le motif rendu aveugle, et le nom du type
-qui ne désigne plus rien.
+Huit sabotages, huit échecs : un champ renommé sur chacune des trois routes, un
+champ ajouté sans lecteur, un champ retiré du type, le motif rendu aveugle, le
+nom du type qui ne désigne plus rien, et une tolérance vidée de son objet.
 
 ### Le mur ouvert n'avait aucun test navigateur, et le sabotage a corrigé le mien
 C'est la PREMIÈRE surface du produit où un compte voit le pseudo et l'effort de

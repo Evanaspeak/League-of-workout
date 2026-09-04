@@ -45,6 +45,5 @@ export async function GET() {
   return NextResponse.json({
     partageable: estGrosseSeance(derniere.points, precedents),
     points: derniere.points,
-    fenetre: FENETRE_JOURS,
   });
 }

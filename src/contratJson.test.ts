@@ -45,6 +45,21 @@ const CONTRATS = [
     client: "src/lib/chargerContexte.ts",
     type: "ContexteCompte",
   },
+  {
+    nom: "/api/classement",
+    route: "src/app/api/classement/route.ts",
+    client: "src/app/[locale]/amis/AmisClient.tsx",
+    type: "Classement",
+    /**
+     * `debut` est envoyé et lu par PERSONNE à l'écran — et il reste, à
+     * dessein. `e2e/social.spec.ts` le lit pour vérifier la borne basse de la
+     * fenêtre AVANT de regarder le tableau : c'est la sonde posée après qu'une
+     * exécution a rendu un chiffre faux sans dire lequel des trois coupables
+     * l'avait produit. Un champ qui sert à diagnostiquer se déclare comme tel,
+     * il ne se supprime pas au motif qu'aucun composant ne l'affiche.
+     */
+    envoyesSansLecteur: ["debut"],
+  },
 ] as const;
 
 /**
@@ -70,18 +85,28 @@ function champsEnvoyes(route: string): string[] {
   const debut = src.search(/NextResponse\.json\(\{\s*\n/);
   if (debut < 0) return [];
   const corps = src.slice(debut);
-  return [...corps.matchAll(/^ {4}([a-zA-Z][a-zA-Z0-9_]*):/gm)].map((m) => m[1]);
+  /**
+   * `clé:` ET `clé,` — le raccourci d'objet est une clé comme une autre.
+   * `/api/classement` écrit `lignes,` : exiger les deux-points l'aurait rendue
+   * invisible côté route, donc déclarée-mais-non-envoyée côté écran, et le
+   * garde aurait accusé un champ parfaitement présent. C'est la faute déjà
+   * commise sur `filtreParCompte`, où exiger les deux-points recalait
+   * `where: { id, userId }`.
+   */
+  return [...corps.matchAll(/^ {4}([a-zA-Z][a-zA-Z0-9_]*)\s*[:,]/gm)].map((m) => m[1]);
 }
 
 /** Les champs déclarés par le type que le navigateur lit. Le `?` est du bruit. */
 function champsDeclares(client: string, type: string): string[] {
   const src = readFileSync(join(RACINE, client), "utf8");
-  const bloc = src.match(new RegExp(`export type ${type} = \\{([\\s\\S]*?)\\n\\};`));
+  // `export` est facultatif : un écran déclare son type pour lui seul.
+  const bloc = src.match(new RegExp(`(?:export )?type ${type} = \\{([\\s\\S]*?)\\n\\};`));
   if (!bloc) return [];
   return [...bloc[1].matchAll(/^ {2}([a-zA-Z][a-zA-Z0-9_]*)\??:/gm)].map((m) => m[1]);
 }
 
-describe.each(CONTRATS)("les champs de $nom", ({ route, client, type }) => {
+describe.each(CONTRATS)("les champs de $nom", ({ route, client, type, ...reste }) => {
+  const tolere: readonly string[] = (reste as { envoyesSansLecteur?: readonly string[] }).envoyesSansLecteur ?? [];
   /**
    * Le témoin, sans lequel rien de ce qui suit ne prouve quoi que ce soit.
    *
@@ -103,6 +128,15 @@ describe.each(CONTRATS)("les champs de $nom", ({ route, client, type }) => {
 
   it("tout ce qui est envoyé est déclaré par quelqu'un", () => {
     const declares = new Set(champsDeclares(client, type));
-    expect(champsEnvoyes(route).filter((c) => !declares.has(c))).toEqual([]);
+    expect(champsEnvoyes(route).filter((c) => !declares.has(c) && !tolere.includes(c))).toEqual([]);
+  });
+
+  /**
+   * Une tolérance qui ne désigne plus rien est du code mort qu'on a fini par
+   * admettre : elle se relit comme une décision, et elle n'en est plus une.
+   */
+  it("les champs tolérés sont encore envoyés", () => {
+    const envoyes = new Set(champsEnvoyes(route));
+    expect(tolere.filter((c) => !envoyes.has(c))).toEqual([]);
   });
 });
