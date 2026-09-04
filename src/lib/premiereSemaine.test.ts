@@ -54,4 +54,27 @@ describe("objectif de première semaine", () => {
     expect(premiereSemaine(ilYA(1), NaN, MAINTENANT).parties).toBe(0);
     expect(premiereSemaine(ilYA(1), -3, MAINTENANT).parties).toBe(0);
   });
+
+  it("borne ce qu'on AFFICHE à la cible, pas ce qu'on compte", () => {
+    /**
+     * Trouvé en lisant le tableau de bord d'un compte à neuf cent soixante
+     * activités : il annonçait « 960 sur 5 », dessinait une barre de dix-neuf
+     * mille pour cent, et donnait à un lecteur d'écran un `aria-valuenow` de
+     * 960 pour un maximum de 5 — ce qui n'est pas un état valide.
+     *
+     * Le compte réel reste dans `parties` ; c'est `avancement` qu'on montre.
+     */
+    const gros = premiereSemaine(new Date("2026-09-01T00:00:00Z"), 960,
+      new Date("2026-09-03T00:00:00Z"));
+    expect(gros.parties).toBe(960);
+    expect(gros.avancement).toBe(OBJECTIF_PARTIES);
+    expect(gros.atteint).toBe(true);
+
+    // En dessous de la cible, les deux disent la même chose : la borne ne
+    // doit pas se mettre à mentir dans l'autre sens.
+    const petit = premiereSemaine(new Date("2026-09-01T00:00:00Z"), 3,
+      new Date("2026-09-03T00:00:00Z"));
+    expect(petit.avancement).toBe(3);
+    expect(petit.parties).toBe(3);
+  });
 });

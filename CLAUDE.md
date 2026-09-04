@@ -1128,6 +1128,41 @@ vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
+### Lire l'écran comme quelqu'un qui s'en sert, sur un compte à mille parties
+Trois défauts en une lecture, sur un tableau de bord qui passait tous ses
+contrôles. Aucun n'était visible en lisant le code, et aucun ne l'était sur un
+compte de mesure ordinaire : il a fallu un compte à **neuf cent soixante
+activités et trente jours payés**, c'est-à-dire celui du propriétaire.
+
+- **« Objectif atteint · 960 sur 5 ».** L'objectif de première semaine n'était
+  borné nulle part. Il dessinait une barre de **dix-neuf mille deux cents pour
+  cent** — invisible, le conteneur la rogne — et donnait à un lecteur d'écran
+  un `aria-valuenow` de 960 pour un `aria-valuemax` de 5, ce qui n'est pas un
+  état valide. La borne vit dans le module, sous le nom `avancement`, et le
+  compte réel reste dans `parties` : c'est le NOM qui empêche de reprendre le
+  mauvais des deux, comme pour `pointsPayes` et `totalPoints`.
+- **« 14 personnes y a contribué ce mois-ci ».** Le gabarit accordait le nom et
+  pas le verbe. Même défaut en espagnol — « personas ha contribuido ». L'anglais
+  et l'allemand étaient justes, le chinois et le japonais n'accordent pas.
+- **Deux « niveaux » sur le même écran**, corrigé juste avant et trouvé de la
+  même façon.
+
+**Ce que ça dit de la méthode.** Les deux signalements du propriétaire, ce
+matin, venaient tous deux de l'usage : un chiffre faux dans l'onglet social, un
+niveau bloqué à 1. Aucun test ne les voyait, et pour cause — ils portent sur ce
+qui est VRAI à l'écran, pas sur ce qui est présent dans le DOM. C'est la même
+leçon que la capture d'écran de la veille, et elle mérite d'être une habitude :
+après un chantier, ouvrir les écrans sur un compte à l'échelle d'un vrai
+utilisateur et LIRE, phrase par phrase.
+
+**Et une ambiguïté laissée aux questions plutôt que tranchée seule.** Le bilan
+de saison affiche « journée la plus chère », qui somme l'effort GÉNÉRÉ par les
+parties du jour ; le mur des records affiche le plus gros jour d'effort PAYÉ.
+Les deux sont vrais, les deux sont utiles, et rien ne dit lequel est lequel —
+sur un produit dont tout le reste du registre est en effort payé. Changer ce
+que ça mesure ou renommer l'un des deux est un arbitrage de produit ; il part
+dans les questions.
+
 ### Publier plus vite que la CI ne tourne annule ses exécutions
 Constaté sur V393, V394 et V395 : les trois figurent en **« cancelled »**. Ce
 n'est pas une panne, c'est `cancel-in-progress` qui fait ce pour quoi il

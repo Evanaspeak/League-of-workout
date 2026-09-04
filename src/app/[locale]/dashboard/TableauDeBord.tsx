@@ -120,7 +120,7 @@ type DashData = {
   veille?: { pointsJour: number; pointsSemaine: number; alerte: "jour" | "semaine" | null };
   defaitesDAffilee?: number;
   premiereSemaine?: {
-    parties: number; restantes: number; joursRestants: number;
+    parties: number; avancement: number; restantes: number; joursRestants: number;
     atteint: boolean; visible: boolean;
   };
   plafondQuotidien?: number;
@@ -641,7 +641,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={OBJECTIF_PARTIES}
-            aria-valuenow={data.premiereSemaine.parties}
+            aria-valuenow={data.premiereSemaine.avancement}
             aria-label={t.debutTitre}
             className="h-2 rounded-full overflow-hidden"
             style={{ background: "rgba(152,162,176,0.16)" }}
@@ -649,7 +649,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             <div
               className="h-full rounded-full"
               style={{
-                width: `${Math.round((data.premiereSemaine.parties / OBJECTIF_PARTIES) * 100)}%`,
+                width: `${Math.round((data.premiereSemaine.avancement / OBJECTIF_PARTIES) * 100)}%`,
                 background: data.premiereSemaine.atteint
                   ? "var(--victory)"
                   : "var(--brand-gradient)",
@@ -658,7 +658,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             />
           </div>
           <div className="text-xs mt-2" style={{ color: "var(--steel)" }}>
-            {t.debutAvancement(data.premiereSemaine.parties, OBJECTIF_PARTIES)}
+            {t.debutAvancement(data.premiereSemaine.avancement, OBJECTIF_PARTIES)}
           </div>
         </div>
       )}
