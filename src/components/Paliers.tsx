@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { jourLocal } from "@/lib/serie";
 import { chargerProgression, rafraichirProgression, type Progression } from "@/lib/chargerProgression";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useDateLocale, useT } from "@/lib/i18n/LocaleContext";
 import { badges as dict } from "@/lib/i18n/dictionaries/badges";
 import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
 import type { Badge } from "@/lib/badges";
@@ -45,6 +45,7 @@ type Exploits = { dansLHeure: boolean };
 export function Paliers() {
   const t = useT(dict);
   const tt = useT(dictTitres);
+  const nombre = new Intl.NumberFormat(useDateLocale());
   const [etat, setEtat] = useState<Reponse | null>(null);
   const [exploits, setExploits] = useState<Exploits | null>(null);
 
@@ -94,6 +95,15 @@ export function Paliers() {
           <span className="mono-num" style={{ fontSize: "1.5rem", color: "var(--gold)" }}>
             {`${tt.niveau} ${etat.niveau.niveau}`}
           </span>
+          {/*
+            L'XP totale, en toutes lettres. C'est la moitié « jeu vidéo » de la
+            demande : un niveau sans compteur derrière ne dit pas ce qui le
+            fait monter. Le nombre passe par `Intl` — un séparateur de milliers
+            écrit à la main serait faux dans quatre langues sur six.
+          */}
+          <span className="mono-num" style={{ fontSize: "0.95rem", color: "var(--gold)", opacity: .8 }}>
+            {`${nombre.format(etat.niveau.xp)} ${tt.xp}`}
+          </span>
           {etat.titre && (
             <span
               style={{
@@ -105,7 +115,7 @@ export function Paliers() {
             </span>
           )}
           <span className="mono-num" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
-            {`${etat.niveau.restant} ${tt.points} ${tt.versLeNiveau} ${etat.niveau.niveau + 1}`}
+            {`${etat.niveau.restant} ${tt.xp} ${tt.versLeNiveau} ${etat.niveau.niveau + 1}`}
           </span>
         </div>
       )}

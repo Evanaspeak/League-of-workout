@@ -1,11 +1,14 @@
 import {
   avancementNiveau,
-  niveauPourPoints,
+  avancementPourXp,
+  niveauPourXp,
   PAS_NIVEAU,
   seuilDuNiveau,
   titrePorte,
   TITRES,
   tousLesTitres,
+  XP_PAR_ACTIVITE,
+  xpDuCompte,
   type SourceNiveau,
 } from "@/lib/niveauCompte";
 
@@ -13,8 +16,8 @@ const vide: SourceNiveau = { pointsPayes: 0, parties: 0, meilleureSerie: 0, jour
 const source = (p: Partial<SourceNiveau>): SourceNiveau => ({ ...vide, ...p });
 
 describe("le niveau de compte", () => {
-  it("commence à 1 sans rien avoir payé", () => {
-    expect(niveauPourPoints(0)).toBe(1);
+  it("commence à 1 sans rien avoir fait", () => {
+    expect(niveauPourXp(0)).toBe(1);
     expect(seuilDuNiveau(1)).toBe(0);
   });
 
@@ -33,7 +36,7 @@ describe("le niveau de compte", () => {
     for (let n = 2; n < 300000; n += 1) {
       const seuil = seuilDuNiveau(n);
       vus += 1;
-      if (niveauPourPoints(seuil) !== n || niveauPourPoints(seuil - 1) !== n - 1) ecarts.push(n);
+      if (niveauPourXp(seuil) !== n || niveauPourXp(seuil - 1) !== n - 1) ecarts.push(n);
       if (ecarts.length > 4) break;
     }
     expect(ecarts).toEqual([]);
@@ -52,43 +55,86 @@ describe("le niveau de compte", () => {
     // Pas un cas d'usage : un contrôle que le calcul ne se disloque pas hors
     // de son domaine. Le niveau rendu doit encadrer les points, toujours.
     for (const points of [1e12, 1e15, 1e18, 1e30]) {
-      const n = niveauPourPoints(points);
+      const n = niveauPourXp(points);
       expect(seuilDuNiveau(n)).toBeLessThanOrEqual(points);
       expect(seuilDuNiveau(n + 1)).toBeGreaterThan(points);
     }
   });
 
-  it("cale sa courbe sur le dernier palier de volume", () => {
-    // 25 000 points est le dernier palier de badges : les deux échelles
-    // doivent dire la même chose, sinon on affiche deux progressions qui se
-    // contredisent sur le même écran.
-    expect(niveauPourPoints(25000)).toBe(32);
-    expect(seuilDuNiveau(2)).toBe(50);
-    expect(seuilDuNiveau(10)).toBe(2250);
+  /**
+   * Les repères donnés par le propriétaire, en ACTIVITÉS et pas en XP.
+   *
+   * C'est ainsi qu'il a formulé la demande — « niveau un au niveau deux, dix
+   * activités, après trente » — donc c'est ainsi que le test doit la tenir. Le
+   * jour où l'XP par activité change, c'est ce contrôle qui dira que la
+   * promesse faite ne tient plus, là où un seuil écrit en XP ne dirait rien.
+   */
+  it.each([
+    [2, 10],
+    [3, 30],
+    [4, 60],
+    [5, 100],
+    [6, 150],
+  ])("demande %i activités pour atteindre le niveau %i", (niveau, activites) => {
+    const source: SourceNiveau = { ...vide, parties: activites };
+    expect(niveauPourXp(xpDuCompte(source))).toBe(niveau);
+    // Et une activité de moins ne suffit pas : sans ce second sens, un seuil
+    // trop bas passerait le contrôle du dessus.
+    expect(niveauPourXp(xpDuCompte({ ...vide, parties: activites - 1 }))).toBe(niveau - 1);
+  });
+
+  it("fait monter plus vite celui qui paie", () => {
+    // Neuf cent soixante parties jamais payées : le cas réel qui a motivé le
+    // changement. Le compteur bouge enfin, ce qu'il ne faisait pas.
+    const joue = { ...vide, parties: 960 };
+    expect(niveauPourXp(xpDuCompte(joue))).toBeGreaterThan(10);
+
+    // Le même compte qui aurait payé la moitié de ce qu'il doit monte plus
+    // haut. C'est ce qui remplace l'ancienne porte : un rapport, pas un mur.
+    const paye = { ...joue, pointsPayes: 5000 };
+    expect(niveauPourXp(xpDuCompte(paye)))
+      .toBeGreaterThan(niveauPourXp(xpDuCompte(joue)));
+  });
+
+  it("compte l'activité et le paiement, chacun à son taux", () => {
+    expect(xpDuCompte({ ...vide, parties: 3 })).toBe(3 * XP_PAR_ACTIVITE);
+    expect(xpDuCompte({ ...vide, pointsPayes: 40 })).toBe(40);
+    expect(xpDuCompte({ ...vide, parties: 3, pointsPayes: 40 })).toBe(3 * XP_PAR_ACTIVITE + 40);
+    // Une source abîmée vaut zéro plutôt que NaN : NaN traverse une barre de
+    // progression sans bruit.
+    expect(xpDuCompte({ ...vide, parties: Number.NaN, pointsPayes: -12 })).toBe(0);
   });
 
   it("écarte ce qui n'est pas un nombre plutôt que de rendre NaN", () => {
-    expect(niveauPourPoints(Number.NaN)).toBe(1);
-    expect(niveauPourPoints(Number.POSITIVE_INFINITY)).toBe(1);
-    expect(niveauPourPoints(-500)).toBe(1);
-    expect(avancementNiveau(Number.NaN).part).toBe(0);
+    expect(niveauPourXp(Number.NaN)).toBe(1);
+    expect(niveauPourXp(Number.POSITIVE_INFINITY)).toBe(1);
+    expect(niveauPourXp(-500)).toBe(1);
+    expect(avancementPourXp(Number.NaN).part).toBe(0);
+    expect(avancementNiveau({ ...vide, parties: Number.NaN }).part).toBe(0);
   });
 
   it("rend un avancement borné entre 0 et 1", () => {
-    const a = avancementNiveau(seuilDuNiveau(5));
+    const a = avancementPourXp(seuilDuNiveau(5));
     expect(a.niveau).toBe(5);
     expect(a.part).toBe(0);
     expect(a.restant).toBe(seuilDuNiveau(6) - seuilDuNiveau(5));
 
-    const b = avancementNiveau(seuilDuNiveau(6) - 1);
+    const b = avancementPourXp(seuilDuNiveau(6) - 1);
     expect(b.niveau).toBe(5);
     expect(b.part).toBeGreaterThan(0.9);
     expect(b.part).toBeLessThanOrEqual(1);
     expect(b.restant).toBe(1);
   });
 
+  /**
+   * Le pas est épinglé, et ce pin a déjà servi : il est tombé le jour où la
+   * courbe est passée de l'effort payé à l'XP. C'est ce qu'on lui demande —
+   * une courbe de progression ne doit pas pouvoir bouger sans que quelqu'un
+   * l'écrive. Le chiffre a changé une fois, avec sa raison ; il ne changera
+   * pas deux fois par accident.
+   */
   it("garde le pas déclaré, sans quoi la courbe change en silence", () => {
-    expect(PAS_NIVEAU).toBe(25);
+    expect(PAS_NIVEAU).toBe(50);
     expect(seuilDuNiveau(3)).toBe(PAS_NIVEAU * 3 * 2);
   });
 });

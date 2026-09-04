@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { jetonPlausible } from "@/lib/profilPublic";
 import { nomPublie } from "@/lib/nomAffiche";
 import { longueurSerie, meilleureSerie } from "@/lib/serie";
-import { niveauPourPoints, titrePorte } from "@/lib/niveauCompte";
+import { niveauPourXp, titrePorte, xpDuCompte } from "@/lib/niveauCompte";
 import { textes } from "@/lib/i18n/textes";
 import { profilPublic as dict } from "@/lib/i18n/dictionaries/profilPublic";
 import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
@@ -105,7 +105,7 @@ export default async function PageProfilPublic(
       </h1>
       <p style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", margin: 0 }}>
         <span className="mono-num" style={{ fontSize: "1.2rem", color: "var(--gold)" }}>
-          {`${tt.niveau} ${niveauPourPoints(points)}`}
+          {`${tt.niveau} ${niveauPourXp(xpDuCompte(sourceNiveau))}`}
         </span>
         {titre && (
           <span

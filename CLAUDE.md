@@ -769,7 +769,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2109 tests unitaires, 191 suites. Base et session doublées : aucune dépendance à
+2115 tests unitaires, 191 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -2286,6 +2286,69 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 « le code ne s'affiche pas » — le troisième déguisement de cette panne-là
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
+
+### Neuf cent soixante parties, niveau un — et le niveau passe à l'XP
+Constaté par le propriétaire sur son propre compte, et c'est le genre de défaut
+qu'aucun test ne pouvait trouver : **tout marchait exactement comme écrit.**
+
+Le niveau se calculait sur l'effort PAYÉ et sur lui seul, pour une raison qui
+reste bonne — quelqu'un qui perd beaucoup accumule de la dette, et faire monter
+celui qui ne paie jamais serait le contresens d'un produit dont le sujet est de
+payer. Le prix de cette règle ne s'est vu qu'à l'usage : à neuf cent soixante
+parties enregistrées et deux points payés, on reste **niveau 1**. Le compteur
+ne bougeait donc jamais pour la personne la plus assidue du produit, et un
+niveau qui ne bouge pas n'est pas un niveau.
+
+**Les deux symptômes signalés n'en faisaient qu'un.** « Le social dit que je ne
+fais que deux activités » et « je suis à 960 parties et toujours niveau 1 » ont
+la même cause : le chiffre affiché par le classement au cumul est l'effort
+PAYÉ, et c'est lui qui décidait du niveau. Vérifié avant de conclure que le
+compteur de parties était en cause : il lit `Game` filtré sur le compte et sur
+`sansEnjeu: false`, et `sansEnjeu` ne peut être posé que par un `body.sansEnjeu
+=== true` explicite — aucun chemin ne le met par accident.
+
+**Ce que la nouvelle règle coûte, et il faut l'écrire.** Jouer rapporte
+maintenant de l'XP quel que soit le résultat : perdre fait donc monter. Ce
+n'est plus la porte que posait la première version. Ce qui la remplace est un
+RAPPORT et non un mur — dix d'XP par activité, un par point payé — donc une
+défaite de vingt points payée rapporte trente contre dix si on ne la paie
+jamais. Payer reste de très loin le chemin le plus rapide ; ce n'est plus le
+seul.
+
+**La courbe est calée sur les repères donnés**, en activités et pas en XP,
+parce que c'est ainsi que la demande a été formulée : dix activités pour le
+niveau 2, trente pour le 3, soixante pour le 4, cent pour le 5. Le seuil vaut
+`50 × n × (n−1)` d'XP, donc la même forme quadratique qu'avant avec un pas
+doublé — et la démonstration de la forme fermée tient telle quelle, puisque
+`1 + 4 xp / PAS` vaut `(2n − 1)²` quel que soit le pas. Le compte à l'origine
+du signalement passe de **niveau 1 à niveau 14**, et le suivant lui demande
+quatre-vingt-dix activités de plus.
+
+**Le garde du pas a mordu, et c'était son travail.** `expect(PAS_NIVEAU).toBe(25)`
+existait pour refuser qu'une courbe de progression change en silence. Il est
+tombé ; le chiffre a été mis à jour AVEC sa raison, ce qui est la seule façon
+correcte de faire taire un pin.
+
+**Et la fonction que les écrans appellent prend désormais la SOURCE, pas un
+nombre.** C'est structurel plutôt que documentaire : le sabotage avait montré
+en juillet qu'on pouvait passer l'effort généré à la place du payé sans
+qu'aucun test ne les distingue, puisque les deux sont des nombres. Avec la
+source entière il n'y a plus de mauvais nombre à passer — c'est le module qui
+décide ce que vaut un compte. Le témoin du test de route a dû être refait pour
+la même raison : 9 570 d'XP donnent le niveau 14 contre 4 pour la bonne
+source, et ces deux chiffres-là ne se confondent pas.
+
+Quatre sabotages, quatre échecs.
+
+**Ce qui n'est PAS fait, et pourquoi.** Les défis personnels doivent rapporter
+de l'XP — c'est la réponse donnée à la question 139, restée « à voir » jusque-là.
+Ça demande de RETENIR qu'un défi a été fini : un défi du jour est une fonction
+pure du jour, mais savoir s'il a été rempli le 12 août demande les parties et
+les paiements de ce jour-là, qu'on ne relit pas. Le stocker est la bonne
+réponse — des LIGNES, comme `Paiement`, dont l'XP se déduit par somme, jamais
+un total rangé qui finirait par diverger. C'est une migration et un chemin
+d'écriture ; c'est la suite, pas ce commit. Et la récompense des défis
+PARTAGÉS reste ouverte : le propriétaire l'a explicitement remise à plus tard.
 
 ### La fenêtre d'envoi est atteinte un jour sur deux, mesuré
 Le journal disait « trois à six passages par jour », relevé avant que la

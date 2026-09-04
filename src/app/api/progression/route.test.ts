@@ -13,7 +13,7 @@ import { GET as GET_BADGES } from "../badges/route";
 import { GET as GET_SERIE } from "../serie/route";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { niveauPourPoints } from "@/lib/niveauCompte";
+import { niveauPourXp, XP_PAR_ACTIVITE } from "@/lib/niveauCompte";
 import { defiDuJour } from "@/lib/defiQuotidien";
 
 const session = getCurrentUser as jest.Mock;
@@ -100,11 +100,17 @@ describe("la progression", () => {
     return GET(requete("/api/progression?jour=2026-09-02"))
       .then((r) => corps(r) as Promise<{ badges: { niveau: { niveau: number } } }>)
       .then((c) => {
-        // 120 payés : seuil du niveau 2 à 50, du niveau 3 à 150.
-        expect(c.badges.niveau.niveau).toBe(2);
-        // Le témoin : 9 000 générés donneraient le niveau 19. Sans lui, un
-        // niveau figé à 2 passerait le contrôle en ne prouvant rien.
-        expect(niveauPourPoints(9000)).toBe(19);
+        // 57 activités et 120 payés : 570 + 120 d'XP, donc le niveau 4.
+        expect(c.badges.niveau.niveau).toBe(4);
+        /**
+         * Le témoin, et il a fallu le refaire quand le niveau est passé à
+         * l'XP. Si la route passait l'effort GÉNÉRÉ au lieu du PAYÉ, la même
+         * source vaudrait 9 570 d'XP et le niveau 14. Les deux chiffres sont
+         * assez éloignés pour qu'aucune erreur d'arrondi ne les confonde —
+         * c'est ce qui rend le contrôle discriminant, et sans lui un niveau
+         * figé à 4 passerait en ne prouvant rien.
+         */
+        expect(niveauPourXp(57 * XP_PAR_ACTIVITE + 9000)).toBe(14);
       });
   });
 

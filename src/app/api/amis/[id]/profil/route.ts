@@ -3,7 +3,7 @@ import { nomPublie } from "@/lib/nomAffiche";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { composerProfil, toPartage } from "@/lib/profilAmi";
-import { niveauPourPoints, titrePorte } from "@/lib/niveauCompte";
+import { niveauPourXp, titrePorte, xpDuCompte } from "@/lib/niveauCompte";
 import { etatRetard, longueurSerie, meilleureSerie, jourLocal } from "@/lib/serie";
 import { debutFenetre } from "@/lib/classement";
 
@@ -105,7 +105,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       serie: longueurSerie(listeJours, aujourdhui),
       meilleureSerie: meilleureSerie(listeJours),
       jeuFavori: favori[0]?.jeu ?? null,
-      niveau: niveauPourPoints(sourceNiveau.pointsPayes),
+      niveau: niveauPourXp(xpDuCompte(sourceNiveau)),
       titre: titrePorte(sourceNiveau),
     },
   ));
