@@ -6,7 +6,7 @@ import { composerRecords } from "@/lib/records";
 import { nomPublie } from "@/lib/nomAffiche";
 import { moisDuJour } from "@/lib/defiMensuel";
 import {
-  classer, debutFenetre, ecartAuPremier, JOURS_CLASSEMENT, longueurFenetre,
+  classer, debutFenetre, ecartAuPremier, longueurFenetre,
   toPeriode,
 } from "@/lib/classement";
 
@@ -193,6 +193,5 @@ export async function GET(req: Request) {
     debut,
     jours: longueurFenetre(debut, aujourdhui),
     ecart: ecartAuPremier(lignes),
-    fenetre: JOURS_CLASSEMENT,
   });
 }
