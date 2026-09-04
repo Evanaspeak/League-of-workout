@@ -26,7 +26,21 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
  * C'est la seule page du lot dont une différence ne prouve rien.
  */
 const LANGUE_ADRESSE = langueDemandee(process.argv);
-const PAGES = ["/", "/cgu", "/login", "/beta", "/telechargement", "/dashboard", "/history", "/settings"]
+/**
+ * `/settings` ne rend que la LISTE des rubriques.
+ *
+ * Tout ce qu'elles contiennent — la force, les exercices, les rappels, le
+ * corps, les jeux — s'ouvre par un FRAGMENT, et n'a donc jamais été capturé
+ * par cet outil. Deux corrections de libellé y ont vécu sans qu'une seule
+ * campagne puisse les voir : le simulateur qui vouvoyait et le titre rendu
+ * deux fois. Une page qu'on ne capture pas est une page qu'on ne compare pas,
+ * et le rapport n'en dit rien plutôt que de le signaler.
+ */
+const PAGES = [
+  "/", "/cgu", "/login", "/beta", "/telechargement", "/dashboard", "/history",
+  "/settings", "/settings#profil", "/settings#corps", "/settings#effort",
+  "/settings#jeux", "/settings#donnees",
+]
   .map((c) => enLangue(LANGUE_ADRESSE, c));
 const PAGES_INSTABLES = new Set(["_telechargement"]);
 const LARGEURS = [360, 768, 1280];
@@ -113,7 +127,11 @@ for (const largeur of LARGEURS) {
     // Une session invalide renvoie les écrans connectés vers la connexion, et
     // les deux séries capturent alors la même page de connexion : la
     // comparaison rend « aucune différence » sans avoir rien comparé.
-    const normaliser = (c) => c.replace(/\/+$/, "") || "/";
+    // Le FRAGMENT ne fait pas partie du chemin : `/fr/settings#effort` arrive
+    // sur `/fr/settings`, et le comparer tel quel déclarerait toutes les
+    // rubriques « non représentatives » — un contrôle qui crie sur ce qui va
+    // bien finit par ne plus se lire.
+    const normaliser = (c) => c.split("#")[0].replace(/\/+$/, "") || "/";
     const arrivee = normaliser(new URL(page.url()).pathname);
     if (arrivee !== normaliser(chemin)) {
       console.error(`  ${chemin} : la navigation a abouti sur ${arrivee} — capture non représentative`);
@@ -140,7 +158,7 @@ for (const largeur of LARGEURS) {
       await Promise.all(attentes);
     }).catch(() => {});
     await page.waitForTimeout(1500);
-    const nom = `${largeur}${chemin.replace(/\//g, "_") || "_accueil"}.png`;
+    const nom = `${largeur}${chemin.replace(/#/g, "-").replace(/\//g, "_") || "_accueil"}.png`;
     const image = await page.screenshot({ fullPage: true });
     writeFileSync(join(dossier, nom), image);
     empreintes[nom] = createHash("sha256").update(image).digest("hex").slice(0, 16);
