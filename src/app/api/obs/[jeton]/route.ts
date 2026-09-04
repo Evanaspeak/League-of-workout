@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { exercicesEnTemps, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
 import { etatRetard, longueurSerie } from "@/lib/serie";
+import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function GET(
 
   const retard = etatRetard(user.detteDepuis, user.dettePointsDus);
   return NextResponse.json({
-    lignes: ventiler(repartirPoints(points, exercices)).map((l) => l.valeur),
+    lignes: ventiler(repartirPoints(points, exercices), null, etiquetteLocale(toLocale(user.langue))).map((l) => l.valeur),
     points,
     serie: longueurSerie(paiements.map((p) => p.jour)),
     enRetard: retard.enRetard,

@@ -1126,6 +1126,104 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### Le compteur de l'onglet disparaissait quatre chargements sur cinq
+Trouvé en vérifiant tout autre chose : je lisais la dette dans quatre langues
+pour éprouver la mise en forme des nombres, et le titre de l'onglet portait le
+compteur en français, en allemand et en japonais, pas en anglais. J'ai cru à une
+affaire de langue. Ça n'en était pas une.
+
+**C'est une COURSE, et elle est antérieure à mon changement.** Mesurée cinq
+fois sur la version d'avant, à conditions identiques : **une fois présent,
+quatre fois absent.** Le mécanisme se nomme une fois qu'on le regarde — l'effet
+ne passe QU'UNE fois, à l'arrivée de la dette, et Next rend ses métadonnées de
+son côté, donc écrit `document.title` à un instant qu'on ne commande pas. Quand
+cette écriture tombe après la nôtre, le compteur est perdu jusqu'à la
+navigation suivante ; quand elle tombe avant, il tient.
+
+**Le journal appelle ce rappel « le moins coûteux qui existe »** — il ne
+notifie rien, ne réclame aucune permission, et se voit dans la barre d'onglets
+pendant qu'on joue. Il ne marchait qu'une fois sur cinq, et **rien ne le
+couvrait** : aucun parcours ne lisait `page.title()`, nulle part.
+
+Un observateur repose le compteur quand le titre est réécrit. Il ne peut pas
+boucler : reposer le compteur rend le titre conforme, donc la mutation suivante
+ne demande plus rien. Remesuré : **cinq fois sur cinq.**
+
+**Le parcours vaut par sa SECONDE moitié.** La première — « le compteur est
+là » — passait déjà une fois sur cinq avant correction : la course décidait, et
+un test que le hasard fait passer n'éprouve rien. La seconde rejoue l'écriture
+de Next à la main (`document.title = "Win or Workout"`) et exige le retour du
+compteur. C'est déterministe, et c'est exactement le mécanisme corrigé.
+Sabotage : l'observateur débranché, le parcours tombe.
+
+**Ce que ça apprend sur la méthode.** Le défaut a été trouvé en regardant une
+colonne qui n'était pas celle qu'on mesurait, et ma première explication — « une
+affaire de langue » — était fausse. Ce qui l'a tranchée est l'A/B : la même
+sonde, cinq fois, sur la version d'avant et sur la version d'après. Une mesure
+unique n'est pas une mesure, et c'est encore plus vrai quand ce qu'on mesure est
+une course : elle rend le bon résultat assez souvent pour qu'on la croie.
+
+### La dette s'écrivait « 1543 » dans les six langues
+Suite du recensement des nombres non localisés. `useNombre` avait été posé pour
+la couche d'affichage, et il ne pouvait rien pour celle-ci : la dette ne passe
+pas par un composant, elle passe par `formaterCompact`, `formaterQuantite`,
+`formaterDuree` et `ventiler`, quatre fonctions de `src/lib/exercices.ts` qui
+rendaient `String(n)` — donc « 1543 » là où le français écrit « 1 543 »,
+l'allemand « 1.543 » et le japonais « 1,543 ». Et « 2,4 km » en anglais, où il
+faut « 2.4 km » : le module codait `fr-FR` en dur pour la distance.
+
+**C'est le nombre le plus important du produit** — ce qu'on doit — et il vit
+sur la pastille, dans le compteur, dans le titre de l'onglet, dans l'historique,
+sur le bilan, dans l'image de saison, sur la source de diffusion et dans les
+deux notifications.
+
+**L'étiquette de langue est OPTIONNELLE dans la signature, et elle devait
+l'être.** Son absence garde exactement le rendu d'avant : c'est ce qui a permis
+de reprendre la quinzaine d'appelants un par un, en vérifiant après chacun, sans
+qu'aucun écran ne change avant d'avoir été regardé. Une erreur ici serait pire
+que le défaut qu'on corrige.
+
+**Les deux moitiés du sujet, et la seconde est celle qu'on oublie.** Quatorze
+appelants sont des composants et lisent `useDateLocale()`. Quatre sont rendus au
+SERVEUR — l'image de saison, la source de diffusion, le rappel du matin et la
+notification de seuil — et ne peuvent appeler aucun crochet React : ils ont la
+langue du COMPTE sous la main, et c'est la bonne, puisque ce qui part hors du
+navigateur porte la langue du compte.
+
+**`src/quantiteLocalisee.test.ts` regarde l'APPEL, jamais l'import.** Un fichier
+qui importe `useDateLocale` sans le passer a l'intention et pas le
+comportement — c'est le défaut déjà écrit ici pour le garde du nom publié et
+pour celui de la porte des routes. Le contrôle compte donc les arguments de
+premier niveau de chaque appel, ce qui demande de suivre la PROFONDEUR des
+parenthèses : la moitié de ces appels portent un objet, un gabarit ou un appel
+imbriqué, et un découpage sur les virgules annoncerait cinq arguments là où il y
+en a deux. Le découpage vit hors de la boucle et s'éprouve sur six cas
+fabriqués — les fichiers réels ne contiennent que des cas qu'il accepte, donc
+ils ne le distinguent pas d'un découpage cassé.
+
+Deux témoins, et le second porte autant que le premier : au moins vingt appels
+examinés, et au moins trois fichiers de `app/api/` parmi eux. Sans lui, la règle
+passerait pour tenue alors qu'elle n'aurait été vérifiée que sur les écrans,
+c'est-à-dire sur la moitié du sujet.
+
+Quatre sabotages, quatre échecs : un appel client sans étiquette, un appel
+serveur sans étiquette, le découpage rendu aveugle, et les routes écartées du
+recensement.
+
+**Un mot anglais trouvé au passage, et c'est un français en dur.** Le rappel
+fractionné du mode session écrivait son titre et sa phrase à la main —
+« ${quantite} à faire maintenant. » — et partait tel quel dans les six langues.
+Les trois autres notifications en jeu passent par `enJeu` depuis qu'on a corrigé
+ce défaut ailleurs : c'est la moitié non réparée d'une correction déjà faite,
+motif que ce projet paie en boucle. Et elle arrive au seul moment où l'on ne
+peut pas aller chercher le texte ailleurs, puisqu'on joue.
+
+**Vérifié à l'écran, sur une dette de 1 543 points**, dans six langues :
+« 1 543 » en français, « 1.543 » en allemand, « 1,543 » en anglais, en japonais
+et en chinois — et **« 1543 » en espagnol, qui est juste** : `Intl` n'y groupe
+pas les nombres à quatre chiffres. C'est précisément ce qu'une table écrite à la
+main ne saurait jamais.
+
 ### Le japonais a montré la moitié que je venais de laisser
 Lecture du tableau de bord en japonais, trois heures après avoir fait passer les
 nombres par `Intl`. Deux lignes qui se suivent :

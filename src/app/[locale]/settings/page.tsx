@@ -4,7 +4,7 @@ import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { chargerContexte } from "@/lib/chargerContexte";
 import { descriptionsExercices, nomsExercices } from "@/lib/nomsExercices";
 import { logout } from "@/lib/actions";
-import { useT, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useLocale, useMinuscule, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -49,6 +49,7 @@ type Rubrique = (typeof RUBRIQUES)[number];
 export default function SettingsPage() {
   const t = useT(settingsDict);
   const minuscule = useMinuscule();
+  const etiquette = useDateLocale();
   const tExo = useT(exercicesDict);
   const { locale } = useLocale();
   // Lu sans effet : le rendu serveur dit « non », le navigateur tranche, et
@@ -971,7 +972,7 @@ export default function SettingsPage() {
                   <div className="mono-num" style={{
                     fontSize: "1.05rem", fontWeight: 600, color: "var(--amber)", lineHeight: 1.2,
                   }}>
-                    {formaterCompact(plafond, id)}
+                    {formaterCompact(plafond, id, null, etiquette)}
                   </div>
                   <div style={{ fontSize: "0.7rem", color: "var(--faint)" }}>
                     {minuscule(EXO_LABELS[id].nom)}

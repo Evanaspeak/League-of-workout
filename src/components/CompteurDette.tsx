@@ -8,7 +8,7 @@ import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
 import { jourLocal } from "@/lib/serie";
 import { useChemin } from "@/lib/i18n/useChemin";
-import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useMinuscule, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
   EXERCICES, formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId,
@@ -39,6 +39,7 @@ export function CompteurDette() {
   const pathname = useChemin();
   const t = useT(exercicesDict);
   const minuscule = useMinuscule();
+  const etiquette = useDateLocale();
   const nomsExo: Record<ExerciceId, string> = nomsExercices(t);
 
 
@@ -123,8 +124,8 @@ export function CompteurDette() {
             id: exercice,
             pts: pts ?? 0,
             valeur: typeof rendue === "number"
-              ? formaterQuantite(rendue, exercice)
-              : formaterCompact(pts ?? 0, exercice),
+              ? formaterQuantite(rendue, exercice, etiquette)
+              : formaterCompact(pts ?? 0, exercice, null, etiquette),
             secondes: typeof rendue === "number" ? rendue : quantite(pts ?? 0, exercice),
           };
         })
@@ -594,7 +595,7 @@ export function CompteurDette() {
             <div>
               <div className="text-xs mb-1" style={{ color: "var(--faint)" }}>
                 {t.detteConvertiObjectif(
-                  formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion),
+                  formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion, etiquette),
                   nomsExo[conversion],
                 )}
               </div>

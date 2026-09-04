@@ -124,10 +124,10 @@ export async function GET() {
   const bilan = calculerBilan(parties, paiements, jourDe(depuis), jourDe(maintenant), jourDe);
   // « 4 200 points » ne dit rien à personne. La quantité réelle, dans les
   // exercices du compte, en dit quelque chose.
-  const parts = ventiler(repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices)));
+  const etiquette = etiquetteLocale(estLocale(user.langue) ? user.langue : "en");
+  const parts = ventiler(repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices)), null, etiquette);
   const effortPaye = parts.map((p) => p.valeur).join(" + ") || "0";
 
-  const etiquette = etiquetteLocale(estLocale(user.langue) ? user.langue : "en");
   return new ImageResponse(
     carte(bilan, user.pseudo, effortPaye, motsImage(user.langue), etiquette),
     {

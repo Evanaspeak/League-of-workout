@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { ventiler } from "@/lib/exercices";
 import { notifierSysteme } from "@/lib/notifier";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import type { ScoreDirect } from "@/types/electron";
 import { ecrire, lire } from "@/lib/stockage";
@@ -25,6 +25,7 @@ export const ROLE_DEFAUT = "Jungle";
  */
 export function PartieDetectee() {
   const t = useT(enJeu);
+  const etiquette = useDateLocale();
 
   useEffect(() => {
     const pont = window.electronLOL;
@@ -142,7 +143,7 @@ export function PartieDetectee() {
         // Encore fallait-il le dire — jusqu'ici il fallait rouvrir la fenêtre
         // pour le savoir.
         const { repartition } = await res.json();
-        const quantite = ventiler(repartition ?? {}).map((v) => `${v.valeur} ${t.noms[v.id]}`).join(" · ");
+        const quantite = ventiler(repartition ?? {}, null, etiquette).map((v) => `${v.valeur} ${t.noms[v.id]}`).join(" · ");
         if (quantite) notifierSysteme(t.partieTerminee, t.aFaire(quantite), "wow-partie");
       } catch {
         // Sans clé Riot de production, le suivi de session n'a rien à

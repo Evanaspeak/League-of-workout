@@ -758,7 +758,7 @@ export function AjoutActivite({
                         const seul = parts[0] ?? { id: toExerciceId(preview.exercice), pts: preview.scoring.pompesFinales };
                         return (
                           <>
-                            <div className="text-4xl font-bold gold-text">{formaterCompact(seul.pts, seul.id)}</div>
+                            <div className="text-4xl font-bold gold-text">{formaterCompact(seul.pts, seul.id, null, dateLocale)}</div>
                             <div className="text-sm mt-1" style={{ color: "var(--muted)" }}>
                               {nomsExo[seul.id].toUpperCase()}
                             </div>
@@ -769,7 +769,7 @@ export function AjoutActivite({
                         <div className="space-y-1">
                           {parts.map((part) => (
                             <div key={part.id} className="text-2xl font-bold gold-text">
-                              {formaterCompact(part.pts, part.id)}
+                              {formaterCompact(part.pts, part.id, null, dateLocale)}
                               <span className="text-sm ml-2" style={{ color: "var(--faint)" }}>
                                 {minuscule(nomsExo[part.id])}
                               </span>
@@ -852,7 +852,7 @@ export function AjoutActivite({
                       </span>
                     ) : m.alreadyLogged ? (
                       <>
-                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice))}</span>
+                        <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice), null, dateLocale)}</span>
                         <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "var(--faint)" }}>
                           {t.loggedBadge}
                         </span>

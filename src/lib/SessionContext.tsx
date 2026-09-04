@@ -10,6 +10,8 @@ import {
 } from "@/lib/exercices";
 import { JEU_DEFAUT, typeDuJeu, type TypeJeu } from "@/lib/jeux";
 import { notifierSysteme } from "@/lib/notifier";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import { ecrire, effacer, lire } from "./stockage";
 
 const POLL_MS = 2 * 60 * 1000;
@@ -70,6 +72,8 @@ type SessionCtx = {
 const SessionContext = createContext<SessionCtx | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const tJeu = useT(enJeu);
+  const etiquette = useDateLocale();
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionGames, setSessionGames] = useState<SessionGame[]>([]);
   const [sessionError, setSessionError] = useState("");
@@ -112,10 +116,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // exercices cochés, comme un ajout manuel.
   const exercicesRef = useRef<ExerciceId[]>([EXERCICE_DEFAUT]);
 
+  /**
+   * Le rappel fractionné parlait français à tout le monde : il écrivait son
+   * titre et sa phrase en dur, alors que les trois autres notifications en jeu
+   * passent par `enJeu` depuis qu'on a corrigé ce défaut ailleurs. C'est la
+   * moitié non réparée d'une correction déjà faite — et elle arrive au seul
+   * moment où l'on ne peut pas aller chercher le texte ailleurs, puisqu'on
+   * joue.
+   */
   const notifier = useCallback((points: number) => {
-    const quantite = formaterCompact(points, exerciceRef.current);
-    notifierSysteme("Win or Workout", `${quantite} à faire maintenant.`, "wow-rappel");
-  }, []);
+    const quantite = formaterCompact(points, exerciceRef.current, null, etiquette);
+    notifierSysteme(tJeu.rappelTitre, tJeu.rappelMaintenant(quantite), "wow-rappel");
+  }, [tJeu, etiquette]);
 
   /** Dette totale générée depuis le début du chrono, acquittements compris. */
   const detteTotaleChrono = useCallback(() => {

@@ -187,7 +187,7 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
   }
 
   const effortPaye = bilan
-    ? ventiler(bilan.repartitionPayee).map((p) => p.valeur).join(" + ") || t.aucun
+    ? ventiler(bilan.repartitionPayee, null, etiquette).map((p) => p.valeur).join(" + ") || t.aucun
     : t.aucun;
 
   /**
