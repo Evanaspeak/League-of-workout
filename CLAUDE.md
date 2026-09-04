@@ -1079,6 +1079,51 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une récompense qu'on ne voit pas n'en est pas une
+Suite immédiate de l'XP des défis. Le nombre monte, la table le retient, le
+niveau en tient compte — et **rien à l'écran ne relie ce mouvement au défi
+qu'on vient de finir.** Un compteur qui grandit tout seul n'est pas une
+récompense : c'est un chiffre qui bouge.
+
+Chaque barre porte donc ce qu'elle vaut, à côté de ce qu'elle demande —
+« +50 XP » sur le défi du jour, « +300 XP » sur ceux du mois — et le chiffre
+passe au vert quand c'est fait. Il sert aussi de raison de COMMENCER, ce qui
+est la moitié du travail d'un défi : on ne se met pas à une tâche dont on ne
+sait pas ce qu'elle rapporte.
+
+**Les deux valeurs viennent du module qui les accorde**, jamais d'un chiffre
+écrit dans le composant. Une récompense annoncée qui diffère de celle qu'on
+reçoit est pire que pas d'annonce du tout, et c'est le genre d'écart qui ne se
+voit qu'après coup, sur le compte de quelqu'un.
+
+**`+50 XP` ne passe PAS par `Intl`, et la raison est écrite dans le
+dictionnaire.** Cinquante et trois cents s'écrivent pareil dans les six
+langues ; un séparateur de milliers ne s'y pose jamais. Le jour où un défi
+vaudra 1 500, c'est le gabarit qu'il faudra formater — pas le composant, où la
+règle se perdrait.
+
+**Le sabotage n'a pas compilé au premier essai**, et c'est noté comme tel
+plutôt que compté comme un test qui mord : retirer l'appel rend le paramètre
+inutilisé, et `noUnusedLocals` le nomme. Réécrit pour compiler — la valeur
+reste lue, le texte devient vide — il fait tomber le parcours.
+
+**Et une image de la même famille que l'icône cassée, trouvée en recensant.**
+`PartageSeance` affiche l'image de séance sans dimensions : la fenêtre n'a
+aucune hauteur à garder tant qu'elle n'est pas là, elle grandit d'un coup à son
+arrivée, et comme la fenêtre est centrée, la phrase du dessus remonte sous les
+yeux de quelqu'un en train de la lire. 1200 × 630 avec `height: auto` suffit —
+le navigateur en déduit le rapport et garde la place avant d'avoir un pixel.
+Les deux autres images du produit étaient déjà bornées : celle du bilan porte
+ses dimensions, et les logos de jeux ont un `alt` VIDE, donc rien à faire
+grandir quand ils manquent.
+
+**Ce qui a été regardé et ne se fait PAS : la ligne 152 du plan** — « la
+progression physique ET le volume ». Elle demande de montrer une progression
+physique, or le produit ne garde qu'un `pompesMax` COURANT : il n'y a aucune
+histoire à montrer. La construire est exactement ce que la réponse 153 — « une
+courbe de force dans le temps » — remet à plus tard. La faire quand même
+reviendrait à décider 153 par la bande. Ça part dans les questions.
+
 ### Une icône cassée faisait sauter l'historique, et seule la lenteur le montrait
 Campagne passée après V387, sur un compte de mesure à neuf parties et une
 dette — c'est-à-dire un compte qui ressemble enfin à celui de quelqu'un. Quatre

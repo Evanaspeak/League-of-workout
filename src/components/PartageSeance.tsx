@@ -35,7 +35,27 @@ export function PartageSeance({ points, onFermer }: { points: number; onFermer: 
           <img
             src="/api/seance/image"
             alt={t.alt(points)}
-            style={{ width: "100%", borderRadius: 8, border: "1px solid var(--line)" }}
+            /**
+             * Les dimensions réservent la place, et ce n'est pas décoratif.
+             *
+             * Sans elles, la fenêtre n'a aucune hauteur à garder tant que
+             * l'image n'est pas là : elle grandit d'un coup quand elle arrive,
+             * et comme la fenêtre est centrée, la phrase du dessus remonte
+             * sous les yeux de quelqu'un en train de la lire. Et pendant
+             * l'attente, une image cassée rend son texte de remplacement, qui
+             * fait deux lignes ici — c'est le défaut mesuré sur les icônes de
+             * l'historique, à une autre échelle.
+             *
+             * 1200 × 630 sont les dimensions rendues par la route ; avec
+             * `height: auto`, le navigateur en déduit le rapport et garde la
+             * place avant même d'avoir un pixel.
+             */
+            width={1200}
+            height={630}
+            style={{
+              width: "100%", height: "auto",
+              borderRadius: 8, border: "1px solid var(--line)",
+            }}
             onError={() => setCassee(true)}
             ref={(el) => {
               // Une image déjà terminée ne déclenche plus `onError` : React

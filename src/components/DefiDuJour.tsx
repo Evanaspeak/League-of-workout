@@ -7,6 +7,10 @@ import { defis as dict } from "@/lib/i18n/dictionaries/defis";
 import type { AvancementDefi } from "@/lib/defiQuotidien";
 import type { AvancementMensuel } from "@/lib/defiMensuel";
 import type { Collectif } from "@/lib/objectifCollectif";
+// Les deux valeurs viennent du module qui les ACCORDE, jamais d'un chiffre
+// écrit à l'écran : une récompense annoncée qui diffère de celle qu'on reçoit
+// est pire que pas de récompense annoncée du tout.
+import { XP_DEFI_JOUR, XP_DEFI_MOIS } from "@/lib/xpDefis";
 
 /**
  * Le défi du jour, sur le tableau de bord.
@@ -57,7 +61,7 @@ export function DefiDuJour() {
    * six fois sur ce projet, et il ne prend jamais la forme d'une copie qu'on
    * remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
    */
-  const barre = (cle: string, cible: number, ou: number, fait: boolean) => {
+  const barre = (cle: string, cible: number, ou: number, fait: boolean, xp: number) => {
     const phrase = (t as unknown as Record<string, (n: number) => string>)[cle];
     if (typeof phrase !== "function") return null;
     const part = cible > 0 ? Math.min(1, ou / cible) : 0;
@@ -65,7 +69,23 @@ export function DefiDuJour() {
       <div key={cle} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <div className="flex items-baseline justify-between gap-3">
           <span style={{ fontSize: "0.9rem", opacity: fait ? 0.6 : 1 }}>{phrase(cible)}</span>
-          <b className="mono-num" style={{ fontSize: "0.8rem" }}>{`${ou} / ${cible}`}</b>
+          <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            {/*
+              Ce que le défi RAPPORTE, à côté de ce qu'il demande.
+              Sans ce chiffre, la récompense existe et ne se voit pas : l'XP
+              monte de cinquante sans que rien ne relie ce mouvement au défi
+              qu'on vient de finir, et une récompense que personne ne relie à
+              son geste n'en est pas une. Il vaut aussi comme raison de
+              commencer, ce qui est la moitié du travail d'un défi.
+            */}
+            <span
+              className="mono-num"
+              style={{ fontSize: "0.72rem", color: fait ? "var(--win, #4caf50)" : "var(--gold)" }}
+            >
+              {t.gain(xp)}
+            </span>
+            <b className="mono-num" style={{ fontSize: "0.8rem" }}>{`${ou} / ${cible}`}</b>
+          </span>
         </div>
         <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
           <div
@@ -99,7 +119,7 @@ export function DefiDuJour() {
         )}
       </div>
 
-      {barre(defi.cle, defi.cible, defi.ou, defi.fait)}
+      {barre(defi.cle, defi.cible, defi.ou, defi.fait, XP_DEFI_JOUR)}
 
       {mois && mois.length > 0 && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
@@ -107,7 +127,7 @@ export function DefiDuJour() {
             <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.moisTitre}</h3>
             <p className="text-xs mt-1" style={{ color: "var(--steel)" }}>{t.moisAide}</p>
           </div>
-          {mois.map((m) => barre(m.cle, m.cible, m.ou, m.fait))}
+          {mois.map((m) => barre(m.cle, m.cible, m.ou, m.fait, XP_DEFI_MOIS))}
         </div>
       )}
 

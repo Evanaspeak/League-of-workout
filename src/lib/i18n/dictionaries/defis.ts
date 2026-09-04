@@ -6,6 +6,12 @@
  * à l'autre, et un gabarit unique produirait de l'allemand faux. La cible est
  * passée en argument pour qu'elle reste écrite une seule fois — dans le code,
  * là où elle décide.
+ *
+ * `gain` dit ce que le défi rapporte, et il le dit sans passer par `Intl` :
+ * cinquante et trois cents s'écrivent pareil dans les six langues, un
+ * séparateur de milliers ne s'y pose jamais. Le jour où un défi vaudra 1 500,
+ * c'est ici qu'il faudra le formater — pas dans le composant, où la règle se
+ * perdrait.
  */
 export const defis = {
   fr: {
@@ -19,6 +25,7 @@ export const defis = {
     titre: "Défi du jour",
     aide: "Il change chaque jour, et il vaut jusqu'à minuit.",
     fait: "Fait",
+    gain: (n: number) => `+${n} XP`,
     parties3: (n: number) => `Enregistre ${n} parties`,
     victoires2: (n: number) => `Gagne ${n} parties`,
     jeux2: (n: number) => `Joue à ${n} jeux différents`,
@@ -37,6 +44,7 @@ export const defis = {
     titre: "Daily challenge",
     aide: "It changes every day, and it stands until midnight.",
     fait: "Done",
+    gain: (n: number) => `+${n} XP`,
     parties3: (n: number) => `Log ${n} games`,
     victoires2: (n: number) => `Win ${n} games`,
     jeux2: (n: number) => `Play ${n} different games`,
@@ -55,6 +63,7 @@ export const defis = {
     titre: "Reto del día",
     aide: "Cambia cada día y vale hasta medianoche.",
     fait: "Hecho",
+    gain: (n: number) => `+${n} XP`,
     parties3: (n: number) => `Registra ${n} partidas`,
     victoires2: (n: number) => `Gana ${n} partidas`,
     jeux2: (n: number) => `Juega a ${n} juegos distintos`,
@@ -73,6 +82,7 @@ export const defis = {
     titre: "Tagesaufgabe",
     aide: "Sie wechselt täglich und gilt bis Mitternacht.",
     fait: "Erledigt",
+    gain: (n: number) => `+${n} XP`,
     parties3: (n: number) => `Trage ${n} Partien ein`,
     victoires2: (n: number) => `Gewinne ${n} Partien`,
     jeux2: (n: number) => `Spiele ${n} verschiedene Spiele`,
@@ -91,6 +101,7 @@ export const defis = {
     titre: "每日挑战",
     aide: "每天更换，有效至当日结束。",
     fait: "已完成",
+    gain: (n: number) => `+${n} XP`,
     parties3: (n: number) => `记录 ${n} 场对局`,
     victoires2: (n: number) => `赢下 ${n} 场对局`,
     jeux2: (n: number) => `玩 ${n} 款不同的游戏`,
@@ -109,6 +120,7 @@ export const defis = {
     titre: "今日のチャレンジ",
     aide: "毎日変わり、その日のうちだけ有効です。",
     fait: "達成",
+    gain: (n: number) => `+${n} XP`,
     parties3: (n: number) => `${n} 試合を記録する`,
     victoires2: (n: number) => `${n} 試合勝つ`,
     jeux2: (n: number) => `${n} 種類のゲームをプレイする`,
