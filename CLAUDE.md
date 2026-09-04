@@ -1060,6 +1060,42 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un parcours tombé une fois en CI, et ce qu'on en sait vraiment
+V373 est **rouge**, en 7 min 42 — donc les parcours ont bien tourné, ce que la
+durée dit avant la pastille. Un seul test est tombé, dans le premier tronçon :
+
+```
+e2e/detection-partie.spec.ts:208 › une partie que le serveur refuse le dit
+  Expected pattern: /Rôle inconnu/
+  Received string:  "Partie terminée | 1 pompes à faire."
+```
+
+Ce test DÉTOURNE `POST /api/games` pour rendre un 400. Le message reçu est
+celui du succès : l'interception n'a pas pris, la vraie route a répondu, et la
+partie s'est enregistrée. Ce n'est donc pas la route qui a changé de
+comportement — c'est le détournement qui a manqué.
+
+**Ce qu'on sait, et rien de plus :**
+
+- V372, juste avant, est verte ; le fichier passe en local sur la tête, neuf
+  sur neuf ;
+- V373 ne touche ni `/api/games`, ni la détection, ni le barème : elle ajoute
+  une colonne de réglage, un panneau et six traductions ;
+- le service worker a été soupçonné — Playwright n'intercepte pas ce qui passe
+  par lui — et **écarté** : `sw.js` ne répond que pour `mode === "navigate"`,
+  donc un `POST` d'API le traverse sans qu'il s'en mêle.
+
+**Ce qu'on ne sait pas : la cause.** Elle n'est pas nommée, et « ça repasse »
+n'en est pas une. C'est écrit ici pour qu'une récidive se reconnaisse au lieu
+de se redécouvrir — et pour qu'on résiste à la tentation d'allonger un délai
+sans savoir ce qu'on attend, qui est la façon la plus sûre de rendre un test
+muet.
+
+**Ce qui n'a PAS été fait, et pourquoi.** Poser `serviceWorkers: "block"` dans
+la configuration Playwright supprimerait une source d'imprévu — mais deux
+fichiers de parcours éprouvent justement le service worker, et on ne change pas
+une configuration globale à cinq heures du matin sur une hypothèse écartée.
+
 ### Une section ajoutée au milieu, et un décalage que je ne sais pas reproduire
 Le mur des records s'est glissé ENTRE les deux panneaux miroités de `/amis`, et
 la campagne de clôture l'a dit tout de suite : **3032 ms sur téléphone bridé**,
