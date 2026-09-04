@@ -989,6 +989,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le mur des records, et deux moitiés de ligne qu'on ne fait pas
+Ligne 140, réponse « Oui » : « un mur des records, par exercice et par période.
+Le plus grand nombre de pompes en une journée. »
+
+**Ce qu'il apporte, et pourquoi il n'est pas un second classement.** Le
+classement additionne une fenêtre, la série dit qui n'a pas lâché, le record
+retient une POINTE — la plus grosse soirée. Les trois ne se remplacent pas, et
+c'est pour ça que le mur est une section à part et pas un tri de plus sur les
+mêmes pseudos. Répéter les mêmes noms dans un second ordre n'apprend rien et
+double la place.
+
+**Par période, oui. Par exercice, NON, et c'est une limite écrite.**
+`Paiement` ne porte que des points et un jour : l'exercice vit sur le compte,
+où il change quand on en change, et sur la partie, qui n'est pas ce qu'on paie.
+Un mur « par exercice » demanderait de retenir l'exercice à chaque paiement,
+donc une colonne ET une décision sur les paiements déjà écrits. La case du plan
+porte la mention plutôt que de laisser croire la ligne entière faite.
+
+**Entre amis, et pas au choix — la 141 reste ouverte.** Elle demande « public
+ou entre amis, au choix ». Un mur PUBLIC est une surface d'exposition nouvelle :
+il donne à qui n'a rien demandé une liste de pseudos et d'efforts, c'est-à-dire
+exactement ce que la réponse 127 a refusé en refusant l'annuaire. Ça se
+construit avec son réglage et son défaut fermé, et ce n'est pas la même
+nuit. Le mur reste donc dans le cercle, comme le classement.
+
+**Le mode fantôme le couvre sans qu'on ait rien à écrire**, et c'est le seul
+point qui demandait de l'attention : le mur lit les pseudos des LIGNES du
+classement, déjà passées par `nomPublie` et par le filtre en base. Quelqu'un
+qui s'est retiré des classements ne réapparaît donc pas par le record — ce qui
+serait le pire endroit possible pour réapparaître. Un test de route tient ce
+cas précis.
+
+**Le regroupement porte sur le COUPLE compte-jour**, pas sur le compte. Un
+`_max` sur les points rendrait le plus gros PAIEMENT, ce qui n'est pas la même
+chose : ça se verrait le soir où quelqu'un paie sa dette en deux fois. Et une
+seule lecture pour les deux périodes — le mois se découpe ensuite sur le
+préfixe.
+
+**À égalité, le plus ANCIEN tient.** Un record ne se prend pas en égalant ;
+sans cette règle, le titre changerait de main à chaque soirée où quelqu'un
+refait le même chiffre.
+
+**Un piège de doublure, nouveau celui-là.** La route fait désormais DEUX
+`groupBy` sur la même table — les sommes, puis les jours. Une doublure qui rend
+la même chose aux deux fait lire des sommes comme des jours, et le mur plante
+sur un `jour` absent. Elle répond maintenant selon l'axe de regroupement
+demandé, et le contrôle des bornes va chercher l'appel des SOMMES au lieu du
+dernier : prendre le dernier faisait passer les deux onglets pour identiques,
+puisque le mur borne toujours de la même façon.
+
+Cinq sabotages, cinq échecs.
+
 ### L'objectif collectif, et un garde plus faible que ce que le journal en disait
 Ligne 133, réponse « Oui » : « Ensemble, 100 000 pompes ce mois-ci ». C'est la
 seule chose du produit qui additionne l'effort de TOUT LE MONDE, et c'est ce

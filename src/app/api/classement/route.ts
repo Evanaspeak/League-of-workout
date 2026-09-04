@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estJourValide, jourLocal } from "@/lib/serie";
+import { composerRecords } from "@/lib/records";
+import { moisDuJour } from "@/lib/defiMensuel";
 import {
   classer, debutFenetre, ecartAuPremier, JOURS_CLASSEMENT, longueurFenetre,
   toPeriode,
@@ -65,7 +67,7 @@ export async function GET(req: Request) {
    */
   const ids = [user.id, ...liens.map((l) => (l.demandeurId === user.id ? l.receveurId : l.demandeurId))];
 
-  const [comptes, sommes] = await Promise.all([
+  const [comptes, sommes, joursPayes] = await Promise.all([
     /**
      * Les identifiants viennent de la requête filtrée juste au-dessus : ce
      * sont les amis acceptés du demandeur, et personne d'autre.
@@ -103,13 +105,45 @@ export async function GET(req: Request) {
       },
       _sum: { points: true },
     }),
+    /**
+     * Le mur des records (ligne 140), sur le même cercle et dans le même
+     * aller-retour groupé.
+     *
+     * Le regroupement porte sur le COUPLE compte-jour : le record est le plus
+     * gros JOUR, et un jour peut porter plusieurs séances. Un `_max` sur les
+     * points rendrait le plus gros PAIEMENT, ce qui n'est pas la même chose et
+     * se verrait le soir où quelqu'un paie sa dette en deux fois.
+     *
+     * Une seule lecture pour les deux périodes : le mois se découpe ensuite
+     * sur le préfixe, en mémoire. Deux requêtes auraient lu deux fois des
+     * lignes dont l'une est un sous-ensemble de l'autre.
+     */
+    prisma.paiement.groupBy({
+      by: ["userId", "jour"],
+      where: { userId: { in: ids }, jour: { lte: aujourdhui } },
+      _sum: { points: true },
+    }),
   ]);
 
   const points = new Map(sommes.map((s) => [s.userId, s._sum.points ?? 0]));
   const lignes = classer(comptes, points, user.id);
 
+  /**
+   * Les pseudos viennent de `lignes`, donc déjà passés par `nomPublie` ET par
+   * le filtre du mode fantôme : quelqu'un qui s'est retiré des classements ne
+   * réapparaît pas par le mur. C'est ce que le module refuse de deviner — il
+   * ne connaît que la liste qu'on lui donne.
+   */
+  const pseudos = new Map(lignes.map((l) => [l.id, l.pseudo]));
+
   return NextResponse.json({
     lignes,
+    records: composerRecords(
+      joursPayes.map((g) => ({ userId: g.userId, jour: g.jour, points: g._sum.points ?? 0 })),
+      pseudos,
+      user.id,
+      moisDuJour(aujourdhui),
+    ),
     periode,
     debut,
     jours: longueurFenetre(debut, aujourdhui),

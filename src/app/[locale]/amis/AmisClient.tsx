@@ -5,6 +5,7 @@ import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
 import type { LigneClassement, Periode } from "@/lib/classement";
+import type { MurDesRecords } from "@/lib/records";
 import { JOURS_CLASSEMENT, PERIODE_DEFAUT, PERIODES } from "@/lib/classement";
 import DetteEquipe from "./DetteEquipe";
 
@@ -58,6 +59,7 @@ type Groupe = {
 };
 type Classement = {
   lignes: LigneClassement[];
+  records?: MurDesRecords;
   jours: number;
   ecart: number | null;
   periode?: Periode;
@@ -539,6 +541,42 @@ export function AmisClient() {
             <div style={{ minHeight: 160 }} aria-hidden="true" />
           )}
       </section>
+
+      {/*
+        Le mur des records (ligne 140), sous le classement et pas dedans.
+        Les deux ne disent pas la même chose : le classement additionne une
+        fenêtre, le mur retient une POINTE — la plus grosse soirée. Les mêler
+        ferait un second ordre sur les mêmes pseudos, ce qui n'apprend rien et
+        double la place.
+      */}
+      {classement?.records && (
+        <section className="lol-panel p-5 space-y-3">
+          <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.recordsTitre}</h2>
+          {!classement.records.mois && !classement.records.toujours ? (
+            <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.recordsAucun}</p>
+          ) : (
+            <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+              {([["recordsMois", classement.records.mois], ["recordsToujours", classement.records.toujours]] as const)
+                .map(([cle, r]) => (
+                  <div key={cle}>
+                    <dt style={{ color: "var(--steel)", fontSize: ".85rem" }}>
+                      {cle === "recordsMois" ? t.recordsMois : t.recordsToujours}
+                    </dt>
+                    <dd style={{ margin: 0, overflowWrap: "anywhere" }}>
+                      {r
+                        ? (
+                          <span style={{ color: r.moi ? "var(--gold)" : undefined }}>
+                            {t.recordsLigne(r.pseudo, r.points, r.jour)}
+                          </span>
+                        )
+                        : <span style={{ color: "var(--steel)" }}>{"\u2014"}</span>}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+          )}
+        </section>
+      )}
 
       {/*
         Le lien d'invitation, sous le classement.
