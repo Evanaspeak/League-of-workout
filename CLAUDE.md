@@ -1098,6 +1098,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un titre rendu deux fois, et un reproche à la première ouverture
+Suite de la lecture d'écrans, sur la rubrique « Ton corps » — celle que je
+venais d'écrire la nuit précédente. Les deux défauts sont les miens, et aucun
+des deux ne se voyait en relisant le code.
+
+**« TON CORPS » s'affichait deux fois de suite.** `EnteteRubrique` rend le titre
+de la rubrique, et mon premier panneau rendait un `<h2>` qui répétait la même
+chaîne — c'est le MÊME libellé, `corpsTitre`, qui sert aux deux. Aucune autre
+rubrique ne fait ça : chez les voisines, chaque panneau se nomme pour ce qu'il
+EST — « Test de force », « Tes exercices », « Rappel de la dette ». Deux titres
+de même niveau et de même texte se lisent aussi deux fois pour un lecteur
+d'écran.
+
+La correction n'ajoute aucune clé : l'aide de la rubrique remonte AU-DESSUS du
+premier panneau, exactement là où « Ton effort » met la sienne, et le `<h2>`
+disparaît. Le panneau garde son intitulé propre, « Ce que tu cherches à faire »,
+qui nomme déjà le groupe de boutons.
+
+**Et le dernier mot du panneau du mètre-ruban était un reproche.** Trois champs
+vides, à la première ouverture, l'écran finissait sur « Il manque une mesure ».
+C'est-à-dire un reproche pour ne pas avoir commencé, à l'instant précis qui
+décide si l'on se servira de la fonctionnalité — et le paragraphe d'aide juste
+au-dessus dit déjà quoi faire. C'est la règle déjà posée pour l'objectif de
+première semaine : un objectif raté qu'on laisse affiché n'est plus un objectif.
+
+Ce qui manque ne se dit donc qu'à partir du moment où l'on a commencé.
+
+**Le parcours vaut par ses DEUX moitiés**, et c'est ce qui le distingue d'un
+test décoratif : il vérifie que la phrase est absente sur un compte neuf, ET
+qu'elle revient dès qu'un champ est rempli. Sans la seconde, supprimer la phrase
+pour de bon passerait aussi — on aurait remplacé un reproche par un silence sur
+ce qui bloque vraiment.
+
+**Le premier sabotage n'a pas compilé**, et c'est noté comme tel plutôt que
+compté comme un test qui mord : retirer la condition rend `rubanEntame`
+inutilisée, et `noUnusedLocals` le nomme. Réécrit en `(rubanEntame || true)`, il
+fait tomber le parcours.
+
+**Un échec que je n'explique pas, et qui ne se maquille pas.** Le fichier est
+tombé une fois sur ce test, sur l'exécution qui suivait immédiatement un
+redémarrage du serveur ; il passe seul et il passe en fichier entier sur un
+serveur chaud. Le limiteur d'inscription a été écarté par la mesure — une seule
+ligne dans `LoginAttempt`. La cause reste inconnue ; ce qui est établi, c'est
+qu'elle n'est pas le limiteur.
+
+**Et l'ordre des outils s'est vengé, comme le journal le prévoit.** Le compte de
+mesure a été purgé par le parcours des réglages, qui efface les comptes
+`@example.test` : la lecture d'écran suivante a atterri sur `/fr/login`. Le
+contrôle d'atterrissage l'a dit au lieu de rendre un rapport flatteur, ce pour
+quoi il existe. L'ordre est écrit depuis longtemps — la suite d'abord, le compte
+ensuite, la mesure enfin — et je l'ai pris à l'envers.
+
 ### Une dispense dont la RAISON était fausse, et le vouvoiement qu'elle abritait
 Suite de la lecture d'écrans, sur la rubrique « Ton effort » des réglages.
 Deux trouvailles, et la seconde met un trou dans un garde.
