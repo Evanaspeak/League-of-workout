@@ -1,5 +1,6 @@
 "use client";
 import type { useT } from "@/lib/i18n/LocaleContext";
+import { usePourcentage } from "@/lib/i18n/LocaleContext";
 import type { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 
 type T = ReturnType<typeof useT<typeof dashboard>>;
@@ -31,6 +32,7 @@ export function ComparatifJeux({
   fmt: (points: number) => string;
   formaterTempsJeu: (secondes: number) => string;
 }) {
+  const pourcent = usePourcentage();
   return (
     <div className="lol-panel p-4 space-y-3">
       <div>
@@ -72,7 +74,7 @@ export function ComparatifJeux({
                 </td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--bone)" }}>{j.games}</td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: j.winrate === null ? "rgba(152,162,176,0.35)" : "rgba(236,239,244,0.8)" }}>
-                  {j.winrate === null ? t.sansObjet : `${j.winrate}%`}
+                  {j.winrate === null ? t.sansObjet : pourcent(j.winrate)}
                 </td>
                 <td className="px-3 py-2 text-right mono-num gold-text font-semibold">{fmt(j.points)}</td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--muted)" }}>{fmt(j.detteMoyenne)}</td>

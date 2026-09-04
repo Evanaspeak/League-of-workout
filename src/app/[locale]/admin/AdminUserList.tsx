@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { adminUserList } from "@/lib/i18n/dictionaries/adminUserList";
 import { Icone } from "@/components/Icone";
 
@@ -59,6 +59,7 @@ function ActivityDot({ value, max }: { value: number; max: number }) {
 }
 
 export default function AdminUserList() {
+  const pourcent = usePourcentage();
   const t = useT(adminUserList);
   const dateLocale = useDateLocale();
   const [users, setUsers] = useState<UserStat[]>([]);
@@ -238,7 +239,7 @@ export default function AdminUserList() {
                   <Stat label={t.totalGames} value={String(u.totalGames)} />
                   <Stat label={t.totalPompes} value={String(u.totalPompes)} />
                   <Stat label={t.avgPompesPerGame} value={u.totalGames > 0 ? String(u.avgPompes) : "—"} />
-                  <Stat label={t.winrate} value={u.totalGames > 0 ? `${u.winrate}%` : "—"} />
+                  <Stat label={t.winrate} value={u.totalGames > 0 ? pourcent(u.winrate) : "—"} />
                   <Stat label={t.games7d} value={String(u.gamesThisWeek)} />
                   <Stat label={t.games30d} value={String(u.gamesThisMonth)} />
                   <Stat label={t.lastGame} value={daysSince(u.lastGame, t) ?? t.never} />
@@ -383,7 +384,7 @@ export default function AdminUserList() {
                   <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.championMasteryGlobal}</SectionTitle>
                     <div style={{ display: "flex", gap: 24 }}>
-                      <Stat label={t.maxOverload} value={`+${Math.round(scoring.mastery.surchargeMax * 100)}%`} />
+                      <Stat label={t.maxOverload} value={`+${pourcent(scoring.mastery.surchargeMax * 100)}`} />
                       <Stat label={t.gamesForMaxLabel} value={t.gamesForMax(scoring.mastery.partiesPourMax)} />
                     </div>
                   </div>

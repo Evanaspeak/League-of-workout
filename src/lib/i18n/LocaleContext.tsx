@@ -119,6 +119,24 @@ export function useNombre(options?: Intl.NumberFormatOptions): (n: number) => st
 }
 
 /**
+ * Met un POURCENTAGE en forme dans la langue de l'écran.
+ *
+ * Le français veut une espace insécable devant le signe — « 33 % » — et
+ * l'anglais n'en veut pas. Un « % » recollé à la main n'a qu'une règle, donc
+ * il en a cinq de fausses. C'est le défaut déjà corrigé pour le bilan de
+ * saison, et laissé partout ailleurs : le winrate du tableau de bord affichait
+ * « 33% » en français.
+ *
+ * Elle prend un nombre de 0 à 100, comme on l'écrit et comme le reste du
+ * produit le calcule ; `Intl` attend une fraction, la division vit ici pour
+ * qu'aucun appelant n'ait à s'en souvenir.
+ */
+export function usePourcentage(): (pourCent: number) => string {
+  const format = useNombre({ style: "percent", maximumFractionDigits: 0 });
+  return (pourCent) => format(pourCent / 100);
+}
+
+/**
  * Passe un mot en minuscule pour l'écrire au fil d'une phrase — sauf en
  * allemand, où les noms communs gardent leur majuscule. « 8 min 25 boxen »
  * n'est pas une faute de style : c'est une faute d'orthographe, et elle
