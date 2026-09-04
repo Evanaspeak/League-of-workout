@@ -1126,6 +1126,47 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### « Activité » survivait dans cinq langues, et le français seul avait été repris
+Trouvé en lisant l'écran d'export des données en japonais : « そしてすべての
+アクティビティ » — « et toutes tes activités » — sous un français qui dit
+« l'intégralité de tes parties » depuis que le propriétaire a signalé le
+malentendu.
+
+**Le renommage n'avait touché que le français.** Une première reprise en avait
+rattrapé vingt-quatre en allemand, sur le seul écran où le défaut avait été
+constaté. Le recensement complet en trouve **vingt-cinq de plus**, dans cinq
+dictionnaires et cinq langues : le tableau de bord, l'historique, l'accueil,
+les réglages et la visite guidée.
+
+**Ce qui rend le recensement possible est un discriminant, et il n'est pas
+dans la langue examinée.** Le mot a DEUX sens dans ce produit : une partie, et
+l'activité PHYSIQUE du calcul de calories. Les séparer par le texte allemand
+est impossible — « Aktivitätsgrad » et « Aktivitäten » se ressemblent trop — et
+le chinois n'a pas de frontière de mot. Ce qui tranche est ce que dit le
+FRANÇAIS pour la même clé : s'il dit « partie », la traduction ne peut pas dire
+« activité » ; s'il dit lui-même « activité », c'est l'autre sens et il n'y a
+rien à reprocher.
+
+Sept entrées tombent ainsi du bon côté — le niveau d'activité physique des
+réglages, dans quatre langues — et le sabotage qui élargit le discriminant à
+tout les fait remonter, ce qui est la preuve qu'il trie.
+
+**Le témoin compte les entrées COMPARÉES**, pas les fichiers : plus de deux
+mille. Un découpage de blocs cassé rendrait sinon le contrôle vert en n'ayant
+rien comparé — c'est le troisième témoin creux corrigé cette nuit, et celui-ci
+est né correct parce que les deux précédents avaient coûté.
+
+Quatre sabotages, quatre échecs.
+
+Vérifié à l'écran dans quatre langues : « すべての試合 », « sämtliche Runden »,
+« todas tus partidas », « 全部对局记录 ».
+
+**Ce que ça apprend, et c'est la cinquième fois en une nuit :** un renommage
+qui ne touche qu'une langue laisse cinq écrans faux, et rien ne le signale —
+celui qui écrit l'application la lit en français. La parade n'est pas la
+vigilance, c'est le recensement, et il demande un discriminant qui vive
+AILLEURS que dans la langue qu'on examine.
+
 ### « 1 min 55 » au milieu d'un écran japonais
 Suite de la lecture d'écrans. La rubrique « Ton effort », en japonais,
 annonçait le coût de la boxe et de la planche en **« 1 min 55 »** et

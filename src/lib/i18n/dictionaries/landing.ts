@@ -167,7 +167,7 @@ export const landing = {
     heroVersion: (v: string) => `Versión ${v}`,
     heroBeta: "Crear mi cuenta",
     heroApercuTitre: "Win or Workout · Panel",
-    heroApercuAlt: "El panel de Win or Workout: 105 actividades, 55 % de victorias, 2203 puntos de deuda y el avance hacia el objetivo.",
+    heroApercuAlt: "El panel de Win or Workout: 105 partidas, 55 % de victorias, 2203 puntos de deuda y el avance hacia el objetivo.",
 
     jeuxLegende: "Los juegos compatibles",
     boucleTitre: "Cómo funciona",
@@ -244,7 +244,7 @@ export const landing = {
     heroVersion: (v: string) => `Version ${v}`,
     heroBeta: "Konto erstellen",
     heroApercuTitre: "Win or Workout · Übersicht",
-    heroApercuAlt: "Die Übersicht von Win or Workout: 105 Aktivitäten, 55 % Siegquote, 2203 Punkte Schuld und der Fortschritt zum Ziel.",
+    heroApercuAlt: "Die Übersicht von Win or Workout: 105 Runden, 55 % Siegquote, 2203 Punkte Schuld und der Fortschritt zum Ziel.",
 
     jeuxLegende: "Die unterstützten Spiele",
     boucleTitre: "So funktioniert es",
@@ -321,7 +321,7 @@ export const landing = {
     heroVersion: (v: string) => `版本 ${v}`,
     heroBeta: "创建账号",
     heroApercuTitre: "Win or Workout · 面板",
-    heroApercuAlt: "Win or Workout 的面板：105 项活动、55% 胜率、2,203 点欠账，以及朝目标推进的进度。",
+    heroApercuAlt: "Win or Workout 的面板：105 场对局、55% 胜率、2,203 点欠账，以及朝目标推进的进度。",
 
     jeuxLegende: "支持的游戏",
     boucleTitre: "怎么用",
@@ -398,7 +398,7 @@ export const landing = {
     heroVersion: (v: string) => `バージョン ${v}`,
     heroBeta: "アカウントを作る",
     heroApercuTitre: "Win or Workout · ダッシュボード",
-    heroApercuAlt: "Win or Workout のダッシュボード：105 件のアクティビティ、勝率 55%、2,203 ポイントの負債、そして目標までの進み具合。",
+    heroApercuAlt: "Win or Workout のダッシュボード：105 試合、勝率 55%、2,203 ポイントの負債、そして目標までの進み具合。",
 
     jeuxLegende: "対応タイトル",
     boucleTitre: "使い方",
