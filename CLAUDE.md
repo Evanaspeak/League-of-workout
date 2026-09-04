@@ -1144,6 +1144,23 @@ vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
+### Un réglage qui parlait encore de boxe alors qu'il gouverne toute la dette
+Trouvé en lisant l'écran des réglages. Depuis V387 la dette monte pour TOUS les
+exercices, les pompes comprises — et le seuil de rappel, qui compare `dureeSec`
+à `seuilSec`, s'applique donc à tout le monde. Son titre disait encore
+« Rappel du compteur de boxe », et son explication « la boxe s'accumule au fil
+des parties ».
+
+Quelqu'un qui fait des pompes — le cas par défaut, celui de presque tout le
+monde — voyait donc un réglage nommé pour un exercice qu'il ne pratique pas,
+et pouvait raisonnablement conclure qu'il ne le concernait pas. C'est
+exactement la même famille que les deux « niveau » de tout à l'heure : un mot
+juste le jour où il a été écrit, devenu faux quand le produit a bougé sous lui.
+
+Le titre devient « Rappel de la dette » dans les six langues, et l'explication
+parle d'un SEUIL plutôt que d'un temps — puisque pour un exercice compté en
+répétitions, ce n'est plus une durée qu'on attend.
+
 ### Une troisième liste de pages publiques, sur la barre que tout le monde voit
 Trouvé en continuant à lire les écrans, celui-ci sans compte du tout. Sur
 `/telechargement`, sur les CGU et **sur les quinze pages du calculateur**, un
