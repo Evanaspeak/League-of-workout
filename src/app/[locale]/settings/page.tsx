@@ -122,6 +122,7 @@ export default function SettingsPage() {
   /** Recevoir le bilan hebdomadaire par courriel. */
   const [bilanActif, setBilanActif] = useState(true);
   const [fantome, setFantome] = useState(false);
+  const [recordsPublics, setRecordsPublics] = useState(false);
   /** Le nom montré aux autres : « pseudo » ou « riot » (réponse 128). */
   const [nomAffiche, setNomAffiche] = useState("pseudo");
   /**
@@ -172,6 +173,7 @@ export default function SettingsPage() {
       setVariante(s.user?.variantePompes ?? null);
       setBilanActif(s.user?.bilanActif !== false);
       setFantome(s.user?.fantome === true);
+      setRecordsPublics(s.user?.recordsPublics === true);
       setNomAffiche(s.user?.nomAffiche === "riot" ? "riot" : "pseudo");
       setLienProfil(typeof s.user?.jetonProfil === "string" ? s.user.jetonProfil : null);
       setPartage(s.user?.partageAmis === "detail" ? "detail" : "total");
@@ -317,6 +319,19 @@ export default function SettingsPage() {
     const avant = fantome;
     setFantome(actif);
     await enregistrerReglage({ fantome: actif }, () => setFantome(avant));
+  };
+
+  /**
+   * Le mur des records ouvert à tous, ou au seul cercle (réponse 141).
+   *
+   * Même retour en arrière que le mode fantôme, et pour la même raison : un
+   * réglage de confidentialité qui s'affiche « fermé » sans avoir été
+   * enregistré fait croire qu'on s'est fermé, et on ne le vérifie jamais.
+   */
+  const handleSaveRecords = async (actif: boolean) => {
+    const avant = recordsPublics;
+    setRecordsPublics(actif);
+    await enregistrerReglage({ recordsPublics: actif }, () => setRecordsPublics(avant));
   };
 
   /**
@@ -650,6 +665,44 @@ export default function SettingsPage() {
                 <button
                   key={libelle}
                   onClick={() => handleSaveBilan(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    minHeight: 44,
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {libelle}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Le mur des records : ouvert à tous, ou au seul cercle (réponse 141) */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 className="titre-section">{t.recordsLabel}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+            {t.recordsAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {[
+              // Les libellés disent QUI voit, pas si un interrupteur est en
+              // marche : la question qu'on se pose ici est « devant qui ? ».
+              { valeur: false, libelle: t.recordsAmis },
+              { valeur: true, libelle: t.recordsTous },
+            ].map(({ valeur, libelle }) => {
+              const actif = valeur === recordsPublics;
+              return (
+                <button
+                  key={libelle}
+                  onClick={() => handleSaveRecords(valeur)}
                   aria-pressed={actif}
                   style={{
                     padding: "7px 14px",

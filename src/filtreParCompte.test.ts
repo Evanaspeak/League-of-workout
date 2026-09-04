@@ -66,6 +66,13 @@ const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId", "parrainId"];
 const APPELS_HORS_COMPTE: Record<string, string> = {
   "amis : user.findMany":
     "Résoudre un pseudo en compte, c'est regarder chez quelqu'un d'autre : c'est tout l'objet d'« ajouter un ami ». Le `select` ne rend que l'identifiant et le pseudo, et deux homonymes font refuser au lieu de choisir.",
+  "classement : user.findMany":
+    "Le mur des records OUVERT (ligne 141) : par définition il regarde des " +
+    "comptes qui ne sont pas les vôtres. Deux conditions le bornent, et elles " +
+    "sont en base : `recordsPublics` — le choix de la personne, faux par " +
+    "défaut — et `fantome`, qui reste au-dessus. Le `select` ne rend que ce " +
+    "qui compose un pseudo. Déclarée ici bien que le garde ne l'exige pas : sa " +
+    "fenêtre attrape le filtre de l'appel voisin.",
   "progression : paiement.groupBy":
     "L'objectif collectif (ligne 133) : la seule lecture du produit qui somme " +
     "l'effort de TOUT LE MONDE. Ce qui en sort est un total et un décompte de " +

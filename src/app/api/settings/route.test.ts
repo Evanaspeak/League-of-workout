@@ -200,6 +200,24 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update).not.toHaveBeenCalled();
   });
 
+  it("enregistre le mur des records ouvert à tous", async () => {
+    const r = await put({ userPrefs: { recordsPublics: true } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.recordsPublics).toBe(true);
+  });
+
+  /**
+   * Même refus que pour le mode fantôme, et pour la même raison. Une
+   * conversion `Boolean("non")` rend VRAI : quelqu'un qui demande de se
+   * refermer serait ouvert, et il ne le vérifiera jamais.
+   */
+  it.each([["oui"], ["non"], [1], [{}], [null]])(
+    "refuse %p pour le mur des records", async (valeur) => {
+      const r = await put({ userPrefs: { recordsPublics: valeur } });
+      expect(r.status).toBe(400);
+      expect(p.user.update).not.toHaveBeenCalled();
+    });
+
   it("enregistre le nom montré aux autres", async () => {
     const r = await put({ userPrefs: { nomAffiche: "riot" } });
     expect(r.status).toBe(200);

@@ -304,3 +304,51 @@ describe("le mur des records", () => {
     expect(c.records.toujours).toMatchObject({ pseudo: "Moi", points: 40 });
   });
 });
+
+describe("le mur ouvert à tous", () => {
+  it("ne part pas du tout quand personne n'a ouvert le sien", async () => {
+    /**
+     * Le défaut est fermé, donc le cas courant est qu'il n'y ait personne.
+     * Une seconde lecture de paiements pour zéro compte serait un
+     * aller-retour vers Neon à chaque ouverture de l'écran.
+     */
+    db.user.findMany.mockImplementation(async (a: { where?: { recordsPublics?: boolean } }) =>
+      (a.where?.recordsPublics ? [] : [personne("moi", "Moi")]));
+    const c = await corps(await GET(requete("/api/classement?jour=2026-09-04"))) as {
+      recordsOuverts: unknown;
+    };
+    expect(c.recordsOuverts).toBeNull();
+    // Une seule lecture de jours : celle du cercle.
+    const parJour = db.paiement.groupBy.mock.calls
+      .map((k: [{ by: string[] }]) => k[0]).filter((a: { by: string[] }) => a.by.includes("jour"));
+    expect(parJour).toHaveLength(1);
+  });
+
+  it("ne retient que les comptes OUVERTS et non fantômes", async () => {
+    /**
+     * Les deux conditions sont en base, et c'est ce que ce contrôle regarde :
+     * filtrer à l'affichage ferait sortir le pseudo et le volume de quelqu'un
+     * qui a demandé l'inverse, et ils seraient dans l'onglet réseau de qui
+     * regarde.
+     */
+    db.user.findMany.mockImplementation(async (a: { where?: { recordsPublics?: boolean } }) =>
+      (a.where?.recordsPublics ? [{ id: "o", pseudo: "Ouvert", riotId: null, nomAffiche: "pseudo" }] : [personne("moi", "Moi")]));
+    db.paiement.groupBy.mockImplementation(async (a: { by: string[]; where: { userId: { in: string[] } } }) => {
+      if (!a.by.includes("jour")) return sommes;
+      return a.where.userId.in.includes("o")
+        ? [{ userId: "o", jour: "2026-09-01", _sum: { points: 777 } }]
+        : joursRecords;
+    });
+    const c = await corps(await GET(requete("/api/classement?jour=2026-09-04"))) as {
+      recordsOuverts: { toujours: { pseudo: string; points: number } | null };
+    };
+    expect(c.recordsOuverts.toujours).toMatchObject({ pseudo: "Ouvert", points: 777 });
+
+    const appel = db.user.findMany.mock.calls
+      .map((k: [{ where?: { recordsPublics?: boolean; fantome?: boolean } }]) => k[0])
+      .find((a: { where?: { recordsPublics?: boolean } }) => a.where?.recordsPublics === true);
+    expect(appel).toBeDefined();
+    expect((appel as { where: Record<string, unknown> }).where)
+      .toMatchObject({ recordsPublics: true, fantome: false });
+  });
+});

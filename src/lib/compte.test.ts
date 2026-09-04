@@ -51,6 +51,9 @@ const PART_AU_NAVIGATEUR = new Set([
   "detteDepuis", "dettePointsDus",
   // Le mode fantôme est un réglage : l'écran des réglages le lit et l'écrit.
   "fantome",
+  // Le mur des records ouvert ou fermé : même chose, c'est un réglage, et
+  // l'écran des réglages doit pouvoir l'afficher et le changer.
+  "recordsPublics",
   // Ce qu'un ami a le droit de voir : même chose, c'est un réglage.
   "partageAmis",
   // Le nom montré aux autres : même chose. Il sort du compte parce que
@@ -149,5 +152,26 @@ describe("comptePublic", () => {
     comptePublic(compte);
     expect(compte.passwordHash).toBe("x");
     expect(compte.jetonObs).toBe("y");
+  });
+});
+
+describe("les défauts des réglages de confidentialité", () => {
+  /**
+   * Le défaut se lit dans le SCHÉMA, parce que c'est lui qui décide pour les
+   * comptes qui n'ouvriront jamais leurs réglages — c'est-à-dire la plupart.
+   * Un défaut basculé à « ouvert » ferait publier davantage des gens qui
+   * n'ont rien demandé, et rien dans le code applicatif ne le dirait.
+   */
+  const bloc = SCHEMA.match(/^model User \{$([\s\S]*?)^\}$/m);
+  if (!bloc) throw new Error("Le modèle User est introuvable dans le schéma.");
+  const modele = bloc[1];
+
+  it.each([
+    ["fantome", "false"],
+    ["recordsPublics", "false"],
+  ])("%s vaut %s par défaut, c'est-à-dire le plus fermé", (colonne, defaut) => {
+    const ligne = modele.split("\n").find((l) => new RegExp(`^\\s*${colonne}\\s`).test(l));
+    expect(ligne).toBeDefined();
+    expect(ligne).toContain(`@default(${defaut})`);
   });
 });

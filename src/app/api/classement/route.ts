@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estJourValide, jourLocal } from "@/lib/serie";
 import { composerRecords } from "@/lib/records";
+import { nomPublie } from "@/lib/nomAffiche";
 import { moisDuJour } from "@/lib/defiMensuel";
 import {
   classer, debutFenetre, ecartAuPremier, JOURS_CLASSEMENT, longueurFenetre,
@@ -67,7 +68,7 @@ export async function GET(req: Request) {
    */
   const ids = [user.id, ...liens.map((l) => (l.demandeurId === user.id ? l.receveurId : l.demandeurId))];
 
-  const [comptes, sommes, joursPayes] = await Promise.all([
+  const [comptes, sommes, joursPayes, ouverts] = await Promise.all([
     /**
      * Les identifiants viennent de la requête filtrée juste au-dessus : ce
      * sont les amis acceptés du demandeur, et personne d'autre.
@@ -123,6 +124,21 @@ export async function GET(req: Request) {
       where: { userId: { in: ids }, jour: { lte: aujourdhui } },
       _sum: { points: true },
     }),
+    /**
+     * Le mur OUVERT (réponse 141, « au choix »), et les deux conditions qui le
+     * gouvernent.
+     *
+     * `recordsPublics` est le choix de la personne, faux par défaut : personne
+     * ne se met à publier davantage parce qu'on a ajouté une fonctionnalité.
+     * `fantome` reste AU-DESSUS : qui s'est retiré des classements ne revient
+     * pas par le mur, ouvert ou non. Les deux se lisent EN BASE — filtrer à
+     * l'affichage ferait sortir le pseudo et le volume de quelqu'un qui a
+     * demandé l'inverse, et ils seraient dans l'onglet réseau de qui regarde.
+     */
+    prisma.user.findMany({
+      where: { recordsPublics: true, fantome: false },
+      select: { id: true, pseudo: true, riotId: true, nomAffiche: true },
+    }),
   ]);
 
   const points = new Map(sommes.map((s) => [s.userId, s._sum.points ?? 0]));
@@ -136,8 +152,37 @@ export async function GET(req: Request) {
    */
   const pseudos = new Map(lignes.map((l) => [l.id, l.pseudo]));
 
+  /**
+   * Le mur ouvert lit SES jours à part.
+   *
+   * Ils ne peuvent pas se déduire de `joursPayes`, qui ne porte que le cercle.
+   * Une seconde lecture est donc nécessaire — et elle ne part que s'il y a
+   * quelqu'un pour y figurer, ce qui est le cas courant aujourd'hui : à quatre
+   * comptes tous fermés, la requête ne part pas du tout.
+   */
+  const joursOuverts = ouverts.length > 0
+    ? await prisma.paiement.groupBy({
+      by: ["userId", "jour"],
+      where: { userId: { in: ouverts.map((o) => o.id) }, jour: { lte: aujourdhui } },
+      _sum: { points: true },
+    })
+    : [];
+
   return NextResponse.json({
     lignes,
+    /**
+     * Le mur ouvert. `null` quand personne n'a ouvert le sien : une section
+     * vide dirait « il n'y a personne », alors que la vérité est « personne
+     * n'a choisi de figurer ici ». Ce n'est pas la même phrase.
+     */
+    recordsOuverts: ouverts.length > 0
+      ? composerRecords(
+        joursOuverts.map((g) => ({ userId: g.userId, jour: g.jour, points: g._sum.points ?? 0 })),
+        new Map(ouverts.map((o) => [o.id, nomPublie(o)])),
+        user.id,
+        moisDuJour(aujourdhui),
+      )
+      : null,
     records: composerRecords(
       joursPayes.map((g) => ({ userId: g.userId, jour: g.jour, points: g._sum.points ?? 0 })),
       pseudos,

@@ -72,6 +72,7 @@ export async function PUT(req: Request) {
       fuseau?: string;
       bilanActif?: boolean;
       fantome?: boolean;
+      recordsPublics?: boolean;
       /**
        * La présence du jeton EST le réglage du profil public. Le corps de la
        * requête, lui, porte un booléen : c'est la question qu'on pose à
@@ -165,6 +166,21 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
       }
       data.fantome = body.userPrefs.fantome;
+    }
+
+    /**
+     * Le mur des records ouvert à tous, ou au seul cercle (réponse 141).
+     *
+     * Même refus que pour le mode fantôme, et pour la même raison : c'est un
+     * réglage de confidentialité, et enregistrer « ouvert » pour quelqu'un qui
+     * vient de demander l'inverse est le seul résultat qu'on ne peut pas
+     * rattraper — il croit s'être fermé, et il ne le vérifiera jamais.
+     */
+    if (body.userPrefs.recordsPublics !== undefined) {
+      if (typeof body.userPrefs.recordsPublics !== "boolean") {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.recordsPublics = body.userPrefs.recordsPublics;
     }
 
     /**
