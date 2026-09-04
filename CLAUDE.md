@@ -1098,6 +1098,52 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un avertissement que GitHub compense, et la fois où on l'a lu avant d'agir
+Le journal portait cet avertissement depuis le 3 septembre, avec sa raison de
+ne PAS y toucher : « le jour où GitHub cessera de compenser, les quatre travaux
+tombent d'un coup, sauvegarde et supervision comprises », et « trois majeures
+d'écart sur `upload-artifact` ne se prennent pas à l'aveugle ». Ce qui manquait
+n'était pas le courage, c'était la LECTURE des notes de version.
+
+Elles ont été lues, et rapportées à ce dépôt plutôt que résumées :
+
+- **`checkout` v7** bloque le checkout d'une branche de PR de fork sur
+  `pull_request_target` et `workflow_run`. Ce dépôt n'a **ni l'un ni l'autre** —
+  vérifié sur les cinq workflows.
+- **`setup-node` v5** met en cache automatiquement dès que `package.json` porte
+  un champ `packageManager`, et **v6** restreint ça à npm. Aucun des deux
+  `package.json` du dépôt ne porte ce champ, et `tests.yml` demande déjà
+  `cache: npm` explicitement : le comportement ne change pas.
+- **`setup-node` v7** retire un export `NODE_AUTH_TOKEN` factice. Aucun workflow
+  ne s'en sert, ni de `registry-url`.
+- **`upload-artifact` v7** et **`cache` v6** ne touchent à aucune entrée :
+  seulement Node 24 et un exécuteur ≥ 2.327.1, et les exécuteurs sont hébergés
+  par GitHub.
+
+`cache` s'arrête à **v6** : c'est sa dernière majeure, et prendre « la même
+version que les autres » aurait épinglé une étiquette qui n'existe pas.
+
+**Éprouvé sur la BRANCHE avant `main`**, et c'est le geste qui compte ici. Une
+erreur de version d'action ne se voit pas dans `tsc` ni dans `jest` : elle ne se
+voit qu'à l'exécution, et pour la sauvegarde elle ne se verrait que le
+lendemain matin. Les deux travaux ont donc été déclenchés à la main sur la
+branche : `tests.yml` rend **neuf travaux verts en 8 min 58**, avec les six
+« Parcours » qui ont réellement joué (40 s à 7 min 49) et une préparation entre
+38 s et 1 min 00 — donc les caches restaurent bien sous `cache@v6`. La
+sauvegarde a été relancée de la même façon, et ses **treize étapes** sont
+vertes : export, restauration dans un PostgreSQL 18 neuf, comparaison table par
+table, chiffrement, dépôt de l'archive.
+
+**Et c'est la sauvegarde qui éprouve vraiment `upload-artifact`**, ce qui ne
+saute pas aux yeux. Dans `tests.yml`, l'étape est conditionnée à l'échec : sur
+une exécution verte elle est « skipped », donc l'action n'a rien fait et son
+succès ne prouve rien. Celle de la sauvegarde, elle, part à tous les coups —
+40 150 octets téléversés et finalisés. Une action de dépôt ne se juge que sur
+un dépôt qui a lieu.
+
+**La durée avant la pastille**, une fois de plus : neuf minutes disent que les
+parcours ont tourné, une minute dirait le contraire quelle que soit la couleur.
+
 ### « Convertir en », et le compteur qui accepte de n'en faire qu'une partie
 Demandé par le propriétaire en deux temps, et c'est la SECONDE phrase qui a
 décidé de la forme. D'abord le bouton : « il faudrait un bouton convertir en

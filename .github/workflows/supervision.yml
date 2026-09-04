@@ -43,7 +43,7 @@ jobs:
       ADRESSE: ${{ vars.URL_SUPERVISION || 'https://winorworkout.com' }}
       ETAT: /tmp/etat-supervision
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Préparer le dossier d'état
         run: mkdir -p "$ETAT"
