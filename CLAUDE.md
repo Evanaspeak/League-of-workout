@@ -1098,6 +1098,86 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Convertir en », et le compteur qui accepte de n'en faire qu'une partie
+Demandé par le propriétaire en deux temps, et c'est la SECONDE phrase qui a
+décidé de la forme. D'abord le bouton : « il faudrait un bouton convertir en
+quand on clique sur le rappel de la boxe ». Puis, la question posée : « si on
+sélectionne les pompes, on met un cliqueur qu'on peut éditer manuellement aussi
+pour dire le nombre de pompes qu'on a pu faire, **si on convertit 10 min de
+boxe ça peut faire beaucoup de pompes à faire en une fois** ».
+
+**Ça écarte le « c'est fait » d'un coup, et pour une raison qui se démontre.**
+Dix minutes de boxe font quatre-vingts pompes ; personne ne les fait d'affilée.
+Un bouton unique mentirait dans les deux sens — il paierait tout à qui n'a fait
+que la moitié, et il n'offrirait rien à qui a fait la moitié. Le compteur est
+donc le pendant exact du chrono : ce qu'on a fait compte, et le reste reste dû.
+
+**Le cliqueur ET la saisie, pas l'un ou l'autre.** On tape sur le plus pendant
+la série, on corrige à la main quand on a compté dans sa tête. Et le nombre EST
+le champ : un chiffre affiché à côté d'un champ de saisie fait deux vérités à
+l'écran, ce qui est le défaut déjà payé sur la pastille et le décompte.
+
+**La conversion se fait au SERVEUR, et c'est la décision de fond.** La réponse
+de `/api/dette` porte désormais `conversions` — la dette entière exprimée dans
+chaque exercice qu'on peut proposer. La calculer au navigateur aurait rouvert le
+défaut corrigé en août à l'endroit exact où on venait de le fermer : la pastille
+convertissait les points chez le client pendant que le décompte lisait la durée
+calculée au serveur, et les deux annonçaient deux nombres pour la même dette.
+
+**Un seul chemin de paiement pour les trois formes.** `payer(charge)` remplace
+`cloturer(toutFait)`, qui devient une enveloppe. Quatre règles vivent là et ont
+chacune leur raison écrite — la file hors ligne, le rejeu d'un 500 ou d'un 401,
+la proposition de partage, le jour local — et écrire un second `cloturer` pour
+le compteur les aurait recopiées toutes les quatre.
+
+**Ce qu'on ne propose PAS, avec sa raison.** Les exercices comptés au temps sont
+écartés : convertir vers un second exercice au temps demanderait de recibler le
+chrono, ce qui est un autre écran. Le besoin va d'ailleurs dans l'autre sens —
+échapper à une dette au temps. Proposer un bouton sans avoir construit ce qu'il
+ouvre serait pire que ne pas le proposer.
+
+**Un piège du réseau, trouvé par un test qui a mordu.** `JSON.stringify(NaN)`
+rend `null`, et `Number(null)` vaut **zéro** : une quantité que le navigateur
+n'a pas su écrire arrivait donc comme un abandon immédiat, et la route répondait
+200 en ne payant rien. C'est « absent et aberrant sont deux choses différentes »
+sous une forme nouvelle — le type se vérifie AVANT la conversion, et le cas de
+test est écrit sous la forme que le réseau en fait, pas sous celle qu'on tape.
+
+**Et le garde des messages d'API a mordu**, ce qui est son travail : mes deux
+refus n'étaient pas traduits. « Exercice inconnu » existait déjà — le doublon est
+parti, et c'est `tsc` qui l'a dit, pas moi.
+
+Trois sabotages au navigateur, trois échecs : le compteur qui paie tout, le
+serveur qui cesse d'envoyer les conversions, et le plus qui n'incrémente plus.
+Le second n'a pas compilé au premier essai — les imports devenus inutiles — et
+c'est noté comme tel plutôt que compté comme un test qui mord.
+
+### Un module dont le seul lecteur est son propre test passe pour vivant
+Trouvé en m'y appuyant sans le vouloir. J'ai commis `conversionDette.ts` — un
+module complet, éprouvé, et que RIEN n'utilise encore, l'écran restant à
+écrire — et `codeMort.test.ts` est resté vert.
+
+La raison est dans sa construction : il écarte les fichiers de test de la liste
+des CANDIDATS (un test n'a pas à être importé), mais pas de la liste des
+LECTEURS. Un module importé par son seul fichier de test compte donc comme lu.
+
+**C'est l'angle mort exact de ce garde**, et il est plus gênant que la moyenne
+parce que celui-ci est de ceux qui font SUPPRIMER du code sur la foi de ce
+qu'ils lisent : il attrape le fichier que plus personne n'appelle, sauf quand
+le dernier appelant est le test écrit pour lui — c'est-à-dire précisément le
+cas d'un module qu'on a écrit puis abandonné.
+
+**Ce n'est PAS corrigé, et la raison est écrite plutôt que tue.** Le resserrer
+demande de décider ce qu'on fait des modules légitimement éprouvés seuls, et il
+y en a — un module peut naître avec ses tests une nuit et recevoir son écran la
+suivante, ce qui est exactement ce qui vient de se produire. Le refuser
+mécaniquement obligerait à commettre le composant à moitié pour satisfaire un
+garde, ce qui est pire que le défaut qu'il attrape. Ce qui manque n'est pas la
+détection mais une TOLÉRANCE datée, et ça ne se décide pas en huit minutes.
+
+En attendant : un module commis sans lecteur reste sur la branche, jamais
+fusionné sur `main`. C'est ce qui a été fait ici.
+
 ### Le jeu que je venais d'ajouter était invisible à l'application, et je l'ai trouvé en cherchant autre chose
 Troisième divergence de la même famille en une heure, et celle-ci est la
 meilleure démonstration du problème : **c'est moi qui venais de la créer.**

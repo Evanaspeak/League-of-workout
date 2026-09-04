@@ -1,6 +1,7 @@
 import {
   dureeAffichee, quantite, repartirPoints, toExerciceId, toExerciceIds,
 } from "@/lib/exercices";
+import { convertirDette, conversionsProposees } from "@/lib/conversionDette";
 
 /**
  * Ce qu'un écran connecté a besoin de savoir sur le compte, dès l'ouverture.
@@ -65,6 +66,23 @@ export function reponseDette(user: {
     quantites: Object.fromEntries(
       Object.entries(repartirPoints(points, exercices))
         .map(([id, pts]) => [id, quantite(pts ?? 0, toExerciceId(id))]),
+    ) as Record<string, number>,
+    /**
+     * La dette ENTIÈRE, exprimée dans chaque exercice qu'on peut proposer.
+     *
+     * Le « convertir en » a besoin de ce chiffre pour dire ce qu'il y aurait à
+     * faire, et il est calculé ICI pour la raison écrite juste au-dessus : le
+     * navigateur n'a pas forcément les mêmes ratios, et deux conversions de la
+     * même dette ont déjà produit deux nombres qui se contredisaient à l'écran.
+     * Le laisser au composant aurait rouvert ce défaut à l'endroit exact où on
+     * venait de le fermer.
+     *
+     * Le plancher de `convertirDette` s'applique donc aussi : une petite dette
+     * convertie en course rendrait zéro par arrondi, et le bouton dirait « tu
+     * ne dois rien » à quelqu'un qui doit encore quelque chose.
+     */
+    conversions: Object.fromEntries(
+      conversionsProposees(exercices).map((e) => [e, convertirDette(points, e).quantite]),
     ) as Record<string, number>,
     /**
      * Temps de travail que ça représente, en secondes.

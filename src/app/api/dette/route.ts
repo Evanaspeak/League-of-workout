@@ -9,7 +9,9 @@ import {
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { reponseDette } from "@/lib/contexteConnecte";
 import { estJourValide, jourLocal } from "@/lib/serie";
-import { DUREE_MAX_SEC, entierBorne } from "@/lib/bornesSaisie";
+import { partPayeeQuantite } from "@/lib/conversionDette";
+import { toExerciceId } from "@/lib/exercices";
+import { DUREE_MAX_SEC, QUANTITE_MAX, entierBorne } from "@/lib/bornesSaisie";
 
 
 export async function GET() {
@@ -23,8 +25,19 @@ export async function GET() {
 
 /**
  * Acquitte tout ou partie de la dette.
- *  - `{ tout: true }`      → remise à zéro (l'utilisateur a tout fait)
- *  - `{ secondes: 120 }`   → paiement partiel, converti en points au prorata
+ *  - `{ tout: true }`                        → remise à zéro (tout est fait)
+ *  - `{ secondes: 120 }`                     → paiement partiel au temps
+ *  - `{ quantite: 40, exercice: "pompes" }`  → paiement partiel au compteur
+ *
+ * La troisième forme vient du « convertir en » : on doit dix minutes de boxe,
+ * on n'a pas la place de boxer, on fait des pompes à la place. Et comme dix
+ * minutes de boxe font beaucoup de pompes, on n'en fait pas forcément le
+ * compte d'un coup — d'où un paiement partiel, comme pour le chrono.
+ *
+ * **La conversion se fait ICI, jamais au navigateur.** Les ratios font
+ * autorité au serveur, et c'est un défaut déjà payé : la pastille convertissait
+ * les points chez le client pendant que le décompte lisait la durée calculée au
+ * serveur, et les deux annonçaient deux nombres différents pour la même dette.
  */
 export async function PATCH(req: Request) {
   // La dette s'exprime en temps d'effort : sans les ratios réglés en
@@ -38,7 +51,41 @@ export async function PATCH(req: Request) {
   const dus = Math.max(0, user.dettePointsDus);
 
   let restant = 0;
-  if (!body?.tout) {
+  if (!body?.tout && body?.quantite !== undefined) {
+    /**
+     * Paiement au COMPTEUR, dans l'unité d'un exercice choisi.
+     *
+     * L'exercice doit être nommé : sans lui, « 40 » ne veut rien dire — c'est
+     * quarante pompes, quarante secondes ou quarante kilomètres selon ce qu'on
+     * a en tête, et se tromper d'unité efface une dette qu'on n'a pas payée.
+     * `toExerciceId` referme la liste ; une valeur inconnue est refusée plutôt
+     * que ramenée à un défaut, parce que le défaut paierait au mauvais tarif.
+     */
+    const exercice = typeof body?.exercice === "string" ? body.exercice : "";
+    if (!exercice || toExerciceId(exercice) !== exercice) {
+      return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
+    }
+    /**
+     * La quantité peut être décimale — la course se compte par pas de cent
+     * mètres — donc `entierBorne` ne convient pas. Ce qui est refusé reste le
+     * même : ce qui n'est pas un nombre fini, ce qui est négatif, et ce qui
+     * dépasse une borne au-delà de laquelle personne n'a rien fait.
+     */
+    /**
+     * Le type se vérifie AVANT la conversion, et c'est le piège du projet :
+     * `Number(null)` vaut zéro, `Number([])` aussi. Or `JSON.stringify(NaN)`
+     * rend `null` — donc une quantité que le navigateur n'a pas su écrire
+     * arrivait ici comme un abandon immédiat, et la route répondait 200 en
+     * ne payant rien. Absent et aberrant sont deux choses différentes ; seul
+     * un nombre écrit comme un nombre entre.
+     */
+    const faite = typeof body.quantite === "number" ? body.quantite : Number.NaN;
+    if (!Number.isFinite(faite) || faite < 0 || faite > QUANTITE_MAX) {
+      return NextResponse.json({ error: "Quantité invalide" }, { status: 400 });
+    }
+    const part = partPayeeQuantite(faite, dus, toExerciceId(exercice), await chargerRatios());
+    restant = Math.max(0, dus - Math.round(dus * part));
+  } else if (!body?.tout) {
     /**
      * Une durée impossible ne vaut pas « tout est fait ».
      *
