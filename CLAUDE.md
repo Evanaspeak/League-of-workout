@@ -1098,6 +1098,72 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux mots justes pour leur auteur, faux pour leur lecteur
+Trouvés en lisant les écrans sur un compte semé à soixante parties et zéro
+point payé — c'est-à-dire le compte de quelqu'un qui joue et ne paie pas, qui
+est le cas courant. Aucun des deux n'était visible en lisant le code, et aucun
+test ne pouvait les voir : tous les chiffres sont justes.
+
+**« Jours actifs 0 » sur un bilan qui annonce « Parties 60 ».** Le champ compte
+les jours où quelque chose a été PAYÉ — son commentaire le dit — et le libellé
+disait « actifs ». Quelqu'un qui a joué soixante fois en trois jours lit qu'il
+n'a rien fait, sur l'écran qui existe pour montrer ce qu'il a fait, et sur
+lequel il partage une image. « Jours payés » dans les six langues : c'est le
+mot du reste du produit, « l'effort réellement PAYÉ » au classement et « 3 jours
+payés d'affilée » aux paliers, donc il ne demande rien à apprendre.
+
+**Et il vit à TROIS endroits, dont un que j'allais laisser.** Le courriel
+hebdomadaire lit le même champ et portait le même libellé. Je ne l'ai pas
+trouvé en réfléchissant : je l'ai trouvé en cherchant l'ancienne chaîne dans
+tout le dépôt avant de publier, par acquit de conscience. C'est exactement le
+motif que ce projet paie en boucle, et il ne prend jamais la forme d'une copie
+qu'on remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
+L'image de saison, elle, a été vérifiée et ne porte pas ce libellé.
+
+**Et les mêmes trois mots pour deux quantités, à quatre lignes d'écart.** Le
+panneau des paliers rendait :
+
+```
+Niveau de souffrance 1
+0 points
+100 points d'effort avant le suivant     ← l'effort PAYÉ
+Prochain palier · 500 points d'effort    ← l'effort GÉNÉRÉ
+480 / 500
+```
+
+Les deux sont vrais et parlent de deux choses différentes. Rien ne les
+distingue, et le lecteur en conclut que le palier suivant est à vingt points
+quand il en reste cent. C'est le défaut d'« activité » et celui des deux
+« niveau », sous une troisième forme — et sur le même panneau que le second.
+La phrase du niveau de souffrance porte maintenant « payés ».
+
+**Ce qui n'a PAS été corrigé, et pourquoi ça part dans les questions.** La
+question de fond est de savoir sur quoi porte le palier de VOLUME, et deux
+décisions écrites se contredisent dans le dépôt :
+
+- `badges.ts` s'ouvre sur « quelqu'un qui **paie** sa cinq-centième pompe ne
+  voit rien se passer », ce qui reprend mot pour mot la réponse 145 —
+  « quand quelqu'un paie 500 pompes cumulées, il ne se passe rien » ;
+- `progression.ts` écrit, quelques lignes plus bas, « les paliers récompensent
+  le volume **joué**, le niveau récompense ce qui a été fait ».
+
+Le code suit la seconde. Le panneau annonce donc « Ce que tu as déjà fait ·
+100 points d'effort » à quelqu'un qui n'a fait aucune pompe. Changer la source
+ferait redescendre les paliers de tous ceux qui les ont obtenus en jouant : ce
+n'est pas une correction, c'est un arbitrage, et il ne se prend pas contre une
+décision écrite dans le code sans le dire.
+
+**Ce que la correction de libellé apporte en attendant** : elle rend la
+contradiction LISIBLE à l'écran au lieu de la cacher. C'est le bon état pour
+rendre l'arbitrage.
+
+**La méthode, encore.** C'est la troisième fois cette semaine qu'un défaut est
+trouvé en OUVRANT l'écran plutôt qu'en lisant le code ou en lançant un test.
+Ce qui le rend possible ici est le compte : à zéro partie, les deux libellés
+affichent zéro partout et ne se contredisent jamais ; il faut soixante parties
+et zéro paiement pour que l'écart se voie. Un compte de mesure vide mesure une
+application vide.
+
 ### La tolérance datée, et le faux positif que le garde aurait fabriqué
 Le journal avait laissé cet angle mort ouvert hier, avec sa raison écrite : un
 module dont le seul lecteur est son propre test passe pour vivant, parce que

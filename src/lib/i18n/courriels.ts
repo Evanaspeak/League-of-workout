@@ -18,6 +18,15 @@ export type TextesBilan = {
   parties: string;
   effort: string;
   paye: string;
+  /**
+   * Les jours PAYÉS, pas les jours où l'on a joué.
+   *
+   * Le champ qui l'alimente est `joursActifs` du bilan de saison, qui compte
+   * les jours où quelque chose a été payé. Le libellé disait « actifs » : dans
+   * un courriel qui annonce « Parties : 60 » deux lignes plus haut, ça se lit
+   * comme une perte de données. Corrigé sur l'écran du bilan le même jour, et
+   * ICI aussi — c'est exactement la moitié que ce projet oublie à chaque fois.
+   */
   jours: string;
   /** La phrase de clôture, qui change selon qu'on a soldé ou non. */
   cloture: (reste: boolean) => string;
@@ -31,7 +40,7 @@ const TEXTES: Record<string, TextesBilan> = {
   fr: {
     sujet: "Ta semaine",
     titre: (p) => `Ta semaine, ${p}`,
-    parties: "Parties", effort: "Effort généré", paye: "Effort payé", jours: "Jours actifs",
+    parties: "Parties", effort: "Effort généré", paye: "Effort payé", jours: "Jours payés",
     cloture: (reste) => reste
       ? "Il reste quelque chose à solder. Ça ne s'efface pas tout seul."
       : "Rien en attente. C'est rare, et ça se note.",
@@ -41,7 +50,7 @@ const TEXTES: Record<string, TextesBilan> = {
   en: {
     sujet: "Your week",
     titre: (p) => `Your week, ${p}`,
-    parties: "Games", effort: "Effort owed", paye: "Effort paid", jours: "Active days",
+    parties: "Games", effort: "Effort owed", paye: "Effort paid", jours: "Paid days",
     cloture: (reste) => reste
       ? "Something is still outstanding. It does not clear itself."
       : "Nothing waiting. That is rare, and worth noting.",
@@ -51,7 +60,7 @@ const TEXTES: Record<string, TextesBilan> = {
   es: {
     sujet: "Tu semana",
     titre: (p) => `Tu semana, ${p}`,
-    parties: "Partidas", effort: "Esfuerzo generado", paye: "Esfuerzo pagado", jours: "Días activos",
+    parties: "Partidas", effort: "Esfuerzo generado", paye: "Esfuerzo pagado", jours: "Días pagados",
     cloture: (reste) => reste
       ? "Queda algo por saldar. No se borra solo."
       : "Nada pendiente. Es raro, y merece anotarse.",
@@ -61,7 +70,7 @@ const TEXTES: Record<string, TextesBilan> = {
   de: {
     sujet: "Deine Woche",
     titre: (p) => `Deine Woche, ${p}`,
-    parties: "Runden", effort: "Angefallener Aufwand", paye: "Bezahlter Aufwand", jours: "Aktive Tage",
+    parties: "Runden", effort: "Angefallener Aufwand", paye: "Bezahlter Aufwand", jours: "Bezahlte Tage",
     cloture: (reste) => reste
       ? "Es steht noch etwas offen. Von allein verschwindet das nicht."
       : "Nichts offen. Das ist selten und darf notiert werden.",
@@ -71,7 +80,7 @@ const TEXTES: Record<string, TextesBilan> = {
   zh: {
     sujet: "你的一周",
     titre: (p) => `${p}，这是你的一周`,
-    parties: "场次", effort: "产生的量", paye: "已还的量", jours: "活跃天数",
+    parties: "场次", effort: "产生的量", paye: "已还的量", jours: "已还的天数",
     cloture: (reste) => reste
       ? "还有没还的。它不会自己消失。"
       : "没有欠着的。这不常见，值得记一笔。",
@@ -81,7 +90,7 @@ const TEXTES: Record<string, TextesBilan> = {
   ja: {
     sujet: "今週のまとめ",
     titre: (p) => `${p} さんの一週間`,
-    parties: "試合数", effort: "発生した量", paye: "返した量", jours: "動いた日数",
+    parties: "試合数", effort: "発生した量", paye: "返した量", jours: "返した日数",
     cloture: (reste) => reste
       ? "まだ残っています。ひとりでに消えることはありません。"
       : "残りはありません。めずらしいことなので、書いておきます。",

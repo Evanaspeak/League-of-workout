@@ -13,7 +13,20 @@ export const bilanSaison = {
     paye: "Effort payé",
     du: "Effort produit",
     serie: "Jours d'affilée",
-    joursActifs: "Jours actifs",
+    /**
+     * « Payés », et pas « actifs ».
+     *
+     * Le champ compte les jours où quelque chose a été PAYÉ. Sur un bilan qui
+     * annonce « PARTIES 60 » quatre cases plus haut, « Jours actifs 0 » se lit
+     * comme une perte de données : on a joué soixante fois en trois jours, et
+     * l'écran dit qu'on n'a rien fait. Le compteur était juste ; c'est le mot
+     * qui l'était pour son auteur et pas pour son lecteur.
+     *
+     * Même famille qu'« activité » et que les deux « niveau », et le mot de
+     * remplacement est celui du reste du produit : « l'effort réellement PAYÉ »
+     * au classement, « 3 jours payés d'affilée » aux paliers.
+     */
+    joursActifs: "Jours payés",
     pireJour: "Journée la plus chère",
     jeuPrincipal: "Jeu le plus joué",
     championPrincipal: "Champion le plus joué",
@@ -36,7 +49,7 @@ export const bilanSaison = {
     paye: "Effort paid",
     du: "Effort earned",
     serie: "Days in a row",
-    joursActifs: "Active days",
+    joursActifs: "Paid days",
     pireJour: "Most expensive day",
     jeuPrincipal: "Most played game",
     championPrincipal: "Most played champion",
@@ -59,7 +72,7 @@ export const bilanSaison = {
     paye: "Esfuerzo pagado",
     du: "Esfuerzo generado",
     serie: "Días seguidos",
-    joursActifs: "Días activos",
+    joursActifs: "Días pagados",
     pireJour: "El día más caro",
     jeuPrincipal: "Juego más jugado",
     championPrincipal: "Campeón más jugado",
@@ -82,7 +95,7 @@ export const bilanSaison = {
     paye: "Bezahlter Aufwand",
     du: "Erzeugter Aufwand",
     serie: "Tage in Folge",
-    joursActifs: "Aktive Tage",
+    joursActifs: "Bezahlte Tage",
     pireJour: "Teuerster Tag",
     jeuPrincipal: "Meistgespieltes Spiel",
     championPrincipal: "Meistgespielter Champion",
@@ -105,7 +118,7 @@ export const bilanSaison = {
     paye: "已完成训练",
     du: "产生的训练量",
     serie: "连续天数",
-    joursActifs: "活跃天数",
+    joursActifs: "已支付天数",
     pireJour: "代价最高的一天",
     jeuPrincipal: "最常玩的游戏",
     championPrincipal: "最常用的英雄",
@@ -128,7 +141,7 @@ export const bilanSaison = {
     paye: "こなした運動",
     du: "発生した運動",
     serie: "連続日数",
-    joursActifs: "活動した日数",
+    joursActifs: "支払った日数",
     pireJour: "いちばん高くついた日",
     jeuPrincipal: "いちばん遊んだゲーム",
     championPrincipal: "いちばん使ったチャンピオン",
