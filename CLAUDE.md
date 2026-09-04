@@ -810,7 +810,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 218 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 220 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1143,6 +1143,43 @@ rend discriminant, puisqu'un panneau qui laisserait partir la requête changerai
 vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
+
+### Une troisième liste de pages publiques, sur la barre que tout le monde voit
+Trouvé en continuant à lire les écrans, celui-ci sans compte du tout. Sur
+`/telechargement`, sur les CGU et **sur les quinze pages du calculateur**, un
+visiteur sans compte voyait « Dashboard · Historique · Amis · Ta saison ·
+Réglages » — cinq liens qui le renvoient tous à un écran de connexion.
+
+`Nav.tsx` portait sa PROPRE liste de chemins publics, `["/login", "/"]`, deux
+entrées, quand `routesPubliques.ts` en compte dix. C'est le troisième
+exemplaire de la même règle, et la divergence est celle que ce projet a déjà
+payée : deux listes de chemins publics avaient laissé quatre routes partir en
+307 vers `/login` pendant des semaines, et `routesPubliques.ts` est né de là.
+
+**Le pire endroit possible.** Les pages du calculateur existent pour être
+trouvées par une recherche — c'est le seul canal d'acquisition qui travaille
+sans qu'on s'en occupe. Le défaut tombait donc exactement sur les gens qui
+arrivent, et sur eux seuls : ceux qui ont un compte ne le voyaient jamais.
+
+**La correction n'est pas de recopier la liste une troisième fois.** La barre
+ne pose plus la question au CHEMIN : ce qui décide, c'est d'avoir une session,
+et elle la connaît déjà — elle demande le compte pour savoir qui est
+administrateur. Le chemin sert encore, mais seulement à éviter un
+scintillement : derrière la porte, le middleware a déjà exigé une session, donc
+les liens partent au premier rendu ; sur une page publique on ne sait pas
+encore, et on ne promet rien avant de savoir.
+
+**Le parcours tient les DEUX moitiés**, et la seconde porte autant que la
+première : sans elle, retirer la barre partout satisferait le premier contrôle,
+et quelqu'un de connecté perdrait sa navigation sur les CGU sans que rien ne le
+dise. Deux sabotages, deux échecs, chacun sur son propre test.
+
+**Et un piège de la méthode, à noter avant qu'il produise un faux positif.**
+Lire un écran par `innerText` colle les éléments EN LIGNE sans espace : la
+cellule de dette de l'historique se lit « 20pompes » alors qu'un
+`margin-left: 5px` la sépare correctement à l'écran. Ce qu'on lit ainsi est le
+texte, pas la mise en page — pour la seconde, il faut regarder les styles
+calculés.
 
 ### Lire l'écran comme quelqu'un qui s'en sert, sur un compte à mille parties
 Trois défauts en une lecture, sur un tableau de bord qui passait tous ses
