@@ -5,12 +5,35 @@ import { useChemin } from "@/lib/i18n/useChemin";
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/SessionContext";
 import { useT } from "@/lib/i18n/LocaleContext";
+import { estCheminPublic } from "@/lib/routesPubliques";
 import { nav as navDict } from "@/lib/i18n/dictionaries/nav";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { Wordmark } from "./Wordmark";
 import { chargerCompte } from "@/lib/useIdCompte";
 
-const PUBLIC_PATHS = ["/login", "/"];
+/**
+ * Les liens de l'application se montrent à qui a un COMPTE, pas selon la page.
+ *
+ * Cette barre portait sa propre liste de pages publiques — `["/login", "/"]`,
+ * deux entrées — alors que `routesPubliques.ts` en compte dix. Sur les huit
+ * autres, dont `/telechargement`, `/cgu` et surtout les quinze pages du
+ * CALCULATEUR, un visiteur sans compte voyait « Dashboard · Historique · Amis ·
+ * Ta saison · Réglages » : cinq liens qui le renvoient tous à un écran de
+ * connexion. Les pages du calculateur existent pour être trouvées par une
+ * recherche — c'est-à-dire que le défaut tombait exactement sur les gens qui
+ * arrivent, et sur eux seuls.
+ *
+ * C'est le troisième exemplaire d'une même règle, et la divergence est celle
+ * que ce projet a déjà payée : deux listes de chemins publics avaient laissé
+ * quatre routes partir en 307 vers `/login` pendant des semaines. La bonne
+ * réponse n'est pas de recopier la liste une troisième fois, c'est de ne plus
+ * poser la question au CHEMIN : ce qui décide, c'est d'avoir une session.
+ *
+ * Le chemin sert quand même, et pour éviter un scintillement : derrière la
+ * porte, le middleware a déjà exigé une session, donc les liens partent au
+ * premier rendu. Sur une page publique on ne sait pas encore, et on ne promet
+ * rien avant de savoir.
+ */
 // Ces pages gèrent leur propre chrome (nav intégrée) : pas de double barre.
 const SELF_CHROMED = ["/", "/beta", "/recuperation"];
 
@@ -18,6 +41,7 @@ export default function Nav() {
   const path = useChemin();
   const { sessionActive, sessionGames, countdown, polling, stopSession } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [connecte, setConnecte] = useState(false);
   // Sous 720 px les liens ne tiennent plus sur une ligne et le dernier était
   // coupé à mi-mot : ils passent derrière un menu. Le chemin est mémorisé avec
   // l'état d'ouverture pour refermer le menu au changement de page — c'est le
@@ -43,7 +67,11 @@ export default function Nav() {
     // autres composants qui ont besoin de savoir qui est connecté — sans quoi
     // la même question part trois à cinq fois par page.
     let obsolete = false;
-    chargerCompte().then((u) => { if (!obsolete && u?.estAdmin) setIsAdmin(true); });
+    chargerCompte().then((u) => {
+      if (obsolete) return;
+      if (u) setConnecte(true);
+      if (u?.estAdmin) setIsAdmin(true);
+    });
     return () => { obsolete = true; };
   }, []);
 
@@ -51,7 +79,7 @@ export default function Nav() {
     return null;
   }
 
-  const isPublic = PUBLIC_PATHS.some((p) => (p === "/" ? path === "/" : path.startsWith(p)));
+  const isPublic = estCheminPublic(path) && !connecte;
 
   return (
     <nav style={{
