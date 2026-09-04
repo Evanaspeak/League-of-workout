@@ -989,6 +989,71 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un badge qui ne se déduit pas, et la seule chose de la progression qui se range en base
+Ligne 147, la dernière de l'étape 03 : « des badges. Le premier 100, la
+première semaine complète, la première défaite payée dans l'heure ». Les deux
+premiers existaient déjà — ce sont les paliers `volume100` et `serie7`. **C'est
+le troisième qui fait toute la ligne**, et il est d'une autre nature.
+
+**Un palier est un TOTAL, un exploit est un MOMENT.** Un total se recalcule à
+tout instant depuis la base, et c'est précisément pourquoi les paliers ne se
+stockent pas : un badge rangé finit par diverger de ce qu'il prétend décrire.
+Un délai, lui, ne se recalcule pas — la dette d'hier soir n'existe plus, et
+rien ne dira jamais après coup en combien de temps elle a été payée. Il se
+retient donc, et une seule fois. `User.paiementEclairLe` est la seule colonne
+de progression de tout le produit, et la raison de l'exception est écrite au
+schéma.
+
+La conséquence à assumer : **un exploit ne se PERD pas.** Supprimer une partie
+fait redescendre un palier, et c'est juste ; ça n'efface pas le fait qu'un soir
+on a payé dans l'heure. Retirer un exploit reviendrait à nier quelque chose qui
+a eu lieu.
+
+**Quatre conditions, et celle qui compte est « soldée ».** « Payée dans
+l'heure » veut dire payée, pas entamée : un paiement partiel rapide laisse la
+dette courir, donc il ne dit rien de ce que la ligne récompense. Les trois
+autres : quelque chose a été payé, la dette existait avec un début lisible, et
+le délai n'est pas NÉGATIF — une horloge reculée entre deux ouvertures donne un
+délai négatif, qui passerait toute comparaison à un plafond. C'est la
+correction déjà écrite pour le chrono de session, retombée telle quelle.
+
+**La condition est posée à la BASE, pas après lecture.** `updateMany` avec
+`paiementEclairLe: null` dans le `where` : deux paiements partis en même temps
+liraient tous deux « pas encore d'exploit », et le second écraserait la date du
+premier. C'est le même raisonnement que pour la date de début de dette, et il
+n'y a toujours pas de transaction pour le tenir à notre place.
+
+**L'exploit se pose en DERNIER, et son échec ne coûte que lui-même.** L'ordre
+de cette route est désormais : la trace, le décompte, le badge. Ce qui se
+rattrape à la main passe après ce qui ne se rattrape pas — un badge manqué se
+regagne au prochain soir, un paiement refusé après décompte, non. Et c'est un
+`try` et non un `.catch()` : celui-ci ne rattrape qu'une promesse rejetée, pas
+un jet synchrone, ce qui est exactement ce qu'aurait produit une méthode
+absente de la doublure.
+
+**La date ne SORT PAS du compte, mais elle figure à l'export.** L'écran ne
+reçoit qu'un booléen, composé au serveur ; la date elle-même n'a aucun lecteur,
+et une donnée qui voyage à chaque chargement de page sans que personne ne la
+lise est du gaspillage avant d'être un risque. L'article 20, lui, couvre TOUT
+ce qu'on garde et pas seulement ce qu'on affiche — une donnée qu'on ne montre
+pas est précisément celle qu'on oublie d'exporter.
+
+**Trois gardes ont mordu sur la colonne**, ce qui est leur travail :
+`compte.test.ts` a exigé qu'on la range d'un côté ou de l'autre de ce qui sort,
+puis — une fois rangée du côté « ne sort pas » — que `comptePublic` la retire
+POUR DE BON, ce qui n'était pas fait ; et `politiqueComplete.test.ts` a exigé
+une ligne de politique dans les six langues.
+
+Et le piège déjà écrit ici, retombé dedans : `jest.mock` remplace le MODULE
+ENTIER, donc `user.updateMany` n'existait pas dans la doublure. Il n'a rien
+cassé tout de suite — le chemin n'était pas emprunté par les tests existants —
+et c'est ce qui rend ce piège coûteux : il attend le premier test qui passe
+vraiment par là.
+
+Cinq sabotages, cinq échecs : le paiement partiel accepté, la condition retirée
+du `where`, l'exploit rendu regagnable, le délai négatif accepté, et le `try`
+retiré.
+
 ### Le niveau de compte et le titre, et deux chiffres qui portaient le même nom
 Lignes 148 et 149, toutes deux répondues « oui ». Elles vont ensemble parce
 qu'elles se déduisent des mêmes données : le niveau dit COMBIEN, le titre dit
@@ -1082,11 +1147,26 @@ une adresse sans préfixe NÉGOCIE et rend l'anglais. Le premier jet cherchait
 « Niveau » dans une page allemande de fait anglaise. L'adresse porte la langue
 en clair maintenant.
 
-**Un échec non reproduit, et il est écrit tel quel.** Le premier test de
-`profil-public.spec.ts` est tombé une fois dans une exécution à trois fichiers,
-et l'exécution suivante des mêmes trois fichiers rend 23 sur 23. Je ne sais pas
-le nommer, et « ça repasse » n'est pas un diagnostic — c'est noté pour qu'une
-récidive se reconnaisse au lieu de se redécouvrir.
+**Un échec intermittent, et voilà exactement ce qu'on en sait.** Le PREMIER
+test d'un fichier — celui qui ouvre le compte — est tombé deux fois dans des
+exécutions à plusieurs fichiers, une fois sur `profil-public.spec.ts` et une
+fois sur `hors-ligne.spec.ts`, en rendant 23 sur 23 puis 18 sur 18 à
+l'exécution suivante des mêmes fichiers.
+
+Ce qui est établi : ça ne touche que l'OUVERTURE DE COMPTE, et jamais en
+exécution à un seul worker sur les essais faits. Ce qui ne l'est pas : la
+cause. J'ai d'abord écrit « reproductible à deux workers » sur la foi d'un
+échec suivi d'un succès à un worker — c'était une conclusion tirée d'une seule
+exécution de chaque côté, et la suivante à deux workers est passée. Deux points
+ne font pas une courbe.
+
+**Ce que ça ne menace pas : la CI.** Elle joue un seul worker par exécuteur
+depuis V358, précisément parce que le processeur ne suit pas — bcrypt coût 12
+sur chaque connexion. Le cas ne s'y présente donc pas. C'est un défaut
+d'outillage local, il est noté pour qu'une récidive se reconnaisse au lieu de
+se redécouvrir, et il ne sera pas « corrigé » par un délai allongé : allonger
+une attente sans savoir ce qu'on attend est la façon la plus sûre de rendre un
+test muet.
 
 ### Campagne de clôture du 4 septembre, et l'historique d'un compte NEUF
 Passée après les six versions de la nuit, sur un compte de mesure fraîchement

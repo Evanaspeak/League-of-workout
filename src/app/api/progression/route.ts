@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estJourValide, jourLocal } from "@/lib/serie";
 import { reponseBadges, reponseSerie } from "@/lib/progression";
+import { composerExploits } from "@/lib/exploits";
 
 /**
  * Les paliers et la série, en un seul aller-retour.
@@ -63,5 +64,12 @@ export async function GET(req: Request) {
   return NextResponse.json({
     badges: reponseBadges(source),
     serie: reponseSerie(source, aujourdhui, user),
+    /**
+     * Les exploits se lisent sur le COMPTE, déjà chargé par la session : ils
+     * ne coûtent aucune requête. C'est ce qui rend acceptable de les ranger en
+     * base plutôt que de les déduire — le prix se paie à l'écriture, une fois,
+     * et jamais à la lecture.
+     */
+    exploits: composerExploits(user),
   });
 }

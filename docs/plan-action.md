@@ -52,7 +52,7 @@ C'est le seul bloc qui agit à la fois sur la rétention et sur l'acquisition : 
 
 Dans l'ordre : les amis, puis le classement sur le volume payé avec la dette en retard visible, puis le lien de parrainage. Les équipes et le mode fantôme viennent après.
 
-### [ ] 03 — Badges, titres, niveau de compte
+### [x] 03 — Badges, titres, niveau de compte
 *3 nuits*
 
 Les paliers existent déjà et ne récompensent rien. Ces trois-là se branchent sur des données qu'on a déjà, coûtent peu, et donnent une raison de continuer une fois la nouveauté passée. C'est le meilleur rapport entre l'effort et l'effet du document.
@@ -145,12 +145,12 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
 
 ### Progression et récompenses
-*6 à faire · 3 faits.* Les paliers existent, et depuis V364 le niveau de compte et le titre.
+*5 à faire · 4 faits.* Les paliers, le niveau de compte, le titre et l'exploit de la dette payée dans l'heure.
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 146 | Les paliers cumulés, annoncés au franchissement | — |
-| [ ] | 147 | Des badges | 1 nuit |
+| [x] | 147 | Des badges | 1 nuit |
 | [x] | 148 | Un niveau de compte, séparé du niveau de force | 1 nuit |
 | [x] | 149 | Un titre affiché à côté du pseudo, gagné par l'usage | 1 nuit |
 | [ ] | 150 | Des cosmétiques : couleurs, cadres, thèmes | 2 nuits |

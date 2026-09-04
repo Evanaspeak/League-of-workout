@@ -25,6 +25,16 @@ type Reponse = {
 };
 
 /**
+ * Les exploits arrivent à côté des paliers, pas dedans.
+ *
+ * Un palier porte un seuil et un avancement ; un exploit n'a ni l'un ni
+ * l'autre — il a eu lieu ou non. Les forcer dans la même forme aurait demandé
+ * d'inventer un seuil de un, et le composant aurait dessiné une barre de
+ * progression vers un événement.
+ */
+type Exploits = { dansLHeure: boolean };
+
+/**
  * Les paliers, sur le tableau de bord.
  *
  * Le libellé se compose à partir de la clé : « volume500 » devient « 500 points
@@ -36,6 +46,7 @@ export function Paliers() {
   const t = useT(dict);
   const tt = useT(dictTitres);
   const [etat, setEtat] = useState<Reponse | null>(null);
+  const [exploits, setExploits] = useState<Exploits | null>(null);
 
   /**
    * Les paliers viennent de l'appel commun, partagé avec la série.
@@ -45,7 +56,10 @@ export function Paliers() {
    * deux réponses qui se déduisent des mêmes lignes.
    */
   useEffect(() => {
-    const poser = (p: Progression | null) => { if (p?.badges) setEtat(p.badges as Reponse); };
+    const poser = (p: Progression | null) => {
+      if (p?.badges) setEtat(p.badges as Reponse);
+      if (p?.exploits) setExploits(p.exploits as Exploits);
+    };
     void chargerProgression(jourLocal()).then(poser);
     const relire = () => { void rafraichirProgression(jourLocal()).then(poser); };
     window.addEventListener("wow-dette-changee", relire);
@@ -121,6 +135,17 @@ export function Paliers() {
 
       {obtenus.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {exploits?.dansLHeure && (
+            <span
+              title={tt.eclairAide}
+              style={{
+                fontSize: "0.72rem", padding: "3px 8px", borderRadius: 999,
+                border: "1px solid var(--blue, #0bc4e3)", color: "var(--blue, #0bc4e3)",
+              }}
+            >
+              {tt.eclair}
+            </span>
+          )}
           {obtenus.map((b) => (
             <span
               key={b.cle}

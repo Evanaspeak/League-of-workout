@@ -13,6 +13,8 @@
  */
 export const titres = {
   fr: {
+    eclair: "Éclair",
+    eclairAide: "Dette soldée dans l'heure",
     niveau: "Niveau",
     versLeNiveau: "vers le niveau",
     points: "points",
@@ -25,6 +27,8 @@ export const titres = {
     machine: "Machine",
   },
   en: {
+    eclair: "Lightning",
+    eclairAide: "Debt cleared within the hour",
     niveau: "Level",
     versLeNiveau: "to level",
     points: "points",
@@ -37,6 +41,8 @@ export const titres = {
     machine: "Machine",
   },
   es: {
+    eclair: "Relámpago",
+    eclairAide: "Deuda saldada en una hora",
     niveau: "Nivel",
     versLeNiveau: "para el nivel",
     points: "puntos",
@@ -49,6 +55,8 @@ export const titres = {
     machine: "Máquina",
   },
   de: {
+    eclair: "Blitz",
+    eclairAide: "Schuld binnen einer Stunde beglichen",
     niveau: "Stufe",
     versLeNiveau: "bis Stufe",
     points: "Punkte",
@@ -61,6 +69,8 @@ export const titres = {
     machine: "Maschine",
   },
   zh: {
+    eclair: "闪电",
+    eclairAide: "一小时内还清",
     niveau: "等级",
     versLeNiveau: "升至等级",
     points: "点",
@@ -73,6 +83,8 @@ export const titres = {
     machine: "机器",
   },
   ja: {
+    eclair: "電光",
+    eclairAide: "一時間以内に完済",
     niveau: "レベル",
     versLeNiveau: "次のレベルまで",
     points: "ポイント",

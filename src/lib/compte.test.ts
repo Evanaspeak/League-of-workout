@@ -69,6 +69,13 @@ const PART_AU_NAVIGATEUR = new Set([
 
 /** Ce qui ne sort jamais, et pourquoi. */
 const NE_SORT_PAS: Record<string, string> = {
+  paiementEclairLe:
+    "La première dette soldée dans l'heure. Elle sort bien, mais transformée : " +
+    "`/api/progression` en rend un BOOLÉEN, qui est tout ce que l'écran " +
+    "montre. La date elle-même n'a aucun lecteur, et une donnée qui voyage à " +
+    "chaque chargement de page sans que personne ne la lise est du gaspillage " +
+    "avant d'être un risque. Elle figure en revanche dans l'export de " +
+    "l'article 20, qui couvre tout ce qu'on garde.",
   jetonProfil:
     "Lien du profil public : une adresse qui montre le pseudo et l'effort SANS " +
     "session, donc un laissez-passer, pas un réglage. Même raison que le jeton " +

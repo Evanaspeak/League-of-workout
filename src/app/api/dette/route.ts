@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { retirerDeLaDette } from "@/lib/dette";
+import { meriteEclair } from "@/lib/exploits";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeEffort, exercicesEnTemps, secondesParPoint, toExerciceIds,
@@ -154,6 +155,30 @@ export async function PATCH(req: Request) {
   // Le retrait reste atomique en lui-même : `decrement` côté base, pour qu'une
   // partie enregistrée pendant le paiement ne se fasse pas écraser.
   await retirerDeLaDette(prisma, user.id, paye);
+
+  /**
+   * L'exploit se pose APRÈS le décompte, et son échec ne coûte que lui-même.
+   *
+   * L'ordre suit celui déjà choisi ici pour la trace et le décompte : ce qui
+   * peut se refaire à la main passe en dernier. Un badge manqué se rattrape au
+   * prochain soir ; une dette décomptée sans trace ne se rattrape pas.
+   *
+   * `updateMany` avec la condition dans le `where` plutôt qu'un `update` après
+   * lecture : deux paiements partis en même temps liraient tous deux « pas
+   * encore d'exploit », et le second écraserait la date du premier. La
+   * condition est donc posée à la BASE, comme pour la date de début de dette.
+   */
+  if (meriteEclair({ depuis: user.detteDepuis, paye, restant, deja: user.paiementEclairLe })) {
+    // `try` et non `.catch()` : celui-ci ne rattrape qu'une promesse rejetée,
+    // pas un jet synchrone — et un badge manqué ne doit sous aucun prétexte
+    // faire échouer un paiement qui, lui, a bien eu lieu.
+    try {
+      await prisma.user.updateMany({
+        where: { id: user.id, paiementEclairLe: null },
+        data: { paiementEclairLe: new Date() },
+      });
+    } catch { /* Un exploit manqué se rattrape au prochain soir. */ }
+  }
   const maj = await prisma.user.findUniqueOrThrow({
     where: { id: user.id },
     select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
