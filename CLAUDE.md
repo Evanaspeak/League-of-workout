@@ -989,6 +989,51 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'objectif collectif, et un garde plus faible que ce que le journal en disait
+Ligne 133, réponse « Oui » : « Ensemble, 100 000 pompes ce mois-ci ». C'est la
+seule chose du produit qui additionne l'effort de TOUT LE MONDE, et c'est ce
+qui la rend intéressante — un compte neuf y voit qu'il n'est pas seul avant
+même d'avoir un ami.
+
+**La cible est celle de la réponse, et il faut dire ce qu'elle vaut
+aujourd'hui.** À quatre comptes, la barre affiche quelques pour cent, et une
+barre à trois pour cent décourage. Ce qui la sauve n'est pas de rabaisser
+l'objectif — un objectif qui recule quand quelqu'un arrive n'en est pas un —
+c'est de dire COMBIEN de gens l'ont rempli. « 8 420 sur 100 000, à 4 » est une
+phrase vraie à toutes les tailles ; « 8 420 sur 100 000 » tout court ne l'est
+qu'à partir d'une foule. Le nombre de contributeurs n'est donc pas une
+décoration, c'est ce qui rend l'objectif honnête avant qu'il ne soit
+atteignable.
+
+**Et il se compte sur les GROUPES, pas sur les lignes** : un compte qui paie
+trois fois dans le mois est un contributeur, pas trois.
+
+**La trouvaille est ailleurs : le garde du filtrage par compte est plus faible
+que ce que ce journal affirme.** L'entrée du classement disait le
+resserrement — « ce qui précède le nom suffit à trancher : un point en fait une
+lecture de résultat, un guillemet une chaîne » — et le code, lui, cherchait
+toujours `userId` n'importe où dans les quatre cents caractères autour de
+l'appel. `groupBy({ by: ["userId"] })` et `s.userId` passaient donc pour des
+filtres. **Ma somme collective, qui lit toute la base sans filtre, est entrée
+par là sans que rien ne le dise.**
+
+C'est le pire genre d'écart : le journal décrit une correction, on la croit
+faite, et on cesse de vérifier. La règle est écrite maintenant dans
+`porteUnFiltre`, sortie de la boucle pour être ÉPROUVÉE — sur les routes
+réelles, remettre la recherche naïve ne fait tomber aucun contrôle, faute d'un
+cas qui les distingue. Un resserrement qu'aucun test ne peut voir n'est pas un
+resserrement ; trois cas fabriqués lui donnent ses dents.
+
+**Et la dispense est déclarée bien que le garde ne l'exige pas.** Sa fenêtre de
+quatre cents caractères attrape le `where` de l'appel VOISIN — c'est une
+coarseness assumée depuis l'écriture du garde — donc il laisse passer ma somme
+même resserré. Une lecture sans filtre se déclare là où on la cherchera, pas là
+où le motif veut bien la voir. La raison y est écrite : un total et un décompte
+sur tout le monde ne désignent personne.
+
+Cinq sabotages, cinq échecs après correction — dont celui du garde, qui a
+d'abord passé au vert et qui a fait écrire les trois cas.
+
 ### Campagne du 4 septembre : l'écran des amis sautait de 0,145
 Passée après les six versions de la nuit, sur un compte de mesure neuf. Douze
 écrans mesurés ; un seul défaut, et il est sur l'écran que je venais

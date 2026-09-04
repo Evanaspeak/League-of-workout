@@ -66,6 +66,14 @@ const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId", "parrainId"];
 const APPELS_HORS_COMPTE: Record<string, string> = {
   "amis : user.findMany":
     "Résoudre un pseudo en compte, c'est regarder chez quelqu'un d'autre : c'est tout l'objet d'« ajouter un ami ». Le `select` ne rend que l'identifiant et le pseudo, et deux homonymes font refuser au lieu de choisir.",
+  "progression : paiement.groupBy":
+    "L'objectif collectif (ligne 133) : la seule lecture du produit qui somme " +
+    "l'effort de TOUT LE MONDE. Ce qui en sort est un total et un décompte de " +
+    "contributeurs — aucun pseudo, aucune ligne, rien qui désigne quelqu'un. " +
+    "Elle est déclarée ici bien que le garde ne l'exige pas : sa fenêtre de " +
+    "quatre cents caractères attrape le filtre de l'appel VOISIN, donc il la " +
+    "laisserait passer en silence. Une lecture sans filtre se déclare là où " +
+    "on la cherchera, pas là où le motif veut bien la voir.",
   "groupes : groupe.create":
     "Un groupe qu'on vient de créer n'appartient encore à personne. L'appartenance s'écrit à la ligne suivante, et c'est elle qui porte le compte.",
 };
@@ -75,6 +83,32 @@ const OPERATIONS = [
   "updateMany", "delete", "deleteMany", "count", "aggregate", "groupBy",
   "upsert", "create", "createMany",
 ].join("|");
+
+/**
+ * La colonne compte comme un FILTRE quand elle est une clé, pas quand elle est
+ * une chaîne ou une lecture de résultat.
+ *
+ * Le journal décrivait ce resserrement depuis l'arrivée du classement ; le
+ * code, lui, cherchait encore le nom n'importe où dans les quatre cents
+ * caractères. `groupBy({ by: ["userId"] })` le donne comme axe de regroupement
+ * et `s.userId` le lit dans le résultat : ni l'un ni l'autre ne filtre quoi que
+ * ce soit.
+ *
+ * Ce qui précède le nom suffit à écarter les deux : un guillemet en fait une
+ * chaîne, un point une lecture. Ce qui SUIT tranche le reste — deux points pour
+ * `userId: …`, une virgule ou une accolade pour le raccourci d'objet
+ * `{ id, userId }`, qui est un filtre parfaitement juste et qu'il ne faut pas
+ * recaler.
+ *
+ * Elle est sortie de la boucle pour être ÉPROUVÉE : sur les routes réelles,
+ * remettre la recherche naïve ne fait tomber aucun contrôle, faute d'un cas qui
+ * les distingue. Un resserrement qu'aucun test ne peut voir n'est pas un
+ * resserrement.
+ */
+export function porteUnFiltre(autour: string): boolean {
+  return COLONNES_DE_COMPTE.some((c) =>
+    new RegExp(`(?<![."'\`\\w])${c}\\s*[:,}]`).test(autour));
+}
 
 function routes(): { nom: string; texte: string }[] {
   const trouvees: { nom: string; texte: string }[] = [];
@@ -129,7 +163,25 @@ describe("filtrage par compte", () => {
         const appel = `${r.nom} : ${modele}.${m[3]}`;
         if (appel in APPELS_HORS_COMPTE) continue;
         const autour = r.texte.slice(Math.max(0, m.index! - 400), m.index! + m[0].length + 400);
-        if (COLONNES_DE_COMPTE.some((c) => autour.includes(c))) continue;
+        /**
+         * La colonne compte comme un FILTRE quand elle est une clé, pas quand
+         * elle est une chaîne ou une lecture de résultat.
+         *
+         * Le journal décrivait ce resserrement depuis l'arrivée du classement ;
+         * le code, lui, cherchait encore le nom n'importe où dans les quatre
+         * cents caractères. `groupBy({ by: ["userId"] })` le donne comme axe de
+         * regroupement et `s.userId` le lit dans le résultat : ni l'un ni
+         * l'autre ne filtre quoi que ce soit, et les deux faisaient passer une
+         * requête qui lit toute la base. Une somme collective ajoutée cette
+         * nuit est entrée ainsi, sans que rien ne le dise.
+         *
+         * Ce qui précède le nom suffit à trancher : un guillemet en fait une
+         * chaîne, un point une lecture. Ce qui SUIT tranche le reste : deux
+         * points pour `userId: …`, une virgule ou une accolade pour le
+         * raccourci d'objet `{ id, userId }`, qui est un filtre parfaitement
+         * juste et qu'il ne faut pas recaler.
+         */
+        if (porteUnFiltre(autour)) continue;
         if (/\bid:\s*(user|me|moi)\.id/.test(autour)) continue;
         nus.push(appel);
       }
@@ -168,5 +220,28 @@ describe("filtrage par compte", () => {
         .toEqual({ prefixe, existe: true });
       expect(raison.length).toBeGreaterThan(60);
     }
+  });
+});
+
+describe("ce qui compte pour un filtre", () => {
+  it("accepte une clé, et le raccourci d'objet", () => {
+    expect(porteUnFiltre("where: { userId: user.id }")).toBe(true);
+    expect(porteUnFiltre("where: { id, userId }")).toBe(true);
+    expect(porteUnFiltre("where: { demandeurId: moi }")).toBe(true);
+  });
+
+  it("REFUSE un axe de regroupement et une lecture de résultat", () => {
+    /**
+     * Les deux cas qui ont laissé passer une requête lisant toute la base :
+     * `by: ["userId"]` nomme la colonne sans rien filtrer, et `s.userId` la lit
+     * dans le résultat. Une somme collective est entrée par là.
+     */
+    expect(porteUnFiltre('groupBy({ by: ["userId"], _sum: { points: true } })')).toBe(false);
+    expect(porteUnFiltre("sommes.map((s) => s.userId)")).toBe(false);
+    expect(porteUnFiltre("select: { userId: true }")).toBe(true);
+  });
+
+  it("ne voit rien là où il n'y a rien", () => {
+    expect(porteUnFiltre("findMany({ orderBy: { jour: \"desc\" } })")).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import { reponseBadges, reponseSerie } from "@/lib/progression";
 import { composerExploits } from "@/lib/exploits";
 import { avancementDefi, defiDuJour } from "@/lib/defiQuotidien";
 import { debutDuMois, defisDuMois, moisDuJour } from "@/lib/defiMensuel";
+import { composerCollectif } from "@/lib/objectifCollectif";
 
 /**
  * Les paliers et la série, en un seul aller-retour.
@@ -36,7 +37,9 @@ export async function GET(req: Request) {
   const demande = new URL(req.url).searchParams.get("jour");
   const aujourdhui = estJourValide(demande) ? demande : jourLocal();
 
-  const [agregat, paiements, partiesDuMois] = await Promise.all([
+  const prefixeDuMois = moisDuJour(aujourdhui);
+
+  const [agregat, paiements, collectif, partiesDuMois] = await Promise.all([
     prisma.game.aggregate({
       // Même raison que dans `/api/badges`, dont cette route reprend le calcul.
       where: { userId: user.id, sansEnjeu: false },
@@ -68,6 +71,27 @@ export async function GET(req: Request) {
      * méridien — et c'est la MÊME dans les deux endroits, ce qui vaut mieux
      * qu'une seconde règle qui divergerait à la première correction.
      */
+    /**
+     * L'objectif collectif (ligne 133) : la seule lecture du produit qui ne
+     * filtre PAS par compte.
+     *
+     * Ce qui en sort est une somme et un décompte sur tout le monde — aucun
+     * pseudo, aucune ligne, rien qui désigne quelqu'un. C'est ce qui rend la
+     * dispense acceptable, et c'est écrit là où le garde la lit.
+     *
+     * `_count.userId` compte les LIGNES de paiement, pas les comptes
+     * distincts ; le nombre de contributeurs se compte donc à part, sur les
+     * groupes. Un `groupBy` rendrait autant de lignes que de comptes actifs,
+     * ce qui est acceptable à cette échelle et cesserait de l'être à dix
+     * mille — le jour venu, ce sera un compteur tenu à l'écriture.
+     */
+    prisma.paiement.groupBy({
+      by: ["userId"],
+      where: prefixeDuMois
+        ? { jour: { gte: `${prefixeDuMois}-01`, lte: aujourdhui } }
+        : { jour: aujourdhui },
+      _sum: { points: true },
+    }),
     prisma.game.findMany({
       where: {
         userId: user.id,
@@ -131,8 +155,18 @@ export async function GET(req: Request) {
      * assumé : c'est déjà le cas partout ailleurs, et une troisième règle
      * n'arrangerait rien.
      */
+    /**
+     * Ce que tout le monde a payé ce mois-ci, et à combien.
+     *
+     * Le décompte se fait sur les GROUPES et non sur les lignes : un compte
+     * qui paie trois fois dans le mois est un contributeur, pas trois.
+     */
+    collectif: composerCollectif({
+      points: collectif.reduce((somme, g) => somme + (g._sum.points ?? 0), 0),
+      contributeurs: collectif.filter((g) => (g._sum.points ?? 0) > 0).length,
+    }),
     defisMois: (() => {
-      const prefixe = moisDuJour(aujourdhui);
+      const prefixe = prefixeDuMois;
       return defisDuMois({
         pointsPayesDuMois: prefixe
           ? paiements
