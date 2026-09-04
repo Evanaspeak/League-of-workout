@@ -129,13 +129,13 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 128 | Pseudo Riot ou pseudo interne, au choix | ½ nuit |
 
 ### Défis, saisons, événements
-*8 à faire · 2 faits.* Le défi quotidien (V366) et les deux onglets du classement (V367).
+*7 à faire · 3 faits.* Le défi quotidien (V366), les deux onglets du classement (V367) et les deux défis mensuels (V368). La 137 est bloquée : elle demande des récompenses, et la réponse 139 dit « à voir ».
 
 | | réf | | effort |
 |---|---|---|---|
-| [ ] | 131 | Des défis mensuels, en volume ET en nombre de parties | 2 nuits |
+| [x] | 131 | Des défis mensuels, en volume ET en nombre de parties | 2 nuits |
 | [ ] | 132 | Individuels et communs | — |
-| [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué | 1 nuit |
+| [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué — **attend la réponse 139** | 1 nuit |
 | [x] | 138 | Un défi quotidien tiré au sort, valable 24 h | 1 nuit |
 | [ ] | 133 | Un objectif collectif à l'échelle de l'application | 1 nuit |
 | [ ] | 135 | Un événement au lancement d'un patch | 1 nuit |

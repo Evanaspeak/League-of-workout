@@ -5,6 +5,7 @@ import { chargerProgression, rafraichirProgression, type Progression } from "@/l
 import { useT } from "@/lib/i18n/LocaleContext";
 import { defis as dict } from "@/lib/i18n/dictionaries/defis";
 import type { AvancementDefi } from "@/lib/defiQuotidien";
+import type { AvancementMensuel } from "@/lib/defiMensuel";
 
 /**
  * Le défi du jour, sur le tableau de bord.
@@ -21,10 +22,12 @@ import type { AvancementDefi } from "@/lib/defiQuotidien";
 export function DefiDuJour() {
   const t = useT(dict);
   const [defi, setDefi] = useState<AvancementDefi | null>(null);
+  const [mois, setMois] = useState<AvancementMensuel[] | null>(null);
 
   useEffect(() => {
     const poser = (p: Progression | null) => {
       if (p?.defi) setDefi(p.defi as AvancementDefi);
+      if (Array.isArray(p?.defisMois)) setMois(p.defisMois as AvancementMensuel[]);
     };
     void chargerProgression(jourLocal()).then(poser);
     const relire = () => { void rafraichirProgression(jourLocal()).then(poser); };
@@ -44,10 +47,35 @@ export function DefiDuJour() {
    * où seul un test l'avait attrapé. Ici le compilateur le nomme, parce que le
    * dictionnaire déclare exactement les six clés du catalogue.
    */
-  const libelle = (t as unknown as Record<string, (n: number) => string>)[defi.cle];
-  if (typeof libelle !== "function") return null;
-
-  const part = defi.cible > 0 ? Math.min(1, defi.ou / defi.cible) : 0;
+  /**
+   * La même barre pour le jour et pour le mois.
+   *
+   * Écrite deux fois, elle aurait fini par diverger — c'est le motif trouvé
+   * six fois sur ce projet, et il ne prend jamais la forme d'une copie qu'on
+   * remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
+   */
+  const barre = (cle: string, cible: number, ou: number, fait: boolean) => {
+    const phrase = (t as unknown as Record<string, (n: number) => string>)[cle];
+    if (typeof phrase !== "function") return null;
+    const part = cible > 0 ? Math.min(1, ou / cible) : 0;
+    return (
+      <div key={cle} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="flex items-baseline justify-between gap-3">
+          <span style={{ fontSize: "0.9rem", opacity: fait ? 0.6 : 1 }}>{phrase(cible)}</span>
+          <b className="mono-num" style={{ fontSize: "0.8rem" }}>{`${ou} / ${cible}`}</b>
+        </div>
+        <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
+          <div
+            style={{
+              height: "100%", borderRadius: 3,
+              background: fait ? "var(--win, #4caf50)" : "var(--gold)",
+              width: `${Math.round(part * 100)}%`,
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="lol-panel p-5 space-y-3">
@@ -68,23 +96,17 @@ export function DefiDuJour() {
         )}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <div className="flex items-baseline justify-between gap-3">
-          <span style={{ fontSize: "0.9rem" }}>{libelle(defi.cible)}</span>
-          <b className="mono-num" style={{ fontSize: "0.8rem" }}>
-            {`${defi.ou} / ${defi.cible}`}
-          </b>
+      {barre(defi.cle, defi.cible, defi.ou, defi.fait)}
+
+      {mois && mois.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
+          <div>
+            <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.moisTitre}</h3>
+            <p className="text-xs mt-1" style={{ color: "var(--steel)" }}>{t.moisAide}</p>
+          </div>
+          {mois.map((m) => barre(m.cle, m.cible, m.ou, m.fait))}
         </div>
-        <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
-          <div
-            style={{
-              height: "100%", borderRadius: 3,
-              background: defi.fait ? "var(--win, #4caf50)" : "var(--gold)",
-              width: `${Math.round(part * 100)}%`,
-            }}
-          />
-        </div>
-      </div>
+      )}
     </div>
   );
 }

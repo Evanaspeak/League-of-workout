@@ -17,6 +17,7 @@ export type Progression = {
   serie: unknown;
   exploits?: unknown;
   defi?: unknown;
+  defisMois?: unknown;
 };
 
 let enCours: Promise<Progression | null> | null = null;
