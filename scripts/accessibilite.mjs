@@ -10,9 +10,9 @@
  */
 import { readFileSync, existsSync } from "node:fs";
 import { chromium } from "playwright";
-import { enLangue } from "./langue.mjs";
+import { enLangue, langueDemandee, positionnels } from "./langue.mjs";
 
-const BASE = process.argv[2] ?? "http://127.0.0.1:3311";
+const [BASE = "http://127.0.0.1:3311"] = positionnels(process.argv);
 const CHROMIUM = "/opt/pw-browsers/chromium";
 
 /**
@@ -46,12 +46,19 @@ const PAGES = [
  * déborder de son bouton, et une langue qui traduit mal un libellé peut le
  * vider. Une langue se passe en argument ; sans argument, on les passe toutes.
  *
- *   node scripts/accessibilite.mjs                → les six langues
- *   node scripts/accessibilite.mjs http://… de    → l'allemand seul
+ *   node scripts/accessibilite.mjs                 → les six langues
+ *   node scripts/accessibilite.mjs --langue=de     → l'allemand seul
+ *
+ * Le drapeau est le MÊME que celui des trois autres outils, et il se pose où
+ * l'on veut. Il prenait ici la place d'un argument nu, ce qui faisait de
+ * `--langue=de` une adresse : quinze pages « injoignables » et un rapport à
+ * zéro constat sur zéro page ouverte.
  */
 const LANGUES = ["fr", "en", "es", "de", "zh", "ja"];
-const langueDemandee = process.argv[3];
-const aTester = langueDemandee ? [langueDemandee] : LANGUES;
+const demandee = process.argv.some((a) => a.startsWith("--langue="))
+  ? langueDemandee(process.argv)
+  : null;
+const aTester = demandee ? [demandee] : LANGUES;
 
 /**
  * Pages qui demandent un compte. Le jeton se dépose dans un fichier par
