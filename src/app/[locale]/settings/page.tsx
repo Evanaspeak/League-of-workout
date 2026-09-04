@@ -147,6 +147,7 @@ export default function SettingsPage() {
   const [corps, setCorps] = useState<CorpsPrefs>({
     formuleCalorique: null, niveauActivite: null, modeCalorique: null,
     poidsCible: null, tourTaille: null, tourCou: null, tourHanches: null,
+    rappelPeseeActif: false,
   });
   const [mensurations, setMensurations] = useState<{
     poids: number | null; taille: number | null; age: number | null;
@@ -188,6 +189,7 @@ export default function SettingsPage() {
         tourTaille: s.user?.tourTaille ?? null,
         tourCou: s.user?.tourCou ?? null,
         tourHanches: s.user?.tourHanches ?? null,
+        rappelPeseeActif: Boolean(s.user?.rappelPeseeActif),
       });
       setMensurations({
         poids: s.user?.poids ?? null,

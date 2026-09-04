@@ -48,6 +48,7 @@ export type CorpsPrefs = {
   tourTaille: number | null;
   tourCou: number | null;
   tourHanches: number | null;
+  rappelPeseeActif: boolean;
 };
 
 export function ReglagesCorps({
@@ -326,6 +327,27 @@ export function ReglagesCorps({
         {pesees && pesees.length === 1 && (
           <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsCourbeUnePesee}</p>
         )}
+        {/*
+          Le rappel hebdomadaire (réponse 022 : OPTIONNEL). Éteint par défaut,
+          et il ne dit rien du poids — c'est un rappel de geste, pas un
+          jugement. Une notification qui commente est une notification qu'on
+          coupe, et on coupe tout avec.
+        */}
+        <div className="flex items-center justify-between gap-3" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+          <div>
+            <div className="text-sm">{t.corpsRappelLabel}</div>
+            <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.corpsRappelAide}</p>
+          </div>
+          <button
+            className="py-2 px-3 rounded text-sm"
+            aria-pressed={prefs.rappelPeseeActif}
+            style={boutonStyle(prefs.rappelPeseeActif)}
+            onClick={() => poser("rappelPeseeActif", !prefs.rappelPeseeActif)}
+          >
+            {prefs.rappelPeseeActif ? t.corpsRappelOui : t.corpsRappelNon}
+          </button>
+        </div>
+
         {lectureRatee && (
           <p role="alert" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>
             {t.corpsCourbeEchec}
