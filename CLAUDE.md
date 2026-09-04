@@ -1128,6 +1128,25 @@ vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
+### Publier plus vite que la CI ne tourne annule ses exécutions
+Constaté sur V393, V394 et V395 : les trois figurent en **« cancelled »**. Ce
+n'est pas une panne, c'est `cancel-in-progress` qui fait ce pour quoi il
+existe — une poussée qui en suit une autre de près annule la précédente, et une
+exécution annulée n'envoie aucun courriel. La règle est écrite plus bas, dans
+l'entrée sur les cinquante courriels d'échec.
+
+Ce qu'elle implique n'y était pas : **seule la DERNIÈRE version d'une rafale
+est réellement jugée.** Trois versions ont donc traversé `main` sans qu'aucun
+parcours ne tourne en intégration continue sur leur arbre. Le risque est
+contenu — chacune a eu ses tests unitaires et les parcours qui la couvrent en
+local — mais ce n'est pas la même chose que la suite entière sur une machine
+propre, et c'est précisément ce que la CI apporte.
+
+La conséquence pratique est une cadence : quand on publie plusieurs fois de
+suite, on attend que la dernière exécution ABOUTISSE avant de recommencer.
+Une rafale de six versions en quarante minutes ne laisse jamais une seule
+exécution finir, et le tableau se remplit de gris qu'on lit comme du vert.
+
 ### Ce qui pèse dans la plus grosse réponse, et deux choses qu'on ne fait pas
 Le journal portait « `/api/games` : 35 634 octets avant, **24 834** après » le
 resserrement des colonnes. Ce chiffre a vieilli : la même mesure, sur les mêmes
