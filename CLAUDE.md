@@ -989,6 +989,49 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le mur ouvert à tous, et deux défauts qu'aucun test ne regardait
+Ligne 141, réponse « au choix ». Le mur des records de la veille restait dans
+le cercle ; il s'ouvre maintenant à tous les comptes pour qui le demande.
+
+**Trois règles, toutes reprises du mode fantôme, parce que c'est la même
+nature de réglage.** Le défaut est FAUX — le plus fermé : personne ne se met à
+publier davantage parce qu'on a ajouté une fonctionnalité. Une valeur qui n'est
+pas un booléen est REFUSÉE et jamais convertie : `Boolean("non")` rend vrai, et
+quelqu'un qui demande à se refermer serait ouvert sans jamais le vérifier. Et
+le filtre est EN BASE : l'écarter à l'affichage ferait sortir le pseudo et le
+volume de quelqu'un qui a demandé l'inverse, et ils seraient dans l'onglet
+réseau de qui regarde.
+
+**Le mode fantôme reste AU-DESSUS**, et c'est la seule décision qui ne se
+déduisait pas des précédentes. Les deux réglages ne parlent pas de la même
+chose — l'un dit « pas dans les classements », l'autre « devant qui » — et on
+pourrait les croire indépendants. Ils ne le sont pas : un mur est un classement,
+donc se cacher des classements doit se cacher du mur, ouvert ou non.
+`where: { recordsPublics: true, fantome: false }`, et un test tient chacune des
+deux conditions séparément.
+
+**La requête ne part pas du tout quand personne n'a ouvert le sien**, ce qui
+est le cas courant : à quatre comptes tous fermés, l'écran ne paie aucun
+aller-retour de plus. Et la réponse rend `null` plutôt qu'un mur vide — une
+section vide dirait « il n'y a personne », alors que la vérité est « personne
+n'a choisi de figurer ici ». Ce n'est pas la même phrase.
+
+**Deux sabotages sur quatre sont passés au vert, et c'étaient les deux
+règles qui comptent le plus.**
+
+- **le défaut du schéma basculé à `true`** : aucun test ne le regardait. Le
+  défaut décide pour tous les comptes qui n'ouvriront jamais leurs réglages,
+  c'est-à-dire la plupart, et il vit dans le SCHÉMA — pas dans le code
+  applicatif, où on aurait pensé à le chercher. Un contrôle lit maintenant les
+  deux réglages de confidentialité du modèle `User` et exige `@default(false)` ;
+  il sera là pour le troisième ;
+- **une valeur non booléenne convertie** : le refus était écrit dans la route
+  et éprouvé par rien. Cinq valeurs y passent maintenant, dont `"non"`, que
+  `Boolean` rend VRAI — c'est le cas exact où la conversion silencieuse ouvre
+  le compte de quelqu'un qui demandait de le fermer.
+
+Six sabotages, six échecs après correction.
+
 ### Le mur des records, et deux moitiés de ligne qu'on ne fait pas
 Ligne 140, réponse « Oui » : « un mur des records, par exercice et par période.
 Le plus grand nombre de pompes en une journée. »

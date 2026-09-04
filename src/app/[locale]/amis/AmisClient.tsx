@@ -60,6 +60,7 @@ type Groupe = {
 type Classement = {
   lignes: LigneClassement[];
   records?: MurDesRecords;
+  recordsOuverts?: MurDesRecords | null;
   jours: number;
   ecart: number | null;
   periode?: Periode;
@@ -574,6 +575,39 @@ export function AmisClient() {
                   </div>
                 ))}
             </dl>
+          )}
+          {/*
+            Le mur OUVERT, quand quelqu'un a choisi d'y figurer (réponse 141).
+            Il est sous celui du cercle et pas à sa place : les deux ne
+            répondent pas à la même question — « qui, parmi mes amis » et
+            « qui, sur tout le produit » — et le second n'a de sens que quand
+            il y a du monde. Rien ne s'affiche tant que personne n'a ouvert le
+            sien : une section vide dirait « il n'y a personne », alors que la
+            vérité est « personne n'a choisi de figurer ici ».
+          */}
+          {classement.recordsOuverts && (classement.recordsOuverts.mois || classement.recordsOuverts.toujours) && (
+            <div style={{ borderTop: "1px solid var(--line, rgba(255,255,255,.08))", paddingTop: 12 }}>
+              <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.recordsOuvertsTitre}</h3>
+              <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginTop: 8 }}>
+                {([["recordsMois", classement.recordsOuverts.mois], ["recordsToujours", classement.recordsOuverts.toujours]] as const)
+                  .map(([cle, r]) => (
+                    <div key={cle}>
+                      <dt style={{ color: "var(--steel)", fontSize: ".85rem" }}>
+                        {cle === "recordsMois" ? t.recordsMois : t.recordsToujours}
+                      </dt>
+                      <dd style={{ margin: 0, overflowWrap: "anywhere" }}>
+                        {r
+                          ? (
+                            <span style={{ color: r.moi ? "var(--gold)" : undefined }}>
+                              {t.recordsLigne(r.pseudo, r.points, r.jour)}
+                            </span>
+                          )
+                          : <span style={{ color: "var(--steel)" }}>{"\u2014"}</span>}
+                      </dd>
+                    </div>
+                  ))}
+              </dl>
+            </div>
           )}
         </section>
       )}

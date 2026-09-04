@@ -164,6 +164,17 @@ model User {
    */
   paiementEclairLe DateTime?
 
+  /**
+   * Le mur des records est-il ouvert à tous les comptes, ou au seul cercle
+   * d'amis (réponse 141, « au choix ») ?
+   * Le défaut est FAUX, c'est-à-dire le plus fermé : un mur ouvert donne à qui
+   * n'a rien demandé un pseudo et un volume d'effort, et personne ne doit se
+   * mettre à publier davantage parce qu'on a ajouté une fonctionnalité.
+   * Le mode fantôme reste au-dessus : qui s'est retiré des classements ne
+   * revient pas par le mur, ouvert ou non.
+   */
+  recordsPublics Boolean @default(false)
+
   codeParrain String? @unique
   parrainId   String?
   parrain     User?   @relation("Parrainage", fields: [parrainId], references: [id], onDelete: SetNull)

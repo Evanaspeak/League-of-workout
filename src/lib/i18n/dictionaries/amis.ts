@@ -67,6 +67,7 @@ export const amis = {
     classementAide: (jours: number) =>
       `Sur l'effort réellement PAYÉ ces ${jours} derniers jours, pas sur les parties jouées : perdre beaucoup ne fait pas monter. La semaine se rejoue à zéro, donc elle se rattrape.`,
     recordsTitre: "Le mur des records",
+    recordsOuvertsTitre: "Sur tout le produit",
     recordsMois: "Ce mois-ci",
     recordsToujours: "Depuis toujours",
     recordsLigne: (pseudo: string, points: number, jour: string) => `${pseudo}, ${points} points le ${jour}`,
@@ -172,6 +173,7 @@ export const amis = {
     classementAide: (jours: number) =>
       `On effort actually PAID over the last ${jours} days, not on games played: losing a lot does not move you up. The week starts over, so it can be caught up.`,
     recordsTitre: "Record wall",
+    recordsOuvertsTitre: "Across the whole app",
     recordsMois: "This month",
     recordsToujours: "All time",
     recordsLigne: (pseudo: string, points: number, jour: string) => `${pseudo}, ${points} points on ${jour}`,
@@ -277,6 +279,7 @@ export const amis = {
     classementAide: (jours: number) =>
       `Sobre el esfuerzo realmente PAGADO en los últimos ${jours} días, no sobre las partidas jugadas: perder mucho no te hace subir. La semana vuelve a empezar, así que se puede remontar.`,
     recordsTitre: "Muro de récords",
+    recordsOuvertsTitre: "En toda la aplicación",
     recordsMois: "Este mes",
     recordsToujours: "Desde siempre",
     recordsLigne: (pseudo: string, points: number, jour: string) => `${pseudo}, ${points} puntos el ${jour}`,
@@ -382,6 +385,7 @@ export const amis = {
     classementAide: (jours: number) =>
       `Nach dem tatsächlich BEZAHLTEN Aufwand der letzten ${jours} Tage, nicht nach gespielten Partien: viel zu verlieren bringt dich nicht nach oben. Die Woche beginnt neu, also lässt sie sich aufholen.`,
     recordsTitre: "Rekordwand",
+    recordsOuvertsTitre: "In der ganzen App",
     recordsMois: "Diesen Monat",
     recordsToujours: "Seit Beginn",
     recordsLigne: (pseudo: string, points: number, jour: string) => `${pseudo}, ${points} Punkte am ${jour}`,
@@ -487,6 +491,7 @@ export const amis = {
     classementAide: (jours: number) =>
       `按最近 ${jours} 天真正完成的努力量排名，而不是按对局数：输得多并不会让你上升。每周重新开始，所以随时可以追上。`,
     recordsTitre: "纪录墙",
+    recordsOuvertsTitre: "全站范围",
     recordsMois: "本月",
     recordsToujours: "全部时间",
     recordsLigne: (pseudo: string, points: number, jour: string) => `${pseudo}，${jour} 偿还 ${points} 点`,
@@ -588,6 +593,7 @@ export const amis = {
     classementAide: (jours: number) =>
       `直近 ${jours} 日間に実際にこなした努力量で並びます。試合数ではないので、負けが多くても順位は上がりません。週ごとにゼロから始まるので、いつでも追いつけます。`,
     recordsTitre: "記録の壁",
+    recordsOuvertsTitre: "アプリ全体",
     recordsMois: "今月",
     recordsToujours: "累計",
     recordsLigne: (pseudo: string, points: number, jour: string) => `${pseudo}、${jour} に ${points} ポイント`,

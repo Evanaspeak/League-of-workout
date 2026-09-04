@@ -152,6 +152,15 @@ const ATTENDU: Record<string, RegExp> = {
    */
   nomAffiche: /nom montré aux autres|pseudo Riot ou pseudo/i,
   /**
+   * Le mur des records ouvert à tous (ligne 141).
+   *
+   * Il se décrit et ne s'exempte pas : c'est le seul réglage du produit qui
+   * fasse sortir un pseudo et un volume d'effort HORS du cercle d'amis, et la
+   * politique est exactement l'endroit où quelqu'un vient chercher ce qui
+   * sort de chez lui.
+   */
+  recordsPublics: /mur des records|records ouvert/i,
+  /**
    * La date du premier paiement éclair (ligne 147).
    *
    * Elle ne sort jamais du compte et ne paraît devant personne — c'est un
