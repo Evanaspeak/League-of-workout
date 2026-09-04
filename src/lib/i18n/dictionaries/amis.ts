@@ -24,7 +24,7 @@ export const amis = {
     ajouter: "Envoyer la demande",
     envoi: "Envoi…",
     envoyeeA: (pseudo: string) => `Demande envoyée à ${pseudo}.`,
-    accepteeAvec: (pseudo: string) => `${pseudo} vous avait déjà demandé : vous êtes amis.`,
+    accepteeAvec: (pseudo: string) => `${pseudo} t'avait déjà demandé : vous êtes amis.`,
 
     recuesTitre: "Demandes reçues",
     accepter: "Accepter",

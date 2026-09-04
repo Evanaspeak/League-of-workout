@@ -785,7 +785,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2130 tests unitaires, 192 suites. Base et session doublées : aucune dépendance à
+2134 tests unitaires, 193 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1095,6 +1095,82 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un mot juste devenu faux, et le niveau qu'il a fallu couper en deux
+Signalé par le propriétaire, en deux messages qui disent la même chose sous
+deux angles : « comment ça se fait que j'ai plus de 900pt d'activité et que je
+suis que niveau 5 », puis « attend mais quand tu dis activité ce n'est pas le
+nombre de pompe et de boxe ect ?! ».
+
+**Rien n'était cassé, et c'est ce qui rend le cas instructif.** Le mot
+« activité » désignait une PARTIE dans tout le produit — c'est ainsi qu'il avait
+été écrit, et c'était exact le jour où il l'a été. Le chiffre qu'il regardait
+sur son tableau de bord, lui, était de la DETTE, exprimée en pompes. Deux
+unités, un seul mot, et un compteur qui semblait ne pas suivre. Il a lu son
+propre écran de travers pendant des semaines, et aucun test ne pouvait le voir :
+tous les chiffres étaient justes.
+
+Deux corrections, et la seconde est de sa main.
+
+**« Activité » devient « partie », partout où le mot désigne une partie.**
+Onze clés dans six dictionnaires. Ce qui n'a PAS bougé : `cgu.ts` et
+`confidentialite.ts`, où « activité physique » veut dire l'exercice — le même
+mot, l'autre sens, et le renommer là aurait fabriqué le malentendu inverse.
+
+**Un second niveau, qui compte ce qu'il croyait compter.** Le niveau de COMPTE
+répond à « depuis combien de temps tu es là » : dix d'XP par partie, un par
+point payé. Le niveau de SOUFFRANCE répond à « qu'est-ce que tu as vraiment
+fait » : l'effort PAYÉ, et lui seul. `50 × n × (n−1)` points — cent pompes pour
+le niveau 2, mille pour le 5.
+
+Les deux se recouvrent sur l'effort payé, et c'est assumé : ce qui les sépare
+est qu'un compte qui joue sans jamais payer monte sur le premier et reste au
+plancher sur le second. C'est exactement la distinction demandée.
+
+**Rien n'est stocké**, comme pour le niveau de compte : le chiffre se recalcule
+depuis les paiements à chaque lecture, donc il ne peut pas diverger de ce qui le
+produit.
+
+**Le piège du niveau de compte se rejoue ici, en pire.** Il avait coûté une nuit
+en juillet : le module annonçait « l'effort PAYÉ » et la route lui passait
+l'effort GÉNÉRÉ, les deux chiffres portant le même nom. Ici les deux niveaux
+vivent CÔTE À CÔTE dans la même réponse, ce qui rend la confusion plus facile,
+pas moins. Sabotage fait — `source.totalPoints` à la place de
+`sourceNiveau.pointsPayes` : **aucun test unitaire ne tombe**, exactement comme
+la première fois. Le contrôle qui manquait est celui de la route, sur le double
+qui rend 9 000 générés contre 120 payés : niveau 13 contre niveau 2, onze
+paliers d'écart qu'aucun arrondi ne confond.
+
+**Une garde a été écrite, sabotée, et retirée.** J'avais posé
+`if (!Number.isFinite(points) || points <= 0) return 1;` en tête de
+`souffrancePourPoints`. La retirer ne fait tomber aucun test, et la raison est
+arithmétique : zéro donne `n = 1`, un négatif donne `NaN` par la racine,
+l'infini donne `Infinity`, et les trois retombent sur 1 par la condition
+FINALE — qui, elle, mord quand on la sabote. C'est le troisième cas de ce motif
+au journal, après le `muet = false` de la pastille et les deux boucles de
+comparaison du niveau de compte : **une ligne qu'on peut retirer sans qu'un test
+tombe ne tient rien, et elle se relit comme une garantie.**
+
+**Et le parcours ne regardait que l'API, ce qui laissait le trou qui compte.**
+Le composant déclare `souffrance?:` — optionnel, comme les deux champs voisins —
+donc un champ renommé côté route ne fait échouer ni la compilation ni une
+lecture d'API : la section disparaît du panneau, sans erreur et sans test rouge.
+C'est le défaut déjà écrit sous « un champ renommé vidait un panneau entier », et
+`contratJson.test.ts` ne l'attrape pas ici : il garde les champs de PREMIER
+niveau des routes fusionnées, et celui-ci vit sous `badges`, déclaré `unknown`.
+Le parcours recharge donc la page et lit la ligne à l'écran.
+
+Sept sabotages. Deux passés au vert — la garde morte, et la source du niveau —
+et ce sont les deux qui ont appris quelque chose. Un n'a pas compilé plutôt que
+de faire tomber un test (`false && etat.souffrance` fait perdre à TypeScript la
+restriction de `etat`) : réécrit en `niveau > 9999`, il fait tomber le parcours.
+
+**Ce que ça apprend au-delà du cas**, et c'est la troisième fois cette semaine :
+le défaut n'a été trouvé ni par un test, ni par un audit, ni par une relecture,
+mais par le propriétaire du produit qui REGARDE son écran. Les tests éprouvent
+ce que le code fait ; ils ne disent rien de ce que les mots veulent dire pour
+celui qui les lit. Un mot juste le jour où on l'écrit devient faux quand le
+produit bouge sous lui, et rien ne le signale jamais.
+
 ### Le panneau des ratios pouvait écraser la configuration par les valeurs d'origine
 Trouvé en recensant les `catch` silencieux des fichiers touchés cette semaine.
 La règle du projet est écrite depuis longtemps : une lecture au montage qui
@@ -1143,6 +1219,68 @@ rend discriminant, puisqu'un panneau qui laisserait partir la requête changerai
 vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
+
+### Le produit tutoie, sauf quand il a une raison de vouvoyer — et la règle a dérivé
+Recensement fait en lisant les écrans : **174 « vous » contre 233 « tu »** dans
+les blocs français des dictionnaires. Le chiffre brut ne dit rien de faux — la
+plupart de ces vouvoiements sont légitimes — mais il cachait une quinzaine de
+lignes qui vouvoyaient au milieu d'écrans qui tutoient partout.
+
+L'écran des réglages disait « Toutes VOS données » sous un titre « TES
+DONNÉES ». Le panneau des paliers disait « Ce que VOUS avez déjà fait » au
+milieu d'un tableau de bord qui tutoie de bout en bout. Les sept étapes des
+premiers pas — ce qu'un compte neuf lit en premier — vouvoyaient entièrement.
+
+Ce n'est pas une préférence de style. Le seul retour d'acquisition qu'on ait
+jamais eu portait sur la VOIX du produit — « ça fait trop IA » — et un texte
+qui change de registre d'un panneau à l'autre est précisément ce qui donne
+cette impression. C'est la même famille que les tirets cadratins, déjà chassés
+pour la même raison.
+
+**Trois familles vouvoient, chacune pour sa raison**, et c'est la règle qui
+manquait : le JURIDIQUE (CGU, confidentialité), la SANTÉ (consentement, mises
+en garde de volume — la distance y est voulue), et les pages PUBLIQUES
+d'acquisition, qui s'adressent à quelqu'un sans compte. Tout ce qui est derrière
+la porte tutoie.
+
+`src/lib/i18n/registre.test.ts` la tient, avec les deux contrôles habituels :
+un témoin de non-vacuité — un dossier renommé rendrait le test vert en
+n'examinant rien — et le refus d'une dispense qui ne désigne plus de fichier
+existant.
+
+**Le garde a mordu sur sa première exécution, et il avait raison.** Il a
+signalé « ${pseudo} t'avait déjà demandé : **vous** êtes amis » — qui n'est pas
+un vouvoiement mais un PLURIEL. Aucun motif ne peut distinguer les deux : c'est
+une question de sens. La tolérance porte donc sur la CLÉ, avec sa raison
+écrite, et non sur le fichier — posée sur le fichier, elle aurait couvert tout
+l'écran des amis.
+
+**L'allemand n'avait qu'un seul vrai vouvoiement**, et le recensement naïf en
+annonçait sept : « Sie » y est aussi le pronom de la troisième personne, donc
+« Sie zeigt », « Sie blockiert nichts » et « Sie ist nirgends aufgelistet » sont
+tous des faux positifs. Un motif qui ne distingue pas les deux ferait corriger
+de l'allemand parfaitement juste.
+
+**Et un parcours a mordu sur le changement de texte**, ce qui est son travail :
+`premier-ecran.spec.ts` cherchait le bouton « Enregistrer VOTRE première
+partie ». Un libellé d'interface ne change pas en silence.
+
+### Un réglage qui parlait encore de boxe alors qu'il gouverne toute la dette
+Trouvé en lisant l'écran des réglages. Depuis V387 la dette monte pour TOUS les
+exercices, les pompes comprises — et le seuil de rappel, qui compare `dureeSec`
+à `seuilSec`, s'applique donc à tout le monde. Son titre disait encore
+« Rappel du compteur de boxe », et son explication « la boxe s'accumule au fil
+des parties ».
+
+Quelqu'un qui fait des pompes — le cas par défaut, celui de presque tout le
+monde — voyait donc un réglage nommé pour un exercice qu'il ne pratique pas,
+et pouvait raisonnablement conclure qu'il ne le concernait pas. C'est
+exactement la même famille que les deux « niveau » de tout à l'heure : un mot
+juste le jour où il a été écrit, devenu faux quand le produit a bougé sous lui.
+
+Le titre devient « Rappel de la dette » dans les six langues, et l'explication
+parle d'un SEUIL plutôt que d'un temps — puisque pour un exercice compté en
+répétitions, ce n'est plus une durée qu'on attend.
 
 ### Une troisième liste de pages publiques, sur la barre que tout le monde voit
 Trouvé en continuant à lire les écrans, celui-ci sans compte du tout. Sur

@@ -1,5 +1,6 @@
 import { prochainPalier, tousLesBadges } from "@/lib/badges";
 import { avancementNiveau, titrePorte } from "@/lib/niveauCompte";
+import { avancementSouffrance } from "@/lib/niveauSouffrance";
 import { etatRetard, longueurSerie, meilleureSerie } from "@/lib/serie";
 
 /**
@@ -77,6 +78,20 @@ export function reponseBadges(src: SourceProgression) {
      * passer de travers.
      */
     niveau: avancementNiveau(sourceNiveau),
+    /**
+     * Le niveau de SOUFFRANCE, à côté de celui du compte.
+     *
+     * Il ne lit que l'effort payé, donc il répond à une autre question : le
+     * niveau de compte dit depuis combien de temps on est là, celui-ci dit ce
+     * qu'on a vraiment encaissé. Un compte qui joue beaucoup sans jamais payer
+     * monte sur le premier et reste à 1 sur le second, et c'est la distinction
+     * qui a été demandée.
+     *
+     * Il part de `sourceNiveau.pointsPayes` et non de `source.totalPoints` :
+     * c'est le même piège que celui qui a coûté une nuit sur le niveau de
+     * compte, et le nom du champ est ce qui l'empêche de se refaire.
+     */
+    souffrance: avancementSouffrance(sourceNiveau.pointsPayes),
     titre: titrePorte(sourceNiveau),
   };
 }

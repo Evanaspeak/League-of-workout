@@ -94,7 +94,7 @@ test("un compte vide peut enregistrer sa première partie depuis le tableau de b
   await passerIntro(page);
 
   for (const declencheur of [
-    page.getByRole("button", { name: /enregistrer votre première partie/i }),
+    page.getByRole("button", { name: /enregistrer ta première partie/i }),
     page.getByRole("button", { name: /^ajouter une partie$/i }).last(),
   ]) {
     await declencheur.click();
@@ -128,7 +128,7 @@ test("les deux déclencheurs valent aussi sur un téléphone", async ({ browser 
   await passerIntro(page);
 
   for (const declencheur of [
-    page.getByRole("button", { name: /enregistrer votre première partie/i }),
+    page.getByRole("button", { name: /enregistrer ta première partie/i }),
     page.getByRole("button", { name: /^ajouter une partie$/i }).last(),
   ]) {
     await expect(declencheur).toBeVisible();

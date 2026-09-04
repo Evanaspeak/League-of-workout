@@ -10,7 +10,7 @@ export const landing = {
     heroVersion: (v: string) => `Version ${v}`,
     heroBeta: "Créer mon compte",
     heroApercuTitre: "Win or Workout · Tableau de bord",
-    heroApercuAlt: "Le tableau de bord de Win or Workout : 105 activités, 55 % de winrate, 2 203 points de dette et la progression vers l'objectif.",
+    heroApercuAlt: "Le tableau de bord de Win or Workout : 105 parties, 55 % de winrate, 2 203 points de dette et la progression vers l'objectif.",
 
     // ── La bande des jeux ──
     jeuxLegende: "Les jeux pris en charge",

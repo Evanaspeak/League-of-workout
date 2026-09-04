@@ -7,6 +7,7 @@ import { badges as dict } from "@/lib/i18n/dictionaries/badges";
 import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
 import type { Badge } from "@/lib/badges";
 import type { Avancement, CleTitre } from "@/lib/niveauCompte";
+import type { AvancementSouffrance } from "@/lib/niveauSouffrance";
 
 type Reponse = {
   badges: Badge[];
@@ -21,6 +22,14 @@ type Reponse = {
    * déploiement antérieur peut recevoir une réponse qui ne les porte pas.
    */
   niveau?: Avancement;
+  /**
+   * Le niveau de SOUFFRANCE, qui ne compte que l'effort payé.
+   *
+   * Optionnel pour la même raison que le niveau de compte : une page servie
+   * par un déploiement antérieur peut recevoir une réponse qui ne le porte
+   * pas, et un `undefined` traversé sans garde afficherait « Niveau NaN ».
+   */
+  souffrance?: AvancementSouffrance;
   titre?: CleTitre | null;
 };
 
@@ -116,6 +125,30 @@ export function Paliers() {
           )}
           <span className="mono-num" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
             {`${etat.niveau.restant} ${tt.xp} ${tt.versLeNiveau} ${etat.niveau.niveau + 1}`}
+          </span>
+        </div>
+      )}
+
+      {/*
+        Le niveau de SOUFFRANCE, sur sa propre ligne.
+        Il répond à une autre question que celui du compte — celui-là dit
+        depuis combien de temps on est là, celui-ci ce qu'on a vraiment
+        encaissé — donc il ne se mêle pas à la même ligne, où l'on croirait à
+        deux façons de dire la même chose. Le rouge le distingue de l'or.
+      */}
+      {etat.souffrance && (
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <span className="mono-num" style={{ fontSize: "1.1rem", color: "var(--loss, #ef5350)" }}>
+            {`${tt.souffrance} ${etat.souffrance.niveau}`}
+          </span>
+          <span
+            className="mono-num"
+            style={{ fontSize: "0.9rem", color: "var(--loss, #ef5350)", opacity: 0.8 }}
+          >
+            {`${nombre.format(etat.souffrance.points)} ${tt.points}`}
+          </span>
+          <span className="mono-num" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
+            {tt.souffranceAide(etat.souffrance.restant)}
           </span>
         </div>
       )}
