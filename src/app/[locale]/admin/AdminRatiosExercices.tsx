@@ -25,17 +25,35 @@ export default function AdminRatiosExercices() {
   const [parDefaut, setParDefaut] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  /**
+   * A-t-on VRAIMENT lu les valeurs en vigueur ?
+   *
+   * Les champs partent sur `RATIOS_DEFAUT`, ce qu'il faut bien afficher le
+   * temps de la requête. Mais une lecture qui échoue laissait ces valeurs à
+   * l'écran **comme si c'était la configuration du site** — et un seul clic
+   * sur « Enregistrer » écrasait alors les vrais ratios par les valeurs
+   * d'origine. Ce panneau règle une conversion GLOBALE : ce que doit tout le
+   * monde s'exprimerait d'un coup dans une autre unité, sans que personne
+   * l'ait demandé, et le seul indice serait un chiffre qui a changé.
+   *
+   * On n'écrit donc pas une valeur qu'on n'a pas lue. C'est la règle du repli
+   * déjà écrite pour les réglages : un repli ne peut pas être plus permissif
+   * que ce qu'on demandait.
+   */
+  const [lu, setLu] = useState(false);
+  const [lectureKO, setLectureKO] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/config/exercices")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!d?.ratios) return;
+        if (!d?.ratios) { setLectureKO(true); return; }
         setSquats(String(d.ratios.squats));
         setBoxe(String(d.ratios.boxe));
         setParDefaut(Boolean(d.parDefaut));
+        setLu(true);
       })
-      .catch(() => {});
+      .catch(() => setLectureKO(true));
   }, []);
 
   /** Valeur saisie ramenée dans ses bornes, pour l'aperçu comme pour l'envoi. */
@@ -140,14 +158,19 @@ export default function AdminRatiosExercices() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 16 }}>
-        <button className="lol-btn text-sm px-5" onClick={() => envoyer("PUT")} disabled={saving}>
+        <button
+          className="lol-btn text-sm px-5"
+          onClick={() => envoyer("PUT")}
+          disabled={saving || !lu}
+          style={{ opacity: lu ? 1 : 0.45 }}
+        >
           {saving ? t.enregistrement : t.enregistrer}
         </button>
         <button
           className="lol-btn lol-btn-blue text-sm px-4"
           onClick={() => envoyer("DELETE")}
-          disabled={saving || parDefaut}
-          style={{ opacity: parDefaut ? 0.45 : 1 }}
+          disabled={saving || parDefaut || !lu}
+          style={{ opacity: parDefaut || !lu ? 0.45 : 1 }}
         >
           {t.reinitialiser}
         </button>
@@ -157,6 +180,17 @@ export default function AdminRatiosExercices() {
       </div>
 
       <p className="text-xs mt-3" style={{ color: "var(--faint)" }}>{t.propagation}</p>
+
+      {/*
+        L'échec de lecture se DIT, et il s'annonce : sans `role`, il paraît à
+        l'écran et n'existe pas pour un lecteur d'écran — sous deux boutons
+        devenus inertes, ce qui est exactement l'expérience du refus silencieux.
+      */}
+      {lectureKO && (
+        <p role="alert" className="text-sm mt-2" style={{ color: "var(--ember)" }}>
+          {t.lectureEchouee}
+        </p>
+      )}
 
       {msg && (
         <p className="text-sm mt-2" style={{ color: msg === t.enregistre ? "var(--victory)" : "var(--ember)" }}>

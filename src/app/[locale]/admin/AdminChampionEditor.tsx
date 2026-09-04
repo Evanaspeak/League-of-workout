@@ -15,14 +15,31 @@ export default function AdminChampionEditor() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  /**
+   * Une lecture qui échoue laissait « Chargement… » pour toujours.
+   *
+   * L'éditeur reste alors inerte — les deux boutons sont désactivés tant que
+   * `loading` est vrai, donc rien ne pouvait être écrasé, ce qui est le bon
+   * comportement. Mais rien ne le DISAIT : on attendait devant un panneau qui
+   * ne chargerait plus jamais, sans savoir pourquoi. Et la promesse partait en
+   * rejet non rattrapé.
+   *
+   * On garde le verrou et on ajoute la phrase. La liste des champions
+   * s'applique à tous les comptes et sert à VALIDER une saisie : une liste
+   * vide enregistrée par mégarde ferait refuser tous les champions du jeu.
+   */
+  const [lectureKO, setLectureKO] = useState(false);
+
   useEffect(() => {
     fetch("/api/admin/config/champions")
-      .then((r) => r.json())
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
+        if (!Array.isArray(data?.champions)) { setLectureKO(true); return; }
         setText((data.champions as string[]).join("\n"));
         setIsDefault(data.isDefault ?? false);
         setLoading(false);
-      });
+      })
+      .catch(() => setLectureKO(true));
   }, []);
 
   const save = async () => {
@@ -96,7 +113,13 @@ export default function AdminChampionEditor() {
       </div>
 
       {loading ? (
-        <div className="text-center py-10 gold-text text-sm">{t.loading}</div>
+        lectureKO ? (
+          <p role="alert" className="text-center py-10 text-sm" style={{ color: "var(--ember)" }}>
+            {t.lectureEchouee}
+          </p>
+        ) : (
+          <div className="text-center py-10 gold-text text-sm">{t.loading}</div>
+        )
       ) : (
         <textarea
           value={text}

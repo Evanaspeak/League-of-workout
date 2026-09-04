@@ -794,7 +794,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 217 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 218 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1078,6 +1078,55 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le panneau des ratios pouvait écraser la configuration par les valeurs d'origine
+Trouvé en recensant les `catch` silencieux des fichiers touchés cette semaine.
+La règle du projet est écrite depuis longtemps : une lecture au montage qui
+retombe sur une valeur par défaut SAINE est l'usage légitime du silence. Ici la
+valeur par défaut n'est pas saine, elle est **fausse et crédible**.
+
+`AdminRatiosExercices` part sur `RATIOS_DEFAUT`, ce qu'il faut bien afficher le
+temps de la requête. Une lecture qui échouait laissait ces valeurs à l'écran
+**comme si c'était la configuration du site** — et un seul clic sur
+« Enregistrer » écrivait les valeurs d'origine par-dessus les vrais ratios.
+
+Ce n'est pas un panneau parmi d'autres : il règle une conversion GLOBALE. Ce
+que doit tout le monde s'exprimerait d'un coup dans une autre unité, sans que
+personne l'ait demandé, et le seul indice serait un chiffre qui a changé. Le
+journal porte déjà une entrée entière sur le jour où un ratio a semblé réécrire
+tout l'historique.
+
+**On n'écrit donc pas une valeur qu'on n'a pas lue.** Les deux boutons sont
+inertes tant que la lecture n'a pas abouti, et l'échec se dit avec `role`
+plutôt que de paraître sous deux boutons devenus muets — c'est le défaut déjà
+corrigé sur le signalement et sur la mise de côté d'un exercice.
+
+**Le second panneau global avait la même famille de défaut, en plus bénin.**
+`AdminChampionEditor` n'avait AUCUN `catch` : une lecture qui échoue laissait
+« Chargement… » pour toujours, et la promesse partait en rejet non rattrapé.
+L'éditeur restait inerte, ce qui est le bon comportement — la liste des
+champions sert à VALIDER une saisie, et une liste vide enregistrée par mégarde
+ferait refuser tous les champions du jeu. Mais rien ne le disait : on attendait
+devant un panneau qui ne chargerait plus jamais. Le verrou reste, la phrase
+s'ajoute.
+
+**`AdminSeuilDette` a le même motif et se garde tel quel**, avec sa raison :
+c'est un outil de TEST qui force le compteur du compte administrateur
+lui-même. Une lecture ratée y laisse cinq minutes dans les champs, et
+enregistrer écrit cinq minutes sur sa propre dette. C'est le geste que l'outil
+existe pour faire.
+
+**Le parcours REND l'adresse administrateur** à qui la portait, au lieu de la
+laisser sur un compte jetable. `bareme-gele.spec.ts` la reprend lui-même au
+début, donc la suite tient sans ça — mais sur une base locale qu'on ne
+remonte pas entre deux exécutions, le vrai administrateur se retrouvait sans
+son panneau, et le symptôme ne ressemble pas à sa cause.
+
+Le parcours coupe la LECTURE et laisse l'écriture ouverte : c'est ce qui le
+rend discriminant, puisqu'un panneau qui laisserait partir la requête changerait
+vraiment la configuration. Il regarde l'écran ET la base — sans le second
+contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
+l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
 ### Dépendances au 4 septembre, et deux mesures corrigées
 `npm audit` rend **les deux mêmes vulnérabilités qu'hier**, toutes deux dans

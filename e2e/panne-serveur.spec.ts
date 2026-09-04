@@ -400,3 +400,82 @@ test("une coupure d'un instant ne vide pas le compteur de dette pour toute la pa
   expect(coupes).toBe(1);
   await ctx.close();
 });
+
+/**
+ * Le panneau des ratios, quand il ne peut pas lire ce qui est en vigueur.
+ *
+ * C'est le pire des deux défauts trouvés dans l'administration, et il est de
+ * la famille « répond juste, ne fait rien » : les champs partent sur les
+ * valeurs D'ORIGINE, ce qu'il faut bien afficher le temps de la requête. Une
+ * lecture qui échouait laissait ces valeurs à l'écran comme si c'était la
+ * configuration du site — et un seul clic sur « Enregistrer » écrasait les
+ * vrais ratios par les valeurs d'origine.
+ *
+ * Ce panneau règle une conversion GLOBALE : ce que doit tout le monde
+ * s'exprimerait d'un coup dans une autre unité, sans que personne l'ait
+ * demandé, et le seul indice serait un chiffre qui a changé.
+ */
+test("les ratios ne s'enregistrent pas quand on n'a pas pu les lire", async ({ browser }) => {
+  const { requeteSql } = await import("./base");
+  const admin = (process.env.ADMIN_EMAILS || "evantocquet@gmail.com").split(",")[0].trim();
+  // Le compte devient administrateur le temps du test, comme dans
+  // `bareme-gele.spec.ts` : l'adresse est reprise à qui la portait, puis
+  // rendue. Ce test n'écrit AUCUNE configuration globale — il éprouve
+  // justement le refus d'écrire.
+  const [porteur] = await requeteSql<{ id: string }>(
+    `SELECT id FROM "User" WHERE email = $1`, [admin]);
+  await requeteSql(`UPDATE "User" SET email = NULL WHERE email = $1`, [admin]);
+  await requeteSql(`UPDATE "User" SET email = $1 WHERE id = $2`, [admin, uid]);
+
+  const avant = await requeteSql<{ value: string }>(
+    `SELECT value::text AS value FROM "SystemConfig" WHERE key = 'exercices'`);
+
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+  // Seule la LECTURE est coupée. L'écriture reste ouverte, et c'est ce qui
+  // rend le contrôle discriminant : si le panneau la laissait partir, la
+  // configuration changerait vraiment.
+  await page.route("**/api/admin/config/exercices", (r) =>
+    (r.request().method() === "GET"
+      ? r.fulfill({ status: 500, contentType: "application/json", body: '{"error":"Erreur serveur"}' })
+      : r.continue()));
+
+  await page.goto("/admin", { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(2500);
+
+  // L'échec se DIT, et il s'annonce.
+  const alerte = page.getByRole("alert").filter({ hasText: /n'ont pas pu être lues/i });
+  await expect(alerte).toBeVisible({ timeout: 15_000 });
+
+  // Et le bouton ne peut plus rien écrire.
+  const enregistrer = page.getByRole("button", { name: /^enregistrer$/i }).first();
+  await expect(enregistrer).toBeDisabled();
+
+  // Le contrôle qui décide de tout : la base n'a pas bougé. Sans lui, un écran
+  // qui se contente d'afficher un message tout en laissant partir la requête
+  // passerait le test.
+  const apres = await requeteSql<{ value: string }>(
+    `SELECT value::text AS value FROM "SystemConfig" WHERE key = 'exercices'`);
+  expect(apres.map((l) => l.value)).toEqual(avant.map((l) => l.value));
+
+  /**
+   * L'adresse est RENDUE à qui la portait.
+   *
+   * `bareme-gele.spec.ts` la reprend lui-même au début, donc la suite tient
+   * sans ça — mais un test qui laisse le compte administrateur sur un compte
+   * jetable prive le vrai administrateur de son panneau dans toutes les
+   * exécutions à la main qui suivront, sur une base locale qu'on ne remonte
+   * pas entre deux.
+   */
+  await requeteSql(`UPDATE "User" SET email = NULL WHERE id = $1`, [uid]);
+  if (porteur) await requeteSql(`UPDATE "User" SET email = $1 WHERE id = $2`, [admin, porteur.id]);
+  await ctx.close();
+});
