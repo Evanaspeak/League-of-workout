@@ -561,15 +561,65 @@ describe("le silence d'une partie", () => {
   });
 
   /**
-   * Le cas qui distingue « cette partie » de « pour toujours ». Sans le
-   * relèvement à l'OUVERTURE d'une partie, la pastille resterait absente le
-   * reste de la soirée, et rien ne le dirait.
+   * Le cas qui a fait toute la correction, et il disait l'INVERSE avant.
+   *
+   * Il exigeait qu'une partie qui commence lève le silence — « la partie
+   * suivante la ramène ». Signalé par le propriétaire : « je viens de mettre
+   * non et j'ai quand même la pastille ». Pour League, la question se pose sur
+   * l'ÉCRAN DE CHARGEMENT, donc AVANT que la partie commence : la partie qui
+   * démarrait ensuite était celle-là même qu'on venait de refuser, et elle
+   * levait son propre silence quelques secondes plus tard.
+   *
+   * Le test défendait donc le défaut, ce qui est la forme la plus coûteuse
+   * d'un mauvais test : il ne se contente pas de ne rien attraper, il fait
+   * échouer la correction.
    */
-  it("la partie suivante la ramène", () => {
+  it("la partie qu'on vient de refuser ne lève pas son propre silence", () => {
+    overlay.masquerJusquALaProchainePartie();
+    // C'est la séquence réelle : le silence est posé sur l'écran de
+    // chargement, la partie démarre APRÈS.
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(false);
+  });
+
+  /**
+   * Et la question SUIVANTE le lève, parce qu'une question EST un écran de
+   * chargement. Sans elle, un refus vaudrait pour le reste de la soirée.
+   */
+  it("la question suivante lève le silence", () => {
     overlay.definirEnPartie(true, "League of Legends");
     overlay.masquerJusquALaProchainePartie();
+    expect(fenetre().isVisible()).toBe(false);
 
-    overlay.definirEnPartie(false);
+    overlay.poserQuestion({ texte: "Lancer ?", oui: "Oui", non: "Non", delaiMs: 5_000 });
+    /**
+     * La fenêtre est visible ici de toute façon : `poserQuestion` affiche par
+     * un geste EXPLICITE, qui passe outre le silence — c'est écrit trois tests
+     * plus bas. Regarder la visibilité maintenant ne prouverait donc rien, et
+     * la première version de ce test l'a fait : le sabotage — la levée retirée
+     * de `poserQuestion` — passait au vert.
+     *
+     * On repart donc d'une fenêtre cachée, et on demande un affichage
+     * AUTOMATIQUE, le seul que le silence arrête. `masquer()` ne touche pas au
+     * silence : c'est précisément ce qui rend la mesure propre.
+     */
+    overlay.masquer();
+    overlay.afficher();
+    expect(fenetre().isVisible()).toBe(true);
+  });
+
+  /**
+   * Un jeu qu'on ferme le lève aussi, et ce n'est pas du confort : sans ça,
+   * quelqu'un qui passe ensuite le réglage sur « lance sans demander » n'a
+   * plus jamais de question, donc plus jamais rien pour lever le silence — et
+   * sa pastille reste éteinte sans que rien ne le lui dise.
+   */
+  it("un jeu qu'on ferme lève le silence", () => {
+    overlay.definirEnPartie(true, "League of Legends");
+    overlay.masquerJusquALaProchainePartie();
+    overlay.leverSilence();
+
     overlay.definirEnPartie(true, "League of Legends");
     overlay.afficher();
     expect(fenetre().isVisible()).toBe(true);

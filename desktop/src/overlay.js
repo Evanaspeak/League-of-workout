@@ -332,6 +332,19 @@ function masquerJusquALaProchainePartie() {
   masquer();
 }
 
+/**
+ * Lève le silence sans rien afficher.
+ *
+ * Sans elle, un refus resterait en vigueur pour toujours le jour où quelqu'un
+ * passe le réglage de session sur « lance sans demander » : plus aucune
+ * question n'étant posée, plus rien ne lèverait le silence, et la pastille
+ * serait éteinte sans que personne ne sache pourquoi. Un jeu qu'on ferme est
+ * la fin d'une soirée : c'est le bon moment.
+ */
+function leverSilence() {
+  muet = false;
+}
+
 function basculer() {
   if (voulu) masquer();
   else afficher({ parLUtilisateur: true });
@@ -355,11 +368,20 @@ function definirEnPartie(valeur, jeu = null) {
   if (enPartie) manuel = false;
 
   if (enPartie && !avant) {
-    // Une partie qui COMMENCE lève le silence de la précédente : c'est
-    // exactement la portée demandée — « caché jusqu'au prochain écran de
-    // chargement ». Posé sur la fin de partie, le silence sauterait dès
-    // qu'on quitte, donc avant l'écran où la question se repose.
-    muet = false;
+    /**
+     * Le silence n'est PAS levé ici, et c'est une correction.
+     *
+     * Il l'était, au motif qu'« une partie qui commence lève le silence de la
+     * précédente ». C'était faux pour League, et signalé par le propriétaire :
+     * la question se pose sur l'ÉCRAN DE CHARGEMENT, donc AVANT que la partie
+     * commence. La partie qui démarrait ensuite était donc celle-là même
+     * qu'on venait de refuser — elle levait son propre silence, et la pastille
+     * revenait quelques secondes après qu'on eut cliqué « non ».
+     *
+     * Le silence se lève maintenant à la question SUIVANTE, ce qui est
+     * exactement ce qui avait été demandé : « jusqu'au prochain écran de
+     * chargement ». La question EST cet écran.
+     */
     partieEnCoursSec = 0;
     const releve = JEUX_AVEC_RELEVE.has(jeu);
     // Sans relevé, personne ne viendra dire combien de temps s'est écoulé :
@@ -467,6 +489,12 @@ function poserQuestion({ texte, oui, non, delaiMs = 45_000 } = {}) {
   if (questionEnCours) questionEnCours.repondre(null);
 
   const id = ++dernierIdQuestion;
+  /**
+   * Une question posée est un écran de chargement, donc une NOUVELLE partie :
+   * c'est ici que le silence d'un refus précédent se lève. Écrit plus haut, il
+   * se levait sur la partie qu'on venait de refuser.
+   */
+  muet = false;
   afficher({ parLUtilisateur: true });
   /**
    * La question prend TOUT l'écran.
@@ -752,7 +780,7 @@ const _placement = { positionDuCoin, dansLEcran, LARGEUR, HAUTEUR, MARGE };
 
 module.exports = {
   _placement,
-  initOverlay, afficher, masquer, masquerJusquALaProchainePartie, basculer,
+  initOverlay, afficher, masquer, masquerJusquALaProchainePartie, leverSilence, basculer,
   envoyerEtat, definirEnPartie, definirReleve, definirDette, signalerCapture,
   definirReleveApex,
   protegerDeLaCapture,
