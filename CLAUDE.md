@@ -989,6 +989,96 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois routes en `.tsx` étaient invisibles à TOUS les gardes structurels
+Trouvé par un sabotage qui n'a rien fait tomber, ce qui est la seule façon de
+trouver ça. J'avais neutralisé le verrou de session de `/api/seance/image` —
+`const user = (await getCurrentUser())!;` — et les huit contrôles de
+`porteRoutes.test.ts` sont restés au vert, les quatre parcours navigateur
+aussi.
+
+**Deux causes, l'une derrière l'autre.**
+
+La première : les trois gardes qui parcourent `src/app/api` cherchaient
+`e.name === "route.ts"`. Next accepte aussi `route.tsx`, et trois routes de ce
+projet en sont — les deux images rendues par `next/og` et l'icône de
+l'application. Elles n'étaient donc examinées par AUCUN d'eux depuis qu'elles
+existent : ni la porte, ni le filtrage par compte, ni l'écart des parties sans
+enjeu. Le garde ne leur trouvait rien à reprocher parce qu'il ne les lisait
+pas, et un recensement qui ne lit rien passe au vert.
+
+La seconde : même en les lisant, `porteRoutes` cherchait l'APPEL à
+`getCurrentUser`, jamais le REFUS. Une route qui appelle et ignore la réponse
+le satisfaisait entièrement. C'est le défaut déjà écrit ici pour le piège de
+focus — **un garde qui reconnaît un import reconnaît une intention, pas un
+comportement** — et il vaut pour la porte de cinquante routes. Il cherche
+maintenant un refus (401, 403, `redirect`, `notFound`) dans les quatre cents
+caractères qui suivent chaque appel.
+
+**Et le parcours navigateur ne pouvait pas le voir non plus**, ce qui est le
+pire du lot : le middleware redirige déjà l'anonyme vers la connexion, donc le
+verrou de la route ne sert QUE le jour où l'adresse entrerait par erreur dans
+les chemins publics. C'est-à-dire précisément le jour où il compte, et le seul
+où personne ne le teste.
+
+**Trois défauts réels sont tombés dès que les gardes ont vu ces fichiers :**
+
+- **l'image du bilan de saison comptait les parties SANS ENJEU.** La même
+  requête est écrite deux fois — `/api/bilan` et `/api/bilan/image` — et une
+  seule des deux filtrait. L'image affichait donc plus de parties et un autre
+  taux de victoire que la page juste à côté, et c'est l'image qu'on partage.
+  C'est le huitième cas de règle dupliquée de ce projet, et le premier qu'un
+  garde existant aurait dû attraper ;
+- **`/api/signalement` était ouverte en FAIT et pas en droit.** Elle figure
+  dans les préfixes publics depuis toujours mais pas dans la liste des
+  dispenses, et le premier contrôle la laissait passer parce qu'elle CONTIENT
+  `getCurrentUser` — un appel qui rend `null` sans rien refuser. C'est ce
+  qu'on veut d'une porte ouverte assumée, et ce qu'on ne veut pas d'une porte
+  qu'on croit fermée. Elle est déclarée, avec sa raison : celui qui ne peut
+  plus se connecter est celui qui a le plus besoin de signaler ;
+- **le garde ne connaissait qu'une des DEUX façons de traverser le
+  middleware.** `PUBLIC_PREFIXES` en est une ; l'autre est le `matcher` de
+  `middleware.ts`, qui écarte certaines adresses avant tout contrôle — l'icône
+  de l'application y figure. J'ai d'abord cru qu'elle était bloquée et j'allais
+  l'écrire ; la sonde a rendu 200 et `image/png` sans session, et c'est la
+  sonde qui avait raison. Le garde lit les deux listes maintenant.
+
+Quatre sabotages sur les gardes réparés, quatre échecs.
+
+### L'image de partage après une grosse séance
+Ligne 122, réponse « Oui ». La question n'était pas l'image — le moteur existe
+depuis le bilan de saison — mais **ce qu'est une GROSSE séance**. Ça ne peut
+pas être un nombre fixe : cent points sont une soirée ordinaire pour qui joue
+beaucoup et un record pour qui débute.
+
+C'est donc un RECORD sur trente jours glissants, pour la raison déjà écrite
+pour le classement : un record de toujours est décidé par une seule soirée, et
+plus personne ne le bat. Avec un PLANCHER, parce qu'un record ne veut rien dire
+quand il n'y a rien à battre — la toute première séance en est toujours un, et
+proposer de partager quatre pompes met le produit en défaut de sérieux. Un ex
+æquo ne compte pas : égaler son record n'est pas le battre, et reproposer la
+même image pour le même chiffre est exactement la sollicitation qu'on veut
+éviter.
+
+**Le chiffre vient de la BASE.** Le prendre dans l'adresse laisserait n'importe
+qui fabriquer une image à douze mille points, et une image qu'on peut écrire
+soi-même ne dit plus rien de personne — donc plus personne ne la regarde.
+
+**La proposition ne part qu'après un paiement ABOUTI.** Une séance mise en file
+hors ligne n'est pas encore une séance : proposer une image de ce qui n'est pas
+enregistré serait promettre deux fois.
+
+**Un défaut attrapé en relisant le rendu, pas en le testant** : payer TOUTE sa
+dette la ramène à zéro, et le composant prend alors une branche de sortie
+anticipée qui ne rendait que le chrono. La proposition disparaissait donc au
+moment exact où elle a un sens — après la plus grosse séance possible.
+
+Six sabotages unitaires, six échecs. Au navigateur, l'image est éprouvée sur sa
+SIGNATURE PNG et non sur sa taille : une page d'erreur rendue en 200 passerait
+un contrôle de taille. Et le contrôle « pas d'image sans session » a d'abord
+échoué à cause de MON test : Playwright suit les redirections, donc le 307 vers
+la connexion devient un 200 sur la page de connexion. On regarde ce qui sort,
+jamais le code de réponse.
+
 ### Le profil public, et l'adresse qu'on ne peut pas énumérer
 Ligne 121, réponse « Au choix ». Deux règles du projet s'appliquent d'elles-
 mêmes dès qu'on lit « au choix » :
