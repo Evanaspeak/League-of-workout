@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { jetonPlausible } from "@/lib/profilPublic";
 import { nomPublie } from "@/lib/nomAffiche";
 import { longueurSerie, meilleureSerie } from "@/lib/serie";
+import { niveauPourPoints, titrePorte } from "@/lib/niveauCompte";
 import { textes } from "@/lib/i18n/textes";
 import { profilPublic as dict } from "@/lib/i18n/dictionaries/profilPublic";
+import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
 import { estLocale, type Locale } from "@/lib/i18n/langues";
 import { etiquetteLocale } from "@/lib/i18n/langues";
 
@@ -36,6 +38,7 @@ export default async function PageProfilPublic(
   const { locale: brut, jeton } = await params;
   const locale: Locale = estLocale(brut) ? brut : "en";
   const t = textes(dict, locale);
+  const tt = textes(dictTitres, locale);
 
   const compte = jetonPlausible(jeton)
     ? await prisma.user.findUnique({
@@ -78,6 +81,21 @@ export default async function PageProfilPublic(
   }
   const jeuFavori = [...compteJeux.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
+  /**
+   * Le niveau et le titre ne coûtent AUCUNE requête de plus : ils se déduisent
+   * de ce que cette page lit déjà. Et ils ne révèlent rien qu'elle ne montre
+   * pas — la série, la meilleure série et les parties sont juste en dessous.
+   * C'est ce qui les distingue du profil d'un ami, où le titre est rangé du
+   * côté du détail parce qu'il y DIRAIT un chiffre que le mode « total » tait.
+   */
+  const sourceNiveau = {
+    pointsPayes: points,
+    parties: parties.length,
+    meilleureSerie: meilleureSerie(jours),
+    joursPayes: new Set(jours).size,
+  };
+  const titre = titrePorte(sourceNiveau);
+
   const nombre = new Intl.NumberFormat(etiquetteLocale(locale));
 
   return (
@@ -85,6 +103,21 @@ export default async function PageProfilPublic(
       <h1 className="titre-page" style={{ fontSize: "1.6rem", overflowWrap: "anywhere" }}>
         {nomPublie(compte)}
       </h1>
+      <p style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", margin: 0 }}>
+        <span className="mono-num" style={{ fontSize: "1.2rem", color: "var(--gold)" }}>
+          {`${tt.niveau} ${niveauPourPoints(points)}`}
+        </span>
+        {titre && (
+          <span
+            style={{
+              fontSize: ".72rem", padding: "3px 8px", borderRadius: 999,
+              border: "1px solid var(--blue, #0bc4e3)", color: "var(--blue, #0bc4e3)",
+            }}
+          >
+            {tt[titre]}
+          </span>
+        )}
+      </p>
       <p style={{ color: "var(--steel)", maxWidth: "55ch" }}>{t.sousTitre}</p>
 
       <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>

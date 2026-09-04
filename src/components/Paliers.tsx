@@ -4,9 +4,25 @@ import { jourLocal } from "@/lib/serie";
 import { chargerProgression, rafraichirProgression, type Progression } from "@/lib/chargerProgression";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { badges as dict } from "@/lib/i18n/dictionaries/badges";
+import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
 import type { Badge } from "@/lib/badges";
+import type { Avancement, CleTitre } from "@/lib/niveauCompte";
 
-type Reponse = { badges: Badge[]; prochain: Badge | null };
+type Reponse = {
+  badges: Badge[];
+  prochain: Badge | null;
+  /**
+   * Le niveau et le titre arrivent dans la MÊME réponse que les paliers.
+   *
+   * Ils se déduisent des mêmes chiffres ; leur donner une route à eux ferait
+   * un aller-retour de plus vers Neon pour relire les mêmes lignes, et ce
+   * défaut a déjà été corrigé une fois ici en fusionnant `/api/badges` et
+   * `/api/serie`. Ils sont optionnels parce qu'une page servie par un
+   * déploiement antérieur peut recevoir une réponse qui ne les porte pas.
+   */
+  niveau?: Avancement;
+  titre?: CleTitre | null;
+};
 
 /**
  * Les paliers, sur le tableau de bord.
@@ -18,6 +34,7 @@ type Reponse = { badges: Badge[]; prochain: Badge | null };
  */
 export function Paliers() {
   const t = useT(dict);
+  const tt = useT(dictTitres);
   const [etat, setEtat] = useState<Reponse | null>(null);
 
   /**
@@ -57,6 +74,27 @@ export function Paliers() {
           {t.obtenus(obtenus.length, etat.badges.length)}
         </span>
       </div>
+
+      {etat.niveau && (
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+          <span className="mono-num" style={{ fontSize: "1.5rem", color: "var(--gold)" }}>
+            {`${tt.niveau} ${etat.niveau.niveau}`}
+          </span>
+          {etat.titre && (
+            <span
+              style={{
+                fontSize: "0.72rem", padding: "3px 8px", borderRadius: 999,
+                border: "1px solid var(--blue, #0bc4e3)", color: "var(--blue, #0bc4e3)",
+              }}
+            >
+              {tt[etat.titre]}
+            </span>
+          )}
+          <span className="mono-num" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
+            {`${etat.niveau.restant} ${tt.points} ${tt.versLeNiveau} ${etat.niveau.niveau + 1}`}
+          </span>
+        </div>
+      )}
 
       {etat.prochain ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

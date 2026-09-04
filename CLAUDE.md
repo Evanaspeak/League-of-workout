@@ -989,6 +989,105 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le niveau de compte et le titre, et deux chiffres qui portaient le même nom
+Lignes 148 et 149, toutes deux répondues « oui ». Elles vont ensemble parce
+qu'elles se déduisent des mêmes données : le niveau dit COMBIEN, le titre dit
+QUOI, et aucun des deux n'est stocké — un niveau rangé en base finit par
+diverger de ce qu'il prétend décrire le jour où une partie est supprimée. La
+contrepartie est qu'un niveau peut BAISSER ; c'est le prix, il est assumé, et
+c'est déjà celui des paliers.
+
+**La trouvaille de la nuit est un mot.** Le module annonçait « le niveau se
+calcule sur l'effort PAYÉ » — la décision de la réponse 115, qui refuse de
+faire monter celui qui perd sans jamais payer. La route, elle, lui passait
+`source.totalPoints`, qui est l'effort **GÉNÉRÉ**, c'est-à-dire ce que les
+parties ont coûté. Le commentaire disait une chose, le code en faisait une
+autre, et **aucun test ne pouvait les distinguer** : les deux chiffres portaient
+le même nom, dans une forme que j'avais réemployée telle quelle au motif
+qu'elle se ressemblait trait pour trait.
+
+C'est le sabotage qui l'a dit. `avancementNiveau(source.parties)` à la place de
+`avancementNiveau(source.totalPoints)` passait au vert : rien n'éprouvait la
+SOURCE du niveau, seulement qu'il en sortait un nombre plausible. Le champ
+s'appelle `pointsPayes` maintenant, et `SourceNiveau` ne réemploie plus
+`SourceBadges`. **Deux formes identiques ne sont pas la même chose quand l'une
+compte ce qu'on doit et l'autre ce qu'on a fait** — et c'est le NOM qui empêche
+la confusion, pas le commentaire. Le double de la route rend désormais 9 000
+générés contre 120 payés, deux valeurs qui encadrent le seuil du titre
+« endurant » : sans cet écart, les deux sources donnaient le même titre et le
+contrôle passait sans rien prouver.
+
+**Une ligne écrite, sabotée, retirée.** J'avais corrigé la forme fermée du
+niveau par deux boucles de comparaison, au motif qu'une racine carrée flottante
+peut rendre 2,9999997 au seuil exact — donc précisément à l'instant qu'on veut
+fêter. Les retirer ne faisait tomber aucun test. La raison est algébrique : au
+seuil du niveau n, `1 + 4 points / 25` vaut `(2n − 1)²`, un carré parfait, et la
+racine d'un carré parfait est exacte en IEEE 754. La correction ne tenait rien
+et se relisait comme une garantie. Elle est partie, remplacée par un test qui
+vérifie **trois cent mille niveaux**, au seuil et un point en dessous.
+
+**Et le témoin de ce test ne témoignait de rien.** Il rejouait un niveau isolé
+HORS de la boucle : vider la boucle laissait la liste d'écarts vide et le cas
+isolé juste, donc tout au vert. Il compte les tours maintenant. C'est le même
+défaut, sous une troisième forme cette semaine : un garde posé à côté de ce
+qu'il surveille ne surveille rien.
+
+**Où le titre s'affiche, et où il ne s'affiche PAS.** Il fait un mot, il est
+flatteur par construction, et on pourrait le croire anodin. Il ne l'est pas :
+« Increvable » DIT une série de trente jours, c'est-à-dire exactement le chiffre
+que le mode « total » du profil d'un ami existe pour taire. Il est donc rangé
+du côté du DÉTAIL, sous le réglage `partageAmis` qui existe déjà — pas de
+nouveau réglage, pas de nouvelle colonne. Un résumé d'un renseignement reste ce
+renseignement, et le publier sous une autre forme est la façon la plus discrète
+de défaire un réglage.
+
+Sur le profil PUBLIC, en revanche, il s'affiche sans condition : la série et
+les parties sont juste en dessous, et c'est la personne elle-même qui a publié
+l'adresse.
+
+**Pas dans le classement, et la raison est un coût.** Il faudrait l'historique
+complet des paiements de CHAQUE ami pour calculer sa meilleure série, là où le
+classement ne lit aujourd'hui qu'une somme sur sept jours. Un aller-retour par
+ami vers Neon pour orner un tableau de rangs n'est pas un échange qui se fait.
+C'est écrit plutôt que laissé à deviner.
+
+**Aucun titre n'est désobligeant, et c'est une règle et non de la politesse.**
+Il s'affiche à côté d'un pseudo, donc devant quelqu'un d'autre : « Débutant »
+ferait du produit celui qui vous désigne publiquement. Quelqu'un qui n'a rien
+gagné n'a donc PAS de titre — pas un titre qui dit qu'il n'a rien fait.
+
+**Le titre porté est le plus RARE**, pas le dernier gagné : sinon il changerait
+à chaque partie. Et l'ordre est celui du TEMPS que chacun demande, pas celui
+d'un chiffre — sept jours d'affilée sont plus durs que dix jours épars, et c'est
+ce qui les sépare.
+
+Neuf sabotages. Trois sont passés au vert au premier essai, et ce sont les trois
+qui ont appris quelque chose : la source du niveau, la source du titre, et le
+témoin de la boucle. Un dixième n'a pas compilé plutôt que de faire tomber un
+test — la colonne `points` retirée du `select` fait nommer sa lecture par
+`tsc` — et c'est noté comme tel, pas compté comme un garde qui mord.
+
+**Deux pièges d'outillage, dont un nouveau.**
+
+`{tt.niveau} {valeur}` en JSX fait DEUX enfants texte, et React insère un
+`<!-- -->` entre eux dans le HTML rendu au serveur. Un contrôle qui lit la
+réponse — c'est-à-dire le seul qui prouve quelque chose ici — cherchait donc
+`Niveau 3` dans une chaîne qui contient `Niveau<!-- --> <!-- -->3`. La bonne
+correction n'est pas d'assouplir le motif mais de composer la chaîne d'un seul
+tenant : le HTML devient ce qu'on croit qu'il est.
+
+L'autre est connu, sous une variante : une requête faite HORS du navigateur
+(`request.get`) n'emporte pas forcément l'en-tête de langue du contexte, donc
+une adresse sans préfixe NÉGOCIE et rend l'anglais. Le premier jet cherchait
+« Niveau » dans une page allemande de fait anglaise. L'adresse porte la langue
+en clair maintenant.
+
+**Un échec non reproduit, et il est écrit tel quel.** Le premier test de
+`profil-public.spec.ts` est tombé une fois dans une exécution à trois fichiers,
+et l'exécution suivante des mêmes trois fichiers rend 23 sur 23. Je ne sais pas
+le nommer, et « ça repasse » n'est pas un diagnostic — c'est noté pour qu'une
+récidive se reconnaisse au lieu de se redécouvrir.
+
 ### Campagne de clôture du 4 septembre, et l'historique d'un compte NEUF
 Passée après les six versions de la nuit, sur un compte de mesure fraîchement
 ouvert.

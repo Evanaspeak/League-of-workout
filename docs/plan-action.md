@@ -145,14 +145,14 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
 
 ### Progression et récompenses
-*8 à faire · 1 faits.* Les paliers existent. Tout ce qui les entoure reste à faire.
+*6 à faire · 3 faits.* Les paliers existent, et depuis V364 le niveau de compte et le titre.
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 146 | Les paliers cumulés, annoncés au franchissement | — |
 | [ ] | 147 | Des badges | 1 nuit |
-| [ ] | 148 | Un niveau de compte, séparé du niveau de force | 1 nuit |
-| [ ] | 149 | Un titre affiché à côté du pseudo, gagné par l'usage | 1 nuit |
+| [x] | 148 | Un niveau de compte, séparé du niveau de force | 1 nuit |
+| [x] | 149 | Un titre affiché à côté du pseudo, gagné par l'usage | 1 nuit |
 | [ ] | 150 | Des cosmétiques : couleurs, cadres, thèmes | 2 nuits |
 | [ ] | 151 | Un thème visuel par jeu | 1 nuit |
 | [ ] | 152 | Progression physique ET volume, les deux | 1 nuit |

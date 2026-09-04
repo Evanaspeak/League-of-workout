@@ -3,7 +3,10 @@ import {
 } from "@/lib/profilAmi";
 
 const TOTAL = { pseudo: "Alice", points: 120, enRetard: false, joursDeRetard: 0 };
-const DETAIL = { parties: 42, serie: 3, meilleureSerie: 9, jeuFavori: "League of Legends" };
+const DETAIL = {
+  parties: 42, serie: 3, meilleureSerie: 9, jeuFavori: "League of Legends",
+  niveau: 12, titre: "regulier",
+};
 
 describe("le réglage de partage", () => {
   /**
@@ -45,6 +48,24 @@ describe("ce qui repart", () => {
     const a = Object.keys(composerProfil("total", TOTAL, DETAIL));
     const b = Object.keys(composerProfil("detail", TOTAL, DETAIL));
     expect(b.length).toBeGreaterThan(a.length);
+  });
+
+  /**
+   * Le titre est un RÉSUMÉ du détail, donc il en fait partie.
+   *
+   * « Increvable » dit une série de trente jours — le chiffre même que le
+   * mode « total » existe pour taire. Le laisser passer serait défaire le
+   * réglage par une porte plus discrète, et personne ne s'en apercevrait :
+   * le titre fait un mot et il est flatteur.
+   */
+  it("le titre et le niveau ne sortent JAMAIS en mode total", () => {
+    const p = composerProfil("total", TOTAL, DETAIL);
+    expect(p).not.toHaveProperty("titre");
+    expect(p).not.toHaveProperty("niveau");
+    // Le témoin : ils sortent bien quand la personne l'autorise, sinon le
+    // contrôle ci-dessus serait vrai d'une fonction qui ne les rend jamais.
+    const q = composerProfil("detail", TOTAL, DETAIL);
+    expect(q).toMatchObject({ titre: "regulier", niveau: 12 });
   });
 
   it("le retard voyage dans les deux cas : c'est ce que le classement montre déjà", () => {

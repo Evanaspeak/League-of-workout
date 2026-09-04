@@ -25,7 +25,10 @@ export async function GET() {
     }),
     prisma.paiement.findMany({
       where: { userId: user.id },
-      select: { jour: true },
+      // `points` s'ajoute au MÊME select : le niveau se calcule sur l'effort
+      // PAYÉ, et une colonne de plus sur une requête qu'on fait déjà ne coûte
+      // rien, là où un agrégat séparé serait un aller-retour de plus vers Neon.
+      select: { jour: true, points: true },
       orderBy: { jour: "desc" },
       take: 800,
     }),
@@ -35,5 +38,6 @@ export async function GET() {
     totalPoints: agregat._sum.pompesCalculees ?? 0,
     parties: agregat._count._all ?? 0,
     jours: paiements.map((p) => p.jour),
+    pointsPayes: paiements.reduce((somme, p) => somme + p.points, 0),
   }));
 }
