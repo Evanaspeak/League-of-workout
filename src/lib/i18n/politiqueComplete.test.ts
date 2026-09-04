@@ -68,6 +68,25 @@ const ATTENDU: Record<string, RegExp> = {
   poids: /poids/i,
   taille: /taille/i,
   sportsHoursPerWeek: /heures de sport/i,
+  /**
+   * Le corps et les calories (étape 05).
+   *
+   * Quatre lignes de politique couvrent onze champs, et c'est le bon
+   * découpage : une ligne par ce qu'on FAIT de la donnée, pas une par colonne.
+   * Le tableau s'adresse à quelqu'un qui veut savoir ce qu'on garde et
+   * pourquoi ; l'égrener colonne par colonne le rendrait illisible sans rien
+   * dire de plus.
+   */
+  formuleCalorique: /objectif calorique/i,
+  niveauActivite: /objectif calorique/i,
+  modeCalorique: /objectif calorique/i,
+  poidsCible: /objectif calorique/i,
+  tourTaille: /mètre-ruban/i,
+  tourCou: /mètre-ruban/i,
+  tourHanches: /mètre-ruban/i,
+  pesees: /pesées/i,
+  rappelPeseeActif: /rappel de pesée/i,
+  rappelPeseeLe: /rappel de pesée/i,
   pompesMax: /nombre maximum de pompes/i,
   // Une seule ligne du tableau décrit les deux dates : c'est la même réponse,
   // acceptée ou refusée, et l'article 7.1 impose de pouvoir la prouver.

@@ -61,6 +61,29 @@ const NE_SORTENT_PAS = [
   // l'onglet réseau, par quel compte celui-ci est arrivé. Aucun écran ne le
   // demande.
   "parrainId",
+  /**
+   * Le corps, et ce qu'on en fait (étape 05).
+   *
+   * Neuf colonnes qui sont des données de SANTÉ au sens de l'article 9 : la
+   * variante de formule, le niveau d'activité, le mode poursuivi, le poids
+   * visé, les trois mesures du mètre-ruban et le rappel de pesée. Aucune n'a
+   * de raison de traverser la réponse que la navigation lit à chaque page, et
+   * `comptePublic` sert précisément les routes de DIFFUSION — la source OBS
+   * s'affiche par-dessus un stream, devant le public de quelqu'un d'autre.
+   *
+   * Elles se demandent par `/api/settings`, derrière la porte, avec le reste
+   * des réglages. Et elles figurent à l'export de l'article 20, qui couvre
+   * tout ce qu'on garde et pas seulement ce qu'on affiche.
+   */
+  "formuleCalorique",
+  "niveauActivite",
+  "modeCalorique",
+  "poidsCible",
+  "tourTaille",
+  "tourCou",
+  "tourHanches",
+  "rappelPeseeActif",
+  "rappelPeseeLe",
 ] as const;
 
 type Secret = (typeof NE_SORTENT_PAS)[number];
