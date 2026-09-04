@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nomPublie } from "@/lib/nomAffiche";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { composerProfil, toPartage } from "@/lib/profilAmi";
@@ -52,7 +53,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const [compte, sommeSemaine, parties, jours, favori] = await Promise.all([
     prisma.user.findUnique({
       where: { id },
-      select: { id: true, pseudo: true, detteDepuis: true, dettePointsDus: true, partageAmis: true },
+      select: { id: true, pseudo: true, riotId: true, nomAffiche: true, detteDepuis: true, dettePointsDus: true, partageAmis: true },
     }),
     prisma.paiement.aggregate({
       where: { userId: id, jour: { gte: debut, lte: aujourdhui } },
@@ -81,7 +82,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   return NextResponse.json(composerProfil(
     toPartage(compte.partageAmis),
     {
-      pseudo: compte.pseudo,
+      // Le nom montré aux autres : réponse 128.
+      pseudo: nomPublie(compte),
       points: Math.max(0, sommeSemaine._sum.points ?? 0),
       enRetard: retard.enRetard,
       joursDeRetard: retard.jours,

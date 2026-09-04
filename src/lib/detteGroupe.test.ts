@@ -62,6 +62,17 @@ describe("ce que l'équipe doit", () => {
     expect(d.masques).toBe(0);
   });
 
+  test("montre le nom que chacun a CHOISI", () => {
+    const d = composerDetteEquipe(
+      [
+        { id: "a", pseudo: "Ana", riotId: "AnaLoL#EUW", nomAffiche: "riot", dettePointsDus: 30, fantome: false },
+        { id: "b", pseudo: "Bob", riotId: "BobLoL#EUW", nomAffiche: "pseudo", dettePointsDus: 10, fantome: false },
+      ],
+      "a",
+    );
+    expect(d.lignes.map((l) => l.pseudo)).toEqual(["AnaLoL", "Bob"]);
+  });
+
   test("une dette négative s'affiche à zéro", () => {
     const d = composerDetteEquipe([membre("a", "Ana", -5)], "a");
     expect(d.lignes[0].dus).toBe(0);

@@ -200,6 +200,23 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update).not.toHaveBeenCalled();
   });
 
+  it("enregistre le nom montré aux autres", async () => {
+    const r = await put({ userPrefs: { nomAffiche: "riot" } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.nomAffiche).toBe("riot");
+  });
+
+  /**
+   * Refusé plutôt que ramené au défaut. Le défaut est le plus fermé, donc une
+   * conversion serait sûre — mais elle enregistrerait « pseudo » pour
+   * quelqu'un qui vient de demander « riot », et il croirait avoir ouvert.
+   */
+  it("refuse une valeur non prévue pour le nom montré", async () => {
+    const r = await put({ userPrefs: { nomAffiche: "twitch" } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
   it("ouvrir le profil public tire un jeton, et le rend à l'écran", async () => {
     // L'écran ne peut pas le fabriquer : il est tiré au serveur. Sans lui dans
     // la réponse, il faudrait un second appel pour lire une valeur qu'on vient

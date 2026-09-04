@@ -42,6 +42,21 @@ describe("classer", () => {
    * comparant aucun pseudo : c'est exactement le test qui passait déjà avant
    * la règle qu'il prétend éprouver, et il a été écrit deux fois sur ce projet.
    */
+  it("montre le nom que chacun a CHOISI, pas celui du compte", () => {
+    // Réponse 128 : le pseudo Riot relie ce compte à une identité extérieure.
+    // Un classement qui le publierait sans qu'on l'ait demandé est exactement
+    // ce que le réglage existe pour empêcher.
+    const lignes = classer(
+      [
+        compte("a", "Ana", { riotId: "AnaLoL#EUW", nomAffiche: "riot" }),
+        compte("b", "Bob", { riotId: "BobLoL#EUW", nomAffiche: "pseudo" }),
+      ],
+      new Map([["a", 10], ["b", 5]]),
+      "a",
+    );
+    expect(lignes.map((l) => l.pseudo)).toEqual(["AnaLoL", "Bob"]);
+  });
+
   it("à égalité, range par pseudo, et pas dans l'ordre reçu", () => {
     const lignes = classer(
       [compte("z", "Zoé"), compte("m", "Milo"), compte("a", "Alice")],

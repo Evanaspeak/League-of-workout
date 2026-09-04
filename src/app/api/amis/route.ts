@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { nomPublie } from "@/lib/nomAffiche";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { validerPseudo } from "@/lib/identite";
@@ -19,7 +20,7 @@ import {
  * plus cher : ce ne sont plus les données de celui qui demande.
  */
 
-const PERSONNE = { select: { id: true, pseudo: true } } as const;
+const PERSONNE = { select: { id: true, pseudo: true, riotId: true, nomAffiche: true } } as const;
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -56,8 +57,22 @@ export async function GET() {
     }),
   ]);
 
-  const autre = (l: { demandeurId: string; demandeur: { id: string; pseudo: string }; receveur: { id: string; pseudo: string } }) =>
+  type Personne = { id: string; pseudo: string | null; riotId: string | null; nomAffiche: string | null };
+  const autre = (l: { demandeurId: string; demandeur: Personne; receveur: Personne }) =>
     l.demandeurId === user.id ? l.receveur : l.demandeur;
+
+  /**
+   * Ce qui SORT d'une personne : son identifiant et le nom qu'elle a choisi de
+   * montrer. Rien d'autre.
+   *
+   * L'écriture précédente était `{ lien: l.id, ...autre(l) }` — un étalement,
+   * donc tout ce que le `select` ramène. Depuis que celui-ci porte `riotId` et
+   * `nomAffiche` pour appliquer le choix, l'étalement aurait publié le pseudo
+   * Riot de tout le monde, y compris de ceux qui viennent de demander l'inverse.
+   * C'est le défaut déjà corrigé sur le compte par `comptePublic` : un
+   * `{ ...ligne }` publie tout ce qu'on lui remet.
+   */
+  const vue = (p: Personne) => ({ id: p.id, pseudo: nomPublie(p) });
 
   return NextResponse.json({
     /**
@@ -68,11 +83,11 @@ export async function GET() {
      */
     amis: liens
       .filter((l) => l.etat === "acceptee")
-      .map((l) => ({ lien: l.id, ...autre(l) })),
+      .map((l) => ({ lien: l.id, ...vue(autre(l)) })),
     /** Les demandes qu'on a reçues : ce sont les seules auxquelles on répond. */
     recues: liens
       .filter((l) => l.etat === "attente" && l.receveurId === user.id)
-      .map((l) => ({ lien: l.id, ...l.demandeur })),
+      .map((l) => ({ lien: l.id, ...vue(l.demandeur) })),
     /**
      * Celles qu'on a envoyées. Les montrer sert à deux choses : savoir qu'on
      * n'a pas oublié de demander, et pouvoir annuler — sans quoi une demande
@@ -80,7 +95,7 @@ export async function GET() {
      */
     envoyees: liens
       .filter((l) => l.etat === "attente" && l.demandeurId === user.id)
-      .map((l) => ({ lien: l.id, ...l.receveur })),
+      .map((l) => ({ lien: l.id, ...vue(l.receveur) })),
     /**
      * Le code part à TOUS les membres, pas au seul propriétaire.
      *

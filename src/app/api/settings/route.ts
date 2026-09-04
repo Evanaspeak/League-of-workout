@@ -11,6 +11,7 @@ import { estLocale } from "@/lib/i18n/langues";
 import { estFuseauValide } from "@/lib/fuseau";
 import { PARTAGES, type Partage } from "@/lib/profilAmi";
 import { decisionProfilPublic } from "@/lib/profilPublic";
+import { NOMS, type ChoixNom } from "@/lib/nomAffiche";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -78,6 +79,7 @@ export async function PUT(req: Request) {
        */
       jetonProfil?: string | null;
       partageAmis?: string;
+      nomAffiche?: string;
       sessionAuto?: string;
     } = {};
 
@@ -174,6 +176,22 @@ export async function PUT(req: Request) {
      * « détail », et il croirait avoir ouvert quand il a fermé. Un réglage
      * qu'on ne peut pas vérifier doit dire quand il n'a pas pris.
      */
+    /**
+     * Le nom montré aux autres (réponse 128).
+     *
+     * Refusé si la valeur n'est pas prévue, jamais ramené au défaut. Le défaut
+     * est le plus fermé, donc une conversion silencieuse serait SÛRE — mais
+     * elle enregistrerait « pseudo » pour quelqu'un qui vient de demander
+     * « riot », et il croirait avoir ouvert quand il a fermé. C'est la règle
+     * déjà posée pour le partage aux amis.
+     */
+    if (body.userPrefs.nomAffiche !== undefined) {
+      if (!NOMS.includes(body.userPrefs.nomAffiche as ChoixNom)) {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.nomAffiche = body.userPrefs.nomAffiche;
+    }
+
     if (body.userPrefs.partageAmis !== undefined) {
       if (!PARTAGES.includes(body.userPrefs.partageAmis as Partage)) {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });

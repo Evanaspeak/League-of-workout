@@ -53,6 +53,9 @@ const PART_AU_NAVIGATEUR = new Set([
   "fantome",
   // Ce qu'un ami a le droit de voir : même chose, c'est un réglage.
   "partageAmis",
+  // Le nom montré aux autres : même chose. Il sort du compte parce que
+  // l'écran des réglages doit pouvoir l'afficher et le changer.
+  "nomAffiche",
   "exercicesSuspendus", "suspensionDepuis",
   "langue", "bilanActif", "bilanLe", "relanceLe", "rappelLe", "fuseau",
   "variantePompes", "exercice", "exercices",

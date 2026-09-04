@@ -1,3 +1,4 @@
+import { nomPublie } from "@/lib/nomAffiche";
 /**
  * La dette commune d'une équipe.
  *
@@ -47,6 +48,8 @@ export type DetteEquipe = {
 type MembreBrut = {
   id: string;
   pseudo: string | null;
+  riotId?: string | null;
+  nomAffiche?: string | null;
   dettePointsDus: number;
   fantome: boolean;
 };
@@ -72,7 +75,8 @@ export function composerDetteEquipe(membres: MembreBrut[], moiId: string): Dette
   const visibles = membres.filter((m) => !m.fantome || m.id === moiId);
   const lignes: LigneEquipe[] = visibles.map((m) => ({
     id: m.id,
-    pseudo: m.pseudo ?? "",
+    // Le nom montré aux autres, pas celui du compte : réponse 128.
+    pseudo: nomPublie(m),
     dus: Math.max(0, m.dettePointsDus),
     moi: m.id === moiId,
   }));

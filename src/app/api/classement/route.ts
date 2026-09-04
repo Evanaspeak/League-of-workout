@@ -74,7 +74,7 @@ export async function GET(req: Request) {
         id: { in: ids },
         OR: [{ fantome: false }, { id: user.id }],
       },
-      select: { id: true, pseudo: true, detteDepuis: true, dettePointsDus: true },
+      select: { id: true, pseudo: true, riotId: true, nomAffiche: true, detteDepuis: true, dettePointsDus: true },
     }),
     prisma.paiement.groupBy({
       by: ["userId"],
