@@ -54,7 +54,25 @@ test("le corps est éteint au départ, et s'allume avec un objectif chiffré", a
    * calculer ici plutôt que de chercher « kcal » distingue « le panneau
    * s'affiche » de « le panneau dit la bonne chose ».
    */
-  await expect(page.getByText(/2207 kcal/)).toBeVisible({ timeout: 10_000 });
+  /**
+   * Le nombre se lit en CHIFFRES, pas en chaîne.
+   *
+   * Il s'écrivait « 2207 » et il s'écrit maintenant « 2 207 » en français,
+   * « 2.207 » en allemand — c'est la correction du point décimal et des
+   * séparateurs. Un parcours qui compare une chaîne est lié à la typographie
+   * de la langue où il a été écrit ; c'est la troisième fois que ce projet le
+   * paie, après l'effort du classement et le compte de parties. On retient
+   * donc les chiffres de la ligne, ce qui vaut dans les six langues et reste
+   * impossible à satisfaire par accident.
+   */
+  // « kcal » tout court attrape d'abord l'aide qui explique l'écart de 166 kcal
+  // entre les deux variantes de formule. C'est la LIGNE DE L'OBJECTIF qu'on
+  // veut, et son gabarit la nomme : « X kcal par jour ».
+  const ligne = page.getByText(/kcal par jour|kcal per day/).first();
+  await expect(ligne).toBeVisible({ timeout: 10_000 });
+  await expect
+    .poll(async () => ((await ligne.textContent()) ?? "").replace(/\D/g, ""))
+    .toBe("2207");
 
   // Réponse 016 : aucune date n'est promise, et l'écran dit pourquoi.
   await expect(page.getByText(/7 700|7,700/)).toBeVisible();

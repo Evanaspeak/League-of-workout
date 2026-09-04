@@ -1126,6 +1126,43 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### La suite entière après huit versions, et le seul parcours qui tombe est celui qui a vieilli
+Huit versions ont traversé `main` cette nuit — V422 à V429 — dont cinq qui
+touchent des libellés que des parcours LISENT. La suite complète n'avait pas
+été rejouée depuis. Elle l'a été : **223 passés, un échec, deux non joués**,
+en 11 min 48 à deux workers.
+
+L'échec est `e2e/corps.spec.ts`, et c'est le parcours qui a vieilli, pas le
+produit : il cherchait `/2207 kcal/` et l'écran écrit maintenant
+« 2 207 kcal ». **C'est la troisième fois que ce projet paie exactement cette
+leçon** — après l'effort du classement, puis le compte de parties : mettre un
+nombre en forme change la façon dont un test doit le lire, et un parcours qui
+compare une chaîne est lié à la typographie de la langue où il a été écrit.
+
+Il retient donc les chiffres de la ligne, comme `e2e/social.spec.ts` depuis sa
+propre correction.
+
+**Et ma première réparation lisait la mauvaise ligne**, ce que seul le
+message d'échec a dit : `getByText(/kcal/)` attrape d'abord l'aide qui explique
+l'écart de 166 kcal entre les deux variantes de formule. Le contrôle rendait
+« 166 » — un chiffre juste, sur une phrase qui n'est pas celle qu'on éprouve.
+C'est le gabarit de l'objectif qui nomme sa ligne : « X kcal par jour ».
+
+**Le parcours réparé DISCRIMINE encore**, et c'est ce qui distingue une
+réparation d'un assouplissement : le déficit de perte passé de vingt à
+vingt-cinq pour cent le fait tomber. Sans ce contrôle, on aurait pu croire
+avoir réparé le test alors qu'on l'aurait seulement rendu muet.
+
+**Les deux non joués sont l'effet du mode série** : Playwright saute ce qui
+suit un échec dans le même fichier. Ils passent une fois le fichier réparé —
+trois sur trois.
+
+Une note d'outillage, sur ma façon de lancer : `npx playwright test | tail -30`
+retient TOUTE la sortie jusqu'à la fin. Lancée en arrière-plan, la suite n'a
+donc rien écrit pendant douze minutes, et il n'y avait aucun moyen de savoir où
+elle en était. Le `tail` se met après coup, sur un fichier de sortie complet,
+pas dans la commande.
+
 ### « IMC 24.7 » : le point décimal, et les quatre-vingts gabarits triés
 Le journal recensait « soixante-dix-sept gabarits qui interpolent un nombre »
 sans les avoir repris, en écrivant que « la plupart ne sont jamais atteints par
