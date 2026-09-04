@@ -45,7 +45,7 @@ jobs:
       PASSE: ${{ secrets.SAUVEGARDE_PASSPHRASE }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Des secrets absents ne sont pas une sauvegarde qui échoue : c'est une
       # sauvegarde qui n'a pas encore été configurée. La distinction compte,
@@ -193,7 +193,7 @@ jobs:
             --output /tmp/sauvegarde/base.dump.gpg /tmp/sauvegarde/base.dump
           rm -f /tmp/sauvegarde/base.dump
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.secrets.outputs.prets == 'oui'
         with:
           name: base-${{ github.run_id }}

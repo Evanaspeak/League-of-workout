@@ -21,9 +21,9 @@ jobs:
         working-directory: desktop
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # Node 20 n'est plus maintenu. electron-builder 26 et Electron 43
           # sont testés sur 22 : c'est la version qui compile ici comme chez

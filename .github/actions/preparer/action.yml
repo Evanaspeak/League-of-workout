@@ -16,7 +16,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v7
       with:
         node-version: 22
         cache: npm
@@ -34,7 +34,7 @@ runs:
     # restaurent une archive depuis le cache de GitHub, qui est bien plus près
     # que le registre.
     - id: modules
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: node_modules
         key: modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
@@ -56,7 +56,7 @@ runs:
     # Playwright. `--with-deps` installe en plus des paquets système qui, eux,
     # ne se cachent pas — d'où l'étape qui reste, bien plus courte.
     - if: inputs.navigateur == 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
         key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
@@ -100,7 +100,7 @@ runs:
 
     # Le cache de construction de Next. La clé porte le commit pour qu'un
     # changement de source reparte du plus proche parent plutôt que de rien.
-    - uses: actions/cache@v4
+    - uses: actions/cache@v6
       with:
         path: .next/cache
         key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
