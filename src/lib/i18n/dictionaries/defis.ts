@@ -9,6 +9,10 @@
  */
 export const defis = {
   fr: {
+    moisTitre: "Ce mois-ci",
+    moisAide: "Deux objectifs, remis à zéro le premier du mois.",
+    moisPoints: (n: number) => `Paie ${n} points d'effort`,
+    moisParties: (n: number) => `Enregistre ${n} parties`,
     titre: "Défi du jour",
     aide: "Il change chaque jour, et il vaut jusqu'à minuit.",
     fait: "Fait",
@@ -20,6 +24,10 @@ export const defis = {
     seances1: (n: number) => `Fais ${n} séance`,
   },
   en: {
+    moisTitre: "This month",
+    moisAide: "Two goals, reset on the first of the month.",
+    moisPoints: (n: number) => `Pay ${n} effort points`,
+    moisParties: (n: number) => `Log ${n} games`,
     titre: "Daily challenge",
     aide: "It changes every day, and it stands until midnight.",
     fait: "Done",
@@ -31,6 +39,10 @@ export const defis = {
     seances1: (n: number) => `Do ${n} session`,
   },
   es: {
+    moisTitre: "Este mes",
+    moisAide: "Dos objetivos, reiniciados el día uno de cada mes.",
+    moisPoints: (n: number) => `Paga ${n} puntos de esfuerzo`,
+    moisParties: (n: number) => `Registra ${n} partidas`,
     titre: "Reto del día",
     aide: "Cambia cada día y vale hasta medianoche.",
     fait: "Hecho",
@@ -42,6 +54,10 @@ export const defis = {
     seances1: (n: number) => `Haz ${n} sesión`,
   },
   de: {
+    moisTitre: "Diesen Monat",
+    moisAide: "Zwei Ziele, am Monatsersten zurückgesetzt.",
+    moisPoints: (n: number) => `Zahle ${n} Aufwandspunkte`,
+    moisParties: (n: number) => `Trage ${n} Partien ein`,
     titre: "Tagesaufgabe",
     aide: "Sie wechselt täglich und gilt bis Mitternacht.",
     fait: "Erledigt",
@@ -53,6 +69,10 @@ export const defis = {
     seances1: (n: number) => `Absolviere ${n} Einheit`,
   },
   zh: {
+    moisTitre: "本月",
+    moisAide: "两个目标，每月一号重置。",
+    moisPoints: (n: number) => `偿还 ${n} 点努力值`,
+    moisParties: (n: number) => `记录 ${n} 场对局`,
     titre: "每日挑战",
     aide: "每天更换，有效至当日结束。",
     fait: "已完成",
@@ -64,6 +84,10 @@ export const defis = {
     seances1: (n: number) => `完成 ${n} 次训练`,
   },
   ja: {
+    moisTitre: "今月",
+    moisAide: "目標は 2 つ。毎月 1 日にリセットされます。",
+    moisPoints: (n: number) => `努力ポイントを ${n} 返す`,
+    moisParties: (n: number) => `${n} 試合を記録する`,
     titre: "今日のチャレンジ",
     aide: "毎日変わり、その日のうちだけ有効です。",
     fait: "達成",

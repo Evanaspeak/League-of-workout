@@ -5,6 +5,7 @@ import { estJourValide, jourLocal } from "@/lib/serie";
 import { reponseBadges, reponseSerie } from "@/lib/progression";
 import { composerExploits } from "@/lib/exploits";
 import { avancementDefi, defiDuJour } from "@/lib/defiQuotidien";
+import { debutDuMois, defisDuMois, moisDuJour } from "@/lib/defiMensuel";
 
 /**
  * Les paliers et la série, en un seul aller-retour.
@@ -35,7 +36,7 @@ export async function GET(req: Request) {
   const demande = new URL(req.url).searchParams.get("jour");
   const aujourdhui = estJourValide(demande) ? demande : jourLocal();
 
-  const [agregat, paiements, partiesDuJour] = await Promise.all([
+  const [agregat, paiements, partiesDuMois] = await Promise.all([
     prisma.game.aggregate({
       // Même raison que dans `/api/badges`, dont cette route reprend le calcul.
       where: { userId: user.id, sansEnjeu: false },
@@ -54,8 +55,13 @@ export async function GET(req: Request) {
       take: 800,
     }),
     /**
-     * Les parties du jour, et elles seules : c'est le seul aller-retour que le
-     * défi quotidien ajoute, et il porte sur une poignée de lignes.
+     * Les parties du MOIS, une seule fois, pour les deux défis.
+     *
+     * Le défi du jour a besoin de celles d'aujourd'hui, ceux du mois de toutes
+     * celles du mois. Le mois CONTIENT le jour : une requête suffit, et la
+     * journée se découpe ensuite en mémoire. Deux requêtes auraient coûté deux
+     * allers-retours vers Neon pour des lignes dont l'une est un sous-ensemble
+     * de l'autre.
      *
      * Les bornes sont en UTC, comme dans `/api/dashboard/daily` qui découpe
      * déjà les journées ainsi. C'est une approximation pour qui joue loin du
@@ -67,11 +73,11 @@ export async function GET(req: Request) {
         userId: user.id,
         sansEnjeu: false,
         date: {
-          gte: new Date(`${aujourdhui}T00:00:00.000Z`),
+          gte: debutDuMois(aujourdhui) ?? new Date(`${aujourdhui}T00:00:00.000Z`),
           lte: new Date(`${aujourdhui}T23:59:59.999Z`),
         },
       },
-      select: { result: true, jeu: true },
+      select: { result: true, jeu: true, date: true },
     }),
   ]);
 
@@ -103,6 +109,9 @@ export async function GET(req: Request) {
      */
     defi: (() => {
       const paiementsDuJour = paiements.filter((p) => p.jour === aujourdhui);
+      const partiesDuJour = partiesDuMois.filter(
+        (g) => g.date.toISOString().slice(0, 10) === aujourdhui,
+      );
       return {
         ...avancementDefi(defiDuJour(aujourdhui), {
           partiesDuJour: partiesDuJour.length,
@@ -112,6 +121,26 @@ export async function GET(req: Request) {
           seancesDuJour: paiementsDuJour.length,
         }),
       };
+    })(),
+    /**
+     * Les deux défis du mois (ligne 131).
+     *
+     * Le mois se lit sur le PRÉFIXE du jour côté paiements, qui portent déjà
+     * une date locale, et sur la borne UTC côté parties, qui portent un
+     * instant. Les deux découpages ne coïncident pas exactement, et c'est
+     * assumé : c'est déjà le cas partout ailleurs, et une troisième règle
+     * n'arrangerait rien.
+     */
+    defisMois: (() => {
+      const prefixe = moisDuJour(aujourdhui);
+      return defisDuMois({
+        pointsPayesDuMois: prefixe
+          ? paiements
+            .filter((p) => p.jour.startsWith(prefixe) && p.jour <= aujourdhui)
+            .reduce((somme, p) => somme + p.points, 0)
+          : 0,
+        partiesDuMois: partiesDuMois.length,
+      });
     })(),
   });
 }

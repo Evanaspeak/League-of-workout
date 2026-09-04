@@ -117,9 +117,14 @@ describe("la progression", () => {
       { jour: "2026-09-02", points: 120 },
       { jour: "2026-08-14", points: 9000 },
     ]);
+    // Deux parties le jour demandé, une troisième plus tôt dans le MOIS : la
+    // requête ne rend plus le jour mais le mois, et c'est la page qui
+    // redécoupe. Sans cette troisième ligne, rien ne dirait que le découpage
+    // se fait, puisque mois et jour rendraient le même compte.
     base.game.findMany.mockResolvedValue([
-      { result: "V", jeu: "League of Legends" },
-      { result: "D", jeu: "Apex Legends" },
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-02T20:00:00.000Z") },
+      { result: "D", jeu: "Apex Legends", date: new Date("2026-09-02T21:00:00.000Z") },
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-01T18:00:00.000Z") },
     ]);
     const c = await corps(await GET(requete("/api/progression?jour=2026-09-02"))) as {
       defi: { cle: string; cible: number; ou: number; fait: boolean };
@@ -140,8 +145,68 @@ describe("la progression", () => {
     // parties, sinon celles d'hier compteraient.
     const ou = base.game.findMany.mock.calls[0][0].where;
     expect(ou.userId).toBeDefined();
-    expect(ou.date.gte.toISOString()).toBe("2026-09-02T00:00:00.000Z");
+    // La requête part au PREMIER du mois, et la journée se redécoupe ensuite.
+    expect(ou.date.gte.toISOString()).toBe("2026-09-01T00:00:00.000Z");
+    expect(ou.date.lte.toISOString()).toBe("2026-09-02T23:59:59.999Z");
     expect(ou.sansEnjeu).toBe(false);
+  });
+
+  it("compte le MOIS pour les défis mensuels, et le JOUR pour celui du jour", async () => {
+    /**
+     * Le contrôle qui distingue les deux découpages, et il ne peut le faire
+     * que parce que le double rend trois parties dont une hors de la journée.
+     * Un défi mensuel qui compterait le jour, ou un défi quotidien qui
+     * compterait le mois, rendrait ici le même chiffre des deux côtés.
+     */
+    base.paiement.findMany.mockResolvedValue([
+      { jour: "2026-09-02", points: 120 },
+      { jour: "2026-08-14", points: 9000 },
+    ]);
+    base.game.findMany.mockResolvedValue([
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-02T20:00:00.000Z") },
+      { result: "D", jeu: "Apex Legends", date: new Date("2026-09-02T21:00:00.000Z") },
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-01T18:00:00.000Z") },
+    ]);
+    const c = await corps(await GET(requete("/api/progression?jour=2026-09-02"))) as {
+      defi: { cle: string; ou: number };
+      defisMois: { cle: string; ou: number }[];
+    };
+    const parties = c.defisMois.find((d) => d.cle === "moisParties");
+    expect(parties?.ou).toBe(3);
+    // Cent vingt le 2 septembre, neuf mille le 14 AOÛT : le mois n'en compte
+    // que cent vingt.
+    expect(c.defisMois.find((d) => d.cle === "moisPoints")?.ou).toBe(120);
+    // Et le défi du JOUR, lui, ne voit que les deux parties du 2 septembre.
+    // C'est le même jeu de données : le contrôle ne vaut que par l'écart.
+    expect(c.defi.cle).toBe("paye300");
+    expect(c.defi.ou).toBe(120);
+  });
+
+  it("le défi du JOUR ne compte pas les parties du reste du mois", async () => {
+    /**
+     * Le 8 septembre 2026 tombe sur « enregistre 3 parties », et c'est ce qui
+     * rend le contrôle possible : sur une date dont le défi porte sur les
+     * PAIEMENTS, le découpage des parties ne changerait rien et le sabotage
+     * passerait au vert — ce qu'il a fait au premier essai.
+     *
+     * Deux parties le 8, trois autres plus tôt dans le mois : le défi du jour
+     * en voit deux, celui du mois en voit cinq.
+     */
+    base.game.findMany.mockResolvedValue([
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-08T20:00:00.000Z") },
+      { result: "D", jeu: "Apex Legends", date: new Date("2026-09-08T21:00:00.000Z") },
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-01T18:00:00.000Z") },
+      { result: "V", jeu: "League of Legends", date: new Date("2026-09-02T18:00:00.000Z") },
+      { result: "D", jeu: "League of Legends", date: new Date("2026-09-03T18:00:00.000Z") },
+    ]);
+    const c = await corps(await GET(requete("/api/progression?jour=2026-09-08"))) as {
+      defi: { cle: string; ou: number; cible: number; fait: boolean };
+      defisMois: { cle: string; ou: number }[];
+    };
+    expect(c.defi.cle).toBe("parties3");
+    expect(c.defi.ou).toBe(2);
+    expect(c.defi.fait).toBe(false);
+    expect(c.defisMois.find((d) => d.cle === "moisParties")?.ou).toBe(5);
   });
 
   it("filtre par compte des deux côtés", async () => {

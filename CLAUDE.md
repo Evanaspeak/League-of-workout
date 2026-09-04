@@ -989,6 +989,54 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les défis du mois, et une ligne qu'on ne peut pas faire seul
+Ligne 131, réponse « en volume ET en nombre de parties » : deux objectifs
+mensuels, montrés ensemble. C'est ce qui les distingue du défi du jour, qui
+change tous les jours et n'en montre qu'un — un mois est assez long pour qu'on
+ne se souvienne pas d'un objectif vu une fois, donc il faut qu'il soit toujours
+là.
+
+**La ligne 137 ne se fait PAS, et la raison est écrite plutôt que contournée.**
+Elle demande « trois niveaux, récompenses exponentielles, et pour les niveaux
+moyen et difficile des malus si échoué ». Or la réponse 139 — « qu'est-ce qu'on
+gagne à finir un défi ? » — dit **« à voir »**. Une échelle de récompenses
+exponentielle suppose une monnaie qui n'existe pas, et un malus dans ce produit
+veut dire de la dette AJOUTÉE sans qu'aucune partie ne l'ait produite : les
+deux se décident avec le propriétaire, pas ici. Ce qui est construit est donc
+l'objectif seul — il se voit, il se poursuit, il se termine — et les niveaux
+viendront se poser dessus le jour où on saura ce qu'ils donnent. La case du
+plan porte la mention.
+
+**Une requête de moins, pas une de plus.** Le défi du jour avait besoin des
+parties d'aujourd'hui, ceux du mois de toutes celles du mois. Le mois CONTIENT
+le jour : une seule requête suffit, et la journée se redécoupe en mémoire.
+Écrire les deux aurait coûté deux allers-retours vers Neon pour des lignes dont
+l'une est un sous-ensemble de l'autre.
+
+**Un mois faux ne fait tomber aucune requête, et c'est ce qui le rend
+dangereux.** « 2026-13-01 » a la forme d'une date et n'existe pas ; employé
+comme préfixe, il ne compterait simplement jamais aucun paiement, et l'objectif
+du mois resterait à zéro pour toujours sans que rien ne le dise. C'est la
+famille du défaut déjà corrigé deux fois sur `estJourValide`, sous une
+troisième forme : ici il ne faut pas l'aller-retour d'une date, il faut le
+contrôle du mois pour lui-même.
+
+**Le sabotage a de nouveau trouvé un jeu de données qui ne distingue rien.**
+« le défi du jour compte tout le mois » est passé au vert : le 2 septembre 2026
+tombe sur un défi de PAIEMENT, donc le découpage des parties n'y change rien.
+Il fallait une date dont le défi porte sur les parties — le 8 septembre, «
+enregistre 3 parties » — avec deux parties ce jour-là et trois autres plus tôt
+dans le mois. C'est la troisième fois cette nuit que le même défaut se
+présente : **un test peut porter sur la bonne propriété et n'avoir aucune
+donnée capable de la mettre en défaut.**
+
+**Et la barre de progression est écrite une seule fois** pour le jour et pour
+le mois. Écrite deux fois, elle aurait fini par diverger — c'est le motif
+trouvé six fois sur ce projet, et il ne prend jamais la forme d'une copie qu'on
+remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
+
+Six sabotages, six échecs après correction.
+
 ### Les deux onglets du classement, et un écart à l'ordre du plan
 Ligne 144, réponse « les deux onglets ». **Et c'est un écart à l'ordre de
 l'étape 04**, qui dit de faire les défis mensuels avant tout le reste : cette
