@@ -783,7 +783,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 211 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 212 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -2267,6 +2267,52 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 « le code ne s'affiche pas » — le troisième déguisement de cette panne-là
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
+
+### Le mur ouvert n'avait aucun test navigateur, et le sabotage a corrigé le mien
+C'est la PREMIÈRE surface du produit où un compte voit le pseudo et l'effort de
+quelqu'un avec qui il n'a aucun lien. Partout ailleurs il faut une amitié
+acceptée des deux côtés ; ici il suffit d'avoir un compte. Ce qu'il publie
+tient donc entièrement à deux conditions lues en base — `recordsPublics` et
+`fantome` — et une seule des deux qui saute publie quelqu'un qui avait demandé
+l'inverse.
+
+Les tests de route disent ce que la route décide. Ils ne disent rien de ce qui
+se joue ENTRE comptes : que le réglage cliqué par l'un ressorte sur l'écran de
+l'autre, et que celui qui n'a rien touché n'y soit nulle part. Quatre comptes,
+aucun ami de personne : un qui ouvre son mur **par l'écran de réglages**, un
+qui garde le défaut et paie PLUS, un qui ouvre le sien tout en se cachant et
+paie plus encore. Les chiffres sont plus gros exprès — si une condition saute,
+la ligne prend la première place et l'échec est franc.
+
+**Le troisième sabotage a corrigé mon commentaire.** J'avais écrit que le
+contrôle sur la RÉPONSE distingue « filtré en base » de « filtré à
+l'affichage ». Filtre déplacé dans le composant : c'est le contrôle de l'ÉCRAN
+qui tombe en premier. Le mur ne publie que le VAINQUEUR de chaque période, donc
+une ligne fermée qui traverse le réseau est forcément celle qui a pris la
+place, et la cacher laisse le mur vide. **Il n'existe aucun état où la réponse
+la porte et où l'écran reste juste**, et mon commentaire promettait le
+contraire. Il dit maintenant ce que le contrôle prouve — et pourquoi il n'est
+pas décoratif : il mordra le jour où ce mur publiera cinq lignes au lieu d'une.
+
+C'est la leçon déjà écrite trois fois cette nuit sous d'autres formes : **un
+test qui passe ne dit pas ce qu'il éprouve**, et seul le sabotage le dit. Ici
+il n'a pas trouvé un défaut du produit, il a trouvé une phrase fausse dans mon
+propre test — ce qui se relit comme une garantie et fait cesser de vérifier.
+
+Deux pièges d'écriture, tous deux déjà dans ce fichier. La rubrique des
+réglages s'ouvre par le FRAGMENT (`/settings#effort`) et non par un paramètre :
+`/settings` seul rend la liste, où le bouton n'existe pas. Et le mur a DEUX
+lignes gagnées par le même paiement — « ce mois-ci » et « depuis toujours » —
+donc `toBeVisible` tombait sur une violation du mode strict. Le compte exact
+plutôt qu'un `.first()` : il dit l'état réel, là où le premier trouvé passerait
+aussi bien avec une ligne qu'avec dix.
+
+Trois sabotages, trois échecs. Dix parcours au vert dans le fichier.
+
+**Et la ligne 087 du plan était la 148 sous un autre numéro** — « un système de
+niveau » demandé deux fois, à deux endroits de l'interrogatoire. Elle est
+cochée avec sa raison écrite, pour que personne n'aille chercher un second
+système de niveau qui n'existera jamais.
 
 ### Dépendances, au 3 septembre : une haute réellement corrigée
 `fast-uri` 3.0.0 à 3.1.5, quatre avis dont deux de falsification de requête

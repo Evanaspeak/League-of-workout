@@ -503,3 +503,114 @@ test("le panneau du classement n'est pas recréé à l'arrivée des données", a
 
   await ctx.close();
 });
+
+/**
+ * Le mur OUVERT, et pourquoi il ne se relit pas comme le reste.
+ *
+ * C'est la PREMIÈRE surface du produit où un compte voit le pseudo et
+ * l'effort de quelqu'un avec qui il n'a aucun lien. Partout ailleurs il faut
+ * une amitié acceptée des deux côtés ; ici il suffit d'avoir un compte. Ce que
+ * ça publie tient donc entièrement à deux conditions lues en base, et une
+ * seule des deux qui saute publie quelqu'un qui avait demandé l'inverse.
+ *
+ * Trois comptes, aucun ami de personne :
+ *
+ * - **ouvert** a ouvert son mur PAR L'ÉCRAN DE RÉGLAGES. C'est la moitié du
+ *   test qu'aucun test de route ne peut faire : le réglage traverse l'écran,
+ *   la route, la base, et ressort sur l'écran de QUELQU'UN D'AUTRE ;
+ * - **ferme** n'a rien touché — le défaut est le plus fermé — et paie PLUS.
+ *   Le chiffre est plus gros exprès : si la condition saute, il prend la
+ *   première place et l'échec est franc ;
+ * - **fantome** a ouvert son mur ET s'est retiré des classements. Le fantôme
+ *   passe AVANT : qui s'est caché ne revient pas par le mur. Il paie plus que
+ *   les deux autres, pour la même raison.
+ *
+ * Et le contrôle porte sur la RÉPONSE, pas seulement sur l'écran. Le filtre
+ * est en base, et c'est tout le propos : une ligne écartée à l'affichage
+ * traverserait quand même le réseau et figurerait dans l'onglet réseau de qui
+ * regarde — c'est-à-dire exactement là où quelqu'un a demandé à ne pas être.
+ * Un test qui ne lit que le tableau ne distingue pas les deux.
+ */
+test("le mur ouvert ne montre que ceux qui l'ont ouvert", async ({ browser }) => {
+  const moi = await ouvrirCompte(browser, "Voisin");
+  const ouvert = await ouvrirCompte(browser, "Ouvert");
+  const ferme = await ouvrirCompte(browser, "Ferme");
+  const cache = await ouvrirCompte(browser, "Cache");
+
+  // `ouvert` ouvre son mur depuis ses réglages, comme n'importe qui le ferait.
+  const ctxO = await browser.newContext({ storageState: ouvert.etat });
+  const pageO = await ctxO.newPage();
+  await pageO.goto("/dashboard");
+  await viderLesFenetres(pageO);
+  // La rubrique s'ouvre par le FRAGMENT, pas par un paramètre : le réglage du
+  // mur vit dans « Ton effort », et `/settings` seul rend la liste des
+  // rubriques, où le bouton n'existe pas.
+  await pageO.goto("/settings#effort");
+  const bouton = pageO.getByRole("button", { name: /ouvert à tous|open to all/i });
+  await expect(bouton).toBeVisible();
+  await bouton.click();
+  await expect(bouton).toHaveAttribute("aria-pressed", "true");
+  await ctxO.close();
+
+  // Le réglage est ARRIVÉ EN BASE : sans ce contrôle, un écran qui garde chez
+  // lui ce qu'on vient de cliquer passerait la moitié du test.
+  const [enBase] = await requeteSql<{ recordsPublics: boolean }>(
+    `SELECT "recordsPublics" FROM "User" WHERE pseudo = $1`, [ouvert.compte.pseudo]);
+  expect(enBase?.recordsPublics).toBe(true);
+
+  // `cache` ouvre le sien et se retire des classements : les deux à la fois.
+  await requeteSql(
+    `UPDATE "User" SET "recordsPublics" = true, fantome = true WHERE pseudo = $1`,
+    [cache.compte.pseudo]);
+
+  await requeteSql(PAYER, [jeton(), 300, jourLocalTest(), ouvert.compte.pseudo]);
+  await requeteSql(PAYER, [jeton(), 800, jourLocalTest(), ferme.compte.pseudo]);
+  await requeteSql(PAYER, [jeton(), 5000, jourLocalTest(), cache.compte.pseudo]);
+
+  const { ctx, page } = await ouvrirEcranAmis(browser, moi.etat);
+
+  /**
+   * Ce que l'écran montre : celui qui a ouvert, et son jour. DEUX fois — le
+   * mur a deux lignes, « ce mois-ci » et « depuis toujours », et son seul
+   * paiement tient les deux. Le compte exact plutôt qu'un `.first()` : il dit
+   * l'état réel, là où le premier trouvé passerait aussi bien avec une ligne
+   * qu'avec dix.
+   */
+  const mur = page.getByText(new RegExp(`${ouvert.compte.pseudo}.*300`));
+  await expect(mur).toHaveCount(2);
+  await expect(mur.first()).toBeVisible();
+
+  /**
+   * Et ce que le RÉSEAU porte.
+   *
+   * **Ce contrôle ne distingue PAS, aujourd'hui, « filtré en base » de
+   * « filtré à l'affichage »**, et c'est le sabotage qui l'a dit plutôt que la
+   * relecture. Le filtre déplacé dans le composant fait tomber le contrôle de
+   * l'ÉCRAN en premier : le mur ne publie que le VAINQUEUR de chaque période,
+   * donc une ligne fermée qui traverse le réseau est forcément celle qui a
+   * pris la place, et la cacher laisse le mur vide. Il n'existe pas d'état où
+   * la réponse la porte et où l'écran reste juste.
+   *
+   * Il n'est pas décoratif pour autant : il mord le jour où ce mur publiera
+   * autre chose qu'un vainqueur — un classement des cinq premiers, un drapeau
+   * envoyé au navigateur — c'est-à-dire précisément le jour où le filtre
+   * pourrait glisser à l'affichage sans que rien à l'écran ne bouge.
+   */
+  const corps = await page.evaluate(async (jour: string) => {
+    const res = await fetch(`/api/classement?jour=${jour}`);
+    return JSON.stringify(await res.json());
+  }, jourLocalTest());
+
+  expect({
+    ouvertVu: corps.includes(ouvert.compte.pseudo),
+    fermeVu: corps.includes(ferme.compte.pseudo),
+    cacheVu: corps.includes(cache.compte.pseudo),
+    huitCents: corps.includes("800"),
+    cinqMille: corps.includes("5000"),
+  }).toEqual({
+    ouvertVu: true, fermeVu: false, cacheVu: false,
+    huitCents: false, cinqMille: false,
+  });
+
+  await ctx.close();
+});
