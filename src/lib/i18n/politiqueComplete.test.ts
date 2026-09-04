@@ -79,6 +79,15 @@ const ATTENDU: Record<string, RegExp> = {
   signalements: /signalement de problème/i,
   paiements: /paiements de dette/i,
   /**
+   * Les efforts que d'AUTRES ont faits pour acquitter votre dette.
+   *
+   * C'est la dette commune d'une équipe. Elle se décrit et ne s'exempte pas,
+   * pour la raison qui vaut déjà pour la liste d'amis : ce n'est pas seulement
+   * un renseignement sur vous, c'en est un sur quelqu'un d'autre — le nom de
+   * celui qui a fait l'effort — et il traverse le compte.
+   */
+  relaisRecus: /dette d'équipe|dette commune/i,
+  /**
    * Qui sont vos amis et dans quels groupes vous êtes.
    *
    * Trois relations, et pas une exemption : c'est le renseignement le plus
@@ -197,6 +206,45 @@ describe("politique de confidentialité", () => {
   it("lit bien le modèle User", () => {
     expect(champs).toContain("poids");
     expect(champs.length).toBeGreaterThan(20);
+  });
+
+  /**
+   * Le tableau des données doit avoir le MÊME NOMBRE DE LIGNES partout.
+   *
+   * Tout le reste de ce fichier ne lit que le français : c'est là que se
+   * décide ce qui est décrit, et le faire six fois n'apprendrait rien de plus.
+   * Mais ça laissait un trou, et je suis tombé dedans en écrivant la ligne de
+   * la dette d'équipe — insérée dans deux langues sur six, tout est resté au
+   * vert. Une politique qui décrit une donnée en français et se tait en
+   * allemand n'est pas une politique traduite, c'est une politique fausse dans
+   * cinq langues.
+   *
+   * Le compte suffit : la parité des CLÉS est déjà tenue ailleurs, ce qui
+   * manquait est la longueur d'un tableau.
+   */
+  it("le tableau des données a le même nombre de lignes dans les six langues", () => {
+    const lignes = (langue: string) => {
+      const bloc = confidentialite[langue as keyof typeof confidentialite] as Record<string, unknown>;
+      // Le tableau vit sous « 2. Données collectées ». On le cherche par sa
+      // FORME — un tableau de tableaux — plutôt que par le nom de l'article,
+      // qui n'a aucune raison d'être stable.
+      for (const article of Object.values(bloc)) {
+        if (!article || typeof article !== "object") continue;
+        for (const champ of Object.values(article as Record<string, unknown>)) {
+          if (Array.isArray(champ) && champ.length > 5 && Array.isArray(champ[0])) {
+            return champ.length;
+          }
+        }
+      }
+      return 0;
+    };
+    const fr = lignes("fr");
+    // Sans ce témoin, un tableau introuvable rendrait zéro partout et le test
+    // passerait en ne comparant rien.
+    expect(fr).toBeGreaterThan(10);
+    for (const langue of Object.keys(confidentialite)) {
+      expect({ langue, lignes: lignes(langue) }).toEqual({ langue, lignes: fr });
+    }
   });
 
   it("décrit chaque champ personnel du compte, ou dit pourquoi il en est absent", () => {

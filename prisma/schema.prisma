@@ -25,7 +25,7 @@ model User {
 
   // Connexion email/mot de passe OU pseudo/code (null pour les comptes OAuth).
   // Pour les comptes "pseudo+code", le code est haché ici et email reste null.
-  passwordHash  String?
+  passwordHash String?
 
   // Génération de session. Les sessions sont des jetons signés : rien en base
   // ne les représente, donc rien ne pouvait les révoquer. Réinitialiser le mot
@@ -33,7 +33,7 @@ model User {
   // l'intrus restait bon trente jours. Incrémenter ce compteur périme d'un coup
   // tous les jetons émis avant, et `getCurrentUser()` le vérifie à chaque appel
   // puisqu'il relit déjà la ligne.
-  sessionEpoch  Int     @default(0)
+  sessionEpoch Int @default(0)
 
   // Génération de l'intro (accueil + visite guidée). Les marques de « déjà vu »
   // vivent dans le navigateur, ce qui suffit au quotidien mais ne se commande
@@ -41,7 +41,7 @@ model User {
   // de quelqu'un d'autre. Ce compteur fait partie de la clé sous laquelle elles
   // sont écrites — l'incrémenter les rend caduques d'un coup, sur tous les
   // appareils du compte, sans rien avoir à effacer.
-  introGeneration Int   @default(0)
+  introGeneration Int @default(0)
 
   // Infos physiques optionnelles (remplies à l'inscription si l'utilisateur veut).
   //
@@ -66,6 +66,14 @@ model User {
 
   signalements Signalement[]
   paiements    Paiement[]
+  /**
+   * Les paiements que d'AUTRES ont faits pour acquitter cette dette-ci.
+   * Une équipe a une dette commune : un membre peut faire l'effort à la place
+   * d'un autre. Sans cette relation, la dette du bénéficiaire baisserait sans
+   * que rien ne dise pourquoi — et une dette qu'on ne doit plus sans savoir
+   * pourquoi ne se rattrape pas.
+   */
+  relaisRecus  Paiement[]    @relation("Relais")
 
   // Depuis quand une dette non payée court. Posée quand le compteur passe de
   // zéro à positif, effacée quand il retombe à zéro. Sans elle, « en retard
@@ -81,11 +89,9 @@ model User {
 
   /**
    * Le parrainage.
-   *
    * `codeParrain` se tire à la demande, comme `jetonObs` : un compte qui n'a
    * jamais ouvert l'écran des amis n'en a pas, et une colonne nulle vaut mieux
    * qu'un code engendré pour tout le monde à l'inscription.
-   *
    * `parrainId` ne se pose QU'À la création du compte et ne change jamais.
    * Le rouvrir permettrait de se réattribuer à quelqu'un d'autre après coup,
    * donc de faire compter une inscription deux fois. `SetNull` plutôt que
@@ -93,33 +99,30 @@ model User {
    * à voir avec celui qui l'a invité.
    */
   /**
+   * /**
    * Mode fantôme : participer aux classements sans y apparaître.
-   *
    * Réponse 129. Il ferme un trou que le classement a ouvert : celui-ci publie
    * le pseudo et l'état de retard à tous ses amis, et la seule façon d'en
    * sortir était de retirer l'ami — c'est-à-dire de casser le lien pour éviter
    * ce qu'il montre.
-   *
    * Ce qui est caché, c'est la LIGNE ENTIÈRE chez les autres, pas seulement le
    * nom. Masquer le pseudo en laissant la ligne serait du théâtre : à trois
    * amis, une place et un volume désignent quelqu'un aussi sûrement qu'un
    * pseudo. On voit toujours son propre classement, soi-même compris.
    */
-  fantome     Boolean @default(false)
+  fantome Boolean @default(false)
 
   /**
    * Ce qu'un ami a le droit de voir : "total" ou "detail".
-   *
    * Réponse 120 — « ce qu'il autorise ». La décision appartient à celui qu'on
    * regarde, et le défaut est le plus FERMÉ : quelqu'un qui n'ouvre jamais ses
    * réglages ne doit pas se mettre à partager davantage parce qu'on a ajouté
    * une fonctionnalité.
-   *
    * Indépendant du mode fantôme, qui ne parle que des CLASSEMENTS. Les deux se
    * combinent : on peut être visible au classement et fermé sur le détail, ou
    * l'inverse.
    */
-  partageAmis String  @default("total")
+  partageAmis String @default("total")
 
   codeParrain String? @unique
   parrainId   String?
@@ -130,7 +133,7 @@ model User {
   // liste active, que tout le reste de l'application lit déjà — et attendent
   // ici qu'on les reprenne. Les garder à part évite de toucher aux six
   // endroits qui répartissent la dette, et donc d'en oublier un.
-  exercicesSuspendus String[] @default([])
+  exercicesSuspendus String[]  @default([])
   // Depuis quand, pour pouvoir le rappeler sans le réclamer.
   suspensionDepuis   DateTime?
 
@@ -189,39 +192,37 @@ model User {
   // plusieurs sont sélectionnés, ils tournent à tour de rôle d'une partie à
   // l'autre. `exercice` (singulier) est l'ancienne version, conservée en base
   // le temps que tous les déploiements soient à jour — ne plus l'utiliser.
-  exercice           String   @default("pompes")
-  exercices          String[] @default(["pompes"])
+  exercice          String    @default("pompes")
+  exercices         String[]  @default(["pompes"])
   // Seuil de rappel pendant une session, en points d'effort. 0 = désactivé.
   // Remplacé par `rappelSeuilSec` — conservé le temps de la transition.
-  rappelSeuilPoints  Int      @default(45)
+  rappelSeuilPoints Int       @default(45)
   // Dette accumulée et pas encore faite, en points d'effort.
-  dettePointsDus     Int      @default(0)
+  dettePointsDus    Int       @default(0)
   // Seuil de rappel en SECONDES d'effort (300 = 5 min). 0 = désactivé.
-  rappelSeuilSec     Int      @default(300)
+  rappelSeuilSec    Int       @default(300)
   /**
    * Que faire quand l'application détecte qu'un jeu vient de démarrer.
-   *
-   *   "demander" → la question s'affiche par-dessus l'écran de chargement
-   *   "auto"     → la session démarre seule, comme avant
-   *   "jamais"   → rien, on lance la session à la main
-   *
+   * "demander" → la question s'affiche par-dessus l'écran de chargement
+   * "auto"     → la session démarre seule, comme avant
+   * "jamais"   → rien, on lance la session à la main
    * Le défaut est « demander » : une session qui se lance sans qu'on l'ait
    * voulu est une surprise, et le propriétaire du produit l'a signalée comme
    * telle. L'écran de chargement est le seul instant où l'on sait qu'une
    * partie commence et où l'on n'est pas encore en jeu.
    */
-  sessionAuto        String   @default("demander")
+  sessionAuto       String    @default("demander")
   // Volume d'effort quotidien au-delà duquel l'application prévient, en points.
   // Ce n'est pas un plafond dur : la dette continue de se calculer, on signale
   // seulement qu'on a dépassé ce qu'on s'était fixé pour la journée.
   // 0 = pas d'avertissement.
-  plafondQuotidien   Int      @default(0)
+  plafondQuotidien  Int       @default(0)
   // Nombre maximum de pompes d'affilée, et date du test. C'est lui qui fixe le
   // niveau, donc le multiplicateur de la dette. 0 = jamais testé.
   // Mesurer en pompes plutôt qu'en gainage : la monnaie de l'app est la pompe,
   // et tenir la planche quatre minutes ne dit pas qu'on sait en faire dix.
-  pompesMax          Int      @default(0)
-  pompesMaxLe        DateTime?
+  pompesMax         Int       @default(0)
+  pompesMaxLe       DateTime?
 
   // Beta : rang d'inscription (1..N). Seuls les 100 premiers ont accès.
   betaRank  Int?
@@ -296,11 +297,12 @@ model Game {
   id                  String   @id @default(cuid())
   userId              String
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /** Date de la PARTIE, éventuellement corrigée à la main après coup. */
+  /**
+   * Date de la PARTIE, éventuellement corrigée à la main après coup.
+   */
   date                DateTime @default(now())
   /**
    * Date de l'ENREGISTREMENT, posée par le serveur et jamais modifiée.
-   *
    * `date` ne peut pas servir à mesurer : une partie ajoutée à la main se
    * date dans le passé, et le délai entre l'inscription et la première partie
    * en ressortait négatif. Les deux dates disent deux choses différentes, et
@@ -325,24 +327,22 @@ model Game {
 
   /**
    * Partie jouée SANS ENJEU : refusée à l'écran de chargement.
-   *
    * Elle entre quand même dans l'historique — on a joué, la trace reste — mais
    * elle ne coûte rien (`pompesCalculees` vaut zéro), n'alimente aucune dette,
    * et sort de TOUT ce qui agrège : winrate, graphiques, paliers, bilan de
    * saison, maîtrise du champion. Sans ce dernier point, une soirée refusée
    * ferait quand même bouger les chiffres qu'on vient regarder.
-   *
    * Ne pas l'enregistrer du tout était l'autre option, et c'est celle qu'on
    * n'a pas prise : on joue cinq parties, l'application en montre deux, et
    * rien n'explique l'écart — ni sur le moment, ni trois semaines plus tard.
    */
-  sansEnjeu           Boolean  @default(false)
+  sansEnjeu   Boolean  @default(false)
   // Exercice actif au moment où la partie a été enregistrée. Quand la dette se
   // partage entre plusieurs exercices, c'est le premier d'entre eux.
-  exercice            String   @default("pompes")
+  exercice    String   @default("pompes")
   // Ventilation de la dette entre exercices, en JSON : {"pompes":23,"boxe":23}.
   // Null quand un seul exercice est concerné — `exercice` suffit alors.
-  repartition         String?
+  repartition String?
   // Ratios en vigueur au moment de l'enregistrement, en JSON :
   // {"pompes":1,"boxe":6.9}. Ils disent combien de répétitions ou de secondes
   // vaut un point d'effort. Gelés ici pour la MÊME raison que `variante` et
@@ -351,43 +351,43 @@ model Game {
   // monde, et une soirée qui avait coûté 4 min 25 de boxe en affichait 8 min 50.
   // Null pour les parties antérieures à cette colonne : elles retombent sur les
   // ratios d'origine, qui sont ceux sous lesquels elles ont été chiffrées.
-  ratios              String?
+  ratios      String?
   // Variante d'exécution en vigueur au moment de l'enregistrement ("genoux").
   // Recopiée depuis le réglage du compte plutôt que lue au moment de
   // l'affichage : le réglage change, l'historique ne doit pas changer avec.
   // Quelqu'un qui arrête les genoux au sol verrait sinon ses trois premières
   // semaines se réécrire d'un coup.
-  variante            String?
+  variante    String?
   // Jeu concerné, et façon dont il génère de la dette :
   //   "parties" → résultat et KDA (League of Legends, Valorant…)
   //   "temps"   → durée jouée, sans victoire ni défaite (Minecraft…)
-  jeu                 String   @default("League of Legends")
-  typeJeu             String   @default("parties")
+  jeu         String   @default("League of Legends")
+  typeJeu     String   @default("parties")
   // Durée jouée en secondes, renseignée uniquement pour typeJeu = "temps".
-  dureeSec            Int?
+  dureeSec    Int?
   // Battle royale : place finale et taille de la partie. `deaths` et `result`
   // n'y veulent rien dire — c'est le classement qui fait la performance.
-  placement           Int?
-  joueurs             Int?
+  placement   Int?
+  joueurs     Int?
   // Rocket League : arrêts. Les buts vont dans `kills` et les passes dans
   // `assists`, qui jouent le même rôle ; il manquait une troisième case.
-  arrets              Int?
+  arrets      Int?
   // Type de file, lu sur le lanceur League : « Classée Solo/Duo », « ARAM »…
   // Le KDA seul ne distingue pas une classée d'une partie normale.
-  file                String?
-  fileClassee         Boolean?
-  source              String   @default("manuel") // manuel | riot_api | live_client
-  riotMatchId         String?
+  file        String?
+  fileClassee Boolean?
+  source      String   @default("manuel") // manuel | riot_api | live_client
+  riotMatchId String?
 
-  @@index([userId])
-  // Les six lectures de statistiques filtrent sur le compte ET sur l'enjeu :
-  // c'est le `where` le plus fréquent de cette table.
-  @@index([userId, sansEnjeu])
   // Une partie Riot ne peut être enregistrée qu'une fois par joueur : deux
   // onglets ouverts ou un renvoi réseau ne doivent pas la facturer deux fois.
   // Les parties manuelles ont riotMatchId à null, que Postgres ne contraint
   // pas — elles restent donc librement dupliquables, ce qui est voulu.
   @@unique([userId, riotMatchId])
+  @@index([userId])
+  // Les six lectures de statistiques filtrent sur le compte ET sur l'enjeu :
+  // c'est le `where` le plus fréquent de cette table.
+  @@index([userId, sansEnjeu])
 }
 
 /**
@@ -464,6 +464,21 @@ model Paiement {
   // Points d'effort acquittés.
   points Int
 
+  /**
+   * Le compte dont ce paiement acquitte la dette, quand ce n'est PAS celui qui
+   * a fait l'effort.
+   * C'est tout le mécanisme de la dette d'équipe : `userId` dit qui a fait les
+   * pompes — donc à qui le classement les compte, ce qui est juste — et
+   * `pourUserId` dit de quelle dette elles sont retirées.
+   * Nul dans le cas ordinaire, qui est de payer la sienne. Une colonne qui
+   * vaudrait toujours `userId` coûterait un index pour ne rien distinguer.
+   * `SetNull` et non `Cascade` : le bénéficiaire peut supprimer son compte,
+   * l'effort a bien été fait par quelqu'un d'autre et n'a aucune raison de
+   * disparaître de SON registre.
+   */
+  pourUserId String?
+  pour       User?   @relation("Relais", fields: [pourUserId], references: [id], onDelete: SetNull)
+
   // Jour LOCAL du paiement, au format AAAA-MM-JJ. Le jour UTC ne convient pas :
   // quelqu'un qui paie à une heure du matin verrait sa série comptée sur la
   // veille ou le lendemain selon son fuseau.
@@ -472,29 +487,27 @@ model Paiement {
   /**
    * Jeton d'unicité, posé par le navigateur quand le paiement a été fait hors
    * réseau et rejoué plus tard.
-   *
    * Sans lui, un renvoi paie deux fois : la file d'attente réessaie tant
    * qu'elle n'a pas reçu de réponse, et une réponse perdue en chemin est
    * indiscernable d'une requête jamais arrivée. C'est le cas normal sur un
    * téléphone qui retrouve le réseau dans un tunnel.
-   *
    * Facultatif : un paiement fait en ligne n'en a pas besoin, et poser un
    * jeton à tout le monde ne ferait qu'ajouter une colonne à indexer.
    */
   jeton String? @unique
 
   @@index([userId, jour])
+  // Lire « qui a payé pour moi » se filtre sur le bénéficiaire.
+  @@index([pourUserId])
 }
 
 // ─── Signalements ───────────────────────────────────────────────────────────
 
 /**
  * Un problème signalé depuis l'application.
- *
  * Jusqu'ici un bug se signalait par courriel, donc ne se signalait pas. Et le
  * peu qui arrivait manquait de tout : quelle page, quelle version, quel
  * navigateur, connecté ou non. On répondait par des questions.
- *
  * `userId` est facultatif — sans quoi un problème sur l'écran de connexion,
  * c'est-à-dire le pire de tous, resterait le seul qu'on ne peut pas signaler.
  */
@@ -505,10 +518,14 @@ model Signalement {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  /** Ce que la personne a écrit. */
+  /**
+   * Ce que la personne a écrit.
+   */
   message String
 
-  /** Page d'où le signalement part, sans paramètres de requête. */
+  /**
+   * Page d'où le signalement part, sans paramètres de requête.
+   */
   page String
 
   /**
@@ -518,7 +535,9 @@ model Signalement {
    */
   contexte String
 
-  /** ouvert | traite */
+  /**
+   * ouvert | traite
+   */
   statut String @default("ouvert")
 
   @@index([statut, createdAt])
@@ -527,36 +546,34 @@ model Signalement {
 // ─── Candidatures bêta ───────────────────────────────────────────────────────
 
 model BetaApplication {
-  id           String   @id @default(cuid())
-  createdAt    DateTime @default(now())
-  pseudo       String
-  email        String   @unique
-  riotId       String
-  region       String
-  genre        String
-  age          Int
-  poids        Int
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  pseudo             String
+  email              String   @unique
+  riotId             String
+  region             String
+  genre              String
+  age                Int
+  poids              Int
   hoursPerWeek       String
-  sportsHoursPerWeek Int    @default(0)
+  sportsHoursPerWeek Int      @default(0)
   currentSport       String?
   motivation         String
-  discovery    String
-  engagement   Int
-  status       String   @default("pending") // pending | accepted | rejected
+  discovery          String
+  engagement         Int
+  status             String   @default("pending") // pending | accepted | rejected
 }
 
 // ─── Le social ───────────────────────────────────────────────────────────────
 
 /**
  * Une amitié, demandée puis acceptée.
- *
  * **Rien n'est explorable.** Le propriétaire du produit a répondu non à
  * « es-tu prêt à modérer un espace social ? » (réponse 127), et cette réponse
  * décide de la forme : pas d'annuaire, pas de recherche, aucun texte libre
  * échangé. On ajoute quelqu'un dont on connaît déjà le pseudo, et la relation
  * n'existe que s'il l'accepte. Il n'y a donc rien à modérer : le seul contenu
  * qui circule est un pseudo, déjà validé par `validerPseudo`.
- *
  * **Un refus supprime la ligne.** Le marquer laisserait à qui insiste le moyen
  * de savoir qu'il a été refusé — et il n'y a personne pour arbitrer ce qui
  * suivrait. Refuser rend donc l'état d'avant : il pourra redemander, et ce
@@ -568,7 +585,9 @@ model Amitie {
   demandeurId String
   receveurId  String
 
-  /** attente | acceptee */
+  /**
+   * attente | acceptee
+   */
   etat String @default("attente")
 
   createdAt  DateTime  @default(now())
@@ -590,7 +609,6 @@ model Amitie {
 
 /**
  * Un groupe qu'on rejoint par un code.
- *
  * Même raison que pour les amitiés : le code est la seule porte. Sans lui le
  * groupe n'existe pour personne, ce qui évite d'avoir à surveiller ce que des
  * inconnus y feraient. Le nom est validé comme un pseudo — c'est le seul texte
@@ -599,7 +617,9 @@ model Amitie {
 model Groupe {
   id        String   @id @default(cuid())
   nom       String
-  /** Le code d'invitation, régénérable : c'est la seule façon de le révoquer. */
+  /**
+   * Le code d'invitation, régénérable : c'est la seule façon de le révoquer.
+   */
   code      String   @unique
   createdAt DateTime @default(now())
 
@@ -613,7 +633,6 @@ model MembreGroupe {
 
   /**
    * proprietaire | membre
-   *
    * Le propriétaire renomme le groupe et refait le code. Un groupe qui perd le
    * sien ne peut plus révoquer un code déjà partagé, d'où la reprise : quand
    * le propriétaire part, le plus ancien membre restant hérite du rôle.

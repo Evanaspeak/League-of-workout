@@ -342,3 +342,73 @@ test("un lien de parrainage cassé n'empêche pas de créer un compte", async ({
   await expect(page.getByRole("heading", { name: /tes amis|your friends/i })).toBeVisible();
   await ctx.close();
 });
+
+/**
+ * La dette commune d'une équipe (réponse 118).
+ *
+ * Ce qu'aucun test unitaire ne peut voir : que l'effort fait par QUELQU'UN
+ * D'AUTRE arrive vraiment sur la dette du bon compte, et que la trace reste au
+ * nom de celui qui l'a faite — c'est ce qui décide de son classement.
+ */
+test("un coéquipier prend une part de la dette, et c'est la bonne qui baisse", async ({ browser }) => {
+  const a = await ouvrirCompte(browser, "Cap");
+  const b = await ouvrirCompte(browser, "Coeq");
+  const nom = `Cinq ${Date.now().toString(36)}`;
+
+  const { ctx: ctxA, page: pageA } = await ouvrirEcranAmis(browser, a.etat);
+  await pageA.getByLabel(/nom du groupe|group name/i).fill(nom);
+  await pageA.getByRole("button", { name: /^créer$|^create$/i }).click();
+  await expect(pageA.getByText(nom)).toBeVisible();
+
+  const [groupe] = await requeteSql<{ id: string; code: string }>(
+    'SELECT id, code FROM "Groupe" WHERE nom = $1', [nom]);
+
+  const { ctx: ctxB, page: pageB } = await ouvrirEcranAmis(browser, b.etat);
+  await pageB.getByLabel(/code d.invitation|invite code/i).fill(groupe.code);
+  await pageB.getByRole("button", { name: /^rejoindre$|^join$/i }).click();
+  await expect(pageB.getByText(nom)).toBeVisible();
+
+  // Une dette pour le capitaine, posée en base : ce qu'on éprouve ici est le
+  // relais, pas la façon dont une dette naît — elle a ses propres parcours.
+  await requeteSql('UPDATE "User" SET "dettePointsDus" = 60 WHERE pseudo = $1', [a.compte.pseudo]);
+
+  await pageB.reload();
+  // Le bouton porte le nom du GROUPE : plusieurs cartes peuvent être ouvertes
+  // sur cet écran, et « la dette de l'équipe » seul ne dirait pas laquelle.
+  await pageB.getByRole("button", { name: new RegExp(`(la dette de l.équipe|the team.s debt) ${nom}`, "i") }).click();
+  await expect(pageB.getByText(a.compte.pseudo, { exact: true })).toBeVisible();
+
+  const champ = pageB.getByLabel(new RegExp(`(prendre|take on) ${a.compte.pseudo}`, "i")).first();
+  await champ.fill("25");
+  await pageB.getByRole("button", { name: new RegExp(`(prendre|take on) ${a.compte.pseudo}`, "i") }).click();
+
+  // L'écran ET la base : sans le second, un écran qui se contente d'afficher
+  // ce qu'on vient de taper passerait le test.
+  await expect(pageB.getByText(/(doit|owes) 35/i)).toBeVisible();
+
+  const [capitaine] = await requeteSql<{ dettePointsDus: number }>(
+    'SELECT "dettePointsDus" FROM "User" WHERE pseudo = $1', [a.compte.pseudo]);
+  expect(capitaine.dettePointsDus).toBe(35);
+
+  const [coequipier] = await requeteSql<{ dettePointsDus: number }>(
+    'SELECT "dettePointsDus" FROM "User" WHERE pseudo = $1', [b.compte.pseudo]);
+  expect(coequipier.dettePointsDus).toBe(0);
+
+  /**
+   * La trace appartient à CELUI QUI A FAIT l'effort.
+   *
+   * C'est ce qui décide de son classement, et c'est juste : ce sont ses
+   * pompes. `pourUserId` ne dit que de quelle dette elles ont été retirées.
+   */
+  const paiements = await requeteSql<{ points: number; pseudo: string; beneficiaire: string }>(
+    `SELECT p.points, u.pseudo, b.pseudo AS beneficiaire
+       FROM "Paiement" p
+       JOIN "User" u ON u.id = p."userId"
+       LEFT JOIN "User" b ON b.id = p."pourUserId"
+      WHERE u.pseudo = $1`, [b.compte.pseudo]);
+  expect(paiements).toHaveLength(1);
+  expect(paiements[0]).toMatchObject({ points: 25, beneficiaire: a.compte.pseudo });
+
+  await ctxA.close();
+  await ctxB.close();
+});

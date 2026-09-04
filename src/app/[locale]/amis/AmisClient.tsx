@@ -5,6 +5,7 @@ import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
 import type { LigneClassement } from "@/lib/classement";
+import DetteEquipe from "./DetteEquipe";
 
 /**
  * Les amis et les groupes.
@@ -652,6 +653,8 @@ export function AmisClient() {
                     {copie === g.code ? t.copie : t.copier}
                   </button>
                 </div>
+
+                <DetteEquipe groupeId={g.id} nom={g.nom} />
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   {g.proprietaire && (

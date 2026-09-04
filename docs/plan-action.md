@@ -118,7 +118,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 114 | Des amis qu'on ajoute ET des groupes qu'on rejoint | 2 nuits |
 | [x] | 115 | Un classement entre amis, sur le volume payé | 1 nuit |
 | [x] | 116 | Le classement montre la dette en retard | ½ nuit |
-| [ ] | 118 | Une équipe de cinq avec une dette commune | 2 nuits |
+| [x] | 118 | Une équipe de cinq avec une dette commune | 2 nuits |
 | [ ] | 142 | La dette de groupe quand on joue à cinq ensemble | 1 nuit |
 | [x] | 119 | Un lien de parrainage, avantage pour les deux | 1 nuit |
 | [x] | 120 | Voir les statistiques d'un ami selon ce qu'il autorise | 1 nuit |

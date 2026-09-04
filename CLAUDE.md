@@ -989,6 +989,83 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La dette commune d'une équipe, et le registre qu'on n'a pas créé
+Ligne 118, réponse « Oui » : « Cinq personnes, une dette commune, chacun paie
+ce qu'il peut. Ça sauve celui qui décroche. » C'est la SECONDE moitié qui
+décide de la forme — ce qu'on veut n'est pas un compteur de plus, c'est qu'un
+effort fait par quelqu'un puisse acquitter la dette d'un autre.
+
+**Il n'y a donc pas de second registre.** La dette commune est la SOMME des
+dettes personnelles, c'est-à-dire une lecture. En créer une vraie obligerait à
+décider, à chaque paiement, laquelle des deux baisse — et les deux réponses
+sont fausses : l'une compte l'effort deux fois, l'autre le perd. Le seul
+invariant qui tienne depuis le premier jour est qu'un point d'effort payé est
+une pompe que quelqu'un a faite ; un transfert le respecte, un second compteur
+non. C'est le même raisonnement qui avait écarté « offrir des points » comme
+avantage de parrainage.
+
+**`Paiement.userId` dit qui a fait l'effort, `pourUserId` de quelle dette il
+est retiré.** Le classement compte donc le relais à celui qui l'a fait, ce qui
+est juste — ce sont ses pompes. Et la colonne existe surtout pour une autre
+raison : **sans elle, la dette du bénéficiaire baisserait sans que rien ne dise
+pourquoi.** C'est la faute déjà écrite ici pour le paiement — « une dette qu'on
+ne doit plus sans savoir pourquoi ne se rattrape pas » — et elle serait pire
+ici, puisqu'elle se produirait sur le compte de quelqu'un d'autre.
+`SetNull` et non `Cascade` : le bénéficiaire peut supprimer son compte, l'effort
+a bien été fait et reste dans le registre de celui qui l'a fourni.
+
+**Rien ne classe personne, et c'est une contrainte, pas un oubli.** La réponse
+117 refusait le duel — « celui qui paie le plus gagne » — avec sa raison : « ça
+incite au mauvaise performance ». On paie ce qu'on a perdu, donc désigner le
+meilleur payeur d'une équipe dirait exactement la même chose sous un autre nom.
+L'écran montre ce qui est DÛ ; la personne en tête est celle qu'on vient aider.
+
+**Le mode fantôme s'applique**, et le total DIT ce qu'il omet. Un tableau
+d'équipe montre le même couple pseudo + dette qu'un classement, et à cinq une
+place suffit à désigner quelqu'un : un membre fantôme est donc absent, et sa
+dette ne compte pas. Mais l'exclure en silence rendrait le total faux sans que
+personne le sache — d'où le compte des masqués, affiché sous le tableau. On se
+voit toujours soi-même, comme au classement.
+
+**La part se choisit.** Un nombre figé — dix points — obligerait à cliquer
+vingt fois pour solder une dette de deux cents, et c'est précisément la
+personne qu'on vient aider qui en a une grosse.
+
+**Ce qui n'est PAS fait, et pourquoi.** La ligne 142 — une dette de groupe
+quand cinq perdent la MÊME partie — demande de rapprocher les
+`Game.riotMatchId` de plusieurs comptes, donc la clé Riot de production, qui
+n'est pas arrivée. Et la réponse 143 dit que le propriétaire ne joue pas en
+groupe de cinq : il n'y a aucun terrain d'essai. Elle vient après.
+
+Neuf sabotages sur le module, neuf échecs. Huit sur la route, huit échecs —
+dont celui qui compte le plus, le décompte porté sur le payeur au lieu du
+bénéficiaire. Le garde du filtrage par compte a mordu quand le contrôle
+d'appartenance a été retiré : il passait donc pour la bonne raison, et non par
+coïncidence de proximité.
+
+**Et un trou trouvé dans un garde, en tombant dedans.** La ligne de politique
+de confidentialité insérée dans DEUX langues sur six a laissé tout au vert :
+`politiqueComplete.test.ts` ne lit que le français. C'est le bon choix pour
+décider ce qui est décrit — le faire six fois n'apprendrait rien — mais ça
+laissait passer une politique vraie en français et muette dans cinq langues.
+Le tableau doit maintenant avoir le même NOMBRE DE LIGNES partout, avec le
+témoin habituel : une détection qui ne trouve plus le tableau rendrait zéro
+pour tout le monde et le test passerait en ne comparant rien. Elle a d'ailleurs
+mordu tout de suite sur ma première version, qui cherchait le tableau un niveau
+trop haut.
+
+Au navigateur, un test à deux comptes : ce qu'aucun test unitaire ne peut voir,
+c'est que l'effort fourni par l'un arrive sur la dette de l'autre. Il regarde
+l'écran ET la base — sans le second, un écran qui affiche ce qu'on vient de
+taper passerait. Sabotage : l'identifiant du membre retiré de l'envoi, le
+parcours tombe.
+
+**Et le piège du `git checkout --`, retombé dedans.** Il restaure depuis
+l'INDEX : après un sabotage sur un fichier NON indexé, il efface la correction
+elle-même. J'ai perdu les deux ajouts au garde de politique et il a fallu les
+réécrire. C'est écrit dans ce journal depuis le plan du site ; la parade est
+d'indexer avant de saboter.
+
 ### La parallélisation de la CI s'était presque entièrement mangée elle-même
 Mesuré sur V357 avant d'y toucher, étape par étape : le travail `parcours`
 durait 14 min 24, dont **9 min 53 de parcours et 2 min 40 d'accessibilité** —
