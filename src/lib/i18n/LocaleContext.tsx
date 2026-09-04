@@ -99,6 +99,26 @@ export function useDateLocale(): string {
 }
 
 /**
+ * Met un nombre en forme dans la langue de l'écran.
+ *
+ * `${n}` rend « 100000 » et `toFixed(2)` rend « 3.25 » — dans les six langues.
+ * Or le français écrit « 100 000 » et « 3,25 », l'allemand « 100.000 », et
+ * l'anglais « 100,000 ». Un point décimal en allemand n'est pas une coquetterie
+ * de typographie : c'est le séparateur des MILLIERS, donc « 3.25 » s'y lit
+ * comme trois mille deux cent cinquante.
+ *
+ * La règle vit ici et non dans les écrans, pour la même raison
+ * qu'`enMinuscule` : c'est une propriété de la langue, pas de la mise en page.
+ * Et elle vit une seule fois, parce que deux composants s'étaient déjà fabriqué
+ * chacun son `Intl.NumberFormat`.
+ */
+export function useNombre(options?: Intl.NumberFormatOptions): (n: number) => string {
+  const etiquette = useDateLocale();
+  const format = new Intl.NumberFormat(etiquette, options);
+  return (n) => format.format(n);
+}
+
+/**
  * Passe un mot en minuscule pour l'écrire au fil d'une phrase — sauf en
  * allemand, où les noms communs gardent leur majuscule. « 8 min 25 boxen »
  * n'est pas une faute de style : c'est une faute d'orthographe, et elle

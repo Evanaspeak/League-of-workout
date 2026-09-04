@@ -1,6 +1,6 @@
 "use client";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useMinuscule, useNombre } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 
 /** Résumé d'un champion, tel que le renvoie /api/dashboard. */
@@ -44,7 +44,13 @@ export function StatCard({ label, value, sub, lignes, i = 0, ancre }: {
 }
 
 export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSummary; badge: string; badgeColor: string; t: ReturnType<typeof useT<typeof dashboard>> }) {
-  const kdaLabel = champ.kda === null ? "Perfect" : champ.kda.toFixed(2);
+  /*
+    Le KDA passe par `Intl` : `toFixed` rend toujours un POINT décimal, et
+    l'allemand y lit un séparateur de milliers — « 3.25 » s'y comprend comme
+    trois mille deux cent cinquante.
+  */
+  const nombre = useNombre({ minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const kdaLabel = champ.kda === null ? t.kdaParfait : nombre(champ.kda);
   return (
     <div className="lol-panel p-4 fade-in" style={{ position: "relative" }}>
       <span style={{

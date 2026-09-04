@@ -1098,6 +1098,64 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 0 / 100000 » et « 3.25 » : les nombres ne passaient pas par Intl
+Suite du pluriel de zéro : si une règle de langue avait été appliquée
+uniformément aux six blocs, il y en avait peut-être d'autres. Recherche sur les
+décisions grammaticales et typographiques partagées. Elle rend deux choses,
+toutes deux visibles à l'écran depuis toujours.
+
+**L'objectif collectif affichait « 0 / 100000 ».** Six chiffres sans
+séparateur, dans les six langues. Le français écrit « 100 000 », l'allemand
+« 100.000 », l'anglais « 100,000 ».
+
+**Et le KDA du champion passait par `toFixed(2)`**, qui rend TOUJOURS un point
+décimal. En allemand, le point est le séparateur des MILLIERS : « 3.25 » s'y lit
+comme trois mille deux cent cinquante. Ce n'est pas une coquetterie de
+typographie, c'est un chiffre faux.
+
+La règle du projet le disait déjà — « les dates et les nombres passent par
+`Intl`, jamais de table écrite à la main » — et rien ne la tenait.
+
+**`useNombre` rejoint `enMinuscule` dans `LocaleContext`**, pour la même raison
+écrite au-dessus de celle-ci : c'est une propriété de la LANGUE, pas de la mise
+en page. Deux composants s'étaient déjà fabriqué chacun son `Intl.NumberFormat`.
+
+**Le commentaire savait, et le code ne le faisait pas.** Au-dessus de la barre
+du collectif, le commentaire écrit « 8 420 sur 100 000 » — avec ses espaces —
+pour expliquer pourquoi le nombre de contributeurs est nécessaire. La ligne
+juste en dessous rendait « 0 / 100000 ». C'est la forme la plus discrète du
+défaut que ce journal trouve le plus : un commentaire qui décrit ce que le code
+ne fait pas se relit comme une garantie.
+
+**Et ma première correction n'en a réparé qu'une moitié.** Le bloc collectif ne
+passe PAS par la fonction `barre()` qui rend les deux autres : il porte son
+propre exemplaire de la ligne d'avancement, écrit à la main. Je l'ai vu parce
+que la mesure d'après rendait toujours « 100000 » — pas parce que je l'avais
+prévu.
+
+**Un mot anglais en dur, trouvé au passage.** `"Perfect"` s'affichait pour un
+KDA sans mort, dans les six langues. `texteEnDurComposants.test.ts` ne pouvait
+pas le voir : il cherche les ACCENTS, parce qu'un mot anglais est
+indistinguable d'un identifiant. C'est son angle mort par construction, et il
+est écrit dans la nouvelle clé plutôt que laissé à redécouvrir.
+
+`src/nombresLocalises.test.ts` refuse `toFixed` dans la couche d'affichage — les
+`.tsx` — et laisse tranquilles les `.ts` de `src/lib` et des routes, où
+`Number(x.toFixed(1))` sert à ARRONDIR un nombre qui repart en nombre.
+
+**Ce que le garde n'exige PAS, avec sa raison.** Que tout le monde emploie
+`useNombre`. Les deux images (`next/og`) et la page de profil public sont
+rendues au SERVEUR : aucune ne peut appeler un crochet React. Toutes passent la
+langue à `Intl`, ce qui est la seule chose qui compte. Exiger le crochet aurait
+fait un garde impossible à satisfaire, donc un garde qu'on aurait dispensé.
+
+Trois sabotages, trois échecs : le `toFixed` du KDA remis, le balayage rendu
+aveugle, et le crochet commun renommé — ce dernier parce qu'une interdiction
+sans remplacement n'est pas une règle, c'est un mur.
+
+Vérifié à l'écran : « 0 / 100 000 » en français, « 0 / 100.000 » en allemand,
+« 0 / 100,000 » en anglais.
+
 ### « 0 Person hat » : la règle française du zéro, appliquée à cinq langues
 Trouvé en lisant le tableau de bord EN ALLEMAND, sur le compte semé. L'objectif
 collectif annonçait « 0 Person hat diesen Monat beigetragen ». L'allemand met

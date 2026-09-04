@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { jourLocal } from "@/lib/serie";
 import { chargerProgression, rafraichirProgression, type Progression } from "@/lib/chargerProgression";
-import { useDateLocale, useT } from "@/lib/i18n/LocaleContext";
+import { useNombre, useT } from "@/lib/i18n/LocaleContext";
 import { badges as dict } from "@/lib/i18n/dictionaries/badges";
 import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
 import type { Badge } from "@/lib/badges";
@@ -54,7 +54,7 @@ type Exploits = { dansLHeure: boolean };
 export function Paliers() {
   const t = useT(dict);
   const tt = useT(dictTitres);
-  const nombre = new Intl.NumberFormat(useDateLocale());
+  const nombre = { format: useNombre() };
   const [etat, setEtat] = useState<Reponse | null>(null);
   const [exploits, setExploits] = useState<Exploits | null>(null);
 
