@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { lignesBilan, type TextesBilan } from "./i18n/courriels";
 import type { Bilan } from "./bilanHebdo";
 import type { Locale } from "@/lib/i18n/langues";
+import { etiquetteLocale } from "./i18n/langues";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM = "Win or Workout <noreply@winorworkout.com>";
@@ -120,7 +121,7 @@ export async function envoyerBilanHebdo(
   // aucun aujourd'hui, ce qui rendait le défaut invisible — et vide de son
   // sens la seule raison d'être de l'échappement, qui est de tenir le jour où
   // un autre chemin d'écriture oubliera la règle.
-  const lignes = lignesBilan(t, bilan).map(({ libelle, valeur }) => `
+  const lignes = lignesBilan(t, bilan, etiquetteLocale(langue)).map(({ libelle, valeur }) => `
     <tr>
       <td style="padding:7px 0;color:rgba(236,239,244,0.6);font-size:0.92rem;">${echapper(libelle)}</td>
       <td style="padding:7px 0;color:#ECEFF4;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;">${echapper(valeur)}</td>

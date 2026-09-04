@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { ventiler } from "@/lib/exercices";
-import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 
 /**
@@ -18,6 +18,7 @@ import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 export function PartieApexLue() {
   const t = useT(enJeu);
   const etiquette = useDateLocale();
+  const nombre = useNombre();
   /**
    * Dernière partie enregistrée, pour ne pas la compter deux fois.
    *
@@ -64,11 +65,11 @@ export function PartieApexLue() {
         // n'est pas « 30 pompes », et c'est la page qui connaît l'exercice
         // choisi. Sans ventilation, on retombe sur le total.
         const du = ventiler(repartition ?? {}, null, etiquette).map((v) => v.valeur).join(" · ")
-          || String(Number(scoring?.pompesFinales) || 0);
+          || nombre(Number(scoring?.pompesFinales) || 0);
         // Le doute de la lecture se dit : si les modes ne se sont pas accordés,
         // le chiffre mérite d'être vérifié dans l'historique.
         const doute = lu.accord < lu.essais || !lu.elimSures ? t.aVerifier : "";
-        dire(`#${lu.classement} · ${lu.eliminations} élim · ${du}${doute}`, true);
+        dire(t.ligneApex(nombre(lu.classement), nombre(lu.eliminations), du) + doute, true);
 
         // Le compteur de dette et l'historique se rafraîchissent.
         window.dispatchEvent(new Event("wow-dette-changee"));

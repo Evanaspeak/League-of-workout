@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
 import { Wordmark } from "@/components/Wordmark";
 import { ecrire, effacer } from "@/lib/stockage";
+import { useT } from "@/lib/i18n/LocaleContext";
+import { connexionApp } from "@/lib/i18n/dictionaries/connexionApp";
 
 /**
  * Arme le transfert, puis part chez le fournisseur.
@@ -23,6 +25,7 @@ export function ConnexionAppClient({
   nonce: string;
   fournisseur: "google" | "discord";
 }) {
+  const t = useT(connexionApp);
   const formulaire = useRef<HTMLFormElement>(null);
   // Sans aléa, la page n'a pas été ouverte par l'application : on montre le
   // bouton tout de suite. Calculé au rendu, jamais posé depuis l'effet — un
@@ -62,9 +65,7 @@ export function ConnexionAppClient({
     }}>
       <Wordmark fontSize="1.35rem" />
       <p style={{ fontSize: "0.86rem", color: "var(--muted)", lineHeight: 1.6, maxWidth: 360 }}>
-        {nonce
-          ? `Ouverture de ${nom}…`
-          : `Cette page se lance depuis l'application. Continue avec ${nom} si tu es arrivé ici autrement.`}
+        {nonce ? t.ouverture(nom) : t.horsApplication(nom)}
       </p>
 
       <form ref={formulaire} action={action}>
@@ -73,7 +74,7 @@ export function ConnexionAppClient({
           className="lol-btn"
           style={{ opacity: manuel ? 1 : 0, pointerEvents: manuel ? "auto" : "none", transition: "opacity 0.3s" }}
         >
-          Continuer avec {nom}
+          {t.continuer(nom)}
         </button>
       </form>
     </div>

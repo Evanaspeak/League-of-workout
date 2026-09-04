@@ -1126,6 +1126,76 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### Le garde des textes en dur ne lisait pas les gabarits, et deux écrans y vivaient
+Recensement lancé dans la foulée des nombres : la même question, posée hors de
+la couche d'affichage. Il rend une correction attendue et trois trouvailles qui
+ne l'étaient pas.
+
+**Le courriel hebdomadaire écrivait « 5150 » dans les six langues.** C'est le
+SEUL message que le produit envoie de lui-même, donc le seul endroit où
+personne ne peut aller vérifier ailleurs ce qu'il lit — et `lignesBilan` rendait
+`String(b.pointsDus)`. Il a la langue du compte sous la main depuis qu'on a
+corrigé ses deux boutons ; elle ne servait qu'aux liens.
+
+**Et il écrivait « 12 (7V / 5D) » dans les six langues.** Les initiales de
+victoire et de défaite vivaient dans le module, pas dans le dictionnaire : un
+lecteur anglais lisait deux lettres qui ne désignent rien chez lui. **L'espagnol
+tombait juste par hasard** — c'est la façon la plus discrète pour un défaut de
+survivre à une relecture, et elle vaut d'être notée : une langue sur six qui
+coïncide suffit à faire croire que le reste suit.
+
+**Le garde des textes en dur ne lisait pas les GABARITS.** Il cherchait les
+chaînes entre guillemets simples ou doubles, et le texte JSX nu. Or un gabarit
+entre accents graves est précisément l'endroit où l'on écrit une phrase qui
+porte une valeur, c'est-à-dire où l'on écrit une phrase. Deux textes vivants
+s'y cachaient :
+
+- **la ligne de la pastille après une partie d'Apex** — « #3 · 5 élim · … » —
+  alors que `enJeu` existe depuis la nuit où l'on a traduit cette pastille.
+  C'est la moitié non réparée d'une correction déjà faite, sur le fichier même
+  qui l'avait motivée ;
+- **l'écran de départ de la connexion depuis l'application Windows**, c'est-à-dire
+  le PREMIER écran de l'application installée, en français pour tout le monde.
+  Son troisième texte, « Continuer avec Google », n'a **aucun accent** : il
+  échappe au garde par construction, comme « Perfect » avant lui. C'est l'angle
+  mort assumé de l'heuristique, et il est écrit plutôt que laissé à
+  redécouvrir.
+
+**Le sabotage a montré que le garde ne se gardait pas lui-même.** Motif des
+gabarits blindé ET défaut remis : tout au vert. Son état sain étant ZÉRO
+trouvaille, aucun témoin de non-vacuité n'est possible sur les fichiers réels —
+ils ne contiennent, par construction, rien à trouver. La détection sort donc de
+la boucle et s'éprouve sur **six cas fabriqués**, un par forme plus deux qu'elle
+doit laisser passer (un commentaire, une erreur interne). Blinder l'un
+quelconque des trois motifs fait maintenant tomber ce contrôle-là.
+
+**Et une clé morte est apparue en corrigeant, masquée par une coïncidence.**
+`bilanSaison.ts → du` — « Effort produit », écrit dans les six langues et lu par
+personne. Le recensement des clés mortes cherche le nom dans TOUT le code : une
+variable locale `du` d'un fichier sans rapport la maintenait en vie. Ma
+correction a supprimé ce `${du}`, et la clé est tombée. C'est l'autre sens du
+défaut déjà écrit ici pour ce garde — il connaissait le faux positif, pas le
+faux négatif.
+
+**Ce que le recensement n'a PAS trouvé, et qui vaut d'être dit.** Les autres
+producteurs de texte au serveur sont propres : `notifications.ts` et
+`imageBilan.ts` n'interpolent que des durées déjà mises en forme et des nombres
+de jours, l'image de saison passe déjà tout par `Intl`. Le seul autre `String(n)`
+d'un nombre montré était dans le panneau d'administration — `totalPompes` monte à
+des dizaines de milliers — et il passe par `useNombre`. **Aucun garde n'est posé
+sur `String(` en couche d'affichage** : la moitié de ses emplois y sont
+légitimes (une valeur de formulaire, une clé de stockage, un message d'erreur),
+et un motif qui les confondrait ferait plus de bruit qu'il n'attrape.
+
+Huit sabotages, huit échecs — dont un qui avait d'abord passé au vert sans avoir
+rien saboté, `perl` n'ayant pas trouvé son motif. Le contrôle de `git diff
+--stat` avant chaque exécution l'a dit : c'est le piège du « sabotage qui ne
+sabote pas », et il ne se voit qu'en vérifiant que le fichier a bougé.
+
+Vérifié dans le HTML servi, quatre langues : « Continue with Google if you got
+here another way », « Diese Seite wird von der App geöffnet », « このページは
+アプリから開きます ».
+
 ### Le compteur de l'onglet disparaissait quatre chargements sur cinq
 Trouvé en vérifiant tout autre chose : je lisais la dette dans quatre langues
 pour éprouver la mise en forme des nombres, et le titre de l'onglet portait le

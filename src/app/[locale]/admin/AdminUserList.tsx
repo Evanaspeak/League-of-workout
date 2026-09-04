@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT, useDateLocale, usePourcentage } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useNombre, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { adminUserList } from "@/lib/i18n/dictionaries/adminUserList";
 import { Icone } from "@/components/Icone";
 
@@ -62,6 +62,10 @@ export default function AdminUserList() {
   const pourcent = usePourcentage();
   const t = useT(adminUserList);
   const dateLocale = useDateLocale();
+  // `totalPompes` monte à des dizaines de milliers : « 25000 » se lit mal, et
+  // le reste du produit écrit « 25 000 » depuis que les nombres passent par
+  // `Intl`. Un panneau qui échappe à la règle finit par la faire oublier.
+  const nombre = useNombre();
   const [users, setUsers] = useState<UserStat[]>([]);
   const [scoring, setScoring] = useState<ScoringConfig>({ roles: [], levels: [], mastery: null });
   const [loading, setLoading] = useState(true);
@@ -236,12 +240,12 @@ export default function AdminUserList() {
 
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 14 }}>
-                  <Stat label={t.totalGames} value={String(u.totalGames)} />
-                  <Stat label={t.totalPompes} value={String(u.totalPompes)} />
-                  <Stat label={t.avgPompesPerGame} value={u.totalGames > 0 ? String(u.avgPompes) : "—"} />
+                  <Stat label={t.totalGames} value={nombre(u.totalGames)} />
+                  <Stat label={t.totalPompes} value={nombre(u.totalPompes)} />
+                  <Stat label={t.avgPompesPerGame} value={u.totalGames > 0 ? nombre(u.avgPompes) : "—"} />
                   <Stat label={t.winrate} value={u.totalGames > 0 ? pourcent(u.winrate) : "—"} />
-                  <Stat label={t.games7d} value={String(u.gamesThisWeek)} />
-                  <Stat label={t.games30d} value={String(u.gamesThisMonth)} />
+                  <Stat label={t.games7d} value={nombre(u.gamesThisWeek)} />
+                  <Stat label={t.games30d} value={nombre(u.gamesThisMonth)} />
                   <Stat label={t.lastGame} value={daysSince(u.lastGame, t) ?? t.never} />
                   <Stat label={t.lastLevel} value={u.lastLevel ? t.levelAbrev(u.lastLevel) : "—"} />
                 </div>
@@ -301,7 +305,7 @@ export default function AdminUserList() {
                 <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.plankSettings}</SectionTitle>
                   <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-                    <Stat label={t.plankMax} value={String(u.pompesMax)} />
+                    <Stat label={t.plankMax} value={nombre(u.pompesMax)} />
                     <Stat label={t.currentLevel} value={u.niveauActuel != null ? t.levelAbrev(u.niveauActuel) : "—"} />
                     <Stat label={t.multiplier} value={u.multiplicateur != null ? `×${u.multiplicateur}` : "—"} />
                     <Stat label={t.lossPenalty} value={u.malusDefaite != null ? `${u.malusDefaite} ${t.pompesUnit}` : "—"} />
