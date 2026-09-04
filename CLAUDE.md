@@ -2392,6 +2392,25 @@ le filtre faisait exactement son travail. « 800 » fait trois caractères, et d
 JSON en contient : dans un identifiant, dans une date, dans un total. **Le
 contrôle pouvait être vrai sans rien prouver, et sur une autre base il l'a été.**
 
+**Et le recensement qui a suivi a trouvé six autres assertions de la même
+famille, dans le même fichier — dont une qui ne prouvait rien seule.**
+`toContainText("150")` est VRAI sur une ligne qui affiche 5150 : le contrôle du
+retour à la semaine passait donc sur un onglet resté bloqué sur le cumul, et
+n'était sauvé que par l'assertion voisine.
+
+**La correction évidente était fausse, et la mesure l'a dit.** Poser une
+frontière de mot (`\b150\b`) échoue aussi, parce que **`toContainText` colle
+les textes des descendants sans séparateur** : la ligne rend
+« 1Duelmtmj7qi83c5150 points », un pseudo qui finit par un chiffre se soude à
+la valeur, et la frontière n'existe plus. Pire, ça marche dans les deux sens :
+un `not` deviendrait faussement rouge le jour où une marque aléatoire finit par
+le bon chiffre.
+
+Les nombres se lisent donc DANS LEUR CELLULE — la troisième colonne ne porte
+que l'effort — et on y lit le NOMBRE, pas une sous-chaîne. C'est exact,
+indépendant de la langue, et impossible à satisfaire par accident. Sabotage : la
+période forcée à la semaine dans la route, le parcours tombe.
+
 Ce n'est donc pas un aléa, et il ne fallait surtout pas relancer : c'est la
 famille déjà écrite ici — « une machine lente ne se trompe pas, elle révèle » —
 sous une forme nouvelle. Un pseudo porte une marque tirée au hasard et ne peut
