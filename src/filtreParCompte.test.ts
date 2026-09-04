@@ -82,7 +82,17 @@ function routes(): { nom: string; texte: string }[] {
     for (const e of fs.readdirSync(dossier, { withFileTypes: true })) {
       const complet = path.join(dossier, e.name);
       if (e.isDirectory()) parcourir(complet);
-      else if (e.name === "route.ts") {
+      /**
+       * `route.ts` ET `route.tsx`.
+       *
+       * Next accepte les deux, et trois routes de ce projet sont en `.tsx` —
+       * les deux images rendues par `next/og` et l'icône PWA. Elles étaient
+       * donc INVISIBLES à ce recensement depuis qu'elles existent : le garde
+       * ne trouvait rien à leur reprocher parce qu'il ne les lisait pas.
+       * Éprouvé en neutralisant le verrou de session de `seance/image`, qui
+       * n'a fait tomber aucun test.
+       */
+      else if (e.name === "route.ts" || e.name === "route.tsx") {
         trouvees.push({
           nom: path.relative(RACINE, dossier).replace(/\\/g, "/"),
           texte: fs.readFileSync(complet, "utf8"),

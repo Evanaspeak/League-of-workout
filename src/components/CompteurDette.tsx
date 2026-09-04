@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { PartageSeance } from "@/components/PartageSeance";
 import { duree, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
@@ -215,6 +216,15 @@ export function CompteurDette() {
   }, [chronoOuvert, enPause, fini]);
 
   /** Acquitte la part réellement faite, puis referme. */
+  /**
+   * Le nombre de points d'une séance qui mérite d'être montrée, ou `null`.
+   *
+   * Il vient du serveur : le navigateur ne connaît pas le record des trente
+   * derniers jours, et une image qu'on peut se fabriquer soi-même ne dit rien
+   * de personne.
+   */
+  const [partage, setPartage] = useState<number | null>(null);
+
   const cloturer = async (toutFait: boolean) => {
     const secondesFaites = Math.max(0, totalRef.current - restantSec);
     try {
@@ -231,6 +241,25 @@ export function CompteurDette() {
       });
       if (res.ok) {
         contexte.poserDette(await res.json());
+        /**
+         * Une grosse séance se propose au partage (réponse 122).
+         *
+         * La question se pose au SERVEUR, et seulement quand le paiement a
+         * abouti : c'est lui qui sait ce qu'était le record des trente
+         * derniers jours, et une séance mise en file hors ligne n'est pas
+         * encore une séance — proposer une image de ce qui n'est pas
+         * enregistré serait promettre deux fois.
+         *
+         * Son échec ne coûte que lui-même : la séance est payée, et ne pas
+         * proposer une image n'a jamais fait de mal à personne.
+         */
+        try {
+          const s = await fetch("/api/seance");
+          if (s.ok) {
+            const d = await s.json();
+            if (d?.partageable) setPartage(Number(d.points) || 0);
+          }
+        } catch { /* pas d'image proposée, et rien de perdu */ }
       } else if (res.status >= 500 || res.status === 401) {
         /**
          * Le serveur a répondu, mal.
@@ -269,7 +298,22 @@ export function CompteurDette() {
   // Rien en attente, ou page publique : la pastille ne s'affiche pas.
   if (surPagePubliqueRef.current) return null;
   if (!dette || dette.exercices.length === 0 || dette.dureeSec <= 0) {
-    return chronoOuvert ? ModaleChrono() : null;
+    /**
+     * La pastille disparaît, la proposition reste.
+     *
+     * C'est LE cas qui compte : payer toute sa dette la ramène à zéro, donc
+     * cette branche est celle qu'on emprunte juste après une grosse séance. Ne
+     * rendre que le chrono ici ferait disparaître l'image au moment exact où
+     * elle a un sens.
+     */
+    return (
+      <>
+        {chronoOuvert && ModaleChrono()}
+        {partage !== null && (
+          <PartageSeance points={partage} onFermer={() => setPartage(null)} />
+        )}
+      </>
+    );
   }
 
   const progression = dette.seuilSec > 0
@@ -359,6 +403,9 @@ export function CompteurDette() {
       </button>
 
       {chronoOuvert && ModaleChrono()}
+      {partage !== null && (
+        <PartageSeance points={partage} onFermer={() => setPartage(null)} />
+      )}
     </>
   );
 

@@ -106,8 +106,13 @@ export async function GET() {
   const jourDe = (d: Date) => jourDansFuseau(d, user.fuseau);
 
   const [parties, paiements] = await Promise.all([
+    // `sansEnjeu: false`, comme la page. La même requête était écrite deux
+    // fois et une seule des deux filtrait : l'IMAGE comptait les parties
+    // refusées que la page juste à côté écarte, donc deux chiffres pour la
+    // même saison — et c'est l'image qu'on partage. Ce fichier était invisible
+    // au garde qui l'aurait dit : il ne lisait que `route.ts`.
     prisma.game.findMany({
-      where: { userId: user.id, date: { gte: depuis } },
+      where: { userId: user.id, sansEnjeu: false, date: { gte: depuis } },
       select: { date: true, result: true, pompesCalculees: true, jeu: true, champion: true },
     }),
     prisma.paiement.findMany({
