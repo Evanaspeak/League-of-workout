@@ -494,6 +494,77 @@ Règles :
   clause qui dit laquelle fait foi : la française. Le bandeau qui annonçait la
   limite est parti avec elle.
 
+### Ce qui récompense, et ce qui ne récompense rien
+Cinq mécaniques, toutes déduites de ce qui est déjà en base, et toutes rendues
+par `/api/progression` — c'est-à-dire sans un aller-retour de plus vers Neon.
+Aucune ne donne de points d'effort : un point donné est une pompe que personne
+n'a faite, et le registre entier — dette, classement, paliers, bilan — s'en
+trouverait faux.
+
+- **Les paliers** (`badges.ts`, ligne 146) : volume, parties, série. Ils se
+  DÉDUISENT, donc ils peuvent redescendre quand une partie est supprimée.
+- **Le niveau de compte** (`niveauCompte.ts`, ligne 148) : `25 × n × (n−1)`
+  points PAYÉS pour atteindre le niveau n. Payés, jamais générés — sinon
+  perdre beaucoup ferait monter, sur un produit dont le sujet est de payer.
+  Le champ s'appelle `pointsPayes` et non `totalPoints` précisément pour que
+  la confusion ne puisse pas se refaire.
+- **Le titre** (même module, ligne 149) : six, du plus facile au plus rare,
+  ordonnés par le TEMPS qu'ils demandent. On porte le plus rare qu'on ait, et
+  aucun n'est désobligeant — qui n'a rien gagné n'a pas de titre plutôt qu'un
+  titre qui le dit. Il est rangé du côté du DÉTAIL du profil d'un ami :
+  « Increvable » dit une série de trente jours, que le mode « total » tait.
+- **L'exploit du paiement éclair** (`exploits.ts`, ligne 147) : une dette
+  SOLDÉE dans l'heure qui a suivi sa naissance. C'est la seule chose de la
+  progression qui se range en base (`User.paiementEclairLe`), parce qu'un
+  délai est un MOMENT et non un total : la dette d'hier soir n'existe plus, et
+  rien ne dira jamais après coup en combien de temps elle a été payée. Il ne se
+  perd donc pas, et ne se regagne pas.
+
+### Les défis, et l'objectif qu'on poursuit ensemble
+- **Le défi du jour** (`defiQuotidien.ts`, ligne 138) : le même pour tout le
+  monde, décidé par le seul JOUR, donc entièrement déductible sans table ni
+  écriture. Six défis parcourus par blocs de six — jamais deux jours de suite
+  le même — avec le premier et le dernier de chaque bloc FIXÉS par
+  construction : un rattrapage de couture après coup ne peut pas se refermer,
+  parce que le bloc d'avant a peut-être tourné lui aussi.
+- **Les deux défis du mois** (`defiMensuel.ts`, ligne 131) : en volume ET en
+  parties, montrés ensemble. Un mois est trop long pour qu'on se souvienne d'un
+  objectif vu une fois.
+- **L'objectif collectif** (`objectifCollectif.ts`, ligne 133) : tout l'effort
+  payé par tout le monde sur le mois, avec le nombre de CONTRIBUTEURS à côté.
+  Ce dernier n'est pas une décoration — « 8 420 sur 100 000 » décourage à
+  quatre, « 8 420 sur 100 000, à 4 » est vrai à toutes les tailles. C'est la
+  seule lecture du produit qui ne filtre pas par compte, et sa dispense porte
+  sa raison : un total et un décompte ne désignent personne.
+
+### Le mur des records (lignes 140 et 141)
+Le plus gros JOUR d'effort, ce mois-ci et depuis toujours. Il ne remplace pas
+le classement — celui-ci additionne une fenêtre, celui-là retient une pointe —
+et c'est pourquoi il vit dans sa propre section.
+
+Il se regroupe sur le COUPLE compte-jour : un `_max` sur les points rendrait le
+plus gros PAIEMENT, ce qui se verrait le soir où quelqu'un paie en deux fois. À
+égalité, le plus ANCIEN tient — un record ne se prend pas en égalant.
+
+**Entre amis par défaut, ouvert à tous au choix** (`User.recordsPublics`, faux
+par défaut). Le **mode fantôme reste au-dessus** : un mur est un classement,
+donc se cacher des classements se cache du mur, ouvert ou non. Les deux
+conditions sont en base, jamais à l'affichage.
+
+**Ce que la ligne 140 ne fait PAS** : le classement par exercice. `Paiement` ne
+porte que des points et un jour ; retenir l'exercice demanderait une colonne et
+une décision sur les paiements déjà écrits.
+
+### Le classement : la semaine, et le cumul (ligne 144)
+Deux onglets, et la SEMAINE est le défaut, y compris pour une période inconnue.
+Un cumul est décidé par la date d'inscription : le dernier venu y regarde un
+tableau où sa place ne dépend plus de ce qu'il fait. La borne haute reste dans
+les deux cas, sinon un paiement daté du futur entrerait au cumul.
+
+L'onglet ouvert vit dans un `useRef` : le classement se recharge de trois
+autres endroits, qui repasseraient sinon la période par défaut, et le tableau
+reviendrait à la semaine sous un onglet disant « cumul ».
+
 ### Objectif de première semaine
 Ce que quelqu'un fait dans ses sept premiers jours décide s'il reviendra ; le
 reste du produit n'y peut plus grand-chose après. L'objectif est donc petit —
@@ -687,7 +758,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-1904 tests unitaires, 176 suites. Base et session doublées : aucune dépendance à
+2095 tests unitaires, 189 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -712,7 +783,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 201 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 211 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
