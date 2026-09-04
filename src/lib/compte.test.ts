@@ -66,6 +66,10 @@ const PART_AU_NAVIGATEUR = new Set([
 
 /** Ce qui ne sort jamais, et pourquoi. */
 const NE_SORT_PAS: Record<string, string> = {
+  jetonProfil:
+    "Lien du profil public : une adresse qui montre le pseudo et l'effort SANS " +
+    "session, donc un laissez-passer, pas un réglage. Même raison que le jeton " +
+    "de diffusion : il n'a rien à voyager à chaque chargement de page.",
   passwordHash:
     "Condensat du mot de passe : la seule chose qui protège le compte.",
   jetonObs:

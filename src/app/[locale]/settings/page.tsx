@@ -122,6 +122,15 @@ export default function SettingsPage() {
   /** Recevoir le bilan hebdomadaire par courriel. */
   const [bilanActif, setBilanActif] = useState(true);
   const [fantome, setFantome] = useState(false);
+  /**
+   * Le lien du profil public. Nul = le profil est fermé : la PRÉSENCE du lien
+   * est le réglage, et l'éteindre le révoque.
+   */
+  const [lienProfil, setLienProfil] = useState<string | null>(null);
+  const [lienCopie, setLienCopie] = useState(false);
+  // Rendu serveur : `window` n'existe pas. Le lien ne s'affiche de toute façon
+  // qu'une fois le jeton lu, c'est-à-dire après montage.
+  const origine = typeof window === "undefined" ? "" : window.location.origin;
   const [partage, setPartage] = useState("total");
   const [savingExo, setSavingExo] = useState(false);
   const [savedExo, setSavedExo] = useState(false);
@@ -161,6 +170,7 @@ export default function SettingsPage() {
       setVariante(s.user?.variantePompes ?? null);
       setBilanActif(s.user?.bilanActif !== false);
       setFantome(s.user?.fantome === true);
+      setLienProfil(typeof s.user?.jetonProfil === "string" ? s.user.jetonProfil : null);
       setPartage(s.user?.partageAmis === "detail" ? "detail" : "total");
       setPompesMax(s.user?.pompesMax ?? 0);
       setPompesMaxLe(s.user?.pompesMaxLe ?? null);
@@ -198,14 +208,22 @@ export default function SettingsPage() {
    * doit disparaître de l'écran, sans quoi le message d'erreur et ce qu'on
    * voit se contredisent.
    */
+  /**
+   * Rend le CORPS de la réponse, pas un booléen.
+   *
+   * Un réglage peut être décidé au serveur — le jeton du profil public est
+   * tiré là-bas — et l'écran doit pouvoir le lire. `null` vaut échec, donc les
+   * appelants qui ne testaient qu'une vérité continuent de marcher.
+   */
   const enregistrerReglage = async (
     userPrefs: Record<string, unknown>,
     revenir: () => void,
-  ): Promise<boolean> => {
+  ): Promise<{ jetonProfil?: string | null } | null> => {
     setSavingExo(true);
     setSavedExo(false);
     setErreurExo(false);
     let ok = false;
+    let corps: { jetonProfil?: string | null } = {};
     try {
       const res = await fetch("/api/settings", {
         method: "PUT",
@@ -213,6 +231,7 @@ export default function SettingsPage() {
         body: JSON.stringify({ userPrefs }),
       });
       ok = res.ok;
+      if (ok) corps = await res.json().catch(() => ({}));
     } catch {
       ok = false;
     }
@@ -224,7 +243,7 @@ export default function SettingsPage() {
       revenir();
       setErreurExo(true);
     }
-    return ok;
+    return ok ? corps : null;
   };
 
   /**
@@ -241,10 +260,10 @@ export default function SettingsPage() {
     setPompesMaxLe(new Date().toISOString());
     // Le résultat remonte au panneau, qui garde la saisie quand elle n'est pas
     // partie : refermer sur un échec efface ce qu'on vient de taper.
-    return enregistrerReglage(
+    return Boolean(await enregistrerReglage(
       { pompesMax: valeur },
       () => { setPompesMax(avantMax); setPompesMaxLe(avantLe); },
-    );
+    ));
   };
 
   const handleSaveExo = async (nextExercices: ExerciceId[], nextSeuil: number) => {
@@ -295,6 +314,21 @@ export default function SettingsPage() {
     const avant = fantome;
     setFantome(actif);
     await enregistrerReglage({ fantome: actif }, () => setFantome(avant));
+  };
+
+  /**
+   * Le profil public, à adresse partageable (réponse 121).
+   *
+   * Le serveur rend le jeton en réponse : on ne le fabrique pas ici. Un lien
+   * affiché avant que le serveur l'ait gardé serait le pire des deux — on le
+   * colle quelque part, et il n'ouvre rien.
+   */
+  const handleSaveProfilPublic = async (actif: boolean) => {
+    const avant = lienProfil;
+    const reponse = await enregistrerReglage({ profilPublic: actif }, () => setLienProfil(avant));
+    if (!reponse) return;
+    setLienProfil(typeof reponse.jetonProfil === "string" ? reponse.jetonProfil : null);
+    setLienCopie(false);
   };
 
   /**
@@ -665,6 +699,67 @@ export default function SettingsPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* Le profil public, à adresse partageable */}
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
+          <h2 className="titre-section">{t.profilPublicLabel}</h2>
+          <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+            {t.profilPublicAide}
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {[
+              { valeur: false, libelle: t.profilPublicNon },
+              { valeur: true, libelle: t.profilPublicOui },
+            ].map(({ valeur, libelle }) => {
+              const actif = valeur === (lienProfil !== null);
+              return (
+                <button
+                  key={libelle}
+                  onClick={() => handleSaveProfilPublic(valeur)}
+                  aria-pressed={actif}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 999,
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                    minHeight: 44,
+                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
+                    color: actif ? "var(--amber)" : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {libelle}
+                </button>
+              );
+            })}
+          </div>
+          {lienProfil && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              {/*
+                L'adresse partagée ne porte PAS de préfixe de langue : celui qui
+                l'ouvre négocie la sienne, plutôt que de recevoir celle de celui
+                qui a copié le lien. C'est la décision déjà prise pour le lien
+                de parrainage.
+              */}
+              <code style={{ fontFamily: "ui-monospace, monospace", overflowWrap: "anywhere", fontSize: ".8rem" }}>
+                {`${origine}/p/${lienProfil}`}
+              </code>
+              <button
+                type="button"
+                className="lol-btn"
+                onClick={() => {
+                  navigator.clipboard?.writeText(`${origine}/p/${lienProfil}`).then(
+                    () => setLienCopie(true),
+                    () => setLienCopie(false),
+                  );
+                }}
+              >
+                {lienCopie ? t.profilPublicCopie : t.profilPublicCopier}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Ce que les amis voient */}

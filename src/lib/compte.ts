@@ -33,6 +33,11 @@ const NE_SORTENT_PAS = [
   // s'afficher en direct, ce n'est pas une hypothèse d'école. Il se demande
   // par `/api/obs`, qui existe pour ça.
   "jetonObs",
+  // Le jeton du profil public : même nature, même raison. C'est une adresse
+  // qui montre quelque chose de vous SANS session, donc un laissez-passer, et
+  // il n'a rien à voyager à chaque chargement de page. Il se demande par
+  // `/api/settings`, avec le reste des réglages.
+  "jetonProfil",
   // Le compteur de révocation des sessions. Ce n'est pas un secret : c'est de
   // la mécanique interne, que le navigateur ne lit nulle part et n'a aucune
   // raison de connaître. Un compte public qui publie les rouages invite à

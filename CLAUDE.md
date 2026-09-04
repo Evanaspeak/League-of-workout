@@ -989,6 +989,64 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le profil public, et l'adresse qu'on ne peut pas énumérer
+Ligne 121, réponse « Au choix ». Deux règles du projet s'appliquent d'elles-
+mêmes dès qu'on lit « au choix » :
+
+- **le défaut est le plus FERMÉ.** Quelqu'un qui n'ouvre jamais ses réglages ne
+  doit pas se mettre à publier une page parce qu'on a ajouté une
+  fonctionnalité ;
+- **l'adresse ne s'énumère pas.** La fonder sur le pseudo permettrait
+  d'essayer des pseudos jusqu'à dresser la liste des comptes qui ont accepté
+  d'être vus — c'est-à-dire de publier précisément ce que le réglage promet de
+  tenir. Un jeton tiré au hasard ne dit rien de qui il désigne.
+
+**La PRÉSENCE du jeton est le réglage**, et c'est ce qui évite une seconde
+colonne qui pourrait la contredire. Il en découle qu'**éteindre, c'est
+révoquer** : le rallumer tire un NOUVEAU jeton, donc un lien qu'on croyait
+avoir coupé ne revient jamais à la vie. Ça surprend une fois, et c'est le seul
+sens sûr — l'inverse serait le pire défaut possible sur cette page. Le
+rallumer alors qu'il est DÉJÀ ouvert garde le lien en cours, sinon un
+aller-retour dans les réglages casserait une adresse qu'on vient de coller
+quelque part.
+
+**Ni la dette, ni le retard**, et c'est une décision. Une page qu'on partage
+soi-même est une fierté : « j'ai payé douze mille points ». Y publier ce qu'on
+doit et depuis combien de temps on est en retard en ferait un pilori, personne
+ne partagerait le lien, et la fonctionnalité n'existerait pas. C'est aussi ce
+qui la distingue du profil d'un AMI, qui montre le retard : là, la pression
+sociale est le but et elle s'exerce entre gens qui se connaissent ; ici,
+l'adresse peut finir n'importe où.
+
+**Hors des moteurs**, par la balise et non par `robots.txt` : c'est la leçon
+déjà écrite au départ de `/waitlist` — interdire l'exploration n'empêche pas
+l'indexation, et une page de profil indexée survit à la décision de la
+refermer.
+
+**Le jeton repart avec la réponse du réglage.** L'écran ne peut pas le
+fabriquer, il est tiré au serveur ; le lui faire redemander coûterait un
+aller-retour pour une valeur qu'on vient d'écrire. `undefined` quand le réglage
+n'était pas dans la requête, et non `null` : une clé absente ne dit rien, une
+clé nulle dirait « fermé » et l'écran effacerait un lien qui existe toujours.
+
+**Trois gardes ont mordu, tous les trois à raison** : `comptePublic` a exigé
+qu'on range le jeton d'un côté ou de l'autre de ce qui sort du compte — il ne
+sort pas, même raison que le jeton de diffusion —, `pagesOrphelines` a exigé de
+dire pourquoi cette page n'est atteignable par aucun lien du site, et
+`politiqueComplete` a exigé qu'on la décrive dans les six langues.
+
+**Et le garde de parité que je venais d'écrire a servi une heure plus tard.**
+La ligne de politique était posée dans cinq langues sur six — l'anglais avait
+un autre libellé de ligne voisine et ma recherche ne l'avait pas trouvée. Avant
+ce garde, tout serait passé au vert. C'est la meilleure justification qu'un
+contrôle puisse avoir : il attrape son auteur.
+
+Six sabotages unitaires, six échecs. Au navigateur, trois tests — le compte
+neuf n'a pas de profil, le lien ouvre sans session et ne montre pas la dette
+(posée à 4242 exprès, pour que son absence veuille dire quelque chose), et le
+fermer coupe le lien pendant que le rouvrir en donne un autre. Sabotage :
+l'adresse retirée des chemins publics, le parcours tombe.
+
 ### La dette commune d'une équipe, et le registre qu'on n'a pas créé
 Ligne 118, réponse « Oui » : « Cinq personnes, une dette commune, chacun paie
 ce qu'il peut. Ça sauve celui qui décroche. » C'est la SECONDE moitié qui

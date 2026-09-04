@@ -47,6 +47,9 @@ export const PREFIXES_PUBLICS = [
   // La source de diffusion : un logiciel comme OBS n'a ni cookie ni session,
   // et l'adresse elle-même est le laissez-passer.
   "/obs",
+  // Le profil public : son adresse EST le laissez-passer, comme pour la source
+  // de diffusion. Les enfants seulement — `/p` tout court n'existe pas.
+  "/p/",
   // Les enfants seulement : `/api/obs` tout court rend et régénère le jeton,
   // et cette route-là exige une session.
   "/api/obs/",

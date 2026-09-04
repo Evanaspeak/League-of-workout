@@ -29,6 +29,7 @@ const ENTREES_EXTERNES: Record<string, string> = {
   "/connexion-app": "ouverte par l'application de bureau à la fin de son OAuth",
   "/recuperation/valider": "atteinte par le lien du courriel de récupération",
   "/obs/[jeton]": "adresse recopiée à la main dans OBS, jamais cliquée",
+  "/p/[jeton]": "adresse que son propriétaire copie et partage lui-même ; la lister ici reviendrait à publier les liens",
 };
 
 /** Toutes les pages du dossier `app`, sous forme de chemin d'URL. */

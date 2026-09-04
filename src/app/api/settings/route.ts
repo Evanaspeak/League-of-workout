@@ -10,6 +10,7 @@ import { toVariante } from "@/lib/variantes";
 import { estLocale } from "@/lib/i18n/langues";
 import { estFuseauValide } from "@/lib/fuseau";
 import { PARTAGES, type Partage } from "@/lib/profilAmi";
+import { decisionProfilPublic } from "@/lib/profilPublic";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -54,6 +55,7 @@ export async function PUT(req: Request) {
   const body = await req.json();
 
   const updates: Promise<unknown>[] = [];
+  let jetonRendu: string | null | undefined;
 
   // Préférences propres à l'utilisateur, scopées à son propre compte. La
   // configuration de scoring, elle, reste volontairement partagée entre
@@ -69,6 +71,12 @@ export async function PUT(req: Request) {
       fuseau?: string;
       bilanActif?: boolean;
       fantome?: boolean;
+      /**
+       * La présence du jeton EST le réglage du profil public. Le corps de la
+       * requête, lui, porte un booléen : c'est la question qu'on pose à
+       * quelqu'un, pas la valeur qu'on stocke.
+       */
+      jetonProfil?: string | null;
       partageAmis?: string;
       sessionAuto?: string;
     } = {};
@@ -171,6 +179,27 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
       }
       data.partageAmis = body.userPrefs.partageAmis;
+    }
+
+    /**
+     * Le profil public, à adresse partageable.
+     *
+     * La présence du jeton EST le réglage : l'allumer en tire un, l'éteindre
+     * l'efface — donc éteindre, c'est révoquer. Le rallumer alors qu'il l'est
+     * déjà GARDE le lien en cours, sinon un aller-retour dans les réglages
+     * casserait une adresse qu'on vient de coller quelque part.
+     *
+     * Refusé si ce n'est pas un booléen, comme le mode fantôme et pour la même
+     * raison : enregistrer « public » pour quelqu'un qui vient de demander
+     * l'inverse ne se rattrape pas.
+     */
+    if (body.userPrefs.profilPublic !== undefined) {
+      const decision = decisionProfilPublic(body.userPrefs.profilPublic, user.jetonProfil ?? null);
+      if (!decision.ok) {
+        return NextResponse.json({ error: decision.erreur }, { status: 400 });
+      }
+      data.jetonProfil = decision.jetonProfil;
+      jetonRendu = decision.jetonProfil;
     }
 
     // Fuseau horaire, pour savoir quelle heure il est chez la personne. Le
@@ -349,5 +378,13 @@ export async function PUT(req: Request) {
    * aucune raison de le payer.
    */
   oublierBareme();
-  return NextResponse.json({ ok: true });
+  /**
+   * Le jeton du profil public repart avec la réponse quand il vient de changer.
+   *
+   * L'écran ne peut pas le fabriquer — il est tiré au serveur — et le lui
+   * faire redemander par un second appel coûterait un aller-retour pour une
+   * valeur qu'on vient d'écrire. `undefined` quand le réglage n'était pas dans
+   * la requête : une clé absente ne dit rien, une clé nulle dirait « fermé ».
+   */
+  return NextResponse.json({ ok: true, jetonProfil: jetonRendu });
 }
