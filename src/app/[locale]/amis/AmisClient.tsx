@@ -282,53 +282,99 @@ export function AmisClient() {
   };
 
   if (!donnees) {
+    /**
+     * L'attente MIROITE le rendu chargé, position par position.
+     *
+     * React réconcilie par POSITION dans l'arbre : deux `<main>` dont les
+     * enfants ne s'alignent pas font démonter puis remonter tout ce qui est
+     * dedans. Les paragraphes déjà peints sont alors recréés, et le repeint
+     * tardif devient un nouveau candidat au plus grand élément — mesuré ici à
+     * 2964 ms sur téléphone bridé, contre 1652 ms quand `/api/amis` est
+     * bloquée, donc quand le remontage n'a jamais lieu.
+     *
+     * Les six premières positions sont donc les mêmes des deux côtés :
+     * l'en-tête, les trois messages, le panneau du classement, celui du
+     * parrainage. Ce qui suit dépend vraiment de la réponse et n'a rien à
+     * mirroiter — des blocs vides y réservent la place, ce qui est l'autre
+     * moitié du problème.
+     */
     return (
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        <h1 className="titre-page">{t.titre}</h1>
+      <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+        <header className="space-y-2">
+          <h1 className="titre-page">{t.titre}</h1>
+          <p style={{ color: "var(--steel)", maxWidth: "60ch" }}>{t.sousTitre}</p>
+        </header>
+
+        {erreur && (
+          <p className="lol-panel p-4" role="alert" style={{ color: "var(--loss)" }}>{erreur}</p>
+        )}
+        {message && (
+          <p className="lol-panel p-4" role="status" style={{ color: "var(--win)" }}>{message}</p>
+        )}
+        {echecChargement && (
+          <p className="lol-panel p-4" role="alert" style={{ color: "var(--steel)" }}>{t.erreur}</p>
+        )}
+
+        {/*
+          Le titre et la phrase d'explication ne dépendent d'AUCUNE donnée :
+          ils disent ce que l'écran fait, pas ce qu'il contient. Ce composant
+          étant rendu au serveur avant d'être hydraté, ils partent dans le
+          HTML servi — et le plus grand élément de la page cesse d'attendre la
+          réponse.
+        */}
+        <section className="lol-panel p-5 space-y-3" style={{ minHeight: 220 }}>
+          <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.classementTitre}</h2>
+          {/*
+            Les onglets sont là aussi, et ce n'est pas de la décoration : React
+            apparie les enfants par RANG. Sans eux, la phrase d'aide est le
+            deuxième enfant ici et le troisième là-bas — donc appariée à autre
+            chose, donc recréée, donc repeinte tard. C'est exactement ce qui
+            faisait 2976 ms au lieu de 1652.
+          */}
+          <div role="tablist" aria-label={t.classementTitre} style={{ display: "flex", gap: 8 }}>
+            {PERIODES.map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="tab"
+                aria-selected={periode === p}
+                disabled
+                className="lol-btn"
+                style={{ fontSize: ".8rem", padding: "4px 12px", opacity: periode === p ? 1 : 0.55 }}
+              >
+                {p === "semaine" ? t.ongletSemaine : t.ongletTotal}
+              </button>
+            ))}
+          </div>
+          <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
+            {t.classementAide(JOURS_CLASSEMENT)}
+          </p>
+        </section>
+
+        <section className="lol-panel p-5 space-y-3" style={{ minHeight: 200 }}>
+          <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.parrainageTitre}</h2>
+          <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
+            {t.parrainageAide}
+          </p>
+        </section>
+
         {echecChargement ? (
           <div className="lol-panel p-5 space-y-3" role="alert">
-            <p style={{ color: "var(--steel)" }}>{t.erreur}</p>
             <button type="button" className="lol-btn" onClick={charger}>{t.reessayer}</button>
           </div>
         ) : (
           /**
-           * La STRUCTURE de la page, pas une boîte unique.
+           * La réserve du reste, en STRUCTURE et non en un nombre.
            *
-           * Une réserve de 420 pixels avait été posée ici en s'inspirant de
-           * l'historique. Elle ne suffisait plus : l'écran a gagné le
-           * classement, le parrainage et les groupes depuis, et la page mesurée
-           * fait 1883 pixels quand la réserve en tenait 420. Tout ce qui est
-           * visible sautait donc encore — 0,145 de CLS, mesuré, pour un seuil
-           * de 0,1.
-           *
-           * Cinq panneaux plutôt qu'un seul nombre : chacun garde à peu près la
-           * place du sien, et la réserve suit l'écran quand il grandit au lieu
-           * d'être un chiffre à corriger après coup. C'est ce que fait déjà le
-           * squelette de l'historique.
+           * Un bloc unique de 420 pixels vivait ici, posé en s'inspirant de
+           * l'historique. L'écran a gagné depuis le classement, le parrainage,
+           * les groupes et deux onglets : la page mesure 1883 pixels, la
+           * réserve en tenait 420, et tout ce qui est visible sautait —
+           * 0,145 de CLS mesuré, pour un seuil de 0,1. Une réserve écrite
+           * comme un nombre vieillit avec l'écran, et personne ne pense à la
+           * rouvrir quand on ajoute un panneau.
            */
           <div className="space-y-4" role="status" aria-label={t.chargement}>
-            {/*
-              Les deux panneaux portent leur VRAI titre et leur vraie phrase
-              d'explication, parce que ni l'un ni l'autre ne dépend de la
-              réponse — ils disent ce que l'écran fait, pas ce qu'il contient.
-              Ce composant est rendu au serveur avant d'être hydraté : ces
-              textes partent donc dans le HTML, et le plus grand élément de la
-              page cesse d'attendre `/api/amis`. C'est la correction déjà faite
-              sur le premier écran du tableau de bord, et le gain se mesure de
-              la même façon.
-            */}
-            <div className="lol-panel p-5 space-y-3" style={{ minHeight: 220 }}>
-              <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.classementTitre}</h2>
-              <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
-                {t.classementAide(JOURS_CLASSEMENT)}
-              </p>
-            </div>
-            <div className="lol-panel p-5 space-y-3" style={{ minHeight: 200 }}>
-              <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.parrainageTitre}</h2>
-              <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
-                {t.parrainageAide}
-              </p>
-            </div>
             {[230, 300, 280].map((h, i) => (
               <div key={i} className="lol-panel p-5" style={{ minHeight: h }} aria-hidden="true" />
             ))}
@@ -386,8 +432,14 @@ export function AmisClient() {
         il tient en une ligne, la sienne, et dit pourquoi il est vide — ce qui
         est la meilleure explication de ce que le formulaire sert à faire.
       */}
-      {classement && (
-        <section className="lol-panel p-5 space-y-3">
+      {/*
+        Le panneau est TOUJOURS rendu, et seul son tableau attend la
+        réponse. Le laisser apparaître d'un bloc le ferait démonter puis
+        remonter à l'arrivée des données, et les paragraphes déjà peints
+        seraient recréés — c'est ce qui repoussait le plus grand élément
+        de 1652 à 2964 ms sur téléphone bridé.
+      */}
+      <section className="lol-panel p-5 space-y-3">
           <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.classementTitre}</h2>
           {/*
             Deux onglets, et le libellé d'aide suit celui qui est ouvert : une
@@ -412,64 +464,81 @@ export function AmisClient() {
               </button>
             ))}
           </div>
+          {/*
+            La phrase d'aide reste HORS du conditionnel, et à la même
+            profondeur que dans le rendu d'attente. C'est elle, le plus grand
+            élément de la page : la faire descendre d'un cran la fait démonter
+            et remonter à l'arrivée des données, et le repeint tardif redevient
+            le plus grand élément. Le nombre de jours vient du classement quand
+            il est là, de la constante sinon — c'est la même valeur.
+          */}
           <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
-            {periode === "total" ? t.classementAideTotal : t.classementAide(classement.jours)}
+            {periode === "total"
+              ? t.classementAideTotal
+              : t.classementAide(classement?.jours ?? JOURS_CLASSEMENT)}
           </p>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ color: "var(--steel)", fontSize: ".8rem", textAlign: "left" }}>
-                  <th scope="col" style={{ padding: "4px 8px 4px 0", width: "3rem" }}>{t.colRang}</th>
-                  <th scope="col" style={{ padding: "4px 8px 4px 0" }}>{t.colJoueur}</th>
-                  <th scope="col" style={{ padding: "4px 0", textAlign: "right" }}>{t.colEffort}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classement.lignes.map((l) => (
-                  <tr
-                    key={l.id}
-                    style={{
-                      borderTop: "1px solid var(--panel-border, rgba(255,255,255,.08))",
-                      // Sa propre ligne se retrouve d'un coup d'œil dans une
-                      // liste de cent : c'est la seule qu'on vient y chercher.
-                      fontWeight: l.moi ? 700 : 400,
-                    }}
-                  >
-                    <td style={{ padding: "8px 8px 8px 0", fontVariantNumeric: "tabular-nums" }}>
-                      {l.rang}
-                    </td>
-                    <td style={{ padding: "8px 8px 8px 0", overflowWrap: "anywhere" }}>
-                      {l.pseudo}
-                      {l.enRetard && (
-                        /* La pression sociale de la réponse 116, et elle
-                           s'écrit sous le pseudo plutôt qu'à côté : à 320 px,
-                           deux textes sur la même ligne poussent la colonne
-                           des points hors de l'écran. */
-                        <span style={{ display: "block", color: "var(--loss)", fontSize: ".78rem" }}>
-                          {t.retardDepuis(l.joursDeRetard)}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{
-                      padding: "8px 0", textAlign: "right",
-                      fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
-                    }}>
-                      {t.effortPaye(l.points)}
-                    </td>
+          {classement ? (
+            <>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ color: "var(--steel)", fontSize: ".8rem", textAlign: "left" }}>
+                    <th scope="col" style={{ padding: "4px 8px 4px 0", width: "3rem" }}>{t.colRang}</th>
+                    <th scope="col" style={{ padding: "4px 8px 4px 0" }}>{t.colJoueur}</th>
+                    <th scope="col" style={{ padding: "4px 0", textAlign: "right" }}>{t.colEffort}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {classement.lignes.length <= 1 ? (
-            <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.classementSeul}</p>
-          ) : classement.ecart !== null && (
-            <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>
-              {classement.ecart === 0 ? t.enTete : t.ecartAuPremier(classement.ecart)}
-            </p>
+                </thead>
+                <tbody>
+                  {classement.lignes.map((l) => (
+                    <tr
+                      key={l.id}
+                      style={{
+                        borderTop: "1px solid var(--panel-border, rgba(255,255,255,.08))",
+                        // Sa propre ligne se retrouve d'un coup d'œil dans une
+                        // liste de cent : c'est la seule qu'on vient y chercher.
+                        fontWeight: l.moi ? 700 : 400,
+                      }}
+                    >
+                      <td style={{ padding: "8px 8px 8px 0", fontVariantNumeric: "tabular-nums" }}>
+                        {l.rang}
+                      </td>
+                      <td style={{ padding: "8px 8px 8px 0", overflowWrap: "anywhere" }}>
+                        {l.pseudo}
+                        {l.enRetard && (
+                          /* La pression sociale de la réponse 116, et elle
+                             s'écrit sous le pseudo plutôt qu'à côté : à 320 px,
+                             deux textes sur la même ligne poussent la colonne
+                             des points hors de l'écran. */
+                          <span style={{ display: "block", color: "var(--loss)", fontSize: ".78rem" }}>
+                            {t.retardDepuis(l.joursDeRetard)}
+                          </span>
+                        )}
+                      </td>
+                      <td style={{
+                        padding: "8px 0", textAlign: "right",
+                        fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
+                      }}>
+                        {t.effortPaye(l.points)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {classement.lignes.length <= 1 ? (
+              <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.classementSeul}</p>
+            ) : classement.ecart !== null && (
+              <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>
+                {classement.ecart === 0 ? t.enTete : t.ecartAuPremier(classement.ecart)}
+              </p>
+            )}
+            </>
+          ) : (
+            /* La place du tableau, réservée : sans elle le panneau grandit
+               d'un coup et pousse tout ce qui suit. */
+            <div style={{ minHeight: 160 }} aria-hidden="true" />
           )}
-        </section>
-      )}
+      </section>
 
       {/*
         Le lien d'invitation, sous le classement.
@@ -477,13 +546,15 @@ export function AmisClient() {
         donne, puis les deux façons de le remplir — inviter quelqu'un du
         dehors, ou ajouter quelqu'un qui est déjà là.
       */}
-      {parrainage && (
-        <section className="lol-panel p-5 space-y-3">
+      <section className="lol-panel p-5 space-y-3">
           <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.parrainageTitre}</h2>
           <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
             {t.parrainageAide}
           </p>
-          {parrainage.code ? (
+          {!parrainage ? (
+            /* La place du lien, réservée le temps de la réponse. */
+            <div style={{ minHeight: 74 }} aria-hidden="true" />
+          ) : parrainage.code ? (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 {/*
@@ -515,8 +586,7 @@ export function AmisClient() {
               {t.parrainageIndisponible}
             </p>
           )}
-        </section>
-      )}
+      </section>
 
       <section className="lol-panel p-5 space-y-3">
         <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.ajouterTitre}</h2>
