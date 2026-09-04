@@ -596,21 +596,37 @@ test("le mur ouvert ne montre que ceux qui l'ont ouvert", async ({ browser }) =>
    * envoyé au navigateur — c'est-à-dire précisément le jour où le filtre
    * pourrait glisser à l'affichage sans que rien à l'écran ne bouge.
    */
-  const corps = await page.evaluate(async (jour: string) => {
+  const reponse = await page.evaluate(async (jour: string) => {
     const res = await fetch(`/api/classement?jour=${jour}`);
-    return JSON.stringify(await res.json());
+    return res.json() as Promise<{
+      recordsOuverts: { mois: { points: number } | null; toujours: { points: number } | null } | null;
+    }>;
   }, jourLocalTest());
+  const corps = JSON.stringify(reponse);
 
+  /**
+   * Les PSEUDOS se cherchent dans le corps entier — ils portent une marque
+   * tirée au hasard, donc ils ne peuvent pas s'y trouver par accident.
+   *
+   * **Les CHIFFRES, eux, ne se cherchent pas ainsi**, et c'est l'intégration
+   * continue qui l'a dit : `corps.includes("800")` y était vrai alors que le
+   * compte fermé était bien absent. « 800 » est trois caractères, et du JSON en
+   * contient — dans un identifiant, dans une date, dans un total. Le test
+   * passait en local et tombait sur une autre base : ce n'est pas un aléa, c'est
+   * un contrôle qui pouvait être vrai sans rien prouver, et qui l'a été.
+   *
+   * Ils se lisent donc à leur place, dans les lignes composées du mur.
+   */
   expect({
     ouvertVu: corps.includes(ouvert.compte.pseudo),
     fermeVu: corps.includes(ferme.compte.pseudo),
     cacheVu: corps.includes(cache.compte.pseudo),
-    huitCents: corps.includes("800"),
-    cinqMille: corps.includes("5000"),
-  }).toEqual({
-    ouvertVu: true, fermeVu: false, cacheVu: false,
-    huitCents: false, cinqMille: false,
-  });
+  }).toEqual({ ouvertVu: true, fermeVu: false, cacheVu: false });
+
+  expect([
+    reponse.recordsOuverts?.mois?.points,
+    reponse.recordsOuverts?.toujours?.points,
+  ]).toEqual([300, 300]);
 
   await ctx.close();
 });
