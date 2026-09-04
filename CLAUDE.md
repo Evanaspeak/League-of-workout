@@ -758,7 +758,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2095 tests unitaires, 189 suites. Base et session doublées : aucune dépendance à
+2101 tests unitaires, 190 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -2267,6 +2267,45 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 « le code ne s'affiche pas » — le troisième déguisement de cette panne-là
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
+
+### Un champ renommé vidait un panneau entier, sans erreur ni test rouge
+Trouvé en cherchant si le défi du jour et l'objectif collectif méritaient un
+parcours navigateur. La réponse est non, et ce qui manquait était ailleurs, un
+cran plus bas.
+
+`chargerProgression` déclare un type `Progression` dont **tous les champs sont
+des `unknown`** : il ne dit rien de leur contenu, il dit seulement lesquels
+existent. C'est un contrat de NOMS écrit à la main, en face d'un objet composé
+à la main dans la route, avec du JSON entre les deux — donc entièrement hors du
+compilateur. Un `defi` renommé `defiDuJour` dans la route ne casse rien :
+`p?.defi` devient `undefined`, le panneau reste `null`, et le tableau de bord
+perd un bloc entier. Aucune erreur, aucun test rouge, rien à l'écran qui le
+dise.
+
+C'est la famille de `colonnesHistorique.test.ts`, un cran plus loin : là-bas une
+colonne manquante laissait une case vide, ici c'est un panneau qui ne se rend
+plus.
+
+**Et c'est une classe, pas une ligne.** Les DEUX routes fusionnées du projet ont
+exactement cette forme — `/api/progression` avec `Progression`, `/api/contexte`
+avec `ContexteCompte`. Elles ont été écrites pour la même raison, donc elles
+portent le même trou. `src/contratJson.test.ts` les lit à la source et compare
+dans les deux sens : un champ déclaré que la route n'envoie pas est un panneau
+mort, un champ envoyé que personne ne déclare est du volume payé pour rien sur
+une route appelée à chaque chargement. Une troisième route fusionnée s'ajoute au
+tableau en une ligne — sans quoi elle naîtrait sans garde, comme les deux
+premières.
+
+**Le premier `NextResponse.json` d'une route est presque toujours le 401.** Mon
+extraction partait de lui — il est écrit sur une ligne — et balayait donc tout
+ce qui suit, l'objet `source` compris : dix champs annoncés au lieu de six. Le
+garde tombait, ce qui est le bon comportement, mais pour la mauvaise raison, et
+un garde qui échoue pour la mauvaise raison envoie corriger ce qui n'a rien. Il
+s'ancre maintenant sur la forme MULTILIGNE.
+
+Six sabotages, six échecs : un champ renommé de chaque côté, un champ ajouté
+sans lecteur, un champ retiré du type, le motif rendu aveugle, et le nom du type
+qui ne désigne plus rien.
 
 ### Le mur ouvert n'avait aucun test navigateur, et le sabotage a corrigé le mien
 C'est la PREMIÈRE surface du produit où un compte voit le pseudo et l'effort de
