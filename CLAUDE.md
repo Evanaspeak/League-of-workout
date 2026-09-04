@@ -1098,6 +1098,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Overwatch au catalogue, et la seconde liste de jeux qui avait déjà divergé
+Ligne 179 du plan, réponse « Overwatch » à « quel jeu manque le plus ? ». Une
+demi-nuit annoncée, et l'ajout lui-même tient en une ligne : il se juge comme
+Valorant, une victoire ou une défaite et un score éliminations / morts /
+assistances.
+
+**Deux choses qu'il a et qu'on ne lui donne PAS, avec leur raison écrite dans
+le catalogue.** `roles` désigne les lanes d'un MOBA, et `RoleWeight` ne
+contient que celles de League : l'activer proposerait « Jungle » à quelqu'un
+qui joue tank, et pondérerait ses morts avec un poids qui ne le concerne pas.
+`champions` fait valider la saisie contre la liste de `champions.ts`, qui est
+celle de League : Tracer y serait refusée comme un champion inconnu et le
+bouton d'enregistrement resterait éteint — le défaut déjà corrigé sur
+`useChampions`, mais permanent cette fois. Les deux se branchent le jour où le
+barème saura distinguer les trois rôles d'Overwatch ; les livrer à moitié
+rendrait le jeu inutilisable au lieu d'incomplet.
+
+**Ce que l'ajout a mis au jour vaut plus que l'ajout.** `BandeJeux.tsx` — la
+bande de pastilles de la page d'accueil — portait sa PROPRE liste de jeux,
+écrite à la main, sous le même nom `JEUX`. Elle annonçait « les jeux pris en
+charge » et en montrait **treize sur quinze** : « Call of Duty » et « Les Sims »
+manquaient depuis on ne sait quand.
+
+Rien ne pouvait le signaler. Une bande de treize pastilles ressemble beaucoup à
+une bande de quinze, TypeScript ne se plaint pas d'une liste plus courte qu'une
+autre, et c'est la page que personne ne relit ligne à ligne. C'est le motif que
+ce projet paie en boucle, et il ne prend jamais la forme d'une copie qu'on
+remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
+
+**Et cette table-là ne peut PAS se déduire du catalogue**, ce qui est
+précisément pourquoi elle existait. L'abréviation, la teinte et le genre n'y
+sont pas, et n'ont rien à y faire : le catalogue décide de ce qu'une partie
+COÛTE, pas de ce à quoi elle ressemble. Ce qu'on peut faire est de cesser d'en
+refaire la LISTE — le catalogue donne les jeux et leur ordre, la table les
+habille, et `src/bandeJeux.test.ts` refuse qu'un jeu arrive sans parure.
+
+Il tient aussi l'autre sens (une parure qui ne désigne plus rien est du code
+mort que la bande saute en silence) et l'unicité des codes de fichier : deux
+jeux qui partagent un code partagent leur logo, et le symptôme — le mauvais
+logo sur une pastille — ne ressemble pas à sa cause.
+
+**Le prix d'un jeu ajouté, mesuré plutôt que supposé** : six pages de
+calculateur de plus, prérendues, et quarante-huit lignes au plan du site
+(six langues, chacune avec ses six alternatives et son `x-default`).
+`/fr/calculateur/overwatch` rend « Combien de pompes pour une défaite sur
+Overwatch ? », `/de/…` répond 200, et une adresse inventée rend toujours 404.
+Aucune traduction à écrire : le titre est un gabarit qui prend le nom du jeu,
+et c'est ce qui rend l'ajout d'un jeu bon marché.
+
+Trois sabotages sur le garde, trois échecs — dont le jeu ajouté au catalogue
+sans parure, qui est le cas exact qui vient de se produire.
+
 ### Un drapeau posé avant l'adresse devenait l'adresse, et le rapport avait l'air d'un rapport
 Retombé dedans pour la deuxième fois, la seconde après l'avoir écrit ici.
 `node scripts/accessibilite.mjs --langue=fr http://…` rend **quinze pages

@@ -54,6 +54,28 @@ export const JEUX: JeuDef[] = [
   { nom: "PUBG", type: "parties", br: true, joueurs: 100, modes: [1, 2, 3, 4] },
   { nom: "Call of Duty: Warzone", type: "parties", br: true, joueurs: 150, modes: [1, 2, 3, 4] },
   { nom: "Call of Duty", type: "parties", kda: true },
+  /**
+   * Overwatch (réponse 179 : « quel jeu manque le plus ? »).
+   *
+   * Il se juge comme Valorant : une victoire ou une défaite, et un score
+   * éliminations / morts / assistances. Deux choses qu'il a et qu'on ne lui
+   * donne PAS, avec leur raison :
+   *
+   *  - `roles` désigne les lanes d'un MOBA, et la table `RoleWeight` ne
+   *    contient que celles de League — Top, Jungle, Mid, ADC, Support.
+   *    L'activer proposerait « Jungle » à quelqu'un qui joue tank, et le
+   *    barème pondérerait ses morts avec un poids qui ne le concerne pas.
+   *    Les trois rôles d'Overwatch demandent leurs propres pondérations,
+   *    c'est-à-dire des lignes en base et une décision de barème.
+   *  - `champions` fait valider la saisie contre la liste de `champions.ts`,
+   *    qui est celle de League. Tracer y serait refusé comme un champion
+   *    inconnu, et le bouton d'enregistrement resterait éteint — le défaut
+   *    exact déjà corrigé sur `useChampions`, mais permanent cette fois.
+   *
+   * Les deux se branchent le jour où le barème saura les distinguer ; les
+   * livrer à moitié rendrait le jeu inutilisable au lieu d'incomplet.
+   */
+  { nom: "Overwatch", type: "parties", kda: true },
   // Ni l'un ni l'autre ne se juge au KDA : buts et placement ne s'y ramènent
   // pas. Seul le résultat compte.
   // Rocket League n'a ni mort ni classement : buts, arrêts et passes rachètent
