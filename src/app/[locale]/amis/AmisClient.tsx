@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
+import { etiquetteLocale } from "@/lib/i18n/langues";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
@@ -75,6 +76,22 @@ type Donnees = {
 export function AmisClient() {
   const t = useT(dictAmis);
   const { locale } = useLocale();
+  /**
+   * La date d'un record, dans la langue de l'écran.
+   *
+   * Elle sortait telle quelle de la base — « 2026-09-02 » — ce qui enfreint la
+   * règle du projet (toute date passe par `Intl`) et se coupait en travers :
+   * le navigateur coupe volontiers après un trait d'union, donc la ligne
+   * rendait « 2026-09- » puis « 02 ». Les espaces du résultat sont
+   * insécables : « 2 sept. 2026 » ne doit pas se casser en deux non plus.
+   */
+  const jourLisible = (jour: string) => {
+    const d = new Date(`${jour}T00:00:00Z`);
+    if (Number.isNaN(d.getTime())) return jour;
+    return new Intl.DateTimeFormat(etiquetteLocale(locale), {
+      day: "numeric", month: "short", year: "numeric", timeZone: "UTC",
+    }).format(d).replace(/ /g, "\u00a0");
+  };
 
   const [donnees, setDonnees] = useState<Donnees | null>(null);
   /**
@@ -579,7 +596,7 @@ export function AmisClient() {
                       {r
                         ? (
                           <span style={{ color: r.moi ? "var(--gold)" : undefined }}>
-                            {t.recordsLigne(r.pseudo, r.points, r.jour)}
+                            {t.recordsLigne(r.pseudo, r.points, jourLisible(r.jour))}
                           </span>
                         )
                         : <span style={{ color: "var(--steel)" }}>{"\u2014"}</span>}
@@ -611,7 +628,7 @@ export function AmisClient() {
                         {r
                           ? (
                             <span style={{ color: r.moi ? "var(--gold)" : undefined }}>
-                              {t.recordsLigne(r.pseudo, r.points, r.jour)}
+                              {t.recordsLigne(r.pseudo, r.points, jourLisible(r.jour))}
                             </span>
                           )
                           : <span style={{ color: "var(--steel)" }}>{"\u2014"}</span>}

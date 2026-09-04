@@ -600,6 +600,17 @@ test("le mur ouvert ne montre que ceux qui l'ont ouvert", async ({ browser }) =>
   await expect(mur.first()).toBeVisible();
 
   /**
+   * Et la date est LISIBLE, pas celle de la base.
+   *
+   * Elle sortait telle quelle — « 2026-09-02 » — ce qui enfreint la règle du
+   * projet et se coupait en travers de la ligne, le navigateur coupant
+   * volontiers après un trait d'union. Ça ne s'est vu que sur une photo de
+   * l'écran : aucun contrôle ne regardait la forme de cette date, et le
+   * parcours passait parfaitement.
+   */
+  await expect(mur.first()).not.toContainText(/\d{4}-\d{2}-\d{2}/);
+
+  /**
    * Et ce que le RÉSEAU porte.
    *
    * **Ce contrôle ne distingue PAS, aujourd'hui, « filtré en base » de
