@@ -989,6 +989,55 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une section ajoutée au milieu, et un décalage que je ne sais pas reproduire
+Le mur des records s'est glissé ENTRE les deux panneaux miroités de `/amis`, et
+la campagne de clôture l'a dit tout de suite : **3032 ms sur téléphone bridé**,
+le plus grand élément redevenu le paragraphe du parrainage. C'est le même
+défaut que la veille, sous sa forme suivante — React apparie par RANG, et le
+parrainage était sixième d'un côté, septième de l'autre.
+
+Corrigé de la même façon : la section du mur est TOUJOURS rendue dans l'arbre
+chargé, et le rendu d'attente en porte une au même rang. **3032 → 1116 ms**,
+mesuré.
+
+**Et le garde ne mord pas. Trois sabotages, aucun échec, et la mesure ne bouge
+pas non plus.** J'ai essayé la section retirée du rendu d'attente, la même
+remise derrière un conditionnel dans le rendu chargé, puis les deux ensemble :
+1100 ms dans les trois cas, et le parcours au vert. Chacune des deux moitiés
+suffit donc à garder l'alignement — mais les retirer toutes les deux ne
+reproduit pas non plus les 3032 ms, ce que je n'explique pas.
+
+Ce qui est sûr tient en trois mesures : 3068 avant la première correction,
+1116 après, 3032 après l'ajout du mur, 1116 après celle-ci. Ce qui ne l'est pas
+est le mécanisme exact, et **« ça remesure bien » n'est pas un diagnostic**.
+
+Le parcours est gardé pour ce qu'il éprouve — les deux paragraphes ne sont pas
+recréés — avec écrit noir sur blanc ce qu'il n'éprouve pas. Ce qui tient
+réellement le temps d'affichage de cet écran est la campagne de mesure : elle
+l'a attrapé les DEUX fois, à trois heures d'intervalle, et c'est le seul outil
+dont on sache qu'il voit ce défaut. Un test dont on croit qu'il prouve autre
+chose que ce qu'il prouve est pire qu'aucun test.
+
+**La leçon d'usage, elle, est nette** : sur cet écran, toute section ajoutée au
+milieu se paie en temps d'affichage, et la mesure est le seul contrôle qui le
+dise. Une campagne après chaque ajout de panneau, et pas une fois par semaine.
+
+**Les chiffres de clôture, une fois tout remis.**
+
+| écran | LCP poste | LCP téléphone bridé | CLS |
+|---|---|---|---|
+| `/fr/dashboard` | 244 ms | 1116 ms | 0,003 |
+| `/fr/amis` | 232 ms | 1108 ms | 0,013 |
+| `/fr/history` | 144 ms | 908 ms | 0,000 |
+| `/fr/settings` | 168 ms | 920 ms | 0,000 |
+| `/fr/bilan` | 144 ms | 904 ms | 0,000 |
+
+Les cinq écrans connectés sont sous le seuil sur les deux mesures, ce qui
+n'était vrai d'aucun d'eux il y a vingt-quatre heures. **Accessibilité : 0
+constat sur 90 passes**, quinze pages et six langues, aucune page laissée de
+côté — l'audit lancé SEUL, la suite navigateur purgeant les comptes
+`@example.test` dont celui de la mesure.
+
 ### Le mur ouvert à tous, et deux défauts qu'aucun test ne regardait
 Ligne 141, réponse « au choix ». Le mur des records de la veille restait dans
 le cercle ; il s'ouvre maintenant à tous les comptes pour qui le demande.

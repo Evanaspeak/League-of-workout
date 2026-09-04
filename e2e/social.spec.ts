@@ -429,3 +429,77 @@ test("un coéquipier prend une part de la dette, et c'est la bonne qui baisse", 
   await ctxA.close();
   await ctxB.close();
 });
+
+/**
+ * Le rendu d'attente et le rendu chargé s'apparient position par position.
+ *
+ * React réconcilie par RANG : deux arbres dont les enfants ne s'alignent pas
+ * font démonter puis remonter tout ce qui est dedans, et le paragraphe déjà
+ * peint est recréé. Mesuré deux fois cette nuit sur `/amis` — 3032 ms au lieu
+ * de 1116 sur téléphone bridé — et deux fois pour la même raison : une section
+ * ajoutée au MILIEU décale tout ce qui la suit.
+ *
+ * Aucun test unitaire ne peut le voir : c'est une propriété du DOM vivant.
+ * Celui-ci marque les nœuds pendant l'attente et vérifie que ce sont les MÊMES
+ * une fois les données arrivées.
+ *
+ * **Ce qu'il ne garde PAS, et il faut le dire.** Trois sabotages ont été
+ * essayés — la section du mur retirée du rendu d'attente, la même remise
+ * derrière un conditionnel dans le rendu chargé, puis les deux ensemble — et
+ * AUCUN ne l'a fait tomber. La mesure ne bougeait pas non plus : 1100 ms dans
+ * les trois cas. Autrement dit ni ce test ni le banc d'essai ne savent
+ * reproduire à la demande le décalage qui a été mesuré deux fois pour de vrai.
+ *
+ * Il est gardé pour ce qu'il éprouve — les deux paragraphes ne sont pas
+ * recréés — et pas pour ce qu'on aimerait qu'il éprouve. Ce qui tient
+ * réellement le temps d'affichage de cet écran est la campagne de mesure, qui
+ * l'a attrapé les deux fois. Un test dont on croit qu'il prouve autre chose
+ * que ce qu'il prouve est pire qu'aucun test.
+ */
+test("le panneau du classement n'est pas recréé à l'arrivée des données", async ({ browser }) => {
+  const a = await ouvrirCompte(browser, "Rang2");
+  const ctx = await browser.newContext({ storageState: a.etat });
+  const page = await ctx.newPage();
+
+  // La réponse est retenue le temps de marquer le nœud : sans ce délai, elle
+  // arrive avant qu'on ait pu regarder, et le test ne prouve rien.
+  await page.route("**/api/classement**", async (route) => {
+    await new Promise((r) => setTimeout(r, 2500));
+    await route.continue();
+  });
+
+  await page.goto("/fr/amis");
+
+  /**
+   * On marque DEUX paragraphes, et c'est le second qui compte.
+   *
+   * Le premier jet ne marquait que celui du classement — placé AVANT le point
+   * où les sections s'ajoutent, donc jamais décalé : retirer le mur du rendu
+   * d'attente le laissait au vert. Le paragraphe du parrainage est APRÈS, et
+   * c'est lui que le décalage recrée. C'est aussi lui, le plus grand élément
+   * de la page.
+   */
+  const marquer = async (motif: RegExp, marque: number) => {
+    const el = page.getByText(motif).first();
+    await expect(el).toBeVisible();
+    await el.evaluate((e, m) => { (e as HTMLElement & { __marque?: number }).__marque = m; }, marque);
+  };
+  const survit = (motif: RegExp, marque: number) =>
+    page.getByText(motif).first()
+      .evaluate((e, m) => (e as HTMLElement & { __marque?: number }).__marque === m, marque);
+
+  const CLASSEMENT = /Sur l'effort réellement PAYÉ/i;
+  const PARRAINAGE = /Celui qui ouvre ce lien/i;
+  await marquer(CLASSEMENT, 1);
+  await marquer(PARRAINAGE, 2);
+
+  // Le tableau arrive : c'est le moment où un arbre mal aligné remonterait.
+  await expect(page.getByRole("table")).toBeVisible({ timeout: 15000 });
+
+  expect({
+    classement: await survit(CLASSEMENT, 1),
+    parrainage: await survit(PARRAINAGE, 2),
+  }).toEqual({ classement: true, parrainage: true });
+
+  await ctx.close();
+});

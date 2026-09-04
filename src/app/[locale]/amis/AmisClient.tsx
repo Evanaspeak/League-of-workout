@@ -354,6 +354,19 @@ export function AmisClient() {
           </p>
         </section>
 
+        {/*
+          Le mur des records occupe le MÊME rang qu'en bas, et c'est tout ce
+          qu'on lui demande ici. Sans lui, le panneau du parrainage était
+          sixième d'un côté et septième de l'autre — donc apparié à autre
+          chose, donc recréé, donc repeint tard. Mesuré : 3032 ms au lieu de
+          1116. C'est la deuxième fois que la même section ajoutée au milieu
+          décale ce qui la suit.
+        */}
+        <section className="lol-panel p-5 space-y-3" style={{ minHeight: 120 }}>
+          <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.recordsTitre}</h2>
+          <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.recordsAucun}</p>
+        </section>
+
         <section className="lol-panel p-5 space-y-3" style={{ minHeight: 200 }}>
           <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.parrainageTitre}</h2>
           <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
@@ -550,10 +563,9 @@ export function AmisClient() {
         ferait un second ordre sur les mêmes pseudos, ce qui n'apprend rien et
         double la place.
       */}
-      {classement?.records && (
-        <section className="lol-panel p-5 space-y-3">
+      <section className="lol-panel p-5 space-y-3">
           <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.recordsTitre}</h2>
-          {!classement.records.mois && !classement.records.toujours ? (
+          {!classement?.records || (!classement.records.mois && !classement.records.toujours) ? (
             <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.recordsAucun}</p>
           ) : (
             <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
@@ -585,7 +597,7 @@ export function AmisClient() {
             sien : une section vide dirait « il n'y a personne », alors que la
             vérité est « personne n'a choisi de figurer ici ».
           */}
-          {classement.recordsOuverts && (classement.recordsOuverts.mois || classement.recordsOuverts.toujours) && (
+          {classement?.recordsOuverts && (classement.recordsOuverts.mois || classement.recordsOuverts.toujours) && (
             <div style={{ borderTop: "1px solid var(--line, rgba(255,255,255,.08))", paddingTop: 12 }}>
               <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.recordsOuvertsTitre}</h3>
               <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginTop: 8 }}>
@@ -609,8 +621,7 @@ export function AmisClient() {
               </dl>
             </div>
           )}
-        </section>
-      )}
+      </section>
 
       {/*
         Le lien d'invitation, sous le classement.
