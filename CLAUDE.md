@@ -1098,6 +1098,47 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 0 Person hat » : la règle française du zéro, appliquée à cinq langues
+Trouvé en lisant le tableau de bord EN ALLEMAND, sur le compte semé. L'objectif
+collectif annonçait « 0 Person hat diesen Monat beigetragen ». L'allemand met
+le PLURIEL à zéro — « 0 Personen haben » — comme l'anglais et l'espagnol. Le
+français est la seule des trois à mettre le singulier : « 0 personne a
+contribué ».
+
+Tous les gabarits s'écrivaient `n > 1 ? pluriel : singulier`, ce qui est juste
+en français et faux partout ailleurs. **Trente gabarits, cinq fichiers**, tous
+recopiés depuis le bloc français : tableau de bord, défis, historique,
+notifications, réglages.
+
+**Ce n'est pas un cas de bord.** L'objectif collectif se remet à zéro le
+premier du mois : tout le monde lit ce chiffre à zéro ce jour-là, dans sa
+langue. Et la série, le compte de parties, les jours restants passent par les
+mêmes gabarits.
+
+**Rien ne pouvait le signaler.** `dictionaries.test.ts` exige les mêmes clés,
+les mêmes natures de valeur et aucune écriture étrangère aux six langues : six
+fonctions qui rendent chacune une chaîne le satisfont entièrement. Ce qui
+diffère est la RÈGLE derrière la condition, et une condition ne se compare pas
+d'une langue à l'autre — elle se lit.
+
+**Et le journal portait déjà la moitié de ce constat sans en tirer la
+conséquence.** L'entrée sur « 14 personnes y a contribué » disait :
+« l'anglais et l'allemand étaient justes, le chinois et le japonais n'accordent
+pas ». C'était vrai du VERBE au pluriel ; personne n'avait regardé le cas du
+zéro, qui est l'autre bout du même gabarit.
+
+`src/lib/i18n/pluriel.test.ts` refuse `> 1` hors du bloc français, avec la
+raison du français écrite pour qu'on ne le « corrige » pas, et deux témoins :
+au moins vingt dictionnaires à six blocs, et au moins cinq gabarits à seuil
+réellement examinés — sans le second, le jour où plus aucun gabarit ne
+s'écrirait ainsi, le contrôle passerait au vert sans rien garder.
+
+Trois sabotages, trois échecs : un gabarit allemand remis en `> 1`, le repérage
+des blocs rendu aveugle, et tous les seuils supprimés.
+
+Vérifié à l'écran dans les quatre langues qui accordent : « 0 Personen haben »,
+« 0 people have », « 0 personas han », et « 0 personne y a contribué ».
+
 ### Recensement des dispenses de garde : une vingtaine de raisons, une périmée
 La dispense du simulateur — « page publique d'acquisition », factuellement
 fausse — ressemblait au premier cas d'une classe. Elle a donc été cherchée :
