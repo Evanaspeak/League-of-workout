@@ -57,7 +57,7 @@ Dans l'ordre : les amis, puis le classement sur le volume payé avec la dette en
 
 Les paliers existent déjà et ne récompensent rien. Ces trois-là se branchent sur des données qu'on a déjà, coûtent peu, et donnent une raison de continuer une fois la nouveauté passée. C'est le meilleur rapport entre l'effort et l'effet du document.
 
-### [ ] 04 — Les défis
+### [~] 04 — Les défis
 *6 nuits*
 
 Défi quotidien tiré au sort d'abord — c'est le plus simple et le plus fréquent. Puis les défis mensuels à trois niveaux avec malus, puis l'objectif collectif. Le mur des records et les événements de patch en dernier.
@@ -129,14 +129,14 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 128 | Pseudo Riot ou pseudo interne, au choix | ½ nuit |
 
 ### Défis, saisons, événements
-*10 à faire · 0 faits.* Même chose : tout validé, rien construit.
+*9 à faire · 1 fait.* Le défi quotidien existe depuis V366 ; le reste est validé et non construit.
 
 | | réf | | effort |
 |---|---|---|---|
 | [ ] | 131 | Des défis mensuels, en volume ET en nombre de parties | 2 nuits |
 | [ ] | 132 | Individuels et communs | — |
 | [ ] | 137 | Trois niveaux, récompenses exponentielles, malus si échoué | 1 nuit |
-| [ ] | 138 | Un défi quotidien tiré au sort, valable 24 h | 1 nuit |
+| [x] | 138 | Un défi quotidien tiré au sort, valable 24 h | 1 nuit |
 | [ ] | 133 | Un objectif collectif à l'échelle de l'application | 1 nuit |
 | [ ] | 135 | Un événement au lancement d'un patch | 1 nuit |
 | [ ] | 140 | Un mur des records par exercice et par période | 1 nuit |
