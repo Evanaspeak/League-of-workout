@@ -1098,6 +1098,39 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le japonais a montré la moitié que je venais de laisser
+Lecture du tableau de bord en japonais, trois heures après avoir fait passer les
+nombres par `Intl`. Deux lignes qui se suivent :
+
+```
+努力ポイントを 2000 返す      ← la phrase du défi
++300 XP
+0 / 2,000                    ← sa barre d'avancement
+```
+
+Le même nombre, deux écritures, à quatre caractères d'écart. **J'avais formaté
+la barre et pas la phrase.** C'est la correction qui n'en répare qu'une moitié —
+le défaut que ce journal reproche le plus souvent — commise en corrigeant
+exactement ce défaut-là, le même soir.
+
+**Elle ne se voyait qu'en japonais et en allemand**, parce qu'en français
+l'espace de groupement est une espace insécable ÉTROITE : « 2 000 » ressemble à
+« 2000 » quand on le lit vite, et rien ne saute aux yeux. Le japonais et
+l'anglais mettent une virgule, l'allemand un point — trois séparateurs visibles
+qui rendent la divergence évidente. Lire dans une langue à séparateur visible
+est donc un contrôle en soi, et pas seulement une courtoisie envers les autres
+langues.
+
+Les huit phrases de défi reçoivent maintenant la cible DÉJÀ mise en forme.
+`gain` reste hors d'`Intl`, avec la raison qui était déjà écrite en tête du
+module : cinquante et trois cents s'écrivent pareil dans les six langues, et le
+jour où un défi vaudra 1 500, c'est là qu'il faudra le formater.
+
+**Le motif à retenir n'est pas « formatter les nombres ».** C'est qu'une
+grandeur affichée à DEUX endroits d'un même panneau doit passer par le même
+chemin, sinon les deux divergent au premier changement — et que celui qui fait
+le changement est le mieux placé pour ne pas le voir.
+
 ### « 0 points d'effort » au classement, et les soixante-dix-sept gabarits
 Trouvé en lisant l'écran des amis en allemand, puis en français. Le classement
 affichait **« 0 points d'effort »** — le français met le singulier à zéro comme
