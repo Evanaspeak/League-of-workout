@@ -1126,6 +1126,62 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### « 20V / 40D » sur le tableau de bord — la moitié que je venais de laisser
+Trouvé en lisant le tableau de bord en japonais sur le compte semé, une heure
+après avoir corrigé exactement ce défaut dans le courriel hebdomadaire. Sous le
+taux de victoire, dans les six langues : **« 20V / 40D »**.
+
+C'est le motif que ce journal reproche le plus, commis dans l'heure qui suivait
+l'entrée qui le décrit. J'avais corrigé `lignesBilan` et je n'avais pas cherché
+l'autre lieu de la même règle — un `grep` de trente secondes l'aurait donné.
+
+**Aucun garde ne pouvait le voir, et pour une raison écrite.** « V » et « D » ne
+portent aucun accent : c'est l'angle mort par construction du garde des textes
+en dur, déjà noté pour « Perfect » et pour « Continuer avec Google ». Un mot
+sans accent est indistinguable d'un identifiant.
+
+**Les deux lettres vivent maintenant dans un seul dictionnaire**,
+`dictionaries/resultat.ts`, lu des DEUX côtés du réseau : le composant par
+`useT`, le module de courriel par la langue du compte. Écrites deux fois, elles
+auraient divergé à la première correction — et elles venaient précisément de
+le prouver.
+
+**Le premier jet du garde ne gardait pas contre le défaut qu'il raconte.** Il
+recensait les redéclarations dans `dictionaries/` seulement, et le doublon que
+je venais de retirer vivait dans `courriels.ts`, un cran au-dessus. Sabotage :
+les initiales remises dans le courriel, tout au vert. Il lit tout
+`src/lib/i18n` maintenant.
+
+**Et son discriminant était faux, ce que seuls les fichiers réels ont dit.**
+Séparer une initiale d'un libellé par la LONGUEUR marche en français — « V »
+contre « Victoire » — et ne marche pas en chinois ni en japonais, où le mot
+entier fait deux caractères : « 勝利 » et « 失败 » sont des libellés, « 勝 » est
+une initiale, et rien dans leur taille ne le dit. Quatorze faux positifs au
+premier passage. Le recensement ne lit donc que le bloc FRANÇAIS, celui qui
+fait foi partout ailleurs dans ce projet ; une initiale posée dans une autre
+langue sans l'être en français serait une clé absente du bloc de référence, et
+`dictionaries.test.ts` la refuse déjà.
+
+Le cas « 勝利 » figure maintenant parmi les cas fabriqués, avec sa raison : mes
+quatre premiers étaient tous latins plus une initiale japonaise, donc aucun ne
+pouvait le montrer.
+
+**Les nombres de la ligne passent aussi par `Intl`** — un compte à mille
+victoires écrirait « 1000V ».
+
+Six sabotages, six échecs après correction, dont celui qui a d'abord passé au
+vert et qui a fait élargir le recensement.
+
+Vérifié à l'écran dans les six langues : « 20V / 40D » en français et en
+espagnol, « 20W / 40L » en anglais, « 20S / 40N » en allemand, « 20勝 / 40敗 »
+en japonais, « 20胜 / 40负 » en chinois.
+
+**Ce que ça confirme sur la méthode**, et c'est la troisième fois en deux
+jours : lire l'écran dans une langue à ORDRE ou à ÉCRITURE différente trouve ce
+qu'aucun test ne cherche. Ici ce n'est ni l'ordre ni le séparateur — c'est
+qu'une lettre latine au milieu d'un écran japonais saute aux yeux, alors qu'en
+français elle se lit comme une abréviation normale.
+
 ### Campagne allemande entre V421 et V423 : vingt-quatre différences, toutes voulues
 Passée en allemand, sur un compte semé à soixante parties et une dette de 1 543
 points — c'est-à-dire un compte où le changement de la veille a quelque chose à

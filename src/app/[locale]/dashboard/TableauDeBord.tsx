@@ -12,7 +12,7 @@ import { DesktopAuthHandler } from "@/components/DesktopAuthHandler";
 import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
 import { useSession } from "@/lib/SessionContext";
-import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule, usePourcentage } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useLocale, etiquetteLocale, useMinuscule, useNombre, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -83,6 +83,7 @@ const GraphiquesGlobaux = dynamic(
 );
 import { Squelette } from "@/components/dashboard/Squelette";
 import { ecrire, lire } from "@/lib/stockage";
+import { resultat } from "@/lib/i18n/dictionaries/resultat";
 
 /**
  * `jour` (0 = dimanche) et `mois` (0 = janvier) viennent du serveur ; `label`
@@ -168,6 +169,8 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const minuscule = useMinuscule();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
+  const tRes = useT(resultat);
+  const nombre = useNombre();
   const dateLocale = useDateLocale();
   const [data, setData] = useState<DashData | null>(null);
   /**
@@ -580,7 +583,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           value={pourcent(globalStats.winrate)}
           // Le dénominateur est le nombre de parties compétitives : les
           // sessions au temps n'ont pas de résultat et n'entrent pas au compte.
-          sub={`${globalStats.wins}V / ${(globalStats.totalParties ?? globalStats.totalGames) - globalStats.wins}D`}
+          sub={`${nombre(globalStats.wins)}${tRes.victoire} / ${nombre((globalStats.totalParties ?? globalStats.totalGames) - globalStats.wins)}${tRes.defaite}`}
           i={1}
         />
         <StatCard
