@@ -1060,6 +1060,57 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un parcours tombé une fois en CI, et ce qu'on en sait vraiment
+V373 est **rouge**, en 7 min 42 — donc les parcours ont bien tourné, ce que la
+durée dit avant la pastille. Un seul test est tombé, dans le premier tronçon :
+
+```
+e2e/detection-partie.spec.ts:208 › une partie que le serveur refuse le dit
+  Expected pattern: /Rôle inconnu/
+  Received string:  "Partie terminée | 1 pompes à faire."
+```
+
+Ce test DÉTOURNE `POST /api/games` pour rendre un 400. Le message reçu est
+celui du succès : l'interception n'a pas pris, la vraie route a répondu, et la
+partie s'est enregistrée. Ce n'est donc pas la route qui a changé de
+comportement — c'est le détournement qui a manqué.
+
+**Ce qu'on sait, et rien de plus :**
+
+- V372, juste avant, est verte ; le fichier passe en local sur la tête, neuf
+  sur neuf ;
+- V373 ne touche ni `/api/games`, ni la détection, ni le barème : elle ajoute
+  une colonne de réglage, un panneau et six traductions ;
+- le service worker a été soupçonné — Playwright n'intercepte pas ce qui passe
+  par lui — et **écarté** : `sw.js` ne répond que pour `mode === "navigate"`,
+  donc un `POST` d'API le traverse sans qu'il s'en mêle.
+
+**Le tronçon relancé passe.** Ce n'est pas « ça repasse donc c'est réglé » —
+c'est le seul geste qui distingue un aléa d'une régression, et il fallait le
+faire avant de conclure quoi que ce soit. Le même code, le même tronçon, le
+même exécuteur : vert. La cause reste inconnue ; ce qui est établi, c'est
+qu'elle n'est pas dans V373.
+
+**Ce que la prochaine occurrence dira d'elle-même.** Le détournement se COMPTE
+maintenant, et le contrôle porte sur le compteur AVANT le message. Sans lui, le
+symptôme est « Partie terminée » à la place du refus — ce qui se lit comme « la
+route ne dit plus son motif », et envoie chercher le défaut dans la route.
+La vérité était que l'interception n'avait pas pris. Deux causes, un seul
+symptôme ; le compteur les sépare. Éprouvé en retirant le détournement : le
+test rend `"detourne": 0` au lieu du message.
+
+**Et une conséquence d'outillage à retenir** : relancer les travaux échoués
+d'une ancienne exécution ANNULE celle qui tourne, les deux partageant le même
+groupe de concurrence. V375 est partie ainsi. Ce n'est pas grave — la version
+suivante en relance une complète — mais il vaut mieux le savoir que de
+chercher pourquoi une exécution s'est arrêtée toute seule.
+
+**Ce qui n'a PAS été fait, et pourquoi.** Poser `serviceWorkers: "block"` dans
+la configuration Playwright supprimerait une source d'imprévu — mais deux
+fichiers de parcours éprouvent justement le service worker, et on ne change pas
+une configuration globale sur une hypothèse déjà écartée, pour un échec unique
+qui ne se reproduit pas.
+
 ### Une section ajoutée au milieu, et un décalage que je ne sais pas reproduire
 Le mur des records s'est glissé ENTRE les deux panneaux miroités de `/amis`, et
 la campagne de clôture l'a dit tout de suite : **3032 ms sur téléphone bridé**,

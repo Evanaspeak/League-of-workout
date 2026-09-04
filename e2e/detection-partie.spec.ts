@@ -213,8 +213,20 @@ test("une partie que le serveur refuse le dit, au lieu de disparaître", async (
   const { ctx, page } = await ouvrirSurLApplication(browser);
   const avant = (await nombreDeParties(ctx)).length;
 
+  /**
+   * Le détournement se COMPTE, et c'est ce qui distingue les deux échecs.
+   *
+   * Ce test est tombé une fois en intégration continue avec « Partie
+   * terminée » à la place du refus — c'est-à-dire le message du SUCCÈS. Sans
+   * compteur, ça se lit comme « la route ne dit plus son motif », et on va
+   * chercher le défaut dans la route ; la vérité était que l'interception
+   * n'avait pas pris et que la vraie route avait répondu. Deux causes, un seul
+   * symptôme, et neuf minutes perdues du mauvais côté.
+   */
+  let detourne = 0;
   await page.route("**/api/games", async (route) => {
     if (route.request().method() === "POST") {
+      detourne += 1;
       return route.fulfill({
         status: 400, contentType: "application/json",
         body: JSON.stringify({ error: "Rôle inconnu" }),
@@ -235,6 +247,9 @@ test("une partie que le serveur refuse le dit, au lieu de disparaître", async (
   // Le motif rendu par la route accompagne le message : « refusé » tout seul
   // n'apprend rien.
   const dit = (await page.evaluate(() => (window as unknown as { __dits: string[] }).__dits)).join(" ");
+  // D'abord la cause, ensuite le symptôme : à zéro, c'est le détournement qui
+  // a manqué, et le message n'apprend rien.
+  expect({ detourne, dit }).toMatchObject({ detourne: 1 });
   expect(dit).toMatch(/Rôle inconnu/);
   expect((await nombreDeParties(ctx)).length).toBe(avant);
   await ctx.close();
