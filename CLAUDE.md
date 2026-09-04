@@ -1098,6 +1098,61 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une dispense dont la RAISON était fausse, et le vouvoiement qu'elle abritait
+Suite de la lecture d'écrans, sur la rubrique « Ton effort » des réglages.
+Deux trouvailles, et la seconde met un trou dans un garde.
+
+**« Quand ta dette de BOXE franchit ton seuil ».** C'est la moitié non réparée
+d'une correction déjà faite : le bloc du seuil, trois blocs plus haut sur le
+même écran, dit bien « Rappel de la dette » depuis que la dette monte pour tous
+les exercices. Le bloc des notifications, lui, parlait encore de boxe. Quelqu'un
+qui fait des pompes — le cas par défaut — lisait donc, sur le même écran, un
+réglage qui le concerne et un autre qui ne le concernerait pas. Six langues.
+
+**Et le simulateur vouvoyait au milieu d'un écran qui tutoie de bout en bout.**
+« Ce qu'une partie VOUS coûterait, avec VOTRE niveau », « VOUS devriez », entre
+« ta force » et « coche un ou plusieurs exercices ».
+
+`src/lib/i18n/registre.test.ts` existe précisément pour ça, et il le laissait
+passer : `simulateur.ts` figure dans ses dispenses, avec la raison
+« page publique d'acquisition ». **Elle est fausse.** `SimulateurDette` n'est
+monté que dans `src/app/[locale]/settings/page.tsx`, c'est-à-dire derrière la
+porte, et son dictionnaire n'est lu par rien d'autre.
+
+**C'est le pire genre de dispense : elle a l'air motivée.** Une exemption dont
+la raison est fausse ne se distingue pas d'une exemption juste tant que
+personne ne va voir — et c'est justement ce qu'une exemption dispense de faire.
+Le garde vérifiait déjà qu'une dispense désigne un fichier vivant ; il ne
+vérifiait pas qu'elle dit vrai.
+
+**Le témoin qui a tranché n'est pas le raisonnement, ce sont les cinq autres
+langues.** L'espagnol disait déjà « te costaría, tu nivel », l'allemand « was
+dich eine Partie kosten würde ». Seul le français vouvoyait. Un choix de marque
+se prend dans les six langues ; un oubli n'en touche qu'une.
+
+**Le garde vérifie maintenant la prémisse.** Une dispense qui invoque une page
+publique doit être atteinte par une page réellement publique — le dictionnaire
+est lu par des composants, les composants sont montés par des pages, et
+`estCheminPublic` dit si la page l'est. Un saut, comme le garde du nom publié.
+Quatre sabotages, quatre échecs : la dispense fausse remise, la raison
+reformulée (le témoin, sans quoi le contrôle passerait au vert en n'examinant
+aucune dispense), le recensement des pages rendu aveugle, et le vouvoiement
+remis.
+
+**Deux pièges d'outillage, tous deux écrits dans ce journal, tous deux
+retombés dedans dans la même demi-heure.**
+
+`git checkout --` restaure depuis l'INDEX : mon garde n'était pas indexé, donc
+la « remise en état » après le premier sabotage l'a effacé et il a fallu le
+réécrire. La parade est écrite depuis la dette d'équipe — indexer AVANT de
+saboter — et je ne l'ai appliquée qu'au second essai.
+
+Et `scriptsRacine.test.ts` a mordu sur mon propre outil de lecture d'écrans,
+qu'un `git add -A` venait d'indexer à la racine. C'est exactement ce pour quoi
+il a été écrit — un script d'un soir qui reste — et il a attrapé son auteur
+avant la fusion. Un outil de mesure jetable se copie depuis le scratchpad et
+s'efface après usage.
+
 ### Deux mots justes pour leur auteur, faux pour leur lecteur
 Trouvés en lisant les écrans sur un compte semé à soixante parties et zéro
 point payé — c'est-à-dire le compte de quelqu'un qui joue et ne paie pas, qui

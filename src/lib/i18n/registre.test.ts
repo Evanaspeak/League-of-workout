@@ -1,5 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
+
+import { estCheminPublic } from "@/lib/routesPubliques";
 
 /**
  * Le produit TUTOIE, sauf là où il a de bonnes raisons de vouvoyer.
@@ -38,7 +40,6 @@ const VOUVOIENT: Record<string, string> = {
   "consentementSante.ts": "consentement santé : la distance est voulue",
   "calculateur.ts": "page publique d'acquisition",
   "telechargement.ts": "page publique d'acquisition",
-  "simulateur.ts": "page publique d'acquisition",
   "login.ts": "porte d'entrée, avant tout compte",
   "loginButtons.ts": "porte d'entrée, avant tout compte",
   "sourceObs.ts": "lue par le public d'un stream, pas par le compte",
@@ -100,6 +101,77 @@ describe("le registre du produit", () => {
       }
     }
     expect(fautifs).toEqual([]);
+  });
+
+  /**
+   * Une dispense « page publique » qu'aucune page publique n'atteint.
+   *
+   * `simulateur.ts` était dispensé pour cette raison, et elle était FAUSSE :
+   * `SimulateurDette` n'est monté que dans `/settings`, c'est-à-dire derrière
+   * la porte. Un panneau entier vouvoyait donc au milieu d'un écran qui tutoie
+   * de bout en bout, et le garde le laissait passer parce qu'il lisait la
+   * raison sans la vérifier.
+   *
+   * C'est le pire genre de dispense : elle a l'air motivée. Une exemption dont
+   * la raison est fausse ne se distingue pas d'une exemption juste tant que
+   * personne ne va voir — et c'est justement ce qu'une exemption dispense de
+   * faire.
+   *
+   * Le chemin se suit sur UN saut, comme le garde du nom publié : le
+   * dictionnaire est lu par des composants, les composants sont montés par des
+   * pages, et la page dit si elle est publique.
+   */
+  it("une dispense « page publique » désigne une page réellement publique", () => {
+    const SRC = join(process.cwd(), "src");
+    const APP = join(SRC, "app");
+
+    function fichiersSource(dossier: string, out: string[] = []): string[] {
+      for (const e of readdirSync(dossier, { withFileTypes: true })) {
+        if (e.name.startsWith(".") || e.name === "node_modules") continue;
+        const c = join(dossier, e.name);
+        if (e.isDirectory()) fichiersSource(c, out);
+        else if (/\.tsx?$/.test(e.name) && !/\.(test|spec)\.tsx?$/.test(e.name)) out.push(c);
+      }
+      return out;
+    }
+    const tous = fichiersSource(SRC);
+
+    /** Les fichiers qui importent ce dictionnaire. */
+    const lecteursDe = (module: string) =>
+      tous.filter((f) => readFileSync(f, "utf8").includes(`i18n/dictionaries/${module}"`));
+
+    /** Le chemin de route d'une page, sans le segment de langue ni les groupes. */
+    const routeDe = (page: string) =>
+      "/" +
+      relative(APP, page)
+        .replace(/\/page\.tsx?$/, "")
+        .split("/")
+        .filter((seg) => seg !== "[locale]" && !/^\(.*\)$/.test(seg))
+        .join("/");
+
+    const pages = tous.filter((f) => /\/page\.tsx?$/.test(f));
+    expect(pages.length).toBeGreaterThan(10);
+
+    const sansPagePublique: string[] = [];
+    let examinees = 0;
+    for (const [fichier, raison] of Object.entries(VOUVOIENT)) {
+      if (!raison.includes("page publique")) continue;
+      examinees += 1;
+      const consommateurs = lecteursDe(fichier.replace(/\.ts$/, ""));
+      const noms = consommateurs.map((c) => relative(SRC, c).replace(/\.tsx?$/, "").split("/").pop()!);
+      const atteinte = pages.some((page) => {
+        if (!estCheminPublic(routeDe(page))) return false;
+        if (consommateurs.includes(page)) return true;
+        const t = readFileSync(page, "utf8");
+        return noms.some((n) => t.includes(n));
+      });
+      if (!atteinte) sansPagePublique.push(`${fichier} — « ${raison} »`);
+    }
+
+    // Sans témoin, une raison reformulée ferait passer le contrôle au vert en
+    // n'examinant aucune dispense.
+    expect(examinees).toBeGreaterThan(1);
+    expect(sansPagePublique).toEqual([]);
   });
 
   it("n'exempte que des fichiers qui existent encore", () => {
