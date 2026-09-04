@@ -165,8 +165,13 @@ export function ReglagesCorps({
           décider lequel des deux fait foi.
         */}
         <div>
-          <label className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsMode}</label>
-          <div className="flex gap-2 flex-wrap mt-2">
+          {/*
+            Un `<label>` seul devant une rangée de boutons n'étiquette rien :
+            il n'a pas de contrôle à désigner, et un lecteur d'écran le lit
+            comme un texte quelconque. Le groupe se nomme donc lui-même.
+          */}
+          <div id="corps-mode-titre" className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsMode}</div>
+          <div role="group" aria-labelledby="corps-mode-titre" className="flex gap-2 flex-wrap mt-2">
             <button
               className="py-2 px-3 rounded text-sm"
               aria-pressed={prefs.modeCalorique === null}
@@ -192,9 +197,9 @@ export function ReglagesCorps({
         {prefs.modeCalorique && (
           <>
             <div>
-              <label className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsFormule}</label>
+              <div id="corps-formule-titre" className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsFormule}</div>
               <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.corpsFormuleAide}</p>
-              <div className="flex gap-2 mt-2">
+              <div role="group" aria-labelledby="corps-formule-titre" className="flex gap-2 mt-2">
                 {(["h", "f"] as FormuleCalorique[]).map((f) => (
                   <button
                     key={f}
@@ -210,8 +215,9 @@ export function ReglagesCorps({
             </div>
 
             <div>
-              <label className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsActivite}</label>
+              <label htmlFor="corps-activite" className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsActivite}</label>
               <select
+                id="corps-activite"
                 className="lol-select w-full mt-2"
                 value={prefs.niveauActivite ?? ""}
                 onChange={(e) => poser("niveauActivite", (e.target.value || null) as NiveauActivite | null)}
@@ -224,8 +230,9 @@ export function ReglagesCorps({
             </div>
 
             <div>
-              <label className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsPoidsCible}</label>
+              <label htmlFor="corps-poids-cible" className="text-xs" style={{ color: "var(--muted)" }}>{t.corpsPoidsCible}</label>
               <input
+                id="corps-poids-cible"
                 type="number" inputMode="numeric" min={20} max={500}
                 className="lol-input w-full mt-2"
                 value={prefs.poidsCible ?? ""}
@@ -338,8 +345,9 @@ export function ReglagesCorps({
           ["tourHanches", t.corpsTourHanches],
         ] as const).map(([cle, libelle]) => (
           <div key={cle}>
-            <label className="text-xs" style={{ color: "var(--muted)" }}>{libelle}</label>
+            <label htmlFor={`corps-${cle}`} className="text-xs" style={{ color: "var(--muted)" }}>{libelle}</label>
             <input
+              id={`corps-${cle}`}
               type="number" inputMode="numeric" min={15} max={300}
               className="lol-input w-full mt-1"
               value={prefs[cle] ?? ""}
