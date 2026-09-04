@@ -1098,6 +1098,43 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 4 septembre au soir, après neuf versions
+Passée sur un compte semé à soixante parties, après V408 à V416 — dont cinq qui
+ont touché des libellés dans les six langues, et deux qui ont changé la façon
+dont tous les nombres se rendent.
+
+**Accessibilité : 0 constat sur 90 passes**, quinze pages et six langues, et
+**90 « rien à signaler »** — c'est le second chiffre qui compte, celui qui dit
+qu'aucune page n'a été laissée de côté. Un rapport qui annonce zéro sur des
+pages qu'il n'a pas ouvertes est l'inverse d'un audit.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/fr/settings` | 132 ms | 916 ms | 0,000 | la mention Riot, en pied |
+| `/fr/bilan` | 240 ms | **2108 ms** | 0,000 | l'image de saison |
+| `/fr/amis` | 264 ms | 1100 ms | 0,013 | le paragraphe du classement |
+| `/fr/dashboard` | 272 ms | 1124 ms | 0,000 | le bandeau d'attente Riot |
+| `/fr/history` | 524 ms | 1132 ms | 0,000 | le titre |
+| `/fr/beta` | 496 ms | 1128 ms | 0,000 | « Un pseudo suffit » |
+| `/fr/calculateur/league-of-legends` | 528 ms | 1124 ms | 0,000 | le titre |
+| `/fr` | 1000 ms | 1312 ms | 0,000 | l'image de l'application |
+
+Les huit sont dans les seuils, sur les deux mesures. `/fr/bilan` reste le plus
+proche sur téléphone bridé, pour la raison déjà écrite : son plus grand élément
+est l'image de saison, et 2108 ms est à peu près l'instant où elle finit
+d'arriver — c'est le plancher de cette page, pas une régression.
+
+**Le poids du JavaScript par écran**, qui est l'autre moitié du sujet : 214 à
+284 ko pour l'historique, les réglages, les amis et le bilan, contre **375 ko
+pour le tableau de bord**, qui porte recharts. L'écart est connu et il est le
+prix des graphiques.
+
+**Ce que la campagne ne dit PAS, et qu'il vaut mieux écrire.** Elle a été
+passée après les corrections, pas avant : elle constate qu'aucune des neuf
+versions n'a coûté de temps d'affichage, elle ne mesure aucun gain. Les
+changements de ce soir sont des libellés et un formateur de nombres — il n'y
+avait pas de gain à attendre, et en annoncer un serait faux.
+
 ### « 33% » : le pourcentage recollé à la main, et un trou dans mon propre garde
 Suite du recensement des règles de langue. Le journal portait déjà cette
 correction — « le pourcentage passe maintenant par `Intl`, qui connaît la règle
