@@ -785,7 +785,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2130 tests unitaires, 192 suites. Base et session doublées : aucune dépendance à
+2134 tests unitaires, 193 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1143,6 +1143,51 @@ rend discriminant, puisqu'un panneau qui laisserait partir la requête changerai
 vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
+
+### Le produit tutoie, sauf quand il a une raison de vouvoyer — et la règle a dérivé
+Recensement fait en lisant les écrans : **174 « vous » contre 233 « tu »** dans
+les blocs français des dictionnaires. Le chiffre brut ne dit rien de faux — la
+plupart de ces vouvoiements sont légitimes — mais il cachait une quinzaine de
+lignes qui vouvoyaient au milieu d'écrans qui tutoient partout.
+
+L'écran des réglages disait « Toutes VOS données » sous un titre « TES
+DONNÉES ». Le panneau des paliers disait « Ce que VOUS avez déjà fait » au
+milieu d'un tableau de bord qui tutoie de bout en bout. Les sept étapes des
+premiers pas — ce qu'un compte neuf lit en premier — vouvoyaient entièrement.
+
+Ce n'est pas une préférence de style. Le seul retour d'acquisition qu'on ait
+jamais eu portait sur la VOIX du produit — « ça fait trop IA » — et un texte
+qui change de registre d'un panneau à l'autre est précisément ce qui donne
+cette impression. C'est la même famille que les tirets cadratins, déjà chassés
+pour la même raison.
+
+**Trois familles vouvoient, chacune pour sa raison**, et c'est la règle qui
+manquait : le JURIDIQUE (CGU, confidentialité), la SANTÉ (consentement, mises
+en garde de volume — la distance y est voulue), et les pages PUBLIQUES
+d'acquisition, qui s'adressent à quelqu'un sans compte. Tout ce qui est derrière
+la porte tutoie.
+
+`src/lib/i18n/registre.test.ts` la tient, avec les deux contrôles habituels :
+un témoin de non-vacuité — un dossier renommé rendrait le test vert en
+n'examinant rien — et le refus d'une dispense qui ne désigne plus de fichier
+existant.
+
+**Le garde a mordu sur sa première exécution, et il avait raison.** Il a
+signalé « ${pseudo} t'avait déjà demandé : **vous** êtes amis » — qui n'est pas
+un vouvoiement mais un PLURIEL. Aucun motif ne peut distinguer les deux : c'est
+une question de sens. La tolérance porte donc sur la CLÉ, avec sa raison
+écrite, et non sur le fichier — posée sur le fichier, elle aurait couvert tout
+l'écran des amis.
+
+**L'allemand n'avait qu'un seul vrai vouvoiement**, et le recensement naïf en
+annonçait sept : « Sie » y est aussi le pronom de la troisième personne, donc
+« Sie zeigt », « Sie blockiert nichts » et « Sie ist nirgends aufgelistet » sont
+tous des faux positifs. Un motif qui ne distingue pas les deux ferait corriger
+de l'allemand parfaitement juste.
+
+**Et un parcours a mordu sur le changement de texte**, ce qui est son travail :
+`premier-ecran.spec.ts` cherchait le bouton « Enregistrer VOTRE première
+partie ». Un libellé d'interface ne change pas en silence.
 
 ### Un réglage qui parlait encore de boxe alors qu'il gouverne toute la dette
 Trouvé en lisant l'écran des réglages. Depuis V387 la dette monte pour TOUS les

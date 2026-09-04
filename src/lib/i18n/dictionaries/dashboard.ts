@@ -17,10 +17,10 @@ export const dashboard = {
     serieJours: (n: number) => `${n} jour${n > 1 ? "s" : ""} d'affilée`,
     serieMeilleure: (n: number) => `record : ${n}`,
     retardTitre: (n: number) => `En retard depuis ${n} jours`,
-    retardTexte: "Votre dette court depuis trois jours. Elle ne s'efface pas toute seule.",
+    retardTexte: "Ta dette court depuis trois jours. Elle ne s'efface pas toute seule.",
     energieLabel: "Énergie dépensée",
     energieSub: (min: number) => `soit ${min} min de marche`,
-    energieEstimation: "Estimation d'après votre poids et le temps d'effort.",
+    energieEstimation: "Estimation d'après ton poids et le temps d'effort.",
     // Résumés lus par les lecteurs d'écran : un graphique ne dit rien à qui
     // ne le voit pas, le texte porte donc les chiffres eux-mêmes.
     grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>

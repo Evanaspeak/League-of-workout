@@ -1,7 +1,7 @@
 export const exercices = {
   fr: {
     suspendreTitre: "Mettre de côté",
-    suspendreAide: "Une gêne, une blessure : mettez l'exercice de côté et la dette part sur les autres. Aucune raison ne vous est demandée, et votre série continue.",
+    suspendreAide: "Une gêne, une blessure : mets l'exercice de côté et la dette part sur les autres. Aucune raison ne t'est demandée, et ta série continue.",
     suspendre: "Mettre de côté",
     reprendre: "Reprendre",
     suspendusTitre: "Mis de côté",

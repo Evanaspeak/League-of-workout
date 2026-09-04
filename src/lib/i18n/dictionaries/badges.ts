@@ -8,7 +8,7 @@
 export const badges = {
   fr: {
     titre: "Paliers",
-    aide: "Ce que vous avez déjà fait, et ce qui vient ensuite.",
+    aide: "Ce que tu as déjà fait, et ce qui vient ensuite.",
     prochain: "Prochain palier",
     volume: (n: number) => `${n} points d'effort`,
     parties: (n: number) => (n === 1 ? "Première partie" : `${n} parties`),
