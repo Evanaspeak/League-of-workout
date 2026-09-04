@@ -1152,6 +1152,108 @@ serveur qui cesse d'envoyer les conversions, et le plus qui n'incrémente plus.
 Le second n'a pas compilé au premier essai — les imports devenus inutiles — et
 c'est noté comme tel plutôt que compté comme un test qui mord.
 
+### Le corps et les calories, et deux refus qui valent autant que le reste
+Étape 05 du plan, le plus gros bloc non construit : onze lignes, toutes
+décidées par le propriétaire dans l'interrogatoire. Un calculateur d'objectif,
+trois modes, un poids cible, une courbe de pesées, un rappel hebdomadaire, une
+estimation de masse grasse au mètre-ruban.
+
+**Deux des réponses sont des REFUS, et ce sont elles qui gouvernent.**
+
+La 016 : **aucune date d'objectif n'est promise.** La règle des 7 700 kcal par
+kilo est fausse et abandonnée par la recherche — le corps ralentit sa dépense à
+mesure qu'il maigrit, donc une échéance calculée là-dessus dérape de plusieurs
+semaines, et on la croit précisément parce qu'elle est chiffrée. Le module
+n'expose rien qui y ressemble, et **c'est un test STRUCTUREL qui le tient** :
+on ne peut pas éprouver une absence en appelant une fonction, donc il lit la
+source, écarte les commentaires — qui expliquent le refus, et le feraient
+tomber sur sa propre justification — et refuse le vocabulaire de l'échéance.
+Sabotage : une fonction « semaines restantes » ajoutée, il tombe.
+
+La 017 et la 018 : **on avertit, on ne bloque jamais.** Sous le plancher de
+1 500 / 1 200 kcal, ou sous 18,5 d'IMC, le chiffre s'affiche quand même avec sa
+mise en garde. Refuser d'afficher ne protège personne : ça pousse à aller
+chercher le nombre ailleurs, sans l'avertissement qui l'accompagne ici.
+
+**Une variante de FORMULE, pas un genre.** Mifflin-St Jeor a deux constantes
+séparées de 166 kcal. `User.genre` existait déjà — il vient du formulaire bêta,
+en texte libre parmi des options qui peuvent changer — et s'en servir pour une
+arithmétique casserait à la première personne qui écrit autre chose, en
+retombant EN SILENCE sur l'une des deux. Le champ dédié dit ce qu'il fait, et
+l'écran l'écrit : « on te demande laquelle appliquer, pas qui tu es ». Sans lui,
+aucun objectif n'est proposé — c'est le seul repli honnête.
+
+**Le poids d'une pesée est en GRAMMES, et la colonne le dit.** `User.poids` est
+en kilos entiers ; deux unités sous un même mot est exactement le malentendu
+qui a coûté une soirée sur « activité », et quelqu'un qui se pèse à 78,4 kg doit
+pouvoir l'écrire. Une pesée par jour au maximum, posée EN BASE : se peser deux
+fois dans la journée est courant, et c'est la seconde qui compte.
+
+**L'axe de la courbe ne part pas de zéro**, et ce serait la faute INVERSE
+ailleurs. Sur un graphique de volume, un axe tronqué exagère les écarts et
+trompe ; ici la grandeur n'a pas de zéro significatif — personne ne pèse zéro —
+et l'ancrer écraserait deux ans de variations en une ligne plate.
+
+**Le rappel hebdomadaire ne dit rien du poids.** C'est un rappel de geste, pas
+un jugement : « une semaine depuis ta dernière pesée, trente secondes et la
+courbe reprend ». Une notification qui commente est une notification qu'on
+coupe, et on coupe tout avec. Trois conditions le gouvernent, et la troisième
+est celle qui compte — sans un écart de sept jours entre deux rappels, il
+repartirait CHAQUE matin de la semaine suivante, ce que le journal reproche
+déjà à la relance des absents.
+
+**Sans aucune pesée, on compte depuis l'ouverture du compte.** Les deux fautes
+possibles sont symétriques : rendre vrai d'emblée enverrait un rappel le matin
+même où l'on allume le réglage, rendre faux pour toujours rendrait le réglage
+inopérant pour celui qui en a le plus besoin.
+
+**Ce que le parcours navigateur a trouvé, et qu'aucune relecture n'aurait
+donné** : mes `<label>` n'étaient liés à aucun champ. Ils s'affichaient
+parfaitement et n'étaient annoncés par aucun lecteur d'écran. Pire, un `<label>`
+seul devant une rangée de boutons n'étiquette rien du tout — il n'a pas de
+contrôle à désigner, et un lecteur d'écran le lit comme un texte quelconque.
+Les deux groupes se nomment maintenant eux-mêmes par `role="group"` et
+`aria-labelledby`.
+
+**Le contrôle qui décide de tout est le chiffre À L'ÉCRAN.** 80 kg, 180 cm,
+30 ans, variante « h », activité modérée, mode perte → 2207 kcal. Le calculer
+dans le test plutôt que de chercher le mot « kcal » distingue « le panneau
+s'affiche » de « le panneau dit la bonne chose » — c'est le défaut du champ
+renommé qui vidait un panneau entier, qu'un type optionnel ne peut pas
+attraper.
+
+**Un piège de doublure, nouveau dans sa forme.** `/api/push/programme` fait
+maintenant TROIS lectures de `user.findMany`. Une doublure qui rend la même
+chose aux trois fait lire des comptes de pesée comme des comptes en dette, et
+l'échec tombe n'importe où sauf à sa cause. Elle répond désormais selon ce que
+chaque boucle DEMANDE — c'est le piège du mur des records, sous une forme de
+plus.
+
+**Et le renommage de la veille n'avait touché qu'une langue sur six.** Trouvé
+en lisant l'écran en allemand : il disait encore « AKTIVITÄTEN » là où le
+français dit « PARTIES », et il se contredisait tout seul — « Runden » deux
+lignes plus bas. Vingt-quatre clés reprises. C'est le motif que ce projet paie
+en boucle, et il ne prend jamais la forme d'une copie qu'on remarque : il prend
+celle d'une correction qui n'en répare qu'une moitié.
+
+**Trois gardes ont mordu sur les colonnes ajoutées**, ce qui est leur travail :
+`compte.test.ts` a exigé que les neuf soient rangées d'un côté ou de l'autre de
+ce qui sort du compte — elles ne sortent pas, `comptePublic` servant les routes
+de DIFFUSION —, `politiqueComplete.test.ts` a exigé quatre lignes de politique
+dans les six langues, et le recensement des messages d'API a exigé « Poids
+invalide » traduit partout.
+
+**La campagne de clôture**, sur un compte de mesure neuf : `/fr/settings` rend
+**128 ms sur poste, 948 ms sur téléphone bridé, CLS 0,000**, avec 284 ko de
+script contre 371 pour le tableau de bord — la courbe étant chargée à la
+demande, `recharts` n'entre pas dans le paquet des réglages. **Accessibilité :
+0 constat sur 90 passes**, quinze pages et six langues, aucune page laissée de
+côté.
+
+**Ce qui reste de l'étape 05, et sa raison** : la ligne 026, une courte vidéo
+de forme par exercice. Elle demande un tournage ; ce n'est pas un chantier de
+code.
+
 ### Un module dont le seul lecteur est son propre test passe pour vivant
 Trouvé en m'y appuyant sans le vouloir. J'ai commis `conversionDette.ts` — un
 module complet, éprouvé, et que RIEN n'utilise encore, l'écran restant à
