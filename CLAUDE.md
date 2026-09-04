@@ -986,6 +986,14 @@ local, et les plafonds de production se calculent à partir de la structure.
   quarante-cinq pages jamais ouvertes — l'inverse exact d'un audit. Les deux
   chiffres sont désormais séparés, et les pages non mesurées s'annoncent sous
   le total au lieu de s'y fondre.
+- **L'environnement local tombe tout seul, et deux fois par heure.** Le
+  4 septembre à 05:45 puis à 06:35, PostgreSQL ET `next start` étaient morts
+  sans que rien ne les tue — le conteneur les reprend pendant les périodes
+  d'inactivité. Le symptôme est « le code ne s'affiche pas » à l'ouverture de
+  compte, qui ne ressemble en rien à sa cause, et c'est le troisième déguisement
+  de cette panne recensé ici. Deux contrôles d'une seconde avant tout parcours :
+  `pg_isready -h 127.0.0.1 -p 5433` et un `curl` sur le port du serveur. Les
+  relancer coûte `sudo service postgresql start` puis `npx next start -p 3311`.
 - **Tuer le serveur avec `pkill -f`.** Le motif `next start -p 3311` figure
   aussi dans la ligne de commande du shell qui lance la commande : `pkill` tue
   le shell, le serveur survit, et le `next start` suivant échoue sur
