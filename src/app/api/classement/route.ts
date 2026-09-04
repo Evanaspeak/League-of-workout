@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { estJourValide, jourLocal } from "@/lib/serie";
 import {
   classer, debutFenetre, ecartAuPremier, JOURS_CLASSEMENT, longueurFenetre,
+  toPeriode,
 } from "@/lib/classement";
 
 /**
@@ -34,9 +35,19 @@ export async function GET(req: Request) {
    * série. Et c'est le MIEN qui borne la fenêtre de tout le monde — un
    * classement dont chacun mesurerait sa propre semaine ne comparerait rien.
    */
-  const demande = new URL(req.url).searchParams.get("jour");
+  const params = new URL(req.url).searchParams;
+  const demande = params.get("jour");
   const aujourdhui = estJourValide(demande) ? demande : jourLocal();
   const debut = debutFenetre(aujourdhui);
+
+  /**
+   * La semaine ou le cumul (réponse 144).
+   *
+   * Une valeur inconnue retombe sur la SEMAINE, et pas sur le cumul : c'est
+   * celui des deux qui décourage un compte neuf, et un paramètre mal écrit ne
+   * doit pas décider ça à sa place.
+   */
+  const periode = toPeriode(params.get("periode"));
 
   const liens = await prisma.amitie.findMany({
     where: {
@@ -76,9 +87,20 @@ export async function GET(req: Request) {
       },
       select: { id: true, pseudo: true, riotId: true, nomAffiche: true, detteDepuis: true, dettePointsDus: true },
     }),
+    /**
+     * La même requête, bornée ou non : le cumul ne coûte pas un aller-retour
+     * de plus, il en coûte un DIFFÉRENT. Écrire deux appels et n'en garder
+     * qu'un aurait fait payer les deux.
+     *
+     * La borne HAUTE reste dans les deux cas : sans elle, un paiement daté du
+     * futur entrerait au cumul comme il entrait dans la semaine.
+     */
     prisma.paiement.groupBy({
       by: ["userId"],
-      where: { userId: { in: ids }, jour: { gte: debut, lte: aujourdhui } },
+      where: {
+        userId: { in: ids },
+        jour: periode === "total" ? { lte: aujourdhui } : { gte: debut, lte: aujourdhui },
+      },
       _sum: { points: true },
     }),
   ]);
@@ -88,6 +110,7 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     lignes,
+    periode,
     debut,
     jours: longueurFenetre(debut, aujourdhui),
     ecart: ecartAuPremier(lignes),

@@ -989,6 +989,52 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les deux onglets du classement, et un écart à l'ordre du plan
+Ligne 144, réponse « les deux onglets ». **Et c'est un écart à l'ordre de
+l'étape 04**, qui dit de faire les défis mensuels avant tout le reste : cette
+ligne-ci vaut une demi-nuit et termine un écran livré la veille, quand les
+défis mensuels en valent deux et n'auraient pas tenu dans ce qui restait de la
+fenêtre. C'est dit ici plutôt que fait en silence, ce qui est la règle.
+
+**La semaine reste le DÉFAUT, et ce n'est pas un choix d'affichage.** Le
+raisonnement qui a présidé au classement vaut toujours : un cumul est décidé
+par la date d'inscription, le premier arrivé a un total que personne ne
+rattrape, et le dernier venu regarde un tableau où sa place ne dépend plus de
+ce qu'il fait. Ouvrir sur le cumul reviendrait à montrer d'abord celui des deux
+qui décourage. Une période inconnue y retombe aussi — un paramètre mal écrit ne
+doit pas décider ça à la place de quelqu'un.
+
+Le cumul a pourtant sa raison, et c'est l'inverse : au bout de six mois, la
+semaine ne dit plus rien de ce qu'on a fait. Les deux répondent à deux
+questions différentes, et c'est pour ça qu'il en faut deux.
+
+**Le cumul ne coûte pas un aller-retour de plus, il en coûte un DIFFÉRENT.**
+La même requête, bornée ou non. Écrire deux appels et n'en garder qu'un aurait
+fait payer les deux. Et **la borne HAUTE reste dans les deux cas** : sans elle,
+un paiement daté du futur entrerait au cumul comme il entrait dans la semaine.
+
+**Le défaut qu'il fallait éviter était ailleurs**, et il ne se serait vu qu'à
+l'usage : le classement se recharge de trois autres endroits — au montage, au
+rafraîchissement de la dette, après avoir accepté une demande — et tous trois
+passaient la période par défaut. Le tableau serait revenu à la semaine sous un
+onglet qui dit « cumul », c'est-à-dire un écran qui se contredit lui-même sans
+que rien ne le signale. L'onglet ouvert vit donc dans un `useRef`, lisible
+depuis un rappel qui reste stable.
+
+**Ce que le parcours navigateur prouve et qu'aucun test unitaire ne peut
+voir.** Le fichier social posait déjà un paiement de trente jours, écrit à
+l'époque pour éprouver la borne BASSE de la semaine. Il sert maintenant deux
+fois : la semaine l'ignore, le cumul le compte. Sans ce chiffre, un onglet qui
+rechargerait la même période rendrait exactement le même tableau et le test
+passerait en n'éprouvant rien. Et le contrôle vaut **dans les deux sens** — le
+retour à la semaine doit reperdre les cinq mille points, sinon un onglet resté
+bloqué sur le cumul passerait la première moitié.
+
+Cinq sabotages, cinq échecs : le cumul mis par défaut, une période inconnue
+convertie en cumul, la borne haute retirée, la période absente de la réponse,
+et l'onglet qui recharge toujours la semaine — ce dernier au navigateur, avec
+sa reconstruction et son redémarrage de serveur.
+
 ### Le défi du jour, et une couture qu'on ne peut pas rattraper après coup
 Ligne 138, première de l'étape 04 : « un défi quotidien tiré au sort, différent
 chaque jour, valable 24 heures ».

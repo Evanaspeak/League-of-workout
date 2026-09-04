@@ -1,6 +1,7 @@
 import {
   classer, debutFenetre, ecartAuPremier, JOURS_CLASSEMENT, longueurFenetre,
   type CompteClasse,
+  PERIODE_DEFAUT, PERIODES, toPeriode,
 } from "@/lib/classement";
 import { JOURS_AVANT_RETARD } from "@/lib/serie";
 
@@ -183,5 +184,26 @@ describe("l'écart au premier", () => {
   it("ne dit rien quand on ne figure pas dans la liste", () => {
     const lignes = classer([compte("b", "Bob")], new Map([["b", 30]]), "a");
     expect(ecartAuPremier(lignes)).toBeNull();
+  });
+});
+
+describe("les deux périodes", () => {
+  it("retombe sur la SEMAINE pour toute valeur inconnue", () => {
+    /**
+     * Le défaut n'est pas un détail d'affichage : un cumul est décidé par la
+     * date d'inscription, et le dernier venu y regarde un tableau où sa place
+     * ne dépend plus de ce qu'il fait. Un paramètre mal écrit ne doit pas
+     * décider ça à sa place.
+     */
+    for (const brut of [undefined, null, "", "cumul", "TOTAL", 42, {}, ["total"]]) {
+      expect(toPeriode(brut)).toBe("semaine");
+    }
+    expect(PERIODE_DEFAUT).toBe("semaine");
+  });
+
+  it("accepte les deux valeurs prévues, et elles seules", () => {
+    expect(PERIODES).toEqual(["semaine", "total"]);
+    expect(toPeriode("semaine")).toBe("semaine");
+    expect(toPeriode("total")).toBe("total");
   });
 });
