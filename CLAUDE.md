@@ -769,7 +769,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2107 tests unitaires, 190 suites. Base et session doublées : aucune dépendance à
+2109 tests unitaires, 191 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -2278,6 +2278,31 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 « le code ne s'affiche pas » — le troisième déguisement de cette panne-là
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
+
+### Le plan comptait faux sur la section que je venais de remplir
+Trouvé par acquit de conscience, en vérifiant l'arithmétique du plan avant d'en
+rendre compte. La section « Le social » annonçait **6 à faire · 7 faits** ; son
+tableau portait **2 à faire · 11 faits**. J'avais coché ses lignes une par une
+toute la nuit — c'est la règle — sans jamais reprendre l'en-tête qui les compte.
+
+Le coût n'est pas cosmétique. Le plan est ce qu'on LIT pour décider du chantier
+suivant, et CLAUDE.md dit déjà pourquoi : « un plan qu'on ne tient pas à jour
+ment, et on lui obéit quand même ». Celui-ci envoyait refaire quatre lignes déjà
+faites, et cachait qu'il n'en restait que deux — dont aucune n'est à ma portée.
+
+C'est la forme la plus discrète de la faute que ce projet rencontre sans cesse :
+**un nombre écrit une fois, juste ce jour-là, au-dessus de quelque chose qui
+bouge.** La réserve de 420 pixels de l'écran des amis était le même défaut ; les
+trois numéros de version de PostgreSQL dans le workflow de sauvegarde aussi.
+
+`src/planCompte.test.ts` compare chaque en-tête chiffré au tableau qui le suit.
+Il ne juge pas ce qui est fait — il refuse seulement que l'annonce et le contenu
+divergent. Deux témoins, parce que `toEqual([])` est vrai sur une liste vide :
+au moins dix sections chiffrées trouvées, et aucune dont le tableau soit vide —
+sans quoi on comparerait des zéros à des zéros.
+
+Trois sabotages, trois échecs : l'en-tête remis à sa valeur périmée, une ligne
+cochée sans reprendre l'en-tête, et le motif rendu aveugle.
 
 ### Un champ renommé vidait un panneau entier, sans erreur ni test rouge
 Trouvé en cherchant si le défi du jour et l'objectif collectif méritaient un

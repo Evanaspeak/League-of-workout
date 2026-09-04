@@ -110,7 +110,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 026 | Une courte vidéo de forme par exercice | 1 nuit + tournage |
 
 ### Le social
-*6 à faire · 7 faits.* Tu as dit oui à absolument tout. Les amis, les groupes, le classement de la semaine, le lien de parrainage, le mode fantôme et le profil d'un ami existent ; le reste attend.
+*2 à faire · 11 faits.* Tu as dit oui à absolument tout. Les amis, les groupes, le classement de la semaine et son cumul, le lien de parrainage, le mode fantôme, le profil d'un ami, le profil public, la dette d'équipe et le mur des records existent. Restent la validation par vidéo (130) et la dette de groupe à cinq (142).
 
 | | réf | | effort |
 |---|---|---|---|
