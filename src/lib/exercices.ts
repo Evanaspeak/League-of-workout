@@ -11,6 +11,8 @@
  * calibrage pour déterminer le niveau (1 à 5) de l'utilisateur.
  */
 
+import { dureeLocalisee } from "./i18n/duree";
+
 export type ExerciceId =
   | "pompes" | "squats" | "boxe"
   | "planche" | "tractions" | "course";
@@ -263,8 +265,17 @@ function nombre(v: number, etiquette: EtiquetteLangue, decimales = 0): string {
   }).format(v);
 }
 
-/** Formate une durée en secondes : 45 → « 45 s », 850 → « 14 min 10 ». */
+/**
+ * Formate une durée en secondes : 45 → « 45 s », 850 → « 14 min 10 ».
+ *
+ * Avec une étiquette de langue, l'UNITÉ suit elle aussi : « 45 秒 » en
+ * japonais, « 5 Min. » en allemand. Elle était écrite en toutes lettres ici,
+ * donc en français dans les six langues, sur le nombre le plus visible du
+ * produit. Sans étiquette, le rendu est celui d'avant — c'est ce qui a permis
+ * de reprendre les appelants un par un.
+ */
 export function formaterDuree(totalSecondes: number, etiquette?: EtiquetteLangue): string {
+  if (etiquette) return dureeLocalisee(totalSecondes, etiquette);
   const s = Math.max(0, Math.round(totalSecondes));
   if (s < 60) return `${s} s`;
   const minutes = Math.floor(s / 60);

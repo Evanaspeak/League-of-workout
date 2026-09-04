@@ -1126,6 +1126,51 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### « 1 min 55 » au milieu d'un écran japonais
+Suite de la lecture d'écrans. La rubrique « Ton effort », en japonais,
+annonçait le coût de la boxe et de la planche en **« 1 min 55 »** et
+**« 3 min 10 »** — deux abréviations latines au milieu des idéogrammes.
+`formaterDuree` écrivait « min » et « s » en toutes lettres, donc en français
+dans les six langues.
+
+**C'est l'unité de la DETTE**, et elle est partout : la pastille en jeu, le
+décompte, l'historique, la source de diffusion, les deux notifications, le
+simulateur. V422 avait fait passer le NOMBRE par `Intl` et laissé son UNITÉ
+derrière — la moitié non réparée, encore, et sur la même fonction.
+
+**`Intl` connaît les unités, et c'est lui qui les donne.** Aucune table de
+« min » et de « s » n'est écrite à la main : `style: "unit"` rend « 45 s » en
+français, « 45 Sek. » en allemand, « 45 秒 » en japonais.
+
+**Ce qu'il ne connaît pas, c'est la forme COMPOSÉE**, parce que « 5 min 07 »
+n'est pas une unité, c'est un cadran. `Intl.DurationFormat` le saurait ; il
+n'existe pas dans le Node de ce projet — vérifié plutôt que supposé. La
+composition se décide donc par langue, comme les phrases de défi : une forme
+unique produirait « 5分钟 07 » en chinois, où l'on écrit « 5分07秒 ».
+
+**Je croyais le français inchangé, et mon propre test l'a démenti.** `Intl`
+pose une espace INSÉCABLE entre le nombre et son unité — fine (U+202F) devant
+« s », normale (U+00A0) devant « min » — là où l'ancien code posait une espace
+ordinaire. Le changement est invisible et il est juste : le français exige
+l'insécable devant une unité, et sur la pastille elle empêche « 5 » et « min »
+de se séparer en fin de ligne. Mais c'est un changement, et le test l'écrit
+maintenant en points de code plutôt que de laisser croire à une identité qui
+n'existe pas. **Un test écrit sur les VALEURS attrape ce qu'un test écrit sur
+l'intention aurait laissé passer.**
+
+**Et un sabotage est passé au vert : la branche que TOUS les appelants
+empruntent n'était gardée par rien.** Mes contrôles éprouvaient `dureeLocalisee`
+en direct et `formaterDuree` seulement SANS étiquette ; débrancher la
+délégation entre les deux ne faisait rien tomber. Un module juste dont personne
+ne vérifie le branchement ne sert à rien — c'est le défaut déjà écrit ici pour
+le premier écran du tableau de bord et pour le contrat du pont Electron.
+
+Cinq sabotages, cinq échecs après correction.
+
+Vérifié à l'écran dans les six langues : « 1 min 55 » en français, en anglais
+et en espagnol, « 1 Min. 55 » en allemand, « 1分55秒 » en japonais et en
+chinois.
+
 ### « Victoires 33 % » : le japonais disait deux mots pour le même chiffre
 Suite de la lecture d'écrans sur le compte semé. L'écran de saison annonçait
 **« 勝利 33% »** — « Victoire », suivi d'un pourcentage.
