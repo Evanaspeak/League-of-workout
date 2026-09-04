@@ -63,13 +63,13 @@ export function DefiDuJour() {
    * remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
    */
   const barre = (cle: string, cible: number, ou: number, fait: boolean, xp: number) => {
-    const phrase = (t as unknown as Record<string, (n: number) => string>)[cle];
+    const phrase = (t as unknown as Record<string, (n: string) => string>)[cle];
     if (typeof phrase !== "function") return null;
     const part = cible > 0 ? Math.min(1, ou / cible) : 0;
     return (
       <div key={cle} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         <div className="flex items-baseline justify-between gap-3">
-          <span style={{ fontSize: "0.9rem", opacity: fait ? 0.6 : 1 }}>{phrase(cible)}</span>
+          <span style={{ fontSize: "0.9rem", opacity: fait ? 0.6 : 1 }}>{phrase(nombre(cible))}</span>
           <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
             {/*
               Ce que le défi RAPPORTE, à côté de ce qu'il demande.
