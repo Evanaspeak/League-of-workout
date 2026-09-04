@@ -84,3 +84,32 @@ test("une pesée saisie arrive en base", async ({ browser }) => {
 
   await ctx.close();
 });
+
+/**
+ * Ce qui manque ne se dit qu'à partir du moment où l'on a commencé.
+ *
+ * Trois champs vides, « il manque une mesure » était le dernier mot du panneau
+ * à la PREMIÈRE ouverture — un reproche pour ne pas avoir commencé, à l'instant
+ * qui décide si l'on s'en servira. Le contrôle vaut par ses DEUX moitiés : sans
+ * la seconde, supprimer la phrase pour de bon passerait aussi, et on aurait
+ * remplacé un reproche par un silence sur ce qui bloque vraiment.
+ */
+test("le mètre-ruban ne reproche rien tant qu'on n'a rien saisi", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Ruban", { consentement: true });
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  await page.goto("/settings#corps");
+  await viderLesFenetres(page);
+  await page.goto("/settings#corps");
+
+  const manque = page.getByText(/il manque une mesure|a measurement is missing/i);
+  await expect(page.getByText(/tour de taille|waist/i)).toBeVisible({ timeout: 10_000 });
+  await expect(manque).toHaveCount(0);
+
+  // Et il revient dès qu'on commence : la phrase dit alors ce qui bloque.
+  await page.getByLabel(/tour de taille|waist/i).fill("82");
+  await expect(manque).toBeVisible({ timeout: 10_000 });
+
+  await ctx.close();
+});

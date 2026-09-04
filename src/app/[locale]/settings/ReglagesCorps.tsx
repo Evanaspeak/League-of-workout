@@ -113,6 +113,11 @@ export function ReglagesCorps({
     ? masseGrasse(prefs.formuleCalorique, taille, prefs.tourTaille, prefs.tourCou, prefs.tourHanches)
     : null;
 
+  /** A-t-on commencé à remplir le mètre-ruban ? La taille en fait partie. */
+  const rubanEntame = Boolean(
+    prefs.tourTaille || prefs.tourCou || prefs.tourHanches || taille,
+  );
+
   /**
    * Enregistre une pesée.
    *
@@ -154,11 +159,18 @@ export function ReglagesCorps({
 
   return (
     <div className="space-y-6">
+      {/*
+        L'aide de la rubrique vit AU-DESSUS du premier panneau, pas dedans.
+        Elle portait un `<h2>` qui répétait mot pour mot le titre rendu par
+        `EnteteRubrique` : « TON CORPS » s'affichait deux fois de suite, ce
+        qu'aucune autre rubrique ne fait — chez les voisines, chaque panneau se
+        nomme pour ce qu'il EST (« Test de force », « Tes exercices »). Deux
+        titres de même niveau et de même texte se lisent aussi deux fois pour
+        un lecteur d'écran.
+      */}
+      <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsAide}</p>
+
       <div className="lol-panel space-y-4">
-        <div>
-          <h2 className="titre-section">{t.corpsTitre}</h2>
-          <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.corpsAide}</p>
-        </div>
 
         {/*
           Le MODE est l'interrupteur. Un booléen séparé pourrait le contredire —
@@ -381,11 +393,20 @@ export function ReglagesCorps({
             />
           </div>
         ))}
+        {/*
+          Ce qui manque ne se dit qu'à partir du moment où l'on a commencé.
+          Les trois champs vides, « il manque une mesure » est le dernier mot
+          du panneau à la PREMIÈRE ouverture : c'est-à-dire un reproche pour ne
+          pas avoir commencé, à l'instant qui décide si l'on s'en servira. Le
+          paragraphe d'aide juste au-dessus dit déjà quoi faire. C'est la règle
+          déjà posée pour l'objectif de première semaine — un objectif raté
+          qu'on laisse affiché n'est plus un objectif.
+        */}
         {graisse !== null ? (
           <p className="mono-num" style={{ fontSize: "1.2rem" }}>{t.corpsMasseGrasse(graisse)}</p>
-        ) : (
+        ) : rubanEntame ? (
           <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsRubanIncomplet}</p>
-        )}
+        ) : null}
       </div>
     </div>
   );
