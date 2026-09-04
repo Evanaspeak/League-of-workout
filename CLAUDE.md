@@ -242,6 +242,22 @@ posent un faux pont. Le repli se choisit donc à l'écriture, et il ne doit
 jamais être plus permissif que ce qu'on demandait : le repli d'un réglage qui
 dit « demande-moi » ne peut pas être « fais-le sans demander ».
 
+## Les heures se disent en heure française (IMPORTANT)
+
+Consigne du propriétaire. La machine, les journaux de CI, `git log` et les
+travaux programmés sont tous en UTC ; lui vit en France, donc **UTC + 2** de
+fin mars à fin octobre (CEST) et **UTC + 1** le reste de l'année (CET).
+
+Ça vaut pour ce qu'on lui DIT, pas pour ce qu'on écrit dans le code : une
+comparaison d'heure, un cron, un horodatage de journal restent en UTC — les
+convertir serait le défaut que `fenetreEnvoi.ts` existe pour éviter. La
+conversion se fait au moment de rendre compte, et jamais avant.
+
+Et on ne déduit pas une durée du fil de la conversation : `date -u` coûte une
+seconde, et une heure estimée « au ressenti » s'est déjà trompée de vingt
+minutes dans ce projet, ce qui a fait prendre un travail parfaitement normal
+pour un travail bloqué.
+
 ## Versionnage des déploiements Vercel (IMPORTANT)
 À chaque mise en prod (merge sur `main`), nommer le **commit de merge** avec un
 préfixe de version incrémental `Vx — description` (V1, V2, V3…) pour que la
