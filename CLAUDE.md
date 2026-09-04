@@ -1147,6 +1147,26 @@ un test ne garde plus rien.
 déjà écrite : son plus grand élément est l'image de saison, et 2216 ms est à
 peu près l'instant où elle finit d'arriver.
 
+**Accessibilité : 0 constat sur 90 passes**, quinze pages et six langues — mais
+il a fallu réparer l'outil pour pouvoir l'écrire. La première exécution
+annonçait **une page NON MESURÉE**, `/en/history`, « injoignable ». Mesuré
+plutôt que supposé : cette page met **treize secondes et demie** à atteindre le
+silence du réseau, parce que chacune de ses lignes demande son icône à un
+domaine tiers — et une fois sur trois elle dépasse les trente secondes du
+délai par défaut. Le tirage au sort décidait donc de quelle langue manquait à
+l'audit.
+
+C'est le piège de `networkidle` déjà écrit ici pour la suite navigateur —
+« attendre un silence qui ne vient jamais » — jamais appliqué aux outils de
+mesure. Les trois prennent une minute maintenant. **Couper le CDN, la parade de
+`comparer-rendu.mjs`, aurait été une faute ici** : sans lui les icônes tombent
+sur leur repli, qui est un carré de texte et non une image, donc l'audit
+porterait sur une autre page que celle qui est servie.
+
+Le contre-témoin est le compte : 90 passes relevées, et zéro page laissée de
+côté. Un rapport qui annonce zéro sur des pages qu'il n'a pas ouvertes est
+l'inverse d'un audit, et c'est le second chiffre qui le dit.
+
 ### L'XP des défis, et la seule chose du produit qui ne peut pas se recalculer
 Réponse à la question 139 — « qu'est-ce qu'on gagne à finir un défi ? » — restée
 « à voir » depuis l'écriture des défis, et tranchée par le propriétaire : de
