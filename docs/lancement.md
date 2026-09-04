@@ -17,16 +17,25 @@ qui débloque, pas du code.
 
 **2. Le déclencheur des envois programmés n'est pas ponctuel.** Le rappel du
 matin, la relance des absents et le bilan hebdomadaire sont déclenchés par un
-travail GitHub Actions censé passer toutes les heures. Relevé sur huit jours :
-trois à six passages par jour, et **aucun à l'heure où il fallait**. Les trois
-envois n'ont donc jamais eu lieu, en répondant 200 à chaque passage.
+travail GitHub Actions censé passer toutes les heures. Il ne le fait pas.
 
-Le code tolère maintenant l'irrégularité — la fenêtre couvre la matinée au lieu
-d'une heure pile, et une marque par compte empêche les doublons — mais trois
-passages par jour restent une loterie à trois cases sur vingt-quatre. Le geste
-qui règle vraiment la question est un déclencheur fiable : les tâches planifiées
-de Vercel appellent les deux mêmes adresses avec le même secret, et elles
-partent à l'heure. C'est une décision d'infrastructure, elle vous revient.
+Le code tolère l'irrégularité depuis : la fenêtre couvre la matinée — neuf
+heures à midi en heure locale, soit 07:00 à 10:00 UTC en septembre — au lieu
+d'une heure pile, et une marque par compte empêche les doublons.
+
+**Ce que ça donne réellement, mesuré sur les cent dernières exécutions
+(douze jours, 8,3 passages par jour) : six jours ont eu un passage dans la
+fenêtre, six n'en ont eu aucun.** Autrement dit le rappel du matin part environ
+un jour sur deux. Et le bilan hebdomadaire, qui ne part que le LUNDI matin,
+perd une semaine sur deux — un lundi manqué n'est pas rattrapé le mardi, il est
+perdu.
+
+Élargir la fenêtre au-delà de midi ferait un « rappel de la journée », ce qui
+n'est pas la même promesse : c'est un arbitrage de produit, pas une tolérance
+d'implémentation. Le geste qui règle vraiment la question est un déclencheur
+fiable : les tâches planifiées de Vercel appellent les deux mêmes adresses avec
+le même secret, et elles partent à l'heure. C'est une décision
+d'infrastructure, elle vous revient.
 
 Ça compte pour un lancement : la rétention repose entièrement sur ces trois
 envois, et inviter cent personnes à un produit dont les relances ne partent pas
