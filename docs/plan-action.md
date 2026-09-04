@@ -145,7 +145,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
 
 ### Progression et récompenses
-*5 à faire · 4 faits.* Les paliers, le niveau de compte, le titre et l'exploit de la dette payée dans l'heure.
+*4 à faire · 5 faits.* Les paliers, le niveau de compte, le titre et l'exploit de la dette payée dans l'heure.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -157,7 +157,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 151 | Un thème visuel par jeu | 1 nuit |
 | [ ] | 152 | Progression physique ET volume, les deux | 1 nuit |
 | [ ] | 154 | Inciter à la photo avant-après sans jamais la transmettre | ½ nuit |
-| [ ] | 087 | Un système de niveau, comme tu l'as ajouté à l'objectif | 1 nuit |
+| [x] | 087 | Un système de niveau — **la même demande que 148**, cochée avec elle | — |
 
 ### Le calcul de la dette
 *6 à faire · 5 faits.* Le cœur du produit. Trois de tes décisions ne sont pas passées dans le code.
