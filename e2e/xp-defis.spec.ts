@@ -3,7 +3,7 @@ import { ouvrirCompte } from "./compte";
 import { viderLesFenetres } from "./intro";
 import { compter } from "./base";
 import { defiDuJour } from "../src/lib/defiQuotidien";
-import { XP_DEFI_JOUR } from "../src/lib/xpDefis";
+import { XP_DEFI_JOUR, XP_DEFI_MOIS } from "../src/lib/xpDefis";
 
 /**
  * L'XP des défis personnels, de l'écran jusqu'à la base et retour.
@@ -62,6 +62,17 @@ test("un défi du jour rempli se retient une fois, et son XP revient de la base"
 
   const jour = jourLocal();
   const defi = defiDuJour(jour);
+
+  /**
+   * Ce que le défi RAPPORTE est écrit à côté de ce qu'il demande.
+   *
+   * Sans ce chiffre, la récompense existe et ne se voit pas : l'XP monte de
+   * cinquante sans que rien ne relie ce mouvement au défi qu'on vient de
+   * finir. C'est un contrôle d'écran, et il ne peut se faire qu'ici — aucun
+   * test unitaire ne rend de composant sur ce projet.
+   */
+  await expect(page.getByText(`+${XP_DEFI_JOUR} XP`).first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByText(`+${XP_DEFI_MOIS} XP`).first()).toBeVisible();
 
   // Rien n'est retenu au départ : sans ce point de comparaison, un compte qui
   // porterait déjà une ligne rendrait le contrôle final vrai sans rien prouver.
