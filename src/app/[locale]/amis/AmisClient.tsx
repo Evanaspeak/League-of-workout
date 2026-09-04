@@ -5,7 +5,7 @@ import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
 import type { LigneClassement, Periode } from "@/lib/classement";
-import { PERIODE_DEFAUT, PERIODES } from "@/lib/classement";
+import { JOURS_CLASSEMENT, PERIODE_DEFAUT, PERIODES } from "@/lib/classement";
 import DetteEquipe from "./DetteEquipe";
 
 /**
@@ -291,11 +291,47 @@ export function AmisClient() {
             <button type="button" className="lol-btn" onClick={charger}>{t.reessayer}</button>
           </div>
         ) : (
-          /* Une hauteur réservée : sans elle, tout ce qui est visible saute
-             quand la liste arrive. C'est le défaut mesuré à 0,252 de CLS sur
-             l'historique, et la réserve est ce qui le corrige. */
-          <div className="lol-panel p-5" role="status" style={{ minHeight: 420, color: "var(--steel)" }}>
-            {t.chargement}
+          /**
+           * La STRUCTURE de la page, pas une boîte unique.
+           *
+           * Une réserve de 420 pixels avait été posée ici en s'inspirant de
+           * l'historique. Elle ne suffisait plus : l'écran a gagné le
+           * classement, le parrainage et les groupes depuis, et la page mesurée
+           * fait 1883 pixels quand la réserve en tenait 420. Tout ce qui est
+           * visible sautait donc encore — 0,145 de CLS, mesuré, pour un seuil
+           * de 0,1.
+           *
+           * Cinq panneaux plutôt qu'un seul nombre : chacun garde à peu près la
+           * place du sien, et la réserve suit l'écran quand il grandit au lieu
+           * d'être un chiffre à corriger après coup. C'est ce que fait déjà le
+           * squelette de l'historique.
+           */
+          <div className="space-y-4" role="status" aria-label={t.chargement}>
+            {/*
+              Les deux panneaux portent leur VRAI titre et leur vraie phrase
+              d'explication, parce que ni l'un ni l'autre ne dépend de la
+              réponse — ils disent ce que l'écran fait, pas ce qu'il contient.
+              Ce composant est rendu au serveur avant d'être hydraté : ces
+              textes partent donc dans le HTML, et le plus grand élément de la
+              page cesse d'attendre `/api/amis`. C'est la correction déjà faite
+              sur le premier écran du tableau de bord, et le gain se mesure de
+              la même façon.
+            */}
+            <div className="lol-panel p-5 space-y-3" style={{ minHeight: 220 }}>
+              <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.classementTitre}</h2>
+              <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
+                {t.classementAide(JOURS_CLASSEMENT)}
+              </p>
+            </div>
+            <div className="lol-panel p-5 space-y-3" style={{ minHeight: 200 }}>
+              <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.parrainageTitre}</h2>
+              <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>
+                {t.parrainageAide}
+              </p>
+            </div>
+            {[230, 300, 280].map((h, i) => (
+              <div key={i} className="lol-panel p-5" style={{ minHeight: h }} aria-hidden="true" />
+            ))}
           </div>
         )}
       </main>
