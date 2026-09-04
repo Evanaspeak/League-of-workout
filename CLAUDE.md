@@ -1114,6 +1114,103 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Pompes 480 » au-dessus de « 8 pompes », sur la même page
+Trouvé en lisant l'historique en japonais sur le compte semé. Le résumé, en
+haut du tableau, écrivait :
+
+```
+60 件 · 腕立て 480          ← le résumé
+…
+8腕立て                     ← la cellule de dette, six lignes plus bas
+```
+
+Le même couple — une quantité et le nom de son exercice — dans les deux ordres
+opposés, sur le même écran. Et la ligne du résumé se contredit **elle-même** :
+« 60 件 » met le nombre devant, « 腕立て 480 » le met derrière, de part et
+d'autre du même point médian.
+
+**En français ça ne saute pas aux yeux, et c'est pour ça que ça a vécu :**
+« 60 parties · Pompes 480 » se lit vite, les deux mots se ressemblent, et on ne
+compare pas les deux moitiés. En japonais, « 腕立て 480 » porte une **espace
+latine au milieu des idéogrammes** — la même chose qui avait fait voir
+« 20V / 40D » sur le tableau de bord.
+
+**Une seule ligne du dépôt écrit ce couple à l'envers.** Le recensement des
+six lieux où un nom d'exercice croise une quantité rend partout
+`{valeur}` puis `{minuscule(nomsExo[…])}` — la pastille, le décompte, les
+cellules de l'historique, le tableau de bord, le formulaire d'ajout — et
+`Historique.tsx` ligne 203 seule dans l'autre sens. C'est le motif que ce
+projet paie en boucle sous sa forme la plus discrète : pas une copie qu'on
+remarque, une règle appliquée à cinq de ses six endroits.
+
+`src/quantiteAvantNom.test.ts` refuse un gabarit où le nom précède la
+quantité. Il porte sur les GABARITS et pas sur le JSX : c'est la forme qui
+compose une phrase, là où le JSX pose ses éléments côte à côte et se lit à
+l'œil. Le tri sort de la boucle pour être éprouvé sur **huit cas fabriqués** —
+l'état sain du dépôt est zéro trouvaille, donc les fichiers réels ne peuvent
+pas distinguer un motif juste d'un motif aveugle. Quatre sabotages, quatre
+échecs.
+
+**Et un second défaut sur l'écran d'à côté, de la même famille.** Le
+classement des amis rendait **« 努力ポイント 0 »** — nom puis nombre — quand le
+mur des records, à trois centimètres en dessous, rend « 300 ポイント ». Les
+cinq autres langues mettent le nombre en premier, le CHINOIS compris
+(« 0 点努力值 »), qui partage pourtant avec le japonais l'habitude du nombre
+devant son classificateur. Le japonais était seul contre les cinq autres et
+contre lui-même.
+
+**Ce garde-là n'existe pas, et la raison mérite d'être écrite plutôt que
+laissée à redécouvrir.** La règle qui l'attraperait serait « toutes les langues
+placent le nombre au même endroit », et **c'est précisément la règle qu'il ne
+faut pas poser** : le journal porte, six entrées plus haut, le cas inverse —
+« 400 XP 次のレベルまで 5 » était faux justement parce qu'on avait imposé
+l'ordre européen au japonais. Un garde de position produirait des faux
+positifs sur tout ce que V421 a corrigé. Le sabotage confirme : l'ordre remis
+à l'envers, tout reste au vert.
+
+### Le mur des records écrivait « 12000 »
+Trouvé en corrigeant le précédent, dans le même dictionnaire.
+`recordsLigne(pseudo, points: number, jourFormate)` interpolait un **nombre
+brut** dans les six langues.
+
+**C'est le gabarit le plus exposé de la famille**, et c'est ce qui rend
+l'oubli intéressant : il porte le plus gros JOUR d'effort de quelqu'un, donc
+il est par construction celui qui atteint les grands nombres. Une grosse
+soirée passe le millier sans peine.
+
+**Il faisait partie des soixante-dix-sept, et mon recensement de la veille l'a
+manqué.** L'entrée d'hier écrit « quatre ne sont pas dans ce cas » et les
+nomme — l'objectif calorique, le maintien, les minutes de marche, le compte de
+parties — en jugeant que le reste « n'atteint jamais le millier ». C'était vrai
+des seuils, des rangs et des compteurs de jours ; ça ne l'était pas d'un
+record. Un recensement fait à la main garde l'angle mort de celui qui le fait.
+
+Le paramètre s'appelle `formate` maintenant, comme partout ailleurs, et
+**c'est le compilateur qui a désigné les deux appelants** — c'est ce qu'un
+changement de type fait de mieux, et c'est pourquoi il vaut mieux qu'un
+paramètre optionnel.
+
+**Le garde de la veille a dû apprendre le RANG de l'argument.** Il supposait
+que le nombre est le premier ; la ligne du mur commence par un pseudo. Une
+liste de clés sans rang aurait déclaré fautif un appel parfaitement juste, et
+un garde qui crie sur ce qui va bien finit par ne plus se lire. Il porte donc
+`{clé: rang}`, et son découpage d'arguments emprunte celui de
+`quantiteLocalisee.test.ts` — qui suit la PROFONDEUR des parenthèses. Il en
+avait besoin : `recordsLigne(r.pseudo, nombre(r.points), jourLisible(r.jour))`
+porte deux appels imbriqués, et un découpage sur les virgules y compterait
+cinq arguments au lieu de trois.
+
+Trois sabotages, trois échecs — l'appelant qui repasse `String(r.points)`, le
+rang remis à zéro (le pseudo pris pour le nombre), et le dictionnaire remis en
+`number`, qui ne fait pas tomber un test mais la COMPILATION, par la parité
+entre les six blocs. C'est noté comme tel plutôt que compté comme un garde qui
+mord.
+
+Vérifié à l'écran dans quatre langues : « 60 parties · 480 pompes »,
+« 60 Partien · 480 Liegestütze », « 60 件 · 480 腕立て », « 60 局 · 480 俯卧撑 » ;
+et « 0 point d'effort », « 0 Aufwandspunkte », « 0 努力ポイント »,
+« 0 点努力值 » au classement.
+
 ### Huit versions fusionnées sur `main`, aucune en ligne
 Trouvé en vérifiant V422 à V430 en production, ce qui est le geste ordinaire de
 fin de série. Le site est en parfaite santé — `/fr` rend 200, `/api/sante`

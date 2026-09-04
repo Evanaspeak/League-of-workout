@@ -597,7 +597,7 @@ export function AmisClient() {
                       {r
                         ? (
                           <span style={{ color: r.moi ? "var(--gold)" : undefined }}>
-                            {t.recordsLigne(r.pseudo, r.points, jourLisible(r.jour))}
+                            {t.recordsLigne(r.pseudo, nombre(r.points), jourLisible(r.jour))}
                           </span>
                         )
                         : <span style={{ color: "var(--steel)" }}>{"\u2014"}</span>}
@@ -629,7 +629,7 @@ export function AmisClient() {
                         {r
                           ? (
                             <span style={{ color: r.moi ? "var(--gold)" : undefined }}>
-                              {t.recordsLigne(r.pseudo, r.points, jourLisible(r.jour))}
+                              {t.recordsLigne(r.pseudo, nombre(r.points), jourLisible(r.jour))}
                             </span>
                           )
                           : <span style={{ color: "var(--steel)" }}>{"\u2014"}</span>}

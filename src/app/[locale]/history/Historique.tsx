@@ -191,16 +191,25 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const dateLocale = useDateLocale();
   const nombre = useNombre();
   /**
-   * « Pompes 380 · Boxe 4 min 25 » — chaque exercice dans sa propre unité.
+   * « 380 pompes · 4 min 25 boxe » — chaque exercice dans sa propre unité.
    *
    * Reçoit des QUANTITÉS déjà converties, pas des points : les parties n'ont
    * pas toutes le même barème, et les additionner en points reviendrait à
    * reconvertir le tout au barème du jour.
+   *
+   * La QUANTITÉ vient en premier, et le nom la suit en minuscule. C'est
+   * l'ordre de tout le reste du produit — les cellules de dette juste en
+   * dessous, la pastille, le décompte, les notifications — et cette ligne-ci
+   * était la seule à l'inverser. Elle écrivait « 60 parties · Pompes 480 » :
+   * nombre puis nom d'un côté du point médian, nom puis nombre de l'autre,
+   * sur la même ligne. Ça ne saute pas aux yeux en français, où les deux
+   * mots se ressemblent ; ça saute aux yeux en japonais, où « 腕立て 480 »
+   * porte une espace latine au milieu des idéogrammes.
    */
   const resumeParExo = (parExercice: Record<string, number>) => {
     const parts = EXERCICE_IDS
       .filter((id) => (parExercice[id] ?? 0) > 0)
-      .map((id) => `${nomsExo[id]} ${formaterQuantite(parExercice[id], id, dateLocale)}`);
+      .map((id) => `${formaterQuantite(parExercice[id], id, dateLocale)} ${minuscule(nomsExo[id])}`);
     return parts.length > 0 ? parts.join(" · ") : "—";
   };
 

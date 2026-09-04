@@ -5,6 +5,8 @@ import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { testPompes } from "@/lib/i18n/dictionaries/testPompes";
 import { calculateur } from "@/lib/i18n/dictionaries/calculateur";
+import { amis } from "@/lib/i18n/dictionaries/amis";
+import { argumentsDe } from "./quantiteLocalisee.test";
 
 /**
  * Les gabarits qui reçoivent un nombre POUVANT dépasser le millier.
@@ -37,6 +39,13 @@ describe("les gabarits qui reçoivent un grand nombre", () => {
       expect(settings[l].corpsMaintienValeur("2 207")).toContain("2 207");
       expect(dashboard[l].energieSub("1 020")).toContain("1 020");
       expect(history[l].activitesAndTotal("1 240", 1240, "x")).toContain("1 240");
+      /**
+       * Le cinquième, manqué par le recensement de la veille : le mur des
+       * records. Il porte le plus gros JOUR d'effort, donc il est par
+       * définition celui qui atteint les grands nombres — et il interpolait
+       * un `number` brut, ce qui rendait « 12000 » dans les six langues.
+       */
+      expect(amis[l].recordsLigne("Kayn", "12 000", "4 sept.")).toContain("12 000");
     }
   });
 
@@ -91,10 +100,18 @@ describe("les gabarits qui reçoivent un grand nombre", () => {
      *
      * On regarde donc l'argument passé, et il doit venir d'un formateur.
      */
-    const CLES = [
-      "corpsImc", "corpsPeseeValeur", "corpsMasseGrasse", "multiplicateur",
-      "corpsObjectifValeur", "corpsMaintienValeur", "energieSub", "activitesAndTotal",
-    ];
+    /**
+     * La clé, et le RANG de l'argument qui s'affiche. Il valait zéro partout
+     * jusqu'à ce que le mur des records entre dans la liste : sa ligne
+     * commence par un pseudo, et le nombre vient en second. Une liste de clés
+     * sans rang aurait déclaré son appel fautif — un garde qui crie sur ce
+     * qui va bien finit par ne plus se lire.
+     */
+    const CLES: Record<string, number> = {
+      corpsImc: 0, corpsPeseeValeur: 0, corpsMasseGrasse: 0, multiplicateur: 0,
+      corpsObjectifValeur: 0, corpsMaintienValeur: 0, energieSub: 0,
+      activitesAndTotal: 0, recordsLigne: 1,
+    };
     const fautifs: string[] = [];
     let appels = 0;
     const SRC = join(process.cwd(), "src");
@@ -109,13 +126,22 @@ describe("les gabarits qui reçoivent un grand nombre", () => {
     };
     for (const f of lister(SRC)) {
       const texte = readFileSync(f, "utf8");
-      for (const cle of CLES) {
-        for (const m of texte.matchAll(new RegExp(`\\.${cle}\\(([^)]*\\)?[^)]*)\\)`, "g"))) {
+      for (const [cle, rang] of Object.entries(CLES)) {
+        /**
+         * Le découpage suit la PROFONDEUR des parenthèses, il ne coupe pas
+         * sur les virgules. La ligne du mur porte deux appels imbriqués —
+         * `recordsLigne(r.pseudo, nombre(r.points), jourLisible(r.jour))` —
+         * et un découpage naïf y compterait cinq arguments au lieu de trois.
+         * C'est la fonction de `quantiteLocalisee.test.ts`, éprouvée là-bas
+         * sur des cas fabriqués.
+         */
+        for (const m of texte.matchAll(new RegExp(`\\.${cle}\\(`, "g"))) {
+          const args = argumentsDe(texte, m.index + m[0].length - 1);
+          if (!args) continue;
           appels += 1;
-          // Le premier argument est celui qui s'affiche.
-          const premier = m[1].split(",")[0];
-          if (!/\b(decimal|nombre)\s*\(/.test(premier)) {
-            fautifs.push(`${f.slice(SRC.length + 1)} → ${cle}(${premier.slice(0, 40)})`);
+          const affiche = args[rang] ?? "";
+          if (!/\b(decimal|nombre)\s*\(/.test(affiche)) {
+            fautifs.push(`${f.slice(SRC.length + 1)} → ${cle}(…${affiche.slice(0, 40)})`);
           }
         }
       }
