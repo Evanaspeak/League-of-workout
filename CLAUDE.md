@@ -1098,6 +1098,32 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un module dont le seul lecteur est son propre test passe pour vivant
+Trouvé en m'y appuyant sans le vouloir. J'ai commis `conversionDette.ts` — un
+module complet, éprouvé, et que RIEN n'utilise encore, l'écran restant à
+écrire — et `codeMort.test.ts` est resté vert.
+
+La raison est dans sa construction : il écarte les fichiers de test de la liste
+des CANDIDATS (un test n'a pas à être importé), mais pas de la liste des
+LECTEURS. Un module importé par son seul fichier de test compte donc comme lu.
+
+**C'est l'angle mort exact de ce garde**, et il est plus gênant que la moyenne
+parce que celui-ci est de ceux qui font SUPPRIMER du code sur la foi de ce
+qu'ils lisent : il attrape le fichier que plus personne n'appelle, sauf quand
+le dernier appelant est le test écrit pour lui — c'est-à-dire précisément le
+cas d'un module qu'on a écrit puis abandonné.
+
+**Ce n'est PAS corrigé, et la raison est écrite plutôt que tue.** Le resserrer
+demande de décider ce qu'on fait des modules légitimement éprouvés seuls, et il
+y en a — un module peut naître avec ses tests une nuit et recevoir son écran la
+suivante, ce qui est exactement ce qui vient de se produire. Le refuser
+mécaniquement obligerait à commettre le composant à moitié pour satisfaire un
+garde, ce qui est pire que le défaut qu'il attrape. Ce qui manque n'est pas la
+détection mais une TOLÉRANCE datée, et ça ne se décide pas en huit minutes.
+
+En attendant : un module commis sans lecteur reste sur la branche, jamais
+fusionné sur `main`. C'est ce qui a été fait ici.
+
 ### Le jeu que je venais d'ajouter était invisible à l'application, et je l'ai trouvé en cherchant autre chose
 Troisième divergence de la même famille en une heure, et celle-ci est la
 meilleure démonstration du problème : **c'est moi qui venais de la créer.**
