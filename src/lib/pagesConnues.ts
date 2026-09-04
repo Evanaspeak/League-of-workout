@@ -56,6 +56,15 @@ export const PAGES_CONNUES = [
   "/dashboard",
   "/history",
   "/login",
+  /**
+   * Le profil public, à l'adresse que son propriétaire partage.
+   *
+   * Une étoile pour le jeton : il ne se connaît pas d'avance, et le lister
+   * reviendrait à publier les liens. Une adresse dont le jeton ne désigne
+   * personne rend la page « lien inconnu » plutôt qu'un 404 — dire « ce profil
+   * a été fermé » plutôt que « lien inconnu » apprendrait qu'il a existé.
+   */
+  "/p/*",
   "/recuperation",
   "/recuperation/valider",
   "/settings",

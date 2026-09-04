@@ -200,6 +200,44 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update).not.toHaveBeenCalled();
   });
 
+  it("ouvrir le profil public tire un jeton, et le rend à l'écran", async () => {
+    // L'écran ne peut pas le fabriquer : il est tiré au serveur. Sans lui dans
+    // la réponse, il faudrait un second appel pour lire une valeur qu'on vient
+    // d'écrire.
+    const r = await put({ userPrefs: { profilPublic: true } });
+    expect(r.status).toBe(200);
+    const jeton = p.user.update.mock.calls[0][0].data.jetonProfil;
+    expect(typeof jeton).toBe("string");
+    expect((jeton as string).length).toBeGreaterThanOrEqual(24);
+    expect(await corps(r)).toMatchObject({ jetonProfil: jeton });
+  });
+
+  it("le fermer efface le jeton — fermer, c'est révoquer", async () => {
+    const r = await put({ userPrefs: { profilPublic: false } });
+    expect(r.status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.jetonProfil).toBeNull();
+    expect(await corps(r)).toMatchObject({ jetonProfil: null });
+  });
+
+  /**
+   * Même raison que le mode fantôme : c'est un réglage de confidentialité, et
+   * enregistrer « ouvert » pour quelqu'un qui vient de demander l'inverse est
+   * le seul résultat qu'on ne peut pas rattraper.
+   */
+  it("refuse autre chose qu'un booléen pour le profil public", async () => {
+    const r = await put({ userPrefs: { profilPublic: "oui" } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
+  it("une requête sans ce réglage ne rend aucun jeton", async () => {
+    // Une clé absente ne dit rien ; une clé nulle dirait « fermé », et l'écran
+    // effacerait un lien qui existe toujours.
+    const r = await put({ userPrefs: { bilanActif: true } });
+    const lu = await corps(r);
+    expect(lu).not.toHaveProperty("jetonProfil");
+  });
+
   it("enregistre ce qu'un ami a le droit de voir", async () => {
     const r = await put({ userPrefs: { partageAmis: "detail" } });
     expect(r.status).toBe(200);

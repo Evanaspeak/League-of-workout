@@ -122,7 +122,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 142 | La dette de groupe quand on joue à cinq ensemble | 1 nuit |
 | [x] | 119 | Un lien de parrainage, avantage pour les deux | 1 nuit |
 | [x] | 120 | Voir les statistiques d'un ami selon ce qu'il autorise | 1 nuit |
-| [ ] | 121 | Un profil public à adresse partageable, au choix | 1 nuit |
+| [x] | 121 | Un profil public à adresse partageable, au choix | 1 nuit |
 | [x] | 129 | Un mode fantôme : participer sans apparaître | ½ nuit |
 | [ ] | 122 | Une image de partage après une grosse séance | 1 nuit |
 | [ ] | 130 | Validation par vidéo pour apparaître dans les classements | 3 nuits |

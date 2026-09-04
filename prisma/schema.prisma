@@ -100,6 +100,8 @@ model User {
    */
   /**
    * /**
+   * /**
+   * /**
    * Mode fantôme : participer aux classements sans y apparaître.
    * Réponse 129. Il ferme un trou que le classement a ouvert : celui-ci publie
    * le pseudo et l'état de retard à tous ses amis, et la seule façon d'en
@@ -111,6 +113,19 @@ model User {
    * pseudo. On voit toujours son propre classement, soi-même compris.
    */
   fantome Boolean @default(false)
+
+  /**
+   * Le jeton du profil PUBLIC, à adresse partageable (réponse 121, « au
+   * choix »).
+   * Nul tant que le profil n'est pas public : sa présence EST le réglage. Le
+   * rallumer garde le jeton en cours, l'éteindre l'efface — donc éteindre,
+   * c'est révoquer, et un lien qu'on croyait avoir coupé ne revient jamais à
+   * la vie.
+   * Un jeton et non le pseudo : une adresse fondée sur le pseudo permettrait
+   * d'essayer des pseudos jusqu'à dresser la liste des comptes qui ont accepté
+   * d'être vus.
+   */
+  jetonProfil String? @unique
 
   /**
    * Ce qu'un ami a le droit de voir : "total" ou "detail".

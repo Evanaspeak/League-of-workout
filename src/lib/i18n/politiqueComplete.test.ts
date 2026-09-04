@@ -137,6 +137,13 @@ const ATTENDU: Record<string, RegExp> = {
   // décrit avec l'historique des paiements plutôt que séparément.
   detteDepuis: /paiements de dette/i,
   jetonObs: /compteur de stream/i,
+  /**
+   * Le lien du profil public. Il se décrit et ne s'exempte pas : c'est une
+   * page qui montre votre pseudo et votre effort à qui a l'adresse, sans
+   * session. Le fait qu'elle n'existe que si on l'a demandée ne dispense pas
+   * de dire ce qu'elle publie.
+   */
+  jetonProfil: /profil public/i,
   // Mettre un exercice de côté frôle la santé sans en être : on le décrit
   // plutôt que de l'exempter, et la politique dit qu'aucune raison médicale
   // n'est demandée.
