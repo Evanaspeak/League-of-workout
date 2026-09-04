@@ -1128,6 +1128,43 @@ vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
+### Une régression de deux fois, mesurée une seule fois, qui n'existait pas
+Deuxième fois dans la même journée, et cette fois j'étais allé jusqu'à écrire
+le code.
+
+`/api/progression` écrit une ligne `DefiAccompli` quand elle CONSTATE qu'un
+défi est rempli. `skipDuplicates` rend l'écriture sans effet dès le second
+passage — mais elle repart quand même, à chaque chargement d'un écran
+connecté, pour tout le reste du mois dès qu'un défi mensuel est rempli.
+Mesuré : **62 requêtes par seconde** sur un compte dont le défi du mois est
+rempli, contre **125** sur un compte neuf. Deux fois moins, sur la route que
+toute page appelle.
+
+La correction s'écrivait toute seule : lire dans le même `Promise.all` ce qui
+est déjà retenu pour les deux périodes en cours, et ne plus écrire que ce qui
+manque. Une lecture bornée en parallèle contre une écriture par page. Écrite,
+testée, mesurée : **104 req/s**.
+
+**Puis j'ai remesuré l'état d'AVANT trois fois, et il rend 112, 128 et
+131 req/s.** L'écriture ne coûte rien. Les 62 étaient du bruit — une mesure
+prise pendant qu'autre chose tournait sur une machine à quatre cœurs. La
+correction elle-même donne 93, 104 et 134 : le même nuage.
+
+**Le code est donc revenu en arrière**, tests compris. Il n'y avait pas de
+défaut, et garder une lecture de plus au motif qu'elle « ne peut pas faire de
+mal » revient à laisser dans le produit une ligne que rien ne justifie — c'est
+le défaut déjà écrit ici pour le module de stockage et pour la forme fermée du
+niveau : une ligne qu'on peut retirer sans qu'un test tombe ne tient rien, et
+elle se relit comme une garantie.
+
+**Ce qu'il faut retenir tient en une phrase, et le journal la répétait déjà
+pour les temps d'affichage : une mesure unique n'est pas une mesure.** Le
+1636 ms de `/fr/amis`, ce matin, était le même défaut sous une autre forme —
+et là aussi il ressemblait beaucoup à une régression connue, ce qui est
+précisément ce qui rend le piège efficace. La règle pratique est de mesurer
+l'état d'AVANT autant de fois que l'état d'après, et de le faire avant
+d'écrire la correction plutôt qu'après.
+
 ### Dépendances au 4 septembre, et deux mesures corrigées
 `npm audit` rend **les deux mêmes vulnérabilités qu'hier**, toutes deux dans
 `mysql2` et toutes deux inatteignables : ce projet parle à PostgreSQL, le
