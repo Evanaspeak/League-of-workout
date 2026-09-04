@@ -1112,6 +1112,14 @@ lequel il partage une image. « Jours payés » dans les six langues : c'est le
 mot du reste du produit, « l'effort réellement PAYÉ » au classement et « 3 jours
 payés d'affilée » aux paliers, donc il ne demande rien à apprendre.
 
+**Et il vit à TROIS endroits, dont un que j'allais laisser.** Le courriel
+hebdomadaire lit le même champ et portait le même libellé. Je ne l'ai pas
+trouvé en réfléchissant : je l'ai trouvé en cherchant l'ancienne chaîne dans
+tout le dépôt avant de publier, par acquit de conscience. C'est exactement le
+motif que ce projet paie en boucle, et il ne prend jamais la forme d'une copie
+qu'on remarque : il prend celle d'une correction qui n'en répare qu'une moitié.
+L'image de saison, elle, a été vérifiée et ne porte pas ce libellé.
+
 **Et les mêmes trois mots pour deux quantités, à quatre lignes d'écart.** Le
 panneau des paliers rendait :
 
