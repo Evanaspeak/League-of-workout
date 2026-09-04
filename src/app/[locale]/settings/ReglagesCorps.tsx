@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useNombre } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import {
   MULTIPLICATEURS, imc, masseGrasse, mesuresCompletes, objectifCalorique,
@@ -71,6 +71,19 @@ export function ReglagesCorps({
   enregistrer: (userPrefs: Record<string, unknown>, revenir: () => void) => Promise<unknown>;
 }) {
   const t = useT(settingsDict);
+  // Un objectif de calories est TOUJOURS à quatre chiffres : « 2207 kcal »
+  // s'affichait ainsi dans les six langues, là où le français écrit
+  // « 2 207 » et l'allemand « 2.207 ».
+  const nombre = useNombre();
+  /**
+   * Une décimale, et elle passe par `Intl`.
+   *
+   * `${n}` rend « 24.7 » dans les six langues. Le français et
+   * l'espagnol écrivent « 24,7 », et en allemand le POINT est le
+   * séparateur des milliers : « 24.7 » s'y lit comme vingt-quatre mille
+   * sept. Ce n'est pas de la typographie, c'est un chiffre faux.
+   */
+  const decimal = useNombre({ maximumFractionDigits: 1 });
   const [peseeKg, setPeseeKg] = useState("");
   const [peseeEtat, setPeseeEtat] = useState<"" | "envoi" | "ok" | "echec">("");
   const [pesees, setPesees] = useState<{ jour: string; grammes: number }[] | null>(null);
@@ -265,11 +278,11 @@ export function ReglagesCorps({
             {objectif ? (
               <div className="space-y-2" style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
                 <div className="mono-num font-bold" style={{ fontSize: "1.6rem" }}>
-                  {t.corpsObjectifValeur(objectif.cible)}
+                  {t.corpsObjectifValeur(nombre(objectif.cible))}
                 </div>
                 <div className="text-xs" style={{ color: "var(--faint)" }}>
-                  {t.corpsMaintienValeur(objectif.maintien)}
-                  {objectif.imc !== null && ` · ${t.corpsImc(objectif.imc)}`}
+                  {t.corpsMaintienValeur(nombre(objectif.maintien))}
+                  {objectif.imc !== null && ` · ${t.corpsImc(decimal(objectif.imc))}`}
                 </div>
                 {objectif.sousPlancher && (
                   <p role="note" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>
@@ -322,7 +335,7 @@ export function ReglagesCorps({
           <p role="alert" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>{t.erreurSauvegarde}</p>
         )}
         {indice !== null && (
-          <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsImc(indice)}</p>
+          <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsImc(decimal(indice))}</p>
         )}
 
         {/*
@@ -333,7 +346,7 @@ export function ReglagesCorps({
           <CourbePoids
             points={pesees.map((p) => ({ jour: p.jour, kg: p.grammes / 1000 }))}
             formaterJour={(j) => j.slice(5)}
-            formaterPoids={(kg) => t.corpsPeseeValeur(kg)}
+            formaterPoids={(kg) => t.corpsPeseeValeur(decimal(kg))}
           />
         )}
         {pesees && pesees.length === 1 && (
@@ -403,7 +416,7 @@ export function ReglagesCorps({
           qu'on laisse affiché n'est plus un objectif.
         */}
         {graisse !== null ? (
-          <p className="mono-num" style={{ fontSize: "1.2rem" }}>{t.corpsMasseGrasse(graisse)}</p>
+          <p className="mono-num" style={{ fontSize: "1.2rem" }}>{t.corpsMasseGrasse(decimal(graisse))}</p>
         ) : rubanEntame ? (
           <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsRubanIncomplet}</p>
         ) : null}

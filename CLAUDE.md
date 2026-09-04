@@ -1126,6 +1126,60 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### « IMC 24.7 » : le point décimal, et les quatre-vingts gabarits triés
+Le journal recensait « soixante-dix-sept gabarits qui interpolent un nombre »
+sans les avoir repris, en écrivant que « la plupart ne sont jamais atteints par
+un nombre supérieur au millier ». C'était vrai, et ça laissait deux familles
+que le tri n'avait pas séparées.
+
+**Ce qui dépasse le millier À COUP SÛR.** Quatre gabarits, et le premier est
+certain : l'objectif calorique et le maintien sont TOUJOURS à quatre chiffres —
+« 2207 kcal par jour » dans les six langues, là où le français écrit « 2 207 »
+et l'allemand « 2.207 ». Les deux autres sont les minutes de marche
+équivalentes, et le compte de parties de l'historique : le propriétaire en est à
+neuf cent soixante, donc le millier n'est pas une hypothèse.
+
+**Ce qui porte une DÉCIMALE, et c'est pire.** `${n}` rend « 24.7 » partout. Le
+français et l'espagnol écrivent « 24,7 », et en allemand le POINT est le
+séparateur des MILLIERS : « 24.7 » s'y lit comme vingt-quatre mille sept. Ce
+n'est pas de la typographie, c'est un chiffre faux — et il s'agit de l'IMC, du
+poids, de la masse grasse et du multiplicateur de dette. C'est exactement le
+défaut déjà corrigé sur le KDA du tableau de bord, dans quatre autres endroits.
+
+Trouvé en lisant la rubrique « Ton corps » : « IMC 24.7 » au milieu d'un écran
+français.
+
+**Ce qui est LAISSÉ, avec sa raison.** Les soixante-dix autres gabarits reçoivent
+des seuils bornés (les paliers de parties s'arrêtent à cinq cents), des rangs,
+des compteurs de jours, des niveaux. Les reprendre tous ferait une liste
+d'exemptions de soixante-dix lignes que personne ne tiendrait à jour — c'est
+ainsi que meurent les listes de dispenses, et le journal le note déjà ailleurs.
+Le témoin du test compte les gabarits numériques et refuse que ce nombre sorte
+d'une fourchette : le jour où une famille apparaît, la question se repose.
+
+**Et le sabotage a trouvé le même trou pour la troisième fois cette nuit.**
+Remplacer `decimal(x)` par `String(x)` dans le composant satisfait le type —
+c'est bien une chaîne — et rend « 24.7 » en allemand. Le test des dictionnaires
+ne pouvait pas le voir : il éprouve les gabarits, pas leurs APPELS. Un contrôle
+lit donc les appels des huit clés dans la couche d'affichage et exige que le
+premier argument vienne d'un formateur.
+
+C'est la même leçon que la veille sur `formaterDuree`, et que le garde du nom
+publié avant elle : **un module juste dont personne ne vérifie le branchement
+ne sert à rien.**
+
+**Et mes deux premiers cas de pluriel ne distinguaient rien.** Le sabotage qui
+accorde sur la CHAÎNE au lieu du compte — `Number("1 240") > 1`, c'est-à-dire
+`NaN`, donc le singulier — passait au vert sur « 1 » et « 2 ». Il fallait le cas
+où le nombre est GROUPÉ, c'est-à-dire précisément celui du compte de quelqu'un
+qui a mille deux cent quarante parties.
+
+Six sabotages, six échecs après correction.
+
+Vérifié à l'écran : « IMC 24,7 » en français ET en allemand, « BMI 24.7 » en
+anglais et en japonais. C'est précisément ce qu'`Intl` sait et qu'un point
+recollé à la main ne saura jamais.
+
 ### « Activité » survivait dans cinq langues, et le français seul avait été repris
 Trouvé en lisant l'écran d'export des données en japonais : « そしてすべての
 アクティビティ » — « et toutes tes activités » — sous un français qui dit
