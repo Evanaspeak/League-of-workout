@@ -1126,6 +1126,67 @@ ici, comme le séparateur visible avait montré la divergence de la veille. Les
 quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
 toutes sur l'ordre, donc le fragment y passait.
 
+### « Victoires 33 % » : le japonais disait deux mots pour le même chiffre
+Suite de la lecture d'écrans sur le compte semé. L'écran de saison annonçait
+**« 勝利 33% »** — « Victoire », suivi d'un pourcentage.
+
+Le même nombre est affiché à TROIS endroits — le tableau de bord, l'écran de
+saison, et l'IMAGE qu'on partage — et c'est toujours un taux. Les mots, eux,
+ne s'accordaient nulle part :
+
+| langue | tableau de bord | écran de saison | image |
+|---|---|---|---|
+| fr | Winrate | **Victoires** | **victoires** |
+| en | Winrate | **Wins** | **wins** |
+| es | **Victorias** | **Victorias** | **victorias** |
+| de | Siegquote | **Siege** | **Siege** |
+| zh | 胜率 | **胜场** | 胜率 |
+| ja | 勝率 | **勝利** | 勝率 |
+
+Quatre langues sur six annonçaient donc un NOMBRE de victoires et montraient un
+taux. Et `bilan.victoires`, le compte réel, existe dans la réponse et n'est
+affiché nulle part : l'écran avait le chiffre sous la main et montrait l'autre
+sous son étiquette.
+
+**Ce qui l'a fait voir est la divergence entre la page et l'image**, en
+japonais : 勝利 sur l'une, 勝率 sur l'autre, pour le même chiffre, sur un écran
+qui propose de partager la seconde. En français les deux mots se ressemblent
+assez pour qu'on ne les compare pas ; en japonais ils diffèrent d'un caractère
+sur deux et sautent aux yeux.
+
+**La clé s'appelle `winrate` partout maintenant**, y compris là où elle
+s'appelait `victoires`. C'est le NOM qui empêche d'y remettre un compte, comme
+`pointsPayes` face à `totalPoints` — et c'est le nom qui avait invité l'erreur.
+
+**L'espagnol du tableau de bord était fautif lui aussi** et n'avait rien à voir
+avec cet écran : « Victorias » pour un pourcentage, depuis toujours. Il devient
+« % de victorias » — le signe dit ce que c'est, et le libellé reste court pour
+une carte de statistique.
+
+**Deux de mes propres contrôles étaient faux, et seul le sabotage l'a dit :**
+
+- le motif qui refuse le mot du compte n'était ancré que d'un côté —
+  `victorias?$` recalait « % de victorias », qui est juste. Ancré des deux
+  côtés, il ne refuse que le libellé qui n'est QUE le mot du compte ;
+- le témoin vérifiait `LANGUES.length === 6`, c'est-à-dire une constante.
+  Vider la boucle laissait le contrôle vert : rien n'était comparé et rien ne
+  le disait. Il compte les comparaisons FAITES maintenant. C'est le défaut que
+  ce fichier attrape ailleurs depuis des semaines, et il était chez moi pour la
+  deuxième fois de la nuit.
+
+Cinq sabotages, cinq échecs après correction.
+
+Vérifié à l'écran dans les six langues : « WINRATE 33 % », « WINRATE 33% »,
+« % DE VICTORIAS 33 % », « SIEGQUOTE 33 % », « 胜率 33% », « 勝率 33% ».
+
+**Ce qui a été regardé et laissé, avec sa raison.** L'aide du code
+d'invitation écrit « Huit caractères » à la main dans les six langues, alors
+que `LONGUEUR_CODE` vaut 8 dans `social.ts` — un nombre écrit au-dessus de
+quelque chose qui pourrait bouger. Le passer en paramètre obligerait les quatre
+langues européennes à écrire « 8 caractères » au lieu de « Huit caractères »,
+ce qui se lit moins bien, pour se prémunir d'un changement qui n'est pas prévu.
+Écrit ici plutôt que corrigé de travers.
+
 ### « 20V / 40D » sur le tableau de bord — la moitié que je venais de laisser
 Trouvé en lisant le tableau de bord en japonais sur le compte semé, une heure
 après avoir corrigé exactement ce défaut dans le courriel hebdomadaire. Sous le

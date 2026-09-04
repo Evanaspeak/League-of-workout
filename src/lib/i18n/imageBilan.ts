@@ -14,7 +14,15 @@ import { estLocale, type Locale } from "./langues";
 export type MotsImage = {
   periode: (jours: number) => string;
   parties: string;
-  victoires: string;
+  /**
+   * Le TAUX de victoire, pas leur nombre.
+   *
+   * La valeur affichée sous ce mot est un pourcentage. Quatre blocs sur six
+   * portaient pourtant le mot du COMPTE — « victoires », « wins », « Siege » —
+   * et les deux autres celui du taux. Le nom de la clé dit maintenant ce
+   * qu'elle porte, comme `pointsPayes` face à `totalPoints`.
+   */
+  winrate: string;
   paye: string;
   serie: string;
 };
@@ -22,27 +30,27 @@ export type MotsImage = {
 const MOTS: Record<Locale, MotsImage> = {
   fr: {
     periode: (j) => `${j} jours`,
-    parties: "parties", victoires: "victoires", paye: "payé", serie: "jours d'affilée",
+    parties: "parties", winrate: "winrate", paye: "payé", serie: "jours d'affilée",
   },
   en: {
     periode: (j) => `${j} days`,
-    parties: "matches", victoires: "wins", paye: "paid", serie: "days in a row",
+    parties: "matches", winrate: "winrate", paye: "paid", serie: "days in a row",
   },
   es: {
     periode: (j) => `${j} días`,
-    parties: "partidas", victoires: "victorias", paye: "pagado", serie: "días seguidos",
+    parties: "partidas", winrate: "% de victorias", paye: "pagado", serie: "días seguidos",
   },
   de: {
     periode: (j) => `${j} Tage`,
-    parties: "Partien", victoires: "Siege", paye: "bezahlt", serie: "Tage in Folge",
+    parties: "Partien", winrate: "Siegquote", paye: "bezahlt", serie: "Tage in Folge",
   },
   zh: {
     periode: (j) => `${j} 天`,
-    parties: "场次", victoires: "胜率", paye: "已完成", serie: "连续天数",
+    parties: "场次", winrate: "胜率", paye: "已完成", serie: "连续天数",
   },
   ja: {
     periode: (j) => `${j} 日`,
-    parties: "試合", victoires: "勝率", paye: "こなした", serie: "連続日数",
+    parties: "試合", winrate: "勝率", paye: "こなした", serie: "連続日数",
   },
 };
 

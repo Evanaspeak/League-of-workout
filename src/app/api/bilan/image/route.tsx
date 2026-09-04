@@ -79,7 +79,7 @@ function carte(
       <div style={{ display: "flex", gap: 76 }}>
         <Chiffre valeur={nombre(bilan.parties)} legende={mots.parties} />
         <Chiffre valeur={bilan.winrate === null ? "—" : pourcent(bilan.winrate)}
-                 legende={mots.victoires} />
+                 legende={mots.winrate} />
         <Chiffre valeur={effortPaye} legende={mots.paye} />
         <Chiffre valeur={nombre(bilan.meilleureSerie)} legende={mots.serie} />
       </div>
