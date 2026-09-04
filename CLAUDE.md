@@ -2385,6 +2385,23 @@ aussi bien avec une ligne qu'avec dix.
 
 Trois sabotages, trois échecs. Dix parcours au vert dans le fichier.
 
+**Et l'intégration continue a trouvé ce que mes dix exécutions locales n'ont pas
+vu.** Le test est tombé en CI sur une seule ligne : `corps.includes("800")` était
+VRAI alors que le compte fermé était bien absent — `fermeVu` valait `false`, donc
+le filtre faisait exactement son travail. « 800 » fait trois caractères, et du
+JSON en contient : dans un identifiant, dans une date, dans un total. **Le
+contrôle pouvait être vrai sans rien prouver, et sur une autre base il l'a été.**
+
+Ce n'est donc pas un aléa, et il ne fallait surtout pas relancer : c'est la
+famille déjà écrite ici — « une machine lente ne se trompe pas, elle révèle » —
+sous une forme nouvelle. Un pseudo porte une marque tirée au hasard et ne peut
+pas se trouver par accident ; un nombre nu, si. Les chiffres se lisent
+maintenant à leur place, dans les lignes composées du mur, ce qui attrape en
+prime un défaut que le pseudo ne verrait pas : le bon compte publié avec le
+mauvais chiffre — un `_max` sur les points au lieu d'une somme par jour, dont le
+commentaire de la route dit déjà qu'il se verrait le soir où quelqu'un paie sa
+dette en deux fois.
+
 **Et la ligne 087 du plan était la 148 sous un autre numéro** — « un système de
 niveau » demandé deux fois, à deux endroits de l'interrogatoire. Elle est
 cochée avec sa raison écrite, pour que personne n'aille chercher un second
