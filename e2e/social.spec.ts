@@ -279,7 +279,13 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
    */
   const effortsPayes = async () =>
     (await tableau.locator("tbody tr td:nth-child(3)").allInnerTexts())
-      .map((t) => Number(t.trim().split(/\s/)[0]));
+      // Le nombre est mis en forme dans la langue de l'écran : « 5 150 » en
+      // français, « 5,150 » en anglais, « 5.150 » en allemand — et en japonais
+      // il se place APRÈS l'unité. Découper sur l'espace ne rendait donc que
+      // le « 5 » depuis que les nombres passent par `Intl`. On retient les
+      // chiffres de la cellule, séparateurs compris : aucune des six unités
+      // n'en contient, et c'est la seule lecture qui vaille dans les six.
+      .map((t) => Number(t.replace(/\D/g, "")));
 
   await expect(lignes.nth(0)).toContainText(b.compte.pseudo);
   await expect(lignes.nth(1)).toContainText(a.compte.pseudo);

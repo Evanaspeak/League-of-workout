@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useT, useLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { etiquetteLocale } from "@/lib/i18n/langues";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
@@ -74,6 +74,7 @@ type Donnees = {
 };
 
 export function AmisClient() {
+  const nombre = useNombre();
   const t = useT(dictAmis);
   const { locale } = useLocale();
   /**
@@ -551,7 +552,7 @@ export function AmisClient() {
                         padding: "8px 0", textAlign: "right",
                         fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
                       }}>
-                        {t.effortPaye(l.points)}
+                        {t.effortPaye(nombre(l.points), l.points)}
                       </td>
                     </tr>
                   ))}
@@ -795,7 +796,7 @@ export function AmisClient() {
                     {profil === "erreur" && <span role="alert">{t.profilErreur}</span>}
                     {profil && profil !== "erreur" && (
                       <div className="space-y-1">
-                        <div>{t.effortPaye(profil.points)}</div>
+                        <div>{t.effortPaye(nombre(profil.points), profil.points)}</div>
                         {profil.enRetard && (
                           <div style={{ color: "var(--loss)" }}>{t.retardDepuis(profil.joursDeRetard)}</div>
                         )}
