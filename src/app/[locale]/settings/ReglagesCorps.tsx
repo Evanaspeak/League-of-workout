@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
 import {
@@ -24,6 +25,17 @@ import {
  * mode n'est choisi, et c'est le mode qui sert d'interrupteur — pas un booléen
  * de plus qui pourrait le contredire.
  */
+
+/**
+ * La courbe est chargée à la demande : `recharts` pèse cent kilo-octets, et la
+ * page des réglages n'a aucune raison de les porter pour les comptes qui
+ * n'ouvriront jamais cette rubrique. `ssr: false` parce qu'elle mesure son
+ * conteneur, ce que le serveur ne peut pas faire.
+ */
+const CourbePoids = dynamic(
+  () => import("@/components/CourbePoids").then((m) => m.CourbePoids),
+  { ssr: false, loading: () => <div style={{ height: 180 }} /> },
+);
 
 const ACTIVITES = Object.keys(MULTIPLICATEURS) as NiveauActivite[];
 const MODES: ModeCalorique[] = ["perte", "maintien", "prise"];
@@ -60,6 +72,23 @@ export function ReglagesCorps({
   const t = useT(settingsDict);
   const [peseeKg, setPeseeKg] = useState("");
   const [peseeEtat, setPeseeEtat] = useState<"" | "envoi" | "ok" | "echec">("");
+  const [pesees, setPesees] = useState<{ jour: string; grammes: number }[] | null>(null);
+  /**
+   * `null` veut dire « pas encore lu », pas « aucune pesée ».
+   *
+   * La distinction compte : une courbe vide affichée pendant le chargement
+   * dirait « tu ne t'es jamais pesé » à quelqu'un qui a deux ans
+   * d'historique — et c'est le défaut déjà corrigé sur l'historique des
+   * parties, qui annonçait « aucune game » quand la requête échouait.
+   */
+  const [lectureRatee, setLectureRatee] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/pesees")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("lecture"))))
+      .then((d) => setPesees(Array.isArray(d?.pesees) ? d.pesees : []))
+      .catch(() => setLectureRatee(true));
+  }, []);
 
   /** Enregistre un réglage en revenant en arrière si le serveur refuse. */
   const poser = <K extends keyof CorpsPrefs>(cle: K, valeur: CorpsPrefs[K]) => {
@@ -108,7 +137,13 @@ export function ReglagesCorps({
       // Un 500 ou une session expirée traversent `if (res.ok)` sans rien dire :
       // la saisie disparaîtrait en silence, ce que ce projet corrige en boucle.
       setPeseeEtat(res.ok ? "ok" : "echec");
-      if (res.ok) setPeseeKg("");
+      if (res.ok) {
+        setPeseeKg("");
+        // La route rend la courbe entière : la relire serait un aller-retour
+        // pour une réponse qu'on tient déjà.
+        const d = await res.json().catch(() => null);
+        if (Array.isArray(d?.pesees)) { setPesees(d.pesees); setLectureRatee(false); }
+      }
     } catch {
       setPeseeEtat("echec");
     }
@@ -268,6 +303,26 @@ export function ReglagesCorps({
         )}
         {indice !== null && (
           <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsImc(indice)}</p>
+        )}
+
+        {/*
+          Deux points au minimum : une courbe d'un seul point est un point, et
+          l'afficher promet une tendance qui n'existe pas encore.
+        */}
+        {pesees && pesees.length >= 2 && (
+          <CourbePoids
+            points={pesees.map((p) => ({ jour: p.jour, kg: p.grammes / 1000 }))}
+            formaterJour={(j) => j.slice(5)}
+            formaterPoids={(kg) => t.corpsPeseeValeur(kg)}
+          />
+        )}
+        {pesees && pesees.length === 1 && (
+          <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsCourbeUnePesee}</p>
+        )}
+        {lectureRatee && (
+          <p role="alert" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>
+            {t.corpsCourbeEchec}
+          </p>
         )}
       </div>
 
