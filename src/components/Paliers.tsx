@@ -124,7 +124,7 @@ export function Paliers() {
             </span>
           )}
           <span className="mono-num" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
-            {`${etat.niveau.restant} ${tt.xp} ${tt.versLeNiveau} ${etat.niveau.niveau + 1}`}
+            {tt.versLeNiveau(nombre.format(etat.niveau.restant), etat.niveau.niveau + 1)}
           </span>
         </div>
       )}

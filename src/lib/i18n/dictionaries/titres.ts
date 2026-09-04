@@ -32,7 +32,20 @@ export const titres = {
      * d'affilée » — donc il ne demande rien à apprendre.
      */
     souffranceAide: (n: number) => `${n} points payés avant le suivant`,
-    versLeNiveau: "vers le niveau",
+    /**
+     * Une PHRASE, pas un fragment.
+     *
+     * Le composant écrivait `${xp} XP ${versLeNiveau} ${n}`, ce qui donne
+     * « 400 XP vers le niveau 5 » en français et « 400 XP 次のレベルまで 5 »
+     * en japonais — le chiffre du niveau tombe après la postposition, et la
+     * phrase ne veut plus rien dire. C'est la faute que le dictionnaire des
+     * défis interdit en toutes lettres : un gabarit à trous produit de
+     * l'allemand faux, et ici du japonais faux.
+     *
+     * L'XP arrive DÉJÀ mise en forme ; le niveau est un petit entier qui
+     * n'a pas besoin d'`Intl`.
+     */
+    versLeNiveau: (xp: string, niveau: number) => `${xp} XP vers le niveau ${niveau}`,
     points: "points",
     xp: "XP",
     titre: "Titre",
@@ -49,7 +62,7 @@ export const titres = {
     niveau: "Level",
     souffrance: "Pain level",
     souffranceAide: (n: number) => `${n} points paid to the next one`,
-    versLeNiveau: "to level",
+    versLeNiveau: (xp: string, niveau: number) => `${xp} XP to level ${niveau}`,
     points: "points",
     xp: "XP",
     titre: "Title",
@@ -66,7 +79,7 @@ export const titres = {
     niveau: "Nivel",
     souffrance: "Nivel de sufrimiento",
     souffranceAide: (n: number) => `${n} puntos pagados hasta el siguiente`,
-    versLeNiveau: "para el nivel",
+    versLeNiveau: (xp: string, niveau: number) => `${xp} XP para el nivel ${niveau}`,
     points: "puntos",
     xp: "XP",
     titre: "Título",
@@ -83,7 +96,7 @@ export const titres = {
     niveau: "Stufe",
     souffrance: "Leidensstufe",
     souffranceAide: (n: number) => `${n} bezahlte Punkte bis zur nächsten`,
-    versLeNiveau: "bis Stufe",
+    versLeNiveau: (xp: string, niveau: number) => `${xp} XP bis Stufe ${niveau}`,
     points: "Punkte",
     xp: "XP",
     titre: "Titel",
@@ -100,7 +113,7 @@ export const titres = {
     niveau: "等级",
     souffrance: "受苦等级",
     souffranceAide: (n: number) => `距离下一级还差 ${n} 点已付出的努力`,
-    versLeNiveau: "升至等级",
+    versLeNiveau: (xp: string, niveau: number) => `距离等级 ${niveau} 还差 ${xp} XP`,
     points: "点",
     xp: "XP",
     titre: "称号",
@@ -117,7 +130,7 @@ export const titres = {
     niveau: "レベル",
     souffrance: "苦痛レベル",
     souffranceAide: (n: number) => `次のレベルまで支払い済みポイント ${n}`,
-    versLeNiveau: "次のレベルまで",
+    versLeNiveau: (xp: string, niveau: number) => `レベル ${niveau} まであと ${xp} XP`,
     points: "ポイント",
     xp: "XP",
     titre: "称号",
