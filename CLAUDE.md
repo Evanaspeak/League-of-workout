@@ -2279,6 +2279,29 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
 
+### La fenêtre d'envoi est atteinte un jour sur deux, mesuré
+Le journal disait « trois à six passages par jour », relevé avant que la
+fenêtre existe. Vérifié sur les CENT dernières exécutions du travail programmé,
+soit douze jours : **8,3 passages par jour, et six jours sur douze sans aucun
+passage entre 07:00 et 10:00 UTC** — c'est-à-dire hors de la fenêtre 9 h–midi
+en heure locale française.
+
+Le rappel du matin part donc environ un jour sur deux. Et le bilan
+hebdomadaire, qui ne part que le LUNDI, **perd une semaine sur deux** : un
+lundi manqué n'est pas rattrapé le mardi, la marque par jour local le fait
+simplement sauter.
+
+C'est le même défaut que celui du plan, à un jour d'intervalle : un chiffre
+écrit une fois, juste ce jour-là, au-dessus de quelque chose qui a bougé depuis.
+« Aucun à l'heure qu'il fallait » était vrai avant la fenêtre et ne l'est plus ;
+laissé tel quel, il fait croire que rien ne part, alors que la moitié part.
+`docs/lancement.md` porte le chiffre mesuré.
+
+Ce qui NE se décide pas ici : élargir la fenêtre au-delà de midi ferait un
+« rappel de la journée », ce qui n'est pas la même promesse. Et poser un
+déclencheur fiable — les tâches planifiées de Vercel — est une décision
+d'infrastructure. Les deux figurent dans les questions, pas dans le code.
+
 ### Le plan comptait faux sur la section que je venais de remplir
 Trouvé par acquit de conscience, en vérifiant l'arithmétique du plan avant d'en
 rendre compte. La section « Le social » annonçait **6 à faire · 7 faits** ; son
