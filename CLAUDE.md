@@ -1098,6 +1098,34 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une phrase assemblée dans le composant, et le japonais qu'elle produisait
+Trouvé en lisant le tableau de bord en japonais. La ligne du niveau de compte
+rendait **« 400 XP 次のレベルまで 5 »** — le chiffre du niveau tombe APRÈS la
+postposition, et la phrase ne veut plus rien dire.
+
+Le composant écrivait `${xp} XP ${versLeNiveau} ${niveau}`, avec un dictionnaire
+qui ne portait qu'un FRAGMENT : « vers le niveau », « bis Stufe », « 次のレベル
+まで ». Ça marche en français, en anglais, en espagnol et en allemand, qui
+placent tous le nombre après le fragment. Ça ne marche dans aucune des deux
+autres.
+
+**Le dictionnaire des défis interdit ça en toutes lettres**, en tête de module :
+« Chaque défi porte une PHRASE, pas un gabarit à trous : "gagne 2 parties" et
+"paie 100 points" ne se construisent pas de la même façon d'une langue à
+l'autre, et un gabarit unique produirait de l'allemand faux. » La même règle,
+au même endroit du produit, et pas appliquée ici.
+
+`versLeNiveau` est une fonction maintenant, et chaque langue place ses éléments
+où elle veut : « レベル 5 まであと 100 XP », « 距离等级 5 还差 100 XP »,
+« 100 XP bis Stufe 5 ». L'XP arrive déjà mise en forme ; le niveau est un petit
+entier qui n'a pas besoin d'`Intl`.
+
+**Ce que ça apprend sur la méthode.** Une composition dans le composant se
+repère à l'œil nu dans une langue à ORDRE DIFFÉRENT — le japonais et le chinois
+ici, comme le séparateur visible avait montré la divergence de la veille. Les
+quatre langues européennes ne pouvaient pas le signaler : elles s'accordent
+toutes sur l'ordre, donc le fragment y passait.
+
 ### Le japonais a montré la moitié que je venais de laisser
 Lecture du tableau de bord en japonais, trois heures après avoir fait passer les
 nombres par `Intl`. Deux lignes qui se suivent :
