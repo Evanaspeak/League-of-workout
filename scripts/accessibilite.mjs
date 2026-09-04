@@ -187,6 +187,21 @@ for (const chemin of aVisiter) {
     }]);
   }
   const page = await ctx.newPage();
+  /**
+   * Une minute pour atteindre le silence du réseau, et non trente secondes.
+   *
+   * `networkidle` attend cinq cents millisecondes sans une requête. Sur
+   * l'historique, chaque ligne demande son icône de champion à un domaine tiers :
+   * la page met treize secondes à se taire, et **une fois sur trois elle
+   * dépassait les trente secondes par défaut**. Le rapport annonçait alors une
+   * page « injoignable », donc non mesurée — honnête, mais l'audit n'était plus
+   * complet, et le tirage au sort décidait de quelle langue manquait.
+   *
+   * On ne coupe PAS le CDN ici, contrairement à `comparer-rendu.mjs` : sans lui
+   * les icônes tombent sur leur repli, qui est un carré de texte et non une
+   * image, donc on auditerait une autre page que celle qui est servie.
+   */
+  page.setDefaultNavigationTimeout(60_000);
   await page.addInitScript(([__compte]) => {
     try {
       sessionStorage.setItem("splash", "1");
@@ -359,6 +374,7 @@ let horsLangue = 0;
 {
   const ctx = await navigateur.newContext({ reducedMotion: "reduce" });
   const page = await ctx.newPage();
+  page.setDefaultNavigationTimeout(60_000);
   for (const chemin of aVisiter) {
     if (JETON) {
       await ctx.addCookies([{
@@ -411,6 +427,7 @@ let horsLangue = 0;
 {
   const ctx = await navigateur.newContext();
   const page = await ctx.newPage();
+  page.setDefaultNavigationTimeout(60_000);
   for (const chemin of aVisiter) {
     if (JETON) {
       await ctx.addCookies([{

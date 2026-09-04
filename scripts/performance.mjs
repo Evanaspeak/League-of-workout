@@ -77,6 +77,21 @@ const navigateur = await chromium.launch(
 const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, locale: "fr-FR" });
 await ctx.addCookies(cookies());
 const page = await ctx.newPage();
+/**
+ * Une minute pour atteindre le silence du réseau, et non trente secondes.
+ *
+ * `networkidle` attend cinq cents millisecondes sans une requête. Sur
+ * l'historique, chaque ligne demande son icône de champion à un domaine tiers :
+ * la page met treize secondes à se taire, et **une fois sur trois elle
+ * dépassait les trente secondes par défaut**. Le rapport annonçait alors une
+ * page « injoignable », donc non mesurée — honnête, mais l'audit n'était plus
+ * complet, et le tirage au sort décidait de quelle langue manquait.
+ *
+ * On ne coupe PAS le CDN ici, contrairement à `comparer-rendu.mjs` : sans lui
+ * les icônes tombent sur leur repli, qui est un carré de texte et non une
+ * image, donc on auditerait une autre page que celle qui est servie.
+ */
+page.setDefaultNavigationTimeout(60_000);
 
 /**
  * Poids transféré, par nature de ressource.
@@ -235,6 +250,7 @@ console.log(soucis.length ? `\n  À corriger : ${soucis.join(", ")}` : "\n  Dans
 const ctxLent = await navigateur.newContext({ viewport: { width: 390, height: 844 }, locale: "fr-FR" });
 await ctxLent.addCookies(cookies());
 const lente = await ctxLent.newPage();
+lente.setDefaultNavigationTimeout(60_000);
 const cdp = await ctxLent.newCDPSession(lente);
 await cdp.send("Network.enable");
 // Ordres de grandeur d'une 4G moyenne en zone mal couverte : 1,6 Mb/s en
