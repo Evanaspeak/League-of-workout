@@ -2287,6 +2287,53 @@ le processus par `ps -eo pid,args` et on le tue par son numéro.
 recensé ici. `pg_isready` ne suffit pas : il faut vérifier le PORT que
 l'application demande.
 
+### Une photo de l'écran a trouvé deux défauts que rien ne regardait
+Le propriétaire a envoyé une capture pour trancher d'où venait un « 2 » qu'il
+trouvait faux. Elle a tranché — c'était bien l'effort PAYÉ du classement, pas un
+compteur d'activités — et elle a montré deux autres choses au passage, toutes
+deux invisibles à qui lit le code.
+
+**Le titre du panneau mentait sur l'onglet ouvert.** `classementTitre` valait
+« Classement de la semaine » en dur, sous des onglets dont l'un dit « depuis
+toujours ». L'écran se contredisait donc à chaque fois qu'on changeait d'onglet,
+et le même libellé servait d'étiquette au groupe d'onglets, où il était faux de
+la même façon.
+
+Ce qui rend le cas instructif est que **la règle était écrite deux lignes plus
+haut**, et appliquée à moitié : le commentaire du bloc dit « le libellé d'aide
+suit celui qui est ouvert — une phrase qui parle de sept jours sous un tableau
+cumulatif serait fausse ». C'est exact, ça a été fait pour la phrase d'aide, et
+pas pour le titre. Une règle appliquée à un de ses deux endroits est la forme la
+plus discrète de la duplication.
+
+Le titre ne nomme plus de période : les onglets s'en chargent, et un titre qui
+répète l'onglet ouvert n'apprend rien de toute façon.
+
+**Le mur des records affichait une date de base de données.** `recordsLigne`
+recevait `jour` tel qu'il sort de la table — « 2026-09-02 » — alors que la règle
+du projet veut que toute date passe par `Intl`. Le symptôme visible sur la photo
+est une coupure en travers de la ligne, « 2026-09- » puis « 02 » : le navigateur
+coupe volontiers après un trait d'union. La date est formatée dans la langue de
+l'écran, ses espaces rendus insécables pour qu'elle ne se casse pas non plus en
+deux, et **le paramètre du gabarit s'appelle maintenant `jourFormate`** — c'est
+le nom qui empêchera la prochaine date brute d'y entrer, pas le commentaire.
+
+Recensé avant de corriger : c'est bien **une ligne et pas une classe**, aucun
+autre gabarit de dictionnaire ne reçoit de date. Le dire évitera de chercher
+une famille qui n'existe pas.
+
+**Et aucun test ne pouvait voir ni l'un ni l'autre.** Le parcours du mur ouvert
+vérifiait le pseudo et le chiffre, jamais la FORME de la date ; les tests de
+langue refusent un « undefined » et un débordement, pas un titre qui contredit
+l'onglet d'à côté. Le contrôle ajouté refuse désormais une date en `AAAA-MM-JJ`
+dans la ligne du mur. Pour le titre, il n'y a rien à ajouter : le libellé ne
+nomme plus de période, donc il ne peut plus être faux.
+
+**La leçon d'outillage** : la capture d'écran a rapporté deux défauts en une
+fois, sur un écran qui passait tous ses contrôles. Ce n'est pas un hasard —
+elle regarde ce qu'aucun test ne regarde, c'est-à-dire ce qui est VRAI à
+l'écran plutôt que ce qui est présent dans le DOM.
+
 ### Neuf cent soixante parties, niveau un — et le niveau passe à l'XP
 Constaté par le propriétaire sur son propre compte, et c'est le genre de défaut
 qu'aucun test ne pouvait trouver : **tout marchait exactement comme écrit.**
