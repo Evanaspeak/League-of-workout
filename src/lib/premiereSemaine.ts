@@ -30,6 +30,19 @@ const JOUR_MS = 24 * 3600_000;
 export type EtatPremiereSemaine = {
   /** Parties enregistrées depuis l'inscription. */
   parties: number;
+  /**
+   * Ce qu'on AFFICHE : le compte, borné à la cible.
+   *
+   * Sans cette borne, un compte qui enregistre neuf cent soixante activités
+   * pendant sa première semaine affiche « 960 sur 5 », dessine une barre de
+   * dix-neuf mille deux cents pour cent, et annonce à un lecteur d'écran
+   * « 960 sur un maximum de 5 » — ce qui n'est pas un état valide.
+   *
+   * L'objectif est de CINQ activités et il est rempli : « 5 sur 5 » est la
+   * seule phrase qui réponde à la question posée. Le compte réel reste dans
+   * `parties` pour qui en aurait besoin.
+   */
+  avancement: number;
   /** Ce qu'il reste à faire, jamais négatif. */
   restantes: number;
   /** Jours entiers restants avant la fin de la fenêtre, 0 le dernier jour. */
@@ -54,6 +67,7 @@ export function premiereSemaine(
 
   return {
     parties: n,
+    avancement: Math.min(OBJECTIF_PARTIES, n),
     restantes: Math.max(0, OBJECTIF_PARTIES - n),
     joursRestants: dansLaFenetre ? Math.max(0, Math.ceil(JOURS_FENETRE - ecoule) - 1) : 0,
     atteint,
