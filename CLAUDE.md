@@ -1116,6 +1116,12 @@ lui-même. Une lecture ratée y laisse cinq minutes dans les champs, et
 enregistrer écrit cinq minutes sur sa propre dette. C'est le geste que l'outil
 existe pour faire.
 
+**Le parcours REND l'adresse administrateur** à qui la portait, au lieu de la
+laisser sur un compte jetable. `bareme-gele.spec.ts` la reprend lui-même au
+début, donc la suite tient sans ça — mais sur une base locale qu'on ne
+remonte pas entre deux exécutions, le vrai administrateur se retrouvait sans
+son panneau, et le symptôme ne ressemble pas à sa cause.
+
 Le parcours coupe la LECTURE et laisse l'écriture ouverte : c'est ce qui le
 rend discriminant, puisqu'un panneau qui laisserait partir la requête changerait
 vraiment la configuration. Il regarde l'écran ET la base — sans le second

@@ -422,6 +422,8 @@ test("les ratios ne s'enregistrent pas quand on n'a pas pu les lire", async ({ b
   // `bareme-gele.spec.ts` : l'adresse est reprise à qui la portait, puis
   // rendue. Ce test n'écrit AUCUNE configuration globale — il éprouve
   // justement le refus d'écrire.
+  const [porteur] = await requeteSql<{ id: string }>(
+    `SELECT id FROM "User" WHERE email = $1`, [admin]);
   await requeteSql(`UPDATE "User" SET email = NULL WHERE email = $1`, [admin]);
   await requeteSql(`UPDATE "User" SET email = $1 WHERE id = $2`, [admin, uid]);
 
@@ -464,6 +466,16 @@ test("les ratios ne s'enregistrent pas quand on n'a pas pu les lire", async ({ b
     `SELECT value::text AS value FROM "SystemConfig" WHERE key = 'exercices'`);
   expect(apres.map((l) => l.value)).toEqual(avant.map((l) => l.value));
 
+  /**
+   * L'adresse est RENDUE à qui la portait.
+   *
+   * `bareme-gele.spec.ts` la reprend lui-même au début, donc la suite tient
+   * sans ça — mais un test qui laisse le compte administrateur sur un compte
+   * jetable prive le vrai administrateur de son panneau dans toutes les
+   * exécutions à la main qui suivront, sur une base locale qu'on ne remonte
+   * pas entre deux.
+   */
   await requeteSql(`UPDATE "User" SET email = NULL WHERE id = $1`, [uid]);
+  if (porteur) await requeteSql(`UPDATE "User" SET email = $1 WHERE id = $2`, [admin, porteur.id]);
   await ctx.close();
 });
