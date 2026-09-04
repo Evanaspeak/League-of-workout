@@ -1128,6 +1128,44 @@ vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
+### Ce qui pèse dans la plus grosse réponse, et deux choses qu'on ne fait pas
+Le journal portait « `/api/games` : 35 634 octets avant, **24 834** après » le
+resserrement des colonnes. Ce chiffre a vieilli : la même mesure, sur les mêmes
+soixante parties, rend aujourd'hui **32 094 octets**. Un nombre écrit une fois
+au-dessus de quelque chose qui bouge — c'est le défaut que ce projet trouve le
+plus souvent, et il valait mieux le remesurer que le laisser.
+
+La croissance s'explique entièrement, et elle est voulue : trois colonnes se
+sont ajoutées depuis, dont `ratios`, le barème gelé sur chaque partie. Pesé
+champ par champ :
+
+| champ | octets | part |
+|---|---|---|
+| `ratios` | 6 180 | 19,3 % |
+| `date` | 2 040 | 6,4 % |
+| `id` | 1 980 | 6,2 % |
+| `jeu` | 1 560 | 4,9 % |
+
+**Un cinquième de la réponse est le même objet de deux nombres, recopié
+soixante fois.** L'historique le lit ligne par ligne — c'est ce qui empêche un
+changement de barème de réécrire le passé, et cette décision-là ne se rouvre
+pas. Ce qu'on pourrait faire est de n'envoyer que les barèmes DISTINCTS avec un
+renvoi par ligne ; ce serait six kilo-octets sur trente-deux, contre une
+indirection dans la réponse et un composant qui doit la suivre. **Laissé en
+l'état**, comme les trente-six exports trop larges : le gain ne justifie pas la
+retouche, et la mention vaut mieux qu'une optimisation qu'on regrette.
+
+**Et la comparaison de rendu entre V387 et la tête n'a PAS pu se faire.** Un
+arbre de travail git à V387 avec `node_modules` en lien symbolique est refusé
+par Turbopack — « Symlink [project]/node_modules is invalid, it points out of
+the filesystem root ». C'est la troisième fois que Turbopack refuse une
+construction pour une raison de CHEMIN et non de code ; les deux premières sont
+plus haut. Installer un second jeu de dépendances pour capturer huit pages ne
+vaut pas le coup, et le dire est plus honnête que de laisser croire que la
+comparaison a été faite. Ce qui couvre le même terrain, et qui a été fait : les
+quinze pages en six langues de l'audit d'accessibilité, et les cinq écrans
+connectés mesurés un par un.
+
 ### Deux « niveaux » sur le même écran, et un seul qui dit lequel
 Trouvé en éprouvant l'XP à l'échelle du propriétaire : un compte de neuf cent
 soixante activités, pour voir si la courbe et l'affichage tiennent à mille
