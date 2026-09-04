@@ -1128,6 +1128,33 @@ vraiment la configuration. Il regarde l'écran ET la base — sans le second
 contrôle, un écran qui se contente d'afficher un message passerait. Sabotage :
 l'échec de lecture traité comme une lecture réussie, le parcours tombe.
 
+### Deux « niveaux » sur le même écran, et un seul qui dit lequel
+Trouvé en éprouvant l'XP à l'échelle du propriétaire : un compte de neuf cent
+soixante activités, pour voir si la courbe et l'affichage tiennent à mille
+alors qu'ils sont calés sur des repères de dix à cent. **Ils tiennent** —
+niveau 14, 9 900 XP, 600 restants, barre à 57 %, et aucun débordement à 320 px
+en français, en allemand ni en japonais.
+
+Ce qui ne tenait pas est ailleurs. Le tableau de bord affiche maintenant
+« Niveau 14 » dans les paliers, et, deux panneaux plus haut, le test de force
+dit « tant qu'il manque, tu restes au niveau 1 ». Les deux sont vrais et
+parlent de deux choses différentes : le niveau de FORCE fixe le multiplicateur
+de dette, le niveau de COMPTE compte l'XP. Le plan les sépare depuis la
+ligne 148 — « un niveau de compte, séparé du niveau de force » — mais rien à
+l'écran ne le disait, et la contradiction saute aux yeux.
+
+C'est la PHRASE du test de force qui est qualifiée, pas l'étiquette du niveau
+de compte : elle vit dans un panneau qui l'explique déjà en prose, donc elle
+peut porter le mot sans risque de mise en page, là où « Niveau de compte 14 »
+allongerait la ligne la plus visible de l'écran dans six langues. Les autres
+phrases du même panneau n'ont pas bougé : « niveau 3, dette ×1,2 » se
+comprend par le multiplicateur qui la suit.
+
+**Le défaut n'existait pas avant hier**, et c'est ce qui le rend intéressant :
+il n'a pas été introduit par une erreur mais par une fonctionnalité qui rend
+visible un chiffre qui ne l'était pas. Un mot juste devient ambigu quand un
+autre écran se met à employer le même.
+
 ### Une régression de deux fois, mesurée une seule fois, qui n'existait pas
 Deuxième fois dans la même journée, et cette fois j'étais allé jusqu'à écrire
 le code.
