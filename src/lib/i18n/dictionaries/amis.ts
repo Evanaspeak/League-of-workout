@@ -87,6 +87,17 @@ export const amis = {
     parrainageIndisponible: "Le lien n'a pas pu être créé. Recharge la page.",
 
 
+    equipeVoir: "La dette de l'équipe",
+    equipeTitre: "Dette de l'équipe",
+    equipeAide: "Chacun paie ce qu'il peut. Ce que tu fais pour quelqu'un compte pour toi dans le classement, et retire sa dette à lui.",
+    equipeTotal: (n: number) => `${n} points dus en tout`,
+    equipeDu: (n: number) => (n === 0 ? "à jour" : `doit ${n}`),
+    equipeRelayer: "Prendre",
+    equipeRelaisEnCours: "En cours…",
+    equipeMasques: (n: number) => (n === 1
+      ? "1 membre en mode fantôme n'est pas compté dans ce total."
+      : `${n} membres en mode fantôme ne sont pas comptés dans ce total.`),
+
     chargement: "Chargement…",
     erreur: "La liste n'a pas pu être chargée. Rien n'est perdu : recharge la page.",
     reessayer: "Réessayer",
@@ -171,6 +182,17 @@ export const amis = {
         : `${n} people came through this link.`,
     parrainageIndisponible: "The link could not be created. Reload the page.",
 
+
+    equipeVoir: "The team's debt",
+    equipeTitre: "Team debt",
+    equipeAide: "Everyone pays what they can. What you do for someone counts for you in the ranking, and clears their debt.",
+    equipeTotal: (n: number) => `${n} points owed in total`,
+    equipeDu: (n: number) => (n === 0 ? "clear" : `owes ${n}`),
+    equipeRelayer: "Take on",
+    equipeRelaisEnCours: "Working…",
+    equipeMasques: (n: number) => (n === 1
+      ? "1 member in ghost mode is not counted in this total."
+      : `${n} members in ghost mode are not counted in this total.`),
 
     chargement: "Loading…",
     erreur: "The list could not be loaded. Nothing is lost: reload the page.",
@@ -257,6 +279,17 @@ export const amis = {
     parrainageIndisponible: "No se ha podido crear el enlace. Recarga la página.",
 
 
+    equipeVoir: "La deuda del equipo",
+    equipeTitre: "Deuda del equipo",
+    equipeAide: "Cada uno paga lo que puede. Lo que haces por alguien cuenta para ti en la clasificación y salda su deuda.",
+    equipeTotal: (n: number) => `${n} puntos pendientes en total`,
+    equipeDu: (n: number) => (n === 0 ? "al día" : `debe ${n}`),
+    equipeRelayer: "Asumir",
+    equipeRelaisEnCours: "En curso…",
+    equipeMasques: (n: number) => (n === 1
+      ? "1 miembro en modo fantasma no se cuenta en este total."
+      : `${n} miembros en modo fantasma no se cuentan en este total.`),
+
     chargement: "Cargando…",
     erreur: "No se ha podido cargar la lista. No se ha perdido nada: recarga la página.",
     reessayer: "Reintentar",
@@ -342,6 +375,17 @@ export const amis = {
     parrainageIndisponible: "Der Link konnte nicht erstellt werden. Lade die Seite neu.",
 
 
+    equipeVoir: "Die Schuld des Teams",
+    equipeTitre: "Teamschuld",
+    equipeAide: "Jeder zahlt, was er kann. Was du für jemanden tust, zählt für dich in der Rangliste und tilgt dessen Schuld.",
+    equipeTotal: (n: number) => `${n} Punkte insgesamt offen`,
+    equipeDu: (n: number) => (n === 0 ? "ausgeglichen" : `schuldet ${n}`),
+    equipeRelayer: "Übernehmen",
+    equipeRelaisEnCours: "Läuft…",
+    equipeMasques: (n: number) => (n === 1
+      ? "1 Mitglied im Geistmodus wird in dieser Summe nicht gezählt."
+      : `${n} Mitglieder im Geistmodus werden in dieser Summe nicht gezählt.`),
+
     chargement: "Wird geladen…",
     erreur: "Die Liste konnte nicht geladen werden. Nichts ist verloren: lade die Seite neu.",
     reessayer: "Erneut versuchen",
@@ -425,6 +469,15 @@ export const amis = {
     parrainageIndisponible: "链接创建失败，请刷新页面。",
 
 
+    equipeVoir: "队伍的欠账",
+    equipeTitre: "队伍欠账",
+    equipeAide: "各尽所能。你为别人做的努力计入你的排名，同时抵消他的欠账。",
+    equipeTotal: (n: number) => `共欠 ${n} 点`,
+    equipeDu: (n: number) => (n === 0 ? "已还清" : `欠 ${n}`),
+    equipeRelayer: "承担",
+    equipeRelaisEnCours: "进行中…",
+    equipeMasques: (n: number) => `有 ${n} 位隐身成员未计入此总数。`,
+
     chargement: "加载中…",
     erreur: "列表加载失败。什么都没丢：刷新页面即可。",
     reessayer: "重试",
@@ -507,6 +560,15 @@ export const amis = {
       n === 0 ? "このリンクから登録した人はまだいません。" : `このリンクから ${n} 人が登録しました。`,
     parrainageIndisponible: "リンクを作成できませんでした。ページを再読み込みしてください。",
 
+
+    equipeVoir: "チームの負債",
+    equipeTitre: "チームの負債",
+    equipeAide: "できる人ができる分だけ払います。誰かのために果たした努力はあなたのランキングに加算され、その人の負債を減らします。",
+    equipeTotal: (n: number) => `合計 ${n} ポイントの未払い`,
+    equipeDu: (n: number) => (n === 0 ? "完済" : `${n} の未払い`),
+    equipeRelayer: "引き受ける",
+    equipeRelaisEnCours: "処理中…",
+    equipeMasques: (n: number) => `ゴーストモードの ${n} 人はこの合計に含まれていません。`,
 
     chargement: "読み込み中…",
     erreur: "一覧を読み込めませんでした。何も失われていません。ページを再読み込みしてください。",
