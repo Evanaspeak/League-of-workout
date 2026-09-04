@@ -1085,16 +1085,31 @@ comportement — c'est le détournement qui a manqué.
   par lui — et **écarté** : `sw.js` ne répond que pour `mode === "navigate"`,
   donc un `POST` d'API le traverse sans qu'il s'en mêle.
 
-**Ce qu'on ne sait pas : la cause.** Elle n'est pas nommée, et « ça repasse »
-n'en est pas une. C'est écrit ici pour qu'une récidive se reconnaisse au lieu
-de se redécouvrir — et pour qu'on résiste à la tentation d'allonger un délai
-sans savoir ce qu'on attend, qui est la façon la plus sûre de rendre un test
-muet.
+**Le tronçon relancé passe.** Ce n'est pas « ça repasse donc c'est réglé » —
+c'est le seul geste qui distingue un aléa d'une régression, et il fallait le
+faire avant de conclure quoi que ce soit. Le même code, le même tronçon, le
+même exécuteur : vert. La cause reste inconnue ; ce qui est établi, c'est
+qu'elle n'est pas dans V373.
+
+**Ce que la prochaine occurrence dira d'elle-même.** Le détournement se COMPTE
+maintenant, et le contrôle porte sur le compteur AVANT le message. Sans lui, le
+symptôme est « Partie terminée » à la place du refus — ce qui se lit comme « la
+route ne dit plus son motif », et envoie chercher le défaut dans la route.
+La vérité était que l'interception n'avait pas pris. Deux causes, un seul
+symptôme ; le compteur les sépare. Éprouvé en retirant le détournement : le
+test rend `"detourne": 0` au lieu du message.
+
+**Et une conséquence d'outillage à retenir** : relancer les travaux échoués
+d'une ancienne exécution ANNULE celle qui tourne, les deux partageant le même
+groupe de concurrence. V375 est partie ainsi. Ce n'est pas grave — la version
+suivante en relance une complète — mais il vaut mieux le savoir que de
+chercher pourquoi une exécution s'est arrêtée toute seule.
 
 **Ce qui n'a PAS été fait, et pourquoi.** Poser `serviceWorkers: "block"` dans
 la configuration Playwright supprimerait une source d'imprévu — mais deux
 fichiers de parcours éprouvent justement le service worker, et on ne change pas
-une configuration globale à cinq heures du matin sur une hypothèse écartée.
+une configuration globale sur une hypothèse déjà écartée, pour un échec unique
+qui ne se reproduit pas.
 
 ### Une section ajoutée au milieu, et un décalage que je ne sais pas reproduire
 Le mur des records s'est glissé ENTRE les deux panneaux miroités de `/amis`, et
