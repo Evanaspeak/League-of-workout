@@ -3,7 +3,7 @@ import { corps, requete, utilisateur } from "@/test/api";
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     game: { aggregate: jest.fn(), findMany: jest.fn() },
-    paiement: { findMany: jest.fn() },
+    paiement: { findMany: jest.fn(), groupBy: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
@@ -19,7 +19,7 @@ import { defiDuJour } from "@/lib/defiQuotidien";
 const session = getCurrentUser as jest.Mock;
 const base = prisma as unknown as {
   game: { aggregate: jest.Mock; findMany: jest.Mock };
-  paiement: { findMany: jest.Mock };
+  paiement: { findMany: jest.Mock; groupBy: jest.Mock };
 };
 
 const JOURS = ["2026-09-02", "2026-09-01", "2026-08-31", "2026-08-29"];
@@ -29,6 +29,7 @@ beforeEach(() => {
   session.mockResolvedValue(utilisateur({ dettePointsDus: 0, detteDepuis: null }));
   base.game.aggregate.mockResolvedValue({ _sum: { pompesCalculees: 9000 }, _count: { _all: 57 } });
   base.game.findMany.mockResolvedValue([]);
+  base.paiement.groupBy.mockResolvedValue([]);
   // Trente points payés par jour, quatre jours : 120 payés contre 4 200
   // générés. Les deux chiffres sont volontairement TRÈS différents, sans quoi
   // rien ne dirait lequel des deux le niveau emploie.

@@ -18,6 +18,7 @@ export type Progression = {
   exploits?: unknown;
   defi?: unknown;
   defisMois?: unknown;
+  collectif?: unknown;
 };
 
 let enCours: Promise<Progression | null> | null = null;

@@ -6,6 +6,7 @@ import { useT } from "@/lib/i18n/LocaleContext";
 import { defis as dict } from "@/lib/i18n/dictionaries/defis";
 import type { AvancementDefi } from "@/lib/defiQuotidien";
 import type { AvancementMensuel } from "@/lib/defiMensuel";
+import type { Collectif } from "@/lib/objectifCollectif";
 
 /**
  * Le défi du jour, sur le tableau de bord.
@@ -23,11 +24,13 @@ export function DefiDuJour() {
   const t = useT(dict);
   const [defi, setDefi] = useState<AvancementDefi | null>(null);
   const [mois, setMois] = useState<AvancementMensuel[] | null>(null);
+  const [collectif, setCollectif] = useState<Collectif | null>(null);
 
   useEffect(() => {
     const poser = (p: Progression | null) => {
       if (p?.defi) setDefi(p.defi as AvancementDefi);
       if (Array.isArray(p?.defisMois)) setMois(p.defisMois as AvancementMensuel[]);
+      if (p?.collectif) setCollectif(p.collectif as Collectif);
     };
     void chargerProgression(jourLocal()).then(poser);
     const relire = () => { void rafraichirProgression(jourLocal()).then(poser); };
@@ -105,6 +108,42 @@ export function DefiDuJour() {
             <p className="text-xs mt-1" style={{ color: "var(--steel)" }}>{t.moisAide}</p>
           </div>
           {mois.map((m) => barre(m.cle, m.cible, m.ou, m.fait))}
+        </div>
+      )}
+
+      {collectif && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 6 }}>
+          <div>
+            <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.collectifTitre}</h3>
+            {/*
+              Le nombre de contributeurs n'est pas une décoration. « 8 420 sur
+              100 000 » est décourageant à quatre ; « 8 420 sur 100 000, à 4 »
+              est vrai à toutes les tailles, et c'est ce qui rend la barre
+              honnête avant que l'objectif ne soit atteignable.
+            */}
+            <p className="text-xs mt-1" style={{ color: "var(--steel)" }}>
+              {t.collectifAide(collectif.contributeurs)}
+            </p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="flex items-baseline justify-between gap-3">
+              <span style={{ fontSize: "0.9rem" }}>
+                {collectif.atteint ? t.collectifAtteint : "\u00a0"}
+              </span>
+              <b className="mono-num" style={{ fontSize: "0.8rem" }}>
+                {`${collectif.points} / ${collectif.cible}`}
+              </b>
+            </div>
+            <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
+              <div
+                style={{
+                  height: "100%", borderRadius: 3,
+                  background: collectif.atteint ? "var(--win, #4caf50)" : "var(--gold)",
+                  width: `${Math.round(collectif.part * 100)}%`,
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
