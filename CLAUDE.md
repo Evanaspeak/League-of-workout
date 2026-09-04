@@ -1079,6 +1079,41 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dépendances au 4 septembre, et deux mesures corrigées
+`npm audit` rend **les deux mêmes vulnérabilités qu'hier**, toutes deux dans
+`mysql2` et toutes deux inatteignables : ce projet parle à PostgreSQL, le
+paquet n'arrive que par l'outillage en ligne de commande de Prisma, et le seul
+« correctif » proposé reste un retour de version majeure sur le client d'accès
+aux données. `src/dependanceMysql.test.ts` garde le raisonnement plutôt que la
+conclusion, et rien n'a bougé de ce qui le soutient.
+
+Deux mises à jour prises, toutes deux mineures ou correctives :
+`lucide-react` 1.40 → 1.41 et, côté bureau, `electron` 43.5.1 → 43.6.0. Les
+majeures écartées le restent — `typescript` 7, `eslint` 10, `@types/node` 26,
+`prisma` 8 en version candidate, `@libsql/client` 0.18, `electron` 44 — et
+`next-auth` s'affiche « en retard » sur 4.24.15, ce qui est faux à chaque
+audit : c'est l'ancienne branche stable, le projet est sur la 5 en préversion.
+
+**L'application de bureau passe donc en 0.9.13**, pour la règle du
+propriétaire : dès qu'une modification touche `desktop/`, on publie. Rien de ce
+qui s'installe ne change de comportement ; le pont est identique, et les copies
+installées se mettront à jour toutes seules.
+
+**Et un chiffre de la campagne était faux, corrigé plutôt que laissé.** J'avais
+relevé `/fr/amis` à **1636 ms** sur téléphone bridé, avec le paragraphe du
+parrainage comme plus grand élément — ce qui ressemblait beaucoup à la
+régression de réconciliation déjà rencontrée deux fois sur cet écran. Remesuré
+**quatre fois** sur un compte neuf, puis sur le même compte une fois la dette
+posée : **1092 à 1140 ms**, le paragraphe du classement, c'est-à-dire
+exactement les 1116 ms du relevé de la veille. La valeur haute ne s'est pas
+reproduite une seule fois.
+
+Ce qui reste vrai : la mesure d'origine tournait pendant qu'un audit de
+dépendances et une suite navigateur se partageaient la machine, et ce journal
+écrit depuis longtemps qu'on ne mesure pas pendant qu'on construit. Un chiffre
+relevé sur une machine chargée ne se publie pas ; il se remesure au calme, et
+c'est le second chiffre qui compte.
+
 ### Une récompense qu'on ne voit pas n'en est pas une
 Suite immédiate de l'XP des défis. Le nombre monte, la table le retient, le
 niveau en tient compte — et **rien à l'écran ne relie ce mouvement au défi
@@ -1184,7 +1219,7 @@ un test ne garde plus rien.
 |---|---|---|---|
 | `/fr/settings` | 152 ms | 936 ms | 0,000 |
 | `/fr/dashboard` | 268 ms | 1144 ms | 0,000 |
-| `/fr/amis` | 240 ms | 1636 ms | 0,027 |
+| `/fr/amis` | 240 ms | 1120 ms | 0,027 |
 | `/fr/history` | 516 ms | 1124 ms | **0,020** |
 | `/fr/bilan` | 272 ms | 2216 ms | 0,000 |
 
