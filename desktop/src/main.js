@@ -1536,6 +1536,11 @@ app.whenReady().then(() => {
       reglerReleve(false);
       dernieresElim = null;
       overlay.definirEnPartie(false);
+      // Le jeu fermé, la soirée est finie : un « non » d'il y a deux heures ne
+      // doit pas survivre à la prochaine ouverture. Sans ça, quelqu'un qui
+      // passerait ensuite le réglage sur « lance sans demander » n'aurait plus
+      // jamais de pastille, et rien ne le lui dirait.
+      overlay.leverSilence();
       overlay.masquer();
     }
     // Le démarrage de session vit dans la page : c'est elle qui connaît le

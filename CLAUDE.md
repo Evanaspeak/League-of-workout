@@ -1098,6 +1098,65 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La partie refusée levait son propre silence
+Signalé par le propriétaire, en une phrase : « je viens de mettre non à la
+question de démarrer une session ou pas et j'ai quand même la pastille ».
+
+Le silence existe depuis 0.9.12 et il est testé. Ce qui manquait est l'ORDRE.
+Pour League, la séquence réelle est :
+
+1. écran de chargement — le lanceur publie `GameStart`, la page pose la
+   question, on répond **non** : `muet = true`, la pastille se retire ;
+2. la partie démarre pour de bon — l'API de partie répond, `game-started`
+   arrive, `definirEnPartie(true)` posait `muet = false` et la pastille
+   revenait.
+
+**Le commentaire disait « une partie qui commence lève le silence de la
+PRÉCÉDENTE ».** C'est faux ici, et c'est toute la faute : la question se pose
+AVANT que la partie commence, donc la partie qui démarre ensuite est celle-là
+même qu'on vient de refuser. Elle levait son propre silence, quelques secondes
+après le clic.
+
+Le silence se lève maintenant à la question SUIVANTE, ce qui est exactement ce
+qui avait été demandé — « caché jusqu'au prochain écran de chargement ». La
+question EST cet écran ; c'est le seul événement qui le désigne sans ambiguïté.
+
+**Et un trou refermé au passage, qui n'existait pas avant cette correction.**
+Le silence ne se levant plus qu'à la question, quelqu'un qui passerait ensuite
+son réglage sur « lance sans demander » n'aurait plus jamais de question, donc
+plus jamais rien pour le lever : sa pastille resterait éteinte pour toujours,
+sans que rien ne le lui dise. `leverSilence()` est donc appelée quand le JEU se
+ferme — la fin d'une soirée, où il n'y a rien à afficher de toute façon.
+
+**Ce chemin de détection, en revanche, ne va PAS être atteint par un jeu
+détecté par ses processus seuls** : là, la pastille paraît d'abord et la
+question suit, donc le refus était déjà respecté. Le défaut ne touchait que
+League, c'est-à-dire le seul jeu qui publie son écran de chargement — et le
+seul auquel joue celui qui l'a signalé.
+
+**Le test qui tombe est celui qui défendait le défaut.** Il s'appelait « la
+partie suivante la ramène » et exigeait le relèvement qu'on vient de retirer.
+C'est la forme la plus coûteuse d'un mauvais test, déjà rencontrée sur
+l'en-tête de cache des ratios : il ne se contente pas de ne rien attraper, il
+fait échouer la correction.
+
+**Et mon test de remplacement ne prouvait rien**, ce que seul le sabotage a
+dit. Il regardait la visibilité juste après `poserQuestion` — or celle-ci
+affiche par un geste EXPLICITE, qui passe outre le silence de toute façon. La
+fenêtre était donc visible dans les deux cas. Il repart maintenant d'une
+fenêtre cachée et demande un affichage AUTOMATIQUE, le seul que le silence
+arrête.
+
+**Ce qui n'est éprouvé par aucun test, et qui est écrit plutôt que tu** :
+l'appel à `leverSilence()` depuis `main.js`. Ce fichier ne se charge pas dans
+les tests — c'est la limite connue de la coquille — donc le contrôle porte sur
+la fonction, pas sur son branchement.
+
+Application de bureau en **0.9.14**. Le pont ne gagne aucune méthode : la
+correction est entièrement dans la coquille, donc il n'y a pas de repli à
+prévoir devant une copie plus ancienne. Ce qu'une copie ancienne garde, c'est
+le défaut.
+
 ### Overwatch au catalogue, et la seconde liste de jeux qui avait déjà divergé
 Ligne 179 du plan, réponse « Overwatch » à « quel jeu manque le plus ? ». Une
 demi-nuit annoncée, et l'ajout lui-même tient en une ligne : il se juge comme
