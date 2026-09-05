@@ -305,6 +305,28 @@ précisément ce qui a laissé le trou s'ouvrir. Dans ce cas, on prend le témoi
 de la dernière version qui en avait un : constater que celui-ci est encore
 absent dit que le retard dure toujours.
 
+**Et on lit la CI de la version PRÉCÉDENTE.** Pas celle qu'on vient de
+pousser — elle met huit minutes, et attendre à chaque fusion coûte plus que ça
+ne rapporte. Celle d'avant, elle, a fini : un appel, et le rouge se voit à la
+version suivante au lieu de la quatrième.
+
+C'est ce qui manquait dans la nuit du 4 au 5 septembre : V430, V432, V433 et
+V434 sont parties rouges sans que personne regarde, et il a fallu aller lire
+le tableau pour s'en apercevoir. Les deux causes n'étaient ni graves ni
+difficiles — un espace insécable dans une comparaison de chaîne, et une
+branche de parcours prise un jour sur six — mais quatre versions ont traversé
+`main` avec, et la dernière a demandé une suite complète de douze minutes pour
+être nommée. Une lecture par fusion l'aurait dit tout de suite.
+
+```
+mcp__github__actions_list  method=list_workflow_runs  resource_id=tests.yml  branch=main
+```
+
+**La DURÉE avant la pastille**, comme partout ailleurs ici : huit minutes
+disent que les parcours ont joué, une minute dit le contraire quelle que soit
+la couleur. Et une exécution « cancelled » ne dit rien du tout — c'est
+`cancel-in-progress`, seule la dernière d'une rafale est jugée.
+
 ## Architecture fichiers clés
 
 ```
@@ -1113,6 +1135,73 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### « 3 日 » sur la source de diffusion, et la CI rouge que personne ne lisait
+Deux choses sans rapport, réunies parce qu'elles se sont trouvées le même
+quart d'heure.
+
+**La première est la plus petite et la plus exposée.** La source de diffusion
+— la seule surface du produit que des INCONNUS regardent, superposée à un
+stream — écrivait sa série ainsi :
+
+```tsx
+{etat.serie} {(etat.textes ?? …).jours}
+```
+
+Le JSX pose une espace entre deux expressions. En français « 3 j » est juste ;
+en japonais et en chinois, « 3 日 » et « 3 天 » ne le sont pas — on y colle le
+compteur au nombre.
+
+**Et le dictionnaire ne pouvait pas porter la règle**, ce qui est la partie
+intéressante : il TRAVERSE LE RÉSEAU en JSON, parce que la page de diffusion
+n'a pas de langue dans son adresse et reçoit ses mots de la route. Une
+fonction ne survit pas à `JSON.stringify`. Partout ailleurs dans ce projet la
+solution d'une phrase composée est de faire du gabarit une fonction ; ici
+c'était impossible, et c'est la ROUTE qui compose — comme elle compose déjà
+les lignes de dette, deux lignes plus haut.
+
+Le nombre passe par `Intl` au passage. Mille jours font presque trois ans,
+donc ça ne servira pas demain ; mais le jour où ça servira, personne ne
+relira ce fichier.
+
+**Le composant garde un repli sur l'ancienne forme**, et il a sa raison : un
+logiciel de diffusion peut tenir la page ouverte pendant des jours, et une
+réponse plus ancienne ne porte pas le champ. Ce repli rend le sabotage
+invisible côté écran — d'où le contrôle posé sur la RÉPONSE de la route.
+Sans lui, retirer la composition ne faisait tomber aucun test : le composant
+réécrivait l'ancienne forme en silence. C'est le trou déjà rencontré deux fois
+cette nuit, sous une troisième forme.
+
+Trois sabotages, trois échecs : l'espace remise pour le japonais, la
+composition retirée de la réponse, et la langue du compte remplacée par le
+français.
+
+Vérifié sur la réponse servie, cinq langues : « 3 j », « 3 d », « 3 T »,
+« 3日 », « 3天 ».
+
+**La seconde n'est pas un défaut de code, c'est un défaut de METHODE.** En
+allant lire le tableau de la CI par acquit de conscience, j'ai trouvé V430,
+V432, V433 et V434 toutes ROUGES — quatre versions publiées sans que personne
+regarde. Les causes étaient petites :
+
+- `detection-partie.spec.ts` comparait `toContain("30 min")` sur une chaîne
+  dont l'espace est devenue INSÉCABLE depuis que la notification passe par
+  `Intl`. Deux chaînes identiques à l'œil, différentes en points de code ;
+- `xp-defis.spec.ts` posait des parties de battle royale sans classement, dans
+  une branche prise UN JOUR SUR SIX.
+
+Ni l'une ni l'autre n'était grave. Ce qui l'était, c'est qu'il a fallu quatre
+versions et une suite complète de douze minutes pour les nommer.
+
+**Le geste qui manquait tient en un appel, et il est ajouté à la procédure de
+fusion : lire la CI de la version PRÉCÉDENTE.** Pas celle qu'on vient de
+pousser — elle met huit minutes, et attendre à chaque fusion coûte plus que ça
+ne rapporte. Celle d'avant, elle, a fini. Le rouge se voit alors à la version
+suivante au lieu de la quatrième.
+
+C'est le pendant du témoin public ajouté la veille pour le retard de
+déploiement : dans les deux cas, ce qui manquait n'était pas un outil mais le
+fait de REGARDER, et dans les deux cas le coût est de trente secondes.
 
 ### « 1 h 15 » sur une soirée de Minecraft, dans les six langues
 Suite du recensement des unités, étendu aux `.ts` — les trois gardes écrits

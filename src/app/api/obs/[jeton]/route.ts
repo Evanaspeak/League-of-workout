@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { textesDiffusion } from "@/lib/i18n/diffusion";
+import { serieDiffusion, textesDiffusion } from "@/lib/i18n/diffusion";
 import { prisma } from "@/lib/prisma";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { exercicesEnTemps, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
@@ -60,6 +60,15 @@ export async function GET(
     lignes: ventiler(repartirPoints(points, exercices), null, etiquetteLocale(toLocale(user.langue))).map((l) => l.valeur),
     points,
     serie: longueurSerie(paiements.map((p) => p.jour)),
+    /**
+     * La série DÉJÀ composée : le composant écrivait `{serie} {jours}`, et
+     * l'espace du JSX donnait « 3 日 » là où le japonais écrit « 3日 ». Le
+     * dictionnaire traverse le réseau en JSON, il ne peut pas porter une
+     * fonction — c'est donc ici que ça se compose, comme les lignes de dette
+     * juste au-dessus. `serie` reste, parce que c'est lui qui décide si l'on
+     * affiche quelque chose.
+     */
+    serieTexte: serieDiffusion(longueurSerie(paiements.map((p) => p.jour)), toLocale(user.langue)),
     enRetard: retard.enRetard,
     /**
      * Les MOTS, pas la langue.

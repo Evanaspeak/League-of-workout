@@ -65,6 +65,24 @@ describe("ce qui sort, et ce qui ne sort pas", () => {
     expect(r.points).toBe(120);
   });
 
+  it("rend la série DÉJÀ composée, dans la langue du compte", async () => {
+    /**
+     * Le composant écrivait `{serie} {jours}`, et le JSX pose une espace
+     * entre deux expressions : « 3 日 » là où le japonais écrit « 3日 ». Le
+     * dictionnaire traverse le réseau en JSON, où une fonction ne survit pas,
+     * donc c'est la route qui compose — et sans ce contrôle, la retirer de la
+     * réponse ne fait tomber aucun test : le composant a un repli, et il
+     * réécrirait l'ancienne forme en silence.
+     */
+    const jours = ["2026-09-05", "2026-09-04", "2026-09-03"];
+    p.paiement.findMany.mockResolvedValue(jours.map((jour) => ({ jour })));
+    p.user.findUnique.mockResolvedValue({
+      id: "u1", dettePointsDus: 120, detteDepuis: null, exercices: ["boxe"], langue: "ja",
+    });
+    const r = await corps(await lire(JETON)) as { serie: number; serieTexte: string };
+    expect(r.serieTexte).toBe(`${r.serie}日`);
+  });
+
   it("ne rend rien à payer quand aucun exercice ne s'accumule", async () => {
     // Les pompes se font dans la foulée : elles ne s'accumulent pas, et un
     // compteur qui monterait sans fin sur un stream serait faux.

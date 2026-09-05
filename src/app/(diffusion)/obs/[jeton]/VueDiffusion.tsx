@@ -4,7 +4,7 @@ import { textesDiffusion } from "@/lib/i18n/diffusion";
 
 type Textes = { aFaire: string; jours: string; lienInvalide: string };
 type Etat = {
-  lignes: string[]; points: number; serie: number; enRetard: boolean;
+  lignes: string[]; points: number; serie: number; serieTexte?: string; enRetard: boolean;
   /** Les mots, déjà traduits par la route : la page n'a pas de langue à elle. */
   textes?: Textes;
 };
@@ -79,7 +79,13 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
           </span>
           {etat.serie > 0 && (
             <span style={{ ...contour, color: "#2FD98A", fontSize: 18 }}>
-              {etat.serie} {(etat.textes ?? textesDiffusion(undefined)).jours}
+              {/* La série arrive DÉJÀ composée : le japonais et le chinois
+                  n'écrivent pas d'espace entre le nombre et son compteur, et
+                  le JSX en pose une entre deux expressions. Le repli garde
+                  l'ancienne forme pour une réponse plus ancienne — un
+                  logiciel de diffusion peut avoir la page en cache. */}
+              {etat.serieTexte
+                ?? `${etat.serie} ${(etat.textes ?? textesDiffusion(undefined)).jours}`}
             </span>
           )}
         </>
