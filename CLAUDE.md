@@ -1149,6 +1149,23 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La suite entière après sept versions, et ce qu'elle vaut
+Sept versions cette nuit — V446 à V452 — dont cinq qui touchent des
+dictionnaires lus par des parcours, et une qui change la forme d'une réponse
+d'API. La suite navigateur ENTIÈRE a donc été rejouée : **229 passés sur 229,
+en 13 min 06**, deux workers.
+
+C'est le cas que CLAUDE.md réserve à ce qui touche une fondation — « là où une
+régression peut sortir n'importe où ». Des libellés changés dans six langues à
+la fois entrent dans cette catégorie : les parcours choisis à la main
+couvrent ce qu'on a en tête, pas ce qu'on a oublié.
+
+**Ce qu'elle ne prouve pas**, et il vaut mieux l'écrire : elle tourne contre
+la base locale, en PostgreSQL TCP, là où la production parle HTTP à Neon. La
+divergence qui avait fait échouer TOUS les paiements en ligne pendant des
+semaines ne se voit toujours pas ici ; ce qui la garde est
+`transactionsInterdites.test.ts`, pas la suite.
+
 ### Le français donnait un genre à son lecteur, et la règle avait une limite mal tracée
 Trouvé en lisant `/connexion-app` en japonais puis en français, dans la même
 passe que le recensement des promesses périmées. Le japonais dit « 別の経路で
@@ -2356,6 +2373,13 @@ qui manquait à V439, V440, V441 et V442, toutes derrière la porte. Fusionnée 
 **Entre soixante-six et quatre-vingt-quatre minutes, et ce n'est pas un cache** : `x-vercel-cache: MISS`,
 `age: 0` — un rendu neuf à chaque appel. La production répond par ailleurs
 parfaitement, et sert au moins V428 (« Runden » sur `/de`).
+
+**Et il recommence à chaque version.** V450 est fusionnée à 05 h 15 ; son
+témoin — « 16 Spiele » sur `/de`, la première phrase de la page d'accueil —
+est encore absent à 05 h 49, soit **trente-quatre minutes**, avec toujours
+`x-vercel-cache: MISS` et `age: 0`. Trois épisodes mesurés en deux nuits :
+au moins 2 h 40, entre 66 et 84 min, et celui-ci en cours. Ce n'est donc pas
+un incident, c'est le régime.
 
 **Il s'est résorbé seul, comme le précédent.** Le témoin est absent à 04 h 07
 et présent à 04 h 25 : le retard vaut donc **entre 66 et 84 minutes**, contre
