@@ -1136,6 +1136,141 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La lecture des réglages effaçait ce qu'on venait de taper
+Trouvé en allant lire la CI, comme la procédure le dit maintenant. V437 est
+rouge sur `corps.spec.ts` — « le mètre-ruban ne reproche rien tant qu'on n'a
+rien saisi » — et **c'est l'intermittent que ce journal porte depuis l'étape 05
+sous la mention « la cause reste inconnue »**. Il est nommé.
+
+**La sonde a réfuté ma première hypothèse, et c'est elle qui a donné la
+réponse.** Je partais sur un événement React perdu avant l'hydratation :
+`fill` pose la valeur dans le DOM, personne n'écoute encore, l'état reste
+vide. Une sonde de vingt tours qui relève, à chaque échec, la VALEUR du champ
+en même temps que la phrase :
+
+```
+ 1 phrase=OUI  valeur="82"
+ 2 phrase=NON  valeur=""      ← la valeur n'est pas restée
+ 3 phrase=OUI  valeur="82"
+```
+
+**Le champ est VIDE.** Ce n'est donc pas un événement perdu — il aurait laissé
+la valeur dans le DOM — c'est la valeur ÉCRASÉE.
+
+**La cause tient en une ligne.** `settings/page.tsx` lit `/api/settings` au
+montage et REMPLACE chaque objet d'état par la réponse : `setCorps({…})`,
+`setMensurations({…})`, `setProfileForm({…})`. Tout ce qui a été touché entre
+l'affichage et l'arrivée de la réponse disparaît.
+
+**Et ce n'est pas seulement une saisie perdue.** Les réglages du corps
+s'enregistrent AU CLIC : la réponse plus ancienne revenait donc par-dessus une
+valeur déjà écrite en base, et l'écran montrait le contraire de ce qu'on
+venait de choisir. C'est le défaut que la page corrige déjà dans l'autre sens
+— « un réglage que le serveur n'avait pas » — retourné comme un gant.
+
+**La fenêtre n'est pas théorique.** Elle vaut le temps de `/api/settings`,
+c'est-à-dire quelques centaines de millisecondes en local et bien davantage
+sur un réseau mobile. Personne ne l'aurait jamais signalée : ce qu'on voit
+est un champ qui se vide tout seul, ce qui ressemble à une faute de frappe.
+
+**La règle retenue : une valeur qui a quitté son défaut appartient à qui l'a
+changée.** `fusionner(avant, defaut, serveur)` garde `avant` pour toute clé
+qui a bougé, prend le serveur pour le reste. Quelqu'un qui revient au défaut
+laisse le serveur reprendre la main, ce qui est sans conséquence — les deux
+valent la même chose. Les valeurs de départ sortent du `useState` pour
+devenir `CORPS_DEFAUT` et `MENSURATIONS_DEFAUT` : c'est ce qui rend la
+comparaison possible, et le NOM dit à quoi elles servent.
+
+**Le test ne compte plus sur la chance.** Une sonde qui échoue une fois sur
+huit ne prouve rien dans un sens ni dans l'autre : 0 sur 20 après correction
+contre 1 sur 20 avant est un écart qu'on ne peut pas lire. Le nouveau parcours
+RETARDE la réponse d'une seconde et demie, ce qui rend la course certaine —
+avec l'écrasement le champ se vide à tous les coups, avec la fusion jamais.
+Sabotage fait dans les deux sens : le test tombe avec l'ancien code, passe
+avec le nouveau.
+
+Il porte son témoin : sans réponse retardée, la course n'a pas eu lieu et le
+contrôle qui suit passerait sans rien éprouver.
+
+**Ce que ça apprend sur la méthode**, et c'est écrit dans ce fichier depuis le
+3 septembre sans que je l'applique toujours : quand un test échoue pour une
+raison qu'on ne sait pas NOMMER, on instrumente avant la deuxième tentative.
+Ici la sonde a coûté cinq minutes, elle a donné la cause du premier coup, et
+elle a démenti l'hypothèse que j'aurais implémentée sans elle — j'aurais
+ajouté une attente d'hydratation, le test serait redevenu vert par accident,
+et le défaut de produit serait resté.
+
+**Ce qui reste, avec sa taille.** La même page fait cinq autres écritures
+d'état à l'arrivée de la réponse (`setExercicesSel`, `setRappelSeuil`,
+`setLevelConfigs`, `setBetaRank`, `setEstAdmin`). Les trois dernières ne sont
+pas modifiables par la personne, donc rien à écraser. Les deux premières le
+sont, et elles s'enregistrent au clic comme le corps : elles méritent la même
+fusion, et elles ne l'ont pas encore. C'est écrit ici plutôt que laissé à
+redécouvrir.
+
+### Le retard de production s'est résorbé tout seul, et voilà ce qu'on en sait
+Suite de « Huit versions fusionnées sur `main`, aucune en ligne ». L'entrée
+décrivait ce qui était vrai à l'heure où elle a été écrite ; le dénouement
+mérite d'être écrit à côté plutôt que de la corriger, parce que ce qui compte
+ici est la CHRONOLOGIE.
+
+| heure UTC | témoin `/de` (V428) | témoin `/de/connexion-app` (V423) |
+|---|---|---|
+| 23 h 01 | « Aktivitäten » | « Cette page se lance » |
+| 23 h 41 | absent | absent |
+| 00 h 43 | absent | absent |
+| **00 h 57** | **« Runden »** | **« Diese Seite wird »** |
+
+**Le retard aura donc duré au moins deux heures quarante** — V428 a été
+fusionnée à 22 h 15 — et il s'est résorbé sans que rien ne soit fait pour lui.
+Ce n'était donc ni une construction en échec permanent, ni une adresse de
+production épinglée : les deux hypothèses écrites dans l'entrée précédente
+sont écartées par le simple fait que ça a fini par passer.
+
+**Ce qui reste inexpliqué, et il vaut mieux le dire que d'inventer une
+cause** : pourquoi deux heures quarante. Une file d'attente Vercel, une
+construction lente, une rafale de poussées qui se sont mises en travers — le
+tableau de bord le dirait, et il n'est pas lisible d'ici. Ça part dans les
+questions.
+
+**Où s'arrête ce qu'on peut affirmer.** La production sert au moins V428.
+Aucune des versions publiées après elle ne touche une page publique — elles
+corrigent l'historique, les réglages, l'écran des amis, la source de
+diffusion — donc aucun témoin ne permet de la situer plus précisément. C'est
+la limite déjà notée : une version qui ne touche aucune page publique n'a pas
+de témoin, et on se rabat alors sur celui de la dernière qui en avait un.
+
+**Ce que l'épisode laisse derrière lui, et qui vaut plus que son dénouement.**
+Deux gestes de trente secondes sont entrés dans la procédure de fusion : le
+témoin public de ce qu'on vient de publier, et la lecture de la CI de la
+version précédente. Le premier a nommé le retard ; le second a nommé quatre
+exécutions rouges que personne ne regardait. Aucun des deux n'est un outil
+nouveau : ce qui manquait était de REGARDER.
+
+### La coquille Electron ne souffre d'aucun des trois défauts de la nuit
+Recensement passé sur `desktop/`, qui vit HORS du champ des trois gardes
+écrits cette nuit — ils ne lisent que la couche d'affichage du site. Les trois
+familles y ont été cherchées : une unité recollée à la main, un couple
+quantité-nom écrit à l'envers, une phrase assemblée à partir d'un fragment de
+dictionnaire. **Aucune trouvaille**, et les raisons valent d'être écrites,
+parce qu'elles disent pourquoi et donc jusqu'à quand.
+
+- **La pastille en jeu sépare le libellé de la valeur dans le BALISAGE** :
+  `<span data-texte="overlaySiPerdu">` d'un côté, `<b id="dette-d">` de
+  l'autre. Il n'y a pas de phrase composée, donc pas d'ordre à choisir ; le
+  jour où l'un des deux passerait dans un gabarit, le défaut reviendrait.
+- **La dette qui s'y affiche arrive DÉJÀ mise en forme**, poussée par la page
+  à travers le pont. Elle est donc couverte par les corrections du site, et la
+  coquille n'a rien à en savoir — c'est la répartition déjà écrite pour la
+  détection de partie : « l'application se contente de dire qu'un jeu vient de
+  démarrer ».
+- Les trois compositions trouvées ne sont pas des phrases : un couple
+  libellé-valeur séparé par un deux-points (le chemin d'une capture), et deux
+  entrées de menu suivies de leur raccourci après une tabulation, ce qui est la
+  convention des menus.
+- La seule unité écrite à la main est dans un NOM DE FICHIER de capture
+  (`_14h32m05s`), que personne ne lit comme du texte.
+
 ### « 他的昵称 » : deux langues sur six donnaient un genre à quelqu'un
 Trouvé en lisant l'écran des amis en chinois. Le libellé du champ disait
 « 他的昵称 » — « SON pseudo », au masculin — pour désigner quelqu'un dont on
