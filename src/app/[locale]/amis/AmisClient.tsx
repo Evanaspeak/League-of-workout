@@ -586,6 +586,15 @@ export function AmisClient() {
       */}
       <section className="lol-panel p-5 space-y-3">
           <h2 style={{ fontFamily: "var(--font-heading)" }}>{t.recordsTitre}</h2>
+          {/*
+            Le mur du CERCLE porte son intitulé, comme celui d'en dessous.
+            Sans lui, sa phrase de vide — « Personne n'a encore payé une
+            journée entière » — se lisait comme le vide de la SECTION, et le
+            mur ouvert affichait un record deux lignes plus bas. L'écran se
+            contredisait sans qu'aucun de ses deux chiffres soit faux : seul
+            le second des deux murs était nommé.
+          */}
+          <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.recordsCercleTitre}</h3>
           {!classement?.records || (!classement.records.mois && !classement.records.toujours) ? (
             <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.recordsAucun}</p>
           ) : (

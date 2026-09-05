@@ -1149,6 +1149,43 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le mur des records se contredisait, sans qu'aucun de ses chiffres soit faux
+Trouvé en lisant l'écran des amis EN CHINOIS, sur un compte de mesure sans
+ami. L'écran rendait :
+
+```
+纪录墙                        (le mur des records)
+还没有人在一天内还清过。       (personne n'a encore payé une journée entière)
+全站范围                      (sur tout le produit)
+本月  Ouvert…, 300 点 le 5 sept.
+```
+
+**Une phrase de vide, et deux lignes plus bas un record.** Le français disait
+exactement la même chose ; c'est en chinois que ça saute aux yeux, parce que
+les deux blocs y ont des longueurs très différentes et qu'on les lit comme
+deux paragraphes au lieu d'un flux.
+
+**Aucun des deux chiffres n'est faux, et c'est ce qui rend le cas
+intéressant.** Ce sont DEUX murs : celui du CERCLE — les records parmi ses
+amis, vide sur un compte seul — et le mur OUVERT, sous lui, qui montre ceux
+qui ont choisi d'y figurer. Le second portait son intitulé (« Sur tout le
+produit ») ; le premier n'en avait aucun. Sa phrase de vide se lisait donc
+comme le vide de la SECTION ENTIÈRE.
+
+C'est le défaut de la moitié nommée : quand deux choses se suivent et qu'une
+seule porte son nom, le lecteur rattache la première au titre au-dessus. Le
+mur du cercle a le sien maintenant — « Parmi tes amis », « 好友之間 »,
+« Unter deinen Freunden » — dans les deux branches, vide comme remplie.
+
+**Ce qu'aucun test ne pouvait voir.** Les parcours du mur vérifient le pseudo
+et le chiffre ; les tests de langue refusent un « undefined » et un
+débordement. Ce qui manquait est une contradiction ENTRE deux blocs
+parfaitement corrects, et ça ne se lit qu'à l'écran. C'est la quatrième fois
+cette nuit qu'une lecture dans une autre écriture trouve ce qu'aucun test ne
+cherche.
+
+Vérifié à l'écran en français et en chinois.
+
 ### La suite entière après sept versions, et ce qu'elle vaut
 Sept versions cette nuit — V446 à V452 — dont cinq qui touchent des
 dictionnaires lus par des parcours, et une qui change la forme d'une réponse
