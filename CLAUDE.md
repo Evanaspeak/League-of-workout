@@ -1149,6 +1149,65 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dépendances au 5 septembre, et les deux pixels de recharts
+`npm audit` rend **les deux mêmes vulnérabilités**, toutes deux dans `mysql2`
+et toutes deux inatteignables : ce projet parle à PostgreSQL, le paquet
+n'arrive que par l'outillage en ligne de commande de Prisma, et le seul
+« correctif » proposé reste un retour de version majeure sur le client d'accès
+aux données. `src/dependanceMysql.test.ts` garde le raisonnement plutôt que la
+conclusion, et rien n'a bougé de ce qui le soutient. **Côté application de
+bureau : zéro vulnérabilité**, et rien à mettre à jour hors d'un saut majeur —
+donc **aucune version à publier**, la règle du propriétaire ne se déclenchant
+que si `desktop/` change.
+
+Six mises à jour prises, toutes correctives ou mineures : `@auth/prisma-adapter`
+2.11.2 → 2.11.3, `ts-jest` 29.4.11 → 29.4.12, `@playwright/test` 1.62 → 1.63,
+`@types/pg` 8.20 → 8.23, `pg` 8.22 → 8.23, et **`recharts` 3.8.1 → 3.10.1**.
+Les majeures écartées le restent : `typescript` 7, `eslint` 10, `@types/node`
+26, `@types/bcryptjs` 3, `@libsql/client` 0.18, `electron` 44.
+
+**`recharts` mérite mieux qu'un « ça compile ».** C'est la bibliothèque qui
+DESSINE, et sur l'écran le plus vu du produit. La comparaison de rendu la
+mesure plutôt que de la supposer : trente-neuf captures, **trois
+différentes**, toutes le tableau de bord, aux trois largeurs.
+
+Les bandes ont été LUES plutôt que supposées, en demandant à la page quels
+éléments les occupent :
+
+| bande | élément |
+|---|---|
+| y 2081 à 2200 | le graphique « Dette moyenne / partie » |
+| y 2379 à 2538 | le graphique « Pompes par rôle » |
+
+**La hauteur de page est identique au pixel** — 2987 des deux côtés — et les
+axes, les libellés et les nombres ne bougent pas : ce sont les BARRES qui se
+dessinent à un ou deux pixels près. Deux mille cent vingt-trois pixels sur une
+page qui en fait près de quatre millions. C'est un changement de rendu de la
+bibliothèque, pas une régression, et le dire suppose de savoir OÙ — « trois
+captures différentes » se lit comme une alerte tant qu'on n'a pas regardé.
+
+**Et la sonde a rendu « zéro graphique » avant de rendre quoi que ce soit
+d'utile.** J'ai failli conclure que la mise à jour cassait le tableau de bord.
+Le contrôle d'atterrissage a donné la vraie cause du premier coup : la page
+était `/fr/login`. Le compte de mesure avait été purgé par le parcours des
+langues, que je venais de lancer — l'ordre est écrit ici depuis longtemps, **la
+suite d'abord, le compte ensuite, la mesure enfin**, et je l'ai pris à
+l'envers pour la troisième fois. Sans le contrôle d'atterrissage, l'entrée de
+journal aurait annoncé une régression de recharts qui n'existe pas.
+
+Vérifié à l'écran après mise à jour, sur un compte semé à soixante parties :
+trois graphiques rendus, et l'axe horaire dans quatre langues — « 00 h »,
+« 12 AM », « 00 Uhr », « 0時 ».
+
+**Et le parcours complet est tombé une fois, sur la CONNEXION.** C'est
+l'échec d'août, dont la cause est nommée dans ce fichier : à deux workers, le
+haché bcrypt coût 12 perd sa place dans la file, et `waitForURL` expire sur la
+connexion — jamais sur ce que le test éprouvait. La passe téléphone du MÊME
+fichier était passée dans la même exécution, et le fichier relancé seul rend
+douze sur douze. Ce n'est donc pas une régression de `@playwright/test` 1.63
+ni de recharts. Le geste qui le dit est la relance seule, et il fallait le
+faire avant de conclure quoi que ce soit.
+
 ### « 14h » sur l'axe du tableau de bord, dans les six langues
 Le journal le savait, l'avait écrit, et ne l'avait pas corrigé. L'entrée des
 unités recollées porte, dans ce qu'elle laisse en place : « les étiquettes
@@ -2039,10 +2098,18 @@ qui manquait à V439, V440, V441 et V442, toutes derrière la porte. Fusionnée 
 | 03 h 33 | absent | présent |
 | 03 h 59 | absent | présent |
 | 04 h 07 | absent | présent |
+| **04 h 25** | **présent** | présent |
 
-**Soixante-six minutes au dernier relevé, et ce n'est pas un cache** : `x-vercel-cache: MISS`,
+**Entre soixante-six et quatre-vingt-quatre minutes, et ce n'est pas un cache** : `x-vercel-cache: MISS`,
 `age: 0` — un rendu neuf à chaque appel. La production répond par ailleurs
 parfaitement, et sert au moins V428 (« Runden » sur `/de`).
+
+**Il s'est résorbé seul, comme le précédent.** Le témoin est absent à 04 h 07
+et présent à 04 h 25 : le retard vaut donc **entre 66 et 84 minutes**, contre
+au moins 2 h 40 la veille. Deux épisodes, deux résorptions spontanées, aucune
+intervention — ce qui écarte définitivement l'hypothèse d'une construction en
+échec permanent, et laisse celle d'une file d'attente dont on ne voit pas la
+longueur d'ici.
 
 **Ce qu'on ne refait pas : le diagnostic.** Les deux causes possibles sont
 écrites depuis la nuit dernière — construction en échec, ou adresse de
