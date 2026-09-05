@@ -823,7 +823,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2134 tests unitaires, 193 suites. Base et session doublées : aucune dépendance à
+2303 tests unitaires, 218 suites. Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -848,7 +848,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 220 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 229 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -904,10 +904,23 @@ puis en la dispensant sans lui donner de verrou : chaque sabotage tombe sur son
 propre test.
 
 La revue qui a précédé ce garde n'a trouvé **aucune faille exploitable** sur les
-quarante-sept routes : tout est filtré par `userId`, aucun SQL brut, aucun
-secret en dur, la région Riot passe par une liste fermée avant d'entrer dans une
-URL, et le CSP écrit `base-uri` et `form-action`, qui ne retombent pas sur
-`default-src`.
+quarante-sept routes d'alors : tout est filtré par `userId`, aucun secret en
+dur, la région Riot passe par une liste fermée avant d'entrer dans une URL, et
+le CSP écrit `base-uri` et `form-action`, qui ne retombent pas sur
+`default-src` (il vit dans `next.config.ts`, pas dans le middleware).
+
+**Il y en a soixante-quatre aujourd'hui, et ce ne sont pas les mêmes.** Ce qui
+couvre les dix-sept ajoutées depuis n'est pas cette revue — elle ne les a jamais
+vues — ce sont les gardes qui regardent le DOSSIER : `porteRoutes` pour la
+session, `filtreParCompte` pour le filtrage. Une revue est datée par
+construction ; c'est le garde qui vieillit bien.
+
+**Et « aucun SQL brut » était devenu faux.** Il y en a un : `SELECT 1` dans la
+sonde de santé, constante, sans interpolation. Inoffensif, et c'est justement ce
+qui rendait la phrase coûteuse — une description périmée ne se distingue pas
+d'une garantie. `src/sqlBrut.test.ts` la remplace : les variantes `Unsafe`, qui
+prennent une chaîne, sont interdites sans exemption possible, et le seul appel
+dispensé doit rester une constante.
 
 ### Les fenêtres modales
 `src/modalesAnnoncees.test.ts` refuse tout recouvrement plein écran qui ne
@@ -1832,6 +1845,71 @@ construction demandent l'accès au tableau de bord Vercel, qui appartient au
 propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
+
+### Un audit des affirmations du journal, et les trois qui avaient vieilli
+Passe faite sur les affirmations que ce fichier écrit AU PRÉSENT et qu'une
+machine peut reprendre. C'est la méthode qui a déjà rendu deux fois cette
+semaine — le garde du filtrage par compte annoncé resserré et qui ne l'était
+pas, la dispense du simulateur dont la RAISON était fausse.
+
+**Sur une dizaine d'affirmations vérifiées, sept tiennent**, et deux d'entre
+elles ont failli passer pour fausses parce que je cherchais au mauvais endroit :
+le CSP écrit bien `base-uri` et `form-action` — dans `next.config.ts`, pas dans
+le middleware, et le vérifier sur l'EN-TÊTE SERVI plutôt que sur la source le
+dit sans ambiguïté ; le contrôle de correspondance base-schéma emploie bien
+`--exit-code` sans `|| true` — il vit dans l'action composite `preparer`, où le
+journal dit d'ailleurs qu'il a déménagé. Vérifiées aussi : `Paiement.jeton` est
+unique en base, `cancel-in-progress` est posé, `revalidate: 300` est bien le
+délai du bouton de téléchargement, `fullyParallel` reste à `false` et les
+workers sont deux en local et un en intégration continue.
+
+**Trois avaient vieilli, et toutes les trois sont des NOMBRES.**
+
+Les deux premiers sont dans la section « Tests » : « 2134 tests unitaires, 193
+suites » là où il y en a 2297 et 217, et « 220 tests » au navigateur là où il y
+en a 229. C'est le défaut que ce journal nomme lui-même — un nombre écrit une
+fois au-dessus de quelque chose qui bouge — commis dans le fichier qui le
+reproche. Il n'est pas grave ; il est instructif parce qu'il montre que la
+faute ne demande aucune négligence, juste du temps.
+
+**Le troisième portait sur la sécurité, et c'est le seul qui comptait.** La
+revue affirmait « aucune faille exploitable sur les quarante-sept routes : tout
+est filtré par `userId`, **aucun SQL brut**, aucun secret en dur ». Il y a
+soixante-quatre routes aujourd'hui, et il y a bien un `$queryRaw` — `SELECT 1`
+dans la sonde de santé, constante, sans interpolation.
+
+**Rien n'est exploitable, et c'est précisément ce qui rendait la phrase
+coûteuse.** Une affirmation fausse mais inoffensive ne se distingue pas d'une
+garantie : on la relit, on la croit, et on cesse de vérifier. Le journal l'écrit
+déjà pour la dispense de la source de diffusion — « c'est sa DESCRIPTION qui
+avait vieilli, et une description périmée est ce qui fait cesser de vérifier ».
+
+`src/sqlBrut.test.ts` remplace la prose, ce qui est la seule forme de raison
+qu'une machine peut reprendre. Deux règles, et la seconde n'est pas une
+question de sécurité : les variantes `Unsafe` sont interdites SANS exemption —
+elles prennent une chaîne, donc elles sont le seul point d'injection SQL que ce
+projet pourrait avoir — et l'appel dispensé doit rester une CONSTANTE. Prisma
+paramètre pourtant les interpolations d'un gabarit étiqueté ; ce qu'on achète
+là n'est pas une protection, c'est qu'une constante se relise en une seconde. Le
+prix est nul sur le seul SQL brut du dépôt.
+
+**Et la revue elle-même est datée par construction.** Ce qui couvre les
+dix-sept routes ajoutées depuis n'est pas elle — elle ne les a jamais vues —
+ce sont `porteRoutes` et `filtreParCompte`, qui regardent le DOSSIER. C'est
+l'argument déjà écrit pour ces deux gardes, retourné vers la revue : les tests
+écrits à la main ne disent rien de la route qu'on ajoutera demain, et une revue
+non plus.
+
+**Le découpage du gabarit s'éprouve sur des cas fabriqués**, parce que le dépôt
+n'en contient qu'un seul : les fichiers réels ne distinguent pas un découpage
+juste d'un découpage cassé. Dont le cas qui casse une expression naïve — un
+gabarit qui contient une accolade avant son interpolation.
+
+Quatre sabotages, quatre échecs. Le premier a d'abord passé au vert sans avoir
+rien sabordé : mon `perl` n'avait pas trouvé son motif, et `git diff --stat`
+l'a dit. C'est le piège du « sabotage qui ne sabote pas », écrit ici depuis la
+lecture d'issue de Riot, et il se reprend à chaque fois qu'on ne vérifie pas
+que le fichier a bougé.
 
 ### Une grandeur, trois écrans, trois noms — et les trois langues qu'on ne relit pas
 Trouvé en lisant le bilan de saison en chinois, puis le même en français. Le
