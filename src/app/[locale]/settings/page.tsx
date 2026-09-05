@@ -34,6 +34,23 @@ import type { NomIcone } from "@/components/Icone";
 import { ReglagesAvances, type LevelConfig } from "./ReglagesAvances";
 import { ReglagesCorps, type CorpsPrefs } from "./ReglagesCorps";
 
+/**
+ * Les valeurs de DÉPART, nommées pour que la fusion puisse s'y comparer.
+ *
+ * Tout est nul : la fonctionnalité du corps est éteinte tant qu'aucun mode
+ * n'est choisi (réponse 013). Elles ne vivaient qu'à l'intérieur du `useState`
+ * — les sortir est ce qui permet de savoir, à l'arrivée de la réponse, quels
+ * champs la personne a déjà changés.
+ */
+const CORPS_DEFAUT: CorpsPrefs = {
+  formuleCalorique: null, niveauActivite: null, modeCalorique: null,
+  poidsCible: null, tourTaille: null, tourCou: null, tourHanches: null,
+  rappelPeseeActif: false,
+};
+
+type Mensurations = { poids: number | null; taille: number | null; age: number | null };
+const MENSURATIONS_DEFAUT: Mensurations = { poids: null, taille: null, age: null };
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 
@@ -142,17 +159,38 @@ export default function SettingsPage() {
   const [erreurExo, setErreurExo] = useState(false);
 
   /**
+   * Ce que la lecture du serveur a le droit d'écraser, et ce qu'elle n'a pas.
+   *
+   * La page lisait `/api/settings` au montage et REMPLAÇAIT chaque objet
+   * d'état par la réponse. Tout ce qui avait été touché entre l'affichage et
+   * l'arrivée de la réponse disparaissait — quelques centaines de
+   * millisecondes en local, bien davantage sur un réseau mobile.
+   *
+   * Ce n'était pas une hypothèse : la sonde le reproduit une fois sur huit sur
+   * le champ du mètre-ruban, et le champ y est VIDE, pas simplement inerte. Et
+   * ce n'est pas qu'une saisie perdue : les réglages du corps s'enregistrent
+   * au clic, donc la réponse plus ANCIENNE revenait par-dessus une valeur déjà
+   * écrite en base — l'écran montrait alors le contraire de ce qu'on venait de
+   * choisir.
+   *
+   * La règle : une valeur qui a quitté son défaut appartient à qui l'a
+   * changée. Quelqu'un qui revient au défaut laisse le serveur reprendre la
+   * main, ce qui est sans conséquence — les deux valent la même chose.
+   */
+  function fusionner<T extends object>(avant: T, defaut: T, serveur: T): T {
+    const sortie = { ...serveur };
+    for (const cle of Object.keys(defaut) as (keyof T)[]) {
+      if (avant[cle] !== defaut[cle]) sortie[cle] = avant[cle];
+    }
+    return sortie;
+  }
+
+  /**
    * Le corps et les calories (étape 05). Tout est nul au départ : la
    * fonctionnalité est éteinte tant qu'aucun mode n'est choisi (réponse 013).
    */
-  const [corps, setCorps] = useState<CorpsPrefs>({
-    formuleCalorique: null, niveauActivite: null, modeCalorique: null,
-    poidsCible: null, tourTaille: null, tourCou: null, tourHanches: null,
-    rappelPeseeActif: false,
-  });
-  const [mensurations, setMensurations] = useState<{
-    poids: number | null; taille: number | null; age: number | null;
-  }>({ poids: null, taille: null, age: null });
+  const [corps, setCorps] = useState<CorpsPrefs>(CORPS_DEFAUT);
+  const [mensurations, setMensurations] = useState<Mensurations>(MENSURATIONS_DEFAUT);
 
   // ── Test de pompes maximales (fixe le niveau) ──
   const [pompesMax, setPompesMax] = useState(0);
@@ -182,7 +220,7 @@ export default function SettingsPage() {
       // afficher le niveau — emportait alors toute la page.
       setLevelConfigs(Array.isArray(s.levelConfigs) ? s.levelConfigs : []);
       setExercicesSel(toExerciceIds(s.user?.exercices));
-      setCorps({
+      setCorps((avant) => fusionner(avant, CORPS_DEFAUT, {
         formuleCalorique: s.user?.formuleCalorique ?? null,
         niveauActivite: s.user?.niveauActivite ?? null,
         modeCalorique: s.user?.modeCalorique ?? null,
@@ -191,12 +229,12 @@ export default function SettingsPage() {
         tourCou: s.user?.tourCou ?? null,
         tourHanches: s.user?.tourHanches ?? null,
         rappelPeseeActif: Boolean(s.user?.rappelPeseeActif),
-      });
-      setMensurations({
+      }));
+      setMensurations((avant) => fusionner(avant, MENSURATIONS_DEFAUT, {
         poids: s.user?.poids ?? null,
         taille: s.user?.taille ?? null,
         age: s.user?.age ?? null,
-      });
+      }));
       setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
       setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
       setPlafond(s.user?.plafondQuotidien ?? 0);

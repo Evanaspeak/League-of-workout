@@ -131,3 +131,60 @@ test("le mètre-ruban ne reproche rien tant qu'on n'a rien saisi", async ({ brow
 
   await ctx.close();
 });
+
+/**
+ * Ce qu'on tape avant que la lecture des réglages revienne reste à l'écran.
+ *
+ * La page lisait `/api/settings` au montage et REMPLAÇAIT chaque objet d'état
+ * par la réponse : tout ce qui avait été saisi entre l'affichage et l'arrivée
+ * de la réponse disparaissait. Ce n'est pas une hypothèse — le test au-dessus
+ * tombait une fois sur huit, en CI comme en local, et le journal le portait
+ * depuis des jours comme « cause inconnue ».
+ *
+ * Ce qui l'a nommé est une sonde qui relève la VALEUR du champ à l'échec :
+ * elle est VIDE. Ce n'est donc pas un événement React perdu avant
+ * l'hydratation — l'hypothèse de départ, réfutée — c'est la valeur écrasée par
+ * la réponse.
+ *
+ * Le test ci-dessous ne compte pas sur la chance : il RETARDE la réponse d'une
+ * seconde et demie, ce qui rend la course certaine. Avec l'écrasement, le
+ * champ se vide à tous les coups ; avec la fusion, jamais.
+ *
+ * Et ce n'est pas qu'une saisie perdue : les réglages du corps s'enregistrent
+ * au clic, donc la réponse plus ANCIENNE revenait par-dessus une valeur déjà
+ * écrite en base — l'écran montrait le contraire de ce qu'on venait de
+ * choisir.
+ */
+test("une saisie faite avant la fin de la lecture n'est pas effacée", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Course", { consentement: true });
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  // La réponse arrive APRÈS la saisie, toujours. Sans ce retard, la course se
+  // joue en quelques millisecondes et le test ne prouve rien une fois sur huit.
+  let retardees = 0;
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    retardees += 1;
+    await new Promise((r) => setTimeout(r, 1500));
+    return route.fallback();
+  });
+
+  await page.goto("/settings#corps");
+  await viderLesFenetres(page);
+  await page.goto("/settings#corps");
+
+  const champ = page.getByLabel(/tour de taille|waist/i);
+  await champ.waitFor({ state: "visible", timeout: 10_000 });
+  await champ.fill("82");
+
+  // Le témoin : sans réponse retardée, la course n'a pas eu lieu et le
+  // contrôle qui suit passerait sans rien éprouver.
+  expect(retardees).toBeGreaterThan(0);
+
+  // La réponse arrive maintenant. Elle ne doit pas emporter la saisie.
+  await page.waitForTimeout(2500);
+  await expect(champ).toHaveValue("82");
+
+  await ctx.close();
+});
