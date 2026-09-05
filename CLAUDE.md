@@ -1114,6 +1114,113 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 1 h 15 » sur une soirée de Minecraft, dans les six langues
+Suite du recensement des unités, étendu aux `.ts` — les trois gardes écrits
+la veille ne lisent que la couche d'affichage, et c'est écrit dans chacun.
+`formaterTempsJeu` y était, avec ses trois branches en français :
+
+```
+`${s} s`   `${minutes} min`   `${heures} h ${reste}`
+```
+
+**Ce n'est pas le temps d'effort, c'est le temps de JEU**, et c'est pour ça
+qu'il a échappé à la correction de l'unité de la dette : une séance
+d'exercice se compte en minutes, une soirée de jeu passe l'heure sans peine.
+Le module a donc son propre cadran, à l'étage au-dessus, et personne n'était
+allé y regarder.
+
+**Il est reachable, et par cinq jeux du catalogue.** Minecraft, World of
+Warcraft, GTA V, Elden Ring et Les Sims sont comptés au TEMPS : leur durée
+s'affiche sur la carte de l'historique, dans le tableau, dans le détail d'une
+ligne, et sur le comparatif de jeux du tableau de bord. Vérifié à l'écran
+avant de corriger, ce qui a demandé de semer un compte dont TOUTES les parties
+sont au temps — en mode mixte, la colonne ne se rend pas, et j'ai d'abord cru
+le chemin inatteignable.
+
+`tempsJeuLocalise` rejoint `dureeLocalisee` dans le même module, avec la même
+règle : `Intl` donne l'unité, la COMPOSITION se décide par langue. « 1 Std. 15 »
+en allemand, « 1時間15分 » en japonais, « 1小时15分 » en chinois, « 1 hr 15 » en
+anglais — quatre formes qu'aucune table écrite à la main n'aurait eues.
+
+**Le sabotage a trouvé le trou que ce projet paie en boucle : la branche que
+TOUS les appelants empruntent n'était gardée par rien.** `if (false &&
+etiquette)` dans `lib/jeux.ts` laissait les 2275 tests au vert. C'est mot pour
+mot le défaut de l'unité de la dette, deux jours plus tôt, sur le module
+voisin — et je l'ai reproduit en écrivant le module voisin. Un module juste
+dont personne ne vérifie le BRANCHEMENT ne sert à rien.
+
+**Et mon test de valeurs a échoué au premier jet en comparant « 1 h 15 » à
+« 1 h 15 ».** `Intl` pose une insécable ÉTROITE devant « h » en français
+(U+202F) et une NORMALE devant « min » (U+00A0), là où l'allemand garde des
+espaces ordinaires. Écrites à l'œil, les deux chaînes sont identiques ; en
+points de code, elles ne le sont pas. Les assertions portent des échappements
+maintenant. Troisième fois que ce module apprend la même leçon, et la
+troisième fois qu'elle vaut la peine.
+
+**Un renommage qui n'est pas cosmétique.** `ComparatifJeux` recevait la
+fonction en propriété, sous le même nom. Le garde des appels vérifie l'ARITÉ
+par le nom : il aurait déclaré fautif `formaterTempsJeu(j.tempsJoueSec)`, qui
+est parfaitement juste — le composant reçoit un formateur DÉJÀ lié à la
+langue. La propriété s'appelle `formaterTemps`, et le commentaire dit
+pourquoi. C'est le même raisonnement que `pointsPayes` contre `totalPoints` :
+le nom porte la règle.
+
+Trois sabotages, trois échecs : un appelant qui oublie l'étiquette, la
+délégation débranchée, la composition japonaise reprise à `Intl`.
+
+Vérifié à l'écran dans les six langues, sur un compte dont les parties sont
+comptées au temps : « 1 h 15 » et « 27 min » en français et en espagnol,
+« 1 hr 15 » en anglais, « 1 Std. 15 » et « 27 Min. » en allemand,
+« 1時間15分 » et « 27分 » en japonais, « 1小时15分 » en chinois.
+
+**Et la suite complète a rendu deux parcours rouges, dont un qui ne tombe
+qu'un jour sur six.**
+
+Le premier est le mien : `detection-partie.spec.ts` comparait
+`toContain("30 min")` sur la notification de partie illisible, qui passe par
+`Intl` depuis la veille. L'espace y est une INSÉCABLE, et deux chaînes
+identiques à l'œil ne le sont pas en points de code. C'est la troisième fois
+que ce détail coûte une exécution ; `\s` la couvre, une comparaison de chaîne
+non. Il était rouge en intégration continue depuis la version d'avant, et je
+ne l'avais pas vu parce que les parcours choisis pour elle — langues et
+réglages — ne couvrent pas ce fichier.
+
+**Le second est plus intéressant, et il est antérieur à cette nuit.**
+`xp-defis.spec.ts` remplit le défi du jour QUEL QU'IL SOIT — c'est écrit en
+tête du fichier, et c'est la bonne façon d'éprouver un défi qui change tous
+les jours. Sa branche « jeux distincts » posait quatre parties sur une liste
+écrite à la main : League of Legends, **Apex Legends**, Valorant, **Rocket
+League**. Or un battle royale se juge au CLASSEMENT et Rocket League aux buts,
+et le poseur de partie n'envoie ni l'un ni l'autre. La route répondait
+« Classement invalide » en 400.
+
+**Cette branche n'est prise qu'un jour sur six**, celui où le défi mesure des
+jeux distincts. Cinq jours sur six le fichier passait, et le sixième l'échec
+ressemblait à une régression du barème — c'est-à-dire à tout autre chose que
+sa cause. Le 5 septembre était ce sixième jour.
+
+La liste se DÉDUIT du catalogue maintenant, filtrée sur les jeux qui prennent
+un KDA : écrite à la main, elle vieillirait le jour où un jeu change de forme,
+et le défaut reviendrait sous le même déguisement. Avec le contrôle qui
+manquait — assez de jeux pour la cible — sans quoi une liste vide ferait
+échouer le test plus loin, sur un symptôme obscur. Sabotage : la liste
+retournée sur les battle royale, le test tombe.
+
+**Ce que ça apprend sur la méthode.** Un test dont le comportement dépend du
+JOUR est un test dont on ne connaît pas la couleur. Celui-ci était juste dans
+son intention — ne pas s'écrire contre un défi précis — et faux dans une de
+ses six branches, donc invisible cinq jours sur six. Les branches d'un tel
+test se lisent une par une, pas à l'exécution.
+
+**Ce que le recensement des `.ts` laisse en place, et pourquoi.** Le poids en
+kilogrammes des réglages est écrit six fois dans le dictionnaire et vaut « kg »
+partout — c'est une table écrite à la main qui se trouve avoir raison, et la
+reprendre ne changerait rien à l'écran. Le décompte de la prochaine
+vérification Riot est déjà traduit langue par langue (« 秒 » en chinois et en
+japonais). Les branches SANS étiquette de `formaterDuree` et de
+`formaterTempsJeu` gardent leur unité en dur : c'est le rendu d'avant, et son
+absence de changement est ce qui a rendu la reprise des appelants sûre.
+
 ### « コピー ma-team » : trois phrases assemblées dans le composant, toutes invisibles
 Recensement lancé dans la foulée des unités : la même question, posée sur les
 LIBELLÉS. Un composant qui écrit `` `${t.copier} ${nom}` `` compose une

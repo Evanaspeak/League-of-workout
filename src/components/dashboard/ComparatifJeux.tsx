@@ -24,13 +24,19 @@ export type JeuJoue = {
  * plutôt que d'afficher un zéro, qui se lirait comme une valeur.
  */
 export function ComparatifJeux({
-  jeux, t, onChoisirJeu, fmt, formaterTempsJeu,
+  jeux, t, onChoisirJeu, fmt, formaterTemps,
 }: {
   jeux: JeuJoue[];
   t: T;
   onChoisirJeu: (nom: string) => void;
   fmt: (points: number) => string;
-  formaterTempsJeu: (secondes: number) => string;
+  /**
+   * Un formateur DÉJÀ lié à la langue, pas la fonction du module — d'où le nom
+   * différent. `formaterTempsJeu` prend une étiquette de langue en second
+   * argument, et un garde vérifie qu'elle est passée à chaque appel ; réemployer
+   * son nom ici ferait déclarer fautif un appel parfaitement juste.
+   */
+  formaterTemps: (secondes: number) => string;
 }) {
   const pourcent = usePourcentage();
   return (
@@ -79,7 +85,7 @@ export function ComparatifJeux({
                 <td className="px-3 py-2 text-right mono-num gold-text font-semibold">{fmt(j.points)}</td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--muted)" }}>{fmt(j.detteMoyenne)}</td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: j.tempsJoueSec > 0 ? "rgba(236,239,244,0.8)" : "rgba(152,162,176,0.35)" }}>
-                  {j.tempsJoueSec > 0 ? formaterTempsJeu(j.tempsJoueSec) : t.sansObjet}
+                  {j.tempsJoueSec > 0 ? formaterTemps(j.tempsJoueSec) : t.sansObjet}
                 </td>
               </tr>
             ))}

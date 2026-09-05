@@ -124,7 +124,13 @@ test("une issue illisible n'enregistre rien, et le dit", async ({ browser }) => 
   const dit = (await page.evaluate(() => (window as unknown as { __dits: string[] }).__dits)).join(" ");
   expect(dit).toContain("Ahri");
   expect(dit).toContain("8/3/11");
-  expect(dit).toContain("30 min");
+  /**
+   * L'espace n'est pas une espace ordinaire : `Intl` pose une insécable
+   * devant l'unité, et c'est le français qui l'exige. `\s` la couvre, une
+   * comparaison de chaîne non — c'est la troisième fois que ce détail
+   * coûte une exécution, et il ne se voit pas à l'œil.
+   */
+  expect(dit).toMatch(/30\s?min/);
 
   // Et surtout : rien n'a été écrit. C'est le défaut d'origine.
   expect((await nombreDeParties(ctx)).length).toBe(avant);

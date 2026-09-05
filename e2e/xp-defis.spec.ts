@@ -3,6 +3,7 @@ import { ouvrirCompte } from "./compte";
 import { viderLesFenetres } from "./intro";
 import { compter } from "./base";
 import { defiDuJour } from "../src/lib/defiQuotidien";
+import { JEUX, capacitesDuJeu } from "../src/lib/jeux";
 import { XP_DEFI_JOUR, XP_DEFI_MOIS } from "../src/lib/xpDefis";
 
 /**
@@ -94,7 +95,30 @@ test("un défi du jour rempli se retient une fois, et son XP revient de la base"
     const paye = await page.request.patch("/api/dette", { data: { tout: true, jour } });
     expect(paye.status(), await paye.text()).toBe(200);
   } else if (defi.mesure === "jeux") {
-    const jeux = ["League of Legends", "Apex Legends", "Valorant", "Rocket League"];
+    /**
+     * Des jeux qui se saisissent TOUS de la même façon : une issue et un KDA.
+     * La liste était écrite à la main et portait Apex Legends et Rocket
+     * League, qui n'en sont pas — un battle royale se juge au CLASSEMENT et
+     * Rocket League aux buts, et `partie()` n'envoie ni l'un ni l'autre. La
+     * route répondait « Classement invalide » en 400.
+     *
+     * Ça ne tombait qu'un jour sur six : cette branche n'est prise que les
+     * jours où le défi du jour mesure des jeux DISTINCTS. Cinq jours sur six
+     * le fichier passait, et le sixième l'échec ressemblait à une régression
+     * du barème. Ce que ce test éprouve est l'XP d'un défi, pas les formes de
+     * saisie — celles-là ont leurs propres parcours.
+     *
+     * Elle se DÉDUIT du catalogue maintenant : une liste écrite à la main
+     * vieillit le jour où un jeu change de forme, et le défaut reviendrait
+     * sous le même déguisement.
+     */
+    const jeux = JEUX.filter((j) => {
+      const c = capacitesDuJeu(j.nom);
+      return j.type === "parties" && c.kda && !c.br && !c.rl;
+    }).map((j) => j.nom);
+    // Sans quoi la boucle tournerait sur une liste vide et n'enregistrerait
+    // rien, en laissant le test échouer plus loin sur un symptôme obscur.
+    expect(jeux.length).toBeGreaterThanOrEqual(defi.cible);
     for (let i = 0; i < defi.cible; i += 1) await partie(page, jeux[i % jeux.length], "D");
   } else {
     const issue = defi.mesure === "victoires" ? "V" : "D";

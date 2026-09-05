@@ -599,7 +599,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         {aDuTemps && (
           <StatCard
             label={tJeux.tempsJoueLabel}
-            value={formaterTempsJeu(data.global?.tempsJoueSec ?? 0)}
+            value={formaterTempsJeu(data.global?.tempsJoueSec ?? 0, dateLocale)}
             i={3}
           />
         )}
@@ -827,7 +827,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
                 {tJeux.tempsJoueLabel}
               </span>
               <span className="mono-num" style={{ fontSize: "1rem", fontWeight: 600, color: "var(--signal)" }}>
-                {formaterTempsJeu(data.tempsJoueSec ?? 0)}
+                {formaterTempsJeu(data.tempsJoueSec ?? 0, dateLocale)}
               </span>
             </div>
           )}
@@ -1051,7 +1051,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           t={t}
           onChoisirJeu={setFiltreJeu}
           fmt={fmt}
-          formaterTempsJeu={formaterTempsJeu}
+          formaterTemps={(s: number) => formaterTempsJeu(s, dateLocale)}
         />
       )}
 

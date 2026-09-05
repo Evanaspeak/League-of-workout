@@ -1,3 +1,4 @@
+import { tempsJeuLocalise } from "./i18n/duree";
 /**
  * Catalogue de jeux.
  *
@@ -195,7 +196,14 @@ export function typeDuJeu(nom: string | null | undefined, typeFourni?: unknown):
  * minutes), une durée de jeu se compte vite en heures : « 720 min » ne parle
  * à personne, « 12 h » si.
  */
-export function formaterTempsJeu(totalSecondes: number): string {
+export function formaterTempsJeu(totalSecondes: number, etiquette?: string): string {
+  /**
+   * L'étiquette de langue est OPTIONNELLE, et elle devait l'être : son absence
+   * garde exactement le rendu d'avant. C'est ce qui a permis de reprendre les
+   * appelants un par un en vérifiant après chacun, comme pour l'unité de la
+   * dette. Une erreur ici serait pire que le défaut qu'on corrige.
+   */
+  if (etiquette) return tempsJeuLocalise(totalSecondes, etiquette);
   const s = Math.max(0, Math.round(totalSecondes));
   if (s < 60) return `${s} s`;
   const minutes = Math.floor(s / 60);
