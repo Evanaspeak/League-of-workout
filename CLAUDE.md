@@ -1508,6 +1508,12 @@ axe en douze heures.
 pour les jours et les mois : `label` reste, pour un onglet resté ouvert sur une
 réponse plus ancienne — le tableau de bord se garde ouvert une soirée entière.
 
+Le prix est mesuré plutôt que supposé : `/api/dashboard` passe de **5 405 à
+5 579 octets** sur un compte semé à soixante parties, soit cent
+soixante-quatorze octets — un champ numérique par heure qui a des données.
+C'est ce que coûte le repli, et c'est le bon échange sur une route appelée une
+fois par chargement.
+
 **Le sabotage a trouvé que le garde lisait ma propre explication.** Le
 commentaire posé au-dessus de l'heure dit « comme pour les jours et les mois »,
 et le mot « mois » y suffisait à satisfaire le contrôle : le défaut remis à
