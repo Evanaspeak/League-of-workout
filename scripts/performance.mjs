@@ -20,9 +20,10 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { chromium } from "playwright";
-import { enLangue, langueDemandee, positionnels } from "./langue.mjs";
+import { enLangue, langueDemandee, positionnels, refuserPrefixe } from "./langue.mjs";
 
-const [BASE = "http://127.0.0.1:3311", CHEMIN_NU = "/"] = positionnels(process.argv);
+const [BASE = "http://127.0.0.1:3311", CHEMIN_BRUT = "/"] = positionnels(process.argv);
+const CHEMIN_NU = refuserPrefixe(CHEMIN_BRUT);
 const LANGUE = langueDemandee(process.argv);
 const CHEMIN = enLangue(LANGUE, CHEMIN_NU);
 const CHROMIUM = "/opt/pw-browsers/chromium";

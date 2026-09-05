@@ -37,3 +37,31 @@ export function enLangue(langue, chemin) {
 export function positionnels(argv) {
   return argv.slice(2).filter((a) => !a.startsWith("--"));
 }
+
+/**
+ * Refuse un chemin qui porte DÉJÀ un préfixe de langue.
+ *
+ * `enLangue` pose le préfixe elle-même : `/fr/dashboard` devient donc
+ * `/fr/fr/dashboard`, qui rend un 404. Le rapport est alors parfaitement
+ * formé — de très bons chiffres sur « Cette adresse ne mène nulle part » — et
+ * **le contrôle d'atterrissage ne peut pas le voir** : il compare le chemin
+ * d'arrivée au chemin transformé, c'est-à-dire à lui-même.
+ *
+ * Je suis tombé dedans deux fois, la seconde après l'avoir écrit au journal.
+ * Une leçon qu'on écrit sans la fermer se retombe dedans : elle se ferme donc
+ * ici, à l'ENTRÉE, seul endroit où le défaut soit visible.
+ */
+export const LANGUES_MESURE = ["fr", "en", "es", "de", "zh", "ja"];
+
+export function refuserPrefixe(chemin) {
+  const premier = chemin.split("/")[1];
+  if (LANGUES_MESURE.includes(premier)) {
+    console.error(
+      `Le chemin « ${chemin} » porte déjà un préfixe de langue. Les outils le`
+      + ` posent eux-mêmes : passe « /${chemin.split("/").slice(2).join("/")} »`
+      + ` et, si tu veux une autre langue, « --langue=${premier} ».`,
+    );
+    process.exit(1);
+  }
+  return chemin;
+}
