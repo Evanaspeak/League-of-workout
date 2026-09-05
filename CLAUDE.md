@@ -1886,6 +1886,21 @@ plutôt que de faire tomber un test — retirer le contrôle du registre rend so
 paramètre inutilisé, et `noUnusedLocals` le nomme — c'est noté comme tel et non
 compté comme un garde qui mord.
 
+**La CI a nommé l'intermittent que la veille avait laissé « cause inconnue ».**
+V437 est rouge sur un seul tronçon et un seul test : `corps.spec.ts:115`, « le
+mètre-ruban ne reproche rien tant qu'on n'a rien saisi », 41 passés à côté.
+C'est exactement le défaut que V438 a corrigé — le champ tapé effacé par une
+lecture partie avant lui — et V438 est verte en 8 min 08, durée qui dit que les
+parcours ont bien tourné. L'échec local d'hier, celui dont j'écrivais « la cause
+reste inconnue ; ce qui est établi, c'est qu'elle n'est pas le limiteur », avait
+donc une cause, et elle était dans le produit et non dans le banc d'essai.
+
+**Ce que ça apprend sur la lecture de la CI.** Le rouge datait de 00h57 et je ne
+l'ai lu qu'après avoir publié deux versions de plus. La règle écrite la veille —
+lire la CI de la version PRÉCÉDENTE à chaque fusion — n'a servi que parce que je
+l'ai appliquée ; sans elle, le rouge de V437 rejoignait la série de quatre qu'il
+avait fallu découvrir par hasard.
+
 ### Une phrase assemblée dans le composant, et le japonais qu'elle produisait
 Trouvé en lisant le tableau de bord en japonais. La ligne du niveau de compte
 rendait **« 400 XP 次のレベルまで 5 »** — le chiffre du niveau tombe APRÈS la
