@@ -1,7 +1,7 @@
 export const telechargement = {
   fr: {
     title: "APPLICATION DESKTOP",
-    description: "Intègre le client League of Legends en temps réel.",
+    description: "Détecte les parties sur tous les jeux du catalogue, et lit le client League of Legends en temps réel.",
     compatibilite: "Compatible Windows 10 / 11.",
     telecharger: "Télécharger pour Windows",
     bientotDisponible: "Bientôt disponible : le lien de téléchargement sera ajouté ici dès la sortie.",
@@ -17,14 +17,14 @@ export const telechargement = {
     // l'avertissement lui-même, c'est de le découvrir par surprise.
     smartScreenTitre: "Windows va afficher un avertissement",
     smartScreenIntro: "Au lancement de l'installeur, Windows affiche « Windows a protégé votre ordinateur ». C'est normal, et voici comment passer :",
-    smartScreenEtape1: "Clique sur « Informations complémentaires ».",
+    smartScreenEtape1: "Cliquez sur « Informations complémentaires ».",
     smartScreenEtape2: "Puis sur « Exécuter quand même ».",
     smartScreenPourquoi: "Pourquoi cet avertissement ?",
     smartScreenExplication: "Windows le montre pour tout programme dont l'éditeur n'est pas encore certifié. Le faire disparaître demande un certificat de signature payant, délivré après vérification d'identité. Tant que Win or Workout est en bêta et n'a pas d'utilisateurs, cette dépense n'a pas de sens : elle viendra avec eux. Le code de l'application est le même, signé ou non.",
   },
   en: {
     title: "DESKTOP APP",
-    description: "Integrates with the League of Legends client in real time.",
+    description: "Detects games across the whole catalogue, and reads the League of Legends client in real time.",
     compatibilite: "Compatible with Windows 10 / 11.",
     telecharger: "Download for Windows",
     bientotDisponible: "Coming soon: the download link will be added here on release.",
@@ -44,7 +44,7 @@ export const telechargement = {
   },
   es: {
     title: "APLICACIÓN DE ESCRITORIO",
-    description: "Se integra con el cliente de League of Legends en tiempo real.",
+    description: "Detecta las partidas en todos los juegos del catálogo y lee el cliente de League of Legends en tiempo real.",
     compatibilite: "Compatible con Windows 10 / 11.",
     telecharger: "Descargar para Windows",
     bientotDisponible: "Disponible pronto: el enlace de descarga se añadirá aquí al salir.",
@@ -64,7 +64,7 @@ export const telechargement = {
   },
   de: {
     title: "DESKTOP-ANWENDUNG",
-    description: "Bindet den League-of-Legends-Client in Echtzeit ein.",
+    description: "Erkennt Partien in allen Spielen des Katalogs und liest den League-of-Legends-Client in Echtzeit.",
     compatibilite: "Läuft unter Windows 10 / 11.",
     telecharger: "Für Windows herunterladen",
     bientotDisponible: "Bald verfügbar: der Download-Link kommt zum Erscheinen hierher.",
@@ -84,7 +84,7 @@ export const telechargement = {
   },
   zh: {
     title: "桌面应用",
-    description: "实时对接 League of Legends 客户端。",
+    description: "识别目录中所有游戏的对局，并实时对接 League of Legends 客户端。",
     compatibilite: "支持 Windows 10 / 11。",
     telecharger: "下载 Windows 版",
     bientotDisponible: "即将开放：正式发布时下载链接会放在这里。",
@@ -104,7 +104,7 @@ export const telechargement = {
   },
   ja: {
     title: "デスクトップアプリ",
-    description: "League of Legends のクライアントとリアルタイムに連携します。",
+    description: "カタログのすべてのゲームで試合を検出し、League of Legends のクライアントとはリアルタイムに連携します。",
     compatibilite: "Windows 10 / 11 に対応。",
     telecharger: "Windows 版をダウンロード",
     bientotDisponible: "近日公開：リリース時にダウンロードリンクをここへ追加します。",

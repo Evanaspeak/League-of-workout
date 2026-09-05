@@ -66,7 +66,42 @@ const CLES_TOLEREES: Record<string, string> = {
   accepteeAvec: "« vous êtes amis » est un pluriel, pas un vouvoiement",
 };
 
+/**
+ * Des clés qui TUTOIENT légitimement dans un fichier qui vouvoie.
+ *
+ * L'exemption porte sur la clé, jamais sur le fichier : posée sur le fichier,
+ * elle rendrait le contrôle vide de sens, ce qui est exactement l'état d'où
+ * il sort.
+ */
+const TUTOIEMENT_TOLERE: Record<string, string> = {
+  erreurEnvoi: "message d'erreur technique, pas une phrase de santé : la voix ordinaire de l'application",
+};
+
 const VOUS = /\b(vous|votre|vos)\b/i;
+
+/**
+ * Le tutoiement français : pronoms, possessifs, et impératifs de deuxième
+ * personne du singulier. Les impératifs sont ancrés en début de phrase, où
+ * les met une consigne d'interface.
+ */
+const IMPERATIFS = [
+  "Clique", "Lance", "Installe", "Connecte", "Coche", "Choisis", "Ouvre",
+  "Télécharge", "Essaie", "Fais", "Regarde", "Tape", "Colle", "Appuie", "Va",
+].join("|");
+/**
+ * Les bornes s'écrivent à la main, et c'est le piège de ce garde.
+ *
+ * `\b` de JavaScript repose sur `[A-Za-z0-9_]` : une lettre ACCENTUÉE y est un
+ * caractère NON-mot, donc une frontière. `\btes\b` trouve donc « tes » dans
+ * « ê-tes », et `\bta\b` trouve « ta » dans « bê-ta ». Onze faux positifs au
+ * premier jet — « Vous êtes connecté », « Candidater à la bêta » — c'est-à-dire
+ * un garde qui accuse du vouvoiement d'être du tutoiement.
+ */
+const LETTRE = "A-Za-zÀ-ÿ";
+const TUTOIE = new RegExp(
+  `(?<![${LETTRE}])(?:tu|ton|ta|tes|toi)(?![${LETTRE}])`
+  + `|(?<![${LETTRE}])(?:${IMPERATIFS})(?![${LETTRE}])`,
+);
 
 function blocFrancais(source: string): string | null {
   // `[\s\S]` plutôt que le drapeau `s` : la cible de compilation du projet est
@@ -101,6 +136,68 @@ describe("le registre du produit", () => {
       }
     }
     expect(fautifs).toEqual([]);
+  });
+
+  /**
+   * Un fichier qui vouvoie ne tutoie pas AUSSI.
+   *
+   * La dispense écarte le fichier entier du contrôle précédent : un
+   * tutoiement posé dedans y est donc parfaitement invisible. `telechargement.ts`
+   * était dans ce cas — « Installez l'application sur votre PC », « Connectez-vous
+   * avec votre compte », puis « **Clique** sur Informations complémentaires » sur
+   * la même page, dans la même langue.
+   *
+   * Une page qui mélange les deux registres est exactement ce que ce garde
+   * existe pour empêcher ; il ne le voyait pas parce qu'il avait cessé de
+   * regarder. Une dispense borne ce qu'on tolère, elle n'éteint pas la règle.
+   *
+   * Le motif couvre les pronoms ET les impératifs de deuxième personne du
+   * singulier, parce que le défaut trouvé était un impératif : les pronoms
+   * seuls l'auraient laissé passer, et un garde qui ne voit pas le défaut qu'il
+   * raconte ne garde rien. La liste d'impératifs est écrite à la main et elle
+   * vieillira — mais son vieillissement ne produit que des SILENCES, jamais de
+   * fausse alerte : dans un fichier qui vouvoie, la forme correcte finit par
+   * `-ez`.
+   */
+  it("un fichier qui vouvoie ne tutoie pas aussi", () => {
+    let examines = 0;
+    const fautifs: string[] = [];
+    const toleres = new Set<string>();
+    for (const f of Object.keys(VOUVOIENT)) {
+      const bloc = blocFrancais(readFileSync(join(RACINE, f), "utf8"));
+      if (!bloc) continue;
+      examines += 1;
+      for (const ligne of bloc.split("\n")) {
+        if (!TUTOIE.test(ligne)) continue;
+        const cle = /^\s*([A-Za-z0-9_]+)\s*:/.exec(ligne)?.[1] ?? "";
+        if (TUTOIEMENT_TOLERE[cle]) { toleres.add(cle); continue; }
+        fautifs.push(`${f} · ${ligne.trim().slice(0, 90)}`);
+      }
+    }
+    // Témoin : une liste de dispenses vidée rendrait le contrôle vert en
+    // n'examinant aucun fichier.
+    expect(examines).toBeGreaterThanOrEqual(8);
+    expect(fautifs).toEqual([]);
+    // Une tolérance qui ne désigne plus rien de vivant est du code mort dans
+    // le garde même qui existe pour l'attraper.
+    expect([...toleres].sort()).toEqual(Object.keys(TUTOIEMENT_TOLERE).sort());
+  });
+
+  /**
+   * Le motif s'éprouve sur des cas fabriqués.
+   *
+   * L'état sain du dépôt est ZÉRO trouvaille : les fichiers réels ne
+   * distinguent donc pas un motif juste d'un motif aveugle.
+   */
+  it("le motif de tutoiement voit les pronoms et les impératifs", () => {
+    expect(TUTOIE.test('    a: "Clique sur « Informations complémentaires »."')).toBe(true);
+    expect(TUTOIE.test('    a: "C\u0027est ce qui fixe ton niveau."')).toBe(true);
+    expect(TUTOIE.test('    a: "Installe l\u0027application."')).toBe(true);
+    // Ce qu'il ne doit PAS attraper, dans un fichier qui vouvoie :
+    expect(TUTOIE.test('    a: "Installez l\u0027application sur votre PC Windows."')).toBe(false);
+    expect(TUTOIE.test('    a: "Cliquez sur « Informations complémentaires »."')).toBe(false);
+    // « ta » et « ton » ne se confondent pas avec le début d'un autre mot.
+    expect(TUTOIE.test('    a: "Le total attendu."')).toBe(false);
   });
 
   /**
