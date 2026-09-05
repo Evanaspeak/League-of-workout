@@ -84,13 +84,14 @@ const GraphiquesGlobaux = dynamic(
 import { Squelette } from "@/components/dashboard/Squelette";
 import { ecrire, lire } from "@/lib/stockage";
 import { resultat } from "@/lib/i18n/dictionaries/resultat";
+import { heureDuJourLocalisee } from "@/lib/i18n/unite";
 
 /**
  * `jour` (0 = dimanche) et `mois` (0 = janvier) viennent du serveur ; `label`
  * est le repli français des installations plus anciennes. C'est le
  * navigateur qui nomme le jour et le mois, dans la langue du lecteur.
  */
-type PeriodStat = { label: string; jour?: number; mois?: number; avg: number; total: number };
+type PeriodStat = { label: string; heure?: number; jour?: number; mois?: number; avg: number; total: number };
 
 type DashData = {
   totalGames: number;
@@ -187,7 +188,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
 
   const [statsMode, setStatsMode] = useState<"avg" | "total">("avg");
   const [calendarDate, setCalendarDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [dailyHourly, setDailyHourly] = useState<{ label: string; total: number }[] | null>(null);
+  const [dailyHourly, setDailyHourly] = useState<{ label: string; heure?: number; total: number }[] | null>(null);
   const [dailySummary, setDailySummary] = useState<{ total: number; games: number } | null>(null);
   // Jour dont le détail est effectivement affiché. Le chargement s'en déduit :
   // tant qu'il ne correspond pas à la date demandée, la réponse est en route.
@@ -228,9 +229,9 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   } = useSession();
   const { locale } = useLocale();
   /**
-   * Les jours et les mois se nomment avec `Intl`, jamais avec une table écrite
-   * à la main : six langues voudraient six tables, et le navigateur sait déjà
-   * le faire. Le 4 janvier 1970 était un dimanche — c'est le point de départ
+   * Les heures, les jours et les mois se nomment avec `Intl`, jamais avec une
+   * table écrite à la main : six langues voudraient six tables, et le
+   * navigateur sait déjà le faire. Le 4 janvier 1970 était un dimanche — c'est le point de départ
    * qui fait correspondre le numéro de jour à sa date.
    */
   const periodeTraduite = useMemo(() => {
@@ -239,6 +240,9 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     const jours = new Intl.DateTimeFormat(etiquette, { weekday: "short", timeZone: "UTC" });
     const mois = new Intl.DateTimeFormat(etiquette, { month: "short", timeZone: "UTC" });
     return source.map((p) => {
+      if (typeof p.heure === "number") {
+        return { ...p, label: heureDuJourLocalisee(p.heure, etiquette) };
+      }
       if (typeof p.jour === "number") {
         return { ...p, label: jours.format(new Date(Date.UTC(1970, 0, 4 + p.jour))) };
       }
@@ -248,6 +252,23 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
       return p;
     });
   }, [data, statsPeriod, locale]);
+
+  /**
+   * Le détail horaire d'une journée du calendrier, nommé de la même façon.
+   * Il vit dans son propre état — il vient d'une autre route — donc il a
+   * besoin de sa propre traduction : la faire au moment de la réponse la
+   * figerait dans la langue d'alors, et un changement de langue laisserait
+   * l'axe en arrière.
+   */
+  const detailHoraireTraduit = useMemo(() => {
+    if (!dailyHourly) return null;
+    const etiquette = etiquetteLocale(locale);
+    return dailyHourly.map((p) =>
+      typeof p.heure === "number"
+        ? { ...p, label: heureDuJourLocalisee(p.heure, etiquette) }
+        : p,
+    );
+  }, [dailyHourly, locale]);
 
   const loadDash = (filtre: ExerciceId | null = filtreExo, jeu: string | null = filtreJeu) => {
     const qs = new URLSearchParams();
@@ -1081,7 +1102,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           points={periodeTraduite}
           date={calendarDate}
           setDate={setCalendarDate}
-          detailHoraire={dailyHourly}
+          detailHoraire={detailHoraireTraduit}
           resume={dailySummary}
           chargement={dailyLoading}
           fmt={fmt}

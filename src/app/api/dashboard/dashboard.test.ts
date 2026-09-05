@@ -155,9 +155,12 @@ describe("GET /api/dashboard/daily", () => {
     expect(d.games).toBe(0);
   });
 
-  it("range l'effort à la bonne heure", async () => {
-    const d = await corps(await jour("?date=2026-08-19")) as { hourly: { label: string; total: number }[] };
-    expect(d.hourly).toEqual([{ label: "21h", total: 38 }]);
+  // Le NUMÉRO d'heure part avec le libellé : c'est lui que le navigateur
+  // renomme dans la langue du lecteur, `label` n'étant plus qu'un repli pour
+  // un onglet resté ouvert sur une réponse plus ancienne.
+  it("range l'effort à la bonne heure, et envoie son numéro", async () => {
+    const d = await corps(await jour("?date=2026-08-19")) as { hourly: { label: string; heure: number; total: number }[] };
+    expect(d.hourly).toEqual([{ heure: 21, label: "21h", total: 38 }]);
   });
 
   it("cumule plusieurs parties dans la même heure", async () => {
@@ -166,8 +169,8 @@ describe("GET /api/dashboard/daily", () => {
       partie({ id: "g2", date: new Date("2026-08-19T21:52:00Z"), pompesCalculees: 12 }),
       partie({ id: "g3", date: new Date("2026-08-19T23:05:00Z"), pompesCalculees: 5 }),
     ]);
-    const d = await corps(await jour("?date=2026-08-19")) as { hourly: { label: string; total: number }[]; total: number };
-    expect(d.hourly).toEqual([{ label: "21h", total: 50 }, { label: "23h", total: 5 }]);
+    const d = await corps(await jour("?date=2026-08-19")) as { hourly: { label: string; heure: number; total: number }[]; total: number };
+    expect(d.hourly).toEqual([{ heure: 21, label: "21h", total: 50 }, { heure: 23, label: "23h", total: 5 }]);
     expect(d.total).toBe(55);
   });
 });

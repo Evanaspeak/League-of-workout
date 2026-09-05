@@ -38,3 +38,23 @@ export function uniteLocalisee(
     style: "unit", unit, unitDisplay: "short", maximumFractionDigits: decimales,
   }).format(valeur);
 }
+
+/**
+ * L'HEURE DU JOUR sur un axe de graphique : « 14 h » en français, « 2 PM » en
+ * anglais, « 14 Uhr » en allemand, « 14時 » en japonais, « 14 » en espagnol.
+ *
+ * Elle vivait dans DEUX routes d'API sous la forme `` `${h}h` ``, donc en
+ * français dans les six langues — et le commentaire posé juste au-dessus
+ * expliquait déjà pourquoi les jours et les mois n'y sont plus : « le serveur
+ * envoie leur numéro, et le navigateur les nomme dans la langue du lecteur ».
+ * La règle était écrite ; l'heure ne l'avait pas suivie. C'est la moitié non
+ * réparée d'une correction déjà faite, motif que ce projet paie en boucle.
+ *
+ * `hour12` n'est pas imposé : l'anglais rend « 2 PM » et le français « 14 h »
+ * parce que c'est ce que chaque langue fait, et une table écrite à la main
+ * aurait rendu « 14h » aux deux.
+ */
+export function heureDuJourLocalisee(heure: number, etiquette: string): string {
+  return new Intl.DateTimeFormat(etiquette, { hour: "numeric", timeZone: "UTC" })
+    .format(new Date(Date.UTC(1970, 0, 4, heure)));
+}

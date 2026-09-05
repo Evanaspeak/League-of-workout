@@ -1149,6 +1149,75 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 14h » sur l'axe du tableau de bord, dans les six langues
+Le journal le savait, l'avait écrit, et ne l'avait pas corrigé. L'entrée des
+unités recollées porte, dans ce qu'elle laisse en place : « les étiquettes
+horaires des graphiques — `label: \`${h}h\`` — sont construites dans une route
+d'API, au serveur, sans la langue de qui lit ; les corriger demande de la faire
+descendre jusque-là ou de déplacer la mise en forme au navigateur ».
+
+**La deuxième réponse était la bonne, et elle était DÉJÀ appliquée deux lignes
+plus bas.** Le commentaire de `dashboard/route.ts` l'écrit noir sur blanc :
+
+> Le serveur ne nomme plus les jours ni les mois : il envoie leur numéro, et le
+> navigateur les nomme dans la langue du lecteur. Écrits ici, ils restaient
+> français au milieu d'un tableau de bord allemand ou japonais.
+
+Les jours et les mois avaient suivi cette règle. **L'heure, non**, à trois
+lignes d'écart, dans le même objet. C'est le motif que ce projet paie en boucle
+sous sa forme la plus discrète : pas une copie qu'on remarque, une règle
+appliquée à deux de ses trois endroits — et cette fois avec sa propre
+justification écrite juste au-dessus de l'exception.
+
+**`Intl` sait ce qu'aucune table écrite à la main n'aurait su**, et c'est
+mesuré plutôt que supposé : l'anglais rend **« 2 PM »**, l'espagnol un nombre
+NU (« 14 »), l'allemand « 14 Uhr », le japonais « 14時 ». Une table aurait
+écrit « 14h » aux six, et personne n'aurait su qu'un lecteur américain lit son
+axe en douze heures.
+
+**Les deux routes concernées envoient le numéro À CÔTÉ du libellé**, comme
+pour les jours et les mois : `label` reste, pour un onglet resté ouvert sur une
+réponse plus ancienne — le tableau de bord se garde ouvert une soirée entière.
+
+**Le sabotage a trouvé que le garde lisait ma propre explication.** Le
+commentaire posé au-dessus de l'heure dit « comme pour les jours et les mois »,
+et le mot « mois » y suffisait à satisfaire le contrôle : le défaut remis à
+l'identique passait au vert. C'est le pendant exact du piège déjà écrit pour
+`envoisProgrammes.test.ts` — là, le commentaire CITAIT le motif fautif et
+déclenchait le garde ; ici il le CALMAIT. Le source est privé de ses
+commentaires avant d'être lu, les chaînes et les gabarits préservés.
+
+**Et un second trou, sur le BRANCHEMENT.** Ma première version exigeait que la
+couche d'affichage lise `.heure` : `typeof p.heure === "number"` le lit sans
+rien en faire, donc retirer la mise en forme passait au vert. Le garde exige
+maintenant que le champ NOURRISSE le libellé — qu'il entre dans l'appel dont le
+résultat devient `label`. C'est la leçon déjà écrite trois fois ici : un module
+juste dont personne ne vérifie le branchement ne sert à rien.
+
+**Le témoin ne peut pas être un compte.** Borné à `label:`, le recensement
+trouve encore trois objets et reste au-dessus du seuil — en ayant perdu
+exactement la forme la plus facile à manquer, le RACCOURCI d'objet
+(`monthLabels.map((label, i) => ({ label, … }))`). Le témoin exige donc les
+DEUX formes. C'est le piège déjà payé sur `filtreParCompte`, qui recalait
+`where: { id, userId }` pour la même raison.
+
+Cinq sabotages, cinq échecs.
+
+**Et deux tests existants ont mordu**, ce qui est leur travail : la réponse de
+`/api/dashboard/daily` a changé de forme, et deux assertions l'ont dit avant
+moi. Une réponse d'API ne change pas en silence.
+
+**Le piège du `git checkout --`, retombé dedans pour la troisième fois.** Il
+restaure depuis l'INDEX : mes trois corrections du garde n'étaient pas
+indexées, et la remise en état après le premier sabotage les a effacées — j'ai
+relancé la série sur un fichier amputé et lu « 8 tests » là où il y en avait
+onze. La parade est écrite depuis la dette d'équipe : **indexer avant de
+saboter**, et le compte de tests qui baisse est le signe qui l'attrape.
+
+Vérifié à l'écran sur un compte semé à soixante parties, onglet « Heure » du
+graphique de période, dans les six langues : « 00 h », « 12 AM », « 1 »,
+« 00 Uhr », « 0时 », « 0時 ».
+
 ### Deux lignes du plan étaient faites depuis des semaines, sans être cochées
 Passe sur les soixante-neuf lignes non cochées, en cherchant celles que le
 journal ou le dépôt disent déjà faites. C'est le pendant du garde écrit le
@@ -1968,8 +2037,10 @@ qui manquait à V439, V440, V441 et V442, toutes derrière la porte. Fusionnée 
 | 03 h 17 | absent | présent |
 | 03 h 19 | absent | présent |
 | 03 h 33 | absent | présent |
+| 03 h 59 | absent | présent |
+| 04 h 07 | absent | présent |
 
-**Trente-deux minutes, et ce n'est pas un cache** : `x-vercel-cache: MISS`,
+**Soixante-six minutes au dernier relevé, et ce n'est pas un cache** : `x-vercel-cache: MISS`,
 `age: 0` — un rendu neuf à chaque appel. La production répond par ailleurs
 parfaitement, et sert au moins V428 (« Runden » sur `/de`).
 
