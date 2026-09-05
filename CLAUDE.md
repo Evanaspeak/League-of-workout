@@ -1833,6 +1833,59 @@ propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
 
+### Neuf réglages de plus, et le trou que la fusion par valeur ne voit pas
+La veille, la lecture des réglages avait cessé d'effacer ce qu'on venait de
+taper — pour DEUX états sur onze. Le journal l'écrivait noir sur blanc : « les
+deux premières le sont […] elles méritent la même fusion, et elles ne l'ont pas
+encore ». C'est le motif que ce projet paie en boucle, et il était écrit dans
+sa propre entrée.
+
+**Neuf autres états s'écrasaient de la même façon**, et huit d'entre eux
+s'enregistrent AU CLIC — variante de pompes, plafond quotidien, seuil de
+rappel, bilan hebdomadaire, mode fantôme, mur des records, nom affiché,
+sélection d'exercices — plus le formulaire de profil, qui se tape. Pour les
+huit, c'est pire qu'une saisie perdue : la valeur est DÉJÀ en base quand la
+réponse plus ancienne vient la contredire à l'écran.
+
+**Et la fusion par valeur ne suffisait pas.** Elle demande « est-ce que l'état
+courant diffère du défaut ? », donc elle est aveugle au geste d'ANNULATION :
+quelqu'un qui remet un réglage à sa valeur d'origine — décocher sa variante,
+remettre le plafond à zéro, ressortir du mode fantôme — produit un état
+identique au défaut, donc « pas touché », donc la réponse périmée le
+contredit. Sur un réglage de confidentialité, ça veut dire un mode fantôme qui
+se rallume tout seul, c'est-à-dire le seul refus qu'on ne vérifie jamais.
+
+Un registre des clés ÉCRITES ferme ce trou : une clé envoyée l'emporte quoi
+qu'elle vaille. Le nom retenu est celui que le SERVEUR connaît, parce que c'est
+lui que l'envoi porte — et `enregistrerReglage` étant le passage obligé des
+huit, il le remplit tout seul.
+
+**Un blocage complet de la lecture aurait été plus simple et faux.** Ignorer
+toute la réponse dès qu'une écriture a eu lieu ferait, sur une lecture lente,
+afficher les DÉFAUTS à la place des réglages enregistrés de quelqu'un qui a
+touché un seul bouton. Le grain est le champ, pas la page.
+
+**Mon premier parcours ne prouvait rien, et seul le sabotage l'a dit.** Il
+dormait une seconde et demie PUIS laissait partir la requête : le serveur était
+donc interrogé APRÈS le clic, et il répondait la valeur qu'on venait d'écrire.
+La réponse ne contredisait plus rien, et le contrôle passait avec ou sans la
+fusion. Le défaut réel est l'inverse — le serveur a répondu l'état d'AVANT, et
+sa réponse arrive après le geste. On va donc la chercher tout de suite
+(`route.fetch()`) et on ne la remet qu'ensuite (`route.fulfill`).
+
+**Le témoin a changé avec elle.** Compter les lectures RETARDÉES ne dit que
+« le détournement a pris », ce qui reste vrai quand la réponse est déjà
+arrivée. Ce qui prouve la course est le couple des deux compteurs : une lecture
+demandée et pas encore rendue au moment du geste.
+
+Quatre sabotages, quatre échecs, et à chaque fois le seul test qu'il fallait :
+la fusion des objets retirée fait tomber le mètre-ruban, celle des valeurs fait
+tomber l'exercice coché, le registre vidé fait tomber le réglage annulé, et le
+retard supprimé fait tomber les deux témoins. Un cinquième n'a pas compilé
+plutôt que de faire tomber un test — retirer le contrôle du registre rend son
+paramètre inutilisé, et `noUnusedLocals` le nomme — c'est noté comme tel et non
+compté comme un garde qui mord.
+
 ### Une phrase assemblée dans le composant, et le japonais qu'elle produisait
 Trouvé en lisant le tableau de bord en japonais. La ligne du niveau de compte
 rendait **« 400 XP 次のレベルまで 5 »** — le chiffre du niveau tombe APRÈS la
