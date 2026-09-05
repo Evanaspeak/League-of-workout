@@ -20,7 +20,7 @@
  *   node scripts/charge.mjs [base] [chemin] [--cookie=...] [--paliers=1,5,10] [--langue=fr]
  */
 
-import { enLangue, langueDemandee } from "./langue.mjs";
+import { enLangue, langueDemandee, refuserPrefixe } from "./langue.mjs";
 
 /**
  * Ce que ce script mesure, et ce qu'il ne mesure PAS.
@@ -45,7 +45,7 @@ const option = (nom, defaut) => {
 };
 
 const BASE = positionnels[0] ?? "http://127.0.0.1:3311";
-const CHEMIN = enLangue(langueDemandee(process.argv), positionnels[1] ?? "/");
+const CHEMIN = enLangue(langueDemandee(process.argv), refuserPrefixe(positionnels[1] ?? "/"));
 const COOKIE = option("cookie", "");
 const PALIERS = option("paliers", "1,2,5,10,20,40,80,160").split(",").map(Number);
 /** Durée d'un palier. Assez long pour dépasser le régime transitoire. */

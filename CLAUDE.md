@@ -1149,6 +1149,63 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 5 septembre au matin, et le piège qu'on ferme enfin
+Passée après V443 à V448, dont une mise à jour de la bibliothèque qui dessine.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**aucune page laissée de côté** dans aucune des six. C'est le second chiffre
+qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/fr/settings` | 124 ms | 924 ms | 0,000 | la mention Riot, en pied |
+| `/fr/bilan` | 228 ms | **2096 ms** | 0,000 | l'image de saison |
+| `/fr/amis` | 260 ms | 1132 ms | 0,013 | le paragraphe du classement |
+| `/fr/dashboard` | 268 ms | 1144 ms | 0,000 | le bandeau d'attente Riot |
+| `/fr/history` | 488 ms | 1120 ms | 0,000 | le titre |
+| `/fr` | 960 ms | 1472 ms | 0,000 | l'image de l'application |
+
+Les six sont dans les seuils. `/fr/bilan` reste le plus proche sur téléphone
+bridé, pour la raison écrite trois fois déjà : son plus grand élément est
+l'image de saison, et 2096 ms est à peu près l'instant où elle finit
+d'arriver. Le poids du JavaScript va de 189 ko sur l'accueil à **379 ko** sur
+le tableau de bord — contre 377 avant la mise à jour de recharts, donc rien.
+
+**Et le premier passage a mesuré six fois la page 404**, avec de très bons
+chiffres. J'avais passé `/fr/dashboard` — **avec** le préfixe de langue — que
+`enLangue` préfixe une seconde fois. Le rapport annonçait « plus grand
+élément : Cette adresse ne mène nulle part », ce qui est le seul indice.
+
+**C'est la DEUXIÈME fois, et la première est écrite dans ce journal**, avec sa
+raison de ne pas être détectable : « le contrôle d'atterrissage ne peut pas le
+voir, il compare le chemin d'arrivée au chemin transformé, c'est-à-dire à
+lui-même ». La leçon était écrite et le piège restait ouvert. **Une leçon
+qu'on écrit sans la fermer se retombe dedans.**
+
+`refuserPrefixe` la ferme à l'ENTRÉE, seul endroit où le défaut soit visible :
+un chemin dont le premier segment est une des six langues sort en erreur, en
+disant quoi passer à la place et quel drapeau employer. Éprouvé dans les deux
+sens sur les deux outils qui prennent un chemin.
+
+**Le discriminant du garde n'est PAS « emploie `enLangue` »**, et c'est ce que
+mon premier jet avait posé : `accessibilite.mjs` et `comparer-rendu.mjs`
+l'emploient sur une liste de pages écrite DANS le script, où personne ne peut
+glisser un préfixe. Deux faux positifs, c'est-à-dire un garde qui envoie
+corriger ce qui va bien. Ce qui distingue est que le chemin vienne de la
+LIGNE DE COMMANDE, et ça se suit : un identifiant affecté depuis
+`positionnels`, ou depuis une expression qui en contient un, puis passé à
+`enLangue`.
+
+**Et le découpage a dû apprendre les parenthèses ÉQUILIBRÉES.** Un `[^)]*`
+s'arrête à la première fermante : sur
+`enLangue(langueDemandee(process.argv), refuserPrefixe(x))` il ne rendait que
+le premier argument, donc il ne voyait jamais le chemin — c'est-à-dire tout le
+sujet. `charge.mjs` passait ainsi pour non concerné. C'est le troisième
+découpage de ce projet à suivre la profondeur plutôt que les virgules, après
+`quantiteLocalisee` et `etiquettesLocalisees`.
+
+Quatre sabotages, quatre échecs.
+
 ### Dépendances au 5 septembre, et les deux pixels de recharts
 `npm audit` rend **les deux mêmes vulnérabilités**, toutes deux dans `mysql2`
 et toutes deux inatteignables : ce projet parle à PostgreSQL, le paquet
