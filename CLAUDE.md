@@ -1149,6 +1149,62 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Seuls les 100 premiers inscrits ont accès », six jours après la levée du plafond
+Trouvé en poursuivant le recensement des nombres : si le compte de jeux avait
+vieilli, d'autres promesses chiffrées pouvaient l'avoir fait. Deux, et la
+seconde est sur l'écran de connexion.
+
+**La politique de confidentialité annonçait une FINALITÉ qui n'existe plus.**
+La ligne de la candidature bêta disait « Sélection des cent premiers comptes
+(motivation, provenance, engagement) », dans les six langues. V300 a levé le
+plafond ; `betaRank` ne dit plus que l'ordre d'arrivée, et `/waitlist` est
+partie avec.
+
+Ce n'est pas une coquille de marketing. Une finalité est ce que le règlement
+exige d'exact, et celle-là décrivait une sélection qui n'a plus lieu. Ce que
+la candidature sert vraiment aujourd'hui se lit dans le code :
+`porteBeta` ouvre sur `accepted`, `auth.ts` refuse sur `rejected`, et
+`beta-access` autorise l'adresse tout de suite. C'est donc **décider de
+l'accès**, et savoir d'où viennent les inscriptions.
+
+**Et l'écran de connexion promettait l'inverse de ce que le produit fait.**
+« Seuls les 100 premiers inscrits ont accès. » — rendue **trois fois**, sous
+chacun des trois onglets, depuis six jours. Sur la page qui existe pour faire
+entrer, une phrase qui dit à la plupart des gens qu'ils sont arrivés trop
+tard.
+
+Elle est **retirée**, pas corrigée : le lien juste en dessous dit déjà quoi
+faire — « Pas encore de code ? Obtenir un accès » — et le titre de l'écran dit
+déjà que la bêta est fermée. C'est la solution de V443 sur la page de
+téléchargement, appliquée à une phrase qui, elle, ne promettait pas trop mais
+trop peu. Les six clés partent avec, et `clesMortes.test.ts` l'aurait exigé de
+toute façon.
+
+**Le garde tient les DEUX moitiés ensemble**, et c'est ce qui le distingue
+d'une interdiction : tant qu'aucun plafond ne vit dans le code
+(`BETA_LIMIT`, `PLAFOND_BETA`, `LIMITE_BETA`), aucun texte ne l'annonce. Le
+jour où l'on en remet un, le test tombe — et c'est le bon comportement, il
+oblige à reprendre le texte en même temps que la règle. C'est le motif de
+`jeuxDetectables` retourné : ce qui ne peut pas s'importer se compare.
+
+Son motif de texte s'éprouve sur **six cas fabriqués**, un par langue, plus un
+cas qu'il doit LAISSER passer — « les paliers valent 100, 500 » — sans quoi
+rien ne distinguerait un motif juste d'un motif qui refuse tout nombre.
+
+Trois sabotages, trois échecs.
+
+Vérifié à l'écran : la phrase a disparu des trois onglets en français, en
+allemand et en japonais, et la politique rend « Décider de l'accès : accepter
+ou refuser une demande », « Über den Zugang entscheiden », « アクセスの可否を
+決めること ».
+
+**Ce que ça apprend, et c'est la troisième fois en une heure.** Le plafond a
+été levé le 30 août ; le journal porte l'entrée « Le plafond de cent est levé,
+et la liste d'attente supprimée avec lui », qui recense soigneusement la page,
+son dictionnaire, ses chemins publics et sa navigation — et pas les deux
+textes qui l'annonçaient ailleurs. Une suppression se recense dans le dossier
+qu'on supprime ; ce qui la MENTIONNE vit ailleurs, et c'est ce qu'on oublie.
+
 ### « Quinze jeux » sur la première phrase du produit, depuis deux jours
 Trouvé en lisant la modale d'accueil EN JAPONAIS, sur un compte neuf ouvert
 pour l'occasion. Elle annonce « カタログには 15 タイトル » — quinze titres au
@@ -1213,9 +1269,15 @@ le défaut remis, et un écran qui passe un nombre écrit à la main plutôt que
 Vérifié à l'écran dans les six langues : « 16 jeux », « 16 games »,
 « 16 juegos », « 16 Spiele », « 16 タイトル », « 16 款游戏 ».
 
-**Ce que la lecture a trouvé d'autre, et qui va bien** : les douze étapes de
-la visite guidée et les six de la modale d'accueil, lues en japonais, ne
-portent aucune autre affirmation chiffrée sur le produit.
+**Ce que le recensement a trouvé d'autre, et comment il a été fait.** J'ai
+lu trois étapes à l'écran ; le reste est un recensement des DICTIONNAIRES,
+bloc japonais, sur les lignes qui portent un chiffre — ce qui est exhaustif là
+où la lecture à l'écran ne l'était pas. `visite.ts` n'en porte aucune sur ses
+douze étapes. `onboardingModal.ts` en porte une : « ランクで 2/9/4 はこたえます。
+きれいにキャリーすれば腕立て 6 回で済みます », un KDA et un coût donnés en
+EXEMPLE. Ce n'est pas un compte du catalogue, et le français dit la même
+chose ; c'est laissé tel quel, avec cette réserve que le « 6 回 » dépend du
+barème, qui est réglable depuis l'administration.
 
 ### Campagne de clôture du 5 septembre au matin, et le piège qu'on ferme enfin
 Passée après V443 à V448, dont une mise à jour de la bibliothèque qui dessine.
