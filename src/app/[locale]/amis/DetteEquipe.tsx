@@ -101,7 +101,7 @@ export default function DetteEquipe(
 
   if (!ouvert) {
     return (
-      <button type="button" className="lol-btn" onClick={ouvrir} aria-label={`${t.equipeVoir} ${nom}`}>
+      <button type="button" className="lol-btn" onClick={ouvrir} aria-label={t.equipeVoirNomme(nom)}>
         {t.equipeVoir}
       </button>
     );
@@ -131,7 +131,7 @@ export default function DetteEquipe(
                 {!l.moi && l.dus > 0 && (
                   <>
                     <label htmlFor={`part-${l.id}`} className="lecture-ecran">
-                      {`${t.equipeRelayer} ${l.pseudo}`}
+                      {t.equipeRelayerNomme(l.pseudo)}
                     </label>
                     <input
                       id={`part-${l.id}`}
@@ -149,7 +149,7 @@ export default function DetteEquipe(
                       className="lol-btn"
                       disabled={occupe === l.id || !partValide(parts[l.id] ?? String(Math.min(l.dus, 10)), l.dus)}
                       onClick={() => relayer(l.id, Number(parts[l.id] ?? Math.min(l.dus, 10)))}
-                      aria-label={`${t.equipeRelayer} ${l.pseudo}`}
+                      aria-label={t.equipeRelayerNomme(l.pseudo)}
                     >
                       {occupe === l.id ? t.equipeRelaisEnCours : t.equipeRelayer}
                     </button>

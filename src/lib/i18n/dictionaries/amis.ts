@@ -55,6 +55,7 @@ export const amis = {
     membres: (n: number) => (n === 1 ? "1 membre" : `${n} membres`),
     codeDuGroupe: "Code à partager",
     copier: "Copier",
+    copierNomme: (nom: string) => `Copier le code de ${nom}`,
     copie: "Copié",
     refaireCode: "Refaire le code",
     refaireCodeAide: "L'ancien code cesse aussitôt de marcher. À faire si le code a circulé trop loin.",
@@ -113,11 +114,13 @@ export const amis = {
 
 
     equipeVoir: "La dette de l'équipe",
+    equipeVoirNomme: (nom: string) => `La dette de l'équipe ${nom}`,
     equipeTitre: "Dette de l'équipe",
     equipeAide: "Chacun paie ce qu'il peut. Ce que tu fais pour quelqu'un compte pour toi dans le classement, et retire sa dette à lui.",
     equipeTotal: (n: number) => `${n} points dus en tout`,
     equipeDu: (n: number) => (n === 0 ? "à jour" : `doit ${n}`),
     equipeRelayer: "Prendre",
+    equipeRelayerNomme: (pseudo: string) => `Prendre une part de la dette de ${pseudo}`,
     equipeRelaisEnCours: "En cours…",
     equipeMasques: (n: number) => (n === 1
       ? "1 membre en mode fantôme n'est pas compté dans ce total."
@@ -176,6 +179,7 @@ export const amis = {
     membres: (n: number) => (n === 1 ? "1 member" : `${n} members`),
     codeDuGroupe: "Code to share",
     copier: "Copy",
+    copierNomme: (nom: string) => `Copy the code for ${nom}`,
     copie: "Copied",
     refaireCode: "New code",
     refaireCodeAide: "The old code stops working immediately. Do this if the code travelled too far.",
@@ -219,11 +223,13 @@ export const amis = {
 
 
     equipeVoir: "The team's debt",
+    equipeVoirNomme: (nom: string) => `Team debt for ${nom}`,
     equipeTitre: "Team debt",
     equipeAide: "Everyone pays what they can. What you do for someone counts for you in the ranking, and clears their debt.",
     equipeTotal: (n: number) => `${n} points owed in total`,
     equipeDu: (n: number) => (n === 0 ? "clear" : `owes ${n}`),
     equipeRelayer: "Take on",
+    equipeRelayerNomme: (pseudo: string) => `Take on part of ${pseudo}'s debt`,
     equipeRelaisEnCours: "Working…",
     equipeMasques: (n: number) => (n === 1
       ? "1 member in ghost mode is not counted in this total."
@@ -282,6 +288,7 @@ export const amis = {
     membres: (n: number) => (n === 1 ? "1 miembro" : `${n} miembros`),
     codeDuGroupe: "Código para compartir",
     copier: "Copiar",
+    copierNomme: (nom: string) => `Copiar el código de ${nom}`,
     copie: "Copiado",
     refaireCode: "Nuevo código",
     refaireCodeAide: "El código anterior deja de funcionar al instante. Hazlo si el código ha llegado demasiado lejos.",
@@ -325,11 +332,13 @@ export const amis = {
 
 
     equipeVoir: "La deuda del equipo",
+    equipeVoirNomme: (nom: string) => `La deuda del equipo ${nom}`,
     equipeTitre: "Deuda del equipo",
     equipeAide: "Cada uno paga lo que puede. Lo que haces por alguien cuenta para ti en la clasificación y salda su deuda.",
     equipeTotal: (n: number) => `${n} puntos pendientes en total`,
     equipeDu: (n: number) => (n === 0 ? "al día" : `debe ${n}`),
     equipeRelayer: "Asumir",
+    equipeRelayerNomme: (pseudo: string) => `Asumir parte de la deuda de ${pseudo}`,
     equipeRelaisEnCours: "En curso…",
     equipeMasques: (n: number) => (n === 1
       ? "1 miembro en modo fantasma no se cuenta en este total."
@@ -388,6 +397,7 @@ export const amis = {
     membres: (n: number) => (n === 1 ? "1 Mitglied" : `${n} Mitglieder`),
     codeDuGroupe: "Code zum Teilen",
     copier: "Kopieren",
+    copierNomme: (nom: string) => `Code von ${nom} kopieren`,
     copie: "Kopiert",
     refaireCode: "Neuer Code",
     refaireCodeAide: "Der alte Code funktioniert sofort nicht mehr. Mach das, wenn der Code zu weit gewandert ist.",
@@ -431,11 +441,13 @@ export const amis = {
 
 
     equipeVoir: "Die Schuld des Teams",
+    equipeVoirNomme: (nom: string) => `Die Schuld des Teams ${nom}`,
     equipeTitre: "Teamschuld",
     equipeAide: "Jeder zahlt, was er kann. Was du für jemanden tust, zählt für dich in der Rangliste und tilgt dessen Schuld.",
     equipeTotal: (n: number) => `${n} Punkte insgesamt offen`,
     equipeDu: (n: number) => (n === 0 ? "ausgeglichen" : `schuldet ${n}`),
     equipeRelayer: "Übernehmen",
+    equipeRelayerNomme: (pseudo: string) => `Einen Teil der Schuld von ${pseudo} übernehmen`,
     equipeRelaisEnCours: "Läuft…",
     equipeMasques: (n: number) => (n === 1
       ? "1 Mitglied im Geistmodus wird in dieser Summe nicht gezählt."
@@ -494,6 +506,7 @@ export const amis = {
     membres: (n: number) => `${n} 名成员`,
     codeDuGroupe: "分享用的邀请码",
     copier: "复制",
+    copierNomme: (nom: string) => `复制 ${nom} 的邀请码`,
     copie: "已复制",
     refaireCode: "换一个邀请码",
     refaireCodeAide: "旧的邀请码会立刻失效。如果邀请码传得太远，就换一个。",
@@ -535,11 +548,13 @@ export const amis = {
 
 
     equipeVoir: "队伍的欠账",
+    equipeVoirNomme: (nom: string) => `${nom} 队伍的欠账`,
     equipeTitre: "队伍欠账",
     equipeAide: "各尽所能。你为别人做的努力计入你的排名，同时抵消他的欠账。",
     equipeTotal: (n: number) => `共欠 ${n} 点`,
     equipeDu: (n: number) => (n === 0 ? "已还清" : `欠 ${n}`),
     equipeRelayer: "承担",
+    equipeRelayerNomme: (pseudo: string) => `承担 ${pseudo} 的一部分欠账`,
     equipeRelaisEnCours: "进行中…",
     equipeMasques: (n: number) => `有 ${n} 位隐身成员未计入此总数。`,
 
@@ -596,6 +611,7 @@ export const amis = {
     membres: (n: number) => `メンバー ${n} 人`,
     codeDuGroupe: "共有するコード",
     copier: "コピー",
+    copierNomme: (nom: string) => `${nom} の招待コードをコピー`,
     copie: "コピーしました",
     refaireCode: "コードを作り直す",
     refaireCodeAide: "古いコードはすぐに使えなくなります。コードが広まりすぎたときに使ってください。",
@@ -637,11 +653,13 @@ export const amis = {
 
 
     equipeVoir: "チームの負債",
+    equipeVoirNomme: (nom: string) => `${nom} のチームの負債`,
     equipeTitre: "チームの負債",
     equipeAide: "できる人ができる分だけ払います。誰かのために果たした努力はあなたのランキングに加算され、その人の負債を減らします。",
     equipeTotal: (n: number) => `合計 ${n} ポイントの未払い`,
     equipeDu: (n: number) => (n === 0 ? "完済" : `${n} の未払い`),
     equipeRelayer: "引き受ける",
+    equipeRelayerNomme: (pseudo: string) => `${pseudo} の負債の一部を引き受ける`,
     equipeRelaisEnCours: "処理中…",
     equipeMasques: (n: number) => `ゴーストモードの ${n} 人はこの合計に含まれていません。`,
 

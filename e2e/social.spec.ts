@@ -4,6 +4,19 @@ import { viderLesFenetres } from "./intro";
 import { compter, requeteSql } from "./base";
 
 /**
+ * Un motif qui exige tous ses morceaux, dans n'importe quel ORDRE.
+ *
+ * Un libellé composé par le dictionnaire place le nom là où la langue le
+ * veut : « Code von X kopieren » en allemand, « X の招待コードをコピー » en
+ * japonais. Un test qui cherche « copier X » est donc lié à la typographie de
+ * la langue où il a été écrit — c'est la leçon déjà payée sur le nombre mis
+ * en forme au classement.
+ */
+function sansOrdre(...morceaux: string[]): RegExp {
+  return new RegExp(morceaux.map((m) => `(?=.*${m})`).join(""), "i");
+}
+
+/**
  * Les amis et les groupes, de bout en bout.
  *
  * Les tests unitaires disent ce que chaque route décide. Ils ne peuvent rien
@@ -415,14 +428,20 @@ test("un coéquipier prend une part de la dette, et c'est la bonne qui baisse", 
   await requeteSql('UPDATE "User" SET "dettePointsDus" = 60 WHERE pseudo = $1', [a.compte.pseudo]);
 
   await pageB.reload();
-  // Le bouton porte le nom du GROUPE : plusieurs cartes peuvent être ouvertes
-  // sur cet écran, et « la dette de l'équipe » seul ne dirait pas laquelle.
-  await pageB.getByRole("button", { name: new RegExp(`(la dette de l.équipe|the team.s debt) ${nom}`, "i") }).click();
+  /**
+   * Le libellé porte le nom du GROUPE — plusieurs cartes peuvent être
+   * ouvertes sur cet écran, et « la dette de l'équipe » seul ne dirait pas
+   * laquelle — mais on ne peut pas le chercher dans un ORDRE donné : chaque
+   * langue place le nom où elle veut. L'allemand rejette le verbe à la fin,
+   * le japonais met l'objet devant. Les morceaux se cherchent donc sans
+   * ordre, ce qui est la seule lecture qui reste vraie dans les six langues.
+   */
+  await pageB.getByRole("button", { name: sansOrdre("(dette|debt)", nom) }).click();
   await expect(pageB.getByText(a.compte.pseudo, { exact: true })).toBeVisible();
 
-  const champ = pageB.getByLabel(new RegExp(`(prendre|take on) ${a.compte.pseudo}`, "i")).first();
+  const champ = pageB.getByLabel(sansOrdre("(prendre|take on)", a.compte.pseudo)).first();
   await champ.fill("25");
-  await pageB.getByRole("button", { name: new RegExp(`(prendre|take on) ${a.compte.pseudo}`, "i") }).click();
+  await pageB.getByRole("button", { name: sansOrdre("(prendre|take on)", a.compte.pseudo) }).click();
 
   // L'écran ET la base : sans le second, un écran qui se contente d'afficher
   // ce qu'on vient de taper passerait le test.

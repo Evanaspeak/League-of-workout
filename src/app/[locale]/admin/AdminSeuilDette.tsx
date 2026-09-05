@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
+import { formaterDuree } from "@/lib/exercices";
 import { adminSeuil } from "@/lib/i18n/dictionaries/adminSeuil";
 
 /** Bornes du réglage : 2 h suffisent largement à tester tous les cas. */
@@ -16,6 +17,7 @@ const MAX_MIN = 120;
  */
 export default function AdminSeuilDette() {
   const t = useT(adminSeuil);
+  const etiquette = useDateLocale();
 
   const [minutes, setMinutes] = useState("5");
   const [secondes, setSecondes] = useState("0");
@@ -46,13 +48,13 @@ export default function AdminSeuilDette() {
     Math.max(0, (Number(minutes) || 0) * 60 + (Number(secondes) || 0)),
   );
 
-  const lisible = (sec: number) => {
-    if (sec <= 0) return t.jamais;
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    if (m === 0) return `${s} ${t.secondes}`;
-    return s === 0 ? `${m} ${t.minutes}` : `${m} ${t.minutes} ${s}`;
-  };
+  /**
+   * Le cadran vient de `formaterDuree`, qui donne l'unité à `Intl`. Il était
+   * composé ici à partir de deux mots du dictionnaire — « 5 minutes 30 » —
+   * c'est-à-dire une deuxième façon d'écrire une durée, à côté de celle que
+   * tout le produit emploie, et qui en divergerait à la première correction.
+   */
+  const lisible = (sec: number) => (sec <= 0 ? t.jamais : formaterDuree(sec, etiquette));
 
   async function enregistrer() {
     setSaving(true);
