@@ -1846,6 +1846,86 @@ propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
 
+### La page de téléchargement ne nommait qu'un jeu sur seize
+Trouvé en la lisant en japonais, puis en français pour comparer. Le
+sous-titre, sous le titre de la page, dans les six langues :
+
+> Intègre le client League of Legends en temps réel.
+
+C'est VRAI, et c'est la moitié de ce que l'application fait. Elle surveille
+**seize jeux** par leur processus (`desktop/src/jeuxProcessus.js`) et démarre
+un suivi au lancement de n'importe lequel ; ce qu'elle fait EN PLUS pour
+League, c'est lire le client lui-même — phase, file, rôle, écran de fin.
+Quelqu'un qui joue à Valorant, à Apex ou à Rocket League lisait donc une
+phrase d'où il ressort que l'application ne lui sert à rien.
+
+**C'est le défaut déjà corrigé sur la page d'accueil**, mot pour mot : « une
+phrase honnête au moment où on l'écrit devient malhonnête quand le produit
+avance ». Et la page se contredisait elle-même trois lignes plus bas —
+« Lancez une partie : l'application détecte automatiquement les résultats »,
+sans nommer aucun jeu.
+
+**La nouvelle phrase ne porte aucun NOMBRE**, et c'est délibéré : « tous les
+jeux du catalogue » reste vrai quand le catalogue grandit, là où « seize »
+serait un nombre écrit une fois au-dessus de quelque chose qui bouge — le
+défaut que ce journal trouve le plus. Et l'affirmation est déjà GARDÉE :
+`src/jeuxDetectables.test.ts` compare la table des processus au catalogue du
+site, donc « tous » est tenu par un test plutôt que par une relecture.
+
+Elle ne porte pas non plus de PRONOM, ce qui lui évite la question du registre
+dans les six langues à la fois.
+
+**Et le recensement a montré une page qui mélange ses deux registres.** Le
+bloc français de `telechargement.ts` vouvoie — « Installez l'application sur
+votre PC », « Connectez-vous avec votre compte », « Lancez une partie » — et
+une ligne, une seule, tutoyait : « **Clique** sur Informations
+complémentaires ». Sur la même page, dans la même langue.
+
+`registre.test.ts` ne pouvait pas le voir : sa dispense écarte le fichier
+ENTIER du contrôle, donc un tutoiement posé dedans y est parfaitement
+invisible. **Une dispense borne ce qu'on tolère, elle n'éteint pas la règle.**
+Le garde vérifie maintenant les deux sens, et une clé qui tutoie
+légitimement dans un fichier qui vouvoie se déclare avec sa raison — il y en a
+une, le message d'erreur technique du consentement santé, qui n'est pas une
+phrase de santé et parle donc de la voix ordinaire de l'application.
+
+**Le motif a coûté onze faux positifs au premier jet, et la cause vaut d'être
+écrite.** `\b` de JavaScript repose sur `[A-Za-z0-9_]` : une lettre ACCENTUÉE
+y est un caractère NON-mot, donc une frontière. `\btes\b` trouve donc « tes »
+dans « ê|tes », et `\bta\b` trouve « ta » dans « bê|ta ». Le garde accusait
+« Vous êtes connecté » et « Candidater à la bêta » d'être du tutoiement,
+c'est-à-dire exactement l'inverse de ce qu'il cherche. Les bornes s'écrivent
+maintenant à la main, sur une classe de lettres qui contient les accents.
+
+**Le motif couvre les IMPÉRATIFS et pas seulement les pronoms**, parce que le
+défaut trouvé était un impératif : les pronoms seuls l'auraient laissé passer,
+et un garde qui ne voit pas le défaut qu'il raconte ne garde rien. La liste
+d'impératifs est écrite à la main et elle vieillira — mais son vieillissement
+ne produit que des SILENCES, jamais de fausse alerte : dans un fichier qui
+vouvoie, la forme correcte finit par `-ez`.
+
+Cinq sabotages, cinq échecs : le « Clique » remis, la tolérance vidée de son
+objet, les bornes remises en `\b`, une dispense retirée, et la boucle vidée —
+ce dernier pour le témoin, sans quoi un dossier renommé rendrait le contrôle
+vert en n'examinant aucun fichier.
+
+Vérifié à l'écran dans quatre langues : « Détecte les parties sur tous les jeux
+du catalogue, et lit le client League of Legends en temps réel »,
+« Erkennt Partien in allen Spielen des Katalogs », « カタログのすべてのゲーム
+で試合を検出し », « 识别目录中所有游戏的对局 ».
+
+**Ce qui part dans les QUESTIONS plutôt que dans le code.** Les deux pages
+publiques d'acquisition — `/telechargement` et `/calculateur` — vouvoient en
+FRANÇAIS et tutoient dans les cinq autres langues : « Instala la aplicación en
+tu PC », « Installiere die Anwendung auf deinem Windows-PC », « 在你的 Windows
+电脑上安装 ». C'est le même témoin qui avait tranché le cas du simulateur —
+« un choix de marque se prend dans les six langues ; un oubli n'en touche
+qu'une ». La différence est que la dispense écrit ici une décision explicite,
+« ce choix-là appartient à la marque », et qu'elle est factuellement vraie :
+ces pages SONT publiques. Renverser une décision écrite sur la voix de la
+seule surface d'acquisition du produit n'est pas un arbitrage qui se prend
+seul.
+
 ### Campagne de clôture du 5 septembre, et l'audit qui a mesuré une machine morte
 Passée après onze versions — V431 à V441 — dont neuf touchent des libellés dans
 les six langues.
