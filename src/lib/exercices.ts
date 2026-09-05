@@ -16,7 +16,12 @@ import { uniteLocalisee } from "./i18n/unite";
 
 export type ExerciceId =
   | "pompes" | "squats" | "boxe"
-  | "planche" | "tractions" | "course";
+  | "planche" | "tractions" | "course"
+  // Les deux exercices ADAPTÉS (réponse 260). La 259 demandait si quelqu'un
+  // qui ne peut pas faire de pompes peut se servir de l'application
+  // aujourd'hui, et la réponse était « mal » : les six premiers exercices
+  // supposent tous de pouvoir descendre au sol ou de courir.
+  | "pompesMurales" | "marche";
 
 export type UniteExercice = "reps" | "temps" | "distance";
 
@@ -72,6 +77,17 @@ export const RATIOS_DEFAUT: Record<ExerciceId, number> = {
   // Vingt mètres par point. Cent points font deux kilomètres, soit à peu près
   // le temps que demandent cent pompes une fois les repos comptés.
   course: 0.02,
+  // Deux pompes murales pour un point. Le mouvement est le même, la charge
+  // ne l'est pas : debout face à un mur, on pousse à peu près la moitié de
+  // ce qu'on pousse au sol. Le rapport se choisit sur le TEMPS, comme celui
+  // de la course et des tractions : deux pompes murales de trois secondes
+  // font les six secondes d'une pompe au sol.
+  pompesMurales: 2,
+  // Dix mètres par point : cent points font un kilomètre, soit une douzaine
+  // de minutes de marche. C'est un peu PLUS de temps que cent pompes, ce qui
+  // est le bon sens de l'écart pour un exercice moins intense — sans quoi
+  // marcher deviendrait la façon d'effacer sa dette à bon compte.
+  marche: 0.01,
 };
 
 export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
@@ -89,6 +105,13 @@ export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   tractions: { id: "tractions", ratio: RATIOS_DEFAUT.tractions, unite: "reps", pas: 1, secondesParRep: 20, groupe: "haut", materiel: true },
   // Course, en kilomètres. Le pas de cent mètres évite d'afficher « 1,37 km ».
   course: { id: "course", ratio: RATIOS_DEFAUT.course, unite: "distance", pas: 0.1, secondesParRep: 360, groupe: "cardio", materiel: false },
+  // Pompes murales : debout, mains au mur. Aucun passage au sol, aucune
+  // charge sur les poignets. C'est l'exercice qui manquait pour que la
+  // réponse à la 259 cesse d'être « mal ».
+  pompesMurales: { id: "pompesMurales", ratio: RATIOS_DEFAUT.pompesMurales, unite: "reps", pas: 1, secondesParRep: 3, groupe: "haut", materiel: false },
+  // Marche, en kilomètres. Douze minutes par kilomètre, soit cinq km/h : le
+  // pas de quelqu'un qui marche pour de bon, pas celui d'une promenade.
+  marche: { id: "marche", ratio: RATIOS_DEFAUT.marche, unite: "distance", pas: 0.1, secondesParRep: 720, groupe: "cardio", materiel: false },
 };
 
 export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
@@ -102,7 +125,9 @@ export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
  * qu'aucun écran ne le dise. Régler les deux autres par rapport aux pompes
  * donne exactement le même pouvoir de réglage, en gardant une référence fixe.
  */
-export const EXERCICES_REGLABLES: ExerciceId[] = ["squats", "boxe", "planche", "tractions", "course"];
+export const EXERCICES_REGLABLES: ExerciceId[] = [
+  "squats", "boxe", "planche", "tractions", "course", "pompesMurales", "marche",
+];
 
 /**
  * Bornes acceptées pour chaque ratio. Elles ne sont pas décoratives : un
@@ -120,6 +145,12 @@ export const RATIO_BORNES: Record<ExerciceId, { min: number; max: number }> = {
   // Cinq mètres par point au minimum, deux cents au maximum : en deçà la
   // course devient un marathon, au-delà elle efface la dette.
   course: { min: 0.005, max: 0.2 },
+  // Une pompe murale ne peut pas coûter plus qu'une pompe au sol : le
+  // plancher est donc à 1, et non en dessous.
+  pompesMurales: { min: 1, max: 10 },
+  // Quatre mètres par point au minimum : en deçà, une dette ordinaire
+  // demanderait un semi-marathon à quelqu'un qui vient d'arriver.
+  marche: { min: 0.004, max: 0.05 },
 };
 
 /** Ratios tels qu'ils circulent entre la base, le serveur et le navigateur. */

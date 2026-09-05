@@ -34,6 +34,12 @@ export const MET: Record<ExerciceId, number> = {
   tractions: 8.0,
   // Course à allure d'entretien, autour de dix kilomètres à l'heure.
   course: 9.8,
+  // Gymnastique au poids du corps à effort LÉGER : debout, on ne pousse
+  // qu'une fraction de son poids. C'est la ligne du Compendium qui décrit
+  // vraiment le mouvement, et non celle des pompes au sol.
+  pompesMurales: 3.5,
+  // Marche à cinq kilomètres à l'heure sur terrain plat.
+  marche: 3.5,
 };
 
 /**
@@ -61,6 +67,11 @@ export const PART_A_L_EFFORT: Record<ExerciceId, number> = {
   tractions: 0.3,
   // On ne s'arrête pas en courant.
   course: 1,
+  // Quatre secondes par répétition, dont environ deux et demie de poussée :
+  // le mouvement est court et demande moins de récupération qu'au sol.
+  pompesMurales: 0.6,
+  // On ne s'arrête pas en marchant non plus.
+  marche: 1,
 };
 
 /**
