@@ -2419,10 +2419,16 @@ parfaitement, et sert au moins V428 (« Runden » sur `/de`).
 
 **Et il recommence à chaque version.** V450 est fusionnée à 05 h 15 ; son
 témoin — « 16 Spiele » sur `/de`, la première phrase de la page d'accueil —
-est encore absent à 05 h 49, soit **trente-quatre minutes**, avec toujours
-`x-vercel-cache: MISS` et `age: 0`. Trois épisodes mesurés en deux nuits :
-au moins 2 h 40, entre 66 et 84 min, et celui-ci en cours. Ce n'est donc pas
-un incident, c'est le régime.
+est encore absent à 05 h 49, puis à 06 h 12, et **présent à 06 h 14** : le
+retard vaut donc **cinquante-neuf minutes**, avec toujours
+`x-vercel-cache: MISS` et `age: 0` pendant toute l'attente.
+
+**Quatre mesures en deux nuits** : au moins 2 h 40, entre 66 et 84 minutes,
+59 minutes. Ce n'est donc pas un incident, c'est le RÉGIME — et le régime est
+qu'une correction publiée met environ une heure à exister pour qui que ce
+soit. Ça change ce qu'on peut promettre : une correction fusionnée n'est pas
+une correction livrée, et la vérifier trente secondes après la fusion ne dit
+rien.
 
 **Il s'est résorbé seul, comme le précédent.** Le témoin est absent à 04 h 07
 et présent à 04 h 25 : le retard vaut donc **entre 66 et 84 minutes**, contre
