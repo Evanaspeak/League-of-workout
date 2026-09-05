@@ -1846,6 +1846,57 @@ propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
 
+### Campagne de clôture du 5 septembre, et l'audit qui a mesuré une machine morte
+Passée après onze versions — V431 à V441 — dont neuf touchent des libellés dans
+les six langues.
+
+**Accessibilité : 0 constat sur 90 passes**, quinze pages et six langues, et
+**aucune page laissée de côté**. C'est le second chiffre qui compte, et il a
+failli manquer au rapport pour une raison bête : ma boucle passait chaque
+langue dans `| tail -5`, ce qui coupe le décompte des pages RÉELLEMENT
+mesurées. J'avais donc la moitié négative du témoin — la ligne « N page(s) NON
+MESURÉE(S) » n'apparaît nulle part, et le script ne l'imprime qu'au-dessus de
+zéro — sans la moitié positive. Une langue relancée sans le tube donne le
+compte : quinze pages ouvertes, quinze « rien à signaler ».
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/fr/settings` | 128 ms | 920 ms | 0,000 | la mention Riot, en pied |
+| `/fr/bilan` | 204 ms | **2128 ms** | 0,000 | l'image de saison |
+| `/fr/dashboard` | 248 ms | 1120 ms | 0,000 | le bandeau d'attente Riot |
+| `/fr/amis` | 428 ms | 1124 ms | 0,013 | le paragraphe du classement |
+| `/fr/history` | 492 ms | 1280 ms | 0,000 | le titre |
+| `/fr` | 944 ms | 1312 ms | 0,000 | l'image de l'application |
+
+Les six sont dans les seuils sur les deux mesures. `/fr/bilan` reste le plus
+proche sur téléphone bridé, pour la raison déjà écrite deux fois : son plus
+grand élément est l'image de saison, et 2128 ms est à peu près l'instant où
+elle finit d'arriver — c'est le plancher de cette page, pas une régression.
+Le poids du JavaScript va de 187 ko sur l'accueil à 377 ko sur le tableau de
+bord, qui porte recharts.
+
+**Et le premier passage de l'audit a rendu « 0 constat » sur SIX langues, avec
+« 15 pages NON MESURÉES » à côté.** PostgreSQL et `next start` étaient morts
+tous les deux, repris par le conteneur pendant une inactivité. C'est la
+quatrième fois que cette panne est recensée ici, et la première fois qu'un
+outil de mesure la rencontre : le garde posé le 23 août — séparer les défauts
+TROUVÉS des pages non ATTEINTES — a fait exactement son travail, et sans lui
+j'aurais publié « zéro constat sur six langues » en n'ayant rien ouvert.
+
+**Ce que la CI a appris au passage, et c'est une correction de règle.** V440 a
+mis **15 min 56** là où ce journal écrit que huit minutes disent que les
+parcours ont joué. Ce n'était pas un échec : huit travaux sur neuf ont fini en
+moins de six minutes, et le retardataire est `parcours (6)`, dont l'étape de
+PRÉPARATION a pris **8 min 25** contre 41 à 60 secondes partout ailleurs — un
+runner qui a raté son cache `npm ci`, exactement la variance décrite plus haut
+quand les caches ont été posés.
+
+La règle « la durée avant la pastille » attrape les exécutions trop COURTES —
+une minute veut dire que les parcours n'ont pas tourné. Elle a un angle mort
+sur les LONGUES : une exécution qui traîne se lit comme un problème alors
+qu'elle peut n'être qu'un cache froid. Ce qu'il faut regarder est la
+préparation du travail le plus lent, pas le total.
+
 ### Un audit des affirmations du journal, et les trois qui avaient vieilli
 Passe faite sur les affirmations que ce fichier écrit AU PRÉSENT et qu'une
 machine peut reprendre. C'est la méthode qui a déjà rendu deux fois cette
