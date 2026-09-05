@@ -106,7 +106,7 @@ partagent le compte ouvert par le premier test, et cette dépendance-là est
 voulue.
 
 **Mais un fichier peut lever la règle pour lui-même, et l'un devait.**
-`langues.spec.ts` porte 87 tests sur 201 — 43 % de la suite — et ses six blocs
+`langues.spec.ts` porte 87 tests sur 229 — 38 % de la suite — et ses six blocs
 de pages PUBLIQUES ne partagent rien : chacun ouvre son onglet, navigue,
 mesure, et s'en va. `test.describe.configure({ mode: "parallel" })` les
 libère, et le fichier seul passe de 234 à 123 s. Le bloc « écrans connectés »,
