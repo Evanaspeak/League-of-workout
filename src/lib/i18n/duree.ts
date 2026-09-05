@@ -76,3 +76,39 @@ export function dureeLocalisee(totalSecondes: number, etiquette: string): string
   if (reste === 0) return (ROND[langueDe(etiquette)] ?? ((m: number) => unite(m, "minute", etiquette)))(minutes);
   return (COMPOSE[langueDe(etiquette)] ?? composeParDefaut)(minutes, reste, etiquette);
 }
+
+/**
+ * Le temps de JEU, qui n'est pas le temps d'effort.
+ *
+ * Une séance d'exercice se compte en minutes ; une soirée de jeu passe l'heure
+ * sans peine, et « 720 min » ne parle à personne là où « 12 h » parle. D'où un
+ * cadran de plus, à l'étage au-dessus, et la même règle qu'en dessous : les
+ * unités viennent d'`Intl`, la COMPOSITION se décide par langue.
+ *
+ * Il écrivait « 1 h 15 » et « 27 min » dans les six langues, sur les cartes et
+ * le tableau de l'historique — donc chez tous ceux qui jouent à Minecraft, à
+ * World of Warcraft, à GTA V, à Elden Ring ou aux Sims, les cinq jeux du
+ * catalogue comptés au TEMPS.
+ */
+const COMPOSE_HEURES: Record<string, (h: number, min: number) => string> = {
+  zh: (h, min) => `${h}小时${pad(min)}分`,
+  ja: (h, min) => `${h}時間${pad(min)}分`,
+};
+
+const ROND_HEURES: Record<string, (h: number) => string> = {
+  zh: (h) => `${h}小时`,
+  ja: (h) => `${h}時間`,
+};
+
+/** 45 → « 45 s », 1620 → « 27 min », 4530 → « 1 h 15 ». */
+export function tempsJeuLocalise(totalSecondes: number, etiquette: string): string {
+  const s = Math.max(0, Math.round(totalSecondes));
+  const minutes = Math.floor(s / 60);
+  if (minutes < 60) return dureeLocalisee(minutes === 0 ? s : minutes * 60, etiquette);
+  const heures = Math.floor(minutes / 60);
+  const reste = minutes % 60;
+  const langue = langueDe(etiquette);
+  if (reste === 0) return (ROND_HEURES[langue] ?? ((h: number) => unite(h, "hour", etiquette)))(heures);
+  return (COMPOSE_HEURES[langue]
+    ?? ((h: number, m: number) => `${unite(h, "hour", etiquette)} ${pad(m)}`))(heures, reste);
+}

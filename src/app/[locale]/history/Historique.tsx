@@ -619,7 +619,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                             <div className="carte-activite-nom">
                               <span>{g.champion ?? nomDuJeu(g)}</span>
                               {type === "temps"
-                                ? <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span>
+                                ? <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0, dateLocale)}</span>
                                 : <ResultatCell result={g.result} t={t} correction={correctionDe(g.id, corrigible)} />}
                               {g.sansEnjeu && <BadgeSansEnjeu t={t} />}
                             </div>
@@ -704,7 +704,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                         {depliee && (
                           <div className="carte-activite-detail">
                             {type === "temps" ? (
-                              <span>{t.detailDuree} : <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
+                              <span>{t.detailDuree} : <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0, dateLocale)}</span></span>
                             ) : (
                               <>
                                 <span>{t.detailScore} : <span className="mono-num" style={{ color: "var(--bone)" }}>{g.scoreCalcule}</span></span>
@@ -840,7 +840,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
 
                               {modeColonnes === "temps" && (
                                 <td className="px-3 py-2 text-center mono-num" style={{ color: "var(--bone)" }}>
-                                  {formaterTempsJeu(g.dureeSec ?? 0)}
+                                  {formaterTempsJeu(g.dureeSec ?? 0, dateLocale)}
                                 </td>
                               )}
 
@@ -848,7 +848,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                 <td className="px-3 py-2">
                                   {type === "temps" ? (
                                     <span className="mono-num" style={{ color: "var(--bone)" }}>
-                                      {formaterTempsJeu(g.dureeSec ?? 0)}
+                                      {formaterTempsJeu(g.dureeSec ?? 0, dateLocale)}
                                     </span>
                                   ) : (
                                     <div style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
@@ -952,7 +952,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                 <td colSpan={nbColonnes} className="px-3 py-2">
                                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "var(--muted)" }}>
                                     {type === "temps" ? (
-                                      <span>{t.detailDuree} : <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0)}</span></span>
+                                      <span>{t.detailDuree} : <span className="mono-num" style={{ color: "var(--bone)" }}>{formaterTempsJeu(g.dureeSec ?? 0, dateLocale)}</span></span>
                                     ) : (
                                       <>
                                         <span>{t.detailScore} : <span className="mono-num" style={{ color: "var(--bone)" }}>{g.scoreCalcule}</span></span>

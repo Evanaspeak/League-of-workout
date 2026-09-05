@@ -33,6 +33,15 @@ export const ARITE_ATTENDUE: Record<string, number> = {
   formaterCompact: 4,    // (points, exercice, ratios, etiquette)
   formaterQuantite: 3,   // (quantite, exercice, etiquette)
   ventiler: 3,           // (parExercice, ratios, etiquette)
+  /**
+   * Le temps de JEU, ajouté après les quatre autres : il écrivait « 1 h 15 »
+   * et « 27 min » dans les six langues, sur les cartes et le tableau de
+   * l'historique, chez tous ceux qui jouent aux cinq jeux du catalogue comptés
+   * au TEMPS. Le comparatif de jeux, lui, reçoit un formateur DÉJÀ lié à la
+   * langue et l'appelle sous un autre nom — sans quoi ce contrôle déclarerait
+   * fautif un appel parfaitement juste.
+   */
+  formaterTempsJeu: 2,   // (secondes, etiquette)
 };
 
 /**

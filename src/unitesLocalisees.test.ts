@@ -16,6 +16,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { uniteLocalisee } from "@/lib/i18n/unite";
 import { dureeLocalisee } from "@/lib/i18n/duree";
+import { formaterTempsJeu } from "@/lib/jeux";
 
 const LANGUES = ["fr", "en", "es", "de", "zh", "ja"] as const;
 
@@ -142,6 +143,36 @@ describe("la forme ronde et la forme composée s'accordent", () => {
     expect(dureeLocalisee(115, "ja")).toBe("1分55秒");
     expect(dureeLocalisee(120, "zh")).toBe("2分钟");
     expect(dureeLocalisee(115, "zh")).toBe("1分55秒");
+  });
+
+  it("et le temps de JEU suit la même règle, sur la branche que les appelants empruntent", () => {
+    /**
+     * Le contrôle qui manquait la première fois, et qui manquait encore ici :
+     * `tempsJeuLocalise` peut être juste et sa DÉLÉGATION débranchée sans
+     * qu'aucun test ne tombe. Or c'est la branche que tous les appelants
+     * prennent — aucun n'appelle le module de langue en direct.
+     *
+     * Le sabotage l'a montré : `if (false && etiquette)` dans `lib/jeux.ts`
+     * laissait les 2275 tests au vert.
+     */
+    // Les espaces s'écrivent en ÉCHAPPEMENT : `Intl` pose une insécable
+    // étroite devant « h » en français (U+202F) et une normale devant
+    // « min » (U+00A0), là où l'allemand garde des espaces ordinaires. Écrit
+    // à l'œil, ce test aurait comparé « 1 h 15 » à « 1 h 15 » et échoué sans
+    // qu'on voie pourquoi — c'est arrivé au premier jet.
+    expect(formaterTempsJeu(4530, "fr-FR")).toBe("1\u202fh 15");
+    expect(formaterTempsJeu(4530, "de-DE")).toBe("1 Std. 15");
+    expect(formaterTempsJeu(4530, "ja-JP")).toBe("1時間15分");
+    expect(formaterTempsJeu(4530, "zh-CN")).toBe("1小时15分");
+    expect(formaterTempsJeu(1620, "ja-JP")).toBe("27分");
+    expect(formaterTempsJeu(1620, "de-DE")).toBe("27 Min.");
+    expect(formaterTempsJeu(1620, "fr-FR")).toBe("27\u00a0min");
+    expect(formaterTempsJeu(45, "zh-CN")).toBe("45秒");
+    // Sans étiquette, le rendu d'avant, au caractère près : c'est ce qui a
+    // permis de reprendre les appelants un par un.
+    expect(formaterTempsJeu(4530)).toBe("1 h 15");
+    expect(formaterTempsJeu(1620)).toBe("27 min");
+    expect(formaterTempsJeu(45)).toBe("45 s");
   });
 
   it("et les quatre langues européennes n'ont pas eu besoin d'être reprises", () => {
