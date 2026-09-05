@@ -1149,6 +1149,72 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le français donnait un genre à son lecteur, et la règle avait une limite mal tracée
+Trouvé en lisant `/connexion-app` en japonais puis en français, dans la même
+passe que le recensement des promesses périmées. Le japonais dit « 別の経路で
+来た場合 » — neutre par construction ; le français disait « si tu es **arrivé**
+ici autrement ».
+
+**C'est la décision déjà écrite, dans la langue SOURCE.** Le produit ne donne
+de genre à personne — le panneau du corps le dit en toutes lettres, « on te
+demande laquelle appliquer, pas qui tu es » — et deux libellés chinois et
+allemands ont été repris là-dessus cette nuit. Le français, lui, n'avait pas
+été regardé, parce que c'est la langue qu'on relit et qu'un participe accordé
+au masculin s'y lit comme la forme neutre.
+
+**Le recensement en trouve quatre**, et le tri entre elles est ce qui compte :
+
+| lieu | forme | ce qui a été fait |
+|---|---|---|
+| `/connexion-app` | « si tu es arrivé ici autrement » | « si tu arrives ici autrement » |
+| écran de connexion | « Vous êtes connecté dans l'application » | « La connexion est faite dans l'application » |
+| écran de connexion | « Vous êtes bien connecté ici, mais… » | « La connexion a réussi ici, mais… » |
+| case de connexion | « Rester connecté » | **laissé**, avec sa raison |
+
+**Et la règle écrite hier avait une limite mal tracée.** Le journal porte que
+reformuler le français source est « un choix de voix, pas une correction de
+traduction ». C'est vrai quand le neutre COÛTE quelque chose : « retire sa
+dette à lui » n'a pas d'équivalent neutre qui se lise, et « Rester connecté »
+est l'idiome de cette case sur tous les sites — le neutre y coûterait la
+reconnaissance immédiate du libellé. Ça ne l'est pas quand le neutre ne coûte
+rien : « si tu arrives ici » dit exactement la même chose, dans le même
+registre. Le garde ne tient donc QUE la forme mécanique, et sa tolérance porte
+la seule ligne où l'arbitrage appartient au propriétaire.
+
+**Le motif était aveugle à TOUS ses cas au premier jet, pour deux raisons.**
+La classe de lettres contenait « é », donc elle avalait la terminaison et le
+motif ne trouvait plus le participe qu'il cherchait. Et **la borne de fin ne
+peut pas être un `\b`** : le `\b` de JavaScript repose sur `[A-Za-z0-9_]`, donc
+« é » y est un caractère NON-mot et « connecté » en fin de chaîne n'a aucune
+frontière après lui. Le motif trouvait « invitée » — qui finit par une lettre
+latine — et ratait « connecté ». **C'est la troisième fois cette nuit que cette
+borne coûte quelque chose**, après les onze faux positifs du garde de registre
+et le découpage des libellés.
+
+Sa LIMITE est écrite plutôt que laissée à découvrir : il ne connaît que les
+participes en « é ». « inscrit », « prêt », « sûr » lui échappent, et un motif
+qui les couvrirait demanderait une liste de mots, donc vieillirait. Le dépôt
+n'en contient aucun sur son lecteur aujourd'hui.
+
+**Un second témoin, sur le DÉCOUPAGE.** Si la recherche du bloc français
+cessait de trouver sa borne, elle rendrait le fichier ENTIER : le contrôle
+chercherait alors aussi dans l'anglais, n'y trouverait rien de son motif, et
+passerait au vert pour la mauvaise raison. Le test exige donc que le découpage
+coupe vraiment, sur au moins vingt fichiers.
+
+Quatre sabotages, quatre échecs — dont la borne remise en `\b`, qui rend le
+motif aveugle sans rien casser d'autre.
+
+Vérifié à l'écran : « Cette page se lance depuis l'application. Continue avec
+Google si tu arrives ici autrement. »
+
+**Ce qui a été regardé et laissé, avec sa raison.** La politique de
+confidentialité écrit « Parrainage : qui vous a invité » — le participe
+s'accorde avec « vous », donc il genre le lecteur. Le neutre demande de
+réécrire la ligne (« qui vous a fait venir »), ce qui change la formulation
+d'un texte juridique : c'est exactement l'arbitrage qui appartient au
+propriétaire, et il part dans les questions plutôt que dans le code.
+
 ### « Seuls les 100 premiers inscrits ont accès », six jours après la levée du plafond
 Trouvé en poursuivant le recensement des nombres : si le compte de jeux avait
 vieilli, d'autres promesses chiffrées pouvaient l'avoir fait. Deux, et la

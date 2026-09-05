@@ -1,11 +1,11 @@
 export const login = {
   fr: {
     connexionReussieTitle: "CONNEXION RÉUSSIE",
-    connexionReussieBody: "Vous êtes connecté dans l'application.",
+    connexionReussieBody: "La connexion est faite dans l'application.",
     connexionReussieClose: "Vous pouvez fermer cet onglet.",
     reconnexionDesktop: "Choisissez le compte à connecter à l'application. Une session était déjà ouverte ici : elle n'a pas été transmise, faute d'avoir été choisie.",
     transfertEchecTitle: "TRANSFERT INTERROMPU",
-    transfertEchecBody: "Vous êtes bien connecté ici, mais la session n'a pas pu être transmise à l'application.",
+    transfertEchecBody: "La connexion a réussi ici, mais la session n'a pas pu être transmise à l'application.",
     transfertEchecAide: "Vérifiez que l'application est ouverte, puis relancez la connexion depuis celle-ci.",
     compteSupprime: "Votre compte a bien été supprimé.",
     accesReserve: "Accès réservé aux beta-testeurs",

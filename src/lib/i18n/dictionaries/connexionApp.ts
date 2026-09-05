@@ -13,7 +13,7 @@ export const connexionApp = {
   fr: {
     ouverture: (nom: string) => `Ouverture de ${nom}…`,
     horsApplication: (nom: string) =>
-      `Cette page se lance depuis l'application. Continue avec ${nom} si tu es arrivé ici autrement.`,
+      `Cette page se lance depuis l'application. Continue avec ${nom} si tu arrives ici autrement.`,
     continuer: (nom: string) => `Continuer avec ${nom}`,
   },
   en: {
