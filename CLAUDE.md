@@ -106,7 +106,7 @@ partagent le compte ouvert par le premier test, et cette dépendance-là est
 voulue.
 
 **Mais un fichier peut lever la règle pour lui-même, et l'un devait.**
-`langues.spec.ts` porte 87 tests sur 201 — 43 % de la suite — et ses six blocs
+`langues.spec.ts` porte 87 tests sur 229 — 38 % de la suite — et ses six blocs
 de pages PUBLIQUES ne partagent rien : chacun ouvre son onglet, navigue,
 mesure, et s'en va. `test.describe.configure({ mode: "parallel" })` les
 libère, et le fichier seul passe de 234 à 123 s. Le bloc « écrans connectés »,
@@ -1845,6 +1845,47 @@ construction demandent l'accès au tableau de bord Vercel, qui appartient au
 propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
+
+### Le retard de déploiement recommence, et cette fois il a un témoin dès la première minute
+Suite des deux entrées sur le retard de production. Ce qui change ici n'est pas
+le phénomène — c'est qu'on le voit ARRIVER au lieu de le découvrir après coup.
+
+V443 touche `/telechargement`, une page PUBLIQUE : elle a donc un témoin, ce
+qui manquait à V439, V440, V441 et V442, toutes derrière la porte. Fusionnée à
+**03h01 UTC**, CI verte en 7 min 46.
+
+| heure UTC | `Erkennt Partien` (V443) | `Bindet den League` (ancien) |
+|---|---|---|
+| 03 h 15 | absent | présent |
+| 03 h 17 | absent | présent |
+| 03 h 19 | absent | présent |
+| 03 h 33 | absent | présent |
+
+**Trente-deux minutes, et ce n'est pas un cache** : `x-vercel-cache: MISS`,
+`age: 0` — un rendu neuf à chaque appel. La production répond par ailleurs
+parfaitement, et sert au moins V428 (« Runden » sur `/de`).
+
+**Ce qu'on ne refait pas : le diagnostic.** Les deux causes possibles sont
+écrites depuis la nuit dernière — construction en échec, ou adresse de
+production épinglée — et aucune ne se tranche sans le tableau de bord Vercel.
+L'épisode précédent s'est résorbé seul au bout de deux heures quarante. Ce
+qu'on fait ici, c'est CONSTATER et horodater ; le reste part dans les
+questions, où il est déjà.
+
+**Ce que l'épisode ajoute quand même, et qui est utile** : le témoin public
+n'est plus une vérification d'après-coup, c'est une sonde qu'on peut relancer
+toutes les deux minutes. La règle écrite hier — « pousser un témoin public de
+la version qu'on vient de publier » — vaut donc doublement quand la version
+touche une page publique, et il vaut la peine de PRÉFÉRER, à qualité égale,
+publier une correction qui en porte un.
+
+**Un piège de sonde, payé sur celle-ci.** `curl -s … | grep -o "X" | head -1`
+a rendu VIDE une fois sur deux alors que la chaîne était présente : `head`
+ferme le tube, `grep` prend un SIGPIPE, et la sortie se perd. C'est mot pour
+mot le piège du `npx next build | grep | head -1` déjà écrit ici, sous une
+forme nouvelle — et il m'a fait croire une minute que la production entière
+était tombée. Une sonde écrit dans un FICHIER, puis compte :
+`curl -s -o /tmp/x.html … && grep -c "X" /tmp/x.html`.
 
 ### La page de téléchargement ne nommait qu'un jeu sur seize
 Trouvé en la lisant en japonais, puis en français pour comparer. Le
