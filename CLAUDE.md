@@ -1114,6 +1114,84 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « コピー ma-team » : trois phrases assemblées dans le composant, toutes invisibles
+Recensement lancé dans la foulée des unités : la même question, posée sur les
+LIBELLÉS. Un composant qui écrit `` `${t.copier} ${nom}` `` compose une
+phrase, et une phrase composée en JavaScript n'a qu'un seul ordre — celui de
+qui l'a écrite.
+
+Trois l'étaient, toutes sur l'écran des amis :
+
+```
+`${t.copier} ${g.nom}`          → « コピー ma-team »,  « Kopieren ma-team »
+`${t.equipeVoir} ${nom}`        → « チームの負債 ma-team »
+`${t.equipeRelayer} ${pseudo}`  → « 引き受ける Kayn », « Übernehmen Kayn »
+```
+
+**Le japonais place l'objet AVANT le verbe et l'allemand rejette l'infinitif à
+la fin.** Les deux produisent une phrase cassée. Le chinois, lui, est
+verbe-objet comme le français, donc il tombait juste par hasard — c'est la
+façon la plus discrète pour un défaut de survivre à une relecture, et ce
+journal l'a déjà notée pour l'espagnol du courriel hebdomadaire.
+
+**Et les trois vivent dans un `aria-label` ou dans un libellé
+`lecture-ecran`.** Personne de voyant ne les verra jamais : elles ne sont lues
+qu'à voix haute, par un lecteur d'écran, chez quelqu'un qui ne peut pas les
+comparer à l'écran. C'est exactement le genre de défaut qui reste — et c'est
+la deuxième fois cette semaine que l'accessibilité cache un défaut de langue,
+après les `<label>` du panneau du corps qui n'étiquetaient rien.
+
+Les trois clés deviennent des fonctions, comme la ligne du niveau de compte
+l'avait fait avant elles. Chaque langue place le nom où elle veut :
+« Code von ma-team kopieren », « ma-team の招待コードをコピー »,
+« 复制 ma-team 的邀请码 ».
+
+`src/phraseAssemblee.test.ts` refuse qu'un gabarit de `.tsx` mêle un libellé de
+dictionnaire à une autre interpolation. **Trois tolérances, chacune avec sa
+raison**, et un contrôle qui refuse une tolérance ne désignant plus rien de
+vivant :
+
+- « Niveau 4 », deux fois : les six langues placent le mot avant le nombre
+  — fr Niveau, en Level, es Nivel, de Stufe, zh 等级, ja レベル. Il n'y a pas
+  d'ordre à choisir, donc pas de phrase à confier au dictionnaire ;
+- « 20V / 40D » : ce n'est pas une phrase mais un couple nombre-initiale, et
+  l'initiale vient déjà du dictionnaire partagé où chaque langue a choisi la
+  sienne.
+
+**La borne de l'identifiant décide de tout, et le sabotage l'a montré.** Le
+motif doit exiger `t`, `tt`, ou `t` suivi d'une MAJUSCULE. Sans elle,
+`${titrage.variable}` — un nom de variable CSS de la mise en page racine —
+passe pour un libellé, et le garde envoie corriger du code qui n'a rien à voir
+avec du texte. Un garde qui crie sur ce qui va bien finit par ne plus se lire.
+
+**Un quatrième cas au passage, dans le panneau d'administration.**
+`AdminSeuilDette` composait « 5 minutes 30 » à partir de deux mots du
+dictionnaire, c'est-à-dire une DEUXIÈME façon d'écrire une durée à côté de
+celle que tout le produit emploie — et qui en divergerait à la première
+correction. Il lit `formaterDuree` maintenant.
+
+Quatre sabotages, quatre échecs : le libellé réassemblé, une tolérance qui ne
+désigne plus rien, le motif rendu aveugle, et la borne de l'identifiant
+retirée.
+
+**Et le parcours a mordu, ce qui est son travail** : il cherchait
+« prendre <pseudo> » et « la dette de l'équipe <groupe> », c'est-à-dire un
+ORDRE. Or c'est précisément l'ordre qui vient de changer. Il lit les morceaux
+SANS ordre maintenant (`sansOrdre(...)`, une conjonction d'anticipations), ce
+qui est la seule lecture qui reste vraie dans les six langues — et son ancien
+motif anglais était d'ailleurs déjà faux depuis la correction, sans que rien ne
+le dise, puisque le parcours tourne en français. C'est la leçon déjà écrite
+pour le nombre mis en forme au classement : **un test qui compare des chaînes
+est lié à la typographie de la langue où il a été écrit.**
+
+Vérifié à l'écran dans les six langues, sur le nom accessible du bouton de
+copie — c'est-à-dire là où le défaut vivait : « Copier le code de Les
+Vaillants », « Copy the code for Les Vaillants », « Copiar el código de Les
+Vaillants », « Code von Les Vaillants kopieren », « Les Vaillants の招待コード
+をコピー », « 复制 Les Vaillants 的邀请码 ». Les deux phrases de la dette
+d'équipe demandent deux comptes : elles sont vérifiées sur leurs valeurs, et le
+parcours à deux comptes les traverse.
+
 ### « 2 min から » : les unités recollées à la main, et les quatre qui restaient
 Trouvé en lisant l'écran des réglages en japonais. La rubrique « Ton effort »
 propose quatre seuils de rappel :

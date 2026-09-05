@@ -899,7 +899,7 @@ export function AmisClient() {
                     type="button"
                     className="lol-btn"
                     onClick={() => copier(g.code)}
-                    aria-label={`${t.copier} ${g.nom}`}
+                    aria-label={t.copierNomme(g.nom)}
                   >
                     {copie === g.code ? t.copie : t.copier}
                   </button>
