@@ -1149,6 +1149,74 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Quinze jeux » sur la première phrase du produit, depuis deux jours
+Trouvé en lisant la modale d'accueil EN JAPONAIS, sur un compte neuf ouvert
+pour l'occasion. Elle annonce « カタログには 15 タイトル » — quinze titres au
+catalogue — et la page du calculateur, deux clics plus loin, écrit
+« すべてのゲーム（16）».
+
+**Le produit se contredit lui-même, et de trois jours.** Overwatch est entré
+au catalogue en V402, le 3 septembre ; le compte est resté à quinze.
+
+**Onze occurrences, deux dictionnaires, six langues** : le sous-titre du
+héros — c'est-à-dire la PREMIÈRE phrase que quiconque lit du produit —, la
+première étape de « comment ça marche », et le corps de la première étape de
+la modale d'accueil, qui est le premier écran d'un compte neuf. Les deux
+surfaces les plus lues, toutes les deux fausses.
+
+**C'est le défaut que ce journal trouve le plus, et il était déjà nommé.**
+V443 avait délibérément retiré le nombre de la page de téléchargement, deux
+jours plus tôt, en écrivant : « "seize" serait un nombre écrit une fois
+au-dessus de quelque chose qui bouge — le défaut que ce journal trouve le
+plus ». La leçon était tirée pour une phrase et pas pour les onze autres.
+
+**Le nombre part du CATALOGUE**, en chiffres. `heroSubtitle` et le corps de
+la modale deviennent des fonctions de `n`, et les deux écrans passent
+`JEUX.length`. L'étape de « comment ça marche », elle, PERD son nombre : « tout
+le catalogue, du MOBA au battle royale en passant par les jeux qui se comptent
+en heures » dit déjà la variété, et c'est la solution de V443 là où elle
+convient.
+
+**Le prix est que le français écrit « 16 jeux » au lieu de « Seize jeux ».**
+Ça se lit moins bien, et c'est exactement l'arbitrage que le journal a tranché
+dans l'autre sens pour la longueur du code d'invitation — « pour se prémunir
+d'un changement qui n'est pas prévu ». Ici le changement n'est pas une
+hypothèse : il a déjà eu lieu deux fois, et il a déjà coûté deux jours de
+première phrase fausse.
+
+**Le premier motif du garde a rendu quatre faux positifs**, et c'est ce qui a
+donné le bon discriminant. « Last 20 games from your Riot account » et « 105
+games, 55% win rate » comptent des PARTIES, pas des entrées de catalogue. Un
+garde qui crie sur ce qui va bien finit par ne plus se lire. Trois formes
+seulement sont fautives, et le tri s'éprouve sur **neuf cas fabriqués** —
+l'état sain du dépôt étant zéro trouvaille, les fichiers réels ne peuvent pas
+distinguer un tri juste d'un tri aveugle :
+
+- un numéral EN TOUTES LETTRES suivi du mot jeu, dans les six langues ;
+- des chiffres suivis d'un mot qui ne désigne QUE une entrée de catalogue —
+  « タイトル » en japonais, « 款游戏 » en chinois ;
+- des chiffres suivis du mot jeu, sur une ligne qui parle de catalogue.
+
+**Et les interpolations sont écartées avant la recherche** : `${n} jeux` est
+précisément la forme qu'on veut, et son texte contient malgré tout « jeux »
+précédé de quelque chose. Sans ce retrait, le garde refuserait la correction.
+
+**C'est le compilateur qui a désigné les deux appelants**, et c'est ce qu'un
+changement de type fait de mieux : `Type '(n: number) => string' is not
+assignable to type 'ReactNode'`, deux fois, sur les deux seuls écrans
+concernés.
+
+Quatre sabotages, quatre échecs — dont le motif rendu aveugle au chinois avec
+le défaut remis, et un écran qui passe un nombre écrit à la main plutôt que
+`JEUX.length`.
+
+Vérifié à l'écran dans les six langues : « 16 jeux », « 16 games »,
+« 16 juegos », « 16 Spiele », « 16 タイトル », « 16 款游戏 ».
+
+**Ce que la lecture a trouvé d'autre, et qui va bien** : les douze étapes de
+la visite guidée et les six de la modale d'accueil, lues en japonais, ne
+portent aucune autre affirmation chiffrée sur le produit.
+
 ### Campagne de clôture du 5 septembre au matin, et le piège qu'on ferme enfin
 Passée après V443 à V448, dont une mise à jour de la bibliothèque qui dessine.
 

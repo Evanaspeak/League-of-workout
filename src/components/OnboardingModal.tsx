@@ -9,6 +9,7 @@ import { cleOnboarding } from "@/lib/premiereVisite";
 import { useIdCompte } from "@/lib/useIdCompte";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { ecrire, lire, lireSession } from "@/lib/stockage";
+import { JEUX } from "@/lib/jeux";
 
 /* Icônes stroke SVG des étapes d'onboarding */
 function StepIcon({ name }: { name: string }) {
@@ -207,7 +208,7 @@ export function OnboardingModal() {
           marginBottom: "2rem",
           whiteSpace: "pre-line",
         }}>
-          {current.body}
+          {typeof current.body === "function" ? current.body(JEUX.length) : current.body}
         </p>
 
         {/* Actions */}

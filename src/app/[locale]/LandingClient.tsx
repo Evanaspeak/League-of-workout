@@ -11,6 +11,7 @@ import type { VideoBoucle } from "@/lib/videoBoucle";
 import { CadreApp } from "@/components/landing/CadreApp";
 import { LogoWindows } from "@/components/landing/LogoOS";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { JEUX } from "@/lib/jeux";
 
 export default function LandingClient({
   isLoggedIn, telechargement, version, logosJeux, video, locale,
@@ -94,7 +95,7 @@ export default function LandingClient({
             </h1>
 
             <p className="hero-rise hero-sous" style={{ animationDelay: "0.2s" }}>
-              {t.heroSubtitle}
+              {t.heroSubtitle(JEUX.length)}
             </p>
 
             {/* Le bouton principal est un bouton de téléchargement, et il en a
