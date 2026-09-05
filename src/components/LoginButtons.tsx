@@ -244,9 +244,6 @@ export function LoginButtons() {
             </form>
           )}
           {checkbox}
-          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center" }}>
-            {t.seulement100}
-          </p>
         </div>
       )}
 
@@ -273,9 +270,6 @@ export function LoginButtons() {
             </form>
           )}
           {checkbox}
-          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center" }}>
-            {t.seulement100}
-          </p>
         </div>
       )}
 
@@ -362,9 +356,6 @@ export function LoginButtons() {
           )}
 
           <div style={{ marginTop: "0.75rem" }}>{checkbox}</div>
-          <p className="text-xs" style={{ color: "var(--faint)", textAlign: "center", marginTop: "0.75rem" }}>
-            {t.seulement100}
-          </p>
         </div>
       )}
     </div>
