@@ -4,7 +4,7 @@ export const landing = {
     navLoggedOut: "Se connecter",
     heroTitleLine1: "Tu perds une game,",
     heroTitleLine2: "tu fais des pompes.",
-    heroSubtitle: "L'app calcule combien, d'après ton KDA et ton niveau de forme. Quinze jeux, dont League of Legends, Valorant, Apex et Rocket League.",
+    heroSubtitle: (n: number) => `L'app calcule combien, d'après ton KDA et ton niveau de forme. ${n} jeux, dont League of Legends, Valorant, Apex et Rocket League.`,
     heroTelecharger: "Télécharger pour Windows",
     heroTelechargerNote: "Gratuit, sans carte bancaire.",
     heroVersion: (v: string) => `Version ${v}`,
@@ -59,7 +59,7 @@ export const landing = {
       {
         num: "01",
         title: "Choisis ton jeu",
-        desc: "Quinze jeux au catalogue, du MOBA au battle royale en passant par les jeux qui se comptent en heures. Chacun ne te demande que ce qu'il possède vraiment.",
+        desc: "Tout le catalogue, du MOBA au battle royale en passant par les jeux qui se comptent en heures. Chacun ne te demande que ce qu'il possède vraiment.",
       },
       {
         num: "02",
@@ -84,7 +84,7 @@ export const landing = {
     navLoggedOut: "Log in",
     heroTitleLine1: "You lose a game,",
     heroTitleLine2: "you do push-ups.",
-    heroSubtitle: "The app works out how many, from your KDA and your fitness level. Fifteen games, including League of Legends, Valorant, Apex and Rocket League.",
+    heroSubtitle: (n: number) => `The app works out how many, from your KDA and your fitness level. ${n} games, including League of Legends, Valorant, Apex and Rocket League.`,
     heroTelecharger: "Download for Windows",
     heroTelechargerNote: "Free, no card needed.",
     heroVersion: (v: string) => `Version ${v}`,
@@ -136,7 +136,7 @@ export const landing = {
       {
         num: "01",
         title: "Pick your game",
-        desc: "Fifteen games in the catalogue, from MOBAs to battle royales to the ones you count in hours. Each one only asks for what it actually has.",
+        desc: "The whole catalogue, from MOBAs to battle royales to the ones you count in hours. Each one only asks for what it actually has.",
       },
       {
         num: "02",
@@ -161,7 +161,7 @@ export const landing = {
     navLoggedOut: "Iniciar sesión",
     heroTitleLine1: "Pierdes una partida,",
     heroTitleLine2: "haces flexiones.",
-    heroSubtitle: "La app calcula cuántas, según tu KDA y tu nivel de forma. Quince juegos, entre ellos League of Legends, Valorant, Apex y Rocket League.",
+    heroSubtitle: (n: number) => `La app calcula cuántas, según tu KDA y tu nivel de forma. ${n} juegos, entre ellos League of Legends, Valorant, Apex y Rocket League.`,
     heroTelecharger: "Descargar para Windows",
     heroTelechargerNote: "Gratis, sin tarjeta.",
     heroVersion: (v: string) => `Versión ${v}`,
@@ -213,7 +213,7 @@ export const landing = {
       {
         num: "01",
         title: "Elige tu juego",
-        desc: "Quince juegos en el catálogo, del MOBA al battle royale pasando por los que se miden en horas. Cada uno solo te pide lo que realmente tiene.",
+        desc: "Todo el catálogo, del MOBA al battle royale pasando por los que se miden en horas. Cada uno solo te pide lo que realmente tiene.",
       },
       {
         num: "02",
@@ -238,7 +238,7 @@ export const landing = {
     navLoggedOut: "Anmelden",
     heroTitleLine1: "Du verlierst eine Runde,",
     heroTitleLine2: "du machst Liegestütze.",
-    heroSubtitle: "Die App berechnet wie viele, aus deinem KDA und deinem Fitnesslevel. Fünfzehn Spiele, darunter League of Legends, Valorant, Apex und Rocket League.",
+    heroSubtitle: (n: number) => `Die App berechnet wie viele, aus deinem KDA und deinem Fitnesslevel. ${n} Spiele, darunter League of Legends, Valorant, Apex und Rocket League.`,
     heroTelecharger: "Für Windows herunterladen",
     heroTelechargerNote: "Kostenlos, ohne Karte.",
     heroVersion: (v: string) => `Version ${v}`,
@@ -290,7 +290,7 @@ export const landing = {
       {
         num: "01",
         title: "Wähl dein Spiel",
-        desc: "Fünfzehn Spiele im Katalog, vom MOBA über Battle Royale bis zu denen, die man in Stunden misst. Jedes fragt nur nach dem, was es wirklich hat.",
+        desc: "Der ganze Katalog, vom MOBA über Battle Royale bis zu denen, die man in Stunden misst. Jedes fragt nur nach dem, was es wirklich hat.",
       },
       {
         num: "02",
@@ -315,7 +315,7 @@ export const landing = {
     navLoggedOut: "登录",
     heroTitleLine1: "输了一把，",
     heroTitleLine2: "就做几个俯卧撑。",
-    heroSubtitle: "应用会根据你的 KDA 和体能等级算出数量。十五款游戏，包括英雄联盟、无畏契约、Apex 和火箭联盟。",
+    heroSubtitle: (n: number) => `应用会根据你的 KDA 和体能等级算出数量。${n} 款游戏，包括英雄联盟、无畏契约、Apex 和火箭联盟。`,
     heroTelecharger: "下载 Windows 版",
     heroTelechargerNote: "免费，无需银行卡。",
     heroVersion: (v: string) => `版本 ${v}`,
@@ -367,7 +367,7 @@ export const landing = {
       {
         num: "01",
         title: "选好你的游戏",
-        desc: "目录里有十五款游戏，从 MOBA 到大逃杀，也包括那些只能按小时算的。每款只问它真正有的数据。",
+        desc: "整个目录，从 MOBA 到大逃杀，也包括那些只能按小时算的。每款只问它真正有的数据。",
       },
       {
         num: "02",
@@ -392,7 +392,7 @@ export const landing = {
     navLoggedOut: "ログイン",
     heroTitleLine1: "負けたら、",
     heroTitleLine2: "腕立て伏せ。",
-    heroSubtitle: "KDA と体力レベルから、アプリが回数を計算します。League of Legends、VALORANT、Apex、ロケットリーグなど 15 タイトル。",
+    heroSubtitle: (n: number) => `KDA と体力レベルから、アプリが回数を計算します。League of Legends、VALORANT、Apex、ロケットリーグなど ${n} タイトル。`,
     heroTelecharger: "Windows 版をダウンロード",
     heroTelechargerNote: "無料、カード不要。",
     heroVersion: (v: string) => `バージョン ${v}`,
@@ -444,7 +444,7 @@ export const landing = {
       {
         num: "01",
         title: "タイトルを選ぶ",
-        desc: "MOBA からバトロワ、時間で数えるものまで 15 タイトル。それぞれ、そのゲームが実際に持っているデータしか訊きません。",
+        desc: "MOBA からバトロワ、時間で数えるものまでカタログ全部。それぞれ、そのゲームが実際に持っているデータしか訊きません。",
       },
       {
         num: "02",

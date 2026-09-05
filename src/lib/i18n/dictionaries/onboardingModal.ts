@@ -4,7 +4,7 @@ export const onboardingModal = {
       {
         icon: "slash",
         title: "Bienvenue dans\nWin or Workout",
-        body: "Tu joues, tu perds, tu paies. C'est tout le concept.\n\nQuinze jeux au catalogue, et tu choisis la monnaie : pompes, squats ou boxe.",
+        body: (n: number) => `Tu joues, tu perds, tu paies. C'est tout le concept.\n\n${n} jeux au catalogue, et tu choisis la monnaie : pompes, squats ou boxe.`,
       },
       {
         icon: "dumbbell",
@@ -37,7 +37,7 @@ export const onboardingModal = {
       {
         icon: "slash",
         title: "Welcome to\nWin or Workout",
-        body: "You play, you lose, you pay. That's the whole idea.\n\nFifteen games in the catalogue, and you pick the currency: push-ups, squats or boxing.",
+        body: (n: number) => `You play, you lose, you pay. That's the whole idea.\n\n${n} games in the catalogue, and you pick the currency: push-ups, squats or boxing.`,
       },
       {
         icon: "dumbbell",
@@ -70,7 +70,7 @@ export const onboardingModal = {
       {
         icon: "slash",
         title: "Bienvenido a\nWin or Workout",
-        body: "Juegas, pierdes, pagas. Ese es todo el concepto.\n\nQuince juegos en el catálogo, y tú eliges la moneda: flexiones, sentadillas o boxeo.",
+        body: (n: number) => `Juegas, pierdes, pagas. Ese es todo el concepto.\n\n${n} juegos en el catálogo, y tú eliges la moneda: flexiones, sentadillas o boxeo.`,
       },
       {
         icon: "dumbbell",
@@ -103,7 +103,7 @@ export const onboardingModal = {
       {
         icon: "slash",
         title: "Willkommen bei\nWin or Workout",
-        body: "Du spielst, du verlierst, du zahlst. Das ist die ganze Idee.\n\nFünfzehn Spiele im Katalog, und du wählst die Währung: Liegestütze, Kniebeugen oder Boxen.",
+        body: (n: number) => `Du spielst, du verlierst, du zahlst. Das ist die ganze Idee.\n\n${n} Spiele im Katalog, und du wählst die Währung: Liegestütze, Kniebeugen oder Boxen.`,
       },
       {
         icon: "dumbbell",
@@ -136,7 +136,7 @@ export const onboardingModal = {
       {
         icon: "slash",
         title: "欢迎来到\nWin or Workout",
-        body: "你打，你输，你还。整个概念就这么简单。\n\n目录里有十五款游戏，货币由你挑：俯卧撑、深蹲或者拳击。",
+        body: (n: number) => `你打，你输，你还。整个概念就这么简单。\n\n目录里有 ${n} 款游戏，货币由你挑：俯卧撑、深蹲或者拳击。`,
       },
       {
         icon: "dumbbell",
@@ -169,7 +169,7 @@ export const onboardingModal = {
       {
         icon: "slash",
         title: "ようこそ\nWin or Workout へ",
-        body: "遊んで、負けて、払う。仕組みはそれだけです。\n\nカタログには 15 タイトル。通貨は自分で選べます。腕立て、スクワット、ボクシング。",
+        body: (n: number) => `遊んで、負けて、払う。仕組みはそれだけです。\n\nカタログには ${n} タイトル。通貨は自分で選べます。腕立て、スクワット、ボクシング。`,
       },
       {
         icon: "dumbbell",
