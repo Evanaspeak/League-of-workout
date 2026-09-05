@@ -1149,6 +1149,56 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux lignes du plan étaient faites depuis des semaines, sans être cochées
+Passe sur les soixante-neuf lignes non cochées, en cherchant celles que le
+journal ou le dépôt disent déjà faites. C'est le pendant du garde écrit le
+2 septembre : `planCompte.test.ts` refuse qu'un en-tête chiffré mente sur son
+tableau, il ne dit rien d'une LIGNE qui ment sur le dépôt.
+
+**Deux trouvailles, et les deux se prouvent sans me croire sur parole.**
+
+- **299, « découper le fichier des styles »**. `src/app/styles/` porte neuf
+  fichiers et 1 675 lignes, et l'en-tête de `globals.css` écrit lui-même sa
+  vérification : « le découpage a été vérifié en comparant vingt-quatre
+  captures d'écran — huit pages, trois largeurs — avant et après. Aucune ne
+  diffère d'un pixel. » ;
+- **254, « raccourcir les textes de la page d'accueil »**. Le journal porte
+  l'entrée « Mille cent trente-deux mots sur la page d'accueil, deux cent
+  quatre-vingt-six restent ». Remesuré plutôt que cru : **277 mots visibles**
+  sur le HTML servi, l'écart avec 286 s'expliquant par les versions passées
+  depuis (Overwatch entré dans la bande, le numéro de version qui a bougé).
+
+**Et le premier comptage a rendu 36, ce qui est la vraie leçon de la passe.**
+Trente-six mots sur une page qui en porte deux cent soixante-dix-sept, c'est
+un écart d'un facteur huit — donc pas un désaccord de méthode, une mesure
+fausse. PostgreSQL et `next start` étaient morts tous les deux, repris par le
+conteneur pendant une inactivité. **Cinquième recensement de cette panne dans
+ce fichier**, et le premier où elle se déguise en résultat de mesure PLAUSIBLE
+plutôt qu'en erreur : une page qui ne se rend pas rend quand même quelque
+chose, et ce quelque chose se compte.
+
+Le contrôle qui l'attrape coûte une seconde et il est écrit ici depuis le
+4 septembre : `pg_isready -h 127.0.0.1 -p 5433` et un `curl` sur le port du
+serveur AVANT toute mesure. Je ne l'ai fait qu'après avoir douté du chiffre.
+
+**Ce qui n'a PAS été coché, avec sa raison.** La ligne 165 — « l'overlay
+réagit en direct : rouge au franchissement du seuil » — ressemblait à une
+troisième trouvaille : le journal écrit « la pastille passait en ALERTE à
+3 min 35 sous un seuil réglé à 5 min ». Vérifié dans `desktop/src/overlay.html` :
+il n'y a aucun état de seuil, la dette y est orange en permanence
+(`.ligne b.dette { color: #FF8A3D; }`). La pastille qui passait en alerte est
+celle du SITE, pas celle du jeu. Deux surfaces qui portent le même nom dans ce
+projet, et c'est la deuxième fois que ça envoie chercher au mauvais endroit.
+
+**Et un garde qui n'a pas été écrit, mesuré plutôt que supposé.** La règle
+candidate était « une ligne cochée porte `—` dans sa colonne d'effort » — ce
+serait vérifiable, et ça ne tient pas : sur les quatre-vingt-dix lignes
+cochées du plan, soixante et une portent `—` et **vingt-neuf gardent leur
+estimation**. Ce n'est pas une convention en retard, c'est un usage double
+— l'estimation d'une ligne faite dit ce qu'elle a coûté, ce qui est une
+information. Un garde y ferait vingt-neuf faux positifs le jour de son
+écriture, donc il serait dispensé avant d'être lu.
+
 ### La lecture des réglages effaçait ce qu'on venait de taper
 Trouvé en allant lire la CI, comme la procédure le dit maintenant. V437 est
 rouge sur `corps.spec.ts` — « le mètre-ruban ne reproche rien tant qu'on n'a

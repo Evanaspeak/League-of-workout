@@ -292,12 +292,13 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 228 | Attendre un nombre d'utilisateurs avant de monétiser | — |
 
 ### La marque et le ton
-*4 à faire · 1 faits.* 
+*3 à faire · 2 faits.* La page d'accueil est passée de 1 132 mots
+à 277, mesurés sur le HTML servi.
 
 | | réf | | effort |
 |---|---|---|---|
 | [ ] | 248 | Deux tons au choix à l'inscription, sévère ou bienveillant | 2 nuits |
-| [ ] | 254 | Raccourcir les textes de la page d'accueil | 1 nuit |
+| [x] | 254 | Raccourcir les textes de la page d'accueil | — |
 | [ ] | 256 | Faire relire l'anglais par un anglophone | à toi |
 | [x] | 251 | La marque visuelle, validée | — |
 | [ ] | 252 | Une mascotte, plus tard | — |
@@ -346,7 +347,8 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 171 | Une version macOS, plus tard | — |
 
 ### Technique
-*3 à faire · 5 faits.* 
+*2 à faire · 6 faits.* Le découpage des styles est fait : neuf fichiers
+sous `src/app/styles/`, vérifiés à vingt-quatre captures d'écran.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -355,7 +357,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 297 | Une CI qui refuse un push cassé | — |
 | [x] | 298 | Découper le fichier de la page d'accueil | — |
 | [x] | 301 | Mesurer et corriger la performance | — |
-| [ ] | 299 | Découper le fichier des styles | 1 nuit |
+| [x] | 299 | Découper le fichier des styles | — |
 | [ ] | 302 | Affiner la régénération des pages | ½ nuit |
 | [ ] | 300 | Uniformiser styles en ligne et classes utilitaires | 2 nuits |
 
