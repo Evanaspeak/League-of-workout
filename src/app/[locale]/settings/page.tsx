@@ -89,7 +89,8 @@ export default function SettingsPage() {
   // ── Profile ──
   // Le compte Riot n'est plus ici : il vit dans le bloc « League of Legends »
   // des jeux, avec sa propre sauvegarde.
-  const [profileForm, setProfileForm] = useState({ pseudo: "", objectifTotalPompes: 1000 });
+  const PROFIL_DEFAUT = { pseudo: "", objectifTotalPompes: 1000 };
+  const [profileForm, setProfileForm] = useState(PROFIL_DEFAUT);
   const [betaRank, setBetaRank] = useState<number | null>(null);
   // Les coefficients réglés dans la rubrique « avancé » sont communs à tous les
   // comptes. La route ne laisse plus que l'administration les écrire ; l'écran
@@ -180,10 +181,51 @@ export default function SettingsPage() {
   function fusionner<T extends object>(avant: T, defaut: T, serveur: T): T {
     const sortie = { ...serveur };
     for (const cle of Object.keys(defaut) as (keyof T)[]) {
-      if (avant[cle] !== defaut[cle]) sortie[cle] = avant[cle];
+      if (ecrits.current.has(cle as string) || avant[cle] !== defaut[cle]) {
+        sortie[cle] = avant[cle];
+      }
     }
     return sortie;
   }
+
+  /**
+   * Les clés déjà ENVOYÉES au serveur depuis l'ouverture de la page.
+   *
+   * La comparaison à la valeur par défaut ne suffit pas : quelqu'un qui remet
+   * un réglage à sa valeur d'origine — retirer sa variante de pompes, remettre
+   * le plafond à zéro — produit un état identique au défaut, donc « pas
+   * touché », donc la réponse périmée le contredirait. C'est le seul trou que
+   * la fusion par valeur ne peut pas voir, et il tombe exactement sur le geste
+   * d'annulation.
+   *
+   * Une clé écrite l'emporte donc quoi qu'elle vaille. Le nom retenu est celui
+   * que le serveur connaît, parce que c'est lui que l'envoi porte.
+   */
+  const ecrits = useRef(new Set<string>());
+
+  /**
+   * La même règle pour une valeur qui n'est pas un objet.
+   *
+   * Le seuil de rappel est un nombre, la sélection d'exercices un tableau :
+   * ni l'un ni l'autre ne se compare clé par clé. Les deux s'enregistrent au
+   * CLIC comme les réglages du corps, donc les deux sont exposés au même
+   * écrasement par une réponse partie avant le geste.
+   *
+   * `egal` est fourni pour le tableau : deux tableaux de même contenu ne sont
+   * jamais le même objet, et une comparaison par référence déclarerait
+   * « touché » une sélection qui n'a pas bougé — ce qui figerait la valeur du
+   * serveur au lieu de la reprendre.
+   */
+  function fusionnerValeur<T>(
+    cle: string, avant: T, defaut: T, serveur: T,
+    egal: (a: T, b: T) => boolean = (a, b) => a === b,
+  ): T {
+    if (ecrits.current.has(cle)) return avant;
+    return egal(avant, defaut) ? serveur : avant;
+  }
+
+  const memesExercices = (a: ExerciceId[], b: ExerciceId[]) =>
+    a.length === b.length && a.every((x, i) => x === b[i]);
 
   /**
    * Le corps et les calories (étape 05). Tout est nul au départ : la
@@ -209,17 +251,20 @@ export default function SettingsPage() {
       chargerContexte().then((c) => (c?.user ?? {}) as Record<string, never>),
       fetch("/api/settings").then((r) => r.json()),
     ]).then(([u, s]) => {
-      setProfileForm({
+      setProfileForm((avant) => fusionner(avant, PROFIL_DEFAUT, {
         pseudo: u.pseudo ?? "",
         objectifTotalPompes: s.goal?.objectifTotalPompes ?? 1000,
-      });
+      }));
       setBetaRank(u.betaRank ?? null);
       setEstAdmin(Boolean(u.estAdmin));
       // Repli explicite : une réponse incomplète posait `undefined` dans ces
       // états, et la liste des rubriques — qui lit `levelConfigs.length` pour
       // afficher le niveau — emportait alors toute la page.
       setLevelConfigs(Array.isArray(s.levelConfigs) ? s.levelConfigs : []);
-      setExercicesSel(toExerciceIds(s.user?.exercices));
+      setExercicesSel((avant) => fusionnerValeur(
+        "exercices", avant, [EXERCICE_DEFAUT],
+        toExerciceIds(s.user?.exercices), memesExercices,
+      ));
       setCorps((avant) => fusionner(avant, CORPS_DEFAUT, {
         formuleCalorique: s.user?.formuleCalorique ?? null,
         niveauActivite: s.user?.niveauActivite ?? null,
@@ -235,14 +280,24 @@ export default function SettingsPage() {
         taille: s.user?.taille ?? null,
         age: s.user?.age ?? null,
       }));
-      setRappelSeuil(s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT);
-      setSeuilSec(s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT);
-      setPlafond(s.user?.plafondQuotidien ?? 0);
-      setVariante(s.user?.variantePompes ?? null);
-      setBilanActif(s.user?.bilanActif !== false);
-      setFantome(s.user?.fantome === true);
-      setRecordsPublics(s.user?.recordsPublics === true);
-      setNomAffiche(s.user?.nomAffiche === "riot" ? "riot" : "pseudo");
+      setRappelSeuil((avant) => fusionnerValeur(
+        "rappelSeuilPoints", avant, RAPPEL_SEUIL_DEFAUT,
+        s.user?.rappelSeuilPoints ?? RAPPEL_SEUIL_DEFAUT,
+      ));
+      setSeuilSec((avant) => fusionnerValeur("rappelSeuilSec", avant,
+        RAPPEL_SEUIL_SEC_DEFAUT, s.user?.rappelSeuilSec ?? RAPPEL_SEUIL_SEC_DEFAUT));
+      setPlafond((avant) => fusionnerValeur("plafondQuotidien", avant,
+        0, s.user?.plafondQuotidien ?? 0));
+      setVariante((avant) => fusionnerValeur("variantePompes", avant,
+        null, s.user?.variantePompes ?? null));
+      setBilanActif((avant) => fusionnerValeur("bilanActif", avant,
+        true, s.user?.bilanActif !== false));
+      setFantome((avant) => fusionnerValeur("fantome", avant,
+        false, s.user?.fantome === true));
+      setRecordsPublics((avant) => fusionnerValeur("recordsPublics", avant,
+        false, s.user?.recordsPublics === true));
+      setNomAffiche((avant) => fusionnerValeur("nomAffiche", avant,
+        "pseudo", s.user?.nomAffiche === "riot" ? "riot" : "pseudo"));
       setLienProfil(typeof s.user?.jetonProfil === "string" ? s.user.jetonProfil : null);
       setPartage(s.user?.partageAmis === "detail" ? "detail" : "total");
       setPompesMax(s.user?.pompesMax ?? 0);
@@ -292,6 +347,7 @@ export default function SettingsPage() {
     userPrefs: Record<string, unknown>,
     revenir: () => void,
   ): Promise<{ jetonProfil?: string | null } | null> => {
+    for (const cle of Object.keys(userPrefs)) ecrits.current.add(cle);
     setSavingExo(true);
     setSavedExo(false);
     setErreurExo(false);
@@ -454,6 +510,7 @@ export default function SettingsPage() {
   };
 
   const handleSaveProfile = async () => {
+    for (const cle of Object.keys(profileForm)) ecrits.current.add(cle);
     setSavingProfile(true);
     setSavedProfile(false);
     setProfileError("");

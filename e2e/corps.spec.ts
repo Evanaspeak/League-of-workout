@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { ouvrirCompte } from "./compte";
 import { viderLesFenetres } from "./intro";
 import { compter } from "./base";
@@ -18,6 +18,36 @@ import { compter } from "./base";
 
 const PESEES = `SELECT count(*)::text AS n FROM "Pesee" p
   JOIN "User" u ON u.id = p."userId" WHERE u.pseudo = $1`;
+
+/**
+ * Retarder la RÉPONSE, jamais la REQUÊTE — et c'est toute la différence.
+ *
+ * Dormir puis laisser partir la requête ferait interroger le serveur APRÈS le
+ * geste, donc il répondrait la valeur qu'on vient d'écrire : la réponse ne
+ * contredirait plus rien, et le contrôle passerait avec ou sans la fusion.
+ * Éprouvé — c'est exactement ce qu'un sabotage resté vert a montré.
+ *
+ * Le défaut réel est l'inverse : le serveur a répondu l'état d'AVANT, et sa
+ * réponse arrive après le geste. On va donc la chercher tout de suite, et on
+ * ne la remet qu'une seconde et demie plus tard.
+ *
+ * Le témoin est le couple des deux compteurs : une lecture DEMANDÉE et pas
+ * encore RENDUE au moment du geste, c'est-à-dire une course réellement en
+ * cours. Compter les lectures retardées ne dirait que « le détournement a
+ * pris », ce qui reste vrai quand la réponse est déjà arrivée.
+ */
+type Retard = { demandees: number; rendues: number };
+
+async function retarderLaLecture(page: Page, retard: Retard) {
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    retard.demandees += 1;
+    const reponse = await route.fetch();
+    await new Promise((r) => setTimeout(r, 1500));
+    retard.rendues += 1;
+    await route.fulfill({ response: reponse });
+  });
+}
 
 test("le corps est éteint au départ, et s'allume avec un objectif chiffré", async ({ browser }) => {
   const { etat } = await ouvrirCompte(browser, "Corps", { consentement: true });
@@ -162,13 +192,8 @@ test("une saisie faite avant la fin de la lecture n'est pas effacée", async ({ 
 
   // La réponse arrive APRÈS la saisie, toujours. Sans ce retard, la course se
   // joue en quelques millisecondes et le test ne prouve rien une fois sur huit.
-  let retardees = 0;
-  await page.route("**/api/settings", async (route) => {
-    if (route.request().method() !== "GET") return route.fallback();
-    retardees += 1;
-    await new Promise((r) => setTimeout(r, 1500));
-    return route.fallback();
-  });
+  const retard: Retard = { demandees: 0, rendues: 0 };
+  await retarderLaLecture(page, retard);
 
   await page.goto("/settings#corps");
   await viderLesFenetres(page);
@@ -178,13 +203,103 @@ test("une saisie faite avant la fin de la lecture n'est pas effacée", async ({ 
   await champ.waitFor({ state: "visible", timeout: 10_000 });
   await champ.fill("82");
 
-  // Le témoin : sans réponse retardée, la course n'a pas eu lieu et le
-  // contrôle qui suit passerait sans rien éprouver.
-  expect(retardees).toBeGreaterThan(0);
+  // Le témoin : une lecture partie et pas encore revenue, donc une course
+  // réellement en cours. Sans elle, le contrôle qui suit ne prouve rien.
+  expect(retard.demandees).toBeGreaterThan(retard.rendues);
 
   // La réponse arrive maintenant. Elle ne doit pas emporter la saisie.
   await page.waitForTimeout(2500);
   await expect(champ).toHaveValue("82");
+
+  await ctx.close();
+});
+
+/**
+ * Le même écrasement, sur un réglage qui n'est pas un champ de texte.
+ *
+ * Le seuil de rappel est un nombre et la sélection d'exercices un tableau :
+ * ni l'un ni l'autre ne se compare clé par clé, donc ni l'un ni l'autre
+ * n'était couvert par la fusion des objets. Les deux s'enregistrent AU CLIC —
+ * un geste, une écriture — et sont donc exposés au même défaut, en pire : la
+ * valeur est déjà en base quand la réponse plus ancienne vient la contredire à
+ * l'écran.
+ */
+test("un exercice coché avant la fin de la lecture reste coché", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Coche", { consentement: true });
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  const retard: Retard = { demandees: 0, rendues: 0 };
+  await retarderLaLecture(page, retard);
+
+  await page.goto("/settings");
+  await viderLesFenetres(page);
+  await page.goto("/settings");
+  // La rubrique s'OUVRE : l'adresse nue ne rend que la liste des rubriques,
+  // et la liste des exercices vit dedans. C'est le piège déjà écrit au journal.
+  await page.getByRole("button", { name: /ton effort|your effort/i }).first().click();
+
+  // La boxe : elle n'est pas l'exercice par défaut, donc la cocher fait bien
+  // quitter la valeur de départ — sans quoi la fusion reprendrait le serveur
+  // et le test passerait sans rien éprouver.
+  const boxe = page.getByText(/^boxe$|^boxing$/i).first();
+  await boxe.waitFor({ state: "visible", timeout: 10_000 });
+  await boxe.click();
+  expect(retard.demandees).toBeGreaterThan(retard.rendues);
+
+  const case_ = page.getByRole("checkbox", { name: /boxe|boxing/i }).first();
+  await page.waitForTimeout(2500);
+  await expect(case_).toHaveAttribute("aria-checked", "true");
+
+  await ctx.close();
+});
+
+/**
+ * Le seul trou que la comparaison à la valeur par défaut ne peut pas voir :
+ * un réglage remis à sa valeur d'origine.
+ *
+ * On change d'avis. Le compte est en mode fantôme ; la lecture traîne, donc
+ * l'écran montre encore « Visible », qui est le défaut. On clique
+ * « Invisible », puis on se ravise et on reclique « Visible ». L'état final est
+ * identique au défaut : « pas touché » pour une fusion qui ne regarde que les
+ * valeurs, alors que DEUX écritures sont parties. La réponse périmée remettait
+ * donc le mode fantôme que l'on venait d'annuler — et un réglage de
+ * confidentialité qui se rallume tout seul est le seul refus qu'on ne vérifie
+ * jamais.
+ *
+ * C'est le registre des clés ÉCRITES qui le tient, pas la comparaison.
+ */
+test("un réglage annulé ne se rallume pas quand la lecture arrive", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Annule", { consentement: true });
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  // Le serveur porte l'INVERSE du défaut : sans cet écart, la réponse périmée
+  // dirait la même chose que l'écran et le contrôle passerait sans rien voir.
+  const pose = await page.request.put("/api/settings", {
+    data: { userPrefs: { fantome: true } },
+  });
+  expect(pose.status(), await pose.text()).toBe(200);
+
+  const retard: Retard = { demandees: 0, rendues: 0 };
+  await retarderLaLecture(page, retard);
+
+  await page.goto("/settings");
+  await viderLesFenetres(page);
+  await page.goto("/settings");
+  await page.getByRole("button", { name: /ton effort|your effort/i }).first().click();
+
+  const invisible = page.getByRole("button", { name: /^invisible$|^hidden$/i }).first();
+  const visible = page.getByRole("button", { name: /^visible$/i }).first();
+  await invisible.waitFor({ state: "visible", timeout: 10_000 });
+  await invisible.click();
+  await visible.click();
+
+  expect(retard.demandees).toBeGreaterThan(retard.rendues);
+
+  await page.waitForTimeout(2500);
+  await expect(visible).toHaveAttribute("aria-pressed", "true");
+  await expect(invisible).toHaveAttribute("aria-pressed", "false");
 
   await ctx.close();
 });
