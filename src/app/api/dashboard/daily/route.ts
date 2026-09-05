@@ -39,6 +39,10 @@ export async function GET(req: Request) {
   }
 
   const hourly = Array.from({ length: 24 }, (_, h) => ({
+    // Le numéro : c'est le navigateur qui nomme l'heure dans la langue du
+    // lecteur. `label` reste pour un onglet resté ouvert sur une réponse
+    // plus ancienne.
+    heure: h,
     label: `${h}h`,
     total: byHour[h] || 0,
   })).filter((_, h) => !!byHour[h]);

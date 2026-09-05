@@ -280,6 +280,10 @@ export async function GET(req: Request) {
 
   const statsByPeriod = {
     hour: Array.from({ length: 24 }, (_, h) => ({
+      // Le numéro, comme pour les jours et les mois juste en dessous : c'est le
+      // navigateur qui nomme l'heure dans la langue du lecteur. `label` reste
+      // pour un onglet resté ouvert sur une réponse plus ancienne.
+      heure: h,
       label: `${h}h`,
       avg: byHour[h] ? Math.round(byHour[h].total / byHour[h].count) : 0,
       total: byHour[h]?.total ?? 0,
