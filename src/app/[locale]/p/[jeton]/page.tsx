@@ -6,6 +6,7 @@ import { longueurSerie, meilleureSerie } from "@/lib/serie";
 import { niveauPourXp, titrePorte, xpDuCompte } from "@/lib/niveauCompte";
 import { textes } from "@/lib/i18n/textes";
 import { profilPublic as dict } from "@/lib/i18n/dictionaries/profilPublic";
+import { effortPaye as dictEffort } from "@/lib/i18n/dictionaries/effortPaye";
 import { titres as dictTitres } from "@/lib/i18n/dictionaries/titres";
 import { estLocale, type Locale } from "@/lib/i18n/langues";
 import { etiquetteLocale } from "@/lib/i18n/langues";
@@ -38,6 +39,8 @@ export default async function PageProfilPublic(
   const { locale: brut, jeton } = await params;
   const locale: Locale = estLocale(brut) ? brut : "en";
   const t = textes(dict, locale);
+  // Rendue au SERVEUR : pas de crochet React, donc `textes` et non `useT`.
+  const tEffort = textes(dictEffort, locale);
   const tt = textes(dictTitres, locale);
 
   const compte = jetonPlausible(jeton)
@@ -122,7 +125,7 @@ export default async function PageProfilPublic(
 
       <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 16 }}>
         <div>
-          <dt style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.effort}</dt>
+          <dt style={{ color: "var(--steel)", fontSize: ".85rem" }}>{tEffort.nom}</dt>
           <dd className="mono-num" style={{ fontSize: "1.6rem", margin: 0 }}>{nombre.format(points)}</dd>
         </div>
         <div>

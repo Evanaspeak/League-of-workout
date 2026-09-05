@@ -1833,6 +1833,68 @@ propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
 
+### Une grandeur, trois écrans, trois noms — et les trois langues qu'on ne relit pas
+Trouvé en lisant le bilan de saison en chinois, puis le même en français. Le
+chinois annonçait **« 已完成训练 »** — des entraînements accomplis — au-dessus
+d'une QUANTITÉ d'effort, « 480 俯卧撑 ». Un compte de séances par-dessus une
+quantité, ce qui est exactement le défaut déjà corrigé sur « Victoires » qui
+coiffait un pourcentage.
+
+**La même grandeur s'affiche à TROIS endroits**, et elle y était nommée trois
+fois à la main :
+
+| | classement | bilan | profil public |
+|---|---|---|---|
+| fr | Effort payé | Effort payé | Effort payé |
+| en | Effort paid | Effort paid | Effort paid |
+| es | Esfuerzo pagado | Esfuerzo pagado | Esfuerzo pagado |
+| de | Bezahlter Aufwand | Bezahlter Aufwand | **Geleisteter Aufwand** |
+| zh | 已完成努力 | **已完成训练** | **已还努力** |
+| ja | こなした努力 | **こなした運動** | **果たした努力** |
+
+**Ce que la répartition apprend vaut plus que le défaut lui-même.** Les trois
+langues qui coïncident n'ont rien prouvé : elles avaient été recopiées. Ce sont
+l'allemand, le chinois et le japonais qui ont dérivé — c'est-à-dire les trois
+qu'on ne relit pas. La divergence suit donc l'ATTENTION portée à chaque langue,
+pas son écriture : l'allemand est en alphabet latin et il a dérivé comme les
+deux autres.
+
+**Ce qui décide de la formulation retenue n'est pas le goût.** Le classement
+est le seul des trois écrans à EXPLIQUER la grandeur juste au-dessus d'elle, et
+son texte d'aide emploie déjà les mêmes mots — « 真正完成的努力量 » en chinois,
+« 実際にこなした努力量 » en japonais. La colonne et son explication
+s'accordaient ; ce sont les deux autres écrans qui s'en écartaient. Le libellé
+se choisit donc sur une preuve interne, pas sur une préférence de traducteur.
+
+`dictionaries/effortPaye.ts` le porte une seule fois, lu par les deux écrans
+clients (`useT`) et par le profil public, qui est rendu au SERVEUR et n'a donc
+pas de crochet à sa disposition (`textes`). C'est la même réponse que pour les
+initiales de victoire et de défaite, pour la même raison : écrit trois fois, ça
+diverge à la première correction — et ça venait de le prouver trois fois.
+
+**Le garde ne lit que le bloc FRANÇAIS**, comme celui des initiales, et il
+suffit : le défaut portait bien en français, les trois clés y valant « Effort
+payé ». C'est en chinois qu'on l'a VU, c'est en français qu'on peut le compter.
+
+**Et son second contrôle vaut pour le chinois et le japonais seuls.** Leurs
+libellés ne portent aucun accent, donc `texteEnDurComposants.test.ts` ne peut
+pas les voir — c'est son angle mort par construction, et c'est exactement là
+que la divergence avait eu lieu. Un écran qui réécrirait « 已完成努力 » à la
+main serait donc invisible à tous les gardes existants.
+
+Quatre sabotages, quatre échecs, chacun sur son propre contrôle : la clé remise
+dans le bilan, le libellé chinois réécrit dans un écran, un écran qui importe
+le dictionnaire sans l'appeler, et le recensement rendu aveugle.
+
+Vérifié à l'écran, bilan et classement côte à côte : « EFFORT PAYÉ »,
+« BEZAHLTER AUFWAND », « 已完成努力 », « こなした努力 ».
+
+**Ce qui n'a PAS bougé, avec sa raison.** L'IMAGE du bilan écrit « 已完成 » et
+« こなした » — « accompli », sans nom derrière. Ce n'est pas le défaut corrigé
+ici : il n'y a pas de nom faux, la forme est verbale et tient dans une carte
+compacte où le nombre suit immédiatement. La toucher serait retoucher une image
+qui se lit très bien.
+
 ### Neuf réglages de plus, et le trou que la fusion par valeur ne voit pas
 La veille, la lecture des réglages avait cessé d'effacer ce qu'on venait de
 taper — pour DEUX états sur onze. Le journal l'écrivait noir sur blanc : « les
@@ -1885,6 +1947,21 @@ retard supprimé fait tomber les deux témoins. Un cinquième n'a pas compilé
 plutôt que de faire tomber un test — retirer le contrôle du registre rend son
 paramètre inutilisé, et `noUnusedLocals` le nomme — c'est noté comme tel et non
 compté comme un garde qui mord.
+
+**La CI a nommé l'intermittent que la veille avait laissé « cause inconnue ».**
+V437 est rouge sur un seul tronçon et un seul test : `corps.spec.ts:115`, « le
+mètre-ruban ne reproche rien tant qu'on n'a rien saisi », 41 passés à côté.
+C'est exactement le défaut que V438 a corrigé — le champ tapé effacé par une
+lecture partie avant lui — et V438 est verte en 8 min 08, durée qui dit que les
+parcours ont bien tourné. L'échec local d'hier, celui dont j'écrivais « la cause
+reste inconnue ; ce qui est établi, c'est qu'elle n'est pas le limiteur », avait
+donc une cause, et elle était dans le produit et non dans le banc d'essai.
+
+**Ce que ça apprend sur la lecture de la CI.** Le rouge datait de 00h57 et je ne
+l'ai lu qu'après avoir publié deux versions de plus. La règle écrite la veille —
+lire la CI de la version PRÉCÉDENTE à chaque fusion — n'a servi que parce que je
+l'ai appliquée ; sans elle, le rouge de V437 rejoignait la série de quatre qu'il
+avait fallu découvrir par hasard.
 
 ### Une phrase assemblée dans le composant, et le japonais qu'elle produisait
 Trouvé en lisant le tableau de bord en japonais. La ligne du niveau de compte

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useT, useLocale, etiquetteLocale } from "@/lib/i18n/LocaleContext";
 import { bilanSaison as dictBilan } from "@/lib/i18n/dictionaries/bilanSaison";
+import { effortPaye as dictEffort } from "@/lib/i18n/dictionaries/effortPaye";
 import { JOURS_SAISON } from "@/lib/bilanSaison";
 import { ventiler } from "@/lib/exercices";
 
@@ -67,6 +68,7 @@ function Case({ legende, valeur }: { legende: string; valeur: string }) {
 
 export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
   const t = useT(dictBilan);
+  const tEffort = useT(dictEffort);
   const locale = useLocale();
   const [bilan, setBilan] = useState<Bilan | null>(null);
   const [erreur, setErreur] = useState(false);
@@ -229,7 +231,7 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
           <Case legende={t.parties} valeur={nombre(bilan.parties)} />
           <Case legende={t.winrate}
                 valeur={bilan.winrate === null ? t.aucun : pourcent(bilan.winrate)} />
-          <Case legende={t.paye} valeur={effortPaye} />
+          <Case legende={tEffort.nom} valeur={effortPaye} />
           <Case legende={t.serie} valeur={nombre(bilan.meilleureSerie)} />
           <Case legende={t.joursActifs} valeur={nombre(bilan.joursActifs)} />
           <Case legende={t.pireJour}

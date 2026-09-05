@@ -80,7 +80,6 @@ export const amis = {
     classementSeul: "Tu es seul ici. Ajoute un ami : c'est à ce moment-là que le tableau sert à quelque chose.",
     colRang: "Rang",
     colJoueur: "Joueur",
-    colEffort: "Effort payé",
     /**
      * Le nombre arrive DÉJÀ mis en forme, et le compte sert à l'accord.
      *
@@ -204,7 +203,6 @@ export const amis = {
     classementSeul: "You are alone here. Add a friend: that is when this table starts being worth something.",
     colRang: "Rank",
     colJoueur: "Player",
-    colEffort: "Effort paid",
     effortPaye: (formate: string, n: number) => `${formate} effort point${n !== 1 ? "s" : ""}`,
     enTete: "You are leading this week.",
     ecartAuPremier: (n: number) => `You need ${n} more points to take first place.`,
@@ -313,7 +311,6 @@ export const amis = {
     classementSeul: "Estás solo aquí. Añade a un amigo: es entonces cuando esta tabla sirve de algo.",
     colRang: "Puesto",
     colJoueur: "Jugador",
-    colEffort: "Esfuerzo pagado",
     effortPaye: (formate: string, n: number) => `${formate} punto${n !== 1 ? "s" : ""} de esfuerzo`,
     enTete: "Vas primero esta semana.",
     ecartAuPremier: (n: number) => `Te faltan ${n} puntos para el primer puesto.`,
@@ -422,7 +419,6 @@ export const amis = {
     classementSeul: "Du bist hier allein. Füge jemanden hinzu: erst dann taugt diese Tabelle zu etwas.",
     colRang: "Platz",
     colJoueur: "Spieler",
-    colEffort: "Bezahlter Aufwand",
     effortPaye: (formate: string, n: number) => `${formate} Aufwandspunkt${n !== 1 ? "e" : ""}`,
     enTete: "Du führst diese Woche.",
     ecartAuPremier: (n: number) => `Dir fehlen ${n} Punkte bis zum ersten Platz.`,
@@ -531,7 +527,6 @@ export const amis = {
     classementSeul: "这里只有你一个人。加个好友吧，这张表才有意义。",
     colRang: "名次",
     colJoueur: "玩家",
-    colEffort: "已完成努力",
     effortPaye: (formate: string, _n: number) => `${formate} 点努力值`,
     enTete: "本周你领先。",
     ecartAuPremier: (n: number) => `再有 ${n} 点就能拿到第一。`,
@@ -636,7 +631,6 @@ export const amis = {
     classementSeul: "ここにはまだあなたしかいません。友だちを追加すると、この表が意味を持ちます。",
     colRang: "順位",
     colJoueur: "プレイヤー",
-    colEffort: "こなした努力",
     effortPaye: (formate: string, _n: number) => `${formate} 努力ポイント`,
     enTete: "今週はあなたが首位です。",
     ecartAuPremier: (n: number) => `1 位まであと ${n} ポイントです。`,

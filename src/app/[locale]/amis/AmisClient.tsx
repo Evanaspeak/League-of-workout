@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT, useLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { etiquetteLocale } from "@/lib/i18n/langues";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
+import { effortPaye as dictEffort } from "@/lib/i18n/dictionaries/effortPaye";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
 import type { LigneClassement, Periode } from "@/lib/classement";
@@ -76,6 +77,8 @@ type Donnees = {
 export function AmisClient() {
   const nombre = useNombre();
   const t = useT(dictAmis);
+  // L'effort payé se nomme au même endroit pour les trois écrans qui l'affichent.
+  const tEffort = useT(dictEffort);
   const { locale } = useLocale();
   /**
    * La date d'un record, dans la langue de l'écran.
@@ -519,7 +522,7 @@ export function AmisClient() {
                   <tr style={{ color: "var(--steel)", fontSize: ".8rem", textAlign: "left" }}>
                     <th scope="col" style={{ padding: "4px 8px 4px 0", width: "3rem" }}>{t.colRang}</th>
                     <th scope="col" style={{ padding: "4px 8px 4px 0" }}>{t.colJoueur}</th>
-                    <th scope="col" style={{ padding: "4px 0", textAlign: "right" }}>{t.colEffort}</th>
+                    <th scope="col" style={{ padding: "4px 0", textAlign: "right" }}>{tEffort.nom}</th>
                   </tr>
                 </thead>
                 <tbody>
