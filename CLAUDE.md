@@ -1846,6 +1846,64 @@ propriétaire. Ce n'est pas un arbitrage technique qu'on prend seul : si les
 constructions échouent, il faut savoir depuis quand et sur quoi ; si l'adresse
 est épinglée, quelqu'un l'a fait pour une raison.
 
+### Deux exercices pour ceux qui ne peuvent pas descendre au sol
+Ligne 260 du plan, réponse « Oui ». Ce qui la rend urgente n'est pas elle, c'est
+la 259 juste au-dessus : « quelqu'un qui ne peut pas faire de pompes du tout
+peut-il utiliser l'application aujourd'hui ? » → **« Mal. »** Les six exercices
+du catalogue supposaient tous de descendre au sol ou de courir.
+
+**Pompes murales** et **marche** s'ajoutent au catalogue. Debout face à un mur,
+et un kilomètre : aucun passage au sol, aucune course.
+
+**Le rapport se choisit sur le TEMPS, et c'est le principe que le catalogue
+énonçait sans que rien ne le tienne.** Il est écrit exercice par exercice
+depuis le début — « cent points font deux kilomètres, soit à peu près le temps
+que demandent cent pompes », « vingt tractions pour cent points, soit à peu
+près le même temps ». C'est lui qui rend le choix d'exercice LIBRE : si l'un
+coûtait le double d'un autre pour la même dette, il n'y aurait plus de choix,
+il y aurait un piège.
+
+**Mon premier jet le violait**, et c'est ce qui a fait écrire le garde : trois
+pompes murales de quatre secondes font douze secondes par point, contre six
+pour une pompe au sol. Un exercice ADAPTÉ qui demande le double de temps n'est
+pas accessible — c'est l'inverse exact de ce que la 260 demandait. Deux
+répétitions de trois secondes rétablissent la parité.
+
+Le catalogue entier tient maintenant dans une bande de quatre à sept secondes
+et demie par point :
+
+| exercice | s/point | | exercice | s/point |
+|---|---|---|---|---|
+| tractions | 4,00 | | pompes | 6,00 |
+| planche | 5,00 | | **pompesMurales** | **6,00** |
+| boxe | 7,00 | | course | 7,20 |
+| squats | 7,50 | | **marche** | **7,20** |
+
+`src/lib/tempsParPoint.test.ts` tient la bande. Elle est large parce que le
+catalogue l'est : elle n'existe pas pour affiner un barème, elle existe pour
+attraper un facteur deux. Trois sabotages, trois échecs — dont le premier jet
+remis, que le garde nomme « pompesMurales → 12.00 s ».
+
+**Ce que le compilateur a fait tout seul**, et qui est l'argument pour les
+`Record<ExerciceId, …>` : ajouter deux identifiants a nommé les quatre endroits
+qui devaient suivre — les MET et la part à l'effort du calcul de calories, les
+conseils de forme, les noms en jeu. Aucun ne se serait trouvé à la relecture.
+
+**Et deux gardes ont mordu sur mes propres textes**, ce qui est leur travail :
+`nomsExercices` a exigé un nom et une description dans les six langues, et le
+garde des tirets cadratins a attrapé le mien, glissé dans le conseil de forme
+allemand.
+
+Vérifié à l'écran en français, en allemand et en japonais : « POMPES MURALES ·
+Haut du corps, debout. Aucun passage au sol », « WANDLIEGESTÜTZE · Oberkörper,
+im Stehen », « 壁腕立て · 上半身。立ったまま、床に降りる必要はありません ». Le
+simulateur rend « 76 pompes murales » et « 0,4 km » pour la même partie.
+
+**Ce qui n'est PAS fait, avec sa raison.** La ligne 261 — l'application en
+fauteuil — a pour réponse « à traiter » et non « oui » : aucun des exercices
+adaptés d'aujourd'hui ne convient, et choisir lesquels est une décision, pas
+une écriture.
+
 ### Le retard de déploiement recommence, et cette fois il a un témoin dès la première minute
 Suite des deux entrées sur le retard de production. Ce qui change ici n'est pas
 le phénomène — c'est qu'on le voit ARRIVER au lieu de le découvrir après coup.

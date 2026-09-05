@@ -62,12 +62,24 @@ Les paliers existent déjà et ne récompensent rien. Ces trois-là se branchent
 
 Défi quotidien tiré au sort d'abord — c'est le plus simple et le plus fréquent. Puis les défis mensuels à trois niveaux avec malus, puis l'objectif collectif. Le mur des records et les événements de patch en dernier.
 
-### [ ] 05 — Le corps et les calories
-*8 nuits*
+### [~] 05 — Le corps et les calories
+*8 nuits · construit, sauf ce qui demande un tournage*
 
 Le plus gros bloc, et un vrai changement de nature : l'application cesse d'être un compteur de dette pour devenir un suivi. À faire d'un seul tenant — calculateur, trois modes, poids cible, graphique, rappel de pesée — parce qu'à moitié fait il ne sert à rien.
 
 Je le place après les défis parce qu'il double la surface du produit sans rien changer pour ceux qui viennent pour le jeu.
+
+**État au 5 septembre.** Construit d'un seul tenant en V407 — calculateur,
+trois modes, poids cible, courbe de pesées, rappel de pesée, masse grasse au
+mètre-ruban, et les deux avertissements qui n'empêchent jamais d'afficher.
+Quatorze lignes sur quinze. La quinzième est une vidéo de forme par exercice
+(026) : elle demande un tournage, donc elle ne se prend pas ici.
+
+Le marqueur de l'étape est resté `[ ]` pendant ce temps, alors que sa section
+comptait déjà « 1 à faire · 14 faits ». Quelqu'un qui lit la liste des étapes y
+voyait le plus gros bloc du plan intact. C'est ce que ce fichier reproche
+ailleurs : un plan qu'on ne tient pas à jour ment, et on lui obéit quand
+même.
 
 ### [ ] 06 — Le calcul de la dette, tes trois corrections
 *4 nuits*
@@ -291,7 +303,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 252 | Une mascotte, plus tard | — |
 
 ### Accessibilité
-*2 à faire · 6 faits.* Les vérifications sont faites. Les adaptations restent.
+*1 à faire · 7 faits.* Les vérifications sont faites. La première adaptation est là : deux exercices qui ne demandent ni de descendre au sol ni de courir. Reste le fauteuil (261), que la réponse laisse « à traiter » — donc à décider avant d'être écrit.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -301,7 +313,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 265 | L'animation réduite, respectée partout | — |
 | [x] | 266 | Victoire et défaite distinguables par un daltonien | — |
 | [x] | 268 | Le genre « non précisé », avec la moyenne des deux | — |
-| [ ] | 260 | Un exercice adapté par défaut pour les déconditionnés | 1 nuit |
+| [x] | 260 | Un exercice adapté par défaut pour les déconditionnés | — |
 | [ ] | 261 | Rendre l'application utilisable en fauteuil | 2 nuits |
 
 ### Données, confiance, incidents
