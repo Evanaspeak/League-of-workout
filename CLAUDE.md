@@ -1136,6 +1136,64 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 他的昵称 » : deux langues sur six donnaient un genre à quelqu'un
+Trouvé en lisant l'écran des amis en chinois. Le libellé du champ disait
+« 他的昵称 » — « SON pseudo », au masculin — pour désigner quelqu'un dont on
+ne sait rien, pas même son nom.
+
+| langue | libellé | genré ? |
+|---|---|---|
+| fr | « Son pseudo, exactement » | non — « son » s'accorde avec *pseudo*, pas avec la personne |
+| en | « Their display name, exactly » | non |
+| es | « Su apodo, exactamente » | non |
+| **de** | « **Sein** Anzeigename, genau so » | **oui** |
+| **zh** | « **他**的昵称，要一字不差 » | **oui** |
+| ja | « 相手の表示名（正確に） » | non — « 相手 », l'autre partie |
+
+**Le chinois se contredisait lui-même**, et c'est ce qui rend le cas net : le
+même fichier écrit déjà « 对方 » — « l'autre partie », neutre — deux clés plus
+loin, dans « 等待对方回应 ». Ce n'est donc pas une contrainte de la langue,
+c'est une traduction en retard sur les autres. Deux libellés chinois repris,
+deux allemands.
+
+**Le produit ne donne de genre à personne, et c'est une décision écrite.** Le
+panneau du corps demande quelle VARIANTE de formule appliquer, avec sa phrase :
+« on te demande laquelle appliquer, pas qui tu es ». Un libellé qui dit « son
+pseudo à lui » dans deux langues défait ça sans que personne le remarque —
+personne qui lise le français, en tout cas.
+
+**Le garde ne tient que la moitié CHECKABLE du sujet, et il le dit.** Le
+chinois a un pronom isolable (他 / 她) ; l'allemand décline son possessif sur
+le genre GRAMMATICAL du nom — « der Code … ihn », « das Konto … seine Daten »,
+« ein Spiel … seine Zahlen » — et aucun motif ne distingue là une chose d'une
+personne. Le recensement allemand rend quatorze occurrences dont deux seulement
+désignent quelqu'un : un garde y ferait plus de bruit qu'il n'attrape. Les deux
+libellés ont été repris à la main, et la limite est écrite plutôt que laissée
+à redécouvrir.
+
+**Et le découpage par BLOC décide de tout**, ce que le sabotage confirme : le
+japonais écrit 他 pour « autre » — « その他 », « 他の言語 », « 他と分けて » —
+et il vit dans les mêmes fichiers. Aucun motif ne sépare le 他 chinois du 他
+japonais ; ce qui les sépare est le bloc où ils se trouvent. C'est la même
+décision que pour les initiales de résultat, qui ne lisent que le français, et
+le cas japonais figure parmi les cas fabriqués parce qu'il existe pour de vrai
+dans deux dictionnaires.
+
+Trois sabotages, trois échecs : le pronom remis en chinois, le découpage par
+bloc retiré, et le motif rendu aveugle.
+
+**Ce qui a été regardé et LAISSÉ, avec sa raison.** Le français de l'aide de la
+dette d'équipe écrit « retire sa dette à lui » — « lui » y est masculin. C'est
+l'idiome français pour lever l'ambiguïté de « sa » (la sienne, pas la tienne),
+et c'est la langue SOURCE : la reformuler est un choix de voix, pas une
+correction de traduction, et ça se décide avec le propriétaire. L'allemand du
+même passage écrit « Jeder zahlt, was er kann », qui est le générique
+idiomatique et n'a pas d'équivalent neutre qui se lise.
+
+Vérifié à l'écran dans les six langues : « Son pseudo, exactement », « Their
+display name, exactly », « Su apodo, exactamente », « Anzeigename der Person,
+genau so », « 相手の表示名（正確に） », « 对方的昵称，要一字不差 ».
+
 ### « 3 日 » sur la source de diffusion, et la CI rouge que personne ne lisait
 Deux choses sans rapport, réunies parce qu'elles se sont trouvées le même
 quart d'heure.

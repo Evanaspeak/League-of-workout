@@ -361,7 +361,7 @@ export const amis = {
     sousTitre: "Füge jemanden hinzu, dessen Anzeigenamen du schon kennst. Es gibt kein Verzeichnis: nichts lässt sich durchsuchen, und niemand findet dich von allein.",
 
     ajouterTitre: "Freund hinzufügen",
-    pseudoLabel: "Sein Anzeigename, genau so",
+    pseudoLabel: "Anzeigename der Person, genau so",
     pseudoAide: "Der Name des Win-or-Workout-Kontos, nicht der Riot-Name.",
     ajouter: "Anfrage senden",
     envoi: "Wird gesendet…",
@@ -373,7 +373,7 @@ export const amis = {
     refuser: "Ablehnen",
 
     envoyeesTitre: "Gesendete Anfragen",
-    enAttente: "Wartet auf seine Antwort",
+    enAttente: "Wartet auf die Antwort",
     annuler: "Abbrechen",
 
     listeTitre: "Freunde",
@@ -470,7 +470,7 @@ export const amis = {
     sousTitre: "添加你已经知道昵称的人。这里没有名录：什么都搜不到，也没人能自己找到你。",
 
     ajouterTitre: "添加好友",
-    pseudoLabel: "他的昵称，要一字不差",
+    pseudoLabel: "对方的昵称，要一字不差",
     pseudoAide: "是 Win or Workout 账号的昵称，不是 Riot 昵称。",
     ajouter: "发送请求",
     envoi: "发送中…",
@@ -550,7 +550,7 @@ export const amis = {
     equipeVoir: "队伍的欠账",
     equipeVoirNomme: (nom: string) => `${nom} 队伍的欠账`,
     equipeTitre: "队伍欠账",
-    equipeAide: "各尽所能。你为别人做的努力计入你的排名，同时抵消他的欠账。",
+    equipeAide: "各尽所能。你为别人做的努力计入你的排名，同时抵消对方的欠账。",
     equipeTotal: (n: number) => `共欠 ${n} 点`,
     equipeDu: (n: number) => (n === 0 ? "已还清" : `欠 ${n}`),
     equipeRelayer: "承担",
