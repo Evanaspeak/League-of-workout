@@ -1150,6 +1150,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « ベータ版 · 26 juin 2026 施行 » : la date des documents juridiques était française pour tout le monde
+Trouvé en balayant les pages PUBLIQUES en japonais et en chinois — le probe des
+écrans connectés ne les regarde pas, et ce sont pourtant celles que des
+inconnus lisent. Les CGU et la politique de confidentialité affichaient leur
+date d'entrée en vigueur ainsi :
+
+```
+ベータ版 · 26 juin 2026 施行
+测试版 · 自 26 juin 2026 起生效
+Beta-Version · Gültig ab 26 juin 2026
+```
+
+`DATE_ENTREE_EN_VIGUEUR` valait la chaîne « 26 juin 2026 », servie telle quelle
+aux six langues. C'est la règle du projet — « les dates et les nombres passent
+par `Intl`, jamais de table écrite à la main » — et elle manquait sur les deux
+seuls textes qui ENGAGENT l'éditeur du site.
+
+La constante est rangée sous sa forme neutre et mise en forme à la lecture. Le
+jour ne change pas ; seule son écriture suit la langue.
+
+**Et `timeZone: "UTC"` n'est pas une précaution de style.** Une date ISO est lue
+à minuit UTC : un navigateur réglé à l'ouest de Greenwich afficherait la VEILLE.
+Sur une date d'entrée en vigueur, un jour d'écart n'est pas une coquetterie de
+typographie — le test le montre en valeur, la même date sans la garde rendant
+« 25 juin » à Los Angeles.
+
+**Deux de mes contrôles ne prouvaient rien, et les deux pièges sont écrits ici
+depuis longtemps.** `process.env.TZ` posé après le démarrage de Node ne change
+rien à `Intl` : le fuseau est capturé une fois pour toutes, donc mon premier
+contrôle passait au vert avec la garde retirée. Et le contrôle de remplacement,
+posé sur la SOURCE, lisait le commentaire de la fonction — qui cite
+`timeZone: "UTC"` pour expliquer pourquoi il existe. Le garde se satisfaisait de
+sa propre explication. Il lit la source privée de ses commentaires maintenant.
+
+**La correction a fait NAÎTRE une couture**, ce qui vaut d'être noté comme
+méthode : tant que la date était latine, 「日 施行」 ne pouvait pas exister —
+c'est en la rendant idéographique que la couture est apparue. Une correction
+qui change l'écriture d'une valeur oblige à refaire le recensement des
+gabarits qui la reçoivent, et à ce moment-là seulement. Quatre gabarits de
+plus par `colleCjk`, déclarés au garde.
+
+Vérifié à l'écran dans quatre langues : « En vigueur au 26 juin 2026 »,
+« Gültig ab 26. Juni 2026 », 「2026年6月26日施行」,「自 2026年6月26日起生效」.
+
+**Un faux positif du détecteur, écrit plutôt que corrigé de travers.** Il
+signale 「ソロ/デュオ ランク」 sur la page d'accueil : le katakana est dans la
+classe CJK, donc une espace entre deux mots en katakana ressemble à une
+couture. Elle peut être voulue — c'est ainsi qu'on sépare deux mots d'un
+composé — et réécrire du japonais sur un jugement de style n'est pas une
+correction. La limite est notée ; le détecteur reste utile parce que ses vrais
+cas sont des idéogrammes, pas du katakana.
+
 ### « 已于 2026年9月7日 同意 » : la date du consentement cousait, et le probe ne pouvait pas la voir
 Trouvé en lisant la rubrique « Ton profil » EN CHINOIS. La ligne qui prouve le
 consentement aux données de santé rendait 「已于 2026年9月7日 同意」 — une espace

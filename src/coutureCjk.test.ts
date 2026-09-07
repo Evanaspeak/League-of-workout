@@ -7,6 +7,8 @@ import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { amis } from "@/lib/i18n/dictionaries/amis";
 import { consentementSante } from "@/lib/i18n/dictionaries/consentementSante";
+import { cgu } from "@/lib/i18n/dictionaries/cgu";
+import { confidentialite } from "@/lib/i18n/dictionaries/confidentialite";
 import { textesBilan } from "@/lib/i18n/courriels";
 import { dureeLocalisee } from "@/lib/i18n/duree";
 import { etiquetteLocale } from "@/lib/i18n/langues";
@@ -70,6 +72,22 @@ const A_COUTURE: { nom: string; rendre: (l: "zh" | "ja", v: string) => string }[
     nom: `consentementSante.${cle}`,
     rendre: (l: "zh" | "ja", v: string) =>
       (consentementSante as never as Record<string, Record<string, (d: string) => string>>)[l][cle](v),
+  })),
+  /**
+   * La date d'entrée en vigueur des deux documents JURIDIQUES.
+   *
+   * Elle était écrite en français dans les six langues, donc latine, donc sans
+   * couture possible : c'est en la localisant que 「2026年6月26日 施行」 est
+   * apparu. Une correction qui rend une valeur idéographique fait naître la
+   * couture du gabarit qui la reçoit — et le recensement se refait à ce
+   * moment-là, pas avant.
+   */
+  ...([
+    ["cgu", cgu], ["confidentialite", confidentialite],
+  ] as const).map(([nom, dict]) => ({
+    nom: `${nom}.versionLabel`,
+    rendre: (l: "zh" | "ja", v: string) =>
+      (dict as never as Record<string, { versionLabel(d: string): string }>)[l].versionLabel(v),
   })),
   /**
    * Le sujet du bilan hebdomadaire, qui part par COURRIEL.

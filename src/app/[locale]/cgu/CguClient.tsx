@@ -1,7 +1,7 @@
 import { Lien } from "@/components/Lien";
-import { CONTACT_LEGAL, DATE_ENTREE_EN_VIGUEUR } from "@/lib/mentionsLegales";
+import { CONTACT_LEGAL, dateEntreeEnVigueur } from "@/lib/mentionsLegales";
 import { textes } from "@/lib/i18n/textes";
-import { toLocale } from "@/lib/i18n/langues";
+import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 import { cgu } from "@/lib/i18n/dictionaries/cgu";
 
 
@@ -29,7 +29,7 @@ export default function CguClient({ locale }: { locale: string }) {
           {t.pageTitle}
         </h1>
         <p style={{ fontSize: "0.78rem", color: "var(--faint)", marginTop: "0.5rem" }}>
-          {t.versionLabel(DATE_ENTREE_EN_VIGUEUR)}
+          {t.versionLabel(dateEntreeEnVigueur(etiquetteLocale(toLocale(locale))))}
         </p>
       </div>
 

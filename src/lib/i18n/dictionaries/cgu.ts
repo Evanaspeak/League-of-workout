@@ -1,3 +1,4 @@
+import { colleCjk } from "../cjk";
 export const cgu = {
   fr: {
     pageTitle: "CONDITIONS GÉNÉRALES D'UTILISATION",
@@ -269,7 +270,7 @@ export const cgu = {
   },
   zh: {
     pageTitle: "使用条款",
-    versionLabel: (date: string) => `测试版 · 自 ${date} 起生效`,
+    versionLabel: (date: string) => colleCjk(`测试版 · 自 ${date} 起生效`),
     article1: {
       title: "1. 简介",
       paragraphs: [
@@ -336,7 +337,7 @@ export const cgu = {
   },
   ja: {
     pageTitle: "利用規約",
-    versionLabel: (date: string) => `ベータ版 · ${date} 施行`,
+    versionLabel: (date: string) => colleCjk(`ベータ版 · ${date} 施行`),
     article1: {
       title: "1. はじめに",
       paragraphs: [
