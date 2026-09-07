@@ -1188,6 +1188,41 @@ la même série vivent dans `lecture-ecran`, donc invisibles par construction �
 c'est même la raison pour laquelle ils avaient vieilli sans que personne le
 remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
 
+### Douze versions, zéro pixel — et ce que la comparaison ne regarde pas
+Comparaison de rendu passée entre V459 et V471, soit douze versions. Trente-neuf
+captures, huit pages, trois largeurs : **aucune différence**.
+
+C'est le résultat qu'on attendait de versions qui corrigent des libellés et des
+mises en forme, mais il faut dire ce qu'il vaut.
+
+**Ce que la comparaison N'EXERCE PAS, et c'est l'essentiel de la série.** Elle
+tourne en FRANÇAIS. Or les corrections de V467 à V469 sont des coutures
+japonaises et chinoises — « 5分から効きます », « 45秒 », « 9月5日 に » — donc
+invisibles ici par construction. Le seul défaut français de la série était
+« 15360 / 25000 », et le compte de mesure est semé à quarante parties : il
+n'atteint pas le millier, donc ce couple-là ne s'affiche pas non plus.
+
+Autrement dit : elle prouve qu'aucune des douze versions n'a déplacé quoi que ce
+soit **par accident**, et elle ne dit rien de ce qu'elles ont corrigé
+**exprès**. C'est exactement la répartition entre les deux outils — les
+corrections se vérifient en LISANT l'écran dans la langue concernée, la
+non-régression se vérifie au pixel.
+
+**Et le panneau d'administration résiste, pour une raison qui vaut d'être
+écrite.** Le lire demande d'emprunter l'adresse administrateur en base ; c'est
+ce que fait `bareme-gele.spec.ts`, et ça marche pour lui — mais il ne s'en sert
+que par l'API, jamais par la PAGE. Emprunter l'adresse puis ouvrir `/admin` avec
+une session ouverte AVANT l'emprunt renvoie sur le tableau de bord : rien
+dans le dépôt ne prouve que la page se rende par ce chemin. Le contrôle
+d'atterrissage n'a rien dit — l'adresse restait `/admin` — c'est la LECTURE DES
+TITRES qui l'a montré, « Test de force » et « Paliers » n'étant pas des
+sections d'administration.
+
+L'adresse a été rendue à son compte, comme le veut la règle. Ce qu'il faudrait
+pour lire cette page est une session ouverte APRÈS l'emprunt ; c'est faisable
+et ça n'a pas été fait, plutôt que de laisser croire à un balayage qui n'a rien
+balayé.
+
 ### Campagne du 7 septembre au soir : soixante-treize kilo-octets apparus en V460
 Passée après dix versions, V460 à V469, sur un compte semé à soixante parties.
 
