@@ -1,3 +1,4 @@
+import { colleCjk } from "../cjk";
 export const confidentialite = {
   fr: {
     pageTitle: "POLITIQUE DE CONFIDENTIALITÉ",
@@ -469,7 +470,7 @@ export const confidentialite = {
   },
   zh: {
     pageTitle: "隐私政策",
-    versionLabel: (date: string) => `测试版 · 自 ${date} 起生效 · 符合 GDPR`,
+    versionLabel: (date: string) => colleCjk(`测试版 · 自 ${date} 起生效 · 符合 GDPR`),
     article1: {
       title: "1. 数据控制者",
       role: "Evan Tocquet，独立开发者",
@@ -586,7 +587,7 @@ export const confidentialite = {
   },
   ja: {
     pageTitle: "プライバシーポリシー",
-    versionLabel: (date: string) => `ベータ版 · ${date} 施行 · GDPR 準拠`,
+    versionLabel: (date: string) => colleCjk(`ベータ版 · ${date} 施行 · GDPR 準拠`),
     article1: {
       title: "1. 管理者",
       role: "Evan Tocquet（独立開発者）",
