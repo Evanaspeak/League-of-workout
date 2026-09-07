@@ -1150,6 +1150,44 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 7 septembre, et ce qu'elle ne mesure pas
+Passée après V460 à V463, dont une qui change la NATURE de cent cinquante
+pages — elles étaient rendues à la demande, elles sont prérendues.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**aucune page laissée de côté**. C'est le second chiffre qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/fr/bilan` | 120 ms | 908 ms | 0,000 | la mention Riot, en pied |
+| `/fr/settings` | 124 ms | 912 ms | 0,000 | la mention Riot, en pied |
+| `/fr/history` | 148 ms | 900 ms | 0,000 | la mention Riot, en pied |
+| `/fr/dashboard` | 268 ms | 1112 ms | 0,003 | le bandeau d'attente Riot |
+| `/fr/cgu` | 448 ms | 1144 ms | 0,000 | le premier paragraphe |
+| `/fr/telechargement` | 464 ms | 1120 ms | 0,000 | le paragraphe de détection |
+| `/fr/calculateur/league-of-legends` | 476 ms | 1112 ms | 0,000 | le titre |
+| `/fr` | 1012 ms | 1484 ms | 0,000 | « Comment ça marche » |
+
+Les huit sont dans les seuils sur les deux mesures.
+
+**Ce que cette campagne NE dit PAS, et qu'il serait facile de lui faire
+dire.** `/fr/bilan` rend 908 ms là où les trois campagnes précédentes
+relevaient 2 096 à 2 216 ms. Ce n'est PAS un gain : le compte de mesure est
+neuf, donc il n'a pas d'image de saison — et c'est elle qui portait ces deux
+secondes, comme les trois entrées précédentes l'écrivent. Comparer les deux
+chiffres reviendrait à annoncer une amélioration qui n'a pas eu lieu.
+
+**Et le passage au prérendu ne se mesure pas ici non plus.** `next start` sert
+un fichier ou rend une page en un temps voisin sur la même machine ; ce qui
+change est ailleurs — une exécution de fonction par visite contre un fichier
+servi par le réseau de diffusion. Le témoin en est l'EN-TÊTE relevé en
+production (`x-vercel-cache: PRERENDER`), pas une milliseconde d'ici. Un
+banc d'essai local ne peut pas mesurer un cache de bord.
+
+Ce que la campagne établit, et c'est ce qu'on lui demande : **aucune des
+quatre versions n'a coûté de temps d'affichage, et aucune n'a introduit de
+défaut d'accessibilité** dans aucune des six langues.
+
 ### Mille cent seize parties, et les quatre nombres que ça rend visibles
 Le compte de mesure venait d'être porté à l'échelle du propriétaire pour peser
 les routes. Il sert deux fois : sous mille, **un séparateur de milliers ne se
