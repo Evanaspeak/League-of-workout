@@ -86,7 +86,7 @@ export const history = {
 
     // ── Battle royale ──
     placementLabel: "Classement",
-    placementSur: "sur",
+    placementSur: (n: string) => `sur ${n}`,
     buts: "Buts",
     arrets: "Arrêts",
     passes: "Passes décisives",
@@ -186,7 +186,7 @@ export const history = {
     detailDuree: "Playtime",
 
     placementLabel: "Placement",
-    placementSur: "of",
+    placementSur: (n: string) => `of ${n}`,
     buts: "Goals",
     arrets: "Saves",
     passes: "Assists",
@@ -286,7 +286,7 @@ export const history = {
     detailDuree: "Tiempo de juego",
 
     placementLabel: "Puesto",
-    placementSur: "de",
+    placementSur: (n: string) => `de ${n}`,
     buts: "Goles",
     arrets: "Paradas",
     passes: "Asistencias",
@@ -386,7 +386,7 @@ export const history = {
     detailDuree: "Spielzeit",
 
     placementLabel: "Platzierung",
-    placementSur: "von",
+    placementSur: (n: string) => `von ${n}`,
     buts: "Tore",
     arrets: "Paraden",
     passes: "Vorlagen",
@@ -486,7 +486,7 @@ export const history = {
     detailDuree: "游戏时长",
 
     placementLabel: "名次",
-    placementSur: "共",
+    placementSur: (n: string) => `共 ${n}`,
     buts: "进球",
     arrets: "扑救",
     passes: "助攻",
@@ -586,7 +586,7 @@ export const history = {
     detailDuree: "プレー時間",
 
     placementLabel: "順位",
-    placementSur: "中",
+    placementSur: (n: string) => `${n} 中`,
     buts: "ゴール",
     arrets: "セーブ",
     passes: "アシスト",

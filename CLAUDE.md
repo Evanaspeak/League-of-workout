@@ -327,6 +327,13 @@ disent que les parcours ont joué, une minute dit le contraire quelle que soit
 la couleur. Et une exécution « cancelled » ne dit rien du tout — c'est
 `cancel-in-progress`, seule la dernière d'une rafale est jugée.
 
+**L'attente entre deux fusions est la DURÉE d'une exécution, pas huit
+minutes.** Elles en mettent neuf à dix aujourd'hui : fusionner à huit minutes
+annule celle d'avant à une minute de la fin, et le rouge qu'elle aurait dit ne
+se dira jamais. C'est arrivé à V482, tuée par V483 poussée à huit minutes et
+demie. Le compte se prend sur l'HEURE DE DÉPART de l'exécution précédente,
+qu'un appel donne (`run_started_at`), et pas sur celle de la fusion.
+
 ## Architecture fichiers clés
 
 ```
@@ -1149,6 +1156,62 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### 「中 100」 : la phrase assemblée en JSX, et le troisième garde aveugle à cette forme
+Suite directe du pourcentage : si un garde qui ne lit que les gabarits a laissé
+passer quatre `%`, les autres méritaient la même question. Les unités et les
+coutures CJK ont rendu zéro. **Le troisième a rendu un défaut vivant.**
+
+Le champ de classement d'un battle royale compose sa phrase en JSX :
+
+```tsx
+{t.placementSur} {equipesConsultees}     → 「中 100」 en japonais
+```
+
+**中 POSTPOSE.** Il se place APRÈS le nombre — 「100 中」 — et l'écran le
+rendait à l'envers depuis que le champ existe. C'est mot pour mot le défaut de
+V447, sous la forme que son garde ne regarde pas : il porte sur les GABARITS,
+avec sa raison écrite (« c'est la forme qui compose une phrase »). Elle était
+juste et incomplète — `{a} {b}` en JSX compose exactement la même phrase.
+
+Le chinois tombait juste par hasard, comme l'espagnol du courriel hebdomadaire
+avant lui : 共 précède le nombre en chinois. Une langue sur six qui coïncide
+suffit à faire croire que le reste suit.
+
+**Trois exclusions, chacune avec sa raison, et les trois ont mordu au
+sabotage :**
+
+- une CHAÎNE littérale — `{t.mentions}{" "}<Lien…>` — n'est pas une valeur,
+  c'est l'espace qu'on pose à la main autour d'un lien ;
+- une expression qui porte SON PROPRE libellé de dictionnaire : chaque langue
+  garde alors la main sur ses mots des deux côtés ;
+- une expression qui rend un ÉLÉMENT, donc un nœud à part et souvent un bloc.
+  C'est celle-ci qui a fait le seul faux positif du premier jet, sur l'écran de
+  reconnexion de l'application de bureau.
+
+**Et ce faux positif en cachait un vrai.** Le bloc qu'il désignait écrivait
+`code : {code}` en JSX — du texte en dur, invisible au garde des textes en dur
+parce que « code » ne porte aucun accent. C'est son angle mort par
+construction, déjà écrit ici pour « Perfect » et « Continuer avec Google ».
+Le libellé devient une fonction du dictionnaire, ce qui règle du même coup la
+typographie du deux-points : « code : » en français, « code: » en anglais,
+「コード：」 en japonais avec son signe pleine chasse.
+
+Quatre sabotages, quatre échecs : le défaut remis, et les trois exclusions
+retirées une par une.
+
+Vérifié à l'écran dans quatre langues : « Classement sur 100 », « Placement of
+100 », 「順位 100 中」, 「名次 共 100」. La passe allemande n'a pas ouvert la
+fenêtre d'ajout et n'a donc rien mesuré — c'est dit plutôt que compté comme un
+cinquième succès. Le libellé du code de reconnexion, lui, n'est pas lisible
+sans l'application de bureau : il est tenu par la parité des dictionnaires et
+par le compilateur, pas par une lecture.
+
+**Et les comptes de mesure ont été purgés TROIS fois dans la soirée**, chaque
+fois par une suite navigateur lancée après leur création. L'ordre est écrit ici
+depuis longtemps ; ce qui l'est moins, c'est qu'il n'admet aucune exception :
+**une seule exécution de parcours, même sur un autre fichier, efface tout compte
+`@example.test`.** Les comptes se créent en DERNIER, et rien ne se joue après.
 
 ### Deux recensements négatifs, et l'écran de dette d'équipe lu à deux comptes
 Trois choses cherchées après la correction du pourcentage JSX, et écrites ici
