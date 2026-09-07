@@ -46,6 +46,20 @@ describe("les gabarits qui reçoivent un grand nombre", () => {
        * un `number` brut, ce qui rendait « 12000 » dans les six langues.
        */
       expect(amis[l].recordsLigne("Kayn", "12 000", "4 sept.")).toContain("12 000");
+      /**
+       * Les sixième et septième, manqués par les DEUX recensements précédents :
+       * la dette d'une équipe. Elle additionne cinq comptes, donc elle atteint
+       * le millier avant tout le reste — le propriétaire seul est à 8 905 —
+       * et elle interpolait deux `number` bruts.
+       *
+       * C'est la deuxième fois que ce fichier reçoit une clé « manquée par le
+       * recensement de la veille », et la raison est la même : un recensement
+       * fait à la main garde l'angle mort de celui qui le fait.
+       */
+      expect(amis[l].equipeTotal("8 905")).toContain("8 905");
+      expect(amis[l].equipeDu("8 905", 8905)).toContain("8 905");
+      // Et la branche « rien à devoir » ne montre aucun chiffre.
+      expect(amis[l].equipeDu("0", 0)).not.toContain("0");
     }
   });
 

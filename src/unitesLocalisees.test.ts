@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { uniteLocalisee } from "@/lib/i18n/unite";
 import { dureeLocalisee } from "@/lib/i18n/duree";
 import { formaterTempsJeu } from "@/lib/jeux";
+import { sansCommentaires } from "./test/sansCommentaires";
 
 const LANGUES = ["fr", "en", "es", "de", "zh", "ja"] as const;
 
@@ -83,6 +84,20 @@ function fichiersAffichage(dossier: string, sortie: string[] = []): string[] {
       if (e.name === "generated" || e.name === "node_modules") continue;
       fichiersAffichage(chemin, sortie);
     } else if (e.name.endsWith(".tsx") && !e.name.includes(".test.")) {
+      sortie.push(chemin);
+    }
+  }
+  return sortie;
+}
+
+/** Les modules de `src/lib` : `.ts` et `.tsx`, hors tests. */
+function fichiersModule(dossier: string, sortie: string[] = []): string[] {
+  for (const e of readdirSync(dossier, { withFileTypes: true })) {
+    const chemin = join(dossier, e.name);
+    if (e.isDirectory()) {
+      if (e.name === "generated" || e.name === "node_modules") continue;
+      fichiersModule(chemin, sortie);
+    } else if (/\.tsx?$/.test(e.name) && !e.name.includes(".test.")) {
       sortie.push(chemin);
     }
   }
@@ -182,6 +197,90 @@ describe("la forme ronde et la forme composée s'accordent", () => {
     for (const l of ["fr", "en", "es", "de"]) {
       const rond = dureeLocalisee(120, l);
       expect(dureeLocalisee(115, l).startsWith(rond.replace(/\d+/, "1"))).toBe(true);
+    }
+  });
+});
+
+
+/**
+ * Et le MÊME recensement sur `src/lib`, avec une liste fermée.
+ *
+ * L'exemption de `src/lib` était écrite au-dessus du recensement d'affichage,
+ * et elle nommait deux fonctions : `formaterDuree` et `formaterDelai`, qui
+ * composent des CADRANS qu'`Intl` ne sait pas faire. La raison était juste ; ce
+ * qui manquait, c'est que l'exemption portait sur le DOSSIER ENTIER. Une
+ * troisième fonction s'y est donc installée sans que rien ne le dise :
+ * `compteurDette.ts` portait une COPIE de `formaterDuree`, mêmes deux chiffres
+ * de secondes, même « 45 s » sous la minute, et c'est la copie qui est restée
+ * française — sur la notification envoyée PENDANT qu'on joue et sur le libellé
+ * du seuil de la pastille.
+ *
+ * La liste est donc fermée, et chaque entrée porte sa raison. Une quatrième
+ * copie fera tomber ce test, ce qui est exactement ce qu'on lui demande.
+ */
+const CADRANS_TOLERES: Record<string, string> = {
+  "src/lib/exercices.ts":
+    "formaterDuree et formaterQuantite : la branche SANS étiquette garde le "
+    + "rendu d'avant le module, au caractère près — c'est cette identité qui a "
+    + "permis de reprendre la quinzaine d'appelants un par un. Avec étiquette, "
+    + "elles délèguent à dureeLocalisee.",
+  "src/lib/jeux.ts":
+    "formaterTempsJeu : même règle, un étage au-dessus — une soirée de jeu "
+    + "passe l'heure, et « 720 min » ne parle à personne.",
+  "src/lib/mesures.ts":
+    "formaterDelai : « 2 h 10 », « 4 j 3 h ». Un cadran qu'Intl ne sait pas "
+    + "faire, et dont l'unique lecteur est le panneau de mesures de "
+    + "l'administration.",
+};
+
+/**
+ * Un dictionnaire ne compte pas : la langue qui ne peut pas déléguer écrit sa
+ * forme elle-même, et c'est la règle déjà posée pour le composé de durée.
+ */
+const estDictionnaire = (f: string) => f.includes(join("i18n", "dictionaries"));
+
+describe("aucun module de src/lib ne recolle une unité hors de la liste", () => {
+  const RACINE = join(__dirname, "lib");
+  const sources = fichiersModule(RACINE).map(
+    (f) => [f, sansCommentaires(readFileSync(f, "utf8"))] as const,
+  );
+
+  it("le recensement ne trouve que les cadrans déclarés", () => {
+    const fautifs = sources
+      .filter(([f]) => !estDictionnaire(f))
+      .flatMap(([f, s]) => {
+        const relatif = `src/lib${f.slice(RACINE.length)}`.replace(/\\/g, "/");
+        if (CADRANS_TOLERES[relatif]) return [];
+        return uniteRecollee(s).map((g) => `${relatif} : ${g}`);
+      });
+    expect(fautifs).toEqual([]);
+  });
+
+  it("et il a réellement lu quelque chose", () => {
+    // Sans ce témoin, un dossier renommé rendrait le contrôle vert sur zéro
+    // module — c'est-à-dire au moment exact où il faudrait qu'il crie.
+    expect(sources.length).toBeGreaterThan(60);
+  });
+
+  it("le retrait des commentaires est indispensable, et il est éprouvé", () => {
+    /**
+     * `unite.ts` EXPLIQUE le défaut corrigé en citant le gabarit fautif
+     * `${h}h`. Sans le retrait, le garde tomberait sur sa propre
+     * justification — c'est le piège déjà payé deux fois ici, dans les deux
+     * sens.
+     */
+    const brut = readFileSync(join(RACINE, "i18n", "unite.ts"), "utf8");
+    expect(uniteRecollee(brut).length).toBeGreaterThan(0);
+    expect(uniteRecollee(sansCommentaires(brut))).toEqual([]);
+  });
+
+  it("chaque tolérance désigne encore un module qui en a besoin", () => {
+    // Une dispense qui ne désigne plus rien de vivant est du code mort dans le
+    // garde qui existe pour l'attraper.
+    for (const [relatif, raison] of Object.entries(CADRANS_TOLERES)) {
+      expect({ relatif, recolle: uniteRecollee(sansCommentaires(readFileSync(relatif, "utf8"))).length > 0 })
+        .toEqual({ relatif, recolle: true });
+      expect(raison.length).toBeGreaterThan(40);
     }
   });
 });

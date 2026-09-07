@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useT, useLocale } from "@/lib/i18n/LocaleContext";
+import { useT, useLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import { jourLocal } from "@/lib/serie";
@@ -32,6 +32,7 @@ export default function DetteEquipe(
   { groupeId, nom }: { groupeId: string; nom: string },
 ) {
   const t = useT(dictAmis);
+  const nombre = useNombre();
   const { locale } = useLocale();
   const [etat, setEtat] = useState<Etat | null>(null);
   const [ouvert, setOuvert] = useState(false);
@@ -111,7 +112,7 @@ export default function DetteEquipe(
     <div className="space-y-2" style={{ borderLeft: "2px solid var(--line)", paddingLeft: 12 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
         <strong style={{ color: "var(--gold)" }}>{t.equipeTitre}</strong>
-        {etat && <span className="mono-num">{t.equipeTotal(etat.total)}</span>}
+        {etat && <span className="mono-num">{t.equipeTotal(nombre(etat.total))}</span>}
       </div>
       <p style={{ color: "var(--steel)", fontSize: ".85rem", maxWidth: "60ch" }}>{t.equipeAide}</p>
 
@@ -127,7 +128,7 @@ export default function DetteEquipe(
             {etat.lignes.map((l) => (
               <li key={l.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span style={{ overflowWrap: "anywhere" }}>{l.pseudo}</span>
-                <span className="mono-num" style={{ color: "var(--steel)" }}>{t.equipeDu(l.dus)}</span>
+                <span className="mono-num" style={{ color: "var(--steel)" }}>{t.equipeDu(nombre(l.dus), l.dus)}</span>
                 {!l.moi && l.dus > 0 && (
                   <>
                     <label htmlFor={`part-${l.id}`} className="lecture-ecran">

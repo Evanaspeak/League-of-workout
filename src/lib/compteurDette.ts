@@ -21,19 +21,15 @@ export function horloge(secondes: number): string {
 }
 
 /**
- * Durée lisible pour un libellé : « 5 min 20 ».
+ * La durée lisible d'un libellé vit dans `formaterDuree`, pas ici.
  *
- * Sous la minute, on donne des secondes : « 0 min 45 » se lit comme une
- * erreur d'affichage. Les secondes se posent sur deux chiffres, sinon
- * « 5 min 7 » se lit comme cinq minutes et sept minutes.
+ * Ce module en portait une COPIE — même règle, mêmes deux chiffres de
+ * secondes, même « 45 s » sous la minute — et c'est la copie qui est restée
+ * française : elle recollait « s » et « min » à la main dans les six langues,
+ * sur la notification envoyée PENDANT qu'on joue et sur le libellé du seuil.
+ * L'original, lui, passe par `Intl` depuis qu'on a corrigé l'unité de la
+ * dette. La moitié non réparée d'une correction déjà faite, une fois de plus.
  */
-export function duree(secondes: number): string {
-  const s = Math.max(0, Math.round(secondes));
-  if (s < 60) return `${s} s`;
-  const m = Math.floor(s / 60);
-  const reste = s % 60;
-  return reste === 0 ? `${m} min` : `${m} min ${String(reste).padStart(2, "0")}`;
-}
 
 /**
  * Y a-t-il de quoi faire une vraie séance ?

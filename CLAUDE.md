@@ -824,7 +824,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2353 tests unitaires, 224 suites (au 7 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2369 tests unitaires, 226 suites (au 7 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1187,6 +1187,115 @@ par `Intl` ne peut pas se voir ici. Et les résumés de graphique corrigés dans
 la même série vivent dans `lecture-ecran`, donc invisibles par construction —
 c'est même la raison pour laquelle ils avaient vieilli sans que personne le
 remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
+
+### La dette d'une équipe écrivait « 8905 », et deux recensements l'avaient manquée
+Trouvée en poursuivant le recensement des coutures japonaises : `amis.ts` porte
+`equipeTotal` et `equipeDu`, et les deux prenaient un `number` BRUT. Le japonais
+rendait 「合計 8905 ポイントの未払い」 là où il faut 「8,905」, l'allemand
+« 8905 Punkte » là où il faut « 8.905 ».
+
+**C'est la classe corrigée par V463, dans le fichier que V463 a ouvert.** Le
+mur des records y a été repris ; ses deux voisines, non.
+
+**Et c'est la surface qui atteint le millier avant toutes les autres**, ce qui
+rend l'oubli intéressant : une dette d'équipe additionne cinq comptes, quand le
+propriétaire seul est à 8 905 points. Le gabarit le plus exposé de la famille
+était le seul de son fichier à ne pas avoir été repris.
+
+Le commentaire du garde écrit déjà la raison, et il l'écrit contre lui-même :
+« un recensement fait à la main garde l'angle mort de celui qui le fait ». Il
+portait cette phrase pour le mur des records, manqué la veille ; il la reçoit
+une seconde fois, pour la même raison, sur le même fichier.
+
+`equipeDu` prend les DEUX choses, comme les gabarits de pluriel : le nombre mis
+en forme pour l'affichage, et le compte pour sa branche « rien à devoir » —
+`n === 0` ne se teste pas sur « 8 905 ». **Et c'est le compilateur qui a désigné
+les deux appelants**, ce qu'un paramètre optionnel n'aurait pas fait.
+
+**Le parcours à deux comptes ne pouvait pas le voir, et il le dit maintenant** :
+il lit « doit 35 », et trente-cinq n'a pas de séparateur dans aucune des six
+langues. Un test écrit sur un petit nombre n'éprouve pas la mise en forme des
+grands — c'est exactement la raison pour laquelle le compte de mesure a été
+porté à mille cent seize parties ce matin.
+
+### Une copie de `formaterDuree`, et l'espace latine qu'elle cachait
+Recensement des formateurs exportés qui rendent du texte visible sans étiquette
+de langue. Deux candidats ; le premier — `formaterDelai` dans `mesures.ts` —
+est l'exception déjà écrite, un cadran qu'`Intl` ne sait pas faire et dont
+l'unique lecteur est le panneau de mesures. Le second était une COPIE.
+
+`compteurDette.ts` portait `duree()` : même règle, mêmes deux chiffres de
+secondes, même « 45 s » sous la minute que `formaterDuree`. Et c'est la copie
+qui est restée française — elle recollait « s » et « min » à la main dans les
+six langues, sur **la notification envoyée PENDANT qu'on joue** et sur le
+libellé du seuil de la pastille. L'original, lui, passe par `Intl` depuis qu'on
+a corrigé l'unité de la dette. La moitié non réparée d'une correction déjà
+faite, une fois de plus.
+
+**Le garde ne pouvait pas la voir, et sa dispense disait pourquoi.**
+`unitesLocalisees.test.ts` ne lit que la couche d'affichage, et son commentaire
+exempte `src/lib` en NOMMANT deux fonctions : `formaterDuree` et
+`formaterDelai`, qui composent des cadrans. La raison était juste ; ce qui
+manquait, c'est que l'exemption portait sur le DOSSIER ENTIER. Une troisième
+fonction s'y est donc installée sans que rien ne le dise. La liste est fermée
+maintenant, chaque entrée porte sa raison, et le recensement lit le source
+PRIVÉ de ses commentaires — sans quoi il tombe sur l'explication d'`unite.ts`,
+qui cite le gabarit fautif pour dire pourquoi il a disparu.
+
+**Et la correction a rendu visible un défaut qu'elle n'a pas créé.** Lue à
+l'écran en japonais juste après, la pastille rendait :
+
+```
+5分 から効きます       ← une espace latine entre deux idéogrammes
+5分钟 起生效
+```
+
+Le japonais et le chinois séparent volontiers un morceau LATIN de ce qui
+l'entoure, et ce projet suit la convention partout — « 60 試合 », « 12 局 ».
+Elle vaut parce que le morceau séparé est latin. Elle cesse de valoir à
+l'instant où la valeur interpolée est elle-même en idéogrammes, c'est-à-dire à
+l'instant où la durée est passée par `Intl`.
+
+**La voisine l'écrivait déjà correctement, trois lignes plus haut dans le même
+fichier** : `rappelSeuilValeur` rend « ${t}起 » et « ${t}から », sans espace.
+La règle était connue et appliquée à un de ses deux endroits — le motif que ce
+journal trouve le plus.
+
+**Et ça ne se décide pas à l'écriture du gabarit.** La même clé reçoit
+« 5分20秒 » pour la boxe et « 38 » pour les pompes : retirer l'espace en dur
+casserait le second cas, la garder casse le premier. C'est donc la VALEUR qui
+tranche, au moment où elle est là. `colleCjk` retire une espace assise entre
+deux idéogrammes et laisse celle qui suit un chiffre latin ; huit clés de
+quatre fichiers y passent, dans les deux langues.
+
+**Mon propre test s'est trompé, et c'est lui qui l'a dit.** J'attendais que
+« 今日は 5分 溜まりました » perde ses DEUX espaces. La première sépare un
+idéogramme d'un CHIFFRE — c'est la convention, elle reste. Un test écrit sur
+les valeurs attrape ce qu'un test écrit sur l'intention laisse passer, pour la
+troisième fois sur ce module.
+
+Douze sabotages, douze échecs : la copie remise, le collage retiré de deux
+clés, le motif rendu aveugle puis trop gourmand, la seconde passe supprimée, le
+témoin de la durée en idéogrammes cassé, la borne négative retirée, une
+tolérance qui ne désigne plus rien, le dossier renommé, le libellé du seuil
+reparti en dur.
+
+Vérifié à l'écran dans quatre langues : « On y va à partir de 5 min »,
+« Greift ab 5 Min. », 「5分から効きます」,「5分钟起生效」.
+
+**Ce que ce garde ne couvre PAS, écrit plutôt que laissé à découvrir.** La
+règle vaudrait aussi pour un PSEUDO japonais — « 太郎 さんの一週間 » a la même
+couture — et pour tout gabarit qui reçoit un texte dont on ne connaît pas
+l'écriture. Le collage y serait juste ; l'étendre à toutes les clés de
+chaîne des blocs zh et ja est un balayage de dizaines d'entrées, et ça se
+mesure avant de se faire. La liste porte donc les clés qui reçoivent une
+quantité de NOS formateurs, où le cas est certain.
+
+**Un piège d'outillage, nouveau.** La liste des exécutions de CI demandée avec
+un filtre de branche a rendu des exécutions du 3 septembre, quatre jours plus
+tôt, en annonçant `total_count: 216`. Sans filtre, la même demande rend les
+441 vraies, V466 en tête. Un listing qui répond quelque chose de plausible mais
+périmé est exactement ce qui fait conclure de travers ; on lit sans le filtre.
 
 ### L'accueil est le seul écran public encore rendu à la demande, et voilà ce que ça coûte
 Suite de « Zéro page prérendue ». Cent cinquante pages sont prérendues depuis ;

@@ -35,6 +35,28 @@ describe("la durée d'effort", () => {
     expect(formaterDuree(45)).toBe("45 s");
   });
 
+  it("garde les bornes du cadran, avec étiquette comme sans", () => {
+    /**
+     * Ces bornes étaient éprouvées sur `duree`, une COPIE de `formaterDuree`
+     * qui vivait dans `compteurDette.ts` et recollait « s » et « min » à la
+     * main. La copie est partie ; ses cas restent, sur l'original, et sur les
+     * DEUX branches — sinon on garderait la borne du rendu par défaut en
+     * laissant la branche que tous les appelants empruntent sans témoin.
+     */
+    expect(formaterDuree(0)).toBe("0 s");
+    expect(formaterDuree(59)).toBe("59 s");
+    expect(formaterDuree(60)).toBe("1 min");
+    expect(formaterDuree(320)).toBe("5 min 20");
+    expect(formaterDuree(600)).toBe("10 min");
+    // Une durée négative n'existe pas, et la dette peut passer sous zéro le
+    // temps d'une requête.
+    expect(formaterDuree(-10)).toBe("0 s");
+
+    const de = etiquetteLocale("de");
+    expect(formaterDuree(-10, de)).toBe(formaterDuree(0, de));
+    expect(formaterDuree(320, de).replace(/\s/g, " ")).toBe("5 Min. 20");
+  });
+
   it("est bien celle que `formaterDuree` emploie quand on lui donne la langue", () => {
     /**
      * La branche que TOUS les appelants empruntent, et que rien ne gardait :

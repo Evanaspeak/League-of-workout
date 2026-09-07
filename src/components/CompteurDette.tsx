@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { PartageSeance } from "@/components/PartageSeance";
-import { aChronometrer, duree, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
+import { aChronometrer, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
 import { conversionsProposees, surLePas } from "@/lib/conversionDette";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
@@ -12,6 +12,7 @@ import { useT, useMinuscule, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
   EXERCICES, formaterCompact, formaterQuantite, quantite, toExerciceId, type ExerciceId,
+  formaterDuree,
 } from "@/lib/exercices";
 import type { DettePourEcran } from "@/lib/contexteConnecte";
 import { estPagePublique } from "@/lib/pagesPubliques";
@@ -201,7 +202,7 @@ export function CompteurDette() {
     if (notifieRef.current || lire(CLE_SEUIL_NOTIFIE) === "1") return;
     notifieRef.current = true;
     ecrire(CLE_SEUIL_NOTIFIE, "1");
-    notifierSysteme("Win or Workout", t.detteRappelCorps(duree(dette!.dureeSec)), "wow-dette");
+    notifierSysteme("Win or Workout", t.detteRappelCorps(formaterDuree(dette!.dureeSec, etiquette)), "wow-dette");
   }, [seuilAtteint, dette, t]);
 
   const arreterTick = () => {
@@ -434,7 +435,7 @@ export function CompteurDette() {
         </div>
 
         <div style={{ fontSize: "0.62rem", marginTop: 6, color: seuilAtteint ? "var(--ember)" : "var(--faint)" }}>
-          {seuilAtteint ? (aDuTemps ? t.detteFaireBtn : t.detteFaitBtn) : t.detteSeuil(duree(dette.seuilSec))}
+          {seuilAtteint ? (aDuTemps ? t.detteFaireBtn : t.detteFaitBtn) : t.detteSeuil(formaterDuree(dette.seuilSec, etiquette))}
         </div>
       </button>
 
