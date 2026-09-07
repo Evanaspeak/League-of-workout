@@ -33,6 +33,7 @@ import {
 import type { NomIcone } from "@/components/Icone";
 import { ReglagesAvances, type LevelConfig } from "./ReglagesAvances";
 import { ReglagesCorps, type CorpsPrefs } from "./ReglagesCorps";
+import { ReglageVibration } from "./ReglageVibration";
 
 /**
  * Les valeurs de DÉPART, nommées pour que la fusion puisse s'y comparer.
@@ -822,6 +823,8 @@ export default function SettingsPage() {
             })}
           </div>
         </div>
+
+        <ReglageVibration />
 
         {/* Le mur des records : ouvert à tous, ou au seul cercle (réponse 141) */}
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">
