@@ -1150,6 +1150,50 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le témoin public de V460 : un en-tête de cache, et deux minutes au lieu d'une heure
+Suite de l'entrée ci-dessous. La procédure de fusion demande un témoin public
+de la version qu'on vient de publier ; celui-ci a rendu deux choses qu'aucune
+chaîne de caractères n'aurait données.
+
+**Le témoin n'est pas un texte, c'est un EN-TÊTE.** Les pages d'acquisition
+sortaient en `Cache-Control: private, no-store` avec `x-vercel-cache: MISS` —
+c'est-à-dire rendues par une fonction à chaque visite, jamais mises en cache
+par le réseau de diffusion. Elles sortent maintenant en :
+
+```
+/de/calculateur/overwatch   cache-control: public, max-age=0, must-revalidate
+                            x-vercel-cache: PRERENDER
+/fr/cgu                     idem
+/de                         private, no-store · MISS   ← l'accueil, qui lit auth()
+```
+
+`PRERENDER` est la preuve directe que la page vient du magasin de prérendu et
+non d'une exécution. Et l'accueil qui reste `MISS` est le contre-témoin : il
+appelle `auth()` pour adapter trois boutons, donc il est le seul écran public
+encore rendu à la demande. Sans lui, on ne saurait pas si l'en-tête a changé
+pour la bonne raison.
+
+**Et le déploiement a mis MOINS DE DEUX MINUTES.** Fusion à 13 h 10 UTC,
+témoin présent à 13 h 12, avec `age: 13` — donc déjà servi depuis le cache.
+Ce journal porte trois mesures du retard de déploiement : au moins 2 h 40,
+entre 66 et 84 minutes, 59 minutes. Celle-ci en est une quatrième, et elle
+est d'un autre ordre.
+
+**Ce qu'on peut en dire, et ce qu'on ne peut pas.** Les trois mesures
+précédentes portaient toutes sur des pages PUBLIQUES qui étaient, on le sait
+maintenant, rendues à la demande. Une page dynamique est servie par une
+fonction, et c'est la fonction qui doit être remplacée ; une page prérendue
+est un fichier déposé avec la construction. Que le retard disparaisse au
+moment exact où ces pages redeviennent statiques est cohérent — ça ne le
+DÉMONTRE pas. Une seule mesure n'est pas une mesure, et ce fichier le répète
+assez souvent pour ne pas l'oublier ici. La prochaine version qui touche une
+page publique le dira.
+
+**Ce qui reste vrai quoi qu'il arrive** : le témoin d'une version se choisit
+sur ce que la version a CHANGÉ, et ce n'est pas toujours un mot à l'écran.
+Ici la page était identique en français avant et après ; c'est l'en-tête qui
+disait tout.
+
 ### Zéro page prérendue, et le journal qui annonçait deux cent vingt-huit
 Ligne 302 du plan, « affiner la régénération des pages ». Je cherchais à savoir
 si `revalidate = 300`, posé sur la mise en page racine donc sur toutes les
