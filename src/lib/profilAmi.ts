@@ -32,7 +32,19 @@ export function toPartage(brut: unknown): Partage {
 /** Ce que le classement montre déjà à tous les amis. */
 export type ProfilTotal = {
   pseudo: string;
+  /** L'effort payé sur la fenêtre de sept jours, comme l'onglet « semaine ». */
   points: number;
+  /**
+   * Et le même effort depuis toujours, comme l'onglet « cumul ».
+   *
+   * Le profil est le DÉPLIÉ d'une ligne du classement : il doit parler de la
+   * période que le tableau montre. Sans ce champ, l'écran affichait 10 998
+   * dans la ligne et 4 011 dans le profil ouvert juste en dessous.
+   *
+   * Rien de nouveau ne sort du compte : les deux valeurs sont celles que le
+   * classement montre déjà à tous les amis, sous l'un et l'autre onglet.
+   */
+  pointsCumul: number;
   enRetard: boolean;
   joursDeRetard: number;
 };

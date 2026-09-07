@@ -32,7 +32,18 @@ beforeEach(() => {
   db.user.findUnique.mockResolvedValue({
     id: "toi", pseudo: "Toi", detteDepuis: null, dettePointsDus: 0, partageAmis: "total",
   });
-  db.paiement.aggregate.mockResolvedValue({ _sum: { points: 120 } });
+  /**
+   * Les deux agrégats ne rendent PAS la même chose.
+   *
+   * Le premier appel est la fenêtre de sept jours, le second le cumul. Une
+   * doublure qui rendrait la même valeur aux deux ferait passer un profil qui
+   * ignore l'onglet : le contrôle serait vrai quoi qu'il arrive. C'est le
+   * piège déjà payé sur le mur des records et sur le rappel du matin.
+   */
+  db.paiement.aggregate
+    .mockResolvedValueOnce({ _sum: { points: 120 } })
+    .mockResolvedValueOnce({ _sum: { points: 999 } })
+    .mockResolvedValue({ _sum: { points: 120 } });
   db.paiement.findMany.mockResolvedValue([]);
   db.game.count.mockResolvedValue(42);
   db.game.groupBy.mockResolvedValue([{ jeu: "League of Legends", _count: { _all: 30 } }]);
@@ -77,7 +88,34 @@ describe("ce que l'ami autorise", () => {
   it("par défaut, seulement le total : le détail n'est pas dans la réponse", async () => {
     const c = await corps(await lire());
     expect(Object.keys(c).sort())
-      .toEqual(["enRetard", "joursDeRetard", "partage", "points", "pseudo"]);
+      // `pointsCumul` sort au niveau « total », et c'est décidé : c'est ce que
+      // le classement montre déjà à tous les amis sous son onglet cumul. Le
+      // profil étant le déplié d'une de ses lignes, s'en priver le faisait
+      // contredire le tableau au-dessus de lui.
+      .toEqual(["enRetard", "joursDeRetard", "partage", "points", "pointsCumul", "pseudo"]);
+  });
+
+  /**
+   * Les DEUX périodes, parce que le classement a deux onglets.
+   *
+   * Le profil est le déplié d'une de ses lignes : sous « depuis toujours », le
+   * tableau rendait 10 998 et le profil du même compte, ouvert juste en
+   * dessous, 4 011. Deux chiffres pour la même grandeur, sur le même écran,
+   * sans que rien ne les distingue.
+   */
+  it("rend l'effort de la semaine ET celui de toujours", async () => {
+    const c = await corps(await lire()) as { points: number; pointsCumul: number };
+    expect({ semaine: c.points, cumul: c.pointsCumul }).toEqual({ semaine: 120, cumul: 999 });
+  });
+
+  it("et le cumul n'est pas borné à la fenêtre de sept jours", async () => {
+    // Sans borne basse, avec la borne HAUTE du classement : un paiement daté
+    // du futur n'entre nulle part.
+    await lire();
+    const ou = db.paiement.aggregate.mock.calls[1][0].where;
+    expect(ou.userId).toBe("toi");
+    expect(ou.jour.gte).toBeUndefined();
+    expect(typeof ou.jour.lte).toBe("string");
   });
 
   it("quand il l'autorise, le détail s'ajoute", async () => {

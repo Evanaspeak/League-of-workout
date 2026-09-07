@@ -51,13 +51,32 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   const aujourdhui = jourLocal();
   const debut = debutFenetre(aujourdhui);
 
-  const [compte, sommeSemaine, parties, jours, favori] = await Promise.all([
+  const [compte, sommeSemaine, sommeCumul, parties, jours, favori] = await Promise.all([
     prisma.user.findUnique({
       where: { id },
       select: { id: true, pseudo: true, riotId: true, nomAffiche: true, detteDepuis: true, dettePointsDus: true, partageAmis: true },
     }),
     prisma.paiement.aggregate({
       where: { userId: id, jour: { gte: debut, lte: aujourdhui } },
+      _sum: { points: true },
+    }),
+    /**
+     * Le CUMUL, parce que le classement a deux onglets et que le profil est
+     * le déplié d'une de ses lignes.
+     *
+     * Sans lui, l'écran se contredisait : sous « depuis toujours », le tableau
+     * rendait 10 998 et le profil du même compte, ouvert juste en dessous,
+     * 4 011. Deux chiffres pour la même grandeur, sans que rien ne les
+     * distingue — mesuré en basculant l'onglet.
+     *
+     * Il ne se déduit PAS de la liste des paiements lue plus bas : celle-ci
+     * est bornée à huit cents lignes pour la série, et un cumul tronqué
+     * divergerait du tableau au-delà, c'est-à-dire exactement là où personne
+     * ne le vérifierait. La borne HAUTE est celle du classement : un paiement
+     * daté du futur n'entre nulle part.
+     */
+    prisma.paiement.aggregate({
+      where: { userId: id, jour: { lte: aujourdhui } },
       _sum: { points: true },
     }),
     prisma.game.count({ where: { userId: id, sansEnjeu: false } }),
@@ -97,6 +116,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       // Le nom montré aux autres : réponse 128.
       pseudo: nomPublie(compte),
       points: Math.max(0, sommeSemaine._sum.points ?? 0),
+      pointsCumul: Math.max(0, sommeCumul._sum.points ?? 0),
       enRetard: retard.enRetard,
       joursDeRetard: retard.jours,
     },

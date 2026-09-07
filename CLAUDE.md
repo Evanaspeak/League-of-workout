@@ -1150,6 +1150,63 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le profil d'un ami restait sur la semaine sous l'onglet du cumul
+Trouvé en lisant l'écran des amis à DEUX comptes liés, en basculant les onglets
+du classement. Sous « depuis toujours », l'écran rendait :
+
+```
+1  タロウ  10 998 points d'effort     ← la ligne du tableau
+   タロウ   4 011 points d'effort     ← son profil, déplié juste en dessous
+```
+
+**Aucun des deux chiffres n'est faux**, et c'est ce qui rend le cas
+intéressant : le premier est le cumul, le second la semaine. Le profil est le
+DÉPLIÉ d'une ligne du classement — on l'ouvre en cliquant sur cette ligne-là —
+donc il parle forcément de la période que le tableau montre. Il ne rendait que
+la semaine, quel que soit l'onglet.
+
+C'est la famille du mur des records corrigé la veille : deux blocs
+parfaitement corrects qui se contredisent parce qu'un seul des deux dit de
+quoi il parle. Ici il n'y a même pas d'intitulé à ajouter — l'onglet est juste
+au-dessus, et c'est lui qui promet.
+
+**La route rend les DEUX chiffres**, par un second `aggregate` sans borne
+basse. Sommer la liste des `jours` déjà lue aurait été gratuit et **faux
+au-delà de huit cents jours** : elle est bornée par `take: 800` pour la courbe,
+donc le total aurait silencieusement cessé de croître — le pire genre de
+divergence, celle qui n'arrive que chez quelqu'un qui joue depuis deux ans.
+La borne HAUTE reste dans les deux cas, comme au classement : sans elle, un
+paiement daté du futur entrerait au cumul.
+
+**Ce qu'aucun test de route ne peut voir**, et c'est tout l'objet du parcours :
+la route est juste dans les deux cas, puisqu'elle rend les deux. **C'est le
+composant qui choisit**, et il choisissait toujours le même. Le parcours
+éprouve donc le BRANCHEMENT, dans les deux sens — un profil resté bloqué sur
+le cumul tombe aussi, sinon le premier contrôle passerait sur un écran qui
+n'aurait fait que changer de mensonge.
+
+Il vit dans le test du classement plutôt que dans le sien : le montage y est
+déjà, et c'est le seul qui distingue les deux périodes — les cinq mille points
+de B datent de trente jours, donc la semaine les ignore et le cumul les compte.
+Un compte sans paiement hors fenêtre rendrait le même chiffre sous les deux
+onglets, et le parcours passerait en n'éprouvant rien.
+
+**Le profil ne se recharge PAS au changement d'onglet**, et c'est voulu : les
+deux chiffres sont arrivés ensemble. Un aller-retour de plus par clic d'onglet
+serait payé pour une valeur qu'on a déjà.
+
+**Et le piège du `-g` ne vaut pas pour ce fichier**, ce qui mérite d'être écrit
+puisque le journal l'interdit ailleurs : `e2e/social.spec.ts` n'a aucun test de
+préparation — chacun de ses dix tests ouvre ses propres comptes dans son corps.
+Filtrer n'y écarte donc rien. Vérifié avant de s'en servir, plutôt que supposé.
+
+Deux sabotages, deux échecs, chacun sur son propre contrôle : le profil figé
+sur la semaine tombe sur l'assertion du cumul, le profil figé sur le cumul
+tombe sur celle de la semaine.
+
+Vérifié à l'écran : 4 011 sous « La semaine », 10 998 sous « Depuis toujours »,
+dans la ligne comme dans le profil.
+
 ### « il te manque 4011 points » sous une ligne qui écrit « 4 011 »
 Trouvé en lisant l'écran des amis à DEUX comptes, en japonais puis en chinois
 puis en français. Le classement rend deux lignes qui se suivent :
