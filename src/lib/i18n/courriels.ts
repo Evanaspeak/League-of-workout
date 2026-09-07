@@ -1,3 +1,4 @@
+import { colleCjk } from "./cjk";
 import { langueDuCompte } from "./notifications";
 import { resultat } from "./dictionaries/resultat";
 import type { Bilan } from "../bilanHebdo";
@@ -100,7 +101,7 @@ const TEXTES: Record<string, Omit<TextesBilan, "victoire" | "defaite">> = {
   },
   ja: {
     sujet: "今週のまとめ",
-    titre: (p) => `${p} さんの一週間`,
+    titre: (p) => colleCjk(`${p} さんの一週間`),
     parties: "試合数", effort: "発生した量", paye: "返した量", jours: "返した日数",
     cloture: (reste) => reste
       ? "まだ残っています。ひとりでに消えることはありません。"
