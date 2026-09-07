@@ -102,6 +102,39 @@ describe("et il dit ce qu'il n'a pas regardé", () => {
      */
     expect(SRC).toMatch(/nonMesurees\.push\(/);
     expect(SRC).toMatch(/constats\.push\(/);
+  });
+
+  it("range une page privée de ses données du côté NON MESURÉ", () => {
+    /**
+     * Le discriminant est le RÉSEAU, et il a été choisi contre l'évidence.
+     *
+     * Un plancher de textes semblait faire l'affaire ; mesuré, il ne
+     * distingue rien : API coupée, les réglages rendent 137 textes contre 141
+     * avec leurs données, parce que cet écran est fait de texte fixe. Ce qui
+     * tranche est qu'un appel ait échoué.
+     *
+     * Le contrôle porte donc sur le BRANCHEMENT — l'écoute alimente `echecs`,
+     * et `echecs` décide du rangement. Le nom seul survivrait à tout.
+     */
+    // **Les DEUX écoutes, et pas une.** Un appel qui n'aboutit pas et un appel
+    // qui répond 500 sont deux pannes différentes : le premier est un réseau
+    // coupé, le second une route cassée — c'est ce que le barème incomplet en
+    // cache produisait deux versions plus tôt. Le premier jet n'exigeait que
+    // `requestfailed`, et débrancher l'autre passait au vert.
+    //
+    // La fenêtre refuse de FRANCHIR l'écoute voisine, et ce n'est pas un
+    // détail : bornée en nombre de caractères, elle atteignait le
+    // `echecs.push` de l'autre listener, donc le sabotage passait encore. La
+    // borne trop large est un piège que ce journal porte déjà.
+    expect(SRC).toMatch(/page\.on\(\s*"requestfailed"(?:(?!page\.on\()[\s\S])*?echecs\.push\(/);
+    expect(SRC).toMatch(/page\.on\(\s*"response"(?:(?!page\.on\()[\s\S])*?echecs\.push\(/);
+    expect(SRC).toMatch(/if\s*\(echecs\.length\)[\s\S]{0,120}nonMesurees\.push\(/);
+  });
+
+  it("et le verdict lui-même dit qu'il reste des pages non regardées", () => {
+    // Un lecteur s'arrête à la première ligne : « rien à signaler » imprimé
+    // au-dessus d'un bloc de pages injoignables se lit comme un satisfecit.
+    expect(SRC).toMatch(/nonMesurees\.length[\s\S]{0,160}n'ont pas été regardées/);
     expect(SRC).toMatch(/NON MESURÉE/);
   });
 

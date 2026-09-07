@@ -1157,6 +1157,103 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Cent trente-neuf textes publiés comme « rien à signaler »
+La passe japonaise du balayage de coutures avait rendu **139 textes** là où la
+chinoise en rendait 4 049 sur les mêmes écrans. Un écart d'un facteur trente
+n'est pas un désaccord de méthode, c'est une mesure fausse — et elle avait été
+publiée avec un « rien à signaler ».
+
+**Refaite sur un compte de mesure semé à soixante parties** : 749 en japonais,
+752 en chinois, 732 en allemand. Les trois langues s'accordent, donc l'écart
+d'origine venait de la taille du compte et d'une passe incomplète, pas d'un
+angle mort de langue. L'outil imprimait pourtant le chiffre qui le disait ; ce
+qui manquait, c'est de le COMPARER.
+
+**Le plancher de textes semblait être la parade, et la mesure l'a écarté.**
+Avec l'API coupée contre l'API branchée, sur le même compte :
+
+| écran | avec données | API coupée |
+|---|---|---|
+| `/dashboard` | 145 | 25 |
+| `/history` | 295 | 27 |
+| `/amis` | 51 | 28 |
+| `/bilan` | 35 | 18 |
+| **`/settings#effort`** | **141** | **137** |
+
+Les réglages sont faits de texte FIXE : privés de toutes leurs données, ils
+rendent quatre textes de moins. Un plancher n'y mordrait jamais, et il mordrait
+à tort sur un `/bilan` de compte neuf, légitimement pauvre. **Ce qui tranche
+n'est pas la quantité, c'est le RÉSEAU** : la page écoute désormais ses appels,
+et un appel qui échoue range la page du côté NON MESURÉ, avec sa raison.
+
+**Et le verdict a changé de PLACE.** Le bloc des pages injoignables s'imprimait
+sous « Rien à signaler » : un lecteur qui s'arrête à la première ligne lit un
+satisfecit. Il s'imprime avant, et le verdict le rappelle — « Rien à signaler
+— mais 7 page(s) n'ont pas été regardées ». C'est la leçon de l'audit
+d'accessibilité, appliquée à l'outil d'à côté.
+
+**Le garde a demandé trois passes, et les deux premières laissaient un trou.**
+Il n'exigeait d'abord que l'écoute des requêtes en ÉCHEC : débrancher celle des
+réponses non-2xx passait au vert — or c'est exactement ce qu'une route cassée
+produit, et le barème incomplet en cache l'avait fait deux versions plus tôt.
+Puis, les deux écoutes exigées mais avec une fenêtre bornée en CARACTÈRES, le
+motif atteignait le `echecs.push` du listener voisin et le sabotage passait
+encore. La fenêtre refuse maintenant de franchir un autre `page.on(`.
+
+Cinq sabotages, cinq échecs : l'écoute débranchée, le rangement basculé du côté
+des constats, le verdict privé de son rappel, et chacune des deux écoutes
+vidée séparément.
+
+### Le contrôle qui garde la dette du profil public était aveugle à la fuite qui compte
+Trouvé en poursuivant le recensement des gardes qui lisent un MOT là où il faut
+un BRANCHEMENT, appliqué cette fois aux parcours. Une seule ligne de tout `e2e`
+compare un NOMBRE par sous-chaîne, et elle a deux défauts en sens contraires.
+
+```ts
+await requeteSql('UPDATE "User" SET "dettePointsDus" = 4242 …');
+expect(await vue.content()).not.toContain("4242");
+```
+
+**Il pouvait devenir rouge sans raison.** Mesuré sur le HTML réellement servi :
+une page ordinaire de ce site porte **soixante-quatorze séquences de quatre
+chiffres, quarante-quatre valeurs distinctes** — noms de fragments, hachés de
+construction, longueurs — et elles changent à chaque construction. C'est le
+risque que le journal a nommé le 5 septembre sur `social.spec.ts` (« un `not`
+deviendrait faussement rouge le jour où une marque aléatoire finit par le bon
+chiffre ») ; ce fichier-ci n'avait jamais été repris.
+
+**Et surtout il était AVEUGLE à la fuite qu'il existe pour attraper.** Une
+dette affichée passe par `Intl` : elle s'écrit « 4 242 » et jamais « 4242 ». Le
+contrôle ne pouvait donc voir que la fuite INVISIBLE, celle de la charge utile,
+et laissait passer la moitié VISIBLE. C'est mot pour mot le garde du
+pourcentage, qui ne lisait que les gabarits.
+
+**Ce ne sont pas deux formulations d'un même contrôle, ce sont deux fuites.**
+Le texte visible attrape ce qu'on montre ; le HTML servi attrape ce qui
+traverse le réseau sans s'afficher — et cette seconde moitié compte, c'est le
+raisonnement déjà tenu pour le mode fantôme : « l'écarter à l'affichage la
+ferait quand même traverser le réseau ».
+
+**Les six écritures, pas seulement le français** : l'adresse `/p/<jeton>` ne
+porte pas de langue, donc la page NÉGOCIE. Un contrôle écrit sur une seule
+écriture dépendrait de la langue qu'on obtient.
+
+**Le nombre passe à sept chiffres**, et c'est mesuré plutôt que supposé : avec
+la borne qui refuse un voisinage alphanumérique, cinq pages du site rendent
+**zéro** séquence isolée de sept chiffres, contre dix à vingt-quatre de quatre.
+
+**Deux sabotages, deux échecs, et le premier est la démonstration.** La dette
+rendue par `Intl` dans la page fait tomber la ligne du TEXTE VISIBLE, sur
+« 9 876 543 » — le contrôle brut, lui, ne dit rien. La dette posée dans un
+attribut caché fait tomber la ligne du HTML SERVI, et pas l'autre. Chaque
+moitié a son travail, et l'angle mort d'origine est prouvé au lieu d'être
+affirmé.
+
+**Le recensement ailleurs est négatif**, et c'est écrit pour qu'on ne le
+refasse pas : les autres contrôles d'absence des parcours portent sur des
+chaînes — un pseudo tiré au hasard, un chemin, une phrase — jamais sur un
+nombre que le produit mettrait en forme.
+
 ### Deux lignes de veille faites depuis longtemps, sans être cochées
 Quatrième passe du même genre, et le même résultat : deux lignes du plan
 décrivent quelque chose qui existe, et qui se prouve en une ligne de code

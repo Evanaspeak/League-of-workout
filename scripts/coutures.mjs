@@ -90,6 +90,7 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
   let lus = 0;
   const constats = [];
   const nonMesurees = [];
+  const parPage = [];
 
   for (const chemin of PAGES) {
     const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 } });
@@ -103,6 +104,32 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
       localStorage.setItem("low_sante_consent", "1");
     }, uid);
     const page = await ctx.newPage();
+
+    /**
+     * Une page qui n'a pas eu ses données n'a rien montré, et ça ne se voit
+     * pas au nombre de textes.
+     *
+     * Mesuré, API coupée contre API branchée : le tableau de bord passe de 145
+     * à 25, l'historique de 295 à 27 — mais les RÉGLAGES rendent 137 contre
+     * 141, parce que cet écran est fait de texte fixe. Un plancher ne mordrait
+     * donc jamais là où il faut, et mordrait à tort sur un `/bilan` de compte
+     * neuf, qui est légitimement pauvre. Ce qui tranche n'est pas la quantité,
+     * c'est le RÉSEAU.
+     *
+     * C'est la séparation que l'audit d'accessibilité a déjà dû apprendre :
+     * un défaut TROUVÉ et une page non ATTEINTE ne se comptent pas ensemble,
+     * sinon « rien à signaler » veut dire « rien regardé ».
+     */
+    const echecs = [];
+    page.on("response", (r) => {
+      if (r.url().includes("/api/") && !r.ok()) {
+        echecs.push(`${r.status()} sur ${new URL(r.url()).pathname}`);
+      }
+    });
+    page.on("requestfailed", (r) => {
+      if (r.url().includes("/api/")) echecs.push(`réseau coupé sur ${new URL(r.url()).pathname}`);
+    });
+
     const [nu, fragment] = chemin.split("#");
     const adresse = BASE + enLangue(LANGUE, nu) + (fragment ? `#${fragment}` : "");
     await page.goto(adresse, { waitUntil: "domcontentloaded" });
@@ -113,6 +140,12 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
     const arrivee = new URL(page.url()).pathname;
     if (!arrivee.endsWith(nu === "/" ? `/${LANGUE}` : nu)) {
       nonMesurees.push(`${chemin} → ${arrivee}`);
+      await ctx.close();
+      continue;
+    }
+
+    if (echecs.length) {
+      nonMesurees.push(`${chemin} → ${echecs[0]}`);
       await ctx.close();
       continue;
     }
@@ -129,6 +162,7 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
       return [...new Set(out)];
     });
     lus += textes.length;
+    parPage.push({ chemin, n: textes.length });
     for (const t of textes) {
       if (COUTURE.test(t)) constats.push(`${chemin}  COUTURE  « ${t.slice(0, 100)} »`);
       else if (BRUT.test(t)) constats.push(`${chemin}  NOMBRE   « ${t.slice(0, 100)} »`);
@@ -138,14 +172,25 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
   await nav.close();
 
   console.log(`\nLangue ${LANGUE} · ${PAGES.length} page(s) demandée(s) · ${lus} textes lus`);
+  for (const p of parPage) console.log(`  ${String(p.n).padStart(5)}  ${p.chemin}`);
   for (const c of constats) console.log(`  ${c}`);
-  console.log(constats.length ? `\n${constats.length} constat(s).` : "\nRien à signaler.");
-  // Le second chiffre, et c'est celui qui compte : un rapport qui annonce zéro
-  // sur des pages qu'il n'a pas ouvertes est l'inverse d'un audit.
+
+  // Ce qu'on n'a PAS regardé se dit AVANT le verdict, et le verdict le
+  // rappelle. Un lecteur s'arrête à la première ligne : « rien à signaler »
+  // imprimé au-dessus d'un bloc de pages injoignables se lit comme un
+  // satisfecit, et c'est exactement ce que ce garde existe pour empêcher.
   if (nonMesurees.length) {
     console.log(`\n${nonMesurees.length} page(s) NON MESURÉE(S) :`);
     for (const n of nonMesurees) console.log(`  ${n}`);
   }
+  const reste = nonMesurees.length
+    ? ` — mais ${nonMesurees.length} page(s) n'ont pas été regardées`
+    : "";
+  console.log(
+    constats.length
+      ? `\n${constats.length} constat(s)${reste}.`
+      : `\nRien à signaler${reste || " sur les pages mesurées"}.`,
+  );
   if (lus < 20) {
     console.log("\nMoins de vingt textes lus : le balayage n'a rien regardé.");
     process.exit(1);
