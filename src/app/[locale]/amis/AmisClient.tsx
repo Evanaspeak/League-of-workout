@@ -566,7 +566,7 @@ export function AmisClient() {
               <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>{t.classementSeul}</p>
             ) : classement.ecart !== null && (
               <p style={{ color: "var(--steel)", fontSize: ".85rem" }}>
-                {classement.ecart === 0 ? t.enTete : t.ecartAuPremier(classement.ecart)}
+                {classement.ecart === 0 ? t.enTete : t.ecartAuPremier(nombre(classement.ecart), classement.ecart)}
               </p>
             )}
             </>
@@ -814,7 +814,7 @@ export function AmisClient() {
                         )}
                         {profil.partage === "detail" ? (
                           <>
-                            <div>{t.profilParties(profil.parties ?? 0)}</div>
+                            <div>{t.profilParties(nombre(profil.parties ?? 0), profil.parties ?? 0)}</div>
                             <div>
                               {t.profilSerie(profil.serie ?? 0)} · {t.profilMeilleure(profil.meilleureSerie ?? 0)}
                             </div>
