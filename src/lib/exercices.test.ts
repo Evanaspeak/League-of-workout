@@ -2,7 +2,7 @@ import {
   EXERCICES, EXERCICE_IDS, quantite, formaterCompact, repartir, repartirPoints,
   parseRepartition, partPourExercice, pointsEnTemps, secondesParPoint,
   toExerciceId, toExerciceIds, isExerciceId, estEnTemps, exercicesEnTemps,
-  appliquerRatios, normaliserRatios, ratiosActuels, dureeEffort,
+  appliquerRatios, normaliserRatios, ratiosActuels, dureeEffort, formaterAxe,
   RATIOS_DEFAUT, RATIO_BORNES,
   type ExerciceId,
 } from "./exercices";
@@ -210,5 +210,69 @@ describe("ratios réglables", () => {
     const avant = dureeEffort(20, ["boxe"]);
     appliquerRatios({ boxe: 14 });
     expect(dureeEffort(20, ["boxe"])).toBe(avant * 2);
+  });
+});
+
+/**
+ * Les graduations d'un axe de graphique.
+ *
+ * `formaterAxe` rendait `String(q)` et recollait « km », « s » et « min » à la
+ * main : « 10000 » sur un axe français où il faut « 10 000 », dans les six
+ * langues. Sa voisine `formaterQuantite`, quarante lignes plus haut dans le
+ * même fichier, était passée par `Intl` — c'est la moitié non réparée d'une
+ * correction déjà faite.
+ *
+ * Les valeurs sont écrites en POINTS DE CODE. `Intl` pose une insécable entre
+ * le nombre et son unité — ÉTROITE (U+202F) devant « km » et « s » en
+ * français, NORMALE (U+00A0) devant « min » — et deux chaînes identiques à
+ * l'œil ne le sont pas en points de code. Un test écrit sur l'intention
+ * laisserait passer ce que celui-ci attrape ; c'est la troisième fois que ce
+ * module l'apprend.
+ */
+describe("les graduations d'axe", () => {
+  it("groupent les milliers selon la langue", () => {
+    expect(formaterAxe(10000, "pompes", null, "fr-FR")).toBe("10\u202f000");
+    expect(formaterAxe(10000, "pompes", null, "de-DE")).toBe("10.000");
+    expect(formaterAxe(10000, "pompes", null, "ja-JP")).toBe("10,000");
+    // L'espagnol ne groupe pas à quatre chiffres : c'est ce qu'une table
+    // écrite à la main n'aurait jamais su.
+    expect(formaterAxe(1000, "pompes", null, "es-ES")).toBe("1000");
+  });
+
+  it("laissent Intl nommer l'unité de temps", () => {
+    // 30 secondes de boxe : sous la minute, l'axe garde les secondes.
+    const dixSecondes = Math.round(10 / RATIOS_DEFAUT.boxe);
+    expect(formaterAxe(dixSecondes, "boxe", null, "fr-FR")).toMatch(/\u202f?s$/);
+    expect(formaterAxe(dixSecondes, "boxe", null, "de-DE")).toMatch(/Sek\.$/);
+    expect(formaterAxe(dixSecondes, "boxe", null, "ja-JP")).toMatch(/秒$/);
+  });
+
+  it("passent aux minutes au-delà d'une minute, dans la langue", () => {
+    const cinqMinutes = Math.round(300 / RATIOS_DEFAUT.boxe);
+    expect(formaterAxe(cinqMinutes, "boxe", null, "fr-FR")).toBe("5\u00a0min");
+    expect(formaterAxe(cinqMinutes, "boxe", null, "de-DE")).toBe("5 Min.");
+    expect(formaterAxe(cinqMinutes, "boxe", null, "ja-JP")).toBe("5分");
+  });
+
+  it("localisent la distance, séparateur décimal compris", () => {
+    const deuxKm = Math.round(2.4 / RATIOS_DEFAUT.course);
+    expect(formaterAxe(deuxKm, "course", null, "fr-FR")).toMatch(/^2,4/);
+    expect(formaterAxe(deuxKm, "course", null, "en-US")).toMatch(/^2\.4/);
+    // Le chinois écrit son unité en toutes lettres, collée au nombre.
+    expect(formaterAxe(deuxKm, "course", null, "zh-CN")).toMatch(/公里$/);
+  });
+
+  /**
+   * Sans étiquette, le rendu d'AVANT, mot pour mot.
+   *
+   * C'est ce qui a rendu la reprise des appelants sûre un par un : un appel
+   * qu'on n'a pas encore touché ne change pas d'affichage. La règle est celle
+   * de `formaterQuantite`, et elle mérite son test — une correction qui
+   * changerait le repli passerait sinon inaperçue.
+   */
+  it("sans langue, rendent exactement ce qu'ils rendaient", () => {
+    expect(formaterAxe(10000, "pompes")).toBe("10000");
+    const cinqMinutes = Math.round(300 / RATIOS_DEFAUT.boxe);
+    expect(formaterAxe(cinqMinutes, "boxe")).toBe("5 min");
   });
 });

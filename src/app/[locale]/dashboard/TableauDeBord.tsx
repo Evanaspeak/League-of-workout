@@ -504,7 +504,9 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const aDuTemps = (data.global?.tempsJoueSec ?? 0) > 0;
 
   const fmt = (points: number) => formaterCompact(points, exercice, null, dateLocale);
-  const fmtAxe = (points: number) => formaterAxe(points, exercice);
+  // La langue, comme pour `fmt` juste au-dessus : sans elle l'axe rendait
+  // « 10000 » et recollait ses unités à la main.
+  const fmtAxe = (points: number) => formaterAxe(points, exercice, null, dateLocale);
 
   const progress = data.objectifTotalPompes > 0
     ? Math.min(100, Math.round((globalStats.totalPoints / data.objectifTotalPompes) * 100))
@@ -598,7 +600,11 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
 
       {/* Vue d'ensemble — jamais filtrée : elle décrit toute l'activité */}
       <div data-visite="stats" className={`grid grid-cols-1 gap-3 ${aDuTemps ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
-        <StatCard label={t.gamesPlayed} value={globalStats.totalGames} i={0} />
+        {/* Le seul nombre de cette rangée qui partait brut : « 1116 » à côté
+            d'un « 8 905 » groupé, sur la même ligne. Il se voit en japonais et
+            en allemand, où le séparateur est visible ; en français l'espace
+            fine se lit comme rien. */}
+        <StatCard label={t.gamesPlayed} value={nombre(globalStats.totalGames)} i={0} />
         <StatCard
           label={t.winrate}
           value={pourcent(globalStats.winrate)}
@@ -1081,6 +1087,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           avant d'avoir joué, et c'est ici qu'ils apparaîtront. */}
       <GraphiquesGlobaux
         t={t}
+        nombre={nombre}
         dateLocale={dateLocale}
         parJeu={afficherParJeu ? jeuData : null}
         cumul={data.cumulByDate ?? []}

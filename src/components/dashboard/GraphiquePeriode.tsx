@@ -104,7 +104,7 @@ export function GraphiquePeriode({
           ) : detailHoraire && detailHoraire.length > 0 ? (
             <>
             {(() => {
-              const detail = decrireRepartition(detailHoraire, "label", "total", fmt);
+              const detail = decrireRepartition(detailHoraire, "label", "total", fmt, t.separateurListe);
               return detail ? <ResumeGraphique texte={t.grapheRepartition(t.dailyDetail, detail)} /> : null;
             })()}
             <ResponsiveContainer width="100%" height={200}>
@@ -126,7 +126,7 @@ export function GraphiquePeriode({
         <>
         {(() => {
           const titre = mode === "avg" ? t.avgPompesPerGame : t.totalPompesLabel;
-          const detail = decrireRepartition(points, "label", mode, fmt);
+          const detail = decrireRepartition(points, "label", mode, fmt, t.separateurListe);
           return detail ? <ResumeGraphique texte={t.grapheRepartition(titre, detail)} /> : null;
         })()}
         <ResponsiveContainer width="100%" height={200}>

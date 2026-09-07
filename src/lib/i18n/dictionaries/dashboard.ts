@@ -23,10 +23,19 @@ export const dashboard = {
     energieEstimation: "Estimation d'après ton poids et le temps d'effort.",
     // Résumés lus par les lecteurs d'écran : un graphique ne dit rien à qui
     // ne le voit pas, le texte porte donc les chiffres eux-mêmes.
-    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
-      `Graphique « ${titre} » : ${n} points, de ${debut} à ${fin}.`,
+    grapheEvolution: (titre: string, formate: string, n: number, debut: string, fin: string) =>
+      `Graphique « ${titre} » : ${formate} point${n > 1 ? "s" : ""}, de ${debut} à ${fin}.`,
     grapheRepartition: (titre: string, detail: string) =>
       `Graphique « ${titre} » : ${detail}.`,
+    /**
+     * Le séparateur de l'énumération lue à voix haute.
+     *
+     * Il était `", "` dans les six, alors que la phrase finit par « 。 » en
+     * japonais : « 月 8, 火 8, 水 8。 ». `Intl.ListFormat` ne le donne pas —
+     * mesuré : il rend « A 8 B 12 » en japonais — donc chaque langue écrit le
+     * sien, comme le composé de durée quand `Intl` ne sait pas non plus.
+     */
+    separateurListe: ", ",
     pageTitle: "DASHBOARD",
     loading: "Chargement...",
     chargementRate: "Tes statistiques n'ont pas pu être chargées. Rien n'est perdu.",
@@ -144,10 +153,11 @@ export const dashboard = {
     energieLabel: "Energy spent",
     energieSub: (formate: string) => `about ${formate} min of walking`,
     energieEstimation: "Estimate based on your weight and time under effort.",
-    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
-      `Chart "${titre}": ${n} points, from ${debut} to ${fin}.`,
+    grapheEvolution: (titre: string, formate: string, n: number, debut: string, fin: string) =>
+      `Chart "${titre}": ${formate} point${n !== 1 ? "s" : ""}, from ${debut} to ${fin}.`,
     grapheRepartition: (titre: string, detail: string) =>
       `Chart "${titre}": ${detail}.`,
+    separateurListe: ", ",
     pageTitle: "DASHBOARD",
     loading: "Loading...",
     chargementRate: "Your stats could not be loaded. Nothing is lost.",
@@ -255,10 +265,11 @@ export const dashboard = {
     energieLabel: "Energía gastada",
     energieSub: (formate: string) => `unos ${formate} min de caminata`,
     energieEstimation: "Estimación según tu peso y el tiempo de esfuerzo.",
-    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
-      `Gráfico «${titre}»: ${n} puntos, de ${debut} a ${fin}.`,
+    grapheEvolution: (titre: string, formate: string, n: number, debut: string, fin: string) =>
+      `Gráfico «${titre}»: ${formate} punto${n !== 1 ? "s" : ""}, de ${debut} a ${fin}.`,
     grapheRepartition: (titre: string, detail: string) =>
       `Gráfico «${titre}»: ${detail}.`,
+    separateurListe: ", ",
     pageTitle: "PANEL",
     loading: "Cargando…",
     chargementRate: "No se han podido cargar tus estadísticas. No se ha perdido nada.",
@@ -366,10 +377,11 @@ export const dashboard = {
     energieLabel: "Verbrauchte Energie",
     energieSub: (formate: string) => `etwa ${formate} min Gehen`,
     energieEstimation: "Schätzung anhand deines Gewichts und der Belastungsdauer.",
-    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
-      `Diagramm „${titre}“: ${n} Punkte, von ${debut} bis ${fin}.`,
+    grapheEvolution: (titre: string, formate: string, n: number, debut: string, fin: string) =>
+      `Diagramm „${titre}“: ${formate} Punkt${n !== 1 ? "e" : ""}, von ${debut} bis ${fin}.`,
     grapheRepartition: (titre: string, detail: string) =>
       `Diagramm „${titre}“: ${detail}.`,
+    separateurListe: ", ",
     pageTitle: "ÜBERSICHT",
     loading: "Wird geladen…",
     chargementRate: "Deine Statistiken konnten nicht geladen werden. Nichts ist verloren.",
@@ -475,10 +487,11 @@ export const dashboard = {
     energieLabel: "消耗的能量",
     energieSub: (formate: string) => `约合步行 ${formate} 分钟`,
     energieEstimation: "根据你的体重和用力时长估算。",
-    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
-      `图表「${titre}」：${n} 个数据点，从 ${debut} 到 ${fin}。`,
+    grapheEvolution: (titre: string, formate: string, _n: number, debut: string, fin: string) =>
+      `图表「${titre}」：${formate} 个数据点，从 ${debut} 到 ${fin}。`,
     grapheRepartition: (titre: string, detail: string) =>
       `图表「${titre}」：${detail}。`,
+    separateurListe: "、",
     pageTitle: "面板",
     loading: "加载中…",
     chargementRate: "无法加载你的数据。什么都没丢。",
@@ -584,10 +597,11 @@ export const dashboard = {
     energieLabel: "消費エネルギー",
     energieSub: (formate: string) => `徒歩 約${formate} 分ぶん`,
     energieEstimation: "体重と運動時間からの概算です。",
-    grapheEvolution: (titre: string, n: number, debut: string, fin: string) =>
-      `グラフ「${titre}」：${n} 点、${debut} から ${fin} まで。`,
+    grapheEvolution: (titre: string, formate: string, _n: number, debut: string, fin: string) =>
+      `グラフ「${titre}」：${formate} 点、${debut} から ${fin} まで。`,
     grapheRepartition: (titre: string, detail: string) =>
       `グラフ「${titre}」：${detail}。`,
+    separateurListe: "、",
     pageTitle: "ダッシュボード",
     loading: "読み込み中…",
     chargementRate: "統計を読み込めませんでした。データは失われていません。",

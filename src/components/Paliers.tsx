@@ -148,7 +148,7 @@ export function Paliers() {
             {`${nombre.format(etat.souffrance.points)} ${tt.points}`}
           </span>
           <span className="mono-num" style={{ fontSize: "0.8rem", color: "var(--steel)" }}>
-            {tt.souffranceAide(etat.souffrance.restant)}
+            {tt.souffranceAide(nombre.format(etat.souffrance.restant), etat.souffrance.restant)}
           </span>
         </div>
       )}
