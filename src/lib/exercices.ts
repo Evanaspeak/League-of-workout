@@ -265,17 +265,30 @@ function ratioDe(exercice: ExerciceId, ratios?: RatiosExercices | null): number 
 export function quantite(points: number, exercice: ExerciceId, ratios?: RatiosExercices | null): number {
   const def = EXERCICES[exercice];
   const brut = Math.max(0, points) * ratioDe(exercice, ratios);
-  const arrondi = Math.round(brut / def.pas) * def.pas;
-  /**
-   * Un pas décimal laisse traîner les flottants : 3 × 0,1 vaut
-   * 0,30000000000000004, et la distance s'afficherait ainsi. On recale sur le
-   * nombre de décimales du pas lui-même.
-   */
-  if (!Number.isInteger(def.pas)) {
-    const decimales = String(def.pas).split(".")[1]?.length ?? 1;
-    return Number(arrondi.toFixed(decimales));
-  }
-  return arrondi;
+  return arrondirAuPas(brut, def.pas);
+}
+
+/**
+ * Arrondir au pas SANS traîner de flottant.
+ *
+ * Un pas décimal laisse traîner les flottants : 3 × 0,1 vaut
+ * 0,30000000000000004, et la distance s'afficherait ainsi. On recale donc sur
+ * le nombre de décimales du pas lui-même — `String` d'un nombre écrit toujours
+ * son point, quelle que soit la langue, donc ce découpage n'a rien de local.
+ *
+ * **Elle est ici parce qu'elle était écrite DEUX fois.** `surLePas`, qui fait
+ * avancer le compteur d'une tape, portait la même arithmétique — sous un
+ * commentaire qui annonçait le contraire : « on recale sur le nombre de
+ * décimales du pas, comme là-bas, plutôt que d'écrire une deuxième
+ * arithmétique qui divergerait ». L'intention était juste, et c'était bien une
+ * seconde arithmétique. Un commentaire qui décrit une garantie qui n'existe
+ * pas se relit comme une garantie, et on cesse de vérifier.
+ */
+export function arrondirAuPas(valeur: number, pas: number): number {
+  const arrondi = Math.round(valeur / pas) * pas;
+  if (Number.isInteger(pas)) return arrondi;
+  const decimales = String(pas).split(".")[1]?.length ?? 1;
+  return Number(arrondi.toFixed(decimales));
 }
 
 /**
