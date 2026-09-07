@@ -46,7 +46,9 @@ function lienInvitation(code: string): string {
 type Profil = {
   partage: "total" | "detail";
   pseudo: string;
+  /** L'effort de la semaine et celui de toujours : le profil suit l'onglet. */
   points: number;
+  pointsCumul: number;
   enRetard: boolean;
   joursDeRetard: number;
   parties?: number;
@@ -808,7 +810,18 @@ export function AmisClient() {
                     {profil === "erreur" && <span role="alert">{t.profilErreur}</span>}
                     {profil && profil !== "erreur" && (
                       <div className="space-y-1">
-                        <div>{t.effortPaye(nombre(profil.points), profil.points)}</div>
+                        {/**
+                          * Le profil est le DÉPLIÉ d'une ligne du classement :
+                          * il parle donc de la période que le tableau montre.
+                          * Il rendait toujours la semaine, et l'écran se
+                          * contredisait sous l'onglet « depuis toujours » —
+                          * 10 998 dans la ligne, 4 011 dans le profil ouvert
+                          * juste en dessous.
+                          */}
+                        <div>{(() => {
+                          const v = periode === "total" ? profil.pointsCumul : profil.points;
+                          return t.effortPaye(nombre(v), v);
+                        })()}</div>
                         {profil.enRetard && (
                           <div style={{ color: "var(--loss)" }}>{t.retardDepuis(profil.joursDeRetard)}</div>
                         )}

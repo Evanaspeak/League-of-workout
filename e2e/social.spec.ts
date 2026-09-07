@@ -317,13 +317,39 @@ test("le classement compte l'effort payé par l'autre, et pas celui d'un inconnu
    * onglets pour de bon — un onglet qui rechargerait la même période rendrait
    * exactement le même tableau, et rien à l'écran ne le dirait.
    */
+  /**
+   * Le profil d'un ami est le DÉPLIÉ d'une ligne du classement : il doit donc
+   * parler de la période que le tableau montre.
+   *
+   * Aucun test de route ne peut le voir. La route rend les DEUX chiffres —
+   * l'effort de la semaine et celui de toujours — et c'est le composant qui
+   * choisit lequel afficher. Elle est donc juste dans les deux cas, pendant
+   * que l'écran se contredit : 10 998 dans la ligne, 4 011 dans le profil
+   * ouvert un centimètre plus bas, mesuré sur un vrai compte.
+   */
+  const ligneAmi = pageA.getByRole("listitem")
+    .filter({ has: pageA.getByRole("button", { name: /^voir$|^view$/i }) })
+    .filter({ hasText: b.compte.pseudo });
+  await ligneAmi.getByRole("button", { name: /^voir$|^view$/i }).click();
+  // La première ligne du profil ne porte que l'effort payé. On y lit le
+  // NOMBRE, comme dans le tableau, et pour les mêmes trois raisons : le
+  // séparateur de milliers change avec la langue, le pseudo porte une marque
+  // tirée au hasard, et les textes des descendants se collent sans séparateur.
+  const effortProfil = async () =>
+    Number((await ligneAmi.locator("div.space-y-1 > div").first().innerText())
+      .replace(/\D/g, ""));
+  await expect.poll(effortProfil).toBe(150);
+
   await pageA.getByRole("tab", { name: /depuis toujours|all time/i }).click();
   await expect.poll(effortsPayes).toEqual([5150, 40]);
+  // Le profil suit, sans être rechargé : les deux chiffres sont déjà arrivés.
+  await expect.poll(effortProfil).toBe(5150);
 
   // Et le retour à la semaine les reperd : sans ce second sens, un onglet qui
   // resterait bloqué sur le cumul passerait le contrôle ci-dessus.
   await pageA.getByRole("tab", { name: /la semaine|this week/i }).click();
   await expect.poll(effortsPayes).toEqual([150, 40]);
+  await expect.poll(effortProfil).toBe(150);
 
   await ctxA.close();
 });

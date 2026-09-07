@@ -2,7 +2,7 @@ import {
   composerProfil, PARTAGE_DEFAUT, PARTAGES, toPartage,
 } from "@/lib/profilAmi";
 
-const TOTAL = { pseudo: "Alice", points: 120, enRetard: false, joursDeRetard: 0 };
+const TOTAL = { pseudo: "Alice", points: 120, pointsCumul: 360, enRetard: false, joursDeRetard: 0 };
 const DETAIL = {
   parties: 42, serie: 3, meilleureSerie: 9, jeuFavori: "League of Legends",
   niveau: 12, titre: "regulier",
@@ -32,7 +32,11 @@ describe("ce qui repart", () => {
   it("au total, le détail n'est pas dans la réponse — même pas vide", () => {
     const p = composerProfil("total", TOTAL, DETAIL);
     expect(Object.keys(p).sort())
-      .toEqual(["enRetard", "joursDeRetard", "partage", "points", "pseudo"]);
+      // `pointsCumul` sort au niveau « total », et c'est décidé : c'est ce que
+      // le classement montre déjà à tous les amis sous son onglet cumul. Le
+      // profil étant le déplié d'une de ses lignes, s'en priver le faisait
+      // contredire le tableau au-dessus de lui.
+      .toEqual(["enRetard", "joursDeRetard", "partage", "points", "pointsCumul", "pseudo"]);
   });
 
   it("au détail, tout est là", () => {
