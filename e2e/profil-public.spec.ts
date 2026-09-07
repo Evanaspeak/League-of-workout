@@ -46,7 +46,20 @@ test("l'ouvrir donne un lien, qui montre l'effort et jamais la dette", async ({ 
   // Une dette bien visible, pour que son absence sur la page veuille dire
   // quelque chose : sans elle, le contrôle passerait sur une page qui n'a
   // simplement rien à montrer.
-  await requeteSql('UPDATE "User" SET "dettePointsDus" = 4242 WHERE pseudo = $1', [pseudo]);
+  //
+  // **Sept chiffres, et pas quatre.** Le contrôle d'après cherche ce nombre
+  // dans le HTML SERVI, qui porte les noms de fragments et les hachés de
+  // construction : une page ordinaire de ce site en contient soixante-dix
+  // séquences de quatre chiffres, quarante-quatre valeurs distinctes, et elles
+  // changent à chaque construction. « 4242 » était donc à un tirage d'un rouge
+  // injustifié — c'est le risque que le journal a nommé le 5 septembre sur un
+  // autre fichier, et qui n'avait pas été repris ici. Mesuré sur cinq pages :
+  // zéro séquence ISOLÉE de sept chiffres.
+  const DETTE = 9_876_543;
+  await requeteSql(
+    'UPDATE "User" SET "dettePointsDus" = $2 WHERE pseudo = $1',
+    [pseudo, DETTE],
+  );
 
   // Sans session : c'est tout l'objet du lien.
   const anonyme = await browser.newContext();
@@ -54,7 +67,31 @@ test("l'ouvrir donne un lien, qui montre l'effort et jamais la dette", async ({ 
   await vue.goto(`/p/${jeton}`);
 
   await expect(vue.getByRole("heading", { name: pseudo })).toBeVisible();
-  expect(await vue.content()).not.toContain("4242");
+
+  /**
+   * La dette ne fuit ni à l'écran, ni sur le réseau — et ce sont DEUX
+   * contrôles, parce que ce sont deux fuites différentes.
+   *
+   * Le contrôle d'origine ne lisait que le HTML brut, et il était AVEUGLE à la
+   * fuite qui compte le plus : une dette affichée passe par `Intl`, donc elle
+   * s'écrit « 9 876 543 » et jamais « 9876543 ». Il gardait la moitié
+   * invisible du sujet et laissait passer la moitié visible — c'est le motif
+   * du garde du pourcentage, qui ne lisait que les gabarits.
+   *
+   * Les six écritures, et pas seulement celle du français : l'adresse ne porte
+   * pas de langue, donc la page NÉGOCIE, et le contrôle ne doit pas dépendre
+   * de la langue qu'on obtient.
+   */
+  const texte = await vue.locator("body").innerText();
+  for (const langue of ["fr", "en", "es", "de", "zh", "ja"]) {
+    expect(texte).not.toContain(new Intl.NumberFormat(langue).format(DETTE));
+  }
+  expect(texte).not.toContain(String(DETTE));
+
+  // Et rien dans la charge utile non plus : l'écarter à l'affichage la ferait
+  // quand même traverser le réseau, donc elle serait dans l'onglet réseau de
+  // qui regarde. C'est le raisonnement déjà tenu pour le mode fantôme.
+  expect(await vue.content()).not.toContain(String(DETTE));
 
   /**
    * Le niveau part du HTML SERVI, pas d'un appel qui suivrait.

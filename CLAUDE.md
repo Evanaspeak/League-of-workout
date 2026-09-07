@@ -1157,6 +1157,56 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le contrôle qui garde la dette du profil public était aveugle à la fuite qui compte
+Trouvé en poursuivant le recensement des gardes qui lisent un MOT là où il faut
+un BRANCHEMENT, appliqué cette fois aux parcours. Une seule ligne de tout `e2e`
+compare un NOMBRE par sous-chaîne, et elle a deux défauts en sens contraires.
+
+```ts
+await requeteSql('UPDATE "User" SET "dettePointsDus" = 4242 …');
+expect(await vue.content()).not.toContain("4242");
+```
+
+**Il pouvait devenir rouge sans raison.** Mesuré sur le HTML réellement servi :
+une page ordinaire de ce site porte **soixante-quatorze séquences de quatre
+chiffres, quarante-quatre valeurs distinctes** — noms de fragments, hachés de
+construction, longueurs — et elles changent à chaque construction. C'est le
+risque que le journal a nommé le 5 septembre sur `social.spec.ts` (« un `not`
+deviendrait faussement rouge le jour où une marque aléatoire finit par le bon
+chiffre ») ; ce fichier-ci n'avait jamais été repris.
+
+**Et surtout il était AVEUGLE à la fuite qu'il existe pour attraper.** Une
+dette affichée passe par `Intl` : elle s'écrit « 4 242 » et jamais « 4242 ». Le
+contrôle ne pouvait donc voir que la fuite INVISIBLE, celle de la charge utile,
+et laissait passer la moitié VISIBLE. C'est mot pour mot le garde du
+pourcentage, qui ne lisait que les gabarits.
+
+**Ce ne sont pas deux formulations d'un même contrôle, ce sont deux fuites.**
+Le texte visible attrape ce qu'on montre ; le HTML servi attrape ce qui
+traverse le réseau sans s'afficher — et cette seconde moitié compte, c'est le
+raisonnement déjà tenu pour le mode fantôme : « l'écarter à l'affichage la
+ferait quand même traverser le réseau ».
+
+**Les six écritures, pas seulement le français** : l'adresse `/p/<jeton>` ne
+porte pas de langue, donc la page NÉGOCIE. Un contrôle écrit sur une seule
+écriture dépendrait de la langue qu'on obtient.
+
+**Le nombre passe à sept chiffres**, et c'est mesuré plutôt que supposé : avec
+la borne qui refuse un voisinage alphanumérique, cinq pages du site rendent
+**zéro** séquence isolée de sept chiffres, contre dix à vingt-quatre de quatre.
+
+**Deux sabotages, deux échecs, et le premier est la démonstration.** La dette
+rendue par `Intl` dans la page fait tomber la ligne du TEXTE VISIBLE, sur
+« 9 876 543 » — le contrôle brut, lui, ne dit rien. La dette posée dans un
+attribut caché fait tomber la ligne du HTML SERVI, et pas l'autre. Chaque
+moitié a son travail, et l'angle mort d'origine est prouvé au lieu d'être
+affirmé.
+
+**Le recensement ailleurs est négatif**, et c'est écrit pour qu'on ne le
+refasse pas : les autres contrôles d'absence des parcours portent sur des
+chaînes — un pseudo tiré au hasard, un chemin, une phrase — jamais sur un
+nombre que le produit mettrait en forme.
+
 ### Deux lignes de veille faites depuis longtemps, sans être cochées
 Quatrième passe du même genre, et le même résultat : deux lignes du plan
 décrivent quelque chose qui existe, et qui se prouve en une ligne de code
