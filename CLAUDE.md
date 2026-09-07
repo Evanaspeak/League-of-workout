@@ -327,6 +327,13 @@ disent que les parcours ont joué, une minute dit le contraire quelle que soit
 la couleur. Et une exécution « cancelled » ne dit rien du tout — c'est
 `cancel-in-progress`, seule la dernière d'une rafale est jugée.
 
+**L'attente entre deux fusions est la DURÉE d'une exécution, pas huit
+minutes.** Elles en mettent neuf à dix aujourd'hui : fusionner à huit minutes
+annule celle d'avant à une minute de la fin, et le rouge qu'elle aurait dit ne
+se dira jamais. C'est arrivé à V482, tuée par V483 poussée à huit minutes et
+demie. Le compte se prend sur l'HEURE DE DÉPART de l'exécution précédente,
+qu'un appel donne (`run_started_at`), et pas sur celle de la fusion.
+
 ## Architecture fichiers clés
 
 ```
