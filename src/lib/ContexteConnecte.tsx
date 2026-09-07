@@ -62,9 +62,14 @@ export function ContexteConnecteProvider({ children }: { children: React.ReactNo
   const [consentement, setConsentement] = useState<Consentement | null | undefined>(undefined);
 
   const poser = useCallback((c: Awaited<ReturnType<typeof chargerContexte>>) => {
-    // `null` plutôt qu'une attente sans fin : hors ligne ou session expirée,
-    // les écrans doivent pouvoir dire qu'ils ne savent pas. `SessionGuard`
-    // s'occupe de la session elle-même.
+    // `null` plutôt qu'une attente sans fin : hors ligne, les écrans doivent
+    // pouvoir dire qu'ils ne savent pas.
+    //
+    // Ce commentaire disait « SessionGuard s'occupe de la session elle-même ».
+    // C'était faux : il ne traitait que le cas « rester connecté décoché » et
+    // ne regardait aucune réponse d'API. Une session morte laissait donc
+    // `/settings` affichée, tous ses panneaux en erreur. Il écoute maintenant
+    // l'événement que `chargerContexte` émet sur un 401.
     setUser((c?.user ?? null) as Compte | null);
     setDette((c?.dette ?? null) as Dette | null);
     setConsentement((c?.consentement ?? null) as Consentement | null);
