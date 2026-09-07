@@ -82,6 +82,12 @@ describe("et le réglage est atteignable", () => {
      * application, et elle est portée par une clé de dictionnaire.
      */
     expect(panneau).toMatch(/vibrationDisponible\s*\(/);
-    expect(panneau).toMatch(/vibrationIndisponible/);
+    /**
+     * Et la phrase doit être RENDUE quand l'appareil ne sait pas, pas
+     * seulement nommée. Remplacer sa condition par `false` laisse la clé dans
+     * le fichier : le sabotage passait au vert, et l'écran cachait alors le
+     * réglage au lieu de dire pourquoi il ne fera rien.
+     */
+    expect(panneau).toMatch(/!dispo\s*&&[\s\S]{0,200}vibrationIndisponible/);
   });
 });
