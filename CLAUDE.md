@@ -1150,6 +1150,83 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 5 日の遅れ » au-dessus de « 負債が3日続いています »
+Trouvé en lisant le tableau de bord EN JAPONAIS, sur un compte en retard de
+cinq jours. Le panneau du retard rend deux lignes qui se suivent :
+
+```
+5 日の遅れ                        ← le titre, fonction du nombre réel
+負債が3日続いています。           ← la phrase, « trois jours » EN DUR
+```
+
+**Le titre dit cinq, la phrase dit trois, et la phrase a toujours tort sauf le
+premier jour.** Trois est le SEUIL de retard (`JOURS_AVANT_RETARD`) : la phrase
+était vraie à l'instant du franchissement et fausse tous les jours suivants —
+c'est-à-dire presque toujours, puisqu'une dette qu'on ne paie pas ne s'arrête
+pas au troisième jour.
+
+C'est le défaut que ce journal trouve le plus, sous ses deux formes à la fois :
+un nombre écrit une fois au-dessus de quelque chose qui bouge, ET un panneau
+qui se contredit lui-même à deux lignes d'écart. Dans les six langues.
+
+**En français ça ne saute pas aux yeux**, et c'est pour ça que ça a vécu : « En
+retard depuis 5 jours » puis « Ta dette court depuis trois jours » se lisent
+vite, l'un en chiffres et l'autre en lettres, et on ne les compare pas. En
+japonais les deux sont en chiffres — 「5 日」 et 「3日」 — et l'écart est
+immédiat.
+
+**La correction RETIRE le nombre de la phrase** plutôt que d'en faire une
+seconde fonction du même chiffre. Le titre le porte déjà ; un texte qui répète
+son titre n'apprend rien, et le répéter est exactement ce qui a permis à la
+divergence d'exister. C'est la solution retenue pour le titre du classement,
+qui ne nomme plus la période puisque les onglets s'en chargent.
+
+**Et le garde général a été mesuré puis REFUSÉ.** La règle candidate était « un
+libellé constant ne nomme pas un nombre quand son voisin de même préfixe est
+une fonction ». Elle rend **neuf paires** dans le dépôt, dont huit
+parfaitement justes : « une fois par semaine », « Deux objectifs », « il ne
+s'affichera qu'une fois ». Un garde de cette forme ferait huit faux positifs
+le jour de son écriture, donc il serait dispensé avant d'être lu. Le contrôle
+posé est donc étroit — il ne tient que cette clé — et il porte sa raison.
+
+**Le motif a d'abord accusé mes trois corrections.** « Une dette qui court »,
+« Una deuda que sigue », « Eine laufende Schuld » : rien ne distingue l'article
+indéfini du numéral en français, en espagnol ni en allemand. « Un » est donc
+écarté des quatre langues à article, et l'angle mort est écrit — un seuil
+ramené à UN jour et écrit en dur passerait. Les idéogrammes gardent 一, qui n'y
+est pas un article. Quatre sabotages, quatre échecs.
+
+Vérifié à l'écran dans quatre langues : « Une dette qui court ne s'efface pas
+toute seule », « Eine laufende Schuld löscht sich nicht von selbst »,
+「溜まった負債は放っておいても消えません。」,「拖着的欠账不会自己消失。」
+
+**Et le témoin public est arrivé en vingt-trois minutes.** Fusion à 18 h 13
+heure française, « Gesendete Benachrichtigungen » présent sur
+`/de/confidentialite` à 18 h 36, `x-vercel-cache: HIT`. C'est la deuxième
+mesure depuis que les pages publiques sont prérendues, après les moins de deux
+minutes relevées la veille — contre au moins 2 h 40, puis 66 à 84 minutes,
+puis 59 minutes quand elles étaient rendues à la demande. Deux mesures ne font
+pas une loi, mais elles vont dans le même sens et c'est la page prérendue qui
+les porte toutes les deux.
+
+**Trois pièges d'outillage dans la même heure, tous les trois chez moi.**
+
+- **La sonde posait `low_visite_vue` là où la clé est `low_visite:<uid>`.** La
+  visite guidée démarrait donc, et elle NAVIGUE : quatre secondes après le
+  chargement, `/ja/bilan` devenait `/ja/dashboard`. J'ai lu le tableau de bord
+  en croyant lire le bilan de saison, et j'ai failli conclure que la page
+  n'existait pas. Le HTML servi, lui, était juste — c'est ce qui a tranché.
+- **Le contrôle d'atterrissage était posé AVANT l'attente.** Il ne peut donc
+  pas voir une navigation CLIENTE, qui est précisément ce qui se passait. Il
+  passe après le délai maintenant. C'est une variante nouvelle du premier piège
+  de ces outils, et elle vaut d'être notée : « mesurer la mauvaise page » ne
+  demande plus un cookie périmé, il suffit que la page parte toute seule.
+- **La déduplication de ma sonde effaçait une valeur juste.** Le bilan de
+  saison rendait « Jours d'affilée 21 » puis « Jours payés » sans rien : le
+  second 21 avait déjà été vu, donc jeté. J'allais écrire qu'une carte du bilan
+  n'a pas de valeur. Vérifié avant de conclure, comme la fois où le mur des
+  records semblait vide.
+
 ### Trois notifications par semaine, et le budget que le rappel du matin mange
 Ligne 103 du plan, réponse `[103] Combien de notifications par semaine au
 maximum avant que ça devienne pénible, selon toi ? → Trois`. C'est une
