@@ -1157,6 +1157,34 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux lignes de veille faites depuis longtemps, sans être cochées
+Quatrième passe du même genre, et le même résultat : deux lignes du plan
+décrivent quelque chose qui existe, et qui se prouve en une ligne de code
+chacune — la condition pour cocher.
+
+- **290, « un message de prévention en cas d'excès manifeste »** :
+  `/api/dashboard` calcule `veille`, et `TableauDeBord.tsx` la rend
+  (`t.veilleJour` / `t.veilleSemaine`). Le module `src/lib/veille.ts` porte les
+  deux seuils et écrit lui-même la décision qui gouverne la ligne — « ce qui
+  suit ne bloque rien », « dire ce qu'on voit, une fois, sans y revenir ».
+  C'est la règle déjà posée pour le plancher calorique : on avertit, on ne
+  bloque jamais ;
+- **291, « une alerte admin quand un compte dépasse un volume anormal »** :
+  `/api/admin/mesures` filtre les comptes au-dessus de `SEUIL_SEMAINE`, et
+  `AdminMesures` les affiche sous son propre intitulé.
+
+**Les DEUX moitiés ont été vérifiées, pas seulement la route.** C'est la leçon
+de la nuit : une route qui rend un champ que personne n'affiche ne fait rien,
+et c'est exactement le défaut que ce journal appelle « un panneau vidé sans
+erreur ni test rouge ». Les deux lignes ont donc été suivies jusqu'au JSX.
+
+**Et le motif se répète pour la quatrième fois** : les deux ont été construites
+en passant, pendant un chantier voisin — la veille avec le calcul de volume, le
+panneau d'administration avec les mesures — et personne n'est retourné au plan.
+Ce n'est pas de la négligence : le plan et le code se mettent à jour à des
+moments différents, et rien ne les tient ensemble. `planCompte.test.ts` garde
+l'arithmétique des en-têtes, pas la vérité d'une ligne.
+
 ### La pastille rougit au seuil, et le rouge est réservé à ça (ligne 165)
 Réponse 165, « Oui ». Ce qui manquait n'était ni le seuil ni la règle — les
 deux existent depuis longtemps (`User.rappelSeuilSec`, `seuilFranchi`) — c'était
