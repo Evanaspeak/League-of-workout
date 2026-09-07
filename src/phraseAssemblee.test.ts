@@ -60,6 +60,55 @@ export function phraseAssemblee(source: string): string[] {
   });
 }
 
+/**
+ * La même chose en JSX, que le contrôle des gabarits ne voyait pas.
+ *
+ * `{t.placementSur} {equipesConsultees}` compose exactement la même phrase que
+ * `` `${t.placementSur} ${equipesConsultees}` ``, et le japonais y répondait
+ * 「中 20」 là où 中 POSTPOSE : il faut 「20 中」. Le champ de classement d'un
+ * battle royale l'affichait ainsi depuis qu'il existe.
+ *
+ * Deux exclusions, chacune avec sa raison :
+ *
+ * - une CHAÎNE littérale — `{t.mentions}{" "}<Lien…>` — n'est pas une valeur,
+ *   c'est l'espace qu'il faut poser à la main autour d'un lien. Une phrase
+ *   coupée par un lien reste une phrase par langue de part et d'autre ;
+ * - une expression qui porte SON PROPRE libellé de dictionnaire : chaque
+ *   langue garde alors la main sur ses mots des deux côtés, ce qui est
+ *   précisément ce qu'on demande.
+ */
+const LIBELLE_JSX = /\{\s*t(?:t|[A-Z][A-Za-z]*)?\.[A-Za-z][\w.]*\s*\}\s*\{/g;
+const LIBELLE_NU = /\bt(?:t|[A-Z][A-Za-z]*)?\.[A-Za-z]/;
+
+/** L'expression JSX qui commence à `debut` (sur son accolade ouvrante). */
+function expression(source: string, debut: number): string {
+  let profondeur = 0;
+  for (let i = debut; i < source.length; i++) {
+    if (source[i] === "{") profondeur += 1;
+    else if (source[i] === "}") {
+      profondeur -= 1;
+      if (profondeur === 0) return source.slice(debut, i + 1);
+    }
+  }
+  return source.slice(debut);
+}
+
+export function phraseAssembleeJsx(source: string): string[] {
+  const fautifs: string[] = [];
+  for (const m of source.matchAll(LIBELLE_JSX)) {
+    const suivant = expression(source, m.index! + m[0].length - 1);
+    const dedans = suivant.slice(1, -1).trim();
+    if (/^["'`]/.test(dedans)) continue;      // une chaîne littérale, pas une valeur
+    if (LIBELLE_NU.test(dedans)) continue;    // elle porte son propre libellé
+    // Une expression qui rend un ÉLÉMENT n'est pas un mot dans le même souffle :
+    // c'est un nœud à part, souvent un bloc. C'est le cas de la phrase coupée
+    // par un lien, sous une autre forme.
+    if (dedans.includes("<")) continue;
+    fautifs.push(`${m[0]}${dedans.slice(0, 40)}}`);
+  }
+  return fautifs;
+}
+
 function fichiers(dossier: string, sortie: string[] = []): string[] {
   for (const e of readdirSync(dossier, { withFileTypes: true })) {
     const chemin = join(dossier, e.name);
@@ -99,6 +148,24 @@ describe("aucun composant n'assemble une phrase", () => {
     const avecLibelle = sources.flatMap(([, s]) => (s.match(/`[^`]*`/g) ?? []))
       .filter((g) => LIBELLE.test(g));
     expect(avecLibelle.length).toBeGreaterThan(3);
+  });
+
+  it("et pas davantage en JSX", () => {
+    const fautifs = sources
+      .flatMap(([f, src]) => phraseAssembleeJsx(src).map((g) => `${f} : ${g}`));
+    expect(fautifs).toEqual([]);
+  });
+
+  it("le tri JSX se comporte comme annoncé sur des cas fabriqués", () => {
+    // L'état sain est ZÉRO trouvaille : c'est le tri qui s'éprouve, pas ce
+    // qu'il ramène. Sans ces cas, un motif devenu aveugle passerait au vert.
+    expect(phraseAssembleeJsx("<span>{t.placementSur} {equipes}</span>")).toHaveLength(1);
+    expect(phraseAssembleeJsx("{tt.niveau} {n}")).toHaveLength(1);
+    expect(phraseAssembleeJsx('{t.mentions}{" "}<Lien href="/cgu" />')).toHaveLength(0);
+    expect(phraseAssembleeJsx("{t.titre}{depuis ? ` · ${t.suffixe(depuis)}` : \"\"}")).toHaveLength(0);
+    expect(phraseAssembleeJsx("{t.placementSur(nombre(equipes))}")).toHaveLength(0);
+    expect(phraseAssembleeJsx("{titrage.variable} {barlow.variable}")).toHaveLength(0);
+    expect(phraseAssembleeJsx("{t.reconnexion}\n{code && (<span>x</span>)}")).toHaveLength(0);
   });
 
   it("le tri se comporte comme annoncé sur des cas fabriqués", () => {

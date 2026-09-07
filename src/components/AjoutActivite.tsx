@@ -9,7 +9,7 @@ import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
 import { ChampionInput } from "@/components/ChampionInput";
 import { useChampions, championConnu } from "@/lib/useChampions";
-import { useT, useDateLocale, useLocale, useMinuscule, usePourcentage } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useLocale, useMinuscule, useNombre, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
@@ -91,6 +91,7 @@ export function AjoutActivite({
   const t = useT(history);
   const minuscule = useMinuscule();
   const pourcent = usePourcentage();
+  const nombre = useNombre();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
@@ -576,7 +577,7 @@ export function AjoutActivite({
                         onChange={(e) => { setPlacement(e.target.value); }}
                       />
                       <span className="text-sm shrink-0 mono-num" style={{ color: "var(--faint)" }}>
-                        {t.placementSur} {equipesConsultees}
+                        {t.placementSur(nombre(equipesConsultees))}
                       </span>
                     </div>
                   </div>

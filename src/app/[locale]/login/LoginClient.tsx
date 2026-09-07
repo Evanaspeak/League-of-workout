@@ -147,7 +147,7 @@ export function LoginClient({
             {t.reconnexionDesktop}
             {code && (
               <span style={{ display: "block", marginTop: "0.45rem", opacity: 0.7, fontSize: "0.72rem", letterSpacing: "0.04em" }}>
-                code : {code}
+                {t.codeLabel(code)}
               </span>
             )}
           </div>
