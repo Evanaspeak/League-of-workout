@@ -1260,6 +1260,16 @@ d'un `0.x` dont la mineure est le créneau des ruptures (`@libsql/client` 0.18).
 Donc **aucune version d'application de bureau à publier de ce fait** ; la
 0.9.16 est partie pour une autre raison, la pastille qui rougit au seuil.
 
+**La comparaison de rendu n'a PAS été passée, et c'est une décision, pas un
+oubli.** Le seul fichier de la couche d'affichage touché entre V495 et la tête
+est `DetteDirecte.tsx` — et il **rend `null`** : c'est un composant d'effets,
+qui pousse la dette vers la pastille en jeu et ne peint rien. Une comparaison
+de pixels y est un résultat écrit d'avance, et dix minutes de construction pour
+confirmer ce qu'une ligne établit. C'est la même discipline que celle qui a
+fait retirer le `fetchPriority` mesuré sans effet : on ne fait pas une mesure
+dont le résultat est déterminé, et on écrit pourquoi plutôt que de laisser
+croire à un oubli.
+
 **Deux pièges d'outillage, tous deux chez moi, tous deux nouveaux dans leur
 forme.**
 
