@@ -1,3 +1,4 @@
+import { colleCjk } from "../cjk";
 /**
  * Ce que l'application desktop dit pendant qu'on joue.
  *
@@ -95,11 +96,11 @@ export const enJeu = {
     horsLigne: "无法记录：没有网络？",
     aVerifier: "，建议核对一下",
     partieTerminee: "对局结束",
-    aFaire: (quantite: string) => `还差 ${quantite}。`,
+    aFaire: (quantite: string) => colleCjk(`还差 ${quantite}。`),
     essaiTitre: "Win or Workout",
     essaiCorps: "提醒大概就是这个样子。",
     rappelTitre: "Win or Workout",
-    rappelMaintenant: (quantite: string) => `现在要做 ${quantite}。`,
+    rappelMaintenant: (quantite: string) => colleCjk(`现在要做 ${quantite}。`),
     ligneApex: (rang: string, elims: string, du: string) => `第${rang}名 · ${elims} 淘汰 · ${du}`,
     nonEnregistree: "对局未记录",
     partieNonLue: "无法读取对局",
@@ -114,11 +115,11 @@ export const enJeu = {
     horsLigne: "記録できません。ネットワークがありませんか？",
     aVerifier: "（要確認）",
     partieTerminee: "試合終了",
-    aFaire: (quantite: string) => `${quantite} が残っています。`,
+    aFaire: (quantite: string) => colleCjk(`${quantite} が残っています。`),
     essaiTitre: "Win or Workout",
     essaiCorps: "通知はこんなふうに表示されます。",
     rappelTitre: "Win or Workout",
-    rappelMaintenant: (quantite: string) => `いますぐ ${quantite}。`,
+    rappelMaintenant: (quantite: string) => colleCjk(`いますぐ ${quantite}。`),
     ligneApex: (rang: string, elims: string, du: string) => `${rang}位 · ${elims} キル · ${du}`,
     nonEnregistree: "試合を記録できません",
     partieNonLue: "試合を読み取れません",

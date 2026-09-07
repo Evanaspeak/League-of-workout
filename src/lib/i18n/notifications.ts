@@ -1,3 +1,4 @@
+import { colleCjk } from "./cjk";
 import { LANGUES, type Locale } from "./langues";
 
 /**
@@ -106,11 +107,11 @@ const TEXTES: Record<Locale, Textes> = {
   zh: {
     seuil: (d) => ({
       titre: "攒够了",
-      corps: `还欠 ${d}。两局之间，就是还的时候。`,
+      corps: colleCjk(`还欠 ${d}。两局之间，就是还的时候。`),
     }),
     matin: (d) => ({
       titre: "昨晚的还在",
-      corps: `留下了 ${d}。它不会自己消失。`,
+      corps: colleCjk(`留下了 ${d}。它不会自己消失。`),
     }),
     relance: (j) => ({
       titre: `${j} 天没打一局`,
@@ -124,11 +125,11 @@ const TEXTES: Record<Locale, Textes> = {
   ja: {
     seuil: (d) => ({
       titre: "たまってきました",
-      corps: `${d} 残っています。試合と試合のあいだが、返すときです。`,
+      corps: colleCjk(`${d} 残っています。試合と試合のあいだが、返すときです。`),
     }),
     matin: (d) => ({
       titre: "昨夜の分が残っています",
-      corps: `${d} 置いたままです。ひとりでに消えることはありません。`,
+      corps: colleCjk(`${d} 置いたままです。ひとりでに消えることはありません。`),
     }),
     relance: (j) => ({
       titre: `${j} 日、一試合もなし`,

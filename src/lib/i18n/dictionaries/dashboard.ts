@@ -1,3 +1,4 @@
+import { colleCjk } from "../cjk";
 export const dashboard = {
   fr: {
     debutTitre: "Ta première semaine",
@@ -518,7 +519,7 @@ export const dashboard = {
     syntheseDe: (jeu: string) => `小结 · ${jeu}`,
     plafondTitre: "你超过了今天设的量",
     plafondCorps: (fait: string, seuil: string) =>
-      `今天已经攒到 ${fait}，而你设的目标是 ${seuil}。没人逼你继续：可以就此打住，明天再来；感觉不错的话也可以接着做。`,
+      colleCjk(`今天已经攒到 ${fait}，而你设的目标是 ${seuil}。没人逼你继续：可以就此打住，明天再来；感觉不错的话也可以接着做。`),
     railAjoutSurtitre: "刚打完一局？",
     railAjoutTitre: "添加一局",
     railSessionGames: (n: number, dette: string) => `${n} 局 · ${dette}`,
@@ -628,7 +629,7 @@ export const dashboard = {
     syntheseDe: (jeu: string) => `まとめ · ${jeu}`,
     plafondTitre: "今日の目安を超えました",
     plafondCorps: (fait: string, seuil: string) =>
-      `今日は ${fait} 溜まりました。自分で決めた目安は ${seuil} です。続ける義務はありません。ここでやめて明日に回しても、調子が良ければ続けても構いません。`,
+      colleCjk(`今日は ${fait} 溜まりました。自分で決めた目安は ${seuil} です。続ける義務はありません。ここでやめて明日に回しても、調子が良ければ続けても構いません。`),
     railAjoutSurtitre: "いま遊びましたか？",
     railAjoutTitre: "試合を追加",
     railSessionGames: (n: number, dette: string) => `${n} 試合 · ${dette}`,
