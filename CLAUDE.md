@@ -1157,6 +1157,40 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Comparaison de rendu après V481 à V485 : deux cent quarante-quatre pixels
+Passée entre V480 et la tête, sur un compte semé à soixante parties. Trente-neuf
+captures, huit pages, trois largeurs. **Six différentes, et les six
+s'expliquent** : trois sont `/telechargement`, que l'outil range déjà à part
+parce qu'elle lit les releases GitHub et diffère d'une exécution à l'autre sans
+que rien n'ait changé. Les trois autres sont le tableau de bord, aux trois
+largeurs.
+
+**La bande a été LUE, pas supposée.** Une seule, de onze pixels de haut sur
+vingt-six de large, pour deux cent quarante-quatre pixels au total sur une page
+qui en fait plus de quatre millions — et la hauteur de page est identique au
+pixel, 3 278 des deux côtés. En demandant à la page quels éléments occupent ces
+lignes :
+
+```
+y 1484–1504 : Objectif : 1 000
+y 1484–1504 : 48 %
+```
+
+C'est l'avancement vers l'objectif, passé par `Intl` en V482 : le français y
+gagne l'espace insécable étroite devant le signe, et c'est toute la
+différence. Vingt-six pixels de large, c'est exactement ce que cette espace
+occupe.
+
+**Ce que la campagne n'exerce PAS, et il vaut mieux l'écrire.** Elle tourne en
+FRANÇAIS et sur un compte à soixante parties. Les trois autres pourcentages
+corrigés — la maîtrise du détail d'historique, celle de l'aperçu d'ajout, la
+jauge de mise à jour — ne se peignent pas sur ces huit pages : le détail
+demande qu'on le déplie, l'aperçu qu'on saisisse une partie, la jauge une mise
+à jour en cours. Et le japonais de V484 est invisible par construction. La
+comparaison prouve qu'aucune des cinq versions n'a déplacé quoi que ce soit
+**par accident** ; elle ne dit rien de ce qu'elles ont corrigé **exprès**.
+C'est la répartition déjà écrite entre les deux outils.
+
 ### Les six gardes qui ne lisent que les gabarits, recensés jusqu'au bout
 Le pourcentage JSX a ouvert une question qui valait pour toute une classe :
 **quels gardes cherchent un motif dans les `` ` `` seulement, alors que la
