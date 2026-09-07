@@ -102,6 +102,14 @@ export const viewport: Viewport = {
  * et aucune invalidation ne les rattrapait, parce qu'une route entièrement
  * statique n'écoute pas `revalidatePath`. Avec elle, l'invalidation prend effet
  * immédiatement, et cinq minutes servent de filet si elle échoue.
+ *
+ * **Elle n'a rien fait pendant des semaines, et personne ne pouvait le voir.**
+ * La frontière `not-found` de la racine lisait `headers()` ; elle appartient à
+ * l'arbre de rendu de CHAQUE route, donc l'application entière était rendue à
+ * la demande — il n'y avait pas une seule page prérendue, et cette ligne-ci
+ * portait sur rien. Mesuré au moment de la correction : 0 page prérendue
+ * avant, 150 après. Voir `src/quatreCentQuatre.test.ts`, qui refuse le retour
+ * de la cause.
  */
 export const revalidate = 300;
 

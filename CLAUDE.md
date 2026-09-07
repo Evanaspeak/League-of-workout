@@ -343,7 +343,8 @@ src/
       settings/page.tsx             # Réglages utilisateur
       login/page.tsx                # Login
       telechargement/page.tsx       # Page download app desktop
-      not-found.tsx                 # 404 dans la langue de la page
+      introuvable/page.tsx          # 404 dans la langue de l'adresse, prérendue
+    not-found.tsx                   # (racine) dernier recours, en anglais, sans lecture de requête
     (diffusion)/obs/[jeton]/        # Source OBS : sa propre coquille, sans langue
     api/
       dashboard/route.ts            # GET stats globales (totalPompes, statsByPeriod, dailyPompes, etc.)
@@ -823,7 +824,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2346 tests unitaires, 223 suites (au 5 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2353 tests unitaires, 224 suites (au 7 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1148,6 +1149,149 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Zéro page prérendue, et le journal qui annonçait deux cent vingt-huit
+Ligne 302 du plan, « affiner la régénération des pages ». Je cherchais à savoir
+si `revalidate = 300`, posé sur la mise en page racine donc sur toutes les
+pages, servait à quelque chose. La réponse est non, et pour une raison que je
+n'attendais pas : **il n'y avait aucune page à régénérer.**
+
+```
+Route (app)
+┌ ƒ /_not-found        ƒ  (Dynamic)  server-rendered on demand
+├ ƒ /[locale]
+├ ƒ /[locale]/cgu
+├ ƒ /[locale]/calculateur/[jeu]
+```
+
+Pas une seule pastille `○` ni `●` sur les 21 pages. `prerender-manifest.json`
+porte quatre entrées, toutes des fichiers — `robots.txt`, `sitemap.xml`, le
+manifeste, la page d'erreur globale. Un seul `.html` sur le disque. Les
+soixante-quinze pages publiques du site, dont les **96 du calculateur — le
+seul canal d'acquisition qui travaille sans qu'on s'en occupe** — étaient
+rendues à chaque requête, avec `Cache-Control: private, no-store` en en-tête,
+donc sans aucun cache de bord.
+
+**Et le journal annonçait « 228 pages statiques » depuis le 30 août.** C'était
+vrai le jour où ça a été écrit. C'est devenu faux quelques heures plus tard,
+et rien ne pouvait le dire.
+
+**La cause tient en une ligne, et il a fallu la demander à Next.** Cinq
+hypothèses ont été essayées et démenties par la mesure — l'appel base de la
+mise en page, `revalidate` sur une mise en page, `generateStaticParams` posé
+sur la mise en page plutôt que sur la page, `usePathname`, `useRouter`. Chacune
+coûtait une construction de quatre-vingt-dix secondes et rendait la même
+table.
+
+Ce qui a tranché est `export const dynamic = "error"`, qui fait ÉCHOUER la
+construction en NOMMANT l'API fautive :
+
+```
+Route /[locale]/calculateur/[jeu] with `dynamic = "error"` couldn't be
+rendered statically because it used `headers()`.
+```
+
+**`headers()`, dans `src/app/not-found.tsx`.** La frontière 404 de la racine
+lisait la langue dans un en-tête posé par le middleware — c'est la correction
+écrite ici même sous « La 404 localisée ne l'était que pour ceux qui exécutent
+le JavaScript », et elle était juste sur son propre sujet. Ce que personne n'a
+vu, c'est qu'**une frontière `not-found` de racine appartient à l'arbre de
+rendu de CHAQUE route** : une API dynamique posée là rend l'application
+entière dynamique.
+
+C'est le pire genre de défaut, et il mérite d'être nommé : **il ne casse
+rien.** Aucun écran ne change, aucun test ne tombe, aucune mesure ne bouge en
+local — `next start` sert une page dynamique aussi vite qu'une page statique
+sur la même machine. Ce qui change est ailleurs : une exécution de fonction
+par visite au lieu d'un fichier servi par le réseau de diffusion. Le symptôme
+n'est pas une panne, c'est une facture.
+
+**La correction déplace la langue du HEADER vers le PARAMÈTRE DE ROUTE.**
+`/{langue}/introuvable` est une vraie page, prérendue dans les six langues, et
+le middleware y RÉÉCRIT les adresses inconnues. Le geste qui rend ça possible
+est `NextResponse.rewrite(cible, { status: 404 })` : l'adresse demandée reste
+affichée — c'est ce qui distingue une réécriture d'une redirection — et la
+réponse porte le code qui fait sortir une adresse d'un index.
+
+| | avant | après |
+|---|---|---|
+| pages prérendues | **0** | **150** |
+| dont calculateur | 0 | 96 |
+| `revalidate: 300` effectif | sur rien | sur 150 pages |
+
+**Et ça répare le « seul cas qui résiste ».** `e2e/introuvable.spec.ts`
+portait un test dont le commentaire disait : un jeu de calculateur inventé est
+refusé par le ROUTEUR, donc rend la 404 de Next, en anglais ; trois
+contournements essayés, dont « réécrire l'adresse dans le middleware (casse
+aussi les cas qui marchaient) ». Ce qui manquait à cette réécriture était son
+STATUT. Vérifié : `/de/calculateur/jeu-invente` rend maintenant 404 avec
+`lang="de"` et « Seite nicht gefunden ».
+
+**Et la suite navigateur a attrapé une régression que rien d'autre ne
+pouvait voir.** `/fr/opengraph-image` rendait **404**. La carte partagée,
+l'icône d'onglet et l'icône iOS sont engendrées par Next sous `[locale]`, à
+côté des pages, et elles ne figurent pas dans `PAGES_CONNUES` — qui se compare
+au dossier des `page.tsx`. Un `next()` les laissait passer par tolérance ; une
+réécriture, non.
+
+C'est exactement le genre de défaut que ce projet a déjà payé sur ces trois
+adresses : **personne ne regarde le code de réponse d'une vignette.** Un lien
+posé sur Discord perd son image, et rien ne le dit. Aucun test unitaire ne
+demande une image ; les 2 353 étaient verts. Ce qui l'a vu est la suite
+entière, jouée parce que le changement touche le middleware — c'est-à-dire la
+règle de CLAUDE.md sur les fondations, appliquée, et qui a rendu son prix en
+une fois.
+
+`estFichierDeConvention` les écarte de la question « cette adresse
+existe-t-elle », et `pagesConnues.test.ts` compare la liste au dossier : un
+fichier renommé la rendrait fausse sans que rien ne le dise. Un garde existant
+a mordu au passage — il épinglait la FORME de la condition — et il a été
+rouvert plutôt que contourné : la conjonction s'ouvre toujours sur
+`echappeAuPrefixe` et se ferme toujours sur `estPageConnue`, ce qu'il y a
+entre les deux ne peut que restreindre.
+
+**La porte tient toujours, et c'était la question à poser.** Sept des écrans
+devenus statiques sont derrière elle — `/settings`, `/recuperation`, leurs
+voisines — et une coquille prérendue est par construction la même pour tout le
+monde. Vérifié plutôt que supposé : `/fr/settings` rend **307 vers
+`/fr/login`** sans session. Le middleware passe AVANT le service de la page,
+statique ou non, et la coquille ne porte aucune donnée de compte — c'est
+précisément ce que Next prouve en acceptant de la prérendre.
+
+**Le corps de la 404 vit à part**, dans `CorpsIntrouvable`, parce qu'il est
+rendu depuis DEUX coquilles : la page localisée, à l'intérieur de la mise en
+page du site, et la frontière racine, qui n'a ni mise en page ni feuille de
+style et fournit son propre document. Écrit deux fois, il aurait divergé à la
+première correction.
+
+`src/quatreCentQuatre.test.ts` refuse le retour de la cause : aucune API
+dynamique dans la frontière racine ni dans la page localisée, et le
+branchement vérifié des deux côtés — la cible construite depuis la constante,
+et le `status: 404` sur la réécriture. **Le garde lit le source PRIVÉ de ses
+commentaires**, sans quoi il tombe sur sa propre explication, qui nomme
+`headers()` pour dire pourquoi elle l'interdit. C'est le piège déjà payé deux
+fois ici, dans les deux sens ; `sansCommentaires` a donc quitté
+`etiquettesLocalisees.test.ts` pour `src/test/sansCommentaires.ts`, où trois
+gardes la partagent au lieu d'en garder chacun une copie.
+
+Six sabotages, six échecs — le garde couvre aussi les mises en page
+partagées, où `auth()` aurait le même effet que `headers()`.
+
+**Deux pièges d'outillage, tous deux écrits ici, tous deux retombés dedans.**
+Le premier contrôle après correction a rendu « 404, `lang="fr"`, titre
+CONDITIONS GÉNÉRALES D'UTILISATION » — c'est-à-dire le bon code, la bonne
+langue, et le corps d'une expérience précédente. `next start` avait échoué sur
+EADDRINUSE et le serveur de l'essai d'avant tournait encore ; sans lire le
+journal du serveur, j'aurais conclu que la réécriture visait la mauvaise page.
+Et une reconstruction à mi-parcours a fait échouer un `tsc` sur
+`noUnusedLocals`, ce qui est le bon comportement : c'est lui qui a nommé
+l'import devenu inutile quand j'ai stubé l'appel base pour l'expérience.
+
+**Ce que ça apprend au-delà du cas.** Une affirmation de performance écrite
+une fois au-dessus de quelque chose qui bouge est exactement ce que ce journal
+reproche partout ailleurs — et celle-ci portait sur la moitié la plus exposée
+du produit. Ce qui l'a démasquée n'est pas une relecture : c'est d'avoir ouvert
+`prerender-manifest.json` pour vérifier un chiffre que je croyais connaître.
 
 ### La comparaison de rendu accusait une bibliothèque d'icônes, et c'était elle-même
 Dépendances du 7 septembre : `npm audit` rend **les deux mêmes vulnérabilités
@@ -9789,7 +9933,9 @@ nom ni les parties ; les libellés, eux, allaient de toute façon s'afficher.
 | `/de/calculateur/league-of-legends` | 500 ms | 1136 ms | le titre |
 
 CLS de 0,000 partout, et les dix pages restent très en dessous du seuil de
-2500 ms malgré 228 pages statiques au lieu de 78.
+2500 ms malgré 228 pages statiques au lieu de 78. *(Ce chiffre a cessé d'être
+vrai peu après, sans que rien ne le dise — voir « Zéro page prérendue, et le
+journal qui annonçait deux cent vingt-huit ».)*
 
 **Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues,
 **aucune page laissée de côté**. Ce dernier point a demandé du travail : la
@@ -9972,7 +10118,9 @@ redirige en 308 toute adresse sans langue vers celle qu'on a de meilleures
 raisons de croire bonne (le cookie d'abord, l'en-tête du navigateur ensuite,
 l'anglais à défaut). `generateStaticParams` engendre les six versions à la
 construction : **78 pages statiques avant, 228 après**, dont 90 pages de
-calculateur — quinze jeux fois six langues.
+calculateur — quinze jeux fois six langues. *(Vrai ce jour-là ; la 404
+localisée, publiée peu après, a tout ramené à zéro — voir « Zéro page
+prérendue » au journal.)*
 
 **Deux mises en page racines**, et c'est la seule façon d'y arriver : une page
 racine ne peut pas lire un paramètre de route, donc `<html lang>` ne pouvait

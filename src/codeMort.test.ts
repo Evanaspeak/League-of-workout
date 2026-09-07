@@ -45,6 +45,9 @@ const TOLERES: string[] = [
   // comme un module du produit ferait dire au garde qu'il faut lui écrire un
   // lecteur, alors que ses lecteurs sont exactement ceux qu'on attend.
   "test/api.ts",
+  // Même raison : le retrait des commentaires n'existe que pour les gardes qui
+  // lisent du source, et ils sont trois à en avoir besoin.
+  "test/sansCommentaires.ts",
 ];
 
 /**

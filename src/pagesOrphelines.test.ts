@@ -30,6 +30,7 @@ const ENTREES_EXTERNES: Record<string, string> = {
   "/recuperation/valider": "atteinte par le lien du courriel de récupération",
   "/obs/[jeton]": "adresse recopiée à la main dans OBS, jamais cliquée",
   "/p/[jeton]": "adresse que son propriétaire copie et partage lui-même ; la lister ici reviendrait à publier les liens",
+  "/introuvable": "cible d'une RÉÉCRITURE du middleware, pas d'un lien : personne ne clique vers sa propre 404, et l'adresse affichée reste celle qu'on avait demandée",
 };
 
 /** Toutes les pages du dossier `app`, sous forme de chemin d'URL. */

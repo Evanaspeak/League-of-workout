@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { sansCommentaires } from "./test/sansCommentaires";
 
 /**
  * Une route d'API ne sait pas dans quelle langue on la lit.
@@ -23,53 +24,6 @@ const AFFICHAGE = path.join(__dirname, "app", "[locale]", "dashboard", "TableauD
 /** Les champs numériques qu'une route peut envoyer pour qu'on renomme son libellé. */
 const RENOMMABLES = ["heure", "jour", "mois"];
 
-/**
- * Le source privé de ses commentaires.
- *
- * Sans ça le garde lisait ce que j'avais écrit pour l'expliquer : le
- * commentaire posé au-dessus de l'heure dit « comme pour les jours et les
- * mois », et « mois » y suffisait à satisfaire le contrôle. Le sabotage
- * passait donc au vert sur le défaut remis à l'identique. C'est le pendant
- * exact du piège déjà écrit pour `envoisProgrammes.test.ts` — là, le
- * commentaire citait le motif fautif et déclenchait le garde ; ici, il le
- * calmait.
- *
- * Les chaînes et les gabarits sont préservés : ce qu'on y écrit part vraiment
- * dans la réponse, et le retirer ferait accuser un objet parfaitement juste.
- */
-export function sansCommentaires(source: string): string {
-  let out = "";
-  let i = 0;
-  while (i < source.length) {
-    const c = source[i];
-    const suivant = source[i + 1];
-    if (c === "/" && suivant === "/") {
-      while (i < source.length && source[i] !== "\n") i++;
-      continue;
-    }
-    if (c === "/" && suivant === "*") {
-      i += 2;
-      while (i < source.length && !(source[i] === "*" && source[i + 1] === "/")) i++;
-      i += 2;
-      continue;
-    }
-    if (c === '"' || c === "'" || c === "`") {
-      const fin = c;
-      out += c;
-      i++;
-      while (i < source.length && source[i] !== fin) {
-        if (source[i] === "\\") { out += source[i]; i++; }
-        if (i < source.length) { out += source[i]; i++; }
-      }
-      out += source[i] ?? "";
-      i++;
-      continue;
-    }
-    out += c;
-    i++;
-  }
-  return out;
-}
 
 /**
  * Le littéral d'objet le plus intérieur qui entoure `index`.

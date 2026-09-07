@@ -28,6 +28,15 @@
  */
 import { tousLesSlugs } from "@/lib/slugJeu";
 
+/**
+ * L'adresse de la 404 du site, écrite une seule fois.
+ *
+ * Trois endroits la nomment — le middleware qui y réécrit, cette liste, et
+ * celle des chemins publics — et une adresse écrite trois fois finit par avoir
+ * une version en retard.
+ */
+export const CHEMIN_INTROUVABLE = "/introuvable";
+
 export const PAGES_CONNUES = [
   "/",
   "/admin",
@@ -55,6 +64,7 @@ export const PAGES_CONNUES = [
   "/connexion-app",
   "/dashboard",
   "/history",
+  CHEMIN_INTROUVABLE,
   "/login",
   /**
    * Le profil public, à l'adresse que son propriétaire partage.
@@ -79,6 +89,31 @@ export const PAGES_CONNUES = [
  * remplace exactement un segment, jamais plusieurs — `/calculateur/*` couvre
  * `/calculateur/valorant` et non `/calculateur/a/b`.
  */
+/**
+ * Ce que Next.js engendre par CONVENTION DE NOM, et qui n'est pas une page.
+ *
+ * `opengraph-image`, `icon` et `apple-icon` vivent sous `[locale]` comme les
+ * pages, et répondent à une adresse comme elles — mais ce ne sont pas des
+ * pages : `PAGES_CONNUES` se compare au dossier des `page.tsx`, et les y
+ * inscrire ferait mentir cette comparaison.
+ *
+ * Ils doivent pourtant échapper à la question « cette adresse existe-t-elle »,
+ * sinon le middleware les réécrit vers la 404 — et une carte partagée qui rend
+ * 404 laisse un lien sans vignette sur Discord, sans que rien ne le dise :
+ * personne ne regarde le code d'une vignette. C'est la suite navigateur qui
+ * l'a attrapé, et elle seule pouvait le faire.
+ */
+export const FICHIERS_DE_CONVENTION = [
+  "/opengraph-image",
+  "/icon",
+  "/apple-icon",
+] as const;
+
+/** Cette adresse est-elle un fichier engendré par convention de nom ? */
+export function estFichierDeConvention(chemin: string): boolean {
+  return (FICHIERS_DE_CONVENTION as readonly string[]).includes(chemin);
+}
+
 export function estPageConnue(chemin: string): boolean {
   const segments = chemin.split("/").filter(Boolean);
   return PAGES_CONNUES.some((motif) => {

@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "@/auth.config";
 import { estCheminPublic } from "@/lib/routesPubliques";
-import { estPageConnue } from "@/lib/pagesConnues";
+import { CHEMIN_INTROUVABLE, estFichierDeConvention, estPageConnue } from "@/lib/pagesConnues";
 import {
   avecLocale, echappeAuPrefixe, EN_TETE_LANGUE, localeDuChemin, negocierLocale,
   sansLocale,
@@ -136,9 +136,31 @@ export default auth((req) => {
    * L'inversion ne relâche rien : une adresse qui n'existe pas n'a pas de
    * contenu à protéger, et les pages connues traversent toujours les deux
    * contrôles qui suivent, dans le même ordre qu'avant.
+   *
+   * **On RÉÉCRIT vers la 404 du site, avec son code.** Laisser passer faisait
+   * rendre la frontière `not-found` de la racine, qui devait lire la langue
+   * dans un en-tête — et un `headers()` dans cette frontière rend DYNAMIQUE
+   * toute route de l'application, puisqu'elle appartient à l'arbre de chaque
+   * page. Mesuré : 144 pages cessaient d'être prérendues à cause de cette
+   * seule lecture, dont les 96 du calculateur.
+   *
+   * La réécriture garde l'adresse demandée à la barre — c'est ce qui la
+   * distingue d'une redirection — et `status` fait porter le 404 à la réponse,
+   * ce qui est le seul geste qui fasse sortir une adresse d'un index.
+   *
+   * **Et les fichiers de convention en sont écartés.** `next()` les laissait
+   * passer par tolérance ; une réécriture, non. La carte partagée et l'icône
+   * d'onglet ont rendu 404 le temps d'une exécution de la suite navigateur,
+   * qui est la seule à pouvoir le voir : personne ne regarde le code d'une
+   * vignette, et aucun test unitaire ne demande une image.
    */
-  if (!echappeAuPrefixe(pathname) && !estPageConnue(chemin)) {
-    return NextResponse.next({ request: { headers: entetes } });
+  if (!echappeAuPrefixe(pathname) && !estFichierDeConvention(chemin) && !estPageConnue(chemin)) {
+    const cible = req.nextUrl.clone();
+    cible.pathname = avecLocale(CHEMIN_INTROUVABLE, localeDuChemin(pathname) ?? negocierLocale(
+      req.cookies.get("low_locale")?.value, req.headers.get("accept-language"),
+    ));
+    cible.search = "";
+    return NextResponse.rewrite(cible, { status: 404, request: { headers: entetes } });
   }
 
   // Routes publiques : accès libre. La liste et la règle qui la lit vivent
