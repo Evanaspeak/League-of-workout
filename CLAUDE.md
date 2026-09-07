@@ -2423,7 +2423,7 @@ est encore absent à 05 h 49, puis à 06 h 12, et **présent à 06 h 14** : le
 retard vaut donc **cinquante-neuf minutes**, avec toujours
 `x-vercel-cache: MISS` et `age: 0` pendant toute l'attente.
 
-**Quatre mesures en deux nuits** : au moins 2 h 40, entre 66 et 84 minutes,
+**Trois mesures en deux nuits** : au moins 2 h 40, entre 66 et 84 minutes,
 59 minutes. Ce n'est donc pas un incident, c'est le RÉGIME — et le régime est
 qu'une correction publiée met environ une heure à exister pour qui que ce
 soit. Ça change ce qu'on peut promettre : une correction fusionnée n'est pas
