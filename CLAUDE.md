@@ -1157,6 +1157,18 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une sonde sans navigateur déclaré rend 403, et ça ressemble à une porte cassée
+`curl -s -o /dev/null -w "%{http_code}" https://winorworkout.com/fr/dashboard`
+rend **403**. Le journal écrit partout que cette adresse rend 307 vers la
+connexion, et c'est ce qu'elle rend : avec un en-tête de navigateur ordinaire,
+la même requête donne `307` et `location: /fr/login`.
+
+C'est le bord de Vercel qui refuse une requête sans `User-Agent`, pas
+l'application. Le symptôme est trompeur parce que 403 est un code que la porte
+POURRAIT rendre : on cherche alors une régression du contrôle d'accès là où il
+n'y a qu'une sonde mal habillée. Une sonde de production porte un
+`User-Agent`, comme n'importe quel visiteur.
+
 ### Deux lignes de plus faites depuis des semaines, sans être cochées
 Même passe que le 5 septembre, sur les soixante-cinq lignes non cochées, et le
 même résultat : deux d'entre elles décrivent quelque chose qui existe.
