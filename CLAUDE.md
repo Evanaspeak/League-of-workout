@@ -1157,6 +1157,61 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Moins de quatre minutes, migration comprise
+Témoin public de V488, qui ajoute une TABLE : la politique de confidentialité y
+gagne une ligne, donc la version a un témoin sur une page publique. Fusion à
+20 h 11 min 44, « Angefragte Spiele » présent sur `/de/confidentialite` à
+20 h 15 min 10 — **moins de quatre minutes**.
+
+C'est la mesure la plus courte du journal, après les moins de deux minutes de
+V460 et les 14, 23 et 59 minutes des versions suivantes. Les mesures d'avant le
+prérendu allaient d'une à trois heures.
+
+**Et ce témoin-ci prouve une seconde chose**, ce qui n'était encore jamais
+arrivé : la construction Vercel lance `prisma migrate deploy` AVANT `next
+build`. Une migration qui échoue fait donc échouer la construction, et la
+version ne part pas. Voir la ligne nouvelle en ligne, c'est voir que la table
+`DemandeJeu` existe en production — sans avoir accès à la base.
+
+C'est la première fois qu'une version de ce projet emporte une migration ET
+touche une page publique. Le hasard fait bien les choses : la politique de
+confidentialité doit décrire ce qu'on stocke, donc **toute table nouvelle a
+désormais un témoin public par construction.** C'est une propriété du garde
+`politiqueComplete`, pas une coïncidence, et elle vaut d'être notée.
+
+### La photo avant-après : une ligne de plan dont tout le travail est de NE PAS construire
+Réponse 154, et c'est un refus doublé d'une consigne : « non, trop risqué —
+inciter à le faire pour eux, mais jamais transmis à l'application ».
+
+Il n'y a donc rien à construire, et c'est exactement le sujet. Une photo
+avant-après est la donnée la plus intime qu'un produit de ce genre puisse
+toucher ; ce qu'on peut promettre de mieux n'est pas de bien la garder, c'est
+de **ne pas pouvoir la recevoir**. Le panneau du corps le dit, dans les six
+langues, à l'endroit où la personne se pèse et se mesure.
+
+**Une promesse écrite à quelqu'un a besoin d'une seconde moitié.**
+`src/aucunePhoto.test.ts` refuse qu'une route ouvre un chemin binaire —
+`formData`, `arrayBuffer`, `Blob`, `multipart/form-data` — et qu'un écran
+propose un champ de fichier. Tant que le texte affirme qu'on ne la recevra
+jamais, le code ne peut pas la recevoir ; le jour où l'un des deux bouge, il
+faut reprendre l'autre, ce qui est le bon comportement.
+
+Il tient aussi la promesse elle-même dans les SIX langues : disparue d'une
+seule, le garde n'aurait plus d'objet pour ceux qui lisent celle-là.
+
+**Le tri s'éprouve sur des cas fabriqués**, comme partout ici : l'état sain du
+dépôt est zéro trouvaille, donc les fichiers réels ne distinguent pas un motif
+juste d'un motif aveugle.
+
+Trois sabotages, trois échecs : une route qui accepte un envoi de fichier, un
+écran qui propose d'en choisir un, et la promesse vidée en anglais.
+
+**Ce que ça apprend sur la lecture d'un plan.** Une ligne cochée n'est pas
+forcément une fonctionnalité livrée : celle-ci est une décision de ne rien
+livrer, et la seule chose qui la rende vraie est un garde. Sans lui, elle
+serait un paragraphe qu'on croit sur parole — et le premier envoi de fichier
+ajouté six mois plus tard la rendrait fausse sans que personne le voie.
+
 ### Déclarer un jeu absent, et compter les demandes (ligne 180)
 Le catalogue est FERMÉ — c'est ce qui permet de chiffrer une partie — donc la
 seule réponse à « mon jeu n'y est pas » était le silence. La réponse 180 dit

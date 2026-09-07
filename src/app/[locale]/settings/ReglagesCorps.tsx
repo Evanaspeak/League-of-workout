@@ -421,6 +421,22 @@ export function ReglagesCorps({
           <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsRubanIncomplet}</p>
         ) : null}
       </div>
+
+      {/*
+        La photo avant-après (réponse 154).
+
+        La réponse est un REFUS doublé d'une consigne : « non, trop risqué —
+        inciter à le faire pour eux, mais jamais transmis à l'application ».
+        Il n'y a donc rien à construire ici, et c'est le sujet : la seule chose
+        à faire est de le DIRE, et de ne jamais ouvrir de chemin qui reçoive
+        une image. `src/aucunePhoto.test.ts` tient la seconde moitié.
+      */}
+      <div className="lol-panel space-y-2">
+        <h2 className="titre-section">{t.corpsPhotoTitre}</h2>
+        <p className="text-xs" style={{ color: "var(--faint)", lineHeight: 1.6 }}>
+          {t.corpsPhotoAide}
+        </p>
+      </div>
     </div>
   );
 }
