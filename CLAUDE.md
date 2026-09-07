@@ -1238,24 +1238,59 @@ kilo-octets — sur des pages aussi différentes qu'un document juridique et le
 tableau de bord, ce qui écarte un simple redécoupage : ce n'est pas du code
 déplacé d'un fragment à l'autre, c'est du code qui arrive là où il n'était pas.
 
-**La cause n'est PAS nommée, et c'est écrit tel quel plutôt que deviné.** Deux
-hypothèses ont été essayées et DÉMENTIES par la mesure :
+**La cause est nommée depuis, en comparant le CONTENU des fragments.** Les
+noms sont hachés à la construction et les chemins de modules ont disparu : la
+seule empreinte disponible est ce que les fragments CONTIENNENT. Trois d'entre
+eux existent en V470 et pas en V459, et leurs marqueurs les désignent :
+
+| taille brute | ce qu'il porte |
+|---|---|
+| 136 ko | dictionnaires des réglages, de l'accueil-visite, des exercices |
+| 53 ko | dictionnaires des CGU, de la confidentialité, du calculateur |
+| 20 ko | dictionnaires des exercices et du texte en jeu |
+
+**Le dictionnaire des CGU chargé par le tableau de bord**, voilà le témoin : ces
+deux pages n'ont rien à voir. Ce ne sont pas des modules nouveaux — ce sont des
+dictionnaires qui ont REJOINT le groupe de fragments que les écrans connectés
+chargent en commun, et c'est la conséquence directe de ce que V460 a fait de
+bien : cent cinquante routes sont passées de rendues à la demande à prérendues,
+donc le graphe de fragments partagés a été recalculé.
+
+**Ce qui est établi, et ce qui ne l'est pas.** Établi : les trois fragments,
+leur contenu, leur absence en V459, et la version qui les fait apparaître. Non
+établi : le mécanisme interne de Next qui décide de ce regroupement. Le dire
+ainsi vaut mieux que d'inventer une explication qui se relirait comme une
+garantie.
+
+**L'échange, lui, se pose :** cent cinquante pages servies par le réseau de
+diffusion au lieu d'une exécution de fonction par visite, contre
+soixante-treize kilo-octets sur les écrans connectés. Il penche du bon côté —
+les pages prérendues sont les pages d'ACQUISITION, celles qu'on paie à chaque
+visiteur, quand les écrans connectés sont chargés par des gens déjà là et mis
+en cache par leur navigateur. Le redécouper vaudrait quand même la peine ; ce
+n'est pas une correction de nuit.
+
+**Et deux hypothèses ont été essayées et DÉMENTIES avant d'y arriver :**
 
 - `routesPubliques.ts` importe `CHEMIN_INTROUVABLE` depuis `pagesConnues.ts`,
   qui développe le catalogue des jeux — et `routesPubliques` est lu par `Nav`,
   qui est client et rendu sur chaque page. La chaîne est réelle. Sortir la
-  constante dans son propre module ne change **rien** : 452 ko avant comme
-  après. Le changement a donc été retiré, parce qu'un module créé pour une
-  raison démentie est un module sans raison ;
+  constante dans son propre module ne change **rien** au total : 452 ko avant
+  comme après. Le module DISPARAÎT pourtant — vérifié à l'empreinte, la chaîne
+  `/calculateur/${slug}` n'est plus dans aucun fragment du tableau de bord —
+  il est simplement trop petit pour se voir. Le retrait est donc gardé, avec un
+  commentaire qui dit ce qu'il fait et ce qu'il ne fait pas : il ne fallait pas
+  laisser croire qu'il répare les soixante-treize kilo-octets ;
 - un redécoupage global des fragments, que l'égalité des écarts écarte.
 
 `CorpsIntrouvable` est un composant SERVEUR — vérifié, pas supposé — donc il ne
 part pas au navigateur par lui-même.
 
-Ce qui reste à faire est de NOMMER le fragment de 48 ko en comparant son
-contenu entre les deux constructions, pas d'essayer une troisième hypothèse.
-C'est la règle de ce fichier : quand on ne sait pas nommer la cause, on
-instrumente avant la deuxième tentative — et j'en ai essayé deux.
+**Ce que ça apprend sur la méthode.** Après deux hypothèses démenties, la
+troisième n'a pas été essayée : j'ai INSTRUMENTÉ. Comparer le contenu des
+fragments a donné la réponse en une exécution, là où deux essais successifs
+avaient coûté deux constructions pour rien. C'est la règle de ce fichier, et
+elle a rendu exactement ce qu'elle promet.
 
 **Ce que ça ne remet pas en cause** : aucun temps d'affichage n'a bougé, les
 onze pages sont dans les seuils, et le CLS est nul partout. Soixante-treize
