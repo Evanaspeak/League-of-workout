@@ -1839,6 +1839,68 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### `/bilan` franchit le seuil à l'échelle du propriétaire, et la correction évidente ne change rien
+Campagne refaite sur un compte SEMÉ — 1 920 parties, 15 360 points de dette,
+vingt et un paiements — parce que la campagne de V492 tournait sur un compte
+neuf et que le journal le dit à chaque fois : `/bilan` n'a pas d'image de
+saison sur un compte vide, donc son chiffre ne se compare à rien.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 168 ms | 916 ms | 0,000 | la mention Riot, en pied |
+| `/history` | 304 ms | 1284 ms | 0,000 | le nom du produit, en pied |
+| `/amis` | 312 ms | 1112 ms | 0,044 | le paragraphe du classement |
+| `/dashboard` | 464 ms | 1116 ms | 0,000 | le bandeau d'attente Riot |
+| **`/bilan`** | 724 ms | **2 596 à 2 668 ms** | 0,000 | l'image de saison |
+
+**Trois passes, toutes au-dessus des 2 500 ms.** Le journal porte 2 096,
+2 120, 2 128, 2 216 et 2 332 pour cette page sur des comptes semés plus
+petits : elle a toujours été le plancher, elle vient de passer la barre.
+
+**La chaîne a été INSTRUMENTÉE plutôt que devinée**, et les quatre nombres
+disent tout :
+
+```
+document servi            204 ms
+image demandée            215 ms   ← le préchargement fait son travail
+premier octet de l'image 1411 ms
+image reçue              2665 ms
+plus grand élément       2680 ms
+```
+
+Appelée seule, la route rend l'image en **290 ms pour 58 ko**. Les mille cent
+millisecondes de plus ne sont donc ni le rendu ni le préchargement.
+
+**L'hypothèse a été écrite, implémentée, mesurée et RETIRÉE.** Je pensais que
+l'image perdait la file devant quarante-six fragments de JavaScript, et j'ai
+posé `fetchPriority="high"` sur la balise. Trois passes de chaque côté :
+2 596 / 2 600 / 2 620 avant, 2 616 / 2 668 / 2 624 après. **Rien.** Et le HTML
+servi dit pourquoi : Next pose déjà `fetchPriority="low"` sur ses fragments,
+donc l'image ne leur disputait aucune priorité. La ligne est partie — une
+ligne qu'on peut retirer sans que rien ne bouge ne tient rien, et son
+commentaire promettait une explication fausse.
+
+**Le contrôle qui tranche est la mesure sans les fragments** :
+
+| | premier octet | image reçue | plus grand élément |
+|---|---|---|---|
+| tel quel | 1 384 ms | 2 614 ms | **2 628 ms** |
+| fragments JS bloqués | 1 066 ms | 1 472 ms | **1 496 ms** |
+
+C'est donc la BANDE PASSANTE : 295 ko de JavaScript et 58 ko d'image se
+partagent un tuyau à 1,6 Mb/s, et l'image attend son tour. Le seul levier est
+d'envoyer moins d'octets.
+
+**Accessibilité sur le compte semé : 0 constat**, quinze pages en français
+et en allemand, aucune page laissée de côté. Mille neuf cent vingt lignes
+d'historique ne changent rien de ce côté.
+
+**Et c'est une question qui est déjà posée au propriétaire.** Les
+soixante-treize kilo-octets apparus en V460 et le redécoupage des fragments
+de dictionnaire sont dans sa liste depuis ce soir-là. Ce qui change, c'est
+qu'on sait maintenant ce que ça coûte : un écran au-dessus du seuil, à son
+échelle à lui.
+
 ### Le balayage des coutures devient un outil, et sa première version ne voyait pas son propre défaut
 Ce qui a trouvé le plus de défauts ces deux nuits n'est ni un test ni un
 audit : c'est de LIRE les écrans dans une écriture différente. Neuf entrées de
