@@ -35,7 +35,8 @@ import { tousLesSlugs } from "@/lib/slugJeu";
  * celle des chemins publics — et une adresse écrite trois fois finit par avoir
  * une version en retard.
  */
-export const CHEMIN_INTROUVABLE = "/introuvable";
+import { CHEMIN_INTROUVABLE } from "@/lib/cheminIntrouvable";
+export { CHEMIN_INTROUVABLE };
 
 export const PAGES_CONNUES = [
   "/",

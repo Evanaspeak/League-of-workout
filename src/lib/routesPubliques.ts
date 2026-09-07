@@ -13,7 +13,7 @@
  * sans cookie, de `/api/obs`, qui rend et régénère le jeton et exige une
  * session.
  */
-import { CHEMIN_INTROUVABLE } from "@/lib/pagesConnues";
+import { CHEMIN_INTROUVABLE } from "@/lib/cheminIntrouvable";
 
 export const PREFIXES_PUBLICS = [
   "/beta",
