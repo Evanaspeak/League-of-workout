@@ -116,6 +116,32 @@ describe("et il dit ce qu'il n'a pas regardé", () => {
     expect(SRC).not.toMatch(/else if \(BRUT\.test\(t\)\)/);
   });
 
+  it("ne prend pas une ANNÉE dans une date pour un nombre brut", () => {
+    /**
+     * « Accord donné le 7 septembre 2026 » : trois faux positifs, en français,
+     * en anglais et en allemand, sortis quand les rubriques « Ton profil » et
+     * « Tes données » ont rejoint le balayage. Le motif écartait déjà 年 et les
+     * séparateurs `/` et `-` — les dates avaient été prévues, la date LONGUE
+     * latine ne l'était pas.
+     *
+     * Le silence des trois autres langues ne prouvait rien : l'espagnol écrit
+     * 2026 sans séparateur, le japonais et le chinois le suivent d'une marque
+     * déjà exclue.
+     */
+    expect(new Intl.NumberFormat("fr").format(2026)).not.toBe("2026");
+    expect(new Intl.NumberFormat("es").format(2026)).toBe("2026");
+
+    // Le discriminant est DEMANDÉ à Intl — les noms de mois de la langue — et
+    // non écrit à la main : il en faudrait six listes, qui vieilliraient.
+    expect(SRC).toMatch(/new Intl\.DateTimeFormat\(langue,\s*\{\s*month:/);
+    // Et c'est bien lui qui décide, avant la comparaison de mise en forme.
+    expect(SRC).toMatch(
+      /if \(estAnneeDansUneDate\([\s\S]{0,60}return false;[\s\S]{0,120}NumberFormat\(langue\)/,
+    );
+    // Une année hors du champ des dates plausibles reste un nombre brut.
+    expect(SRC).toMatch(/n < 1900 \|\| n > 2199/);
+  });
+
   it("sépare les pages NON MESURÉES du total des constats", () => {
     /**
      * Le contrôle porte sur le BRANCHEMENT, pas sur la présence des mots.

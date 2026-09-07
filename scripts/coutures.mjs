@@ -38,7 +38,8 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
 
 const drapeauPages = process.argv.find((a) => a.startsWith("--pages="));
 const PAGES = (drapeauPages ? drapeauPages.slice("--pages=".length) : PAGES_ARG
-  ?? "/dashboard,/history,/amis,/bilan,/settings#effort,/settings#corps,/settings#jeux")
+  ?? "/dashboard,/history,/amis,/bilan,/settings#profil,/settings#corps"
+    + ",/settings#effort,/settings#jeux,/settings#donnees")
   .split(",").map((c) => refuserPrefixe(c.split("#")[0]) && c);
 
 /**
@@ -92,7 +93,51 @@ export function ecritAutrement(texte, langue) {
   const m = BRUT.exec(texte);
   if (!m) return false;
   const n = Number(m[0]);
-  return Number.isFinite(n) && new Intl.NumberFormat(langue).format(n) !== m[0];
+  if (!Number.isFinite(n)) return false;
+  if (estAnneeDansUneDate(n, texte, langue)) return false;
+  return new Intl.NumberFormat(langue).format(n) !== m[0];
+}
+
+/** Les noms de mois d'une langue, demandés à `Intl` et non écrits ici. */
+const MOIS = new Map();
+function moisDe(langue) {
+  if (!MOIS.has(langue)) {
+    const noms = new Set();
+    for (const style of ["long", "short"]) {
+      const f = new Intl.DateTimeFormat(langue, { month: style });
+      for (let i = 0; i < 12; i += 1) {
+        noms.add(f.format(new Date(Date.UTC(2026, i, 15))).toLowerCase());
+      }
+    }
+    MOIS.set(langue, [...noms].filter((x) => /\p{L}/u.test(x)));
+  }
+  return MOIS.get(langue);
+}
+
+/**
+ * Une ANNÉE dans une date mise en forme n'est pas un nombre brut.
+ *
+ * Le motif écartait déjà 年, la marque japonaise, et les séparateurs `/` et
+ * `-` : les dates avaient été prévues. La date LONGUE latine ne l'était pas,
+ * et l'ajout des rubriques « Ton profil » et « Tes données » au balayage l'a
+ * fait sortir — « Accord donné le 7 septembre 2026 », en français, en anglais
+ * et en allemand, où `Intl` grouperait 2026 en « 2 026 ». L'espagnol, le
+ * japonais et le chinois se taisaient : les trois écrivent 2026 sans
+ * séparateur ou avec une marque déjà exclue, ce qui montre que le silence
+ * d'une langue ne prouve rien.
+ *
+ * Le discriminant est demandé à `Intl` lui aussi : les noms de mois de la
+ * langue. Une liste écrite à la main vieillirait, et il en faudrait six.
+ *
+ * **Sa limite, écrite plutôt que découverte** : un texte qui nomme un mois ET
+ * qui porte par ailleurs un vrai nombre brut de quatre chiffres passerait. Le
+ * cas est étroit, et l'inverse — crier sur chaque date affichée — ferait
+ * cesser de lire le rapport, ce qui coûte bien plus.
+ */
+function estAnneeDansUneDate(n, texte, langue) {
+  if (!Number.isInteger(n) || n < 1900 || n > 2199) return false;
+  const bas = texte.toLowerCase();
+  return moisDe(langue).some((mois) => bas.includes(mois));
 }
 
 if (import.meta.url !== `file://${process.argv[1]}`) {
