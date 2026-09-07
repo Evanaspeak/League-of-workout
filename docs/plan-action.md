@@ -189,7 +189,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 057 | Annoncer la dette AVANT la partie | 1 nuit |
 
 ### Les exercices
-*5 à faire · 5 faits.* Le gros du travail est fait. Reste l'ouverture du catalogue.
+*4 à faire · 6 faits.* Le gros du travail est fait. Reste l'ouverture du catalogue.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -201,7 +201,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 065 | Une liste fermée mais beaucoup plus grande, en sous-catégories | 2 nuits |
 | [ ] | 061 | Le plus varié possible | voir ci-dessus |
 | [ ] | 068 | Le partage entre exercices au choix, pas à parts égales | 1 nuit |
-| [ ] | 071 | Refaire le test de force tous les mois | ½ nuit |
+| [x] | 071 | Refaire le test de force tous les mois — **fait depuis `VALIDITE_TEST_JOURS = 30` : `testAFaire` redevient vrai au bout d'un mois, et le tableau de bord remonte le panneau du test** | — |
 | [x] | 073 | Un rappel d'échauffement avant une grosse dette | — |
 
 ### Les objets connectés
@@ -220,7 +220,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 039 | Terra à 399 $/mois : pas avant des revenus | — |
 
 ### Le premier jour
-*4 à faire · 4 faits.* Ce qui décide si quelqu'un revient. À moitié construit.
+*3 à faire · 5 faits.* Ce qui décide si quelqu'un revient. À moitié construit.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -230,7 +230,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 086 | Modale d'accueil et visite guidée, les deux gardées | — |
 | [ ] | 082 | Une partie de démonstration préremplie, sans avoir à jouer | 1 nuit |
 | [ ] | 090 | Demander l'objectif à l'inscription et adapter l'application | 2 nuits |
-| [ ] | 080 | Mesurer le temps jusqu'à la première partie enregistrée | ½ nuit |
+| [x] | 080 | Mesurer le temps jusqu'à la première partie enregistrée — **fait : `/api/admin/mesures` rend la médiane et les quartiles du délai, et le panneau d'administration les affiche** | — |
 | [ ] | 085 | Te montrer les deux formulaires d'inscription pour choisir | je te dois la maquette |
 
 ### Revenir

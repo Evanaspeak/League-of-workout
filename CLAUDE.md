@@ -1157,6 +1157,31 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux lignes de plus faites depuis des semaines, sans être cochées
+Même passe que le 5 septembre, sur les soixante-cinq lignes non cochées, et le
+même résultat : deux d'entre elles décrivent quelque chose qui existe.
+
+- **071, « refaire le test de force tous les mois »** : `VALIDITE_TEST_JOURS`
+  vaut trente dans `scoring.ts`, `testAFaire` redevient vrai passé ce délai, et
+  le tableau de bord remonte alors le panneau du test. Le rappel EST le
+  panneau ; il n'y avait rien à ajouter ;
+- **080, « mesurer le temps jusqu'à la première partie enregistrée »** :
+  `/api/admin/mesures` rend la médiane et les quartiles du délai entre la
+  création du compte et sa première partie, et le panneau d'administration les
+  affiche. Le commentaire de la route porte même la correction du cas où une
+  partie rattrapée se date la veille et rendait un délai négatif — c'est-à-dire
+  qu'elle a été non seulement écrite mais débuguée.
+
+Les deux se prouvent en une ligne de code chacune, ce qui est la condition
+pour cocher : une ligne cochée sur ma parole ne vaut rien.
+
+**Et le motif se répète** : les deux ont été construites en passant, pendant un
+chantier voisin — le rappel du test avec le calcul du niveau, la mesure du
+délai avec le panneau de mesures — et personne n'est retourné au plan. C'est
+la même mécanique que pour les lignes 299 et 254 : ce n'est pas de la
+négligence, c'est que le plan et le code se mettent à jour à des moments
+différents.
+
 ### TFT vérifié, ligne 176 du plan
 « Tester TFT, jamais vérifié » traînait depuis l'écriture du plan. C'est une
 vérification, pas un arbitrage, donc elle se fait seule.
