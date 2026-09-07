@@ -12,6 +12,7 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { GET } from "./route";
+import { settings } from "@/lib/i18n/dictionaries/settings";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 
@@ -25,6 +26,21 @@ beforeEach(() => {
     riotPuuid: "PUUID-SECRET-1234",
     poids: 75, taille: 180, age: 27, genre: "homme",
     createdAt: new Date("2026-06-01"), betaRank: 3,
+    /**
+     * Le compte est rempli, et ce n'est pas de la décoration.
+     *
+     * `JSON.stringify` OMET les clés dont la valeur est `undefined` : un champ
+     * absent de cette doublure ne paraît pas dans la réponse, donc aucun
+     * contrôle portant sur les noms de champs ne peut le voir. Le garde qui
+     * refuse un nom d'exercice passait ainsi au vert sur le champ même qu'il
+     * existe pour attraper, et celui qui refuse les secrets a le même angle
+     * mort pour tout ce qu'on n'a pas posé ici.
+     */
+    riotId: "Nom#EUW", riotRegion: "euw1", langue: "ja", fuseau: "Europe/Paris",
+    sportsHoursPerWeek: 4, pompesMax: 30, pompesMaxLe: new Date("2026-07-01"),
+    rappelSeuilSec: 300, plafondQuotidien: 500, variantePompes: "genoux",
+    exercicesSuspendus: ["course"],
+    santeConsentiLe: new Date("2026-06-02"), santeRefuseLe: null,
   }));
   (prisma.game.findMany as jest.Mock).mockResolvedValue([
     { id: "g1", userId: "u1", date: new Date(), pompesCalculees: 38, exercice: "pompes" },
@@ -116,6 +132,46 @@ describe("l'export porte tout ce qui appartient à la personne", () => {
     await lire();
     expect((prisma.paiement.findMany as jest.Mock).mock.calls[0][0].where.userId)
       .toBe(utilisateur().id);
+  });
+
+  /**
+   * La phrase de l'écran annonce ce que le fichier contient.
+   *
+   * Elle disait « ton profil, tes réglages et l'intégralité de tes parties »
+   * alors que les séances payées y sont depuis qu'on a complété l'export —
+   * c'est-à-dire qu'elle omettait précisément la moitié que la personne a
+   * envie de reprendre : les parties disent ce qu'elle a joué, les paiements
+   * ce qu'elle a FAIT. Une description périmée ne se distingue pas d'une
+   * garantie, et sur un écran de portabilité elle décourage de chercher.
+   *
+   * Les deux moitiés ensemble : tant que la route rend les séances, la phrase
+   * les annonce. Le jour où l'export cesserait d'en rendre, le contrôle
+   * changerait de sens et il faudrait reprendre le texte en même temps.
+   */
+  it("et la phrase de l'écran l'annonce", async () => {
+    const d = await lire() as Record<string, unknown>;
+    expect(Array.isArray(d.seances)).toBe(true);
+    expect(settings.fr.exportAide).toMatch(/séance/i);
+  });
+
+  /**
+   * Aucun nom de champ ne parle de BOXE.
+   *
+   * `seuilRappelBoxeSec` a survécu au renommage qui a corrigé le libellé de
+   * l'écran : le seuil ne gouvernait que les exercices comptés au temps, et il
+   * gouverne toute la dette depuis qu'elle monte pour tous. C'est la moitié
+   * non reprise d'une correction déjà faite, et un nom de champ dans un
+   * fichier de portabilité est lu par la personne.
+   */
+  it("et aucun nom de champ ne parle d'un seul exercice", async () => {
+    const brut = JSON.stringify(await lire());
+    const cles = [...brut.matchAll(/"([A-Za-z][A-Za-z0-9]*)":/g)].map((m) => m[1]);
+    expect(cles.length).toBeGreaterThan(20);
+    // Les VALEURS peuvent nommer un exercice — « boxe » est un choix légitime
+    // dans la liste des exercices sélectionnés. Ce sont les NOMS de champs qui
+    // ne doivent désigner aucun exercice en particulier, puisque le réglage
+    // qu'ils portent les gouverne tous.
+    expect(cles.filter((c) => /boxe/i.test(c))).toEqual([]);
   });
 
   it("rend ce que la personne nous a écrit", async () => {

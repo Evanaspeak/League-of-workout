@@ -73,7 +73,12 @@ export async function GET() {
       exercices: user.exercices,
       pompesMax: user.pompesMax,
       pompesMaxLe: user.pompesMaxLe,
-      seuilRappelBoxeSec: user.rappelSeuilSec,
+      // Le nom disait « Boxe » : le seuil ne gouvernait que les exercices
+      // comptés au temps, et depuis que la dette monte pour TOUS il gouverne
+      // toute la dette. C'est la moitié non reprise du renommage qui a corrigé
+      // le libellé de l'écran — et un nom de champ dans un fichier de
+      // portabilité est lu par la personne, pas par une machine.
+      seuilRappelSec: user.rappelSeuilSec,
       plafondQuotidienPoints: user.plafondQuotidien,
       objectifTotalPoints: goal?.objectifTotalPompes ?? null,
       variantePompes: user.variantePompes,

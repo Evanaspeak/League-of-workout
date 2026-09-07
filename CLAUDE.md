@@ -1150,6 +1150,66 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'export annonçait trois choses et en rendait cinq, et un champ parlait encore de boxe
+Trouvé en lisant la rubrique « Tes données » EN CHINOIS. La phrase promet
+« 资料、设置和全部对局记录 » — profil, réglages et tout l'historique des
+parties. Le fichier contient aussi les SÉANCES PAYÉES, les signalements et les
+dates de consentement, depuis qu'on a complété l'export.
+
+**Ce n'est pas un mensonge sur le total** — la phrase s'ouvre sur « tout ce
+qu'on garde sur toi » — mais l'énumération qui suit omet précisément la moitié
+que la personne a envie de reprendre. Le journal l'écrit lui-même, à l'entrée
+qui a complété l'export : « Les parties disent ce qu'elle a joué ; les
+paiements disent ce qu'elle a fait, et c'est la moitié qu'elle a envie de
+reprendre. » La correction avait ajouté la donnée et laissé la phrase qui
+l'annonce.
+
+**Et un nom de champ parlait encore de BOXE.** `seuilRappelBoxeSec` a survécu
+au renommage qui a corrigé le libellé de l'écran : le seuil ne gouvernait que
+les exercices comptés au temps, et il gouverne toute la dette depuis qu'elle
+monte pour tous. C'est la moitié non reprise d'une correction déjà faite — le
+motif que ce journal trouve le plus — et un nom de champ dans un fichier de
+portabilité est lu par une PERSONNE, pas par une machine.
+
+**Le garde tient les deux moitiés ensemble** : tant que la route rend les
+séances, la phrase les annonce. Le jour où l'export cesserait d'en rendre, le
+contrôle changerait de sens et il faudrait reprendre le texte en même temps.
+
+**Et il ne pouvait pas voir le champ qu'il existe pour attraper.**
+`JSON.stringify` OMET les clés dont la valeur est `undefined` : la doublure
+d'utilisateur du test ne posait pas `rappelSeuilSec`, donc le champ ne paraissait
+pas dans la réponse, donc le recensement des noms ne le trouvait pas. Le
+sabotage passait au vert. C'est l'angle mort d'une doublure partielle, et il
+valait pour le garde voisin aussi — celui qui refuse qu'un secret sorte ne
+prouvait rien pour tout ce qu'on n'avait pas posé. Le compte est rempli
+maintenant, et les deux gardes mordent : quatre sabotages, quatre échecs.
+
+**Ce que ça apprend sur la méthode** : un test de route qui lit la RÉPONSE
+n'éprouve que les champs que sa doublure alimente. Ce n'est pas visible en
+relisant le test, qui a l'air complet ; ça se voit en instrumentant — la liste
+des clés vraiment lues, imprimée une fois, a donné la réponse du premier coup.
+
+### Campagne de clôture du 7 septembre au soir, après V473 à V475
+Passée sur un compte semé à 960 parties, dette de 15 360 points, vingt et un
+paiements consécutifs.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**aucune page laissée de côté** (quinze « rien à signaler » par langue). C'est
+le second chiffre qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 128 ms | 928 ms | 0,000 | la mention Riot, en pied |
+| `/amis` | 260 ms | 1112 ms | 0,025 | le paragraphe du classement |
+| `/dashboard` | 324 ms | 1136 ms | 0,000 | le mot sur le volume du jour |
+| `/history` | 352 ms | 1272 ms | 0,000 | le titre |
+| `/bilan` | 336 ms | **2332 ms** | 0,000 | l'image de saison |
+
+Les cinq sont dans les seuils. `/bilan` reste le plus proche, pour la raison
+écrite quatre fois : son plus grand élément est l'image de saison, et le compte
+est SEMÉ, donc le chiffre se compare aux 2 096, 2 128, 2 216 et 2 120 des
+campagnes précédentes.
+
 ### Une session morte enfermait dans les réglages, et le commentaire promettait le contraire
 Trouvé par accident, en lisant les écrans avec un jeton dont le compte n'existe
 plus — la suite navigateur venait de purger les comptes `@example.test`, dont
