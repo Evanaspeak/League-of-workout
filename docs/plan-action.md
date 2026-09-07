@@ -335,13 +335,13 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 292 | Que devient l'application si Riot coupe son API | à répondre |
 
 ### L'overlay et le desktop
-*4 à faire · 2 faits.* 
+*3 à faire · 3 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 166 | Un raccourci clavier pour masquer l'overlay | — |
 | [x] | 168 | Une source navigateur pour OBS, avec la dette en direct | — |
-| [ ] | 165 | L'overlay réagit en direct : rouge au franchissement du seuil | ½ nuit |
+| [x] | 165 | L'overlay réagit en direct : rouge au franchissement du seuil | — |
 | [ ] | 161 | Un certificat de signature à 200–400 € par an | à toi |
 | [ ] | 174 | Les statistiques de partie en temps réel, ton critère de réussite | 2 nuits |
 | [ ] | 171 | Une version macOS, plus tard | — |
