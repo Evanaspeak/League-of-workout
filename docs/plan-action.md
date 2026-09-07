@@ -347,8 +347,11 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 171 | Une version macOS, plus tard | — |
 
 ### Technique
-*2 à faire · 6 faits.* Le découpage des styles est fait : neuf fichiers
-sous `src/app/styles/`, vérifiés à vingt-quatre captures d'écran.
+*1 à faire · 7 faits.* Le découpage des styles est fait : neuf fichiers
+sous `src/app/styles/`, vérifiés à vingt-quatre captures d'écran. La
+régénération des pages l'est aussi, et elle a rendu plus que prévu : il n'y
+avait AUCUNE page prérendue — la 404 de la racine lisait `headers()`, ce qui
+rend dynamique toute route de l'application. 0 avant, 150 après.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -358,7 +361,7 @@ sous `src/app/styles/`, vérifiés à vingt-quatre captures d'écran.
 | [x] | 298 | Découper le fichier de la page d'accueil | — |
 | [x] | 301 | Mesurer et corriger la performance | — |
 | [x] | 299 | Découper le fichier des styles | — |
-| [ ] | 302 | Affiner la régénération des pages | ½ nuit |
+| [x] | 302 | Affiner la régénération des pages | — |
 | [ ] | 300 | Uniformiser styles en ligne et classes utilitaires | 2 nuits |
 
 ## Ce qui est dû au propriétaire du produit

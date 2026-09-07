@@ -52,23 +52,25 @@ test("la 404 parle la langue de l'adresse, dans le HTML servi", async ({ page })
 });
 
 /**
- * Le seul cas qui résiste, et il est assumé.
+ * Le cas qui résistait, et qui ne résiste plus.
  *
  * Un jeu de calculateur inventé est refusé par le ROUTEUR — le catalogue est
- * fermé par `dynamicParams = false` — et un refus du routeur ne passe pas par
- * la 404 racine : Next rend sa propre page, sans langue et en anglais.
+ * fermé par `dynamicParams = false` — et un refus du routeur ne consulte pas
+ * la frontière `not-found` : Next rendait sa propre page, sans langue et en
+ * anglais. Trois contournements avaient été essayés et mesurés, dont une
+ * réécriture dans le middleware, écartée à l'époque parce qu'elle cassait les
+ * cas qui marchaient.
  *
- * Trois façons de le contourner ont été essayées et mesurées : ouvrir le
- * catalogue pour que la page appelle `notFound()` (même résultat), poser une
- * frontière `not-found` sous `[locale]` (jamais consultée, faute de mise en
- * page racine), et réécrire l'adresse dans le middleware (casse aussi les cas
- * qui marchaient). Le code de réponse, lui, est juste, et c'est ce qui compte
- * pour qu'une adresse sorte d'un index. Ce test fixe l'état réel plutôt que
- * de laisser croire que le cas est traité.
+ * Ce qui manquait à cette réécriture était son STATUT : `NextResponse.rewrite`
+ * accepte `{ status: 404 }`, donc l'adresse demandée reste affichée ET la
+ * réponse porte le code qui fait sortir une adresse d'un index. Le middleware
+ * connaît déjà le catalogue — un jeu inventé n'est pas une page connue — donc
+ * il traite ce cas comme les autres, et la langue arrive avec.
  */
-test("un jeu de calculateur inventé rend 404, en anglais faute de mieux", async ({ page }) => {
+test("un jeu de calculateur inventé rend 404, dans la langue de l'adresse", async ({ page }) => {
   const reponse = await page.goto("/de/calculateur/jeu-invente");
   expect(reponse?.status()).toBe(404);
+  expect(langueServie(await reponse!.text())).toBe("de");
 });
 
 test("une langue inventée ne mène pas à la connexion", async ({ page }) => {

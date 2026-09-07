@@ -13,8 +13,20 @@
  * sans cookie, de `/api/obs`, qui rend et régénère le jeton et exige une
  * session.
  */
+import { CHEMIN_INTROUVABLE } from "@/lib/pagesConnues";
+
 export const PREFIXES_PUBLICS = [
   "/beta",
+  /**
+   * La 404 du site.
+   *
+   * Le middleware y RÉÉCRIT les adresses inconnues, et une réécriture ne
+   * repasse pas par lui : cette entrée ne sert donc qu'à qui ouvre l'adresse
+   * en direct. Sans elle, la page qui dit « cette adresse ne mène nulle part »
+   * emmènerait à l'écran de connexion — c'est-à-dire exactement le défaut que
+   * la liste des pages connues existe pour corriger.
+   */
+  CHEMIN_INTROUVABLE,
   // L'inscription à la bêta, nommée en entier : `/api/beta` couvrait aussi
   // tout ce qui commencerait par ces lettres, ce qui n'est pas une décision
   // mais une coïncidence de nommage.

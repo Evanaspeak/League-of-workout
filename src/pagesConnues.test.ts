@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PAGES_CONNUES, estPageConnue } from "@/lib/pagesConnues";
+import { FICHIERS_DE_CONVENTION, PAGES_CONNUES, estFichierDeConvention, estPageConnue } from "@/lib/pagesConnues";
 import { tousLesSlugs } from "@/lib/slugJeu";
 
 /**
@@ -21,13 +21,16 @@ function cheminsDuDossier(dossier = RACINE): string[] {
     else if (e.name === "page.tsx") {
       const relatif = path.relative(RACINE, dossier).split(path.sep).join("/");
       /**
-       * L'attrape-tout n'est pas une page, c'est l'absence de page.
+       * Un attrape-tout n'est pas une page, c'est l'absence de page.
        *
-       * `[...introuvable]` existe pour que Next rende NOTRE 404 plutôt que le
-       * sien. L'inscrire parmi les pages connues rendrait `estPageConnue` vrai
-       * pour n'importe quelle adresse, et le middleware redeviendrait
-       * exactement ce qu'on vient de corriger : incapable de distinguer
-       * « protégé » de « inexistant ».
+       * L'inscrire parmi les pages connues rendrait `estPageConnue` vrai pour
+       * n'importe quelle adresse, et le middleware redeviendrait exactement ce
+       * qu'on a corrigé : incapable de distinguer « protégé » de
+       * « inexistant ».
+       *
+       * Le dépôt n'en contient aucun aujourd'hui — la 404 est une page
+       * ordinaire, `[locale]/introuvable`, vers laquelle le middleware réécrit.
+       * Le contrôle reste : c'est la forme qu'on serait tenté de reprendre.
        */
       if (relatif.includes("[...")) continue;
       // Un segment dynamique devient une étoile : le middleware ne sait pas
@@ -101,7 +104,11 @@ describe("le middleware", () => {
      */
     const branche = source.slice(source.indexOf("estPageConnue(chemin)") - 200,
                                  source.indexOf("estPageConnue(chemin)") + 80);
-    expect(branche).toMatch(/!echappeAuPrefixe\(pathname\)\s*&&\s*!estPageConnue\(chemin\)/);
+    // La condition s'ouvre sur `echappeAuPrefixe` et se ferme sur
+    // `estPageConnue` ; ce qu'il y a entre les deux ne peut que RESTREINDRE
+    // encore, jamais élargir — c'est le sens de la conjonction.
+    expect(branche).toMatch(/!echappeAuPrefixe\(pathname\)\s*&&/);
+    expect(branche).toMatch(/&&\s*!estPageConnue\(chemin\)\s*\)/);
   });
 
   it("range ses trois questions dans le bon ordre", () => {
@@ -123,5 +130,35 @@ describe("le middleware", () => {
     const session = source.indexOf("if (!req.auth)");
     expect(existe).toBeLessThan(publique);
     expect(publique).toBeLessThan(session);
+  });
+});
+
+/**
+ * Les fichiers engendrés par convention de nom.
+ *
+ * Ils ne sont pas des pages — donc pas dans `PAGES_CONNUES`, qui se compare au
+ * dossier des `page.tsx` — et ils doivent pourtant échapper à la question
+ * « cette adresse existe-t-elle ». Sans quoi le middleware les réécrit vers la
+ * 404, et un lien partagé perd sa vignette en silence.
+ *
+ * La liste se compare au DOSSIER, comme celle des pages : un fichier renommé
+ * ou supprimé la rendrait fausse sans que rien ne le dise.
+ */
+describe("les fichiers de convention", () => {
+  it("désignent chacun un fichier qui existe sous [locale]", () => {
+    expect(FICHIERS_DE_CONVENTION.length).toBeGreaterThanOrEqual(3);
+    const manquants = FICHIERS_DE_CONVENTION.filter((nom) => {
+      const base = path.join(RACINE, nom.slice(1));
+      return !fs.existsSync(`${base}.tsx`) && !fs.existsSync(`${base}.ts`);
+    });
+    expect({ manquants }).toEqual({ manquants: [] });
+  });
+
+  it("sont reconnus, et rien d'autre ne l'est", () => {
+    for (const nom of FICHIERS_DE_CONVENTION) expect(estFichierDeConvention(nom)).toBe(true);
+    // Sans ce contrôle, une reconnaissance trop large ferait échapper des
+    // adresses inconnues à la 404, ce qui est le défaut inverse.
+    expect(estFichierDeConvention("/cgu")).toBe(false);
+    expect(estFichierDeConvention("/opengraph-image/vole")).toBe(false);
   });
 });
