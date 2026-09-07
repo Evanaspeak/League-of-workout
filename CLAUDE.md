@@ -1839,6 +1839,64 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### La vibration à chaque répétition, et le réglage qui ne peut pas vivre sur le compte
+Ligne 207 du plan, réponse « En option ». Ce qu'elle demande est petit ; ce
+qu'elle a obligé à décider l'est moins.
+
+**Le réglage vit dans l'APPAREIL, pas sur le compte**, et c'est la seule
+décision de fond. Un téléphone vibre, un poste de bureau non : ranger ce choix
+sur le compte le ferait voyager de l'un à l'autre, donc allumer une option qui
+ne veut rien dire là où elle atterrit. C'est exactement ce pour quoi le
+stockage du navigateur existe, et ça évite une colonne — donc une migration,
+une ligne de politique de confidentialité et un champ d'export, pour un
+réglage qui ne dit rien de personne.
+
+**Le défaut est ÉTEINT**, et le repli suit la règle déjà écrite : une valeur
+qui n'est pas exactement `"1"` vaut « non ». « En option » veut dire qu'on peut
+l'allumer, pas qu'elle est là — une vibration que personne n'a demandée, à
+chaque appui, est une surprise désagréable sur l'écran où l'on compte ses
+pompes.
+
+**Le PLUS vibre, le MOINS non.** Ce n'est pas une omission : une répétition
+comptée est un geste qu'on fait sans regarder l'écran, et c'est la seule chose
+que la réponse demande de confirmer. Le moins est une CORRECTION, et la
+confirmer par la même impulsion effacerait la distinction. La saisie au clavier
+non plus — taper « 40 » n'est pas quarante répétitions.
+
+**L'écran DIT quand l'appareil ne sait pas vibrer**, au lieu de cacher la case.
+Safari sur iPhone n'implémente pas l'API, et c'est la moitié des téléphones :
+une case absente laisse chercher où elle est passée, une case qui explique se
+comprend en une lecture. C'est la règle posée pour « Tes jeux » hors
+application, et elle est vérifiée à l'écran dans les deux sens — avec
+`Navigator.prototype.vibrate` retiré, les deux boutons se désactivent et la
+phrase paraît.
+
+**Ce qu'on ne sait PAS détecter, et qu'il vaut mieux écrire.** L'API existe sur
+un Chrome de bureau, où elle ne fait rien : il n'y a aucun moyen de demander à
+un navigateur s'il y a un MOTEUR derrière. Le garde ne peut donc pas être plus
+fin que « l'API existe », et c'est le texte d'aide qui porte le reste — « parce
+qu'un ordinateur ne vibre pas ».
+
+**Le trou que ce projet paie en boucle était ici plus facile que jamais.** Une
+vibration qui ne part pas ne casse RIEN : pas d'erreur, pas d'écran vide, rien.
+On appuie sur le plus, ça compte, et personne ne sait que l'option ne fait plus
+rien. Et aucun parcours navigateur ne peut le voir — `navigator.vibrate` du
+Chromium de la suite ne fait rien de mesurable, et poser une fausse méthode
+éprouverait la fausse méthode. `src/vibrationBranchee.test.ts` est donc
+statique, et il regarde les deux moitiés : le geste qui vibre, et l'écran qui
+l'allume. Neuf sabotages, neuf échecs.
+
+**Et le test s'est heurté à l'environnement, comme deux suites avant lui.** La
+suite tourne en environnement `node` : il n'y a pas de `window`, et
+`src/lib/stockage.ts` lit `window.localStorage` et non `globalThis`. Une
+doublure posée à côté n'est jamais lue, et les tests éprouvent alors un
+stockage vide en croyant éprouver le leur. Le piège est écrit dans ce journal
+depuis le module de stockage ; il se retombe dedans en écrivant le fichier
+d'à côté.
+
+Vérifié à l'écran dans quatre langues : « Vibrer à chaque répétition »,
+« Bei jeder Wiederholung vibrieren », 「1回ごとに振動する」,「每次计数时震动」.
+
 ### « 已于 2026年9月7日 同意 » : la date du consentement cousait, et le probe ne pouvait pas la voir
 Trouvé en lisant la rubrique « Ton profil » EN CHINOIS. La ligne qui prouve le
 consentement aux données de santé rendait 「已于 2026年9月7日 同意」 — une espace

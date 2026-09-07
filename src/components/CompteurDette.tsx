@@ -18,6 +18,7 @@ import type { DettePourEcran } from "@/lib/contexteConnecte";
 import { estPagePublique } from "@/lib/pagesPubliques";
 import { notifierSysteme } from "@/lib/notifier";
 import { echauffementConseille } from "@/lib/echauffement";
+import { vibrerRepetition } from "@/lib/vibration";
 import { abonnerFile, echecFile, enfiler, lireFile, viderFile } from "@/lib/fileHorsLigne";
 import { ecrire, effacer, lire } from "@/lib/stockage";
 import { useValeurClient } from "@/lib/valeurClient";
@@ -645,7 +646,17 @@ export function CompteurDette() {
                     background: "rgba(152,162,176,0.1)", color: "var(--muted)",
                     border: "1px solid rgba(152,162,176,0.2)", minWidth: 52,
                   }}
-                  onClick={() => setFaits((n) => surLePas(n + EXERCICES[conversion].pas, conversion))}
+                  onClick={() => {
+                    /*
+                      Le PLUS vibre, le moins non : une répétition comptée est
+                      un geste qu'on fait sans regarder l'écran, et c'est la
+                      seule chose que la réponse 207 demande de confirmer. Le
+                      moins est une correction — la confirmer par la même
+                      impulsion effacerait la distinction.
+                    */
+                    vibrerRepetition(typeof navigator === "undefined" ? undefined : navigator);
+                    setFaits((n) => surLePas(n + EXERCICES[conversion].pas, conversion));
+                  }}
                 >
                   +
                 </button>
