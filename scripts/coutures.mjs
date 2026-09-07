@@ -73,6 +73,28 @@ export const COUTURE = /[぀-ヿ㐀-鿿][  ][぀-ヿ㐀-鿿]/;
  */
 export const BRUT = /(?<![\d.,  \/-])\d{4,}(?![\d.,  ]|年|\/|-)/;
 
+/**
+ * `Intl` écrirait-il ce nombre AUTREMENT ? Sinon ce n'est pas un nombre brut.
+ *
+ * Le motif ci-dessus cherche quatre chiffres sans séparateur, et c'est juste
+ * dans cinq langues sur six. **L'espagnol ne groupe pas à quatre chiffres** :
+ * `Intl.NumberFormat("es").format(2000)` rend « 2000 », et « 10.000 » à cinq.
+ * Un nombre déjà passé par `Intl` y ressort donc nu, et le motif seul le
+ * signalait — mesuré, quatre faux positifs sur le tableau de bord espagnol,
+ * tous sur des chiffres parfaitement mis en forme.
+ *
+ * On DEMANDE donc à l'autorité plutôt que d'écrire un plancher par langue :
+ * une liste vieillirait, `Intl` non. Le journal porte déjà ce constat depuis
+ * la dette écrite « 1543 » — « c'est précisément ce qu'une table écrite à la
+ * main ne saurait jamais ».
+ */
+export function ecritAutrement(texte, langue) {
+  const m = BRUT.exec(texte);
+  if (!m) return false;
+  const n = Number(m[0]);
+  return Number.isFinite(n) && new Intl.NumberFormat(langue).format(n) !== m[0];
+}
+
 if (import.meta.url !== `file://${process.argv[1]}`) {
   // Importé pour ses motifs : rien à balayer.
 } else {
@@ -165,7 +187,7 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
     parPage.push({ chemin, n: textes.length });
     for (const t of textes) {
       if (COUTURE.test(t)) constats.push(`${chemin}  COUTURE  « ${t.slice(0, 100)} »`);
-      else if (BRUT.test(t)) constats.push(`${chemin}  NOMBRE   « ${t.slice(0, 100)} »`);
+      else if (ecritAutrement(t, LANGUE)) constats.push(`${chemin}  NOMBRE   « ${t.slice(0, 100)} »`);
     }
     await ctx.close();
   }

@@ -1166,6 +1166,43 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Paga 2000 puntos » : quatre faux positifs, et c'était le garde qui avait tort
+Le balayage des coutures rendait **quatre constats en espagnol** sur le tableau
+de bord, et zéro dans les cinq autres langues : « Paga 2000 puntos de
+esfuerzo », « 0 / 2000 », « Objetivo: 1000 », « 480 / 1000 · queda 520 ».
+
+**Aucun n'était un défaut.** `Intl.NumberFormat("es").format(2000)` rend
+« 2000 » : **l'espagnol ne groupe pas à quatre chiffres**, et il écrit
+« 10.000 » à cinq. Les quatre nombres étaient donc parfaitement mis en forme,
+et c'est le motif — quatre chiffres sans séparateur — qui était trop large.
+
+Le journal portait déjà le fait, à l'entrée où la dette est passée par `Intl` :
+« **1543** en espagnol, qui est juste : `Intl` n'y groupe pas les nombres à
+quatre chiffres. C'est précisément ce qu'une table écrite à la main ne saurait
+jamais. » Le constat était écrit, l'outil ne le savait pas.
+
+**La règle DEMANDE à l'autorité au lieu de porter un plancher par langue.**
+`ecritAutrement(texte, langue)` reformate le nombre trouvé et ne signale que
+s'il diffère de ce qui est écrit. Un plancher — quatre chiffres partout, cinq
+en espagnol — aurait marché aujourd'hui et vieilli comme toutes les listes ;
+`Intl` non.
+
+**Ce que ça coûte en pouvoir de détection : rien.** Un vrai nombre brut
+espagnol à cinq chiffres est toujours attrapé, puisque `Intl` l'écrirait
+« 10.000 ». Ce qui disparaît est exactement l'ensemble des textes déjà justes.
+
+**Un garde qui crie sur ce qui va bien finit par ne plus se lire** — c'est la
+raison, et elle est déjà écrite ici pour le garde du compte de jeux, qui avait
+rendu quatre faux positifs au premier jet pour la même sorte de raison.
+
+Deux sabotages, deux échecs : le retour à la forme naïve (`BRUT.test` au point
+de décision) et la règle remplacée par un plancher de longueur. Le second est
+le plus utile : il compile, il marche sur les six langues d'aujourd'hui, et il
+ment le jour où une septième langue groupe autrement.
+
+Recensement après correction : **zéro constat dans les six langues**, sur un
+compte semé à soixante parties.
+
 ### Campagne de clôture du 7 septembre au soir, après V496 à V500
 Passée sur un compte de mesure semé à soixante parties, créé APRÈS la dernière
 suite navigateur — l'ordre est écrit ici depuis longtemps et il n'admet aucune
