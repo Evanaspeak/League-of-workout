@@ -1166,6 +1166,39 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Quatre lignes du plan qui paraissent faisables et ne le sont pas d'ici
+Écrit pour que la passe suivante ne les réexamine pas une cinquième fois. Leur
+colonne d'effort annonce une demie ou une nuit, donc elles ressemblent à du
+travail sans arbitrage. Elles ne le sont pas, et le blocage n'est pas le même à
+chaque fois.
+
+- **051, « analyser les poids par rôle sur de vraies données »** — la réponse
+  dit « à analyser tout de même », donc c'est bien une analyse et non une
+  décision. Mais les données vivent en PRODUCTION, et cette session n'a aucun
+  accès à la base : le compte de mesure local est semé, donc synthétique, et
+  l'analyser reviendrait à mesurer le générateur. Ce n'est pas un arbitrage,
+  c'est une limite d'accès ;
+- **287, « voir les erreurs qui se produisent chez les utilisateurs »** — la
+  réponse suivante, sur Sentry, dit **« Plus tard »**. La ligne est donc
+  différée par le propriétaire lui-même, et la construire irait contre ;
+- **275, « chiffrer poids et taille au niveau des colonnes »** — la réponse est
+  **« Explique-moi »**. Ce qu'elle demande est une explication, pas un chantier,
+  et elle part dans les questions ;
+- **280, « supprimer les comptes inactifs depuis deux ans »** — la réponse est
+  « Oui », et la durée est dans la ligne. Trois choses ne le sont pas, et
+  chacune est un arbitrage : ce qui compte comme INACTIF (aucune connexion, ou
+  aucune partie), le délai entre l'avertissement et la suppression, et ce que
+  deviennent les lignes `Paiement` sur lesquelles la dette d'équipe des autres
+  s'appuie. C'est l'action la plus irréversible du produit, et elle tournerait
+  toute seule : ce n'est pas ce qu'on construit sans son propriétaire.
+
+**Ce que la colonne d'effort du plan ne dit pas**, et c'est la remarque
+générale : elle chiffre le TRAVAIL, pas l'accès ni la décision. Les mentions
+« décision », « à toi » et « à répondre » existent, mais elles ne couvrent pas
+ces quatre cas-là — et une ligne qui paraît faisable se réexamine à chaque
+passe. Les estimations ne sont pas retouchées ici : le plan a été établi avec
+le propriétaire, et changer ses chiffres se discute avec lui.
+
 ### Deux rubriques que le balayage ne visitait pas, et l'année prise pour un nombre
 Le balayage des coutures ouvrait trois rubriques de réglages sur les cinq
 accessibles : **« Ton profil » et « Tes données » n'y étaient pas.** C'est sur
@@ -1327,6 +1360,12 @@ compare à son échelle** : 2 024 ms ici contre 2 096, 2 120, 2 128, 2 216 et
 2 332 sur des comptes semés comparables, et contre les 2 596 à 2 668 relevés à
 mille neuf cent vingt parties. Aucune des cinq versions n'a coûté de temps
 d'affichage.
+
+**Les neuf écrans connectés relus à 320 px**, en allemand et en japonais :
+**débordement nul partout**, et aucun libellé coupé par une ellipse. C'est la
+largeur la plus étroite du produit dans la langue la plus longue, donc le pire
+cas — et les deux rubriques entrées ce soir dans le balayage, « Ton profil » et
+« Tes données », n'avaient jamais été vérifiées à cette largeur.
 
 **Dépendances, troisième passage de la journée** : les deux mêmes
 vulnérabilités `mysql2`, inatteignables et gardées ; **zéro côté application de
