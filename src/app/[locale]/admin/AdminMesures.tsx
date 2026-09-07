@@ -9,6 +9,7 @@ type Reponse = Mesures & {
   veille?: { pseudo: string; points: number }[];
   seuilSemaine?: number;
   equilibre?: EquilibreJeux;
+  demandesJeux?: { nom: string; personnes: number }[];
 };
 
 /**
@@ -67,6 +68,30 @@ export default function AdminMesures() {
           {ligne(t.dansLaJournee, String(m.dansLaJournee))}
           {ligne(t.dansLaSemaine, String(m.dansLaSemaine))}
           {ligne(t.revenus, String(m.revenus))}
+        </div>
+      )}
+
+      {/* Le catalogue est fermé : la seule façon de savoir ce qui y manque est
+          de laisser le dire, et de compter. (réponse 180) */}
+      {m?.demandesJeux && (
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+          <h3 className="titre-section" style={{ fontSize: "0.9rem" }}>{t.demandesTitre}</h3>
+          <p className="text-xs mt-1 mb-2" style={{ color: "var(--steel)" }}>{t.demandesAide}</p>
+          {m.demandesJeux.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--steel)" }}>{t.demandesAucun}</p>
+          ) : (
+            <div className="flex flex-col">
+              {m.demandesJeux.map((d) => (
+                <div key={d.nom} className="flex items-baseline justify-between gap-3"
+                  style={{ padding: "4px 0", fontSize: "0.85rem" }}>
+                  <span style={{ color: "var(--muted)", overflowWrap: "anywhere" }}>{d.nom}</span>
+                  <b style={{ color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>
+                    {t.demandesPersonnes(nombre(d.personnes), d.personnes)}
+                  </b>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

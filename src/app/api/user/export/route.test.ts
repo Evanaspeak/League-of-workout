@@ -7,6 +7,7 @@ jest.mock("@/lib/prisma", () => ({
     pushSubscription: { findMany: jest.fn() },
     paiement: { findMany: jest.fn() },
     signalement: { findMany: jest.fn() },
+    demandeJeu: { findMany: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
@@ -41,6 +42,8 @@ beforeEach(() => {
     rappelSeuilSec: 300, plafondQuotidien: 500, variantePompes: "genoux",
     exercicesSuspendus: ["course"],
     santeConsentiLe: new Date("2026-06-02"), santeRefuseLe: null,
+    dettePointsDus: 320, detteDepuis: new Date("2026-09-05"),
+    paiementEclairLe: new Date("2026-08-20"),
   }));
   (prisma.game.findMany as jest.Mock).mockResolvedValue([
     { id: "g1", userId: "u1", date: new Date(), pompesCalculees: 38, exercice: "pompes" },
@@ -52,6 +55,9 @@ beforeEach(() => {
   ]);
   (prisma.signalement.findMany as jest.Mock).mockResolvedValue([
     { createdAt: new Date("2026-07-01"), message: "le chrono saute", page: "/dashboard", statut: "ouvert" },
+  ]);
+  (prisma.demandeJeu.findMany as jest.Mock).mockResolvedValue([
+    { nom: "Dead by Daylight", quand: new Date("2026-09-01") },
   ]);
 });
 
@@ -152,6 +158,53 @@ describe("l'export porte tout ce qui appartient à la personne", () => {
     const d = await lire() as Record<string, unknown>;
     expect(Array.isArray(d.seances)).toBe(true);
     expect(settings.fr.exportAide).toMatch(/séance/i);
+  });
+
+  /**
+   * Chaque bloc de l'export est ANNONCÉ, ou dit pourquoi il ne l'est pas.
+   *
+   * La phrase promettait « profil, réglages et parties » quand le fichier en
+   * rendait cinq ; on y a ajouté les séances, et le compte a recommencé à
+   * dériver à la ligne suivante. Ce contrôle tient les deux moitiés ensemble :
+   * un bloc ajouté demain fait tomber le test tant que personne n'a décidé si
+   * la phrase doit le nommer.
+   *
+   * Une dispense n'est pas un oubli toléré : elle dit que le bloc entre dans
+   * « tout ce qu'on garde sur toi », qui ouvre la phrase, sans mériter d'être
+   * énuméré. L'énumération sert à ce que la personne reconnaisse ce qu'elle
+   * vient chercher, pas à faire l'inventaire.
+   */
+  const ANNONCE: Record<string, RegExp | string> = {
+    compte: /profil/i,
+    preferences: /réglage/i,
+    parties: /partie/i,
+    seances: /séance/i,
+    exportLe: "l'horodatage du fichier, pas une donnée",
+    detteEnAttentePoints: "la dette du moment, que l'écran montre en permanence",
+    detteDepuis: "la date de cette dette, avec elle",
+    premierPaiementEclairLe: "un badge, pas une donnée qu'on vient reprendre",
+    appareilsNotifies: "une date d'abonnement n'est pas ce qu'on vient chercher",
+    signalements: "ce qu'on nous a écrit, qu'on avait déjà sous les yeux",
+    jeuxDemandes: "un nom de jeu tapé une fois, à côté de ce qui compte",
+  };
+
+  it("annonce chaque bloc, ou dit pourquoi il n'est pas énuméré", async () => {
+    const d = await lire() as Record<string, unknown>;
+    const blocs = Object.keys(d);
+    // Sans témoin, un export vidé rendrait le contrôle vert sur zéro bloc.
+    expect(blocs.length).toBeGreaterThan(5);
+
+    const inconnus = blocs.filter((b) => !(b in ANNONCE));
+    expect(inconnus).toEqual([]);
+
+    const promis = Object.entries(ANNONCE)
+      .filter(([b, r]) => r instanceof RegExp && blocs.includes(b))
+      .filter(([, r]) => !(r as RegExp).test(settings.fr.exportAide));
+    expect(promis).toEqual([]);
+
+    // Et une dispense qui ne désigne plus rien tombe : c'est la règle des
+    // autres gardes de ce projet.
+    expect(Object.keys(ANNONCE).filter((b) => !blocs.includes(b))).toEqual([]);
   });
 
   /**

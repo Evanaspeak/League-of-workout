@@ -422,6 +422,26 @@ const ERROR_MAP: Record<string, Traductions> = {
     de: "Die Freundesliste ist voll",
     zh: "好友列表已满", ja: "フレンド一覧がいっぱいです",
   },
+  "Ce jeu est déjà au catalogue": {
+    en: "That game is already in the catalogue", es: "Ese juego ya está en el catálogo",
+    de: "Dieses Spiel ist schon im Katalog",
+    zh: "这款游戏已经在目录里了", ja: "そのゲームはすでにカタログにあります",
+  },
+  "Nom de jeu trop long": {
+    en: "Game name too long", es: "Nombre de juego demasiado largo",
+    de: "Spielname zu lang",
+    zh: "游戏名太长了", ja: "ゲーム名が長すぎます",
+  },
+  "Nom de jeu invalide": {
+    en: "Invalid game name", es: "Nombre de juego no válido",
+    de: "Ungültiger Spielname",
+    zh: "游戏名无效", ja: "ゲーム名が正しくありません",
+  },
+  "Trop de jeux demandés": {
+    en: "Too many games requested", es: "Demasiados juegos solicitados",
+    de: "Zu viele Spiele angefragt",
+    zh: "申请的游戏太多了", ja: "リクエストしたゲームが多すぎます",
+  },
   "Trop de demandes en attente": {
     en: "Too many pending requests", es: "Demasiadas solicitudes pendientes",
     de: "Zu viele offene Anfragen",

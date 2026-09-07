@@ -4,6 +4,7 @@ import { Lien } from "@/components/Lien";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { overlay as dictOverlay } from "@/lib/i18n/dictionaries/overlay";
 import { detection as dictDetection } from "@/lib/i18n/dictionaries/detection";
+import { DemanderJeu } from "./DemanderJeu";
 import { Icone } from "@/components/Icone";
 import { CompteRiot } from "@/components/CompteRiot";
 import { useValeurClient } from "@/lib/valeurClient";
@@ -311,6 +312,11 @@ export function ReglageJeux() {
           {tDet.ambigus}
         </p>
       )}
+
+      {/* Le catalogue est fermé, donc il faut un chemin pour dire ce qui y
+          manque — sinon la seule réponse à « mon jeu n'y est pas » est le
+          silence. (réponse 180) */}
+      <DemanderJeu />
     </div>
   );
 }

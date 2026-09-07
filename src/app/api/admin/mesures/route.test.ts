@@ -1,7 +1,10 @@
 import { corps, utilisateur, admin } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => ({
-  prisma: { user: { findMany: jest.fn() }, game: { groupBy: jest.fn() } },
+  prisma: {
+    user: { findMany: jest.fn() }, game: { groupBy: jest.fn() },
+    demandeJeu: { findMany: jest.fn() },
+  },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
@@ -12,6 +15,8 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 const session = getCurrentUser as jest.Mock;
 const findMany = (prisma as unknown as { user: { findMany: jest.Mock } }).user.findMany;
 const groupBy = (prisma as unknown as { game: { groupBy: jest.Mock } }).game.groupBy;
+const demandes =
+  (prisma as unknown as { demandeJeu: { findMany: jest.Mock } }).demandeJeu.findMany;
 
 const jour = (n: number) => new Date(`2026-08-${String(n).padStart(2, "0")}T12:00:00Z`);
 
@@ -20,6 +25,7 @@ beforeEach(() => {
   session.mockResolvedValue(admin());
   findMany.mockResolvedValue([]);
   groupBy.mockResolvedValue([]);
+  demandes.mockResolvedValue([]);
 });
 
 /** La route fait deux lectures : les comptes, puis la veille de volume. */
@@ -142,5 +148,22 @@ describe("l'équilibre entre les jeux", () => {
     expect(r.equilibre.jeux[0]).toEqual({ jeu: "A", parties: 20, moyenne: 40 });
     expect(r.equilibre.facteur).toBe(2);
     expect(r.equilibre.derape).toBe(true);
+  });
+});
+
+describe("les jeux qu'on nous demande", () => {
+  it("compte les personnes et range le plus réclamé en tête", async () => {
+    demandes.mockResolvedValue([
+      { nom: "Fortnite", cle: "fortnite" },
+      { nom: "fortnite", cle: "fortnite" },
+      { nom: "Zelda", cle: "zelda" },
+    ]);
+    const r = (await corps(await GET())) as unknown as {
+      demandesJeux: { nom: string; personnes: number }[];
+    };
+    expect(r.demandesJeux).toEqual([
+      { nom: "Fortnite", personnes: 2 },
+      { nom: "Zelda", personnes: 1 },
+    ]);
   });
 });

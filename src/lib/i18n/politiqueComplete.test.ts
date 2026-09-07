@@ -112,6 +112,15 @@ const ATTENDU: Record<string, RegExp> = {
    */
   envoisPush: /notifications envoyées|trois notifications par semaine/i,
   /**
+   * Les jeux que vous nous avez demandé d'ajouter.
+   *
+   * Du texte que VOUS avez écrit, gardé sous votre compte : il faut le dire,
+   * même s'il ne sort jamais vers un autre utilisateur et que seule
+   * l'administration le lit. La ligne dit les deux, parce que « qui le voit »
+   * est justement la question qu'on se pose devant un champ de texte libre.
+   */
+  demandesJeux: /jeux demandés|jeu absent/i,
+  /**
    * Les défis personnels que vous avez remplis.
    *
    * Des lignes, comme les paiements, et pour la même raison : l'XP se déduit

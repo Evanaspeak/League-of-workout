@@ -1157,6 +1157,77 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Déclarer un jeu absent, et compter les demandes (ligne 180)
+Le catalogue est FERMÉ — c'est ce qui permet de chiffrer une partie — donc la
+seule réponse à « mon jeu n'y est pas » était le silence. La réponse 180 dit
+quoi en faire : « laisser l'utilisateur déclarer un jeu absent, et compter les
+demandes. Ça décide de la suite. »
+
+**Un compte de PERSONNES, jamais de clics**, et c'est la contrainte qui
+gouverne tout le reste. `DemandeJeu` porte l'unicité `(userId, cle)` EN BASE :
+sans elle, quelqu'un qui insiste déciderait à lui seul du prochain jeu, et deux
+envois partis en même temps liraient tous deux « pas encore demandé ». Le
+renvoi est donc un SUCCÈS (`skipDuplicates`) et non une erreur — reprocher à
+quelqu'un de redemander serait incompréhensible.
+
+**La clé est la forme REPLIÉE du nom** : minuscules, accents retirés, blancs
+resserrés. Sans elle, « apex », « Apex » et « Apex  Legends » comptent
+séparément — donc le chiffre est faux — et le même compte peut redemander
+indéfiniment en changeant une majuscule. L'administration lit, elle, la
+graphie la plus VUE sous cette clé, pas la forme repliée.
+
+**Un jeu déjà au catalogue est REFUSÉ, pas compté.** La liste sert à décider
+quoi ajouter : la remplir de ce qu'on a déjà la rendrait illisible, et surtout
+la personne ne saurait pas qu'elle peut y jouer tout de suite. Le refus le dit.
+
+**Et c'est du texte LIBRE, ce que la réponse 127 refuse d'avoir à modérer.**
+Deux choses le rendent compatible avec elle, et elles sont écrites des deux
+côtés : ce texte ne sort JAMAIS vers un autre utilisateur — l'administration
+seule le lit — et un plafond de cinq jeux par compte remplace la surveillance,
+comme pour les demandes d'amitié.
+
+**Trois gardes ont mordu**, ce qui est leur travail : la politique de
+confidentialité a exigé une ligne dans les six langues, le recensement des
+messages d'API a exigé les quatre refus traduits, et le garde du pluriel a
+attrapé mes `n > 1` en anglais, en espagnol et en allemand.
+
+**Et l'export a rendu un défaut que je ne cherchais pas.** En écrivant le garde
+qui exige que chaque bloc du fichier soit annoncé ou dispensé, le recensement
+des blocs a nommé **`activites`** — le mot renommé partout à l'écran en V400,
+parce qu'il faisait lire son propre tableau de bord de travers. Le fichier de
+portabilité est lu par une PERSONNE : c'était la moitié non reprise de ce
+renommage, exactement comme `seuilRappelBoxeSec` l'était en V476. Il s'appelle
+`parties`.
+
+**Le garde qui l'a trouvé tient les deux moitiés ensemble** : chaque bloc de
+l'export est annoncé par la phrase de l'écran, ou porte la raison pour laquelle
+il n'est pas énuméré. La phrase promettait trois choses quand le fichier en
+rendait cinq ; on a ajouté les séances en V476, et la dérive a repris à la
+ligne suivante. Un bloc ajouté demain fait tomber le test tant que personne n'a
+décidé.
+
+**Et ce garde est retombé dans le piège que V476 a écrit** : `detteDepuis` et
+`premierPaiementEclairLe` ne paraissaient pas dans la réponse parce que la
+doublure d'utilisateur ne les posait pas, et `JSON.stringify` omet les clés
+`undefined`. Le contrôle qui refuse une dispense sans objet les déclarait donc
+morts. La doublure est remplie, comme la fois d'avant, et pour la même raison.
+
+**Une couture CJK introduite puis refermée**, vérifiée à l'écran plutôt que
+supposée : 「デッドバイデイライト を受け付けました。」 — le nom du jeu vient de
+la personne, donc il peut être en idéogrammes, et l'espace latine du gabarit
+cousait deux caractères qui n'en veulent pas. `colleCjk` la retire ; le
+français et l'allemand ne bougent pas.
+
+Cinq sabotages, cinq échecs : `skipDuplicates` retiré, le plafond débranché, le
+catalogue ignoré, la casse conservée dans la clé, et le renommage de l'export
+annulé.
+
+Vérifié à l'écran en trois langues, de la saisie jusqu'à la liste
+d'administration : « C'est noté pour Dead by Daylight »,
+「デッドバイデイライトを受け付けました。」, et « Dieses Spiel ist schon im
+Katalog » pour un jeu déjà présent. Puis relu par la route d'administration —
+deux demandes, une personne chacune.
+
 ### Surveiller si un jeu paie deux fois plus qu'un autre (ligne 185)
 Le barème est le même pour tous les jeux ; leurs FORMES ne le sont pas. Un
 battle royale à cent joueurs ne distribue pas comme un MOBA à cinq, et rien ne
