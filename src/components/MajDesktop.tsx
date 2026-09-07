@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { maj as dict } from "@/lib/i18n/dictionaries/maj";
 import type { EtatMaj } from "@/types/electron";
 
@@ -13,6 +13,7 @@ import type { EtatMaj } from "@/types/electron";
  */
 export function MajDesktop() {
   const t = useT(dict);
+  const pourcent = usePourcentage();
   const [etat, setEtat] = useState<EtatMaj | null>(null);
   const [masque, setMasque] = useState(false);
 
@@ -71,7 +72,7 @@ export function MajDesktop() {
           </>
         ) : (
           <span className="mono-num" style={{ fontSize: "0.85rem", color: "var(--amber, #FFB454)", fontWeight: 600 }}>
-            {pct}%
+            {pourcent(pct)}
           </span>
         )}
       </div>

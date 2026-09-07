@@ -769,7 +769,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         <div className="lol-panel p-4 space-y-2 rise" style={{ animationDelay: "320ms" }}>
           <div className="flex justify-between text-sm">
             <span className="gold-text font-semibold">{t.objectiveLibre(fmt(data.objectifTotalPompes))}</span>
-            <span className="mono-num" style={{ color: "var(--amber)", fontWeight: 600 }}>{progress}%</span>
+            <span className="mono-num" style={{ color: "var(--amber)", fontWeight: 600 }}>{pourcent(progress)}</span>
           </div>
           <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(152,162,176,0.15)" }}>
             <div

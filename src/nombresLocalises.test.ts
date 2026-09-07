@@ -57,6 +57,35 @@ export function estLongueurCss(debutLigne: string): boolean {
     .test(debutLigne);
 }
 
+/**
+ * L'expression qui précède ce « % » est-elle un GABARIT (`${…}`) ou du JSX ?
+ *
+ * Le contrôle d'origine ne lisait que les gabarits. Or `%` se recolle tout
+ * aussi bien en JSX — `+{Math.round(g.surchargeCalculee * 100)}%` — et cette
+ * forme-là lui était invisible : quatre pourcentages vivaient dedans, dont
+ * celui de l'objectif du tableau de bord, dans un fichier qui appelle
+ * `usePourcentage` quatre cents lignes plus haut.
+ *
+ * La distinction se lit en remontant jusqu'à l'accolade OUVRANTE de
+ * l'expression, en comptant la profondeur — un `${b}` imbriqué dans une
+ * expression JSX rendrait sinon la mauvaise réponse — puis en regardant le
+ * caractère d'avant. Elle vit hors de la boucle pour être éprouvée : l'état
+ * sain du dépôt est ZÉRO pourcentage JSX, donc les fichiers réels ne peuvent
+ * pas distinguer un tri juste d'un tri aveugle.
+ */
+export function ouvreParDollar(avant: string): boolean {
+  let profondeur = 1;
+  for (let i = avant.length - 1; i >= 0; i--) {
+    const c = avant[i];
+    if (c === "}") profondeur += 1;
+    else if (c === "{") {
+      profondeur -= 1;
+      if (profondeur === 0) return avant[i - 1] === "$";
+    }
+  }
+  return false;
+}
+
 function sansCommentaires(source: string): string {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, "")
@@ -121,6 +150,42 @@ describe("les nombres montrés passent par Intl", () => {
     // Et le motif doit trouver quelque chose : s'il ne voyait plus aucun
     // gabarit, il n'y aurait rien à trier.
     expect(trouves).toBeGreaterThan(3);
+    expect(fautifs).toEqual([]);
+  });
+
+  /**
+   * Et le même signe recollé en JSX, que le contrôle ci-dessus ne voyait pas.
+   *
+   * Le témoin ne peut pas être « on a trouvé des pourcentages JSX » : une fois
+   * corrigés, il n'y en a plus un seul, et le contrôle passerait alors au vert
+   * en ne triant rien. C'est le tri lui-même qui s'éprouve, sur des cas
+   * fabriqués — plus un décompte des `}%` toutes formes confondues, qui dit
+   * que le motif voit encore quelque chose.
+   */
+  it("ne recolle aucun % à la main en JSX", () => {
+    expect(ouvreParDollar("              width: `${p")).toBe(true);
+    expect(ouvreParDollar("<span>+{Math.round(g.surchargeCalculee * 100)")).toBe(false);
+    // Une interpolation imbriquée DANS une expression JSX : c'est le cas que
+    // la profondeur existe pour trancher.
+    expect(ouvreParDollar("{a ? `${b}` : c")).toBe(false);
+
+    const fautifs: string[] = [];
+    let vus = 0;
+    for (const f of tous) {
+      const rel = relative(SRC, f).split("\\").join("/");
+      if (rel === PORTE_LA_REGLE) continue;
+      const texte = sansCommentaires(readFileSync(f, "utf8"));
+      for (const m of texte.matchAll(/\}\s?%/g)) {
+        vus += 1;
+        const avant = texte.slice(0, m.index);
+        if (ouvreParDollar(avant)) continue; // gabarit : l'autre contrôle s'en charge
+        const debutLigne = avant.slice(avant.lastIndexOf("\n") + 1);
+        if (estLongueurCss(debutLigne)) continue;
+        fautifs.push(`${rel}:${avant.split("\n").length}`);
+      }
+    }
+
+    expect(vus).toBeGreaterThan(3);
     expect(fautifs).toEqual([]);
   });
 
