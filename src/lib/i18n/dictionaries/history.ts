@@ -1,5 +1,6 @@
 export const history = {
   fr: {
+    exempleBouton: "Voir un exemple, sans rien enregistrer",
     sansEnjeu: "sans enjeu",
     sansEnjeuAide: "Session refusée au lancement : cette partie ne coûte rien et ne compte dans aucune statistique.",
     legendeTableau: "Toutes les parties enregistrées, la plus récente en premier",
@@ -101,6 +102,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   en: {
+    exempleBouton: "See an example, nothing gets saved",
     sansEnjeu: "no stakes",
     sansEnjeuAide: "Session declined at launch: this game costs nothing and counts in no statistic.",
     legendeTableau: "Every logged game, most recent first",
@@ -201,6 +203,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   es: {
+    exempleBouton: "Ver un ejemplo, sin guardar nada",
     sansEnjeu: "sin apuesta",
     sansEnjeuAide: "Sesión rechazada al iniciar: esta partida no cuesta nada y no cuenta en ninguna estadística.",
     legendeTableau: "Todas las partidas registradas, la más reciente primero",
@@ -301,6 +304,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   de: {
+    exempleBouton: "Ein Beispiel ansehen, ohne etwas zu speichern",
     sansEnjeu: "ohne Einsatz",
     sansEnjeuAide: "Sitzung beim Start abgelehnt: diese Partie kostet nichts und zählt in keiner Statistik.",
     legendeTableau: "Alle eingetragenen Runden, die neueste zuerst",
@@ -401,6 +405,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   zh: {
+    exempleBouton: "看一个例子，什么都不会保存",
     sansEnjeu: "不计入",
     sansEnjeuAide: "开局时拒绝了本次记录：这局不产生任何负担，也不计入任何统计。",
     legendeTableau: "全部已记录的对局，最新的排在最前",
@@ -501,6 +506,7 @@ export const history = {
     placementAffiche: (place: number, joueurs: number) => `${place}\u00A0/\u00A0${joueurs}`,
   },
   ja: {
+    exempleBouton: "例を見る（何も保存されません）",
     sansEnjeu: "カウントなし",
     sansEnjeuAide: "開始時にセッションを断ったため、この試合は負担にならず、統計にも入りません。",
     legendeTableau: "記録したすべての試合、新しい順",

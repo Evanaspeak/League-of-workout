@@ -1157,6 +1157,38 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La partie de démonstration, et la moitié qui compte (ligne 082)
+« Une partie de démonstration, préremplie, pour montrer le calcul sans avoir à
+jouer. » → « Oui, excellent ».
+
+**Ce qu'on remplit est l'APERÇU, pas l'historique**, et c'est toute la
+décision : `/api/games/preview` calcule sans rien sauvegarder, donc l'exemple
+montre le vrai chiffre — niveau du compte, multiplicateur, répartition entre
+les exercices choisis — sans qu'une partie fantôme entre nulle part.
+L'enregistrement reste un geste séparé, que la personne fait si elle veut.
+
+**L'exemple suit le jeu CHOISI plutôt que d'en imposer un.** Montrer un KDA de
+League à quelqu'un qui vient de sélectionner Minecraft ne lui apprend rien sur
+ce qu'il va payer. Trois branches, chacune avec sa raison : une soirée de deux
+heures et demie pour un jeu compté au temps, une place au premier tiers pour un
+battle royale — ni la première, qui ne coûte rien, ni la dernière — et une
+DÉFAITE partout ailleurs, parce que c'est elle qui coûte et donc elle qu'il
+faut montrer.
+
+**Le bouton disparaît dès qu'on a saisi quelque chose.** Il n'a alors plus rien
+à montrer et il prendrait la place ; c'est la règle déjà posée pour le reproche
+du mètre-ruban et pour l'objectif de première semaine.
+
+**Ce que le parcours prouve et qu'aucun test unitaire ne peut voir est la
+SECONDE moitié : que rien n'entre en base.** Un exemple qui enregistrerait une
+partie fantôme fausserait le winrate, les paliers et la dette du compte qu'il
+vient d'accueillir — c'est-à-dire exactement la personne qu'on ne peut pas se
+permettre de perdre. Le contrôle compte les lignes avant et après.
+
+Trois sabotages, trois échecs : l'exemple rendu inerte, le bouton qui ne part
+jamais, et l'exemple qui écrit une partie. Le troisième est celui pour lequel
+le test existe.
+
 ### Moins de quatre minutes, migration comprise
 Témoin public de V488, qui ajoute une TABLE : la politique de confidentialité y
 gagne une ligne, donc la version a un témoin sur une page publique. Fusion à

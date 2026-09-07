@@ -384,6 +384,51 @@ export function AjoutActivite({
    */
   const coutVivant = isAddReady && preview ? preview.scoring.pompesFinales : undefined;
 
+  /**
+   * Une partie de démonstration, préremplie (réponse 082).
+   *
+   * « Montrer le calcul sans avoir à jouer » : c'est l'APERÇU qu'on remplit,
+   * pas l'historique. Rien n'est écrit — `/api/games/preview` calcule et ne
+   * sauvegarde rien — et l'enregistrement reste un geste séparé, que la
+   * personne fait si elle le veut.
+   *
+   * L'exemple suit le jeu CHOISI plutôt que d'en imposer un : montrer un KDA
+   * de League à quelqu'un qui vient de sélectionner Minecraft ne lui apprend
+   * rien sur ce qu'il va payer.
+   */
+  const formulaireVierge = !addForm.champion && !addForm.kills && !addForm.deaths
+    && !addForm.assists && !placement && !arrets && !dureeH && !dureeM;
+
+  const remplirExemple = () => {
+    setAddError("");
+    setAddLogged(false);
+    if (typeJeu === "temps") {
+      // Une soirée ordinaire, pas un marathon : l'exemple doit ressembler à ce
+      // que la personne va vivre.
+      setDureeH("2");
+      setDureeM("30");
+      return;
+    }
+    if (capacites.br) {
+      // Ni la première place, qui ne coûte rien, ni la dernière : au milieu,
+      // le chiffre montré est celui qu'on verra le plus souvent.
+      setPlacement(String(Math.max(2, Math.round(equipesConsultees / 3))));
+      return;
+    }
+    if (capacites.rl) {
+      setAddForm((f) => ({ ...f, kills: "1", assists: "2", result: "D" }));
+      setArrets("3");
+      return;
+    }
+    // Une défaite : c'est elle qui coûte, donc c'est elle qu'il faut montrer.
+    setAddForm((f) => ({
+      ...f,
+      role: f.role || "Mid",
+      champion: capacites.champions ? "Ahri" : f.champion,
+      kills: "4", deaths: "9", assists: "6", result: "D",
+    }));
+  };
+
   // Corps de la requête d'aperçu, sérialisé : c'est lui qui décide quand
   // recalculer, plutôt que la longue liste des champs qui le composent.
   const corpsApercu = JSON.stringify(
@@ -697,6 +742,21 @@ export function AjoutActivite({
                   </p>
                 )}
               </div>
+
+              {/*
+                La partie de démonstration (réponse 082). Elle ne paraît que
+                tant que rien n'a été saisi : une fois qu'on a commencé, elle
+                n'a plus rien à montrer et elle prendrait la place.
+              */}
+              {formulaireVierge && (
+                <button
+                  type="button"
+                  className="lol-btn w-full text-xs"
+                  onClick={remplirExemple}
+                >
+                  {t.exempleBouton}
+                </button>
+              )}
 
               {isAddReady && (
                 <div className="space-y-3">
