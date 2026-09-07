@@ -1839,6 +1839,58 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### Le balayage des coutures devient un outil, et sa première version ne voyait pas son propre défaut
+Ce qui a trouvé le plus de défauts ces deux nuits n'est ni un test ni un
+audit : c'est de LIRE les écrans dans une écriture différente. Neuf entrées de
+ce journal en sortent. Le geste était refait à la main à chaque fois, avec un
+motif réécrit à chaque fois — donc avec un angle mort différent à chaque fois.
+`scripts/coutures.mjs` le fige.
+
+**Il lit les ÉCRANS et non la source**, et c'est la seule forme qui marche
+pour ces deux familles : une couture n'existe qu'une fois la valeur
+interpolée, et un nombre brut n'existe qu'au-dessus du millier. Un compte de
+démonstration ne les montre ni l'un ni l'autre.
+
+**Et sa première version a rendu « rien à signaler » sur douze mille textes
+avec un motif qui ne voyait PAS « 15360 / 25000 »**, c'est-à-dire le défaut
+exact pour lequel il existe. La borne arrière contenait l'espace ordinaire,
+posée là pour écarter les dates ; elle écartait du même coup tout nombre suivi
+d'une espace. J'allais écrire au journal que trois langues et cinq écrans
+étaient propres.
+
+**Ce qui l'a dit est le contrôle que ce journal réclame partout : le motif a
+été passé sur des cas FABRIQUÉS avant qu'on croie son résultat.** L'état sain
+du produit étant zéro trouvaille, les écrans ne peuvent pas distinguer un motif
+juste d'un motif aveugle — c'est l'angle mort de tous les outils de ce genre,
+et il est écrit ici depuis le garde du pourcentage. `src/coutures.test.ts`
+porte douze cas, dont **quatre défauts réels recopiés du journal** : la
+pastille de seuil, la date du mur des records, les paliers du rail, le compte
+de parties.
+
+**Un second trou, dans mon propre garde.** Il vérifiait la séparation entre
+les constats et les pages non mesurées en cherchant les MOTS « nonMesurees »
+et « NON MESURÉE » dans la source. Remplacer `nonMesurees.push` par
+`constats.push` laisse les deux mots en place — la déclaration et
+l'affichage — et le sabotage passait au vert : une page injoignable se serait
+comptée comme un constat, ce qui est la confusion que le contrôle existe pour
+empêcher. Il porte sur le BRANCHEMENT maintenant.
+
+**Et un sabotage a d'abord passé au vert pour une raison qui n'était pas un
+trou.** L'espace ajoutée à la seule borne arrière laisse « 25000 » visible :
+le motif n'est pas ancré, et le second nombre de la ligne suffit à le trouver.
+La blindness d'origine demandait l'espace dans les DEUX bornes. Il fallait
+lancer le motif sabordé sur la chaîne pour le voir, plutôt que de conclure du
+vert que le garde ne mordait pas.
+
+**Résultat du balayage, une fois l'outil éprouvé** : japonais, chinois et
+allemand, sur le tableau de bord, l'historique, les amis, le bilan et trois
+rubriques de réglages, sur un compte semé à **1 920 parties, 15 360 points de
+dette et vingt et un paiements** — **plus de douze mille textes lus, aucune
+couture, aucun nombre brut**. Les corrections des deux dernières nuits
+tiennent.
+
+Sept sabotages, sept échecs.
+
 ### « Elles sont fades » : trois formulations, tirées du jour et rangées nulle part
 Ligne 100 du plan, réponse `[100] → Elles sont fades`. Ce qui a demandé de
 décider n'est pas le texte, c'est ce que « fade » désigne.
