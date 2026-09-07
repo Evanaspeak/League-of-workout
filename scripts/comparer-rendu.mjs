@@ -43,6 +43,19 @@ const PAGES = [
 ]
   .map((c) => enLangue(LANGUE_ADRESSE, c));
 const PAGES_INSTABLES = new Set(["_telechargement"]);
+/**
+ * `/` à 360 px n'est PAS listé ici, et c'est délibéré.
+ *
+ * Mesuré le 7 septembre : la même construction comparée à elle-même rend
+ * DIX-HUIT pixels de différence sur `360_fr.png`, en deux bandes de trois et
+ * deux lignes dans la barre de navigation, avec un écart de canal de 4 sur
+ * 255. C'est de l'anticrénelage, invisible à l'œil.
+ *
+ * La déclarer instable la retirerait de la comparaison, et c'est la page la
+ * plus visitée du produit. Le chiffre est écrit pour qu'une différence de cet
+ * ordre s'y reconnaisse ; au-delà, elle se lit bande par bande comme partout
+ * ailleurs.
+ */
 const LARGEURS = [360, 768, 1280];
 
 const dossier = join(RACINE, MODE);
