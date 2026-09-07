@@ -17,7 +17,7 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const [games, goal, abonnements, paiements, signalements] = await Promise.all([
+  const [games, goal, abonnements, paiements, signalements, demandesJeux] = await Promise.all([
     prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
     prisma.pushSubscription.findMany({
@@ -41,6 +41,12 @@ export async function GET() {
       where: { userId: user.id },
       orderBy: { createdAt: "asc" },
       select: { createdAt: true, message: true, page: true, statut: true },
+    }),
+    // Les jeux qu'il nous a demandés : du texte qu'il a écrit, donc à lui.
+    prisma.demandeJeu.findMany({
+      where: { userId: user.id },
+      orderBy: { quand: "asc" },
+      select: { nom: true, quand: true },
     }),
   ]);
 
@@ -100,7 +106,14 @@ export async function GET() {
     // On ne sort que la date d'inscription de chaque appareil : les clés
     // permettraient de lui envoyer des notifications.
     appareilsNotifies: abonnements.map((a) => ({ ajouteLe: a.createdAt })),
-    activites: games.map((g) => ({
+    /**
+     * Le mot « activité » désignait une PARTIE, et il a été renommé partout à
+     * l'écran (V400) parce qu'il faisait lire son propre tableau de bord de
+     * travers — le propriétaire du produit s'y est trompé lui-même. Ce
+     * fichier-ci est lu par une personne : il ne pouvait pas rester la moitié
+     * non reprise de ce renommage.
+     */
+    parties: games.map((g) => ({
       date: g.date,
       jeu: g.jeu,
       typeJeu: g.typeJeu,
@@ -133,6 +146,8 @@ export async function GET() {
       message: r.message,
       statut: r.statut,
     })),
+    /** Les jeux absents du catalogue qu'il nous a signalés. */
+    jeuxDemandes: demandesJeux.map((d) => ({ nom: d.nom, demandeLe: d.quand })),
   };
 
   const jour = new Date().toISOString().slice(0, 10);

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estAdmin } from "@/lib/admin";
 import { calculerMesures, equilibreJeux, type CompteMesure } from "@/lib/mesures";
+import { compterDemandes } from "@/lib/demandeJeu";
 import { JEUX } from "@/lib/jeux";
 import { SEUIL_SEMAINE } from "@/lib/veille";
 
@@ -97,7 +98,18 @@ export async function GET() {
     moyenne: Math.round((g._avg.pompesCalculees ?? 0) * 10) / 10,
   })));
 
+  /**
+   * Les jeux qu'on nous demande (réponse 180) : « ça décide de la suite ».
+   *
+   * Le texte est libre et n'est lu QUE ici — jamais par un autre utilisateur.
+   * Le compte est un compte de personnes, l'unicité étant posée en base.
+   */
+  const demandes = compterDemandes(
+    await prisma.demandeJeu.findMany({ select: { nom: true, cle: true } }),
+  );
+
   return NextResponse.json({
     ...calculerMesures(mesures), veille, seuilSemaine: SEUIL_SEMAINE, equilibre,
+    demandesJeux: demandes,
   });
 }

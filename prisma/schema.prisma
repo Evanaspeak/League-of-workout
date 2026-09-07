@@ -125,6 +125,7 @@ model User {
   paiements      Paiement[]
   defisAccomplis DefiAccompli[]
   envoisPush     EnvoiPush[]
+  demandesJeux   DemandeJeu[]
   /**
    * Les paiements que d'AUTRES ont faits pour acquitter cette dette-ci.
    * Une équipe a une dette commune : un membre peut faire l'effort à la place
@@ -859,4 +860,34 @@ model EnvoiPush {
 
   // La seule question posée : combien depuis telle date, pour ce compte.
   @@index([userId, quand])
+}
+
+/**
+ * Un jeu qu'on nous demande d'ajouter (réponse 180).
+ *
+ * Ce que la table doit rendre est un compte de PERSONNES, pas de clics : sans
+ * l'unicité par compte, quelqu'un qui insiste déciderait de la suite du
+ * catalogue à lui seul. La clé est la forme normalisée du nom — sinon « apex »
+ * et « Apex » comptent deux fois, et le même compte pourrait redemander
+ * indéfiniment en changeant une majuscule.
+ *
+ * Le texte est libre, donc il ne sort JAMAIS vers un autre utilisateur : il
+ * n'est lu que par l'administration. C'est ce qui le rend compatible avec la
+ * réponse 127, qui refuse d'avoir à modérer quoi que ce soit.
+ */
+model DemandeJeu {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /** Le nom tel qu'il a été tapé, débarrassé de ses blancs. */
+  nom String
+  /** Le même, replié : minuscules, accents retirés, espaces resserrés. */
+  cle   String
+  quand DateTime @default(now())
+
+  @@unique([userId, cle])
+  // La seule question posée à cette table : combien de personnes par jeu.
+  @@index([cle])
 }

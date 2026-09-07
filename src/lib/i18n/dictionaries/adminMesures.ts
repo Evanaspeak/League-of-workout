@@ -1,6 +1,10 @@
 /** Le panneau des mesures d'usage, côté administration. */
 export const adminMesures = {
   fr: {
+    demandesTitre: "Jeux demandés",
+    demandesAide: "Comptés par personne, pas par clic. C'est ce qui décide du prochain jeu ajouté.",
+    demandesAucun: "Personne n'a encore demandé de jeu.",
+    demandesPersonnes: (formate: string, n: number) => `${formate} personne${n > 1 ? "s" : ""}`,
     equilibreTitre: "Ce que chaque jeu coûte",
     equilibreAide: (min: number, facteur: number) => `Moyenne par partie, jeux comptés à la partie seulement. Comparés à partir de ${min} parties ; au-delà d'un facteur ${facteur}, il faut regarder.`,
     equilibreAucun: "Pas encore assez de parties pour comparer.",
@@ -24,6 +28,10 @@ export const adminMesures = {
     vide: "Aucun compte à mesurer pour l'instant.",
   },
   en: {
+    demandesTitre: "Games requested",
+    demandesAide: "Counted per person, not per click. This decides which game comes next.",
+    demandesAucun: "Nobody has requested a game yet.",
+    demandesPersonnes: (formate: string, n: number) => `${formate} ${n !== 1 ? "people" : "person"}`,
     equilibreTitre: "What each game costs",
     equilibreAide: (min: number, facteur: number) => `Average per match, match-based games only. Compared from ${min} matches up; past a factor of ${facteur}, take a look.`,
     equilibreAucun: "Not enough matches to compare yet.",
@@ -47,6 +55,10 @@ export const adminMesures = {
     vide: "No account to measure yet.",
   },
   es: {
+    demandesTitre: "Juegos solicitados",
+    demandesAide: "Contados por persona, no por clic. Esto decide cuál será el próximo juego.",
+    demandesAucun: "Todavía nadie ha solicitado un juego.",
+    demandesPersonnes: (formate: string, n: number) => `${formate} persona${n !== 1 ? "s" : ""}`,
     equilibreTitre: "Lo que cuesta cada juego",
     equilibreAide: (min: number, facteur: number) => `Media por partida, solo juegos contados por partida. Se comparan a partir de ${min} partidas; por encima de un factor ${facteur}, hay que mirar.`,
     equilibreAucun: "Todavía no hay partidas suficientes para comparar.",
@@ -70,6 +82,10 @@ export const adminMesures = {
     vide: "Todavía no hay cuentas que medir.",
   },
   de: {
+    demandesTitre: "Angefragte Spiele",
+    demandesAide: "Pro Person gezählt, nicht pro Klick. Das entscheidet, welches Spiel als Nächstes dazukommt.",
+    demandesAucun: "Noch hat niemand ein Spiel angefragt.",
+    demandesPersonnes: (formate: string, n: number) => `${formate} Person${n !== 1 ? "en" : ""}`,
     equilibreTitre: "Was jedes Spiel kostet",
     equilibreAide: (min: number, facteur: number) => `Durchschnitt pro Partie, nur nach Partien gezählte Spiele. Verglichen ab ${min} Partien; über einem Faktor von ${facteur} lohnt ein Blick.`,
     equilibreAucun: "Noch nicht genug Partien für einen Vergleich.",
@@ -93,6 +109,10 @@ export const adminMesures = {
     vide: "Noch keine Konten zu messen.",
   },
   zh: {
+    demandesTitre: "被申请的游戏",
+    demandesAide: "按人计，不按点击计。下一款加入的游戏由此决定。",
+    demandesAucun: "还没有人申请过游戏。",
+    demandesPersonnes: (formate: string) => `${formate} 人`,
     equilibreTitre: "每款游戏的代价",
     equilibreAide: (min: number, facteur: number) => `按局计算的游戏，每局平均值。满 ${min} 局才纳入比较；差距超过 ${facteur} 倍就该看看了。`,
     equilibreAucun: "对局还不够，暂时无法比较。",
@@ -116,6 +136,10 @@ export const adminMesures = {
     vide: "暂时没有可统计的账号。",
   },
   ja: {
+    demandesTitre: "リクエストされたゲーム",
+    demandesAide: "クリック数ではなく人数で数えます。次に追加するゲームはこれで決めます。",
+    demandesAucun: "まだ誰もゲームをリクエストしていません。",
+    demandesPersonnes: (formate: string) => `${formate} 人`,
     equilibreTitre: "ゲームごとの負荷",
     equilibreAide: (min: number, facteur: number) => `試合単位のゲームのみ、1 試合あたりの平均です。${min} 試合から比較し、${facteur} 倍を超えたら確認してください。`,
     equilibreAucun: "比較できるだけの試合がまだありません。",

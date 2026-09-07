@@ -251,7 +251,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 100 | Des notifications moins fades | ½ nuit |
 
 ### Le multi-jeu et la détection
-*2 à faire · 7 faits.* 
+*1 à faire · 8 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -259,7 +259,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 183 | Le scoring battle royale validé | — |
 | [x] | 184 | Rocket League : buts, passes, arrêts | — |
 | [x] | 179 | Ajouter Overwatch au catalogue | ½ nuit |
-| [ ] | 180 | Laisser déclarer un jeu absent, et compter les demandes | 1 nuit |
+| [x] | 180 | Laisser déclarer un jeu absent, et compter les demandes | — |
 | [x] | 185 | Surveiller si un jeu paie deux fois plus qu'un autre | — |
 | [x] | 176 | Tester TFT, jamais vérifié — **vérifié : place 1 / 4 / 8 sur huit joueurs rend 0, 19 et 43 points, le champ est borné à huit, et l'écran le dit** | — |
 | [ ] | 187 | Les quatre logos manquants | à toi |
