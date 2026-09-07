@@ -1188,6 +1188,88 @@ la même série vivent dans `lecture-ecran`, donc invisibles par construction �
 c'est même la raison pour laquelle ils avaient vieilli sans que personne le
 remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
 
+### Campagne du 7 septembre au soir : soixante-treize kilo-octets apparus en V460
+Passée après dix versions, V460 à V469, sur un compte semé à soixante parties.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**aucune page laissée de côté**. C'est le second chiffre qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/fr/settings` | 156 ms | 960 ms | 0,000 | la mention Riot, en pied |
+| `/fr/bilan` | 264 ms | **2120 ms** | 0,000 | l'image de saison |
+| `/fr/dashboard` | 268 ms | 1120 ms | 0,000 | le bandeau d'attente Riot |
+| `/fr/telechargement` | 448 ms | 1084 ms | 0,000 | le paragraphe de détection |
+| `/fr/cgu` | 456 ms | 1104 ms | 0,000 | le premier paragraphe |
+| `/fr/confidentialite` | 468 ms | 1140 ms | 0,000 | le titre |
+| `/fr/calculateur/league-of-legends` | 472 ms | 1124 ms | 0,000 | le titre |
+| `/fr/login` | 472 ms | 1144 ms | 0,000 | la mention des CGU |
+| `/fr/history` | 500 ms | 1284 ms | 0,000 | le titre |
+| `/fr/beta` | 516 ms | 1112 ms | 0,000 | « Un pseudo suffit » |
+| `/fr` | 992 ms | 1312 ms | 0,000 | « Comment ça marche » |
+
+Les onze sont dans les seuils sur les deux mesures, CLS 0,000 partout.
+`/fr/bilan` à 2120 ms est le plancher déjà écrit trois fois — son plus grand
+élément est l'image de saison, et le compte est semé, donc **cette fois le
+chiffre est comparable** aux 2096, 2128 et 2216 des campagnes précédentes. La
+campagne du matin annonçait 908 ms sur un compte neuf, qui n'a pas d'image :
+les deux ne se comparent pas, et c'était déjà écrit.
+
+**Et le poids du JavaScript a bougé, lui.** Le tableau de bord relevait 379 ko
+aux deux dernières campagnes ; il en relève 453.
+
+| page | V459 | V469 |
+|---|---|---|
+| `/` | 189 ko | 190 ko |
+| `/settings` | 287 ko | 287 ko |
+| `/cgu` | 181 ko | **254 ko** |
+| `/history` | 232 ko | **305 ko** |
+| `/dashboard` | 379 ko | **453 ko** |
+
+**C'est réel, et c'est mesuré des deux côtés** : même outil, même compte semé,
+même machine, V459 reconstruite exprès et relevée DEUX fois à 379 ko / 28
+fragments, contre 453 ko / 31 fragments. Le bisect donne V460 — la version qui
+a rendu cent cinquante pages prérendues en sortant `headers()` de la frontière
+404 de la racine. V460 et V461 relèvent déjà 452.
+
+**Trois fragments de plus** : 48 ko, 25 ko et 8 ko, moins un de 7. Le fragment
+de 48 ko porte du texte de dictionnaire. Et l'écart est le MÊME — soixante-treize
+kilo-octets — sur des pages aussi différentes qu'un document juridique et le
+tableau de bord, ce qui écarte un simple redécoupage : ce n'est pas du code
+déplacé d'un fragment à l'autre, c'est du code qui arrive là où il n'était pas.
+
+**La cause n'est PAS nommée, et c'est écrit tel quel plutôt que deviné.** Deux
+hypothèses ont été essayées et DÉMENTIES par la mesure :
+
+- `routesPubliques.ts` importe `CHEMIN_INTROUVABLE` depuis `pagesConnues.ts`,
+  qui développe le catalogue des jeux — et `routesPubliques` est lu par `Nav`,
+  qui est client et rendu sur chaque page. La chaîne est réelle. Sortir la
+  constante dans son propre module ne change **rien** : 452 ko avant comme
+  après. Le changement a donc été retiré, parce qu'un module créé pour une
+  raison démentie est un module sans raison ;
+- un redécoupage global des fragments, que l'égalité des écarts écarte.
+
+`CorpsIntrouvable` est un composant SERVEUR — vérifié, pas supposé — donc il ne
+part pas au navigateur par lui-même.
+
+Ce qui reste à faire est de NOMMER le fragment de 48 ko en comparant son
+contenu entre les deux constructions, pas d'essayer une troisième hypothèse.
+C'est la règle de ce fichier : quand on ne sait pas nommer la cause, on
+instrumente avant la deuxième tentative — et j'en ai essayé deux.
+
+**Ce que ça ne remet pas en cause** : aucun temps d'affichage n'a bougé, les
+onze pages sont dans les seuils, et le CLS est nul partout. Soixante-treize
+kilo-octets sur un forfait mobile, ça se compte autrement qu'en millisecondes —
+c'est pour ça que ça figure ici au lieu d'être arrondi.
+
+**Dépendances du 7 septembre au soir** : `npm audit` rend les deux mêmes
+vulnérabilités `mysql2`, inatteignables et gardées par
+`src/dependanceMysql.test.ts` ; **zéro côté application de bureau**. Rien à
+mettre à jour : tout ce qui est en retard l'est d'une MAJEURE — `typescript` 7,
+`eslint` 10, `@types/node` 26, `@libsql/client` 0.18 — ou d'une version
+candidate, `prisma` 8. Donc **aucune version d'application de bureau à
+publier**.
+
 ### « 15360 / 25000 » sur chaque écran, et le garde qui ne pouvait pas exister
 Trouvé en balayant cinq écrans en japonais et en chinois sur un compte à
 **mille neuf cent vingt parties et quinze mille trois cent soixante points** —
