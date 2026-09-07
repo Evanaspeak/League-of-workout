@@ -122,29 +122,54 @@ page.on("response", (r) => {
   });
 });
 
-/** Ce que le navigateur dit avoir reçu, url par url. */
+/**
+ * Ce que le navigateur dit avoir reçu, url par url.
+ *
+ * **Séparé en deux, et c'est la correction du 7 septembre au soir.** Le
+ * routeur de Next PRÉCHARGE les routes liées depuis la navigation : sur le
+ * tableau de bord, les fragments de `/settings`, `/history` et `/amis`
+ * arrivent une seconde après le `load`, et ils étaient comptés dans le poids
+ * de la page. Le journal portait « 453 ko » pour le tableau de bord ; il en
+ * charge 228, et préchargé 228 de plus.
+ *
+ * Le piège est écrit dans ce journal depuis la campagne du 23 août — « prendre
+ * un préchargement pour un chargement » — et cet outil y tombait encore. La
+ * conséquence est allée plus loin qu'un chiffre : les soixante-treize
+ * kilo-octets « apparus en V460 » sont ENTIÈREMENT du préchargement, apparu
+ * parce que cette version a rendu cent cinquante pages prérendues et que le
+ * routeur ne préchargeait pas les routes dynamiques.
+ *
+ * Ce qui distingue les deux est l'INSTANT : une ressource demandée après la
+ * fin du `load` n'a pas été chargée par la page.
+ */
 async function poidsReels() {
-  const mesures = await page.evaluate(() =>
-    performance.getEntriesByType("resource").map((e) => ({
+  const mesures = await page.evaluate(() => {
+    const fin = performance.getEntriesByType("navigation")[0]?.loadEventEnd ?? 0;
+    return performance.getEntriesByType("resource").map((e) => ({
       url: e.name,
       // `encodedBodySize` est le corps compressé, hors en-têtes ; c'est le
       // chiffre qui compte pour un réseau lent.
       taille: e.encodedBodySize || e.transferSize || 0,
-    })));
+      apresLoad: fin > 0 && e.startTime > fin,
+    }));
+  });
   const parNature = new Map();
+  const precharge = new Map();
   const vues = new Set();
-  for (const { url, taille } of mesures) {
+  for (const { url, taille, apresLoad } of mesures) {
     vues.add(url);
     const connu = parUrl.get(url);
     const nature = connu?.type ?? "autre";
-    parNature.set(nature, (parNature.get(nature) ?? 0) + Math.max(taille, connu?.entete ?? 0));
+    const poids = Math.max(taille, connu?.entete ?? 0);
+    const ou = apresLoad ? precharge : parNature;
+    ou.set(nature, (ou.get(nature) ?? 0) + poids);
   }
   // Ce que l'API de chronométrage n'a pas vu (le document lui-même, entre
   // autres) garde la taille annoncée par son en-tête.
   for (const [url, { type, entete }] of parUrl) {
     if (!vues.has(url) && entete > 0) parNature.set(type, (parNature.get(type) ?? 0) + entete);
   }
-  return parNature;
+  return { parNature, precharge };
 }
 
 await page.addInitScript((__compte) => {
@@ -225,8 +250,9 @@ const nav = await page.evaluate(() => {
 });
 
 const ko = (o) => `${Math.round(o / 1024)} ko`;
-const parNature = await poidsReels();
+const { parNature, precharge } = await poidsReels();
 const total = [...parNature.values()].reduce((a, b) => a + b, 0);
+const totalPrecharge = [...precharge.values()].reduce((a, b) => a + b, 0);
 
 console.log(`\n═══ ${CHEMIN}`);
 console.log(`  LCP           ${Math.round(m.lcp)} ms      (bon en dessous de ${SEUILS.lcp})`);
@@ -240,6 +266,15 @@ console.log(`  Requêtes      ${requetes}`);
 console.log(`  Transféré     ${ko(total)}`);
 for (const [nature, poids] of [...parNature.entries()].sort((a, b) => b[1] - a[1])) {
   if (poids > 0) console.log(`    ${nature.padEnd(12)} ${ko(poids)}`);
+}
+if (totalPrecharge > 0) {
+  // Ce que le routeur va chercher APRÈS le load, pour que le clic suivant
+  // soit instantané. Ça coûte de la bande passante et ça ne retarde pas cette
+  // page-ci : les deux chiffres ne se confondent pas.
+  console.log(`  Préchargé     ${ko(totalPrecharge)}   (après le load, pour les pages liées)`);
+  for (const [nature, poids] of [...precharge.entries()].sort((a, b) => b[1] - a[1])) {
+    if (poids > 0) console.log(`    ${nature.padEnd(12)} ${ko(poids)}`);
+  }
 }
 
 const soucis = [];

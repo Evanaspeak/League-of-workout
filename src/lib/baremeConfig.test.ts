@@ -102,4 +102,45 @@ describe("le barème", () => {
       expect(b.levelConfigs).toEqual(PALIERS);
     });
   });
+
+  it("ni un barème à qui il manque la MAÎTRISE", () => {
+    /**
+     * Le cas que le contrôle précédent laissait passer, et il a rendu la CI
+     * rouge sur V495.
+     *
+     * Le semis écrit les trois tables l'une après l'autre. Une lecture qui
+     * tombe ENTRE les paliers et la maîtrise voit deux tables pleines et la
+     * troisième nulle : l'ancienne condition ne regardait que les deux
+     * premières, donc elle gelait cet état soixante secondes. Tout
+     * enregistrement de partie rendait alors « Config manquante » sur une base
+     * pourtant semée, et le message envoyait chercher une panne inexistante.
+     *
+     * Trois lectures du barème ne sèment pas — la page du tableau de bord,
+     * `/api/settings` et `/api/dashboard` — donc n'importe laquelle peut
+     * ouvrir la fenêtre. Le garde vit ici plutôt que chez elles : il ferme le
+     * cas pour toutes, y compris pour celle qu'on ajoutera demain.
+     */
+    return neuf().then(async ({ chargerBareme }) => {
+      base.masteryConfig.findFirst.mockResolvedValue(null);
+      const partiel = await chargerBareme();
+      expect(partiel.masteryConfig).toBeNull();
+
+      base.masteryConfig.findFirst.mockResolvedValue({ id: 1, surchargeMax: 0.5, partiesPourMax: 100 });
+      const complet = await chargerBareme();
+      // Relu, et non servi depuis le cache : sinon la maîtrise resterait nulle
+      // pendant une minute.
+      expect(base.masteryConfig.findFirst).toHaveBeenCalledTimes(2);
+      expect(complet.masteryConfig?.partiesPourMax).toBe(100);
+    });
+  });
+
+  it("et met bien en cache un barème COMPLET", () => {
+    // Le témoin : sans lui, un garde qui refuserait de mettre en cache quoi
+    // que ce soit passerait les deux contrôles ci-dessus en ne gardant rien.
+    return neuf().then(async ({ chargerBareme }) => {
+      await chargerBareme();
+      await chargerBareme();
+      expect(base.masteryConfig.findFirst).toHaveBeenCalledTimes(1);
+    });
+  });
 });

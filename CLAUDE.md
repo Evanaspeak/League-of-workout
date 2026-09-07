@@ -1839,6 +1839,117 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### « Config manquante » sur une base semée : le cache gardait un barème à qui il manquait un tiers
+V495 est partie ROUGE, et c'est la lecture de sa CI qui l'a dit — un tronçon
+sur six, le premier test du premier fichier, avec **500 `{"error":"Config
+manquante"}`** sur l'enregistrement d'une partie.
+
+**Le semis était pourtant en place**, et il l'est depuis la correction écrite
+plus bas (« Sur une base neuve, la première partie enregistrée tombait ») :
+`/api/games` appelle `seedDefaults()` avant de lire le barème. Ce n'est pas lui
+qui a lâché.
+
+**C'est le CACHE, et la faute est écrite dans son propre commentaire.** Il
+refusait de garder un barème VIDE — et il gardait un barème INCOMPLET :
+
+```ts
+if (levelConfigs.length > 0 && roleWeights.length > 0) {   // la maîtrise manque
+```
+
+Le semis écrit les trois tables l'une après l'autre. Une lecture qui tombe
+ENTRE les paliers et la maîtrise voit deux tables pleines et la troisième
+nulle, et **gèle cet état soixante secondes**. Tout enregistrement de partie
+rend alors « Config manquante » pendant une minute, sur une base parfaitement
+semée — et le message envoie chercher une panne qui n'existe pas.
+
+**C'est le même défaut, un fichier plus loin, que celui déjà corrigé dans la
+route** : « un contrôle qui en oublie un sur trois ne protège pas d'un tiers
+moins, il ne protège pas du cas qui arrive ». Il avait été corrigé côté
+route ; le cache, écrit après, l'a réintroduit.
+
+**Trois lectures du barème ne sèment pas** — la page du tableau de bord,
+`/api/settings` et `/api/dashboard` — donc n'importe laquelle peut ouvrir la
+fenêtre. Le garde vit dans le cache plutôt que chez elles : il ferme le cas
+pour toutes, y compris pour celle qu'on ajoutera demain.
+
+**Pourquoi ce fichier-là, et pourquoi maintenant.** `e2e/bilan.spec.ts` passe
+en premier dans l'ordre alphabétique du premier tronçon, et c'est le seul
+parcours qui ÉCRIT sans avoir chargé d'écran auparavant. Le journal le note
+déjà, à l'entrée de la base neuve : c'est lui qui rencontre les états que
+personne d'autre ne voit.
+
+**Reproduction locale : une fois sur deux.** Base créée, migrations
+appliquées, le fichier joué seul — la première exécution tombe, la seconde
+passe, et les tables sont alors semées. C'est une course, donc elle se garde
+par un test unitaire et non par une relance : deux sabotages, deux échecs, plus
+un témoin qui refuse qu'un garde cesse de mettre en cache quoi que ce soit.
+
+### Un préchargement n'est pas un chargement, et l'outil comptait les deux
+Le journal porte, depuis la campagne du 23 août, le piège « prendre un
+préchargement pour un chargement » — écrit à propos de `performance.mjs`, et
+sur cet outil-là précisément. Il y tombait encore, et le chiffre le plus cité
+de ces deux nuits en dépendait.
+
+**`poidsReels()` prenait TOUTES les entrées de chronométrage.** Le routeur de
+Next va chercher les routes liées depuis la navigation APRÈS le `load` : sur
+le tableau de bord, les fragments de `/settings`, `/history` et `/amis`
+arrivent une seconde plus tard. Comptés dans le poids de la page, ils
+gonflaient le chiffre de plus du double.
+
+| écran | au `load` | préchargé ensuite | ce que le journal annonçait |
+|---|---|---|---|
+| `/dashboard` | **228 ko** | 228 ko | 453 à 456 ko |
+| `/history` | 200 ko | 109 ko | 305 à 309 ko |
+| `/settings` | 257 ko | 34 ko | 287 à 291 ko |
+| `/bilan` | 220 ko | 75 ko | 295 ko |
+
+**Et la conséquence va plus loin qu'un chiffre : les soixante-treize
+kilo-octets « apparus en V460 » sont ENTIÈREMENT du préchargement.** Mesuré
+des deux côtés, même compte semé, même machine :
+
+| | V459 au `load` | V495 au `load` | V459 tout compris | V495 tout compris |
+|---|---|---|---|---|
+| `/dashboard` | 227 ko | **228 ko** | 380 ko | 456 ko |
+| `/history` | 199 ko | **200 ko** | 232 ko | 309 ko |
+| `/settings` | 254 ko | **257 ko** | 287 ko | 291 ko |
+| `/bilan` | 218 ko | **220 ko** | 218 ko | 295 ko |
+
+**Ce que les pages chargent n'a pas bougé de plus de trois kilo-octets en
+trente-six versions.** Ce qui a changé est le PRÉCHARGEMENT, et le mécanisme
+se déduit de ce que V460 a fait : elle a rendu cent cinquante pages
+prérendues, et le routeur ne préchargeait pas les routes dynamiques. `/bilan`
+en est la démonstration la plus nette — zéro préchargement en V459, soixante-dix-sept
+kilo-octets en V495, pour un chargement identique.
+
+**Ce n'est donc pas une régression, c'est le routeur qui fait son travail** :
+il paie de la bande passante après le `load` pour rendre le clic suivant
+instantané. L'échange se discute — il se paie sur un forfait mobile — mais
+c'est une autre question que celle qu'on croyait avoir.
+
+**Comment le défaut a été trouvé, et ce que ça apprend.** Je cherchais ce que
+pesaient les fragments de `/bilan`, et j'ai identifié un fragment de 159 482
+octets ne contenant QUE le dictionnaire des réglages, servi au tableau de
+bord — qui n'a aucune chaîne d'import vers lui. C'était une belle trouvaille,
+et elle était fausse : ce fragment est demandé à 1 582 ms, une seconde après
+un `load` qui finit à 575 ms. C'est le préchargement de `/settings` depuis la
+barre de navigation.
+
+**Le témoin de l'ancienne identification ne tenait pas non plus.** L'entrée de
+V469 nommait « le dictionnaire des CGU chargé par le tableau de bord ».
+Vérifié sur les deux constructions, avec une chaîne unique au dictionnaire des
+CGU : il n'y est ni en V459 ni en V495. Le marqueur employé alors devait être
+ambigu — « Datenschutz » figure aussi dans le dictionnaire de connexion, et
+c'est exactement le faux positif que j'ai commis en refaisant la mesure.
+
+`src/scriptsMesure.test.ts` garde la distinction. Et il a fallu QUATRE jets
+pour qu'il morde : les trois premiers cherchaient les MOTS — `loadEventEnd`,
+`apresLoad`, `precharge` — que chaque sabotage laisse en place, dans le code
+comme dans le commentaire qui l'explique. Il lit la source privée de ses
+commentaires, exige que la frontière soit DÉRIVÉE de la fin du `load` (le mot
+figure ailleurs dans le fichier, pour le temps de chargement affiché), que le
+résultat AIGUILLE vers deux totaux, et que le second soit rendu. Quatre
+sabotages, quatre échecs.
+
 ### `/bilan` franchit le seuil à l'échelle du propriétaire, et la correction évidente ne change rien
 Campagne refaite sur un compte SEMÉ — 1 920 parties, 15 360 points de dette,
 vingt et un paiements — parce que la campagne de V492 tournait sur un compte
@@ -1887,9 +1998,12 @@ commentaire promettait une explication fausse.
 | tel quel | 1 384 ms | 2 614 ms | **2 628 ms** |
 | fragments JS bloqués | 1 066 ms | 1 472 ms | **1 496 ms** |
 
-C'est donc la BANDE PASSANTE : 295 ko de JavaScript et 58 ko d'image se
-partagent un tuyau à 1,6 Mb/s, et l'image attend son tour. Le seul levier est
-d'envoyer moins d'octets.
+C'est donc la BANDE PASSANTE : le JavaScript et l'image se partagent un tuyau
+à 1,6 Mb/s, et l'image attend son tour. Le seul levier est d'envoyer moins
+d'octets. *(Le chiffre de 295 ko écrit ici d'abord comptait les
+préchargements : `/bilan` en CHARGE 220 et en précharge 75. La conclusion ne
+bouge pas — c'est la mesure fragments bloqués qui la porte — mais le nombre,
+si. Voir l'entrée suivante.)*
 
 **Accessibilité sur le compte semé : 0 constat**, quinze pages en français
 et en allemand, aucune page laissée de côté. Mille neuf cent vingt lignes
@@ -2552,6 +2666,10 @@ L'adresse a été rendue à son compte à chaque fois, la restitution étant dan
 `finally` et vérifiée par une relecture.
 
 ### Campagne du 7 septembre au soir : soixante-treize kilo-octets apparus en V460
+**DÉMENTI, le 7 septembre à 23 h 55 : ces soixante-treize kilo-octets sont du
+PRÉCHARGEMENT, et non le poids de la page.** Voir « Un préchargement n'est pas
+un chargement » en tête de journal. Ce qui suit décrit fidèlement ce que
+l'outil montrait, et l'outil comptait les deux ensemble.
 Passée après dix versions, V460 à V469, sur un compte semé à soixante parties.
 
 **Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et

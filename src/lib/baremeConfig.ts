@@ -44,14 +44,30 @@ export async function chargerBareme(): Promise<Bareme> {
 
   const valeurs: Bareme = { roleWeights, levelConfigs, masteryConfig };
   /**
-   * Un barème vide ne se met pas en cache.
+   * Un barème INCOMPLET ne se met pas en cache, et pas seulement un barème
+   * vide.
    *
    * Sur une base neuve, l'amorçage n'a pas encore eu lieu au premier appel :
    * garder ce vide pendant une minute ferait échouer tout ce qui calcule un
    * score, et le message serait « Config manquante » sur une base parfaitement
    * semée quelques millisecondes plus tard.
+   *
+   * **La maîtrise manquait à ce contrôle**, et c'est le même défaut que celui
+   * déjà corrigé un fichier plus loin, dans `/api/games` : « un contrôle qui
+   * en oublie un sur trois ne protège pas d'un tiers moins, il ne protège pas
+   * du cas qui arrive ». Le semis écrit les trois tables l'une après l'autre ;
+   * une lecture qui tombe ENTRE les paliers et la maîtrise voyait deux tables
+   * pleines et la troisième nulle, et gelait cet état soixante secondes. Tout
+   * enregistrement de partie rendait alors « Config manquante » pendant une
+   * minute, sur une base pourtant semée.
+   *
+   * Le cas n'est pas théorique : il a rendu la CI rouge sur V495, sur le
+   * premier test du premier tronçon, celui qui écrit sans avoir chargé
+   * d'écran auparavant. Et trois lectures du barème ne sèment pas — la page du
+   * tableau de bord, `/api/settings` et `/api/dashboard` — donc n'importe
+   * laquelle peut ouvrir la fenêtre.
    */
-  if (levelConfigs.length > 0 && roleWeights.length > 0) {
+  if (levelConfigs.length > 0 && roleWeights.length > 0 && masteryConfig) {
     cache = { valeurs, expire: Date.now() + TTL_MS };
   }
   return valeurs;
