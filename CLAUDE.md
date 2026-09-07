@@ -1839,6 +1839,60 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### Campagne de clôture du 7 septembre, après V487 à V491 — et les dix-huit pixels du banc d'essai
+Comparaison de rendu passée entre V486 et la tête, sur un compte de mesure
+neuf. Trente-neuf captures, huit pages, trois largeurs. **Dix différentes, et
+neuf sont les trois panneaux ajoutés.**
+
+**Les bandes ont été LUES, pas supposées** — c'est la règle de cet outil, et
+elle est ce qui distingue un constat d'une hypothèse :
+
+| capture | ce qui occupe les bandes | version |
+|---|---|---|
+| `settings-effort` ×3 | « Vibrer à chaque répétition », sa phrase, ses deux boutons, et le mur des records qu'ils décalent | V491 |
+| `settings-corps` ×3 | « La photo avant-après » et ce qu'elle décale | V489 |
+| `settings-jeux` ×3 | « Un jeu manque ? », son champ et son bouton | V488 |
+
+Les trois rubriques ont GRANDI — 3 393 → 3 553, 997 → 1 090, 1 137 → 1 267 —
+ce qui est cohérent avec un panneau ajouté et exclut un déplacement.
+
+**La dixième est l'OUTIL, et elle a été mesurée plutôt que devinée.**
+`360_fr.png` diffère de dix-huit pixels, en deux bandes de trois et deux
+lignes, dans la barre de navigation — « Mon espace » et « FR ». Le geste qui
+tranche est celui écrit ici la veille : copier le dossier `apres`, relancer,
+comparer les deux copies. **La même construction comparée à elle-même rend les
+mêmes dix-huit pixels, aux mêmes ordonnées, avec un écart de canal de 4 sur
+255.** C'est de l'anticrénelage, invisible à l'œil, et ce n'est pas une
+régression.
+
+Elle n'est PAS ajoutée aux pages instables, et c'est délibéré : une page
+déclarée instable cesse d'être comparée, et `/` est la plus visitée du
+produit. Le chiffre est écrit ici pour qu'une prochaine différence de dix-huit
+pixels sur cette capture se reconnaisse au lieu de se chercher.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**aucune page laissée de côté** (quinze « rien à signaler » par langue). C'est
+le second chiffre qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 128 ms | 932 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 132 ms | 908 ms | 0,000 | la mention Riot, en pied |
+| `/history` | 148 ms | 908 ms | 0,000 | la mention Riot, en pied |
+| `/amis` | 244 ms | 1112 ms | 0,029 | le paragraphe du classement |
+| `/dashboard` | 256 ms | 1128 ms | 0,003 | le bandeau d'attente Riot |
+
+**Ce que ce tableau NE dit pas**, et qu'il serait facile de lui faire dire :
+`/bilan` à 908 ms n'est pas un gain sur les 2 092 ms de la campagne
+précédente. Le compte de mesure est NEUF, donc il n'a pas d'image de saison —
+et c'est elle qui portait ces deux secondes. C'est écrit quatre fois dans ce
+journal, et ça reste vrai.
+
+**Le poids du JavaScript a bougé de ce qu'on attendait** : les réglages
+passent de 287 à 291 ko (trois panneaux de plus dans la même page), le tableau
+de bord de 453 à 454. Rien à voir avec les soixante-treize kilo-octets de
+V460, qui restent la seule anomalie ouverte de cette série.
+
 ### La vibration à chaque répétition, et le réglage qui ne peut pas vivre sur le compte
 Ligne 207 du plan, réponse « En option ». Ce qu'elle demande est petit ; ce
 qu'elle a obligé à décider l'est moins.
