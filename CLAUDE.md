@@ -1200,6 +1200,15 @@ Vérifié à l'écran dans quatre langues : « Une dette qui court ne s'efface p
 toute seule », « Eine laufende Schuld löscht sich nicht von selbst »,
 「溜まった負債は放っておいても消えません。」,「拖着的欠账不会自己消失。」
 
+**Et le témoin public est arrivé en vingt-trois minutes.** Fusion à 18 h 13
+heure française, « Gesendete Benachrichtigungen » présent sur
+`/de/confidentialite` à 18 h 36, `x-vercel-cache: HIT`. C'est la deuxième
+mesure depuis que les pages publiques sont prérendues, après les moins de deux
+minutes relevées la veille — contre au moins 2 h 40, puis 66 à 84 minutes,
+puis 59 minutes quand elles étaient rendues à la demande. Deux mesures ne font
+pas une loi, mais elles vont dans le même sens et c'est la page prérendue qui
+les porte toutes les deux.
+
 **Trois pièges d'outillage dans la même heure, tous les trois chez moi.**
 
 - **La sonde posait `low_visite_vue` là où la clé est `low_visite:<uid>`.** La
