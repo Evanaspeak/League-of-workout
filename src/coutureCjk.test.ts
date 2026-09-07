@@ -36,8 +36,19 @@ const A_COUTURE: { nom: string; rendre: (l: "zh" | "ja", v: string) => string }[
   { nom: "enJeu.aFaire", rendre: (l, v) => (enJeu as never as Record<string, { aFaire(v: string): string }>)[l].aFaire(v) },
   { nom: "enJeu.rappelMaintenant", rendre: (l, v) => (enJeu as never as Record<string, { rappelMaintenant(v: string): string }>)[l].rappelMaintenant(v) },
   { nom: "dashboard.plafondCorps", rendre: (l, v) => (dashboard as never as Record<string, { plafondCorps(a: string, b: string): string }>)[l].plafondCorps(v, v) },
-  { nom: "notifications.seuil", rendre: (l, v) => textesNotification(l).seuil(v).corps },
-  { nom: "notifications.matin", rendre: (l, v) => textesNotification(l).matin(v).corps },
+  /**
+   * Les DEUX notifications à durée, dans leurs TROIS formulations.
+   *
+   * Depuis la ligne 100 du plan, chaque notification en porte trois et le jour
+   * choisit. N'éprouver que celle d'aujourd'hui laisserait deux textes sur
+   * trois sans garde de couture — c'est-à-dire une espace latine au milieu
+   * d'idéogrammes deux matins sur trois, sur le seul message que le produit
+   * envoie de lui-même. Les trois jours ci-dessous couvrent les trois rangs.
+   */
+  ...["2026-09-07", "2026-09-08", "2026-09-09"].flatMap((jour) => [
+    { nom: `notifications.seuil@${jour}`, rendre: (l: "zh" | "ja", v: string) => textesNotification(l, jour).seuil(v).corps },
+    { nom: `notifications.matin@${jour}`, rendre: (l: "zh" | "ja", v: string) => textesNotification(l, jour).matin(v).corps },
+  ]),
   /**
    * Et les neuf clés de l'écran des amis.
    *
