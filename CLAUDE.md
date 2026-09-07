@@ -1246,6 +1246,13 @@ des campagnes précédentes. **Le tableau de bord relève 453 ko de JavaScript**
 c'est-à-dire exactement ce que la campagne d'après V469 relevait : aucune des
 quatre versions n'a alourdi quoi que ce soit.
 
+**Et les cinq écrans connectés relus à 320 px**, en allemand et en japonais,
+sur le compte semé : **débordement nul partout**, et aucun libellé coupé par
+une ellipse. C'est la largeur la plus étroite du produit dans la langue la plus
+longue, donc le pire cas ; le sweep des coutures et des nombres bruts sur les
+dix écrans ne rend rien non plus, en dehors des dates mises en forme, que son
+motif prend pour des nombres à quatre chiffres.
+
 **Dépendances, troisième passage de la journée** : les deux mêmes
 vulnérabilités `mysql2`, inatteignables et gardées ; **zéro côté application de
 bureau**. Tout ce qui est en retard l'est d'une MAJEURE — `typescript` 7,
