@@ -89,6 +89,33 @@ describe("et il dit ce qu'il n'a pas regardé", () => {
     expect(SRC).toMatch(/process\.exit\(1\)/);
   });
 
+  it("ne signale pas un nombre que la langue écrit DÉJÀ sans séparateur", () => {
+    /**
+     * L'espagnol ne groupe pas à quatre chiffres.
+     *
+     * Le motif seul y rendait quatre faux positifs sur le tableau de bord —
+     * « Paga 2000 puntos », « 0 / 2000 », « Objetivo: 1000 » — tous sur des
+     * nombres parfaitement passés par `Intl`. Un garde qui crie sur ce qui va
+     * bien finit par ne plus se lire.
+     *
+     * Le fait est vérifié auprès de l'AUTORITÉ, pas recopié : c'est `Intl`
+     * qui décide, ici comme dans l'outil.
+     */
+    expect(new Intl.NumberFormat("es").format(2000)).toBe("2000");
+    expect(new Intl.NumberFormat("es").format(10000)).not.toBe("10000");
+    expect(new Intl.NumberFormat("fr").format(2000)).not.toBe("2000");
+
+    // L'outil DEMANDE à Intl au lieu de porter un plancher par langue : une
+    // liste vieillirait, `Intl` non.
+    expect(SRC).toMatch(
+      /function ecritAutrement\([\s\S]{0,500}new Intl\.NumberFormat\(langue\)[\s\S]{0,80}!==/,
+    );
+    // Et c'est bien ELLE qui décide, pas le motif seul — le retour à la forme
+    // naïve est ce que ce contrôle existe pour attraper.
+    expect(SRC).toMatch(/else if \(ecritAutrement\(t, LANGUE\)\)/);
+    expect(SRC).not.toMatch(/else if \(BRUT\.test\(t\)\)/);
+  });
+
   it("sépare les pages NON MESURÉES du total des constats", () => {
     /**
      * Le contrôle porte sur le BRANCHEMENT, pas sur la présence des mots.

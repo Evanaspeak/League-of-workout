@@ -1166,6 +1166,93 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Paga 2000 puntos » : quatre faux positifs, et c'était le garde qui avait tort
+Le balayage des coutures rendait **quatre constats en espagnol** sur le tableau
+de bord, et zéro dans les cinq autres langues : « Paga 2000 puntos de
+esfuerzo », « 0 / 2000 », « Objetivo: 1000 », « 480 / 1000 · queda 520 ».
+
+**Aucun n'était un défaut.** `Intl.NumberFormat("es").format(2000)` rend
+« 2000 » : **l'espagnol ne groupe pas à quatre chiffres**, et il écrit
+« 10.000 » à cinq. Les quatre nombres étaient donc parfaitement mis en forme,
+et c'est le motif — quatre chiffres sans séparateur — qui était trop large.
+
+Le journal portait déjà le fait, à l'entrée où la dette est passée par `Intl` :
+« **1543** en espagnol, qui est juste : `Intl` n'y groupe pas les nombres à
+quatre chiffres. C'est précisément ce qu'une table écrite à la main ne saurait
+jamais. » Le constat était écrit, l'outil ne le savait pas.
+
+**La règle DEMANDE à l'autorité au lieu de porter un plancher par langue.**
+`ecritAutrement(texte, langue)` reformate le nombre trouvé et ne signale que
+s'il diffère de ce qui est écrit. Un plancher — quatre chiffres partout, cinq
+en espagnol — aurait marché aujourd'hui et vieilli comme toutes les listes ;
+`Intl` non.
+
+**Ce que ça coûte en pouvoir de détection : rien.** Un vrai nombre brut
+espagnol à cinq chiffres est toujours attrapé, puisque `Intl` l'écrirait
+« 10.000 ». Ce qui disparaît est exactement l'ensemble des textes déjà justes.
+
+**Un garde qui crie sur ce qui va bien finit par ne plus se lire** — c'est la
+raison, et elle est déjà écrite ici pour le garde du compte de jeux, qui avait
+rendu quatre faux positifs au premier jet pour la même sorte de raison.
+
+Deux sabotages, deux échecs : le retour à la forme naïve (`BRUT.test` au point
+de décision) et la règle remplacée par un plancher de longueur. Le second est
+le plus utile : il compile, il marche sur les six langues d'aujourd'hui, et il
+ment le jour où une septième langue groupe autrement.
+
+Recensement après correction : **zéro constat dans les six langues**, sur un
+compte semé à soixante parties.
+
+### Campagne de clôture du 7 septembre au soir, après V496 à V500
+Passée sur un compte de mesure semé à soixante parties, créé APRÈS la dernière
+suite navigateur — l'ordre est écrit ici depuis longtemps et il n'admet aucune
+exception.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**quinze pages réellement mesurées par langue**, aucune laissée de côté. C'est
+le second chiffre qui compte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 140 ms | 920 ms | 0,000 | la mention Riot, en pied |
+| `/amis` | 248 ms | 1120 ms | 0,014 | le paragraphe du classement |
+| `/dashboard` | 260 ms | 1136 ms | 0,000 | le bandeau d'attente Riot |
+| `/bilan` | 260 ms | **2024 ms** | 0,000 | l'image de saison |
+| `/history` | 532 ms | 1120 ms | 0,000 | le titre |
+
+Les cinq sont dans les seuils. `/bilan` reste le plancher pour la raison écrite
+six fois — son plus grand élément est l'image de saison — et **le chiffre se
+compare à son échelle** : 2 024 ms ici contre 2 096, 2 120, 2 128, 2 216 et
+2 332 sur des comptes semés comparables, et contre les 2 596 à 2 668 relevés à
+mille neuf cent vingt parties. Aucune des cinq versions n'a coûté de temps
+d'affichage.
+
+**Dépendances, troisième passage de la journée** : les deux mêmes
+vulnérabilités `mysql2`, inatteignables et gardées ; **zéro côté application de
+bureau**. Et rien à prendre : tout ce qui est en retard l'est d'une MAJEURE —
+`typescript`, `eslint`, `@types/node`, `prisma`, `next-auth`, `electron` — ou
+d'un `0.x` dont la mineure est le créneau des ruptures (`@libsql/client` 0.18).
+Donc **aucune version d'application de bureau à publier de ce fait** ; la
+0.9.16 est partie pour une autre raison, la pastille qui rougit au seuil.
+
+**Deux pièges d'outillage, tous deux chez moi, tous deux nouveaux dans leur
+forme.**
+
+- **Lire le journal d'une tâche de fond avant qu'elle n'ait rendu la main.**
+  L'audit français affichait onze pages sur quinze et aucune ligne de synthèse.
+  J'ai failli écrire que l'outil s'arrêtait à la frontière des écrans
+  connectés — il tournait encore. Relancé au premier plan : quinze pages, zéro
+  constat. C'est le piège du fichier périmé déjà écrit ici, sous une forme
+  nouvelle : ce n'est plus un fichier d'une exécution PRÉCÉDENTE, c'est celui
+  de l'exécution en cours. La parade est la même : on attend que la tâche dise
+  qu'elle a fini.
+- **`cd` persiste d'un appel à l'autre.** Un `cd desktop` posé dans une
+  commande d'audit a fait tourner le `npm outdated` SUIVANT dans
+  `desktop/` — qui a donc rendu la liste des majeures de l'application de
+  bureau en annonçant celle du site. Le résultat était plausible : une seule
+  ligne, `electron`. C'est exactement la forme d'erreur la plus coûteuse, celle
+  qui rend un chiffre normal. Refait depuis la racine, la liste en compte cinq.
+
 ### « Cinq minutes » était juste, et il manquait la moitié de la phrase
 Vérifié après la publication de la 0.9.16, par acquit de conscience :
 **dix-sept minutes** plus tard, `/fr/telechargement` annonçait encore 0.9.15.
