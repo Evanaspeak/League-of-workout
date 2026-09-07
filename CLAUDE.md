@@ -1150,6 +1150,44 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « 已于 2026年9月7日 同意 » : la date du consentement cousait, et le probe ne pouvait pas la voir
+Trouvé en lisant la rubrique « Ton profil » EN CHINOIS. La ligne qui prouve le
+consentement aux données de santé rendait 「已于 2026年9月7日 同意」 — une espace
+latine entre 「日」 et 「同意」, deux idéogrammes.
+
+**C'est la famille corrigée par V468**, et le recensement d'alors ne l'a pas
+vue : il portait sur les gabarits recevant un texte dont on ne connaît pas
+l'écriture — un pseudo, un nom de groupe. Ici la valeur est une DATE mise en
+forme par `Intl`, donc toujours en idéogrammes en chinois et en japonais : la
+couture est là pour tout le monde, comme celle du mur des records. Quatre
+gabarits, deux langues.
+
+**Et le probe automatique ne pouvait pas la trouver**, ce qui est la vraie
+leçon. Il ouvrait `/settings` sans FRAGMENT ; les rubriques y sont repliées, et
+une rubrique repliée ne rend rien. Tout le contenu de « Ton profil », « Ton
+corps », « Ton effort », « Tes jeux » et « Tes données » échappait donc au
+recensement des coutures et des nombres bruts — c'est-à-dire cinq écrans sur
+les dix que le produit compte derrière la porte.
+
+C'est le même piège que celui de la comparaison de rendu, à laquelle il avait
+fallu ajouter les rubriques pour la même raison : « la moitié de l'écran de
+réglages n'a jamais été comparée, sur aucune campagne, depuis que l'outil
+existe ». La leçon était écrite pour un outil et pas appliquée à l'autre.
+
+Le probe ouvre les six rubriques maintenant. Éprouvé dans les deux sens : sur
+la construction d'avant la correction il rend la couture dans les deux langues,
+sur celle d'après il ne rend plus rien.
+
+Deux sabotages, deux échecs. Vérifié à l'écran : 「2026年9月7日に同意」,
+「已于 2026年9月7日同意」, « Accord donné le 7 septembre 2026 ».
+
+**Dépendances du 7 septembre au soir, second passage** : `npm audit` rend les
+deux mêmes vulnérabilités `mysql2`, inatteignables et gardées par
+`src/dependanceMysql.test.ts` ; **zéro côté application de bureau**. Rien à
+prendre : tout ce qui est en retard l'est d'une MAJEURE — `typescript` 7,
+`eslint` 10, `@types/node` 26, `@types/bcryptjs` 3, `@libsql/client` 0.18,
+`electron` 44. Donc **aucune version d'application de bureau à publier**.
+
 ### Comparaison de rendu après V473–V476, et l'erreur de méthode qui a failli la fausser
 Passée entre V472 et la tête, sur un compte semé à 960 parties. Trente-neuf
 captures, huit pages, trois largeurs. **Six différentes, et les six sont les

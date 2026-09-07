@@ -1,3 +1,4 @@
+import { colleCjk } from "../cjk";
 /**
  * La demande de consentement aux données de santé, et le bloc des réglages.
  *
@@ -189,8 +190,8 @@ export const consentementSante = {
 
     blocTitre: "身体数据",
     blocSousTitre: "健康数据：你可以随时修改或撤回。",
-    consentiLe: (date: string) => `已于 ${date} 同意`,
-    refuseLe: (date: string) => `已于 ${date} 拒绝`,
+    consentiLe: (date: string) => colleCjk(`已于 ${date} 同意`),
+    refuseLe: (date: string) => colleCjk(`已于 ${date} 拒绝`),
     redemander: "给予同意",
     retirer: "撤回同意并删除",
     retirerConfirme: "删除性别、年龄、体重和身高？此操作无法撤销。",
@@ -229,8 +230,8 @@ export const consentementSante = {
 
     blocTitre: "身体データ",
     blocSousTitre: "健康データ：いつでも変更・撤回できます。",
-    consentiLe: (date: string) => `${date} に同意`,
-    refuseLe: (date: string) => `${date} に拒否`,
+    consentiLe: (date: string) => colleCjk(`${date} に同意`),
+    refuseLe: (date: string) => colleCjk(`${date} に拒否`),
     redemander: "同意する",
     retirer: "同意を撤回して削除する",
     retirerConfirme: "性別・年齢・体重・身長を削除しますか？元には戻せません。",

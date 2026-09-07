@@ -6,6 +6,7 @@ import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { amis } from "@/lib/i18n/dictionaries/amis";
+import { consentementSante } from "@/lib/i18n/dictionaries/consentementSante";
 import { textesBilan } from "@/lib/i18n/courriels";
 import { dureeLocalisee } from "@/lib/i18n/duree";
 import { etiquetteLocale } from "@/lib/i18n/langues";
@@ -52,6 +53,23 @@ const A_COUTURE: { nom: string; rendre: (l: "zh" | "ja", v: string) => string }[
     nom: `amis.${cle}`,
     rendre: (l: "zh" | "ja", v: string) =>
       (amis as never as Record<string, Record<string, (p: string) => string>>)[l][cle](v),
+  })),
+  /**
+   * La date du consentement santé, dans les deux sens.
+   *
+   * `consentiLe` et `refuseLe` reçoivent un jour mis en forme par `Intl`, donc
+   * 「2026年9月7日」 en chinois et en japonais : la couture est là quel que
+   * soit le compte, comme celle du mur des records. Trouvée en lisant la
+   * rubrique « Ton profil » EN CHINOIS — 「已于 2026年9月7日 同意」 — et le
+   * recensement automatique ne pouvait pas la voir : il ouvre `/settings`
+   * sans FRAGMENT, donc la rubrique reste repliée.
+   */
+  ...([
+    "consentiLe", "refuseLe",
+  ] as const).map((cle) => ({
+    nom: `consentementSante.${cle}`,
+    rendre: (l: "zh" | "ja", v: string) =>
+      (consentementSante as never as Record<string, Record<string, (d: string) => string>>)[l][cle](v),
   })),
   /**
    * Le sujet du bilan hebdomadaire, qui part par COURRIEL.
