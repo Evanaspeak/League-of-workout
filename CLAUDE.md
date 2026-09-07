@@ -228,9 +228,18 @@ Procédure :
 **Les étiquettes git ne servent pas ici** : `git push --tags` échoue côté
 proxy. Le déclenchement se fait à la main, jamais par `desktop-v*`.
 
-**Le bouton de téléchargement met cinq minutes à suivre.** `dernierInstalleur`
-lit l'API GitHub avec `revalidate: 300` : la page reste statique, et le retard
-après une publication est borné. Il était d'une heure, ce qui allait tant qu'on
+**Le bouton de téléchargement met cinq minutes à suivre — et il faut UNE
+requête pour les déclencher.** `dernierInstalleur` lit l'API GitHub avec
+`revalidate: 300` : la page reste statique, et le retard après une publication
+est borné. Mais la régénération est un *stale-while-revalidate* — **le premier
+visiteur après la fenêtre reçoit encore l'ANCIENNE page**, et c'est sa requête
+qui déclenche la reconstruction en arrière-plan ; le suivant a la nouvelle.
+Mesuré après la 0.9.16 : dix-sept minutes plus tard, le premier appel rendait
+0.9.15, le second 0.9.16 avec `age: 13`. Sur un site à faible trafic, « le
+premier visiteur après la fenêtre » peut arriver des heures plus tard, et c'est
+lui qui paie. Le geste qui l'évite coûte deux secondes, et il fait partie de la
+publication : `curl -s -A "Mozilla/5.0" https://winorworkout.com/fr/telechargement
+> /dev/null` deux fois, cinq minutes après la release. Il était d'une heure, ce qui allait tant qu'on
 publiait une fois par mois. Les copies déjà installées, elles, se mettent à
 jour toutes seules par `latest.yml` — le retard ne concerne que qui installe
 pour la première fois.
@@ -1156,6 +1165,35 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### « Cinq minutes » était juste, et il manquait la moitié de la phrase
+Vérifié après la publication de la 0.9.16, par acquit de conscience :
+**dix-sept minutes** plus tard, `/fr/telechargement` annonçait encore 0.9.15.
+Le journal écrit « cinq minutes », donc l'un des deux avait tort.
+
+**Le second appel rendait 0.9.16, avec `age: 13`.** C'est-à-dire que ma
+première requête n'a pas seulement CONSTATÉ le retard : elle l'a levé. La page
+est prérendue avec `revalidate: 300`, et la régénération est un
+*stale-while-revalidate* — la fenêtre expirée, le premier visiteur reçoit
+encore l'ancienne page et déclenche la reconstruction en arrière-plan ; le
+suivant a la nouvelle.
+
+**Les cinq minutes bornent la FENÊTRE, pas ce que le premier visiteur voit.**
+La nuance ne coûte rien sur un site fréquenté — quelqu'un passe toujours dans
+les secondes qui suivent. Elle coûte tout ici : à quatre comptes, « le premier
+visiteur après la fenêtre » peut arriver des heures plus tard, et c'est
+exactement la personne qu'on cherche à faire installer.
+
+**Le geste qui l'évite coûte deux secondes**, et il rejoint la procédure de
+publication de l'application de bureau : deux requêtes sur la page de
+téléchargement après la release, la première pour déclencher, la seconde pour
+vérifier. C'est le pendant du témoin public d'une version du site — dans les
+deux cas ce qui manquait n'était pas un outil, c'était de REGARDER.
+
+**Et il fallait deux appels pour le savoir.** Un seul aurait rendu 0.9.15 et
+fait conclure à un déploiement bloqué ; c'est la règle déjà écrite ici sous une
+autre forme — une mesure unique n'est pas une mesure, et elle l'est encore
+moins quand l'acte de mesurer change ce qu'on mesure.
 
 ### Cent trente-neuf textes publiés comme « rien à signaler »
 La passe japonaise du balayage de coutures avait rendu **139 textes** là où la
