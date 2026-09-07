@@ -1839,6 +1839,43 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### Recensement des gardes qui lisent un MOT là où il faut lire un BRANCHEMENT
+Le piège s'est présenté QUATRE fois dans la même nuit — le balayage des
+coutures, le préchargement deux fois, la vibration — et à chaque fois sous la
+même forme : un contrôle structurel qui cherche un identifiant dans la source,
+alors que le sabotage laisse l'identifiant en place et retire ce qu'il fait.
+Ça valait un recensement plutôt qu'une quatrième correction isolée.
+
+Quinze fichiers de test lisent du source et y cherchent un mot simple. **Deux
+étaient faux, et les deux étaient de cette nuit :**
+
+- `coutures.test.ts` exigeait `refuserPrefixe`. Garder l'import en retirant
+  l'appel laisse le mot : le sabotage passait au vert, et l'outil aurait pu
+  mesurer une 404 sans que rien ne le dise ;
+- `vibrationBranchee.test.ts` exigeait `vibrationIndisponible`. Remplacer la
+  condition par `false` laisse la clé dans le fichier : l'écran aurait caché
+  le réglage au lieu de dire pourquoi il ne fera rien, ce qui est exactement
+  ce que la règle de « Tes jeux » interdit.
+
+**Les treize autres tiennent, et il vaut mieux écrire pourquoi que de refaire
+le tour dans six semaines :**
+
+| forme | pourquoi le mot SUFFIT |
+|---|---|
+| `modalesAnnoncees` | exige déjà `usePiegeFocus\s*\(`, corrigé quand le défaut a mordu ; le reste porte sur le hook lui-même, doublé par le parcours clavier |
+| `quatreCentQuatre` | le mot est accompagné de la construction de la cible et du `status: 404` |
+| `heroSansFondu` | assertion NÉGATIVE, plus un témoin positif sur une animation dont on sait qu'elle fond |
+| `controleSchema`, `sauvegardeVersion` | des commandes de workflow : leur présence EST leur exécution |
+| `effortPayeUnSeulNom`, `politiqueComplete`, `apiErrorsComplets`, `compte` | des valeurs de dictionnaire ou de réponse, pas du code |
+| `porteRoutes`, `texteEnDurComposants` | des témoins de non-vacuité |
+
+**Ce que ça apprend, et c'est la forme générale du piège.** Un identifiant
+survit à presque tous les sabotages : on le garde à l'import, dans un
+commentaire, dans une déclaration, dans une branche morte. Ce qui ne survit
+pas, c'est l'APPEL (`nom\s*\(`), l'AIGUILLAGE (`x ? a : b`), la CONDITION
+(`!dispo &&`) et la DÉRIVATION (`fin = …loadEventEnd`). Un garde structurel
+qui ne contient aucune de ces quatre formes est à relire.
+
 ### « Config manquante » sur une base semée : le cache gardait un barème à qui il manquait un tiers
 V495 est partie ROUGE, et c'est la lecture de sa CI qui l'a dit — un tronçon
 sur six, le premier test du premier fichier, avec **500 `{"error":"Config
@@ -1913,6 +1950,25 @@ des deux côtés, même compte semé, même machine :
 | `/history` | 199 ko | **200 ko** | 232 ko | 309 ko |
 | `/settings` | 254 ko | **257 ko** | 287 ko | 291 ko |
 | `/bilan` | 218 ko | **220 ko** | 218 ko | 295 ko |
+
+**Le tableau honnête, une fois l'outil corrigé** (compte semé à 1 920
+parties) :
+
+| écran | script au `load` | préchargé ensuite | LCP téléphone bridé |
+|---|---|---|---|
+| `/bilan` | **186 ko** | 109 ko | **2 636 ms** |
+| `/history` | 200 ko | 109 ko | 1 144 ms |
+| `/amis` | 207 ko | 109 ko | 1 136 ms |
+| `/dashboard` | 228 ko | 228 ko | 1 112 ms |
+| `/settings` | **257 ko** | 34 ko | 932 ms |
+
+Et il dit une chose qu'aucune des mesures précédentes ne pouvait dire :
+**`/bilan` charge le MOINS de JavaScript des cinq et c'est le seul au-dessus du
+seuil.** Ce n'est donc pas son paquet qui pèse, c'est que son plus grand
+élément est une IMAGE de 58 ko qui doit passer après lui dans le même tuyau —
+ce que la mesure fragments bloqués disait déjà. Le tableau de bord, deux fois
+plus lourd au chargement, paraît en 1 112 ms parce que son plus grand élément
+est du texte.
 
 **Ce que les pages chargent n'a pas bougé de plus de trois kilo-octets en
 trente-six versions.** Ce qui a changé est le PRÉCHARGEMENT, et le mécanisme

@@ -46,6 +46,14 @@ const PAGES = (drapeauPages ? drapeauPages.slice("--pages=".length) : PAGES_ARG
  *
  * L'espace qui suit un chiffre latin reste : c'est la convention, et un motif
  * qui la refuserait accuserait « 60 試合 », qui est juste.
+ *
+ * **Un faux positif connu, et il est gardé exprès** : 「ソロ/デュオ ランク」 sur
+ * la page d'accueil. Le katakana appartient à la classe CJK, donc une espace
+ * entre deux mots en katakana ressemble à une couture — et elle peut être
+ * voulue, c'est ainsi qu'on sépare deux mots d'un composé. Réécrire du
+ * japonais sur un jugement de style n'est pas une correction. Le motif reste
+ * large parce que ses vrais cas sont des IDÉOGRAMMES ; celui-ci se reconnaît
+ * et se laisse.
  */
 export const COUTURE = /[぀-ヿ㐀-鿿][  ][぀-ヿ㐀-鿿]/;
 

@@ -106,8 +106,16 @@ describe("et il dit ce qu'il n'a pas regardé", () => {
   });
 
   it("refuse un chemin qui porte déjà sa langue", () => {
-    // Le piège retombé deux fois : un préfixe posé deux fois mesure la 404,
-    // et le contrôle d'atterrissage ne peut pas le voir.
-    expect(SRC).toMatch(/refuserPrefixe/);
+    /**
+     * Le piège retombé deux fois : un préfixe posé deux fois mesure la 404,
+     * et le contrôle d'atterrissage ne peut pas le voir.
+     *
+     * Le contrôle porte sur l'APPEL et non sur le nom : garder l'import en
+     * retirant l'appel laisse le mot en place, et le sabotage passait au vert.
+     * Un garde qui reconnaît un import reconnaît une intention, pas un
+     * comportement — c'est écrit au journal pour le piège de focus, et je
+     * viens de le refaire.
+     */
+    expect(SRC).toMatch(/refuserPrefixe\s*\(/);
   });
 });
