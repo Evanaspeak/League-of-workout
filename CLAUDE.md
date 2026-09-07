@@ -1157,6 +1157,36 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### TFT vérifié, ligne 176 du plan
+« Tester TFT, jamais vérifié » traînait depuis l'écriture du plan. C'est une
+vérification, pas un arbitrage, donc elle se fait seule.
+
+Le catalogue le range en battle royale à huit joueurs, un seul par équipe. Ce
+qui a été poussé plutôt que relu :
+
+| place sur huit | ce que ça coûte |
+|---|---|
+| 1 | 0 point |
+| 4 | 19 points |
+| 8 | 43 points |
+
+Monotone, gratuit à la première place, et le champ de saisie est borné à huit
+— vérifié sur l'attribut `max`, pas seulement à l'œil. L'écran japonais rend
+「順位 8 中」, ce qui confirme du même coup la correction de V484 sur un jeu
+qu'elle n'avait pas servi à trouver.
+
+**Ce que la vérification n'a PAS pu faire, et pourquoi ce n'est pas un
+manque** : l'écriture en base a été refusée par le limiteur, soixante parties
+ayant déjà été semées dans la fenêtre. C'est le produit qui fait son travail,
+et le chemin d'écriture d'un battle royale est déjà couvert par Apex dans les
+parcours.
+
+**Un piège de sonde, le même que d'habitude** : la passe française a annoncé
+« TFT absent du sélecteur » avec une liste d'options VIDE — la fenêtre d'ajout
+ne s'était pas ouverte à temps. Une liste vide et une absence se ressemblent
+beaucoup dans un rapport ; c'est la passe japonaise, qui a bien ouvert la
+fenêtre, qui tranche.
+
 ### Comparaison de rendu après V481 à V485 : deux cent quarante-quatre pixels
 Passée entre V480 et la tête, sur un compte semé à soixante parties. Trente-neuf
 captures, huit pages, trois largeurs. **Six différentes, et les six

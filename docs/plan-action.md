@@ -251,7 +251,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 100 | Des notifications moins fades | ½ nuit |
 
 ### Le multi-jeu et la détection
-*4 à faire · 5 faits.* 
+*3 à faire · 6 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -261,7 +261,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 179 | Ajouter Overwatch au catalogue | ½ nuit |
 | [ ] | 180 | Laisser déclarer un jeu absent, et compter les demandes | 1 nuit |
 | [ ] | 185 | Surveiller si un jeu paie deux fois plus qu'un autre | 1 nuit |
-| [ ] | 176 | Tester TFT, jamais vérifié | ½ nuit |
+| [x] | 176 | Tester TFT, jamais vérifié — **vérifié : place 1 / 4 / 8 sur huit joueurs rend 0, 19 et 43 points, le champ est borné à huit, et l'écran le dit** | — |
 | [ ] | 187 | Les quatre logos manquants | à toi |
 | [x] | 182 | Les jeux au temps : payer son temps de jeu | — |
 
