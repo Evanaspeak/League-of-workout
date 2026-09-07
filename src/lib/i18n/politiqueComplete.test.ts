@@ -98,6 +98,20 @@ const ATTENDU: Record<string, RegExp> = {
   signalements: /signalement de problème/i,
   paiements: /paiements de dette/i,
   /**
+   * Ce qu'on vous a envoyé, et quand.
+   *
+   * Le plafond de trois notifications par semaine (réponse 103) a besoin d'un
+   * compte sur une fenêtre GLISSANTE, et les marques par type ne le donnent
+   * pas : chacune ne retient que le dernier envoi de sa sorte. Il faut donc
+   * des lignes, comme les paiements.
+   *
+   * Elles se décrivent plutôt qu'elles ne s'exemptent. Une trace d'envoi dit
+   * quand on vous a dérangé, ce qui est un renseignement sur vous même s'il ne
+   * sort jamais du compte — et la ligne dit du même coup qu'un plafond existe,
+   * ce qu'on ne va chercher nulle part ailleurs.
+   */
+  envoisPush: /notifications envoyées|trois notifications par semaine/i,
+  /**
    * Les défis personnels que vous avez remplis.
    *
    * Des lignes, comme les paiements, et pour la même raison : l'XP se déduit

@@ -72,6 +72,22 @@ function preparer(): boolean {
   return true;
 }
 
+/**
+ * Trois notifications par semaine au maximum.
+ *
+ * C'est la réponse 103 de l'interrogatoire, et elle porte sa raison : au-delà,
+ * « ça devient pénible ». Une application qui insiste se fait couper — et on
+ * coupe TOUT en même temps, y compris le rappel qui servait. Le plafond
+ * protège donc le canal, pas la personne : c'est le même raisonnement que la
+ * relance des absents, envoyée une fois et une seule.
+ *
+ * La fenêtre est GLISSANTE et non calendaire : trois envois le dimanche puis
+ * trois le lundi seraient six en deux jours, ce qui est exactement ce qu'on
+ * veut éviter.
+ */
+export const NOTIFS_PAR_SEMAINE_MAX = 3;
+const FENETRE_MS = 7 * 24 * 3600 * 1000;
+
 export type Notification = {
   titre: string;
   corps: string;
@@ -89,11 +105,34 @@ export type Notification = {
  * N'échoue jamais bruyamment : une notification perdue ne doit pas empêcher
  * d'enregistrer une partie.
  */
-export async function notifier(userId: string, n: Notification): Promise<number> {
+export async function notifier(
+  userId: string,
+  n: Notification,
+  options: { plafonne?: boolean } = {},
+): Promise<number> {
   if (!preparer()) return 0;
 
   const abonnements = await prisma.pushSubscription.findMany({ where: { userId } });
   if (abonnements.length === 0) return 0;
+
+  /**
+   * Le plafond est le DÉFAUT, et l'exemption se demande.
+   *
+   * Dans l'autre sens, un appelant ajouté demain enverrait sans compter, et
+   * rien ne le dirait : le défaut d'un garde ne peut pas être plus permissif
+   * que ce qu'on demandait. La seule dispense est la notification d'essai des
+   * réglages, que la personne vient elle-même de réclamer — la plafonner
+   * rendrait le bouton muet sans expliquer pourquoi, ce qui est pire que le
+   * défaut qu'on corrige.
+   */
+  const plafonne = options.plafonne !== false;
+  if (plafonne) {
+    const depuis = new Date(Date.now() - FENETRE_MS);
+    const deja = await prisma.envoiPush
+      .count({ where: { userId, quand: { gte: depuis } } })
+      .catch(() => 0);
+    if (deja >= NOTIFS_PAR_SEMAINE_MAX) return 0;
+  }
 
   /**
    * L'adresse porte la langue du compte.
@@ -135,5 +174,20 @@ export async function notifier(userId: string, n: Notification): Promise<number>
       }
     }),
   );
+
+  /**
+   * On ne retient que ce qui est PARTI.
+   *
+   * Un envoi qui échoue partout — service injoignable, abonnements tous
+   * révoqués — n'a dérangé personne : le décompter ferait perdre le rappel
+   * suivant à cause d'une panne dont la personne n'a rien su. Et l'écriture
+   * passe en dernier, comme le badge du paiement éclair : son échec ne coûte
+   * que lui-même, là où une notification perdue se voit.
+   */
+  if (plafonne && envoyees > 0) {
+    await prisma.envoiPush
+      .create({ data: { userId, tag: n.tag ?? "wow" } })
+      .catch(() => {});
+  }
   return envoyees;
 }

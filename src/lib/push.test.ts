@@ -23,16 +23,18 @@ jest.mock("./prisma", () => ({
   prisma: {
     pushSubscription: { findMany: jest.fn(), delete: jest.fn() },
     user: { findUnique: jest.fn() },
+    envoiPush: { count: jest.fn(), create: jest.fn() },
   },
 }));
 
 import webpush from "web-push";
-import { notifier } from "./push";
+import { notifier, NOTIFS_PAR_SEMAINE_MAX } from "./push";
 import { prisma } from "./prisma";
 
 const envoi = (webpush as unknown as { sendNotification: jest.Mock }).sendNotification;
 const abos = prisma.pushSubscription as unknown as { findMany: jest.Mock; delete: jest.Mock };
 const user = prisma.user as unknown as { findUnique: jest.Mock };
+const envois = prisma.envoiPush as unknown as { count: jest.Mock; create: jest.Mock };
 
 const ABO = {
   endpoint: "https://fcm.googleapis.com/x", p256dh: "p", auth: "a",
@@ -43,6 +45,8 @@ beforeEach(() => {
   abos.findMany.mockResolvedValue([ABO]);
   envoi.mockResolvedValue({});
   user.findUnique.mockResolvedValue({ langue: "fr" });
+  envois.count.mockResolvedValue(0);
+  envois.create.mockResolvedValue({});
 });
 
 /** Ce que le navigateur reçoit, décodé. */
@@ -80,5 +84,77 @@ describe("l'adresse d'une notification", () => {
     abos.findMany.mockResolvedValue([]);
     expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(0);
     expect(user.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Trois par semaine au maximum — réponse 103.
+ *
+ * Le plafond protège le CANAL et non la personne : une application qui
+ * insiste se fait couper, et on coupe tout en même temps, y compris le rappel
+ * qui servait. C'est le raisonnement de la relance des absents, envoyée une
+ * fois et une seule, appliqué à l'ensemble des envois.
+ */
+describe("le plafond hebdomadaire", () => {
+  it("laisse passer tant qu'on est en dessous", async () => {
+    envois.count.mockResolvedValue(NOTIFS_PAR_SEMAINE_MAX - 1);
+    expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(1);
+    expect(envoi).toHaveBeenCalled();
+  });
+
+  it("refuse au-delà, sans rien envoyer", async () => {
+    envois.count.mockResolvedValue(NOTIFS_PAR_SEMAINE_MAX);
+    expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(0);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  it("compte sur une fenêtre GLISSANTE de sept jours", async () => {
+    // Une semaine calendaire laisserait passer trois envois le dimanche et
+    // trois le lundi, soit six en deux jours — exactement ce qu'on évite.
+    await notifier("u1", { titre: "t", corps: "c" });
+    const ou = envois.count.mock.calls[0][0].where;
+    expect(ou.userId).toBe("u1");
+    const ecart = Date.now() - (ou.quand.gte as Date).getTime();
+    expect(Math.round(ecart / 3600_000)).toBe(7 * 24);
+  });
+
+  it("retient l'envoi, avec ce qu'il était", async () => {
+    await notifier("u1", { titre: "t", corps: "c", tag: "wow-matin" });
+    expect(envois.create).toHaveBeenCalledWith({ data: { userId: "u1", tag: "wow-matin" } });
+  });
+
+  it("ne consomme rien quand l'envoi n'est parti nulle part", async () => {
+    // Un service injoignable ou des abonnements tous révoqués n'ont dérangé
+    // personne : décompter ferait perdre le rappel suivant à cause d'une
+    // panne dont la personne n'a rien su.
+    envoi.mockRejectedValue(Object.assign(new Error("hs"), { statusCode: 500 }));
+    expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(0);
+    expect(envois.create).not.toHaveBeenCalled();
+  });
+
+  it("n'échoue pas quand la trace ne peut pas s'écrire", async () => {
+    // Elle passe en dernier, comme le badge du paiement éclair : son échec ne
+    // coûte que lui-même, là où une notification perdue se voit.
+    envois.create.mockRejectedValue(new Error("base indisponible"));
+    expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(1);
+  });
+
+  it("est le DÉFAUT, et l'exemption se demande", async () => {
+    // Dans l'autre sens, un appelant ajouté demain enverrait sans compter, et
+    // rien ne le dirait : le défaut ne peut pas être plus permissif que ce
+    // qu'on demandait.
+    envois.count.mockResolvedValue(99);
+    expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(0);
+    expect(await notifier("u1", { titre: "t", corps: "c" }, {})).toBe(0);
+    expect(await notifier("u1", { titre: "t", corps: "c" }, { plafonne: true })).toBe(0);
+    expect(await notifier("u1", { titre: "t", corps: "c" }, { plafonne: false })).toBe(1);
+  });
+
+  it("ne retient pas ce qui est dispensé", async () => {
+    // La notification d'essai ne compte pas contre le plafond : elle n'est pas
+    // une sollicitation du produit, c'est une réponse à un bouton.
+    await notifier("u1", { titre: "t", corps: "c" }, { plafonne: false });
+    expect(envois.create).not.toHaveBeenCalled();
+    expect(envois.count).not.toHaveBeenCalled();
   });
 });

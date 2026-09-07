@@ -124,6 +124,7 @@ model User {
   signalements   Signalement[]
   paiements      Paiement[]
   defisAccomplis DefiAccompli[]
+  envoisPush     EnvoiPush[]
   /**
    * Les paiements que d'AUTRES ont faits pour acquitter cette dette-ci.
    * Une équipe a une dette commune : un membre peut faire l'effort à la place
@@ -829,4 +830,33 @@ model DefiAccompli {
 
   @@unique([userId, cle, periode])
   @@index([userId])
+}
+
+/**
+ * Une notification que le PRODUIT a décidé d'envoyer.
+ *
+ * Réponse 103 : « combien de notifications par semaine au maximum avant que ça
+ * devienne pénible ? » — **trois**. Le plafond a besoin d'un COMPTE sur une
+ * fenêtre glissante, et ce compte ne se déduit de rien : les marques
+ * existantes — `rappelLe`, `relanceLe`, `bilanLe`, `peseeLe` — retiennent
+ * chacune le DERNIER envoi de son type, jamais combien il y en a eu. C'est la
+ * même raison qui a fait ranger `paiementEclairLe` en base : une série de
+ * MOMENTS ne se recalcule pas après coup.
+ *
+ * On n'y écrit que ce qui est parti POUR DE BON, et que ce que le produit
+ * envoie de lui-même : une notification demandée — l'essai des réglages — ne
+ * consomme pas le quota de celle qu'on n'a pas demandée.
+ */
+model EnvoiPush {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /** Ce que la notification était : « wow-matin », « wow-dette »… */
+  tag   String
+  quand DateTime @default(now())
+
+  // La seule question posée : combien depuis telle date, pour ce compte.
+  @@index([userId, quand])
 }

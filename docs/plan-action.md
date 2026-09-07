@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-02.
 
-**54 construits · 103 restants · ~60 nuits de travail**
+**55 construits · 102 restants · ~60 nuits de travail**
 
 ## Ce que le recensement montre, et qui n'est pas confortable
 
@@ -234,7 +234,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 085 | Te montrer les deux formulaires d'inscription pour choisir | je te dois la maquette |
 
 ### Revenir
-*3 à faire · 8 faits.* Presque tout construit. C'est le bloc le plus avancé.
+*2 à faire · 9 faits.* Presque tout construit. C'est le bloc le plus avancé.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -247,7 +247,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 107 | La dette dans le titre de l'onglet | — |
 | [x] | 108 | La pastille sur l'icône de l'application desktop | — |
 | [ ] | 099 | Un gel de série à gagner ou à acheter | 1 nuit |
-| [ ] | 103 | Trois notifications par semaine au maximum | ½ nuit |
+| [x] | 103 | Trois notifications par semaine au maximum | — |
 | [ ] | 100 | Des notifications moins fades | ½ nuit |
 
 ### Le multi-jeu et la détection
