@@ -50,6 +50,14 @@ export type ProjectionDette = {
   defaite: string;
   /** Effort déjà dû, hors partie en cours. Chaîne vide s'il n'y en a pas. */
   enAttente: string;
+  /**
+   * L'effort déjà dû a-t-il franchi le seuil de rappel du compte (0.9.16+) ?
+   *
+   * Une application antérieure ignore ce champ : la pastille reste orange,
+   * c'est-à-dire le comportement d'avant. Le repli n'est donc jamais plus
+   * bruyant que ce qu'on demandait.
+   */
+  seuil?: boolean;
 } | null;
 
 /** Score du joueur relevé en direct sur l'API locale de League. */

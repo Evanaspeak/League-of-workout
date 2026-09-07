@@ -6,6 +6,7 @@ import {
 import { ROLE_DEFAUT } from "@/components/PartieDetectee";
 import type { ContextePartie, ScoreDirect } from "@/types/electron";
 import { lire } from "@/lib/stockage";
+import { seuilFranchi } from "@/lib/compteurDette";
 import { useDateLocale } from "@/lib/i18n/LocaleContext";
 
 /**
@@ -49,6 +50,15 @@ type Projection = {
 export function DetteDirecte() {
   const exercicesRef = useRef<ExerciceId[]>(["pompes"]);
   const enAttenteRef = useRef("");
+  /**
+   * Le seuil de rappel est-il franchi ?
+   *
+   * Il porte sur ce qui est DÉJÀ DÛ, jamais sur la projection de la partie en
+   * cours : celle-ci dit ce qu'on paiera SI l'on perd, donc une hypothèse.
+   * Passer la pastille en rouge sur une hypothèse la ferait rougir à presque
+   * toutes les parties, et un signal permanent ne signale plus rien.
+   */
+  const seuilRef = useRef(false);
   const contexteRef = useRef<ContextePartie | null>(null);
   /** KDA du dernier calcul : inutile de refaire l'aperçu s'il n'a pas bougé. */
   const derniereCleRef = useRef("");
@@ -62,8 +72,18 @@ export function DetteDirecte() {
     return ventiler(repartirPoints(points, liste), null, etiquette).map((v) => v.valeur).join(" · ");
   }, [etiquette]);
 
+  /**
+   * Le seuil est posé ICI et non par les cinq appelants.
+   *
+   * C'est la parade au motif que ce projet paie en boucle : une règle écrite à
+   * cinq endroits finit appliquée à quatre. Les appelants construisent ce
+   * qu'ils savent — la projection et l'attente — et le passage obligé ajoute ce
+   * qui vaut pour tous.
+   */
   const publier = useCallback((projection: Projection) => {
-    window.electronLOL?.publierDette?.(projection);
+    window.electronLOL?.publierDette?.(
+      projection && { ...projection, seuil: seuilRef.current },
+    );
   }, []);
 
   /**
@@ -89,6 +109,10 @@ export function DetteDirecte() {
       enAttenteRef.current = points > 0
         ? ventiler(dette.repartition ?? {}, null, etiquette).map((v) => v.valeur).join(" · ")
         : "";
+      // La MÊME fonction que la pastille du site, pas une seconde règle : deux
+      // écritures de ce seuil ont déjà produit deux nombres qui se
+      // contredisaient à l'écran, et le journal en porte l'entrée.
+      seuilRef.current = seuilFranchi(dette);
     } catch { /* la prochaine partie relira */ }
   }, []);
 

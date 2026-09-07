@@ -1157,6 +1157,90 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux lignes de veille faites depuis longtemps, sans être cochées
+Quatrième passe du même genre, et le même résultat : deux lignes du plan
+décrivent quelque chose qui existe, et qui se prouve en une ligne de code
+chacune — la condition pour cocher.
+
+- **290, « un message de prévention en cas d'excès manifeste »** :
+  `/api/dashboard` calcule `veille`, et `TableauDeBord.tsx` la rend
+  (`t.veilleJour` / `t.veilleSemaine`). Le module `src/lib/veille.ts` porte les
+  deux seuils et écrit lui-même la décision qui gouverne la ligne — « ce qui
+  suit ne bloque rien », « dire ce qu'on voit, une fois, sans y revenir ».
+  C'est la règle déjà posée pour le plancher calorique : on avertit, on ne
+  bloque jamais ;
+- **291, « une alerte admin quand un compte dépasse un volume anormal »** :
+  `/api/admin/mesures` filtre les comptes au-dessus de `SEUIL_SEMAINE`, et
+  `AdminMesures` les affiche sous son propre intitulé.
+
+**Les DEUX moitiés ont été vérifiées, pas seulement la route.** C'est la leçon
+de la nuit : une route qui rend un champ que personne n'affiche ne fait rien,
+et c'est exactement le défaut que ce journal appelle « un panneau vidé sans
+erreur ni test rouge ». Les deux lignes ont donc été suivies jusqu'au JSX.
+
+**Et le motif se répète pour la quatrième fois** : les deux ont été construites
+en passant, pendant un chantier voisin — la veille avec le calcul de volume, le
+panneau d'administration avec les mesures — et personne n'est retourné au plan.
+Ce n'est pas de la négligence : le plan et le code se mettent à jour à des
+moments différents, et rien ne les tient ensemble. `planCompte.test.ts` garde
+l'arithmétique des en-têtes, pas la vérité d'une ligne.
+
+### La pastille rougit au seuil, et le rouge est réservé à ça (ligne 165)
+Réponse 165, « Oui ». Ce qui manquait n'était ni le seuil ni la règle — les
+deux existent depuis longtemps (`User.rappelSeuilSec`, `seuilFranchi`) — c'était
+le BRANCHEMENT jusqu'à la fenêtre en jeu, où la dette était orange en
+permanence.
+
+**Le seuil porte sur ce qui est DÉJÀ DÛ, jamais sur la projection.** La pastille
+affiche trois choses : ce qu'on paiera si l'on gagne, si l'on perd, et ce qu'on
+doit déjà. Les deux premières sont des hypothèses ; rougir dessus ferait rougir
+à presque toutes les parties, et un signal permanent ne signale plus rien.
+
+**La règle vient de `seuilFranchi`, pas d'une seconde écriture.** Le journal
+porte l'entrée où la pastille passait en ALERTE à 3 min 35 sous un seuil réglé à
+5 min, précisément parce que deux endroits convertissaient la même dette
+autrement. La page décide, la coquille montre — la même répartition que pour la
+détection de partie.
+
+**Un seuil à zéro veut dire « pas de seuil ».** C'est déjà dans `seuilFranchi`,
+et c'est ce qui empêche la pastille de quelqu'un qui n'a rien réglé d'être rouge
+en permanence.
+
+**Le seuil est posé dans le passage obligé, pas chez les cinq appelants.**
+`publier()` complète la projection ; les appelants construisent ce qu'ils
+savent. C'est la parade au motif que ce projet paie en boucle — une règle écrite
+à cinq endroits finit appliquée à quatre — et un test refuse qu'un appelant se
+remette à la construire lui-même.
+
+**Le garde est statique, et il n'y a pas d'autre choix.** La pastille est une
+fenêtre Electron : aucun parcours ne peut l'ouvrir, et ceux qui simulent le pont
+posent un faux `window.electronLOL` — ils éprouveraient la doublure. C'est la
+situation de la vibration, avec la même réponse : lire les deux moitiés à la
+source, et vérifier des BRANCHEMENTS plutôt que des mots.
+
+**Le pire défaut de cette famille est silencieux** : basculer une classe qui
+n'existe pas dans la feuille de style. Rien ne lève, rien ne colore, et ça ne se
+verrait que sur la machine de quelqu'un, en jeu. Le garde exige donc que la
+classe RÉELLEMENT basculée porte une règle de couleur — pas qu'un nom
+apparaisse quelque part.
+
+**Et un troisième maillon, qu'aucun des deux ne tenait** : `DetteDirecte` passe
+la réponse BRUTE de `/api/dette` à `seuilFranchi`, qui lit `dureeSec` et
+`seuilSec`. Un champ renommé côté route rendrait `undefined`, donc « pas
+franchi » pour toujours — sans erreur et sans test rouge. Les deux modules ne se
+connaissent pas ; c'est un test qui les tient ensemble maintenant.
+
+Huit sabotages, huit échecs : la règle débranchée, l'injection retirée, un
+appelant qui reconstruit le seuil, une classe basculée sans règle CSS, une
+bascule sur une constante, la couleur ordinaire perdue, et les deux champs de la
+route renommés ou vidés. Le renommage de `dureeSec` fait aussi tomber `tsc` —
+c'est noté comme tel plutôt que compté deux fois.
+
+Application de bureau en **0.9.16**. Le pont ne gagne aucune méthode, seulement
+un champ : une copie plus ancienne l'ignore et la ligne reste orange,
+c'est-à-dire le comportement d'avant. Le repli n'est jamais plus bruyant que ce
+qu'on demandait.
+
 ### La partie de démonstration, et la moitié qui compte (ligne 082)
 « Une partie de démonstration, préremplie, pour montrer le calcul sans avoir à
 jouer. » → « Oui, excellent ».
@@ -4070,6 +4154,9 @@ il n'y a aucun état de seuil, la dette y est orange en permanence
 (`.ligne b.dette { color: #FF8A3D; }`). La pastille qui passait en alerte est
 celle du SITE, pas celle du jeu. Deux surfaces qui portent le même nom dans ce
 projet, et c'est la deuxième fois que ça envoie chercher au mauvais endroit.
+
+*(La ligne est faite depuis — voir « La pastille rougit au seuil » en tête de
+journal. Ce constat-ci décrit l'état d'alors, pas celui d'aujourd'hui.)*
 
 **Et un garde qui n'a pas été écrit, mesuré plutôt que supposé.** La règle
 candidate était « une ligne cochée porte `—` dans sa colonne d'effort » — ce

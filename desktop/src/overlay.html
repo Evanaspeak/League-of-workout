@@ -103,6 +103,17 @@
   .ligne b.dette { color: #FF8A3D; }
   .ligne b.gagne { color: #2FD98A; }
 
+  /* Seuil de rappel franchi (réponse 165).
+
+     L'orange dit « il y a quelque chose », le rouge dit « il y a de quoi faire
+     une vraie séance » — c'est le seuil que la personne a réglé elle-même, et
+     c'est le seul chiffre de cette pastille qui appelle un geste.
+
+     Le rouge est réservé à ÇA. Sans seuil réglé, la ligne reste orange quoi
+     qu'il arrive : une pastille rouge en permanence ne signale plus rien, et
+     c'est ce qui arriverait si le seuil valait zéro. */
+  .ligne b.dette.seuil { color: #FF4E4E; }
+
   /* Un état de lecture n'est pas un chiffre : il ne prend pas l'allure d'un
      chiffre. Sans ça, « écran noir » s'affiche en gras monospace, comme une
      valeur relevée. */
@@ -461,6 +472,12 @@
       const due = d && d.enAttente;
       ligneAttente.style.display = due ? "flex" : "none";
       if (due) detteDue.textContent = String(due);
+      // Le seuil est DÉCIDÉ par la page — même fonction que la pastille du
+      // site — et la coquille ne fait que le montrer. Le recalculer ici serait
+      // une seconde règle, donc une divergence à la première correction.
+      // Un champ absent (page plus ancienne) vaut « pas franchi » : la ligne
+      // reste orange, c'est-à-dire le comportement d'avant.
+      detteDue.classList.toggle("seuil", Boolean(d && d.seuil));
     });
   }
 

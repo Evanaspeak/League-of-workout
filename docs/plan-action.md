@@ -318,7 +318,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 261 | Rendre l'application utilisable en fauteuil | 2 nuits |
 
 ### Données, confiance, incidents
-*7 à faire · 4 faits.* 
+*5 à faire · 6 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -330,18 +330,18 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 280 | Supprimer les comptes inactifs depuis deux ans, après avertissement | 1 nuit |
 | [ ] | 275 | Chiffrer poids et taille au niveau des colonnes | 1 nuit |
 | [ ] | 287 | Voir les erreurs qui se produisent chez les utilisateurs | 1 nuit |
-| [ ] | 290 | Un message de prévention en cas d'excès manifeste | ½ nuit |
-| [ ] | 291 | Une alerte admin quand un compte dépasse un volume anormal | ½ nuit |
+| [x] | 290 | Un message de prévention en cas d'excès manifeste | — |
+| [x] | 291 | Une alerte admin quand un compte dépasse un volume anormal | — |
 | [ ] | 292 | Que devient l'application si Riot coupe son API | à répondre |
 
 ### L'overlay et le desktop
-*4 à faire · 2 faits.* 
+*3 à faire · 3 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 166 | Un raccourci clavier pour masquer l'overlay | — |
 | [x] | 168 | Une source navigateur pour OBS, avec la dette en direct | — |
-| [ ] | 165 | L'overlay réagit en direct : rouge au franchissement du seuil | ½ nuit |
+| [x] | 165 | L'overlay réagit en direct : rouge au franchissement du seuil | — |
 | [ ] | 161 | Un certificat de signature à 200–400 € par an | à toi |
 | [ ] | 174 | Les statistiques de partie en temps réel, ton critère de réussite | 2 nuits |
 | [ ] | 171 | Une version macOS, plus tard | — |
