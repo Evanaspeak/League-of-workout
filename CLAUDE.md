@@ -1150,6 +1150,69 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une session morte enfermait dans les réglages, et le commentaire promettait le contraire
+Trouvé par accident, en lisant les écrans avec un jeton dont le compte n'existe
+plus — la suite navigateur venait de purger les comptes `@example.test`, dont
+celui de la mesure. C'est aussi un état réel du produit : un compte supprimé
+depuis un autre appareil, une base restaurée.
+
+**Mesuré, écran par écran :**
+
+| écran | avec un jeton dont le compte est parti |
+|---|---|
+| `/dashboard`, `/history`, `/amis`, `/bilan` | 307 vers `/login` |
+| **`/settings`** | **reste affichée** |
+
+Les quatre premiers sont des pages SERVEUR : elles appellent `getCurrentUser()`,
+qui lit la base, et redirigent. `/settings` est cliente de bout en bout — le
+middleware, lui, ne lit que le JETON, qui reste parfaitement déchiffrable. La
+page se sert donc, et chacun de ses panneaux annonce son échec : « Tes pesées
+n'ont pas pu être lues. Rien n'est perdu : recharge la page. » Recharger ne
+répare rien. C'était le seul écran d'où l'on ne pouvait plus sortir.
+
+**Et le commentaire qui aurait dû l'empêcher affirmait le contraire.**
+`ContexteConnecte` écrivait : « `null` plutôt qu'une attente sans fin : hors
+ligne ou session expirée, les écrans doivent pouvoir dire qu'ils ne savent pas.
+**`SessionGuard` s'occupe de la session elle-même.** » Il ne s'en occupait pas :
+il ne traite que le cas « rester connecté décoché » et ne regarde aucune
+réponse d'API. C'est le défaut que ce journal reproche partout — une garantie
+décrite qui n'existe pas se relit comme une garantie, et on cesse de vérifier.
+
+**Le 401 est le seul signal franc, et c'est pour ça qu'il est le seul retenu.**
+Sur une page connectée, le middleware a déjà exigé une session pour servir la
+page : le jeton est donc lisible. Si la route refuse quand même, c'est que le
+compte derrière n'existe plus. Un 500 est un serveur qui tousse — déconnecter
+quelqu'un pour une panne d'un instant lui ferait retaper son code pour rien, ce
+qui est pire que l'écran vide qu'on corrige. Et une coupure réseau ne rend
+aucun statut : c'est le cas que la mémoire de module traite déjà en retentant.
+
+**La correction ne coûte aucun prérendu**, et c'est ce qui a décidé de sa
+forme. Rendre `/settings` serveur aurait marché et aurait rendu dynamiques les
+pages qui en dépendent ; un événement émis par `chargerContexte` et écouté par
+`SessionGuard` couvre TOUS les écrans connectés, pour rien. Il traite en prime
+ce qu'une redirection serveur ne peut pas voir : un onglet laissé ouvert dont
+le jeton expire pendant la nuit.
+
+**Et la répartition des gardes s'est révélée au sabotage.** Trois sabotages :
+l'événement débranché et l'écouteur retiré font tomber le PARCOURS ; le 500
+traité comme un 401 ne le fait pas — aucun parcours ne pose un 500 sur
+`/api/contexte` — et c'est le test UNITAIRE qui mord. Le parcours garde le
+branchement, l'unitaire garde la discrimination, et il fallait le sabotage pour
+savoir lequel gardait quoi.
+
+**Un piège d'outillage, écrit ici depuis longtemps, retombé dedans.** Les trois
+premiers sabotages ont été lancés avec `-g "session morte"`, qui écarte le test
+qui OUVRE LE COMPTE : sans session, `/settings` redirige de toute façon, et les
+trois passaient au vert. Un test qui passe pour la mauvaise raison ressemble
+exactement à un test qui passe. Le fichier se rejoue en entier.
+
+**Et un échec de contention, écarté par la relance seule.** `hors-ligne.spec.ts`
+est tombé sur `waitForURL` à la CONNEXION en exécution à deux fichiers, et rend
+5 sur 5 seul. C'est l'échec d'août, dont la cause est nommée dans ce fichier —
+bcrypt coût 12 qui perd sa place dans la file — et le geste qui le distingue
+d'une régression est de relancer AVANT de conclure. Le parcours complet, lui,
+passe des deux côtés : la déconnexion n'attrape pas la connexion.
+
 ### « 5 日の遅れ » au-dessus de « 負債が3日続いています »
 Trouvé en lisant le tableau de bord EN JAPONAIS, sur un compte en retard de
 cinq jours. Le panneau du retard rend deux lignes qui se suivent :

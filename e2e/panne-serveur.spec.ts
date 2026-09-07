@@ -479,3 +479,39 @@ test("les ratios ne s'enregistrent pas quand on n'a pas pu les lire", async ({ b
   if (porteur) await requeteSql(`UPDATE "User" SET email = $1 WHERE id = $2`, [admin, porteur.id]);
   await ctx.close();
 });
+
+/**
+ * Une session morte renvoie à la connexion, elle n'enferme pas.
+ *
+ * Trouvé en lisant les écrans avec un jeton dont le compte n'existait plus —
+ * ce qui arrive pour de vrai : un compte supprimé depuis un autre appareil,
+ * une base restaurée. Mesuré : `/dashboard`, `/history`, `/amis` et `/bilan`
+ * partent sur `/login`, parce que ce sont des pages serveur qui lisent le
+ * compte en base. **`/settings` restait affichée**, chacun de ses panneaux
+ * annonçant son échec avec « Rien n'est perdu : recharge la page » — alors
+ * que recharger ne répare rien. Le seul écran d'où l'on ne pouvait pas sortir.
+ *
+ * Le 401 est détourné plutôt que le compte supprimé : c'est le signal exact
+ * que le produit reçoit, et supprimer le compte de test rendrait le reste du
+ * fichier impossible à rejouer.
+ */
+test("une session morte renvoie à la connexion au lieu d'enfermer", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((id) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      localStorage.setItem(`low_onboarded:${id}`, "1");
+      localStorage.setItem(`low_visite:${id}`, "1");
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  // Seul le contexte est refusé : c'est lui que toute page connectée demande.
+  await page.route("**/api/contexte", (r) =>
+    r.fulfill({ status: 401, contentType: "application/json", body: '{"error":"Non authentifié"}' }));
+
+  await page.goto("/settings", { waitUntil: "domcontentloaded" });
+  await page.waitForURL((u) => sansLangue(new URL(u).pathname) === "/login", { timeout: 20_000 });
+
+  await ctx.close();
+});

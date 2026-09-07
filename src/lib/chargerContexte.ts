@@ -21,12 +21,32 @@ export type ContexteCompte = {
 
 let enCours: Promise<ContexteCompte | null> | null = null;
 
+/**
+ * L'événement qui dit que la session ne vaut plus rien.
+ *
+ * Il est émis sur un 401 et sur lui seul. Un 401 sur une page CONNECTÉE est
+ * franc : le middleware a déjà exigé une session pour servir la page, donc le
+ * jeton est lisible ; si la route refuse quand même, c'est que le compte
+ * derrière n'existe plus. Une coupure réseau, elle, ne rend aucun statut.
+ */
+export const SESSION_MORTE = "wow-session-morte";
+
 function demander(): Promise<ContexteCompte | null> {
   return fetch("/api/contexte")
-    .then((r) => (r.ok ? r.json() : null))
+    .then((r) => {
+      if (r.status === 401) {
+        // Le garde de rendu serveur : ce module est client, mais rien
+        // n'empêche qu'il soit importé ailleurs, et une exception ici serait
+        // avalée par le `catch` en bout de chaîne — le 401 deviendrait un
+        // `null` muet, c'est-à-dire exactement l'état qu'on corrige.
+        if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_MORTE));
+        return null;
+      }
+      return r.ok ? r.json() : null;
+    })
     .then((c) => (c && typeof c === "object" ? (c as ContexteCompte) : null))
-    // Hors ligne, ou session expirée : `null` plutôt qu'une promesse rejetée
-    // que chaque appelant devrait rattraper de son côté.
+    // Hors ligne : `null` plutôt qu'une promesse rejetée que chaque appelant
+    // devrait rattraper de son côté.
     .catch(() => null);
 }
 

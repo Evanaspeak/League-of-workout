@@ -12,15 +12,15 @@
  * prochain rafraîchissement, qui peut ne jamais venir : compteur de dette
  * vide, lien d'administration absent, consentement redemandé.
  */
-import { chargerContexte, oublierContexte, rafraichirContexte } from "@/lib/chargerContexte";
+import { chargerContexte, oublierContexte, rafraichirContexte, SESSION_MORTE } from "@/lib/chargerContexte";
 
 const CONTEXTE = { user: { id: "u1" }, dette: null, consentement: null };
 
 const vraiFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = vraiFetch; oublierContexte(); });
 
-function repond(corps: unknown, ok = true) {
-  return jest.fn(() => Promise.resolve({ ok, json: () => Promise.resolve(corps) }));
+function repond(corps: unknown, ok = true, status = ok ? 200 : 500) {
+  return jest.fn(() => Promise.resolve({ ok, status, json: () => Promise.resolve(corps) }));
 }
 
 describe("chargerContexte", () => {
@@ -102,5 +102,60 @@ describe("rafraichirContexte", () => {
     await expect(rafraichirContexte()).resolves.toBeNull();
     await expect(chargerContexte()).resolves.toEqual(CONTEXTE);
     expect(appels).toHaveBeenCalledTimes(3);
+  });
+});
+
+/**
+ * Une session morte se dit, elle ne se tait pas.
+ *
+ * Les quatre écrans connectés rendus au serveur redirigent d'eux-mêmes vers la
+ * connexion : ils lisent le compte en base. `/settings` est cliente de bout en
+ * bout — elle restait donc affichée, chacun de ses panneaux annonçant son
+ * échec avec « Rien n'est perdu : recharge la page », alors que recharger ne
+ * répare rien. Mesuré avec un jeton dont le compte n'existe plus : les quatre
+ * autres écrans partent sur `/login`, celui-là reste.
+ *
+ * Le 401 est le seul signal franc : sur une page connectée, le middleware a
+ * déjà exigé une session pour servir la page, donc le jeton est lisible. Si la
+ * route refuse quand même, c'est que le compte derrière n'existe plus.
+ */
+describe("la session morte", () => {
+  const vraiWindow = (globalThis as { window?: unknown }).window;
+  let emis: string[];
+  beforeEach(() => {
+    emis = [];
+    (globalThis as { window?: unknown }).window = {
+      dispatchEvent: (e: Event) => { emis.push(e.type); return true; },
+    };
+  });
+  afterEach(() => { (globalThis as { window?: unknown }).window = vraiWindow; });
+
+  it("se signale sur un 401", async () => {
+    globalThis.fetch = repond({ error: "Non authentifié" }, false, 401) as never;
+    expect(await chargerContexte()).toBeNull();
+    expect(emis).toEqual([SESSION_MORTE]);
+  });
+
+  it("ne se signale PAS sur un 500", async () => {
+    // Un serveur qui tousse n'est pas une session morte : déconnecter
+    // quelqu'un pour une panne d'un instant lui ferait retaper son code pour
+    // rien, et ce serait pire que l'écran vide qu'on corrige.
+    globalThis.fetch = repond({ error: "boum" }, false, 500) as never;
+    expect(await chargerContexte()).toBeNull();
+    expect(emis).toEqual([]);
+  });
+
+  it("ne se signale PAS hors ligne", async () => {
+    // Une coupure ne rend aucun statut : la promesse est rejetée, et c'est le
+    // cas que la mémoire de module traite déjà en retentant.
+    globalThis.fetch = jest.fn(() => Promise.reject(new Error("hors ligne"))) as never;
+    expect(await chargerContexte()).toBeNull();
+    expect(emis).toEqual([]);
+  });
+
+  it("ne se signale PAS quand tout va bien", async () => {
+    globalThis.fetch = repond(CONTEXTE) as never;
+    expect(await chargerContexte()).toEqual(CONTEXTE);
+    expect(emis).toEqual([]);
   });
 });
