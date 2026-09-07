@@ -62,7 +62,7 @@ export function SyntheseJeu({
               </div>
             </div>
             {(() => {
-              const detail = decrireRepartition(repartition, "label", "pompes", fmt);
+              const detail = decrireRepartition(repartition, "label", "pompes", fmt, t.separateurListe);
               return detail ? <ResumeGraphique texte={t.grapheRepartition(titreRepartition, detail)} /> : null;
             })()}
             <ResponsiveContainer width="100%" height={200}>

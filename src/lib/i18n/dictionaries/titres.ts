@@ -31,7 +31,17 @@ export const titres = {
      * « Payés » est déjà le mot du palier de série voisin — « 3 jours payés
      * d'affilée » — donc il ne demande rien à apprendre.
      */
-    souffranceAide: (n: number) => `${n} points payés avant le suivant`,
+    /**
+     * Le nombre arrive DÉJÀ mis en forme, et le compte sert à l'accord.
+     *
+     * Sa voisine `versLeNiveau`, trois lignes plus bas, prend une chaîne
+     * depuis qu'on a corrigé son ordre — celle-ci prenait encore un nombre
+     * brut. C'est la correction qui n'en répare qu'une moitié, dans le fichier
+     * qui la raconte : à vingt-cinq mille points le palier de volume écrivait
+     * « 25000 », et le japonais faisait tomber le chiffre après son compteur.
+     */
+    souffranceAide: (formate: string, n: number) =>
+      `${formate} point${n > 1 ? "s" : ""} payé${n > 1 ? "s" : ""} avant le suivant`,
     /**
      * Une PHRASE, pas un fragment.
      *
@@ -61,7 +71,8 @@ export const titres = {
     eclairAide: "Debt cleared within the hour",
     niveau: "Level",
     souffrance: "Pain level",
-    souffranceAide: (n: number) => `${n} points paid to the next one`,
+    souffranceAide: (formate: string, n: number) =>
+      `${formate} point${n !== 1 ? "s" : ""} paid to the next one`,
     versLeNiveau: (xp: string, niveau: number) => `${xp} XP to level ${niveau}`,
     points: "points",
     xp: "XP",
@@ -78,7 +89,8 @@ export const titres = {
     eclairAide: "Deuda saldada en una hora",
     niveau: "Nivel",
     souffrance: "Nivel de sufrimiento",
-    souffranceAide: (n: number) => `${n} puntos pagados hasta el siguiente`,
+    souffranceAide: (formate: string, n: number) =>
+      `${formate} punto${n !== 1 ? "s" : ""} pagado${n !== 1 ? "s" : ""} hasta el siguiente`,
     versLeNiveau: (xp: string, niveau: number) => `${xp} XP para el nivel ${niveau}`,
     points: "puntos",
     xp: "XP",
@@ -95,7 +107,8 @@ export const titres = {
     eclairAide: "Schuld binnen einer Stunde beglichen",
     niveau: "Stufe",
     souffrance: "Leidensstufe",
-    souffranceAide: (n: number) => `${n} bezahlte Punkte bis zur nächsten`,
+    souffranceAide: (formate: string, n: number) =>
+      `${formate} bezahlte${n === 1 ? "r" : ""} Punkt${n !== 1 ? "e" : ""} bis zur nächsten`,
     versLeNiveau: (xp: string, niveau: number) => `${xp} XP bis Stufe ${niveau}`,
     points: "Punkte",
     xp: "XP",
@@ -112,7 +125,7 @@ export const titres = {
     eclairAide: "一小时内还清",
     niveau: "等级",
     souffrance: "受苦等级",
-    souffranceAide: (n: number) => `距离下一级还差 ${n} 点已付出的努力`,
+    souffranceAide: (formate: string, _n: number) => `距离下一级还差 ${formate} 点已付出的努力`,
     versLeNiveau: (xp: string, niveau: number) => `距离等级 ${niveau} 还差 ${xp} XP`,
     points: "点",
     xp: "XP",
@@ -129,7 +142,10 @@ export const titres = {
     eclairAide: "一時間以内に完済",
     niveau: "レベル",
     souffrance: "苦痛レベル",
-    souffranceAide: (n: number) => `次のレベルまで支払い済みポイント ${n}`,
+    // Le nombre passe AVANT son compteur : « ポイント 100 » fait tomber le
+    // chiffre après le mot, et la phrase ne veut plus rien dire. C'est le
+    // défaut déjà corrigé sur `versLeNiveau`, juste en dessous.
+    souffranceAide: (formate: string, _n: number) => `次のレベルまで支払い済み ${formate} ポイント`,
     versLeNiveau: (xp: string, niveau: number) => `レベル ${niveau} まであと ${xp} XP`,
     points: "ポイント",
     xp: "XP",

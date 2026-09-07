@@ -42,6 +42,18 @@ export const ARITE_ATTENDUE: Record<string, number> = {
    * fautif un appel parfaitement juste.
    */
   formaterTempsJeu: 2,   // (secondes, etiquette)
+  /**
+   * Les graduations d'axe, ajoutées en dernier — et elles auraient dû l'être
+   * avec `formaterCompact`, dont elles sont la voisine de quarante lignes.
+   * Elle rendait `String(q)` et recollait « km », « s » et « min » à la main,
+   * donc « 10000 » sur un axe français dans les six langues.
+   *
+   * Le sabotage qui débranche la langue de son seul appelant passait au vert :
+   * le module était juste et personne ne vérifiait qu'il soit branché. C'est
+   * le trou que ce projet paie en boucle, et c'est ce contrôle-ci qui le
+   * ferme.
+   */
+  formaterAxe: 4,        // (points, exercice, ratios, etiquette)
 };
 
 /**

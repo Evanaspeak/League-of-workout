@@ -44,13 +44,36 @@ export function decrireRepartition<P extends Record<string, unknown>>(
   cleLabel: keyof P,
   cleValeur: keyof P,
   fmt: (v: number) => string,
+  /**
+   * Le séparateur d'ÉNUMÉRATION, choisi par la langue.
+   *
+   * Il se joignait par `", "` dans les six, et la phrase qui l'entoure finit
+   * par « 。 » en japonais : on lisait « 月 8, 火 8, 水 8。 », une virgule
+   * latine au milieu d'idéogrammes.
+   *
+   * **`Intl.ListFormat` ne sait pas le faire**, et c'est mesuré plutôt que
+   * supposé : avec `type: "unit"` il rend « A 8 B 12 » en japonais et
+   * « A 8B 12 » en chinois, c'est-à-dire aucun séparateur — ces listes-là sont
+   * faites pour « 5 ft 3 in », pas pour une énumération lue à voix haute. Le
+   * séparateur vient donc du DICTIONNAIRE, comme le composé de `duree.ts`
+   * quand `Intl` ne sait pas non plus : la langue qui ne peut pas déléguer
+   * écrit sa forme elle-même.
+   *
+   * Il est OPTIONNEL : son absence garde le rendu d'avant, ce qui rend la
+   * reprise des appelants sûre un par un.
+   */
+  separateur?: string,
 ): string | null {
   if (points.length === 0) return null;
   if (points.length > 8) {
     const valeurs = points.map((p) => Number(p[cleValeur] ?? 0));
-    return `${points.length} — ${fmt(Math.min(...valeurs))} … ${fmt(Math.max(...valeurs))}`;
+    // Deux-points et non tiret cadratin : celui-ci est la ponctuation par
+    // laquelle un texte écrit par une machine se reconnaît, et le projet le
+    // refuse partout où quelqu'un lit. Le garde des dictionnaires ne pouvait
+    // pas le voir ici — cette phrase se compose dans un composant.
+    return `${points.length} : ${fmt(Math.min(...valeurs))} … ${fmt(Math.max(...valeurs))}`;
   }
   return points
     .map((p) => `${String(p[cleLabel])} ${fmt(Number(p[cleValeur] ?? 0))}`)
-    .join(", ");
+    .join(separateur ?? ", ");
 }

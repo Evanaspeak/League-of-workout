@@ -385,14 +385,49 @@ export function ventiler(
 /**
  * Format court pour les axes de graphique, où la place est comptée :
  * les durées sont arrondies à la minute au-delà d'une minute.
+ *
+ * **Sa voisine `formaterQuantite`, quarante lignes plus haut, était passée par
+ * `Intl` ; celle-ci ne l'avait pas suivie.** Elle rendait `String(q)`, donc
+ * « 10000 » sur un axe français où il faut « 10 000 », « 10.000 » en allemand
+ * et « 10,000 » en japonais — et elle recollait « km », « s » et « min » à la
+ * main, dans les six langues. C'est la moitié non réparée d'une correction
+ * déjà faite, sur la fonction d'à côté, dans le même fichier.
+ *
+ * L'axe est la surface la plus lue du tableau de bord : ses graduations sont
+ * les seuls nombres qu'on regarde sans les chercher.
+ *
+ * L'étiquette reste OPTIONNELLE, comme chez sa voisine : son absence garde le
+ * rendu d'avant, ce qui rend la reprise des appelants sûre un par un.
  */
-export function formaterAxe(points: number, exercice: ExerciceId, ratios?: RatiosExercices | null): string {
+export function formaterAxe(
+  points: number,
+  exercice: ExerciceId,
+  ratios?: RatiosExercices | null,
+  etiquette?: EtiquetteLangue,
+): string {
   const q = quantite(points, exercice, ratios);
   const unite = EXERCICES[exercice].unite;
-  if (unite === "distance") return `${q} km`;
-  if (unite !== "temps") return String(q);
-  if (q < 60) return `${q}s`;
-  return `${Math.round(q / 60)} min`;
+  if (!etiquette) {
+    // Le rendu d'avant, mot pour mot, pour l'appelant qui n'a pas de langue.
+    if (unite === "distance") return `${q} km`;
+    if (unite !== "temps") return String(q);
+    if (q < 60) return `${q}s`;
+    return `${Math.round(q / 60)} min`;
+  }
+  if (unite === "distance") return uniteLocalisee(q, "kilometer", etiquette, 1);
+  if (unite !== "temps") return nombre(q, etiquette);
+  /**
+   * Le temps passe par le cadran commun, jamais par `uniteLocalisee` en
+   * direct : le japonais et le chinois y écrivent leur forme ronde à la main
+   * — « 5分 » et non « 5 分 », que rend la donnée CLDR — pour s'accorder au
+   * composé « 1分55秒 » du même module. Réécrire l'unité ici ferait diverger
+   * les deux moitiés, ce que ce module a déjà payé une fois.
+   *
+   * L'arrondi à la minute se fait donc en SECONDES, et le cadran prend alors
+   * sa branche « reste nul », qui est exactement la forme ronde voulue.
+   */
+  if (q < 60) return dureeLocalisee(q, etiquette);
+  return dureeLocalisee(Math.round(q / 60) * 60, etiquette);
 }
 
 /**

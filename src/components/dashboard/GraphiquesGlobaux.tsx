@@ -20,7 +20,7 @@ type T = ReturnType<typeof useT<typeof dashboard>>;
  * les montre, et elle est le seul tracé de l'écran qui puisse descendre.
  */
 export function GraphiquesGlobaux({
-  t, dateLocale, parJeu, cumul, moyenneParSemaine, vue, setVue, fmt, fmtAxe,
+  t, dateLocale, parJeu, cumul, moyenneParSemaine, vue, setVue, fmt, fmtAxe, nombre,
 }: {
   t: T;
   /** Étiquette `Intl` pour les dates des axes. */
@@ -32,6 +32,12 @@ export function GraphiquesGlobaux({
   vue: "total" | "avg";
   setVue: (v: "total" | "avg") => void;
   fmt: (points: number) => string;
+  /**
+   * Un COMPTE, pas une quantité d'effort : `fmt` y ajouterait une unité.
+   * Il sert au résumé lu par un lecteur d'écran, où « 1116 points » voisinait
+   * un « 8 905 » groupé dans la même phrase.
+   */
+  nombre: (n: number) => string;
   fmtAxe: (points: number) => string;
 }) {
   // Deux parties jouées le même jour donnent la même étiquette d'axe, et
@@ -70,7 +76,7 @@ export function GraphiquesGlobaux({
               </div>
             </div>
             {(() => {
-              const detail = decrireRepartition(parJeu, "jeu", "pompes", fmt);
+              const detail = decrireRepartition(parJeu, "jeu", "pompes", fmt, t.separateurListe);
               return detail ? <ResumeGraphique texte={t.grapheRepartition(t.detteParJeu(vue), detail)} /> : null;
             })()}
             <ResponsiveContainer width="100%" height={200}>
@@ -92,7 +98,7 @@ export function GraphiquesGlobaux({
             <h2 className="titre-section mb-3">{t.cumulativeProgress}</h2>
             {(() => {
               const e = decrireEvolution(cumulData, "cumul", fmt);
-              return e ? <ResumeGraphique texte={t.grapheEvolution(t.cumulativeProgress, e.n, e.debut, e.fin)} /> : null;
+              return e ? <ResumeGraphique texte={t.grapheEvolution(t.cumulativeProgress, nombre(e.n), e.n, e.debut, e.fin)} /> : null;
             })()}
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={cumulData} accessibilityLayer>
@@ -115,7 +121,7 @@ export function GraphiquesGlobaux({
             <p className="text-xs mt-1 mb-3" style={{ color: "var(--faint)" }}>{t.progressionAide}</p>
             {(() => {
               const e = decrireEvolution(moyenneParSemaine, "moyenne", fmt);
-              return e ? <ResumeGraphique texte={t.grapheEvolution(t.progressionTitre, e.n, e.debut, e.fin)} /> : null;
+              return e ? <ResumeGraphique texte={t.grapheEvolution(t.progressionTitre, nombre(e.n), e.n, e.debut, e.fin)} /> : null;
             })()}
             <ResponsiveContainer width="100%" height={200}>
               <LineChart
