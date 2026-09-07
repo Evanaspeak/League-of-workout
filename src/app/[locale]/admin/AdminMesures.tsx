@@ -2,11 +2,13 @@
 import { useEffect, useState } from "react";
 import { useT, usePourcentage, useNombre } from "@/lib/i18n/LocaleContext";
 import { adminMesures } from "@/lib/i18n/dictionaries/adminMesures";
-import { formaterDelai, type Mesures } from "@/lib/mesures";
+import { formaterDelai, FACTEUR_ALERTE, PARTIES_MIN_COMPARAISON,
+  type EquilibreJeux, type Mesures } from "@/lib/mesures";
 
 type Reponse = Mesures & {
   veille?: { pseudo: string; points: number }[];
   seuilSemaine?: number;
+  equilibre?: EquilibreJeux;
 };
 
 /**
@@ -65,6 +67,46 @@ export default function AdminMesures() {
           {ligne(t.dansLaJournee, String(m.dansLaJournee))}
           {ligne(t.dansLaSemaine, String(m.dansLaSemaine))}
           {ligne(t.revenus, String(m.revenus))}
+        </div>
+      )}
+
+      {/* Un jeu qui paie deux fois plus qu'un autre déplace les gens vers le
+          moins cher, ce qui n'est pas ce que le produit demande (réponse 185).
+          Le facteur n'existe qu'à partir de deux jeux assez joués : sous ce
+          plancher on montre les moyennes sans rien en conclure. */}
+      {m?.equilibre && (
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+          <h3 className="titre-section" style={{ fontSize: "0.9rem" }}>{t.equilibreTitre}</h3>
+          <p className="text-xs mt-1 mb-2" style={{ color: "var(--steel)" }}>
+            {t.equilibreAide(PARTIES_MIN_COMPARAISON, FACTEUR_ALERTE)}
+          </p>
+          {m.equilibre.jeux.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--steel)" }}>{t.equilibreAucun}</p>
+          ) : (
+            <div className="flex flex-col">
+              {m.equilibre.jeux.map((g) => (
+                <div key={g.jeu} className="flex items-baseline justify-between gap-3"
+                  style={{ padding: "4px 0", fontSize: "0.85rem" }}>
+                  <span style={{ color: "var(--muted)" }}>{g.jeu}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <b style={{ color: "var(--gold)" }}>{nombre(g.moyenne)}</b>
+                    <span style={{ color: "var(--steel)", marginLeft: 8 }}>
+                      {t.equilibreParties(nombre(g.parties), g.parties)}
+                    </span>
+                  </span>
+                </div>
+              ))}
+              {m.equilibre.facteur === null ? (
+                <p className="text-xs mt-2" style={{ color: "var(--steel)" }}>{t.equilibreAucun}</p>
+              ) : (
+                <p className="text-sm mt-2"
+                  style={{ color: m.equilibre.derape ? "var(--loss)" : "var(--steel)" }}>
+                  {t.equilibreFacteur(nombre(m.equilibre.facteur))}
+                  {m.equilibre.derape && <> · {t.equilibreDerape}</>}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

@@ -1,6 +1,8 @@
 import { corps, utilisateur, admin } from "@/test/api";
 
-jest.mock("@/lib/prisma", () => ({ prisma: { user: { findMany: jest.fn() } } }));
+jest.mock("@/lib/prisma", () => ({
+  prisma: { user: { findMany: jest.fn() }, game: { groupBy: jest.fn() } },
+}));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 
 import { GET } from "./route";
@@ -9,6 +11,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 
 const session = getCurrentUser as jest.Mock;
 const findMany = (prisma as unknown as { user: { findMany: jest.Mock } }).user.findMany;
+const groupBy = (prisma as unknown as { game: { groupBy: jest.Mock } }).game.groupBy;
 
 const jour = (n: number) => new Date(`2026-08-${String(n).padStart(2, "0")}T12:00:00Z`);
 
@@ -16,6 +19,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   session.mockResolvedValue(admin());
   findMany.mockResolvedValue([]);
+  groupBy.mockResolvedValue([]);
 });
 
 /** La route fait deux lectures : les comptes, puis la veille de volume. */
@@ -107,3 +111,36 @@ describe("veille de volume", () => {
   });
 });
 
+
+/**
+ * L'équilibre entre les jeux (réponse 185).
+ *
+ * Le calcul vit dans `mesures.ts` et y est éprouvé ; ce qui se joue ici est la
+ * REQUÊTE — ce qu'elle écarte, et ce qui ressort dans la réponse.
+ */
+describe("l'équilibre entre les jeux", () => {
+  const ligne = (jeu: string, n: number, moy: number) =>
+    ({ jeu, _count: { _all: n }, _avg: { pompesCalculees: moy } });
+
+  it("écarte les parties sans enjeu et les jeux comptés au temps", async () => {
+    await GET();
+    const where = groupBy.mock.calls[0][0].where;
+    expect(where.sansEnjeu).toBe(false);
+    // Un jeu au temps n'a rien à faire dans la comparaison : son coût est une
+    // fonction de la durée, pas d'un match.
+    expect(where.jeu.in).toContain("League of Legends");
+    expect(where.jeu.in).not.toContain("Minecraft");
+    expect(where.jeu.in).not.toContain("Les Sims");
+  });
+
+  it("rend les moyennes et le facteur", async () => {
+    groupBy.mockResolvedValue([ligne("A", 20, 40.04), ligne("B", 20, 20)]);
+    const r = (await corps(await GET())) as unknown as { equilibre: { jeux: unknown[]; facteur: number; derape: boolean } };
+    expect(r.equilibre.jeux).toHaveLength(2);
+    // La moyenne est arrondie au dixième : 40,04 rendrait sinon une colonne
+    // de décimales que personne ne lit.
+    expect(r.equilibre.jeux[0]).toEqual({ jeu: "A", parties: 20, moyenne: 40 });
+    expect(r.equilibre.facteur).toBe(2);
+    expect(r.equilibre.derape).toBe(true);
+  });
+});

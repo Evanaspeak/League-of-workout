@@ -1157,6 +1157,121 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Surveiller si un jeu paie deux fois plus qu'un autre (ligne 185)
+Le barème est le même pour tous les jeux ; leurs FORMES ne le sont pas. Un
+battle royale à cent joueurs ne distribue pas comme un MOBA à cinq, et rien ne
+garantissait que les deux coûtent un effort comparable pour une soirée
+équivalente. Si l'écart dérape, les gens jouent au jeu le moins cher — ce qui
+est l'inverse de ce que le produit demande.
+
+Le panneau d'administration rend maintenant la moyenne par partie de chaque
+jeu, et le rapport entre le plus cher et le moins cher. Trois règles, chacune
+avec sa raison :
+
+- **on ne compare que les jeux comptés à la PARTIE.** Le coût d'un jeu compté
+  au temps est une fonction de sa durée : le mettre en face du coût d'un match
+  reviendrait à comparer une soirée entière à dix minutes. Le filtre est dans
+  la requête, et un test le tient — Minecraft et Les Sims doivent en être
+  absents, League of Legends présent ;
+- **sous dix parties, un jeu est LISTÉ mais pas comparé.** Une seule partie
+  malheureuse déciderait sinon du facteur, et l'alerte se déclencherait sur du
+  bruit. C'est le même raisonnement que le plancher du mur des records ;
+- **une moyenne nulle ne divise pas.** Le rapport n'a alors pas de valeur, et
+  rendre l'infini ferait crier l'écran sans rien lui apprendre.
+
+**Les parties SANS ENJEU sont écartées**, et c'est moins évident qu'il n'y
+paraît : elles valent zéro par construction, donc elles tireraient la moyenne
+d'un jeu vers le bas sans que personne ait moins payé. Une soirée refusée sur
+un jeu fausserait la comparaison de tous les autres.
+
+**Le seuil est INCLUSIF**, parce que la réponse dit « deux fois plus » : à deux
+exactement, ça compte. Un test le tient séparément — c'est le genre de borne
+qu'on inverse sans s'en apercevoir.
+
+Cinq sabotages, cinq échecs : le filtre des parties sans enjeu retiré, les jeux
+au temps réintroduits, le plancher supprimé, la division par zéro rouverte, et
+le seuil rendu exclusif.
+
+**Vérifié sur la RÉPONSE de la route**, en empruntant l'adresse administrateur
+en base et en la restituant ensuite — la restitution est vérifiée, pas
+supposée. Sur le compte de mesure : un seul jeu comparable, quatre-vingt-deux
+parties, 12,8 points de moyenne, et **`facteur: null`** — ce qui est le bon
+résultat, puisqu'il faut deux jeux pour un rapport. L'ÉCRAN, lui, n'a pas été
+lu : le panneau d'administration résiste à l'emprunt d'adresse, limite déjà
+écrite et déjà mesurée. Ce qui le tient est le compilateur et la parité des
+dictionnaires.
+
+**Et le garde du pluriel a mordu sur mes propres traductions** : j'avais écrit
+`n > 1` en anglais, en espagnol et en allemand, où le pluriel s'applique aussi
+à zéro. Il est là pour ça, et il l'a dit avant moi.
+
+### Une sonde sans navigateur déclaré rend 403, et ça ressemble à une porte cassée
+`curl -s -o /dev/null -w "%{http_code}" https://winorworkout.com/fr/dashboard`
+rend **403**. Le journal écrit partout que cette adresse rend 307 vers la
+connexion, et c'est ce qu'elle rend : avec un en-tête de navigateur ordinaire,
+la même requête donne `307` et `location: /fr/login`.
+
+C'est le bord de Vercel qui refuse une requête sans `User-Agent`, pas
+l'application. Le symptôme est trompeur parce que 403 est un code que la porte
+POURRAIT rendre : on cherche alors une régression du contrôle d'accès là où il
+n'y a qu'une sonde mal habillée. Une sonde de production porte un
+`User-Agent`, comme n'importe quel visiteur.
+
+### Deux lignes de plus faites depuis des semaines, sans être cochées
+Même passe que le 5 septembre, sur les soixante-cinq lignes non cochées, et le
+même résultat : deux d'entre elles décrivent quelque chose qui existe.
+
+- **071, « refaire le test de force tous les mois »** : `VALIDITE_TEST_JOURS`
+  vaut trente dans `scoring.ts`, `testAFaire` redevient vrai passé ce délai, et
+  le tableau de bord remonte alors le panneau du test. Le rappel EST le
+  panneau ; il n'y avait rien à ajouter ;
+- **080, « mesurer le temps jusqu'à la première partie enregistrée »** :
+  `/api/admin/mesures` rend la médiane et les quartiles du délai entre la
+  création du compte et sa première partie, et le panneau d'administration les
+  affiche. Le commentaire de la route porte même la correction du cas où une
+  partie rattrapée se date la veille et rendait un délai négatif — c'est-à-dire
+  qu'elle a été non seulement écrite mais débuguée.
+
+Les deux se prouvent en une ligne de code chacune, ce qui est la condition
+pour cocher : une ligne cochée sur ma parole ne vaut rien.
+
+**Et le motif se répète** : les deux ont été construites en passant, pendant un
+chantier voisin — le rappel du test avec le calcul du niveau, la mesure du
+délai avec le panneau de mesures — et personne n'est retourné au plan. C'est
+la même mécanique que pour les lignes 299 et 254 : ce n'est pas de la
+négligence, c'est que le plan et le code se mettent à jour à des moments
+différents.
+
+### TFT vérifié, ligne 176 du plan
+« Tester TFT, jamais vérifié » traînait depuis l'écriture du plan. C'est une
+vérification, pas un arbitrage, donc elle se fait seule.
+
+Le catalogue le range en battle royale à huit joueurs, un seul par équipe. Ce
+qui a été poussé plutôt que relu :
+
+| place sur huit | ce que ça coûte |
+|---|---|
+| 1 | 0 point |
+| 4 | 19 points |
+| 8 | 43 points |
+
+Monotone, gratuit à la première place, et le champ de saisie est borné à huit
+— vérifié sur l'attribut `max`, pas seulement à l'œil. L'écran japonais rend
+「順位 8 中」, ce qui confirme du même coup la correction de V484 sur un jeu
+qu'elle n'avait pas servi à trouver.
+
+**Ce que la vérification n'a PAS pu faire, et pourquoi ce n'est pas un
+manque** : l'écriture en base a été refusée par le limiteur, soixante parties
+ayant déjà été semées dans la fenêtre. C'est le produit qui fait son travail,
+et le chemin d'écriture d'un battle royale est déjà couvert par Apex dans les
+parcours.
+
+**Un piège de sonde, le même que d'habitude** : la passe française a annoncé
+« TFT absent du sélecteur » avec une liste d'options VIDE — la fenêtre d'ajout
+ne s'était pas ouverte à temps. Une liste vide et une absence se ressemblent
+beaucoup dans un rapport ; c'est la passe japonaise, qui a bien ouvert la
+fenêtre, qui tranche.
+
 ### Comparaison de rendu après V481 à V485 : deux cent quarante-quatre pixels
 Passée entre V480 et la tête, sur un compte semé à soixante parties. Trente-neuf
 captures, huit pages, trois largeurs. **Six différentes, et les six

@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estAdmin } from "@/lib/admin";
-import { calculerMesures, type CompteMesure } from "@/lib/mesures";
+import { calculerMesures, equilibreJeux, type CompteMesure } from "@/lib/mesures";
+import { JEUX } from "@/lib/jeux";
 import { SEUIL_SEMAINE } from "@/lib/veille";
 
 /**
@@ -71,5 +72,32 @@ export async function GET() {
     .sort((a, b) => b.points - a.points)
     .slice(0, 20);
 
-  return NextResponse.json({ ...calculerMesures(mesures), veille, seuilSemaine: SEUIL_SEMAINE });
+  /**
+   * Ce que chaque jeu coûte en moyenne (réponse 185).
+   *
+   * Seuls les jeux comptés à la PARTIE entrent dans la comparaison : le coût
+   * d'un jeu compté au temps est une fonction de sa durée, donc le comparer au
+   * coût d'un match reviendrait à comparer une soirée à dix minutes. Et les
+   * parties SANS ENJEU sont écartées : elles valent zéro par construction, et
+   * elles tireraient la moyenne d'un jeu vers le bas sans que personne ait
+   * moins payé.
+   */
+  const parJeu = await prisma.game.groupBy({
+    by: ["jeu"],
+    where: {
+      sansEnjeu: false,
+      jeu: { in: JEUX.filter((j) => j.type === "parties").map((j) => j.nom) },
+    },
+    _count: { _all: true },
+    _avg: { pompesCalculees: true },
+  });
+  const equilibre = equilibreJeux(parJeu.map((g) => ({
+    jeu: g.jeu ?? "",
+    parties: g._count._all,
+    moyenne: Math.round((g._avg.pompesCalculees ?? 0) * 10) / 10,
+  })));
+
+  return NextResponse.json({
+    ...calculerMesures(mesures), veille, seuilSemaine: SEUIL_SEMAINE, equilibre,
+  });
 }
