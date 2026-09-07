@@ -5,6 +5,8 @@ import { exercices } from "@/lib/i18n/dictionaries/exercices";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 import { dashboard } from "@/lib/i18n/dictionaries/dashboard";
 import { textesNotification } from "@/lib/i18n/notifications";
+import { amis } from "@/lib/i18n/dictionaries/amis";
+import { textesBilan } from "@/lib/i18n/courriels";
 import { dureeLocalisee } from "@/lib/i18n/duree";
 import { etiquetteLocale } from "@/lib/i18n/langues";
 import { sansCommentaires } from "./test/sansCommentaires";
@@ -33,6 +35,42 @@ const A_COUTURE: { nom: string; rendre: (l: "zh" | "ja", v: string) => string }[
   { nom: "dashboard.plafondCorps", rendre: (l, v) => (dashboard as never as Record<string, { plafondCorps(a: string, b: string): string }>)[l].plafondCorps(v, v) },
   { nom: "notifications.seuil", rendre: (l, v) => textesNotification(l).seuil(v).corps },
   { nom: "notifications.matin", rendre: (l, v) => textesNotification(l).matin(v).corps },
+  /**
+   * Et les neuf clés de l'écran des amis.
+   *
+   * Elles reçoivent un PSEUDO, un NOM DE GROUPE ou une DATE localisée —
+   * trois textes dont on ne connaît pas l'écriture en écrivant le gabarit.
+   * `recordsLigne` est le cas certain : sa date sort toujours en idéogrammes
+   * (« 9月5日 に 300 ポイント »), donc la couture était là pour tout le monde,
+   * quel que soit le pseudo. Les huit autres ne cousent que devant un pseudo
+   * japonais ou chinois, ce qui est un cas légitime et non une hypothèse.
+   */
+  ...([
+    "envoyeeA", "accepteeAvec", "retirerConfirme", "copierNomme",
+    "quitterConfirme", "quitterDernier", "equipeVoirNomme", "equipeRelayerNomme",
+  ] as const).map((cle) => ({
+    nom: `amis.${cle}`,
+    rendre: (l: "zh" | "ja", v: string) =>
+      (amis as never as Record<string, Record<string, (p: string) => string>>)[l][cle](v),
+  })),
+  /**
+   * Le sujet du bilan hebdomadaire, qui part par COURRIEL.
+   *
+   * C'est le seul message que le produit envoie de lui-même, donc le seul
+   * endroit où personne ne peut aller vérifier ailleurs ce qu'il lit. Le
+   * chinois écrit déjà « ${p}，这是你的一周 » sans espace ; le japonais posait
+   * la sienne.
+   */
+  {
+    nom: "courriels.titre",
+    rendre: (l, v) => textesBilan(l).titre(v),
+  },
+  {
+    nom: "amis.recordsLigne",
+    rendre: (l: "zh" | "ja", v: string) =>
+      (amis as never as Record<string, { recordsLigne(a: string, b: string, c: string): string }>)[l]
+        .recordsLigne("太郎", "300", v),
+  },
 ];
 
 const CJK = "\\u3000-\\u303F\\u3040-\\u309F\\u30A0-\\u30FF\\u4E00-\\u9FFF\\uFF00-\\uFFEF";
@@ -75,7 +113,18 @@ describe("aucune espace latine entre deux idéogrammes", () => {
     // Sans ce contrôle, retirer l'espace en dur des gabarits passerait pour une
     // correction — alors que ça casserait le cas des pompes, qui est le défaut.
     for (const l of ["zh", "ja"] as const) {
-      for (const { nom, rendre } of A_COUTURE) {
+      /**
+       * Tous n'ont pas d'espace à garder : le chinois du bilan hebdomadaire
+       * écrit « ${p}，这是你的一周 », sans aucune. Ce qu'on éprouve est donc
+       * que ceux qui EN ONT une la gardent — et le témoin exige qu'ils soient
+       * la grande majorité, sans quoi ce contrôle ne dirait plus rien.
+       */
+      const avecEspace = A_COUTURE.filter(({ rendre }) => / /.test(rendre(l, "5分")) || / /.test(rendre(l, "38")));
+      // Le japonais en a dix-huit sur dix-huit, le chinois dix-sept : seul son
+      // sujet de courriel n'a jamais porté d'espace. Le témoin refuse que ce
+      // sous-ensemble se vide, ce qui rendrait le contrôle muet.
+      expect(avecEspace.length).toBeGreaterThanOrEqual(A_COUTURE.length - 1);
+      for (const { nom, rendre } of avecEspace) {
         expect({ nom, l, garde: / /.test(rendre(l, "38")) }).toEqual({ nom, l, garde: true });
       }
     }
@@ -89,11 +138,13 @@ describe("aucune espace latine entre deux idéogrammes", () => {
       "src/lib/i18n/dictionaries/enJeu.ts",
       "src/lib/i18n/dictionaries/dashboard.ts",
       "src/lib/i18n/notifications.ts",
+      "src/lib/i18n/dictionaries/amis.ts",
+      "src/lib/i18n/courriels.ts",
     ];
     const sources = fichiers.map((f) => sansCommentaires(fs.readFileSync(path.join(process.cwd(), f), "utf8")));
     const total = sources.reduce((n, s) => n + (s.match(/colleCjk\(/g) ?? []).length, 0);
     // Huit clés, deux langues chacune, plus les imports.
-    expect(total).toBeGreaterThanOrEqual(16);
+    expect(total).toBeGreaterThanOrEqual(34);
     for (const s of sources) expect(s).toMatch(/colleCjk\(/);
   });
 });

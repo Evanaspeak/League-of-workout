@@ -1188,6 +1188,40 @@ la même série vivent dans `lecture-ecran`, donc invisibles par construction �
 c'est même la raison pour laquelle ils avaient vieilli sans que personne le
 remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
 
+### La date du mur des records cousait avec sa postposition, pour tout le monde
+Suite mesurée de l'entrée ci-dessous. Le garde de la couture CJK portait sa
+limite écrite : « la règle vaudrait aussi pour un PSEUDO japonais, et ça se
+mesure avant de se faire ». Mesuré.
+
+**Vingt-quatre gabarits par langue** reçoivent un texte dont on ne connaît pas
+l'écriture — un pseudo, un nom de groupe, un nom de jeu. La plupart tombent
+d'eux-mêmes : un jeu du catalogue et le nom de l'application sont toujours
+latins. Rendus avec une valeur japonaise, **seize cousent**, tous dans
+`amis.ts`.
+
+**Et le dix-septième cousait déjà pour tout le monde**, ce que le premier
+recensement n'avait pas vu parce que je lui avais passé une date latine :
+
+```
+太郎、9月5日 に 300 ポイント      ← la date sort TOUJOURS en idéogrammes
+太郎，9月5日 偿还 300 点
+```
+
+`recordsLigne` reçoit un jour mis en forme par `Intl`, donc en 「9月5日」 en
+japonais et en chinois : la couture est là quel que soit le pseudo, sur le mur
+des records, depuis qu'il existe. Les huit autres ne cousent que devant un
+pseudo japonais ou chinois — un cas légitime, pas une hypothèse.
+
+Neuf clés de l'écran des amis plus le sujet du bilan hebdomadaire, deux
+langues, dix-neuf reprises. Le collage étant idempotent et
+sans effet sur un texte latin — « Kayn さん » reste tel quel, et le test le
+vérifie — l'étendre ne coûte rien et ferme la famille entière.
+
+**Ce que la mesure a évité**, et c'est pour ça qu'elle valait la peine : mon
+estimation d'avant parlait de « dizaines d'entrées » à balayer dans les blocs
+zh et ja. Il y en a neuf, dans un seul fichier, et une d'entre elles était un
+défaut vivant plutôt qu'un cas de bord.
+
 ### La dette d'une équipe écrivait « 8905 », et deux recensements l'avaient manquée
 Trouvée en poursuivant le recensement des coutures japonaises : `amis.ts` porte
 `equipeTotal` et `equipeDu`, et les deux prenaient un `number` BRUT. Le japonais
@@ -1283,13 +1317,13 @@ reparti en dur.
 Vérifié à l'écran dans quatre langues : « On y va à partir de 5 min »,
 « Greift ab 5 Min. », 「5分から効きます」,「5分钟起生效」.
 
-**Ce que ce garde ne couvre PAS, écrit plutôt que laissé à découvrir.** La
-règle vaudrait aussi pour un PSEUDO japonais — « 太郎 さんの一週間 » a la même
-couture — et pour tout gabarit qui reçoit un texte dont on ne connaît pas
-l'écriture. Le collage y serait juste ; l'étendre à toutes les clés de
-chaîne des blocs zh et ja est un balayage de dizaines d'entrées, et ça se
-mesure avant de se faire. La liste porte donc les clés qui reçoivent une
-quantité de NOS formateurs, où le cas est certain.
+**Ce que ce garde ne couvrait PAS, et qui a été mesuré depuis.** La règle vaut
+aussi pour un PSEUDO japonais et pour toute valeur dont on ne connaît pas
+l'écriture — voir « La date du mur des records cousait avec sa postposition »
+juste au-dessus : neuf clés de plus, dont une qui cousait déjà pour tout le
+monde. `courriels.ts` est repris aussi : « ${p} さんの一週間 » part par
+courriel, c'est le seul message que le produit envoie de lui-même, et le
+chinois écrivait déjà sa forme sans espace.
 
 **Un piège d'outillage, nouveau.** La liste des exécutions de CI demandée avec
 un filtre de branche a rendu des exécutions du 3 septembre, quatre jours plus
