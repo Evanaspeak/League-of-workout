@@ -1157,6 +1157,68 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les six gardes qui ne lisent que les gabarits, recensés jusqu'au bout
+Le pourcentage JSX a ouvert une question qui valait pour toute une classe :
+**quels gardes cherchent un motif dans les `` ` `` seulement, alors que la
+forme JSX existe ?** Six, et le recensement est allé jusqu'au bout plutôt que
+de s'arrêter au premier.
+
+| garde | forme JSX | résultat |
+|---|---|---|
+| `nombresLocalises` (le `%`) | oui | **quatre défauts**, garde étendu |
+| `phraseAssemblee` | oui | **un défaut vivant**, garde étendu |
+| `unitesLocalisees` | possible | zéro dans le dépôt |
+| `quantiteAvantNom` | possible | zéro : les trois lieux mettent la quantité en premier |
+| `nombreDeJeux` | possible | zéro : la seule trouvaille est un commentaire |
+| `injectionHtml` | non | le gabarit EST le sujet |
+
+**Deux sur six cachaient un défaut, et les deux étaient invisibles à l'œil** —
+une espace insécable manquante, un postposé japonais rendu à l'envers. Les
+quatre autres sont écrits ici pour que le recensement ne se refasse pas : ce
+qui coûte cher n'est pas de chercher, c'est de chercher deux fois.
+
+**Ce que ça apprend au-delà des cinq corrections.** Un garde qui borne sa
+portée écrit sa raison, et la raison est bonne le jour où elle s'écrit. Celle
+de `phraseAssemblee` disait « c'est la forme qui compose une phrase » — vrai
+des gabarits, et faux de croire qu'ils sont les seuls. Une portée se remesure
+quand une correction voisine montre que la frontière a bougé.
+
+### Campagne de clôture du 7 septembre au soir, après V481 à V484
+Passée sur un compte semé à soixante parties, créé APRÈS la dernière suite
+navigateur.
+
+**Accessibilité : 0 constat sur 90 passes** — quinze pages, six langues, et
+**quinze pages réellement mesurées** par langue, aucune laissée de côté.
+
+**Et j'ai retombé dans le piège du tube**, écrit ici le 5 septembre : ma boucle
+passait chaque langue dans `| tail -4`, ce qui coupe le décompte des pages
+mesurées. Je n'avais donc que la moitié négative du témoin — la ligne « N
+page(s) NON MESURÉE(S) » ne s'imprime qu'au-dessus de zéro. Une langue relancée
+sans le tube donne les quinze. **Deuxième fois pour ce piège**, et la parade
+est de relancer une passe entière, pas de deviner.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 160 ms | 920 ms | 0,000 | la mention Riot, en pied |
+| `/dashboard` | 236 ms | 1116 ms | 0,000 | le bandeau d'attente Riot |
+| `/bilan` | 244 ms | **2092 ms** | 0,000 | l'image de saison |
+| `/amis` | 264 ms | 1116 ms | 0,014 | le paragraphe du classement |
+| `/history` | 512 ms | 1284 ms | 0,000 | le titre |
+
+Les cinq sont dans les seuils. `/bilan` reste le plus proche pour la raison
+écrite cinq fois — son plus grand élément est l'image de saison — et le compte
+étant semé, les 2 092 ms se comparent aux 2 096, 2 120, 2 128, 2 216 et 2 332
+des campagnes précédentes. **Le tableau de bord relève 453 ko de JavaScript**,
+c'est-à-dire exactement ce que la campagne d'après V469 relevait : aucune des
+quatre versions n'a alourdi quoi que ce soit.
+
+**Dépendances, troisième passage de la journée** : les deux mêmes
+vulnérabilités `mysql2`, inatteignables et gardées ; **zéro côté application de
+bureau**. Tout ce qui est en retard l'est d'une MAJEURE — `typescript` 7,
+`eslint` 10, `@types/node` 26, `@libsql/client` 0.18, `electron` 44 — ou d'une
+version candidate, `prisma` 8. Rien à prendre, donc **aucune version
+d'application de bureau à publier**.
+
 ### 「中 100」 : la phrase assemblée en JSX, et le troisième garde aveugle à cette forme
 Suite directe du pourcentage : si un garde qui ne lit que les gabarits a laissé
 passer quatre `%`, les autres méritaient la même question. Les unités et les
