@@ -1166,6 +1166,31 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les dispenses des dix gardes les plus fournis, recensées — et le mot qui m'a presque fait mentir
+Pendant du recensement des gardes trop ÉTROITS fait plus tôt dans la soirée. Un
+garde trop étroit est SILENCIEUX ; un garde trop LARGE se paie en faux
+positifs, et il se trahit par une liste de dispenses qui grossit. Les dix
+gardes qui en portent le plus, du plus fourni au moins : `registre` (15),
+`phraseAssemblee`, `liensLocalises`, `genreDuLecteur` (7 chacun),
+`scriptsMesure`, `pagesOrphelines`, `filtreParCompte` (6), `unitesLocalisees`,
+`plafondNotifications` (5), `sqlBrut` (4).
+
+**Le résultat est négatif : les dix vérifient que leurs dispenses désignent
+encore quelque chose de vivant.** C'est le mode de vieillissement de cette
+famille — une exemption qui ne désigne plus rien est du code mort dans le garde
+qui existe pour l'attraper — et il est couvert partout.
+
+**Et j'ai failli publier un faux manque.** Ma détection cherchait des MOTS —
+« ne désigne plus », « vivant », « caduque » — et `pagesOrphelines.test.ts`
+appelle les siennes des `fantomes`. Il ressortait donc comme le seul trou du
+lot, et il n'en est pas un : son contrôle est là, sous un autre nom.
+
+C'est exactement la faute que j'ai passé la soirée à corriger chez les autres,
+commise dans le recensement qui la cherchait. Un recensement par vocabulaire
+hérite du vocabulaire de celui qui le fait ; ce qui aurait tranché du premier
+coup est de chercher la FORME — une comparaison entre la liste de dispenses et
+ce qui existe — plutôt que la phrase qui l'explique.
+
 ### « Paga 2000 puntos » : quatre faux positifs, et c'était le garde qui avait tort
 Le balayage des coutures rendait **quatre constats en espagnol** sur le tableau
 de bord, et zéro dans les cinq autres langues : « Paga 2000 puntos de
