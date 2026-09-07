@@ -1,7 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { Lien } from "@/components/Lien";
-import { useT } from "@/lib/i18n/LocaleContext";
+import { useT, useNombre } from "@/lib/i18n/LocaleContext";
 import { premiersPas as dict } from "@/lib/i18n/dictionaries/premiersPas";
 import { calculerPublic } from "@/lib/calculateurPublic";
 
@@ -31,6 +31,7 @@ export function PremiersPas({ pompesMax, onAjouter }: {
    */
   onAjouter: () => void;
 }) {
+  const nombre = useNombre();
   const t = useT(dict);
 
   const exemple = useMemo(() => calculerPublic({
@@ -106,7 +107,7 @@ export function PremiersPas({ pompesMax, onAjouter }: {
             fontFamily: "var(--font-heading)", fontSize: "2rem", color: "var(--gold)",
             lineHeight: 1, fontVariantNumeric: "tabular-nums",
           }}>
-            {exemple.points}
+            {nombre(exemple.points)}
           </b>
           <span style={{ color: "var(--muted)" }}>{t.exempleUnite}</span>
         </div>

@@ -64,13 +64,35 @@ const ROND: Record<string, (min: number) => string> = {
   ja: (min) => `${min}分`,
 };
 
+/**
+ * Les SECONDES, pour les deux mêmes langues — et la troisième fois que ce
+ * module apprend la même leçon.
+ *
+ * La règle était posée pour la minute ronde et pas pour la seconde ronde,
+ * c'est-à-dire à un de ses deux endroits. `Intl` rend « 45 秒 » en japonais —
+ * donnée CLDR, avec une espace — au-dessus d'un « 1分55秒 » qui n'en a pas et
+ * d'un « 27分 » qui n'en a pas non plus. Trouvé en lisant l'HISTORIQUE d'un
+ * compte dont les parties se comptent au temps : les trois formes s'y suivent
+ * dans la même colonne, et l'espace saute aux yeux.
+ *
+ * Le chinois tombait juste par accident — CLDR y rend déjà « 45秒 ». C'est la
+ * façon la plus discrète pour un défaut de survivre, et c'est la raison pour
+ * laquelle les deux langues sont DÉCLARÉES ici plutôt que laissées à la
+ * donnée : une règle qui ne tient que parce qu'une table externe est d'accord
+ * ne tient rien.
+ */
+const ROND_SECONDES: Record<string, (s: number) => string> = {
+  zh: (s) => `${s}秒`,
+  ja: (s) => `${s}秒`,
+};
+
 const composeParDefaut = (min: number, sec: number, etiquette: string) =>
   `${unite(min, "minute", etiquette)} ${pad(sec)}`;
 
 /** 45 → « 45 s », 850 → « 14 min 10 », dans la langue demandée. */
 export function dureeLocalisee(totalSecondes: number, etiquette: string): string {
   const s = Math.max(0, Math.round(totalSecondes));
-  if (s < 60) return unite(s, "second", etiquette);
+  if (s < 60) return (ROND_SECONDES[langueDe(etiquette)] ?? ((n: number) => unite(n, "second", etiquette)))(s);
   const minutes = Math.floor(s / 60);
   const reste = s % 60;
   if (reste === 0) return (ROND[langueDe(etiquette)] ?? ((m: number) => unite(m, "minute", etiquette)))(minutes);

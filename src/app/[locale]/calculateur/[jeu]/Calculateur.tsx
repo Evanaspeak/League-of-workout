@@ -45,6 +45,8 @@ export function Calculateur({ jeu }: { jeu: string }) {
     dureeSec: minutes * 60,
   }), [jeu, pompesMax, role, result, kills, deaths, assists, arrets, placement, minutes, capacites.joueurs]);
 
+  // `nombre` est déjà pris ici : il rend un CHAMP de formulaire.
+  const chiffre = useNombre();
   const nombre = (
     id: string, libelle: string, valeur: number,
     poser: (n: number) => void, min: number, max: number,
@@ -141,7 +143,7 @@ export function Calculateur({ jeu }: { jeu: string }) {
               fontFamily: "var(--font-heading)", fontSize: "clamp(2.4rem, 9vw, 3.6rem)",
               lineHeight: 1, color: "var(--gold)",
             }}>
-              {resultat.points}
+              {chiffre(resultat.points)}
             </strong>
             <span style={{ color: "var(--muted)" }}>{t.unite}</span>
           </>

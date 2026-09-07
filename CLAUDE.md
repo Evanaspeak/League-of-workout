@@ -824,7 +824,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2369 tests unitaires, 226 suites (au 7 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2373 tests unitaires, 227 suites (au 7 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1187,6 +1187,108 @@ par `Intl` ne peut pas se voir ici. Et les résumés de graphique corrigés dans
 la même série vivent dans `lecture-ecran`, donc invisibles par construction —
 c'est même la raison pour laquelle ils avaient vieilli sans que personne le
 remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
+
+### « 15360 / 25000 » sur chaque écran, et le garde qui ne pouvait pas exister
+Trouvé en balayant cinq écrans en japonais et en chinois sur un compte à
+**mille neuf cent vingt parties et quinze mille trois cent soixante points** —
+c'est-à-dire au-dessus de l'échelle du propriétaire. Sous mille, aucun de ces
+défauts n'existe.
+
+Le panneau des paliers rendait sa ligne d'avancement en JSX nu :
+
+```tsx
+{etat.prochain.avancement} / {etat.prochain.seuil}
+```
+
+« 15360 / 25000 » dans les six langues, là où le français écrit « 15 360 »,
+l'allemand « 15.360 » et le japonais « 15,360 ». Et **sur CHAQUE écran
+connecté**, puisque ce panneau vit dans le rail.
+
+**Deux lignes plus haut, le même composant écrit
+`nombre.format(etat.souffrance.points)`.** La règle était appliquée à un de ses
+deux endroits, dans le même fichier, à quinze lignes d'écart. C'est le motif
+que ce journal trouve plus souvent que tout le reste, et il ne se voit pas en
+relisant le composant — qui a l'air parfaitement cohérent.
+
+**Trois autres de la même forme, tous inoffensifs, tous repris quand même.** Le
+verdict du calculateur public plafonne autour de 240 pour douze heures de jeu —
+mesuré, pas supposé — et l'exemple des premiers pas est calculé sur des entrées
+fixes. Les passer par `Intl` ne change rien à l'écran aujourd'hui et supprime la
+liste d'exemptions qu'un garde aurait dû porter. Le quatrième, lui, compte :
+`AdminMesures` affiche l'effort de sept jours des comptes AU-DESSUS d'un seuil,
+donc par construction des nombres qui le dépassent.
+
+**Le garde a demandé deux bornes, et les deux étaient déjà écrites ailleurs.**
+Il n'existe pas de règle « aucun nombre nu en JSX » — un numéro de niveau, une
+valeur de formulaire et un attribut ARIA doivent rester nus, et ce journal
+l'écrit déjà pour `String(`. Le discriminant est donc le NOM du champ, sur une
+famille fermée de quantités sans plafond, plus :
+
+- **les ATTRIBUTS écartés** : `max={l.dus}` borne un `<input type="number">` et
+  `aria-valuenow={…}` est une valeur ARIA. Ce qui les distingue est le `=` qui
+  précède l'accolade ;
+- **les DICTIONNAIRES écartés** : `{tt.xp}` est le MOT « XP », pas un nombre.
+  Sans cette borne, le garde accusait la ligne qui met justement l'XP en forme —
+  deux faux positifs au premier jet. C'est mot pour mot la borne d'identifiant
+  que `phraseAssemblee.test.ts` avait dû poser, pour la même raison.
+
+Quatre sabotages, quatre échecs. Vérifié à l'écran : le couple a disparu des
+cinq écrans dans les deux langues.
+
+**Et le semis a demandé une leçon d'outillage.** Le limiteur refuse plus de
+soixante écritures par fenêtre ; au-delà, on duplique les lignes en SQL — mais
+en NOMMANT toutes les colonnes, sinon `surchargeCalculee` viole sa contrainte
+`NOT NULL` et l'insertion échoue en silence si on l'a redirigée. Cinq
+doublements portent soixante parties à mille neuf cent vingt.
+
+**Un piège d'ordre, retombé dedans.** J'ai créé le compte de mesure PUIS lancé
+la suite navigateur, qui purge les comptes `@example.test` : le balayage suivant
+a atterri sur `/login` pour deux écrans sur trois. L'ordre est écrit ici depuis
+longtemps — la suite d'abord, le compte ensuite, la mesure enfin — et c'est le
+contrôle d'atterrissage qui l'a dit plutôt que de rendre « rien à signaler ».
+
+### « 45 秒 » au-dessus de « 27分 », et le test qui exigeait l'espace
+Trouvé en lisant l'HISTORIQUE en japonais, sur un compte dont toutes les
+parties se comptent au TEMPS — Minecraft, World of Warcraft, GTA V, Elden Ring,
+Les Sims. Les durées s'y suivent dans une seule colonne, et c'est ce qui rend
+la divergence visible :
+
+```
+3時間50分
+1時間15分
+27分
+45 秒          ← seule à porter une espace
+```
+
+**Le japonais était seul, et contre lui-même.** `dureeLocalisee` écrit son
+composé à la main pour le chinois et le japonais — « 1分55秒 » — et sa forme
+ronde de MINUTE aussi, par la table `ROND`, précisément parce qu'`Intl` y pose
+une espace que le composé n'a pas. La règle est écrite dans le module depuis ce
+jour-là : « la langue qui écrit son composé à la main écrit aussi sa forme
+ronde ». Elle était appliquée à la minute et à l'heure, **pas à la seconde**.
+
+**Le chinois tombait juste par accident**, et c'est la partie instructive :
+CLDR rend « 45秒 » en chinois et « 45 秒 » en japonais. Une règle qui ne tient
+que parce qu'une table externe est d'accord ne tient rien — les deux langues
+sont donc DÉCLARÉES, comme elles le sont déjà pour la minute.
+
+**Et un test épinglait le défaut.** « écrit l'unité de chaque langue »
+normalisait les blancs pour se lire facilement, donc il comparait « 45 秒 » à
+« 45 秒 » et acceptait l'espace. C'est la forme la plus coûteuse d'un mauvais
+test, déjà rencontrée sur l'en-tête de cache des ratios : il ne se contente pas
+de ne rien attraper, il fait échouer la correction. Les deux écritures à
+idéogrammes s'exigent maintenant au caractère près, et un second contrôle tient
+les TROIS formes ensemble — seconde, minute ronde, composé — puisque c'est leur
+voisinage sur une même colonne qui a rendu l'écart visible.
+
+Trois sabotages, trois échecs — dont le japonais seul débranché, qui laisse le
+chinois juste et ne se verrait pas sans un contrôle par langue.
+
+**Ce que ça apprend, et c'est la troisième fois pour ce module** : une règle
+posée à un de ses deux endroits ne se voit pas en relisant le module, qui a
+l'air cohérent. Elle se voit à l'écran, quand les deux formes se retrouvent
+dans la même colonne — et il a fallu un compte dont TOUTES les parties sont au
+temps pour que cette colonne existe. En mode mixte elle ne se rend pas.
 
 ### La date du mur des records cousait avec sa postposition, pour tout le monde
 Suite mesurée de l'entrée ci-dessous. Le garde de la couture CJK portait sa

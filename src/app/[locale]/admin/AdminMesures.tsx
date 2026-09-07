@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useT, usePourcentage } from "@/lib/i18n/LocaleContext";
+import { useT, usePourcentage, useNombre } from "@/lib/i18n/LocaleContext";
 import { adminMesures } from "@/lib/i18n/dictionaries/adminMesures";
 import { formaterDelai, type Mesures } from "@/lib/mesures";
 
@@ -17,6 +17,7 @@ type Reponse = Mesures & {
  * le produit sert à quelque chose. Les deux étaient inconnus.
  */
 export default function AdminMesures() {
+  const nombre = useNombre();
   const pourcent = usePourcentage();
   const t = useT(adminMesures);
   const [m, setM] = useState<Reponse | null>(null);
@@ -83,7 +84,7 @@ export default function AdminMesures() {
                 <div key={u.pseudo} className="flex items-baseline justify-between gap-3"
                   style={{ padding: "4px 0", fontSize: "0.85rem" }}>
                   <span style={{ color: "var(--muted)" }}>{u.pseudo}</span>
-                  <b style={{ color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>{u.points}</b>
+                  <b style={{ color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>{nombre(u.points)}</b>
                 </div>
               ))}
             </div>
