@@ -1260,6 +1260,18 @@ Vérifié à l'écran dans quatre langues : 「試合数 1,116」,「1.116」,�
 「次のレベルまで支払い済み 100 ポイント」; et l'énumération en
 「月 8、火 8、水 8。」
 
+**Et la porte se ferme par le TYPE, pas par un test.** `StatCard` déclarait
+`value?: string | number` : c'est par là que le compte de parties est passé
+brut. Le resserrer à `string` ne casse aucun appelant — il n'y en avait qu'un,
+et il venait d'être corrigé — mais le prochain qui passera un nombre se le
+fera dire par le compilateur. C'est ce qu'un changement de type fait de mieux,
+et ça vaut mieux qu'un garde : un garde se contourne, un type non.
+
+Recensé au passage : c'était le SEUL `string | number` de la couche
+d'affichage. Les autres propriétés typées `number` sont des valeurs de
+formulaire — la valeur d'un `<input type="number">` doit rester un nombre nu,
+la localiser la casserait — et des rappels de sauvegarde.
+
 **Ce que ça apprend sur la méthode**, et c'est la raison pour laquelle le
 semis prend un nombre depuis ce matin : **un compte de mesure à soixante
 parties mesure une application à soixante parties.** Aucun de ces quatre

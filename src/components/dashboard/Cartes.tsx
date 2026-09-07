@@ -15,7 +15,19 @@ export type ChampSummary = {
 };
 
 export function StatCard({ label, value, sub, lignes, i = 0, ancre }: {
-  label: string; value?: string | number; sub?: string;
+  label: string;
+  /**
+   * DÉJÀ mise en forme, et le type le dit.
+   *
+   * Elle acceptait `string | number`, et c'est par là qu'un compte de parties
+   * est passé brut : « 1116 » à côté d'un « 8 905 » groupé, sur la même
+   * rangée. Le resserrer ne casse aucun appelant — il n'y en avait qu'un, et
+   * il est corrigé — mais il ferme la porte pour de bon : le prochain qui
+   * passera un nombre se le fera dire par le compilateur, ce qui vaut mieux
+   * qu'un test et infiniment mieux qu'une relecture.
+   */
+  value?: string;
+  sub?: string;
   /** Ventilation par exercice : des répétitions et des minutes ne s'additionnent pas. */
   lignes?: { nom: string; valeur: string }[];
   i?: number;
