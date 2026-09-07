@@ -160,7 +160,7 @@ export function Paliers() {
               {t.prochain} · {nommer(etat.prochain)}
             </span>
             <b style={{ fontSize: "0.8rem", fontVariantNumeric: "tabular-nums" }}>
-              {etat.prochain.avancement} / {etat.prochain.seuil}
+              {nombre.format(etat.prochain.avancement)} / {nombre.format(etat.prochain.seuil)}
             </b>
           </div>
           <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>

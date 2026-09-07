@@ -76,10 +76,48 @@ describe("la durée d'effort", () => {
   });
 
   it("écrit l'unité de chaque langue", () => {
-    expect(dureeLocalisee(45, "ja-JP").replace(/\s/g, " ")).toBe("45 秒");
+    /**
+     * Le japonais n'a PAS d'espace, et ce contrôle en exigeait une.
+     *
+     * Il normalisait les blancs pour se lire facilement, ce qui lui faisait
+     * accepter le « 45 秒 » de CLDR — c'est-à-dire épingler le défaut. Trouvé
+     * en lisant l'historique d'un compte compté au temps : « 45 秒 » y suivait
+     * « 27分 » et « 3時間50分 », dans la même colonne. C'est la forme la plus
+     * coûteuse d'un mauvais test — il ne se contente pas de ne rien attraper,
+     * il fait échouer la correction.
+     *
+     * Les deux écritures à idéogrammes s'écrivent donc sans blanc du tout, et
+     * on l'exige au caractère près.
+     */
+    expect(dureeLocalisee(45, "ja-JP")).toBe("45秒");
+    expect(dureeLocalisee(45, "zh-CN")).toBe("45秒");
     expect(dureeLocalisee(45, "de-DE").replace(/\s/g, " ")).toBe("45 Sek.");
     expect(dureeLocalisee(840, "de-DE").replace(/\s/g, " ")).toBe("14 Min.");
     expect(dureeLocalisee(840, "zh-CN")).toBe("14分钟");
+  });
+
+  it("et la forme ronde des SECONDES s'accorde avec le composé", () => {
+    /**
+     * La règle « la langue qui écrit son composé à la main écrit aussi sa
+     * forme ronde » était posée pour la MINUTE et pas pour la SECONDE, donc à
+     * un de ses deux endroits. Les trois formes se croisent sur la même
+     * colonne de l'historique.
+     *
+     * Le chinois tombait juste par accident : CLDR y rend déjà « 45秒 ». On
+     * l'exige quand même, sinon la règle ne tient que tant qu'une table
+     * externe est d'accord.
+     */
+    for (const l of ["ja", "zh"] as const) {
+      const e = etiquetteLocale(l);
+      expect({ l, blanc: /\s/.test(dureeLocalisee(45, e)) }).toEqual({ l, blanc: false });
+      expect({ l, blanc: /\s/.test(dureeLocalisee(120, e)) }).toEqual({ l, blanc: false });
+      expect({ l, blanc: /\s/.test(dureeLocalisee(115, e)) }).toEqual({ l, blanc: false });
+    }
+    // Et les quatre langues européennes gardent le blanc d'`Intl` : le
+    // retirer y serait le défaut inverse.
+    for (const l of ["fr", "en", "es", "de"] as const) {
+      expect({ l, blanc: /\s/.test(dureeLocalisee(45, etiquetteLocale(l))) }).toEqual({ l, blanc: true });
+    }
   });
 
   it("compose le cadran selon la langue, pas selon une forme unique", () => {
