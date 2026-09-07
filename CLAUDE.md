@@ -1150,6 +1150,44 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Six versions, et cinq graduations d'axe : la comparaison de rendu après V460–V465
+Passée entre V459 et la tête, sur un compte semé à 480 parties. Trente-neuf
+captures, huit pages, trois largeurs.
+
+**Six captures différentes, et les six s'expliquent.** Trois sont
+`/telechargement`, que l'outil range déjà à part parce qu'elle lit les
+releases GitHub et diffère d'une exécution à l'autre sans que rien n'ait
+changé. Les trois autres sont le tableau de bord, aux trois largeurs.
+
+**Les bandes ont été LUES, pas supposées.** Cinq bandes de huit pixels de
+haut, toutes dans une colonne de huit pixels de large, sur une page dont la
+hauteur est identique au pixel — 3 278 des deux côtés en 1280, 4 193 en 360.
+En demandant à la page quels éléments les occupent :
+
+```
+y 1760–1767 : tspan « 4 000 »
+y 1792–1799 : tspan « 3 000 »
+y 1832–1839 : tspan « 2 000 »
+y 1872–1879 : tspan « 1 000 »
+y 2674–2681 : tspan « 1 000 »
+```
+
+Ce sont exactement les graduations d'axe passées par `Intl` : « 4000 » devient
+« 4 000 », et les huit pixels de large sont l'espace fine qui apparaît. Deux
+cent sept pixels sur une page qui en fait plus de quatre millions.
+
+**Le reste des six versions ne déplace RIEN**, y compris les cent cinquante
+pages devenues prérendues : une page servie depuis le magasin de prérendu rend
+le même HTML que la même page rendue à la demande, ce qui est précisément ce
+qu'on veut d'un tel changement — il se voit dans un en-tête, pas à l'écran.
+
+**Ce que la campagne n'exerce PAS, et il vaut mieux l'écrire.** À 480 parties,
+le compte de parties n'a pas de séparateur : la correction qui le fait passer
+par `Intl` ne peut pas se voir ici. Et les résumés de graphique corrigés dans
+la même série vivent dans `lecture-ecran`, donc invisibles par construction —
+c'est même la raison pour laquelle ils avaient vieilli sans que personne le
+remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
+
 ### L'accueil est le seul écran public encore rendu à la demande, et voilà ce que ça coûte
 Suite de « Zéro page prérendue ». Cent cinquante pages sont prérendues depuis ;
 l'accueil n'en fait pas partie, et c'est la page la plus visitée du produit.
