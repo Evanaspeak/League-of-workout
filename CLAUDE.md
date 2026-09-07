@@ -1150,6 +1150,45 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'accueil est le seul écran public encore rendu à la demande, et voilà ce que ça coûte
+Suite de « Zéro page prérendue ». Cent cinquante pages sont prérendues depuis ;
+l'accueil n'en fait pas partie, et c'est la page la plus visitée du produit.
+
+**La raison tient en un appel.** `/[locale]/page.tsx` appelle `auth()` pour
+adapter trois boutons — le lien de la barre, celui du héros, celui du bas —
+entre « Candidater à la bêta » et « Tableau de bord ». Une lecture de session
+est une lecture de la requête : la page est donc rendue à chaque visite.
+
+**Mesuré en production, huit relevés de chaque, temps jusqu'au premier
+octet :**
+
+| | relevés (s) | médiane | pire |
+|---|---|---|---|
+| `/fr` — rendue à la demande | 1,42 · 0,51 · 0,36 · 0,29 · 0,21 · 0,23 · 0,26 · 0,20 | 0,26 | **1,42** |
+| `/fr/cgu` — prérendue | 0,23 · 0,17 · 0,20 · 0,26 · 0,19 · 0,19 · 0,21 · 0,28 | 0,20 | 0,28 |
+
+**À chaud, l'écart est de soixante millisecondes ; ce qui compte est la
+QUEUE.** La page dynamique a rendu 1,42 s puis 2,11 s sur deux séries
+distinctes — le démarrage à froid de sa fonction — quand la page prérendue n'a
+jamais dépassé 0,28 s sur onze relevés. Et un démarrage à froid tombe
+exactement sur qui arrive de loin : c'est-à-dire sur le premier visiteur, sur
+la page qui existe pour l'accueillir.
+
+**Ce que ça coûterait de la rendre statique, et pourquoi ça ne se décide pas
+ici.** Les trois boutons partiraient dans leur état « déconnecté » puis
+basculeraient à l'hydratation. Quelqu'un de connecté verrait donc « Candidater
+à la bêta » pendant un instant sur sa propre page d'accueil.
+
+Ce n'est pas une régression au sens strict : **c'est exactement ce que `Nav`
+fait déjà partout ailleurs**, et son commentaire l'écrit — « sur une page
+publique on ne sait pas encore, et on ne promet rien avant de savoir ». La
+barre du site résout la session au navigateur sur toutes les pages publiques.
+L'accueil est le seul écran qui s'offre le luxe de le savoir au serveur, et il
+le paie de son prérendu.
+
+Mais un scintillement sur la page la plus vue, c'est un arbitrage de produit,
+pas une décision technique. **Il part dans les questions, avec ses chiffres.**
+
 ### Campagne de clôture du 7 septembre, et ce qu'elle ne mesure pas
 Passée après V460 à V463, dont une qui change la NATURE de cent cinquante
 pages — elles étaient rendues à la demande, elles sont prérendues.
