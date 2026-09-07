@@ -111,6 +111,51 @@ test("un compte vide peut enregistrer sa première partie depuis le tableau de b
 });
 
 /**
+ * La partie de démonstration (réponse 082).
+ *
+ * « Montrer le calcul sans avoir à jouer. » Ce que le parcours prouve et
+ * qu'aucun test unitaire ne peut voir, c'est la SECONDE moitié : que rien
+ * n'entre en base. Un exemple qui enregistrerait une partie fantôme fausserait
+ * le winrate, les paliers et la dette du compte qu'il vient d'accueillir —
+ * c'est-à-dire exactement la personne qu'on ne peut pas se permettre de
+ * perdre.
+ */
+test("l'exemple montre le coût sans rien enregistrer", async ({ browser }) => {
+  const { compter } = await import("./base");
+  const avant = await compter(
+    'SELECT COUNT(*) AS n FROM "Game" g JOIN "User" u ON u.id = g."userId" WHERE u.pseudo = $1',
+    [COMPTE.pseudo],
+  );
+
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.goto("/dashboard");
+  await passerIntro(page);
+
+  await page.getByRole("button", { name: /^ajouter une partie$/i }).last().click();
+  const fenetre = page.getByRole("dialog");
+  await expect(fenetre).toBeVisible();
+
+  await fenetre.getByRole("button", { name: /voir un exemple|see an example/i }).click();
+
+  // Le coût VIVANT paraît : c'est la seule preuve que l'aperçu a tourné, et
+  // non que des champs se sont remplis.
+  await expect(fenetre.getByText(/coût réel|real cost|coût de cette partie/i)).toBeVisible({ timeout: 15_000 });
+
+  // Et le bouton disparaît une fois la partie renseignée : il n'a plus rien à
+  // montrer, et il prendrait la place.
+  await expect(fenetre.getByRole("button", { name: /voir un exemple|see an example/i })).toHaveCount(0);
+
+  await ctx.close();
+
+  // La moitié qui compte : rien n'a été écrit.
+  expect(await compter(
+    'SELECT COUNT(*) AS n FROM "Game" g JOIN "User" u ON u.id = g."userId" WHERE u.pseudo = $1',
+    [COMPTE.pseudo],
+  )).toBe(avant);
+});
+
+/**
  * Le même écran vide sur un téléphone.
  *
  * Le bouton d'ajout vit dans le rail latéral, qui ne se déplie pas de la même

@@ -220,7 +220,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 039 | Terra à 399 $/mois : pas avant des revenus | — |
 
 ### Le premier jour
-*3 à faire · 5 faits.* Ce qui décide si quelqu'un revient. À moitié construit.
+*2 à faire · 6 faits.* Ce qui décide si quelqu'un revient. À moitié construit.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -228,7 +228,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 087 | L'objectif de première semaine | — |
 | [x] | 088 | Des cadres vides mais expliqués | — |
 | [x] | 086 | Modale d'accueil et visite guidée, les deux gardées | — |
-| [ ] | 082 | Une partie de démonstration préremplie, sans avoir à jouer | 1 nuit |
+| [x] | 082 | Une partie de démonstration préremplie, sans avoir à jouer | — |
 | [ ] | 090 | Demander l'objectif à l'inscription et adapter l'application | 2 nuits |
 | [x] | 080 | Mesurer le temps jusqu'à la première partie enregistrée — **fait : `/api/admin/mesures` rend la médiane et les quartiles du délai, et le panneau d'administration les affiche** | — |
 | [ ] | 085 | Te montrer les deux formulaires d'inscription pour choisir | je te dois la maquette |
