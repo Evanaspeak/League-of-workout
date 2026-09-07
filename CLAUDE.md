@@ -1166,6 +1166,69 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un commentaire promettait de ne pas dupliquer, au-dessus d'une duplication
+Trouvé en cherchant, par la FORME cette fois, d'autres endroits où une règle
+est réécrite alors qu'elle existe ailleurs. Le motif cherché était le
+découpage des décimales d'un pas ; il vit à deux endroits.
+
+`quantite` (`exercices.ts`) et `surLePas` (`conversionDette.ts`) portaient la
+même arithmétique — arrondir au pas, puis recaler sur le nombre de décimales du
+pas pour ne pas traîner de flottant (trois fois 0,1 vaut 0,30000000000000004,
+et le compteur l'afficherait en gros au milieu de la fenêtre).
+
+**Et le commentaire de la seconde annonçait l'inverse** : « on recale sur le
+nombre de décimales du pas, **comme là-bas, plutôt que d'écrire une deuxième
+arithmétique qui divergerait** ». L'intention était juste, et c'était bien une
+seconde arithmétique. C'est le défaut que ce journal reproche partout — une
+garantie décrite qui n'existe pas se relit comme une garantie, et on cesse de
+vérifier.
+
+`arrondirAuPas(valeur, pas)` est partagée maintenant. **Le plancher, lui, reste
+chez `surLePas`**, et c'est une décision : une quantité convertie depuis des
+points ne peut pas être négative, alors que le compteur, lui, se décrémente.
+Le remonter dans la fonction commune aurait fait porter à `quantite` une borne
+qui ne la concerne pas.
+
+**Le garde porte sur la FORME et non sur le nom.** Chercher `arrondirAuPas`
+ailleurs ne prouverait rien — un import laisse le nom en place. Il refuse que
+le découpage `String(pas).split(".")` reparaisse dans un autre module de
+`src/lib`, avec le témoin qui va avec : il doit rester là où il doit être.
+
+Trois sabotages, trois échecs : la seconde arithmétique remise, le plancher
+retiré, et le nombre de décimales figé à un.
+
+**Ce que le recensement n'a PAS trouvé**, et qui vaut d'être écrit : aucun
+séparateur de milliers ni virgule décimale codés en dur dans une règle. Les
+deux seules occurrences de `String(...).split(".")` du dépôt étaient
+celles-ci, et elles découpent un littéral JavaScript — `String` d'un nombre
+écrit toujours son point, quelle que soit la langue — donc ce n'était pas la
+famille du faux positif espagnol.
+
+### Les dispenses des dix gardes les plus fournis, recensées — et le mot qui m'a presque fait mentir
+Pendant du recensement des gardes trop ÉTROITS fait plus tôt dans la soirée. Un
+garde trop étroit est SILENCIEUX ; un garde trop LARGE se paie en faux
+positifs, et il se trahit par une liste de dispenses qui grossit. Les dix
+gardes qui en portent le plus, du plus fourni au moins : `registre` (15),
+`phraseAssemblee`, `liensLocalises`, `genreDuLecteur` (7 chacun),
+`scriptsMesure`, `pagesOrphelines`, `filtreParCompte` (6), `unitesLocalisees`,
+`plafondNotifications` (5), `sqlBrut` (4).
+
+**Le résultat est négatif : les dix vérifient que leurs dispenses désignent
+encore quelque chose de vivant.** C'est le mode de vieillissement de cette
+famille — une exemption qui ne désigne plus rien est du code mort dans le garde
+qui existe pour l'attraper — et il est couvert partout.
+
+**Et j'ai failli publier un faux manque.** Ma détection cherchait des MOTS —
+« ne désigne plus », « vivant », « caduque » — et `pagesOrphelines.test.ts`
+appelle les siennes des `fantomes`. Il ressortait donc comme le seul trou du
+lot, et il n'en est pas un : son contrôle est là, sous un autre nom.
+
+C'est exactement la faute que j'ai passé la soirée à corriger chez les autres,
+commise dans le recensement qui la cherchait. Un recensement par vocabulaire
+hérite du vocabulaire de celui qui le fait ; ce qui aurait tranché du premier
+coup est de chercher la FORME — une comparaison entre la liste de dispenses et
+ce qui existe — plutôt que la phrase qui l'explique.
+
 ### « Paga 2000 puntos » : quatre faux positifs, et c'était le garde qui avait tort
 Le balayage des coutures rendait **quatre constats en espagnol** sur le tableau
 de bord, et zéro dans les cinq autres langues : « Paga 2000 puntos de
@@ -1234,6 +1297,16 @@ bureau**. Et rien à prendre : tout ce qui est en retard l'est d'une MAJEURE —
 d'un `0.x` dont la mineure est le créneau des ruptures (`@libsql/client` 0.18).
 Donc **aucune version d'application de bureau à publier de ce fait** ; la
 0.9.16 est partie pour une autre raison, la pastille qui rougit au seuil.
+
+**La comparaison de rendu n'a PAS été passée, et c'est une décision, pas un
+oubli.** Le seul fichier de la couche d'affichage touché entre V495 et la tête
+est `DetteDirecte.tsx` — et il **rend `null`** : c'est un composant d'effets,
+qui pousse la dette vers la pastille en jeu et ne peint rien. Une comparaison
+de pixels y est un résultat écrit d'avance, et dix minutes de construction pour
+confirmer ce qu'une ligne établit. C'est la même discipline que celle qui a
+fait retirer le `fetchPriority` mesuré sans effet : on ne fait pas une mesure
+dont le résultat est déterminé, et on écrit pourquoi plutôt que de laisser
+croire à un oubli.
 
 **Deux pièges d'outillage, tous deux chez moi, tous deux nouveaux dans leur
 forme.**

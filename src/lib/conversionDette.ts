@@ -1,4 +1,4 @@
-import { EXERCICES, estEnTemps, quantite, type ExerciceId, type RatiosExercices } from "@/lib/exercices";
+import { EXERCICES, arrondirAuPas, estEnTemps, quantite, type ExerciceId, type RatiosExercices } from "@/lib/exercices";
 
 /**
  * Voir sa dette dans un autre exercice, et la payer ainsi.
@@ -130,14 +130,14 @@ export function conversionsProposees(dus: ExerciceId[]): ExerciceId[] {
  * naïvement laisse la trace que `quantite` évite déjà de son côté : trois fois
  * 0,1 vaut 0,30000000000000004, et le compteur afficherait ça en gros au
  * milieu de la fenêtre. On recale sur le nombre de décimales du pas, comme là
- * -bas, plutôt que d'écrire une deuxième arithmétique qui divergerait.
+ * -bas — et vraiment là-bas : `arrondirAuPas` est partagée, au lieu d'une
+ * seconde arithmétique qui divergerait.
  *
  * Jamais négatif : on ne peut pas avoir fait moins que rien.
  */
 export function surLePas(valeur: number, exercice: ExerciceId): number {
-  const pas = EXERCICES[exercice].pas;
+  // Le plancher appartient à CETTE fonction : une quantité convertie depuis
+  // des points ne peut pas être négative, mais le compteur, lui, se décrémente.
   const v = Number.isFinite(valeur) ? Math.max(0, valeur) : 0;
-  if (Number.isInteger(pas)) return Math.round(v / pas) * pas;
-  const decimales = String(pas).split(".")[1]?.length ?? 1;
-  return Number((Math.round(v / pas) * pas).toFixed(decimales));
+  return arrondirAuPas(v, EXERCICES[exercice].pas);
 }

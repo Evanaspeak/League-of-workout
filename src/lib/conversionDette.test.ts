@@ -1,5 +1,7 @@
-import { convertirDette, conversionsPossibles, conversionsProposees, partPayeeQuantite } from "@/lib/conversionDette";
-import { EXERCICES, quantite, type ExerciceId } from "@/lib/exercices";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { convertirDette, conversionsPossibles, surLePas, conversionsProposees, partPayeeQuantite } from "@/lib/conversionDette";
+import { EXERCICES, arrondirAuPas, quantite, type ExerciceId } from "@/lib/exercices";
 
 describe("convertir sa dette dans un autre exercice", () => {
   it("ne change jamais ce qu'on doit, seulement l'unité", () => {
@@ -119,5 +121,44 @@ describe("ce qu'on propose de convertir", () => {
 
   it("n'offre pas l'exercice qu'on doit déjà", () => {
     expect(conversionsProposees(["pompes"])).not.toContain("pompes");
+  });
+});
+
+describe("l'arrondi au pas n'est écrit qu'une fois", () => {
+  /**
+   * Le commentaire de `surLePas` promettait de recaler « comme là-bas, plutôt
+   * que d'écrire une deuxième arithmétique qui divergerait » — au-dessus d'une
+   * deuxième arithmétique. L'intention était juste ; la garantie n'existait
+   * pas, et un commentaire qui décrit une garantie absente se relit comme une
+   * garantie.
+   */
+  it("délègue vraiment, au lieu de refaire le calcul", () => {
+    for (const v of [0, 0.05, 0.1, 0.14, 0.3, 1, 2.55, 12.7, 1000.04]) {
+      expect(surLePas(v, "course")).toBe(arrondirAuPas(v, EXERCICES.course.pas));
+      expect(surLePas(v, "pompes")).toBe(arrondirAuPas(v, EXERCICES.pompes.pas));
+    }
+  });
+
+  it("garde son propre plancher, qui n'appartient qu'à lui", () => {
+    // Une quantité convertie depuis des points ne peut pas être négative ;
+    // le compteur, lui, se décrémente.
+    expect(surLePas(-5, "pompes")).toBe(0);
+    expect(surLePas(Number.NaN, "pompes")).toBe(0);
+  });
+
+  it("et la seconde arithmétique ne peut pas revenir", () => {
+    // La FORME plutôt que le mot : le découpage des décimales du pas ne vit
+    // que dans `exercices.ts`, où la fonction partagée est écrite. Chercher le
+    // NOM `arrondirAuPas` ne prouverait rien — un import le laisse en place.
+    const dossier = join(process.cwd(), "src", "lib");
+    const ailleurs = readdirSync(dossier)
+      .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts") && f !== "exercices.ts")
+      .filter((f) => /String\(\s*\w*[Pp]as\s*\)\s*\.split\(/.test(
+        readFileSync(join(dossier, f), "utf8"),
+      ));
+    expect({ ailleurs }).toEqual({ ailleurs: [] });
+    // Témoin : le découpage existe encore là où il doit être.
+    expect(readFileSync(join(dossier, "exercices.ts"), "utf8"))
+      .toMatch(/String\(pas\)\.split\(/);
   });
 });
