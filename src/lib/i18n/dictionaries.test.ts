@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { dashboard } from "./dictionaries/dashboard";
 
 /**
  * Les dictionnaires doivent se correspondre exactement.
@@ -168,5 +169,83 @@ describe("dictionnaires effectivement employés", () => {
       .filter((nom) => !contenu.includes(`dictionaries/${nom}"`));
 
     expect(orphelins).toEqual([]);
+  });
+});
+
+/**
+ * Le nombre de jours de retard est écrit UNE fois, dans le titre.
+ *
+ * `retardTitre` est une fonction du nombre réel — « En retard depuis 5 jours ».
+ * `retardTexte`, deux lignes plus bas dans le même panneau, disait « Ta dette
+ * court depuis trois jours », en dur, dans les six langues : c'est le SEUIL de
+ * retard, vrai le jour du franchissement et faux tous les jours suivants. Le
+ * panneau se contredisait donc lui-même dès le quatrième jour.
+ *
+ * Trouvé en lisant le tableau de bord en japonais sur un compte en retard de
+ * cinq jours : 「5 日の遅れ」 au-dessus de 「負債が3日続いています」. En français
+ * les deux lignes se lisent vite et l'écart ne saute pas aux yeux.
+ *
+ * La correction retire le nombre de la phrase plutôt que d'en faire une
+ * seconde fonction : le titre le porte déjà, et un texte qui répète le titre
+ * n'apprend rien — c'est la solution retenue pour le titre du classement, qui
+ * ne nomme plus la période puisque les onglets s'en chargent.
+ *
+ * **Ce garde est étroit, et ça se mesure.** La règle générale — « un libellé
+ * constant ne nomme pas un nombre quand son voisin de même préfixe est une
+ * fonction » — rend NEUF paires dans le dépôt, dont huit parfaitement justes :
+ * « une fois par semaine », « Deux objectifs », « il ne s'affichera qu'une
+ * fois ». Un garde de cette forme ferait huit faux positifs le jour de son
+ * écriture, donc il serait dispensé avant d'être lu.
+ */
+describe("la phrase du retard", () => {
+  /**
+   * « Un » est ÉCARTÉ des quatre langues à article indéfini.
+   *
+   * Mon premier motif le contenait, et il accusait les trois corrections que
+   * je venais d'écrire : « Une dette qui court », « Una deuda que sigue »,
+   * « Eine laufende Schuld ». Rien ne distingue l'article du numéral en
+   * français, en espagnol ni en allemand — c'est une question de sens, pas de
+   * forme, et un garde qui crie sur ce qui va bien finit par ne plus se lire.
+   *
+   * L'angle mort est écrit plutôt que laissé à découvrir : un seuil de retard
+   * ramené à UN jour et écrit en dur passerait. Il est étroit et il vaut mieux
+   * que quatre faux positifs. Les idéogrammes, eux, gardent 一 : il n'y est
+   * pas un article.
+   */
+  const NUMERAUX =
+    /\b\d+\b|\b(?:deux|trois|quatre|cinq|sept|huit|neuf|dix)\b|\b(?:two|three|four|five|six|seven|eight|nine|ten)\b|\b(?:dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b|\b(?:zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)\b|[一二三四五六七八九十]/i;
+
+  it("ne nomme aucun nombre de jours, dans aucune langue", () => {
+    const fautifs = Object.entries(dashboard)
+      .map(([langue, bloc]) => [langue, (bloc as { retardTexte: string }).retardTexte] as const)
+      .filter(([, texte]) => NUMERAUX.test(texte))
+      .map(([langue, texte]) => `${langue} : ${texte}`);
+    expect(fautifs).toEqual([]);
+  });
+
+  it("et le motif sait reconnaître un numéral, sinon il ne garde rien", () => {
+    // Le témoin. Sans lui, un motif devenu aveugle rendrait le contrôle vert
+    // en n'examinant rien — c'est l'état sain du dépôt qui l'exige, puisqu'il
+    // ne contient plus aucun cas fautif.
+    for (const cas of [
+      "Ta dette court depuis trois jours.",
+      "running for three days",
+      "lleva tres días",
+      "seit drei Tagen",
+      "已经拖了三天",
+      "負債が3日続いています",
+    ]) {
+      expect({ cas, vu: NUMERAUX.test(cas) }).toEqual({ cas, vu: true });
+    }
+  });
+
+  it("c'est bien le TITRE qui porte le nombre", () => {
+    // Les deux moitiés ensemble : le jour où le titre cesserait de le dire, la
+    // règle changerait de sens et il faudrait reprendre la phrase.
+    for (const bloc of Object.values(dashboard)) {
+      const titre = (bloc as { retardTitre: unknown }).retardTitre;
+      expect(typeof titre).toBe("function");
+      expect((titre as (n: number) => string)(5)).toMatch(/5/);
+    }
   });
 });
