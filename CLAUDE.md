@@ -1149,6 +1149,56 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La comparaison de rendu accusait une bibliothèque d'icônes, et c'était elle-même
+Dépendances du 7 septembre : `npm audit` rend **les deux mêmes vulnérabilités
+`mysql2`**, toujours inatteignables et toujours gardées par
+`src/dependanceMysql.test.ts` ; **zéro côté application de bureau**, et rien à
+y mettre à jour hors d'un saut majeur — donc **aucune version à publier**. Une
+seule mise à jour prise, mineure : `lucide-react` 1.41 → 1.42. Les majeures
+écartées le restent : `typescript` 7, `eslint` 10, `@types/node` 26,
+`@types/bcryptjs` 3, `@libsql/client` 0.18, `electron` 44.
+
+**Une bibliothèque qui DESSINE se mesure**, comme recharts deux jours plus
+tôt. La comparaison rend **une capture différente sur trente-neuf** : le
+tableau de bord à 360 px, 154 pixels, deux bandes de dix pixels de haut.
+
+**Les bandes ont été LUES, et ce n'était pas une icône.** En demandant à la
+page quels éléments les occupent : la ligne du niveau de compte — « Niveau 4 ·
+900 XP · Premier pas » et « 100 XP vers le niveau 5 ». Du TEXTE. Une
+bibliothèque d'icônes n'a aucune raison de le déplacer.
+
+**La cause est mon propre outil, et elle se démontre en trois points.**
+`/api/progression` ÉCRIT : elle retient les défis qu'elle constate remplis. Le
+tout PREMIER chargement du tableau de bord sur un compte fraîchement semé pose
+donc ces lignes, et l'XP change entre cette capture-là et la suivante —
+c'est-à-dire entre la référence et la comparaison.
+
+| conditions | différences |
+|---|---|
+| compte neuf, sans préchauffage | **1** — la ligne du niveau |
+| compte déjà chaud | 0 |
+| compte neuf, avec préchauffage | 0 |
+
+Le second point est celui qui tranche : la MÊME construction comparée à
+elle-même sur un compte chaud rend zéro. L'outil n'est donc pas
+non-idempotent en général — il l'est une seule fois, au premier chargement.
+
+**Conclusion sur la mise à jour** : `lucide-react` 1.42 ne change **rien** sur
+trente-neuf captures. Et sans cette lecture des bandes, l'entrée de journal
+aurait annoncé une régression d'icônes qui n'existe pas — exactement ce qui a
+failli arriver à recharts l'avant-veille, où c'était le contrôle
+d'atterrissage qui avait sauvé la conclusion.
+
+`comparer-rendu.mjs` chauffe maintenant le tableau de bord et l'écran des amis
+avant de prendre sa référence. Éprouvé : le même compte fraîchement semé, qui
+rendait une différence, en rend zéro.
+
+**Ce que ça apprend au-delà du cas.** Un outil de comparaison suppose que la
+page est une FONCTION de la construction. Elle ne l'est pas quand une route
+écrit en la servant — et ce projet en a une, pour une raison écrite (un défi
+rempli ne se recalcule pas après coup). La parade n'est pas de rendre la route
+pure, c'est de la laisser s'installer avant de photographier.
+
 ### Le mur des records se contredisait, sans qu'aucun de ses chiffres soit faux
 Trouvé en lisant l'écran des amis EN CHINOIS, sur un compte de mesure sans
 ami. L'écran rendait :

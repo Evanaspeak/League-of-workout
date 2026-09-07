@@ -57,6 +57,35 @@ const jeton = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf
  */
 const compte = existsSync("/tmp/uid.txt") ? readFileSync("/tmp/uid.txt", "utf8").trim() : "";
 const navigateur = await chromium.launch(existsSync(CHROMIUM) ? { executablePath: CHROMIUM } : {});
+
+/**
+ * Le tableau de bord se chauffe avant qu'on le photographie.
+ *
+ * `/api/progression` ÉCRIT : elle retient les défis qu'elle constate remplis.
+ * Le tout premier chargement d'un compte fraîchement semé pose donc ces
+ * lignes, et l'XP du compte change entre cette capture-là et la suivante —
+ * c'est-à-dire entre la référence et la comparaison. La différence apparaît
+ * sur la ligne du niveau de compte, 154 pixels sur le tableau de bord, et
+ * elle n'a rien à voir avec ce qu'on croit mesurer : elle a failli se lire
+ * comme une régression d'une bibliothèque d'icônes.
+ *
+ * Une visite préalable suffit : à partir du second chargement, la lecture est
+ * idempotente — vérifié en comparant une construction à elle-même, qui rend
+ * bien zéro différence.
+ */
+if (jeton) {
+  const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, locale: "fr-FR" });
+  await ctx.addCookies([{
+    name: "authjs.session-token", value: jeton,
+    domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax",
+  }]);
+  const page = await ctx.newPage();
+  for (const chemin of [enLangue(LANGUE_ADRESSE, "/dashboard"), enLangue(LANGUE_ADRESSE, "/amis")]) {
+    await page.goto(`${BASE}${chemin}`, { waitUntil: "networkidle", timeout: 60_000 }).catch(() => {});
+  }
+  await ctx.close();
+}
+
 const empreintes = {};
 /** Pages qui n'ont pas répondu à l'adresse demandée. */
 const detournees = [];
