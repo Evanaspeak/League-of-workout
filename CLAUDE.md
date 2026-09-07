@@ -1150,6 +1150,45 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Comparaison de rendu après V473–V476, et l'erreur de méthode qui a failli la fausser
+Passée entre V472 et la tête, sur un compte semé à 960 parties. Trente-neuf
+captures, huit pages, trois largeurs. **Six différentes, et les six sont les
+corrections voulues** — aux trois largeurs, sur deux pages seulement :
+
+| capture | bandes | ce qui les occupe |
+|---|---|---|
+| `fr_dashboard` | une seule, 13 px de haut | la phrase du retard, changée par V474 |
+| `fr_settings-donnees` | six, de y 178 à 491 | la phrase de l'export (V476) et ce qu'elle décale |
+
+**Les bandes ont été LUES, pas supposées** : en demandant à la page quels
+éléments les occupent, la bande du tableau de bord rend « Une dette qui court
+ne s'efface pas toute seule » et celles des réglages la phrase de
+téléchargement, son bouton, « Zone de danger » et le bouton de suppression.
+Une phrase qui s'allonge décale tout ce qui la suit ; la page fait moins de
+900 px, donc `fullPage` rend la hauteur du viewport des deux côtés et la
+hauteur totale ne bouge pas.
+
+**Et le contrôle qui devait trancher ne testait rien.** Pour distinguer une
+régression d'un bruit d'exécution, j'ai relancé la passe « après » et j'ai lu
+les mêmes six différences — donc conclu au bruit. C'était faux :
+`comparer-rendu.mjs` ÉCRASE le dossier `apres` et le compare toujours à
+`avant`. Relancer refait exactement la même comparaison, et la lire comme
+« la même construction comparée à elle-même » est un contresens.
+
+Le geste qui tranche vraiment demande de garder les deux captures : copier le
+dossier, relancer, comparer les deux copies. Fait : **zéro bande sur les deux
+pages**. L'outil est stable, et les six différences sont réelles.
+
+C'est la même faute que celle que ce journal reproche partout, dans l'outil de
+mesure cette fois : j'ai cru mesurer une chose et j'en mesurais une autre, et
+seul le fait de rendre le geste EXPLICITE l'a montré.
+
+**Une hypothèse essayée et démentie au passage.** Six bandes qui se suivent sur
+une page dont la hauteur n'a pas bougé ressemblent à un DÉCALAGE vertical. La
+mesure dit non : le glissement qui minimise la différence est zéro, et deux
+pixels coûtent déjà le double. Le décalage est LOCAL — seule la partie basse
+de la rubrique descend — ce qu'un glissement global ne peut pas reproduire.
+
 ### L'export annonçait trois choses et en rendait cinq, et un champ parlait encore de boxe
 Trouvé en lisant la rubrique « Tes données » EN CHINOIS. La phrase promet
 « 资料、设置和全部对局记录 » — profil, réglages et tout l'historique des
