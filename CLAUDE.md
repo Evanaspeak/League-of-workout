@@ -1150,6 +1150,49 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux recensements négatifs, et l'écran de dette d'équipe lu à deux comptes
+Trois choses cherchées après la correction du pourcentage JSX, et écrites ici
+parce qu'un recensement qui ne trouve rien coûte le même temps que celui qui
+trouve, et qu'il évite de le refaire dans six semaines.
+
+**Les unités ont le même angle mort, et le dépôt n'en contient aucun cas.**
+`unitesLocalisees.test.ts` ne lit que les gabarits — `uniteRecollee` cherche
+dans les `` ` `` — donc un `{x} min` posé en JSX lui serait invisible, comme
+le `%` l'était. Recensé : **zéro**. Les unités affichées passent toutes par
+`formaterDuree`, `tempsJeuLocalise` ou `uniteLocalisee`.
+
+**Les coutures CJK autour d'une expression JSX : zéro aussi.** C'était le
+défaut de la source de diffusion — `{etat.serie} {jours}`, où le JSX pose une
+espace entre deux expressions et rend 「3 日」. Le recensement suit la même
+règle que le tri du pourcentage : remonter jusqu'à l'accolade ouvrante en
+comptant la profondeur, garder ce qui n'est pas un gabarit. Rien. Ce qui reste
+sont des gabarits de dictionnaire, que `coutureCjk.test.ts` tient déjà.
+
+**Et l'écran de dette d'équipe a été lu, à deux comptes et un groupe.** C'était
+la dernière surface du produit qu'aucune lecture n'avait couverte : elle
+demande deux comptes, un groupe, deux appartenances et deux dettes, ce qui
+explique qu'elle ait attendu. Rien à signaler dans les quatre langues lues :
+
+| langue | ce qu'elle rend |
+|---|---|
+| fr | « Dette de l'équipe · 10 145 points dus en tout », « doit 8 905 » |
+| de @320px | « Teamschuld · 10.145 Punkte insgesamt offen », débordement **0** |
+| ja | 「チームの負債 合計 10,145 ポイントの未払い」「8,905 の未払い」 |
+| zh | 「队伍欠账 共欠 10,145 点」「欠 8,905」 |
+
+Les trois séparateurs de milliers sont ceux de la langue, la couture japonaise
+sépare un nombre LATIN de ses idéogrammes — ce qui est la convention, et non
+le défaut corrigé en V467 — et l'allemand, qui est la langue la plus longue,
+ne déborde pas à trois cent vingt pixels.
+
+**Un piège d'ordre, retombé dedans pour la deuxième fois de la soirée.** J'ai
+créé le compte de mesure, semé quarante parties, PUIS lancé deux fichiers de
+parcours — qui purgent les comptes `@example.test`. La clé étrangère de
+`MembreGroupe` l'a dit tout de suite, ce qui est le bon comportement ; sans
+elle, j'aurais lu un écran vide en cherchant pourquoi le groupe ne s'affiche
+pas. L'ordre est écrit ici depuis longtemps : **la suite d'abord, les comptes
+ensuite, la lecture enfin.**
+
 ### « +37% » dans le détail d'une partie, et le garde qui ne lisait que les gabarits
 Trouvé en ouvrant le détail déplié d'une ligne d'historique — un écran que je
 n'avais encore jamais lu. Il rend « Maîtrise : +0% » dans les six langues, là
