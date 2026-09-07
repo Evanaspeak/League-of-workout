@@ -1150,6 +1150,83 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Six versions, et cinq graduations d'axe : la comparaison de rendu après V460–V465
+Passée entre V459 et la tête, sur un compte semé à 480 parties. Trente-neuf
+captures, huit pages, trois largeurs.
+
+**Six captures différentes, et les six s'expliquent.** Trois sont
+`/telechargement`, que l'outil range déjà à part parce qu'elle lit les
+releases GitHub et diffère d'une exécution à l'autre sans que rien n'ait
+changé. Les trois autres sont le tableau de bord, aux trois largeurs.
+
+**Les bandes ont été LUES, pas supposées.** Cinq bandes de huit pixels de
+haut, toutes dans une colonne de huit pixels de large, sur une page dont la
+hauteur est identique au pixel — 3 278 des deux côtés en 1280, 4 193 en 360.
+En demandant à la page quels éléments les occupent :
+
+```
+y 1760–1767 : tspan « 4 000 »
+y 1792–1799 : tspan « 3 000 »
+y 1832–1839 : tspan « 2 000 »
+y 1872–1879 : tspan « 1 000 »
+y 2674–2681 : tspan « 1 000 »
+```
+
+Ce sont exactement les graduations d'axe passées par `Intl` : « 4000 » devient
+« 4 000 », et les huit pixels de large sont l'espace fine qui apparaît. Deux
+cent sept pixels sur une page qui en fait plus de quatre millions.
+
+**Le reste des six versions ne déplace RIEN**, y compris les cent cinquante
+pages devenues prérendues : une page servie depuis le magasin de prérendu rend
+le même HTML que la même page rendue à la demande, ce qui est précisément ce
+qu'on veut d'un tel changement — il se voit dans un en-tête, pas à l'écran.
+
+**Ce que la campagne n'exerce PAS, et il vaut mieux l'écrire.** À 480 parties,
+le compte de parties n'a pas de séparateur : la correction qui le fait passer
+par `Intl` ne peut pas se voir ici. Et les résumés de graphique corrigés dans
+la même série vivent dans `lecture-ecran`, donc invisibles par construction —
+c'est même la raison pour laquelle ils avaient vieilli sans que personne le
+remarque. Une comparaison de PIXELS ne dit rien de ce qui ne se peint pas.
+
+### L'accueil est le seul écran public encore rendu à la demande, et voilà ce que ça coûte
+Suite de « Zéro page prérendue ». Cent cinquante pages sont prérendues depuis ;
+l'accueil n'en fait pas partie, et c'est la page la plus visitée du produit.
+
+**La raison tient en un appel.** `/[locale]/page.tsx` appelle `auth()` pour
+adapter trois boutons — le lien de la barre, celui du héros, celui du bas —
+entre « Candidater à la bêta » et « Tableau de bord ». Une lecture de session
+est une lecture de la requête : la page est donc rendue à chaque visite.
+
+**Mesuré en production, huit relevés de chaque, temps jusqu'au premier
+octet :**
+
+| | relevés (s) | médiane | pire |
+|---|---|---|---|
+| `/fr` — rendue à la demande | 1,42 · 0,51 · 0,36 · 0,29 · 0,21 · 0,23 · 0,26 · 0,20 | 0,26 | **1,42** |
+| `/fr/cgu` — prérendue | 0,23 · 0,17 · 0,20 · 0,26 · 0,19 · 0,19 · 0,21 · 0,28 | 0,20 | 0,28 |
+
+**À chaud, l'écart est de soixante millisecondes ; ce qui compte est la
+QUEUE.** La page dynamique a rendu 1,42 s puis 2,11 s sur deux séries
+distinctes — le démarrage à froid de sa fonction — quand la page prérendue n'a
+jamais dépassé 0,28 s sur onze relevés. Et un démarrage à froid tombe
+exactement sur qui arrive de loin : c'est-à-dire sur le premier visiteur, sur
+la page qui existe pour l'accueillir.
+
+**Ce que ça coûterait de la rendre statique, et pourquoi ça ne se décide pas
+ici.** Les trois boutons partiraient dans leur état « déconnecté » puis
+basculeraient à l'hydratation. Quelqu'un de connecté verrait donc « Candidater
+à la bêta » pendant un instant sur sa propre page d'accueil.
+
+Ce n'est pas une régression au sens strict : **c'est exactement ce que `Nav`
+fait déjà partout ailleurs**, et son commentaire l'écrit — « sur une page
+publique on ne sait pas encore, et on ne promet rien avant de savoir ». La
+barre du site résout la session au navigateur sur toutes les pages publiques.
+L'accueil est le seul écran qui s'offre le luxe de le savoir au serveur, et il
+le paie de son prérendu.
+
+Mais un scintillement sur la page la plus vue, c'est un arbitrage de produit,
+pas une décision technique. **Il part dans les questions, avec ses chiffres.**
+
 ### Campagne de clôture du 7 septembre, et ce qu'elle ne mesure pas
 Passée après V460 à V463, dont une qui change la NATURE de cent cinquante
 pages — elles étaient rendues à la demande, elles sont prérendues.
