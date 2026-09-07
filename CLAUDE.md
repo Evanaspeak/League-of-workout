@@ -1328,6 +1328,12 @@ compare à son échelle** : 2 024 ms ici contre 2 096, 2 120, 2 128, 2 216 et
 mille neuf cent vingt parties. Aucune des cinq versions n'a coûté de temps
 d'affichage.
 
+**Les neuf écrans connectés relus à 320 px**, en allemand et en japonais :
+**débordement nul partout**, et aucun libellé coupé par une ellipse. C'est la
+largeur la plus étroite du produit dans la langue la plus longue, donc le pire
+cas — et les deux rubriques entrées ce soir dans le balayage, « Ton profil » et
+« Tes données », n'avaient jamais été vérifiées à cette largeur.
+
 **Dépendances, troisième passage de la journée** : les deux mêmes
 vulnérabilités `mysql2`, inatteignables et gardées ; **zéro côté application de
 bureau**. Et rien à prendre : tout ce qui est en retard l'est d'une MAJEURE —
