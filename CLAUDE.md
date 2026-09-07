@@ -1219,13 +1219,27 @@ réponse porte le code qui fait sortir une adresse d'un index.
 | dont calculateur | 0 | 96 |
 | `revalidate: 300` effectif | sur rien | sur 150 pages |
 
-**Et ça répare le « seul cas qui résiste ».** `e2e/introuvable.spec.ts`
-portait un test dont le commentaire disait : un jeu de calculateur inventé est
-refusé par le ROUTEUR, donc rend la 404 de Next, en anglais ; trois
-contournements essayés, dont « réécrire l'adresse dans le middleware (casse
-aussi les cas qui marchaient) ». Ce qui manquait à cette réécriture était son
-STATUT. Vérifié : `/de/calculateur/jeu-invente` rend maintenant 404 avec
-`lang="de"` et « Seite nicht gefunden ».
+**Et le « seul cas qui résiste » était réparé depuis longtemps — c'est son
+test qui avait vieilli.** `e2e/introuvable.spec.ts` portait un contrôle
+intitulé « un jeu de calculateur inventé rend 404, **en anglais faute de
+mieux** », avec le récit de trois contournements essayés. J'ai cru le réparer,
+et j'ai failli l'écrire ici. **Vérifié en production AVANT de conclure** :
+`/de/calculateur/jeu-invente` y rend déjà « Seite nicht gefunden », sur la
+version d'avant. La raison est écrite dans le middleware depuis ce jour-là —
+l'en-tête de langue est posé sur TOUTES les pages, précisément pour qu'une
+adresse rejetée par le routeur ait la sienne.
+
+Ce que la réécriture change pour cette adresse est plus petit et vaut quand
+même : elle rendait une coquille nue de 18 745 octets, sans navigation ; elle
+rend maintenant la 404 du site, dans sa mise en page, avec de quoi aller
+ailleurs. Le test dit ce qu'il éprouve — la langue — au lieu de raconter une
+limite qui n'existait plus.
+
+C'est la faute que ce journal reproche partout : **une description périmée ne
+se distingue pas d'une garantie**, et celle-ci m'a fait annoncer une
+correction que je n'avais pas faite. Ce qui l'a arrêtée est le geste de la
+procédure de fusion — pousser un témoin public — appliqué avant d'écrire la
+conclusion plutôt qu'après.
 
 **Et la suite navigateur a attrapé une régression que rien d'autre ne
 pouvait voir.** `/fr/opengraph-image` rendait **404**. La carte partagée,

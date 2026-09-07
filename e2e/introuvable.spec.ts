@@ -52,20 +52,22 @@ test("la 404 parle la langue de l'adresse, dans le HTML servi", async ({ page })
 });
 
 /**
- * Le cas qui résistait, et qui ne résiste plus.
+ * Le cas dont on croyait qu'il résistait.
  *
- * Un jeu de calculateur inventé est refusé par le ROUTEUR — le catalogue est
- * fermé par `dynamicParams = false` — et un refus du routeur ne consulte pas
- * la frontière `not-found` : Next rendait sa propre page, sans langue et en
- * anglais. Trois contournements avaient été essayés et mesurés, dont une
- * réécriture dans le middleware, écartée à l'époque parce qu'elle cassait les
- * cas qui marchaient.
+ * Ce test s'intitulait « en anglais faute de mieux » et racontait trois
+ * contournements essayés : un jeu de calculateur inventé est refusé par le
+ * ROUTEUR — le catalogue est fermé par `dynamicParams = false` — et un refus
+ * du routeur ne consulte pas la frontière `not-found`.
  *
- * Ce qui manquait à cette réécriture était son STATUT : `NextResponse.rewrite`
- * accepte `{ status: 404 }`, donc l'adresse demandée reste affichée ET la
- * réponse porte le code qui fait sortir une adresse d'un index. Le middleware
- * connaît déjà le catalogue — un jeu inventé n'est pas une page connue — donc
- * il traite ce cas comme les autres, et la langue arrive avec.
+ * **C'était faux depuis longtemps.** Le middleware pose l'en-tête de langue
+ * sur TOUTES les pages, et son commentaire dit précisément pourquoi : « une
+ * adresse REJETÉE PAR LE ROUTEUR a pourtant besoin de sa langue ». Vérifié en
+ * production : l'allemand y arrivait déjà. Le titre du test a survécu à sa
+ * propre correction, et il se relisait comme une limite du produit.
+ *
+ * Il éprouve donc ce qu'il éprouve : le code, et la LANGUE. Sans le second
+ * contrôle il ne distinguait pas notre 404 de celle de Next, qui rend aussi
+ * 404 — et c'est exactement ce qui a laissé la phrase vieillir.
  */
 test("un jeu de calculateur inventé rend 404, dans la langue de l'adresse", async ({ page }) => {
   const reponse = await page.goto("/de/calculateur/jeu-invente");
