@@ -1157,6 +1157,28 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Moins de quatre minutes, migration comprise
+Témoin public de V488, qui ajoute une TABLE : la politique de confidentialité y
+gagne une ligne, donc la version a un témoin sur une page publique. Fusion à
+20 h 11 min 44, « Angefragte Spiele » présent sur `/de/confidentialite` à
+20 h 15 min 10 — **moins de quatre minutes**.
+
+C'est la mesure la plus courte du journal, après les moins de deux minutes de
+V460 et les 14, 23 et 59 minutes des versions suivantes. Les mesures d'avant le
+prérendu allaient d'une à trois heures.
+
+**Et ce témoin-ci prouve une seconde chose**, ce qui n'était encore jamais
+arrivé : la construction Vercel lance `prisma migrate deploy` AVANT `next
+build`. Une migration qui échoue fait donc échouer la construction, et la
+version ne part pas. Voir la ligne nouvelle en ligne, c'est voir que la table
+`DemandeJeu` existe en production — sans avoir accès à la base.
+
+C'est la première fois qu'une version de ce projet emporte une migration ET
+touche une page publique. Le hasard fait bien les choses : la politique de
+confidentialité doit décrire ce qu'on stocke, donc **toute table nouvelle a
+désormais un témoin public par construction.** C'est une propriété du garde
+`politiqueComplete`, pas une coïncidence, et elle vaut d'être notée.
+
 ### La photo avant-après : une ligne de plan dont tout le travail est de NE PAS construire
 Réponse 154, et c'est un refus doublé d'une consigne : « non, trop risqué —
 inciter à le faire pour eux, mais jamais transmis à l'application ».
