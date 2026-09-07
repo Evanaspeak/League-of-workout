@@ -1,5 +1,7 @@
 export const settings = {
   fr: {
+    corpsPhotoTitre: "La photo avant-après",
+    corpsPhotoAide: "Prends-la, garde-la sur ton téléphone. C'est ce qui montre le mieux ce que six mois ont changé, et c'est aussi la donnée la plus intime qui soit : on ne te la demandera jamais, et l'application n'a aucun moyen de la recevoir.",
     partageLabel: "Ce que tes amis voient",
     partageAide: "Ton total d'effort de la semaine et ton retard sont toujours visibles : c'est ce que le classement montre. Le détail ajoute ta série, ton nombre de parties et ton jeu le plus joué.",
     partageTotal: "Mon total",
@@ -134,6 +136,8 @@ export const settings = {
     supprimerDefinitivement: "Supprimer définitivement",
   },
   en: {
+    corpsPhotoTitre: "The before-and-after photo",
+    corpsPhotoAide: "Take it, keep it on your phone. Nothing shows six months of work better, and nothing is more personal: we will never ask for it, and the app has no way to receive it.",
     partageLabel: "What your friends see",
     partageAide: "Your weekly effort total and your lateness are always visible: that is what the standings show. The detail adds your streak, your number of games and your most played game.",
     partageTotal: "My total",
@@ -266,6 +270,8 @@ export const settings = {
     supprimerDefinitivement: "Delete permanently",
   },
   es: {
+    corpsPhotoTitre: "La foto de antes y después",
+    corpsPhotoAide: "Hazla y guárdala en tu teléfono. Nada muestra mejor lo que han cambiado seis meses, y nada es más íntimo: nunca te la pediremos, y la aplicación no tiene forma de recibirla.",
     partageLabel: "Lo que ven tus amigos",
     partageAide: "Tu total de esfuerzo de la semana y tu retraso siempre son visibles: es lo que muestra la clasificación. El detalle añade tu racha, tu número de partidas y tu juego más jugado.",
     partageTotal: "Mi total",
@@ -398,6 +404,8 @@ export const settings = {
     supprimerDefinitivement: "Eliminar definitivamente",
   },
   de: {
+    corpsPhotoTitre: "Das Vorher-Nachher-Foto",
+    corpsPhotoAide: "Mach es und behalte es auf deinem Telefon. Nichts zeigt besser, was sechs Monate verändert haben, und nichts ist persönlicher: Wir fragen nie danach, und die Anwendung kann es gar nicht entgegennehmen.",
     partageLabel: "Was deine Freunde sehen",
     partageAide: "Dein Wochenaufwand und dein Rückstand sind immer sichtbar: das zeigt die Rangliste ohnehin. Die Details ergänzen deine Serie, deine Anzahl an Partien und dein meistgespieltes Spiel.",
     partageTotal: "Meine Summe",
@@ -530,6 +538,8 @@ export const settings = {
     supprimerDefinitivement: "Endgültig löschen",
   },
   zh: {
+    corpsPhotoTitre: "前后对比照",
+    corpsPhotoAide: "拍下来，留在你自己的手机里。没有什么比它更能说明半年的变化，也没有什么比它更私密：我们永远不会向你索取，应用也没有任何接收它的途径。",
     partageLabel: "好友能看到什么",
     partageAide: "你本周的运动总量和拖欠情况始终可见，这本来就是排行显示的内容。细节会再加上你的连续天数、对局数和最常玩的游戏。",
     partageTotal: "只看总量",
@@ -662,6 +672,8 @@ export const settings = {
     supprimerDefinitivement: "永久删除",
   },
   ja: {
+    corpsPhotoTitre: "ビフォーアフターの写真",
+    corpsPhotoAide: "撮って、自分の端末に置いておいてください。半年の変化をいちばんよく示すものであり、同時にいちばん私的なものです。こちらから求めることはありませんし、アプリが受け取る手段もありません。",
     partageLabel: "フレンドに見えるもの",
     partageAide: "今週の運動量と滞納の有無はつねに見えます。ランキングが元々示している内容です。詳細を選ぶと、連続日数・試合数・最もよく遊ぶゲームが加わります。",
     partageTotal: "合計のみ",
