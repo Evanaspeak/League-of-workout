@@ -1150,6 +1150,70 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois notifications par semaine, et le budget que le rappel du matin mange
+Ligne 103 du plan, réponse `[103] Combien de notifications par semaine au
+maximum avant que ça devienne pénible, selon toi ? → Trois`. C'est une
+décision écrite, donc elle se porte ; ce qui suit n'est pas elle, c'est ce
+qu'elle produit.
+
+**Ça se STOCKE, et c'est la deuxième exception du produit.** Les marques
+existantes — `rappelLe`, `relanceLe`, `bilanLe`, `rappelPeseeLe` — ne retiennent
+chacune que le DERNIER envoi de sa sorte : un compte sur une fenêtre glissante
+ne s'en déduit pas. `EnvoiPush` porte donc des LIGNES, comme `Paiement`, et le
+compte se fait par somme — un total rangé en base finirait par diverger de ce
+qui le produit.
+
+**La fenêtre est glissante et non calendaire.** Trois envois le dimanche puis
+trois le lundi feraient six en deux jours, c'est-à-dire exactement ce que la
+réponse refuse.
+
+**Le plafond est le DÉFAUT, et l'exemption se demande.** Dans l'autre sens, un
+appelant ajouté demain enverrait sans compter et rien ne le dirait : le défaut
+d'un garde ne peut pas être plus permissif que ce qu'on demandait. C'est la
+règle déjà écrite pour le repli du réglage qui dit « demande-moi ». Une seule
+dispense, la notification d'ESSAI des réglages : la personne vient d'appuyer
+sur le bouton, et un bouton qui ne fait rien sans dire pourquoi est pire que la
+notification qu'il envoie. Son propre limiteur par compte la garde déjà.
+
+**On ne retient que ce qui est PARTI.** Un envoi qui échoue partout — service
+injoignable, abonnements tous révoqués — n'a dérangé personne : le décompter
+ferait perdre le rappel suivant à cause d'une panne dont la personne n'a rien
+su. Et l'écriture passe en dernier, comme le badge du paiement éclair : son
+échec ne coûte que lui-même.
+
+**Ce que le plafond COÛTE, et qui n'est pas une décision technique.** Le rappel
+du matin peut partir sept fois par semaine ; le seuil de dette part le soir,
+pendant qu'on joue. Premier arrivé, premier servi : le rappel du matin épuise
+donc le budget du lundi au mercredi, et la notification du seuil — celle dont
+`push.ts` écrit qu'elle est la RAISON d'être du canal, « le seul moment où
+quelqu'un est vraiment disponible pour payer sa dette » — ne passe plus du
+jeudi au dimanche.
+
+Et le journal dit lui-même que le rappel du matin est le RATTRAPAGE de
+l'autre : « le rappel de seuil est déjà parti la veille au milieu d'une
+partie ». Un budget dépensé par le rattrapage avant que le principal n'ait
+tiré inverse la relation écrite.
+
+**Choisir lesquelles des trois passent est un rang, donc un arbitrage**, et il
+part dans les questions plutôt que dans le code. Ce qui est construit est la
+lecture littérale de la réponse — un plafond, sans rang — et elle est déjà très
+au-dessus de ce qu'il y avait, c'est-à-dire rien. Écrit ici plutôt que laissé à
+découvrir sur le compte de quelqu'un.
+
+**Aucun parcours navigateur ne peut l'éprouver**, et il vaut mieux le dire :
+l'envoi demande un abonnement auprès du service de notification du navigateur
+et des clés VAPID, dont la suite n'a ni l'un ni l'autre — les parcours posent
+un faux pont. La couverture est donc unitaire, plus un garde qui regarde le
+DOSSIER : `src/plafondNotifications.test.ts` refuse une dispense non déclarée,
+une dispense qui ne désigne plus rien, et un plafond débranché de son passage
+obligé. Huit sabotages, huit échecs.
+
+**Et le garde de la politique a mordu**, ce qui est son travail : une trace
+d'envoi dit quand on vous a dérangé, donc c'est un renseignement sur vous même
+s'il ne sort jamais du compte. La ligne est écrite dans les six langues, et
+elle dit du même coup qu'un plafond existe — ce qu'on ne va chercher nulle
+part ailleurs.
+
 ### Six versions, et cinq graduations d'axe : la comparaison de rendu après V460–V465
 Passée entre V459 et la tête, sur un compte semé à 480 parties. Trente-neuf
 captures, huit pages, trois largeurs.
@@ -1218,10 +1282,26 @@ d'atterrissage n'a rien dit — l'adresse restait `/admin` — c'est la LECTURE 
 TITRES qui l'a montré, « Test de force » et « Paliers » n'étant pas des
 sections d'administration.
 
-L'adresse a été rendue à son compte, comme le veut la règle. Ce qu'il faudrait
-pour lire cette page est une session ouverte APRÈS l'emprunt ; c'est faisable
-et ça n'a pas été fait, plutôt que de laisser croire à un balayage qui n'a rien
-balayé.
+**La session ouverte APRÈS l'emprunt ne suffit pas non plus** — essayé, avec
+l'ordre complet : ouverture du compte, emprunt en base, PUIS connexion. Les
+quatre langues atterrissent sur `/{langue}/dashboard`.
+
+Et c'est là que ça devient intéressant : la page d'administration redirige vers
+`avecLocale("/", locale)`, c'est-à-dire vers `/{langue}`. **On atterrit sur
+`/{langue}/dashboard`, donc ce n'est pas elle qui redirige.** Ce qui a été
+écarté par la lecture du code : `ADMIN_EMAILS` n'est pas défini localement,
+donc le défaut `evantocquet@gmail.com` s'applique et l'emprunt visait la bonne
+adresse ; et `getCurrentUser` lit la ligne PAR SON IDENTIFIANT en rendant
+l'e-mail courant, donc `estAdmin` devrait voir l'adresse empruntée.
+
+Deux méthodes essayées, deux échecs, et la cause n'est pas nommée. Elle n'est
+pas cherchée plus loin pour une raison de priorité assumée : c'est le seul
+écran du produit que le propriétaire est le seul à voir, il le lit en français
+tous les jours, et il en signalerait un défaut lui-même. Ce qui est écrit ici
+sert à ne pas refaire les deux mêmes tentatives.
+
+L'adresse a été rendue à son compte à chaque fois, la restitution étant dans un
+`finally` et vérifiée par une relecture.
 
 ### Campagne du 7 septembre au soir : soixante-treize kilo-octets apparus en V460
 Passée après dix versions, V460 à V469, sur un compte semé à soixante parties.

@@ -99,10 +99,19 @@ export async function PUT() {
   }
   await recordAttempt(cle, "push-test");
 
-  const envoyees = await notifier(user.id, {
-    titre: "Win or Workout",
-    corps: "Les notifications fonctionnent. C'est tout ce qu'on voulait vérifier.",
-    tag: "wow-test",
-  });
+  const envoyees = await notifier(
+    user.id,
+    {
+      titre: "Win or Workout",
+      corps: "Les notifications fonctionnent. C'est tout ce qu'on voulait vérifier.",
+      tag: "wow-test",
+    },
+    // Hors plafond, et c'est la seule dispense : le plafond de trois par
+    // semaine existe contre ce que le PRODUIT envoie de lui-même. Ici la
+    // personne vient d'appuyer sur le bouton, et un bouton qui ne fait rien
+    // sans dire pourquoi est pire que la notification qu'il envoie. Son propre
+    // limiteur, par compte, la garde déjà contre le harcèlement de soi-même.
+    { plafonne: false },
+  );
   return NextResponse.json({ envoyees });
 }
