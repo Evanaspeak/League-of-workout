@@ -9,7 +9,7 @@ import { ChampionIcon } from "@/components/ChampionIcon";
 import { Icone } from "@/components/Icone";
 import { ChampionInput } from "@/components/ChampionInput";
 import { useChampions, championConnu } from "@/lib/useChampions";
-import { useT, useDateLocale, useLocale, useMinuscule } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useLocale, useMinuscule, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
@@ -90,6 +90,7 @@ export function AjoutActivite({
 }) {
   const t = useT(history);
   const minuscule = useMinuscule();
+  const pourcent = usePourcentage();
   const tExo = useT(exercicesDict);
   const tJeux = useT(jeuxDict);
   const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
@@ -743,7 +744,7 @@ export function AjoutActivite({
                         </div>
                         <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(152,162,176,0.08)" }}>
                           <span style={{ color: "var(--muted)" }}>{t.mastery(preview.partiesAvant)}</span>
-                          <span className="blue-text font-bold">+{Math.round(preview.scoring.surcharge * 100)}%</span>
+                          <span className="blue-text font-bold">+{pourcent(Math.round(preview.scoring.surcharge * 100))}</span>
                         </div>
                       </>
                     )}

@@ -7,7 +7,7 @@ import { nomsExercices } from "@/lib/nomsExercices";
 import { CorrectionDates } from "@/components/CorrectionDates";
 import { Fragment, useEffect, useState } from "react";
 import { ChampionIcon } from "@/components/ChampionIcon";
-import { useT, useDateLocale, useMinuscule, useNombre } from "@/lib/i18n/LocaleContext";
+import { useT, useDateLocale, useMinuscule, useNombre, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { history } from "@/lib/i18n/dictionaries/history";
 import {
   EXERCICE_IDS, formaterCompact, formaterQuantite, parseRepartition,
@@ -190,6 +190,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const nomsExo: Record<ExerciceId, string> = nomsExercices(tExo);
   const dateLocale = useDateLocale();
   const nombre = useNombre();
+  const pourcent = usePourcentage();
   /**
    * « 380 pompes · 4 min 25 boxe » — chaque exercice dans sa propre unité.
    *
@@ -709,7 +710,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                               <>
                                 <span>{t.detailScore} : <span className="mono-num" style={{ color: "var(--bone)" }}>{g.scoreCalcule}</span></span>
                                 <span>{t.detailMalus} : <span className="mono-num loss-text">+{g.malusCalcule}</span></span>
-                                <span>{t.detailMastery} : <span className="mono-num blue-text">+{Math.round(g.surchargeCalculee * 100)}%</span></span>
+                                <span>{t.detailMastery} : <span className="mono-num blue-text">+{pourcent(Math.round(g.surchargeCalculee * 100))}</span></span>
                               </>
                             )}
                             <span>{t.tableLevel} : <span className="mono-num gold-text">{g.niveauCalcule}</span></span>
@@ -957,7 +958,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                       <>
                                         <span>{t.detailScore} : <span className="mono-num" style={{ color: "var(--bone)" }}>{g.scoreCalcule}</span></span>
                                         <span>{t.detailMalus} : <span className="mono-num loss-text">+{g.malusCalcule}</span></span>
-                                        <span>{t.detailMastery} : <span className="mono-num blue-text">+{Math.round(g.surchargeCalculee * 100)}%</span></span>
+                                        <span>{t.detailMastery} : <span className="mono-num blue-text">+{pourcent(Math.round(g.surchargeCalculee * 100))}</span></span>
                                       </>
                                     )}
                                     <span>{t.tableLevel} : <span className="mono-num gold-text">{g.niveauCalcule}</span></span>

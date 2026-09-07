@@ -1150,6 +1150,66 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « +37% » dans le détail d'une partie, et le garde qui ne lisait que les gabarits
+Trouvé en ouvrant le détail déplié d'une ligne d'historique — un écran que je
+n'avais encore jamais lu. Il rend « Maîtrise : +0% » dans les six langues, là
+où le français et l'allemand écrivent « +0 % ».
+
+**C'est la correction de V415, appliquée à un de ses deux endroits.** Le
+journal porte l'entrée « 33% : le pourcentage recollé à la main », qui a fait
+passer cinq pourcentages par `Intl` et posé `usePourcentage`. Elle a laissé
+quatre autres derrière elle, et le meilleur témoin est que **le tableau de
+bord appelle `usePourcentage` ligne 168 et recolle son signe ligne 772** — le
+motif que ce projet paie en boucle, dans le fichier même qui porte la
+correction.
+
+**Le garde ne pouvait pas les voir, et sa raison était écrite.** Il cherche
+`${…}%`, c'est-à-dire la forme GABARIT, avec un discriminant soigné pour
+écarter les longueurs CSS. Or `%` se recolle tout aussi bien en JSX :
+
+```tsx
++{Math.round(g.surchargeCalculee * 100)}%   ← invisible au garde
+```
+
+Quatre occurrences vivaient dans cette forme : la maîtrise du détail
+d'historique (en cartes ET en tableau, le même fragment écrit deux fois),
+celle de l'aperçu du formulaire d'ajout, et l'avancement vers l'objectif du
+tableau de bord. Plus une cinquième, la jauge de téléchargement de la mise à
+jour de l'application de bureau.
+
+**Le tri se fait sur l'accolade OUVRANTE**, en remontant en comptant la
+profondeur : un `${b}` imbriqué dans une expression JSX rendrait sinon la
+mauvaise réponse. C'est le troisième découpage de ce projet à suivre la
+profondeur plutôt que les virgules ou le premier caractère rencontré.
+
+**Et le témoin ne peut pas être une trouvaille.** L'état sain du dépôt est
+ZÉRO pourcentage JSX : compter ce qu'on trouve laisserait le contrôle vert le
+jour où le motif deviendrait aveugle. C'est donc le TRI qui s'éprouve, sur
+trois cas fabriqués — dont l'interpolation imbriquée — plus un décompte des
+`}%` toutes formes confondues, qui dit que le motif voit encore quelque chose.
+
+Quatre sabotages, quatre échecs : les deux pourcentages remis en JSX, et le
+tri rendu aveugle dans les deux sens — tout gabarit, puis rien de gabarit.
+
+Vérifié à l'écran dans quatre langues, détail d'historique et tableau de bord :
+« +0 % » et « 35 % » en français et en allemand, « +0% » et « 35% » en anglais,
+en japonais et en chinois.
+
+**Ce qui n'a PAS été lu à l'écran, et pourquoi** : l'aperçu du formulaire
+d'ajout demande une partie en cours de saisie, et la jauge de mise à jour
+demande une application de bureau en train de se mettre à jour. Les deux
+empruntent exactement le même chemin — `usePourcentage` sur un entier — et
+c'est le garde qui les tient, pas une lecture.
+
+**Ce qui a été regardé et LAISSÉ, avec sa raison.** Le détail rend aussi
+`{g.scoreCalcule}`, `{g.malusCalcule}` et `{g.niveauCalcule}` en nombres nus.
+Le niveau est un numéro, que le journal range déjà du côté de ce qui doit
+rester nu. Les deux autres sont bornés par construction — ce sont le score et
+le malus d'UNE partie, jamais un cumul — donc ils n'atteignent pas le millier
+et le séparateur ne se pose jamais. Les passer par `Intl` ne changerait rien à
+l'écran ; la question se reposera le jour où un barème d'administration les
+fera monter.
+
 ### Le profil d'un ami restait sur la semaine sous l'onglet du cumul
 Trouvé en lisant l'écran des amis à DEUX comptes liés, en basculant les onglets
 du classement. Sous « depuis toujours », l'écran rendait :
