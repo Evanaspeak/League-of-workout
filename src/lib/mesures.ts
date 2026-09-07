@@ -100,3 +100,55 @@ export function formaterDelai(minutes: number | null): string {
   const heures = Math.round((m % (24 * 60)) / 60);
   return heures === 0 ? `${jours} j` : `${jours} j ${heures} h`;
 }
+
+/**
+ * Un jeu paie-t-il deux fois plus qu'un autre ? (réponse 185)
+ *
+ * Le barème est le même pour tous les jeux, mais leurs formes ne le sont pas :
+ * un battle royale à cent joueurs distribue autrement qu'un MOBA à cinq, et
+ * rien ne garantit que les deux coûtent le même effort pour une soirée
+ * équivalente. Si l'écart dérape, les gens joueront au jeu le moins cher — ce
+ * qui n'est pas ce que le produit demande.
+ *
+ * Trois règles, chacune avec sa raison :
+ *
+ * - **on ne compare que les jeux comptés à la PARTIE.** Un jeu compté au temps
+ *   coûte une fonction de sa durée : le comparer au coût d'un match reviendrait
+ *   à comparer une soirée entière à dix minutes. C'est à l'appelant de filtrer,
+ *   et le type le dit ;
+ * - **en dessous d'un plancher de parties, un jeu est listé mais pas comparé.**
+ *   Une seule partie malheureuse décide sinon du facteur, et l'alerte se
+ *   déclenche sur du bruit ;
+ * - **un jeu dont la moyenne est nulle ne divise pas.** Le facteur n'a alors
+ *   pas de valeur, et rendre `Infinity` ferait crier l'écran sans rien dire.
+ */
+export const PARTIES_MIN_COMPARAISON = 10;
+
+/** Au-delà de ce facteur, l'écart mérite qu'on regarde. C'est la réponse 185. */
+export const FACTEUR_ALERTE = 2;
+
+export type CoutJeu = { jeu: string; parties: number; moyenne: number };
+
+export type EquilibreJeux = {
+  /** Tous les jeux vus, du plus cher au moins cher. */
+  jeux: CoutJeu[];
+  /** Combien d'entre eux ont assez de parties pour être comparés. */
+  compares: number;
+  /** Rapport entre le plus cher et le moins cher des comparés. */
+  facteur: number | null;
+  /** Vrai quand ce rapport atteint le seuil. */
+  derape: boolean;
+};
+
+export function equilibreJeux(lignes: CoutJeu[]): EquilibreJeux {
+  const jeux = [...lignes].sort((a, b) => b.moyenne - a.moyenne);
+  const assez = jeux.filter((j) => j.parties >= PARTIES_MIN_COMPARAISON);
+  const moyennes = assez.map((j) => j.moyenne);
+  const bas = moyennes.length ? Math.min(...moyennes) : 0;
+  const haut = moyennes.length ? Math.max(...moyennes) : 0;
+  // Il faut DEUX jeux pour un rapport, et un dénominateur qui ne soit pas nul.
+  const facteur = assez.length >= 2 && bas > 0
+    ? Math.round((haut / bas) * 100) / 100
+    : null;
+  return { jeux, compares: assez.length, facteur, derape: facteur !== null && facteur >= FACTEUR_ALERTE };
+}

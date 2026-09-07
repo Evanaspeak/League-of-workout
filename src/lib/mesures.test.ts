@@ -1,4 +1,4 @@
-import { calculerMesures, formaterDelai, quantile, type CompteMesure } from "./mesures";
+import { calculerMesures, equilibreJeux, formaterDelai, quantile, type CompteMesure } from "./mesures";
 
 const T0 = new Date("2026-08-01T10:00:00Z");
 const apres = (minutes: number) => new Date(T0.getTime() + minutes * 60_000);
@@ -88,5 +88,51 @@ describe("lecture d'une durée", () => {
 
   it("dit qu'on ne sait pas, plutôt que zéro", () => {
     expect(formaterDelai(null)).toBe("—");
+  });
+});
+
+describe("l'équilibre entre les jeux (réponse 185)", () => {
+  const j = (jeu: string, parties: number, moyenne: number) => ({ jeu, parties, moyenne });
+
+  it("range du plus cher au moins cher et rend le rapport", () => {
+    const e = equilibreJeux([j("A", 20, 30), j("B", 20, 12), j("C", 20, 20)]);
+    expect(e.jeux.map((x) => x.jeu)).toEqual(["A", "C", "B"]);
+    expect(e.facteur).toBe(2.5);
+    expect(e.derape).toBe(true);
+    expect(e.compares).toBe(3);
+  });
+
+  it("ne crie pas sous le seuil", () => {
+    const e = equilibreJeux([j("A", 20, 30), j("B", 20, 20)]);
+    expect(e.facteur).toBe(1.5);
+    expect(e.derape).toBe(false);
+  });
+
+  it("crie À PARTIR du seuil, pas seulement au-dessus", () => {
+    // « deux fois plus » est la réponse : à deux exactement, ça compte.
+    const e = equilibreJeux([j("A", 20, 40), j("B", 20, 20)]);
+    expect(e.facteur).toBe(2);
+    expect(e.derape).toBe(true);
+  });
+
+  it("liste un jeu trop rare mais ne le compare pas", () => {
+    // Sans ce plancher, une seule partie malheureuse décide du facteur.
+    const e = equilibreJeux([j("A", 20, 20), j("B", 20, 18), j("Rare", 1, 200)]);
+    expect(e.jeux.map((x) => x.jeu)).toContain("Rare");
+    expect(e.compares).toBe(2);
+    expect(e.derape).toBe(false);
+  });
+
+  it("ne divise pas par une moyenne nulle", () => {
+    // Le rapport n'a alors pas de valeur, et rendre l'infini ferait crier
+    // l'écran sans rien lui apprendre.
+    const e = equilibreJeux([j("A", 20, 20), j("Gratuit", 20, 0)]);
+    expect(e.facteur).toBeNull();
+    expect(e.derape).toBe(false);
+  });
+
+  it("ne rend aucun rapport avec un seul jeu comparable", () => {
+    const e = equilibreJeux([j("A", 20, 20), j("B", 3, 60)]);
+    expect(e.facteur).toBeNull();
   });
 });

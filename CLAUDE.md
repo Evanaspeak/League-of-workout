@@ -1157,6 +1157,54 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Surveiller si un jeu paie deux fois plus qu'un autre (ligne 185)
+Le barème est le même pour tous les jeux ; leurs FORMES ne le sont pas. Un
+battle royale à cent joueurs ne distribue pas comme un MOBA à cinq, et rien ne
+garantissait que les deux coûtent un effort comparable pour une soirée
+équivalente. Si l'écart dérape, les gens jouent au jeu le moins cher — ce qui
+est l'inverse de ce que le produit demande.
+
+Le panneau d'administration rend maintenant la moyenne par partie de chaque
+jeu, et le rapport entre le plus cher et le moins cher. Trois règles, chacune
+avec sa raison :
+
+- **on ne compare que les jeux comptés à la PARTIE.** Le coût d'un jeu compté
+  au temps est une fonction de sa durée : le mettre en face du coût d'un match
+  reviendrait à comparer une soirée entière à dix minutes. Le filtre est dans
+  la requête, et un test le tient — Minecraft et Les Sims doivent en être
+  absents, League of Legends présent ;
+- **sous dix parties, un jeu est LISTÉ mais pas comparé.** Une seule partie
+  malheureuse déciderait sinon du facteur, et l'alerte se déclencherait sur du
+  bruit. C'est le même raisonnement que le plancher du mur des records ;
+- **une moyenne nulle ne divise pas.** Le rapport n'a alors pas de valeur, et
+  rendre l'infini ferait crier l'écran sans rien lui apprendre.
+
+**Les parties SANS ENJEU sont écartées**, et c'est moins évident qu'il n'y
+paraît : elles valent zéro par construction, donc elles tireraient la moyenne
+d'un jeu vers le bas sans que personne ait moins payé. Une soirée refusée sur
+un jeu fausserait la comparaison de tous les autres.
+
+**Le seuil est INCLUSIF**, parce que la réponse dit « deux fois plus » : à deux
+exactement, ça compte. Un test le tient séparément — c'est le genre de borne
+qu'on inverse sans s'en apercevoir.
+
+Cinq sabotages, cinq échecs : le filtre des parties sans enjeu retiré, les jeux
+au temps réintroduits, le plancher supprimé, la division par zéro rouverte, et
+le seuil rendu exclusif.
+
+**Vérifié sur la RÉPONSE de la route**, en empruntant l'adresse administrateur
+en base et en la restituant ensuite — la restitution est vérifiée, pas
+supposée. Sur le compte de mesure : un seul jeu comparable, quatre-vingt-deux
+parties, 12,8 points de moyenne, et **`facteur: null`** — ce qui est le bon
+résultat, puisqu'il faut deux jeux pour un rapport. L'ÉCRAN, lui, n'a pas été
+lu : le panneau d'administration résiste à l'emprunt d'adresse, limite déjà
+écrite et déjà mesurée. Ce qui le tient est le compilateur et la parité des
+dictionnaires.
+
+**Et le garde du pluriel a mordu sur mes propres traductions** : j'avais écrit
+`n > 1` en anglais, en espagnol et en allemand, où le pluriel s'applique aussi
+à zéro. Il est là pour ça, et il l'a dit avant moi.
+
 ### Une sonde sans navigateur déclaré rend 403, et ça ressemble à une porte cassée
 `curl -s -o /dev/null -w "%{http_code}" https://winorworkout.com/fr/dashboard`
 rend **403**. Le journal écrit partout que cette adresse rend 307 vers la
