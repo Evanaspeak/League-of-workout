@@ -1839,6 +1839,62 @@ composé — et réécrire du japonais sur un jugement de style n'est pas une
 correction. La limite est notée ; le détecteur reste utile parce que ses vrais
 cas sont des idéogrammes, pas du katakana.
 
+### « Elles sont fades » : trois formulations, tirées du jour et rangées nulle part
+Ligne 100 du plan, réponse `[100] → Elles sont fades`. Ce qui a demandé de
+décider n'est pas le texte, c'est ce que « fade » désigne.
+
+**Ce n'est pas la VOIX.** Le ton est écrit en tête du module depuis le premier
+jour, et il est bon : direct, sans moquerie et sans encouragement de façade.
+Le changer serait renverser une décision de marque que le propriétaire n'a pas
+prise. **C'est la RÉPÉTITION** : un texte juste reçu mot pour mot tous les
+matins ne se lit plus à la troisième fois, et se coupe à la cinquième. La
+variété est la moitié du sujet que le code peut traiter sans arbitrer la voix,
+et les douze textes d'origine restent tels quels, en première formulation.
+
+**Elle se DÉDUIT du jour, comme le défi quotidien.** Rien ne se range :
+un compteur en base finirait par diverger de ce qui le produit, et il en
+faudrait un par notification. Le jour donne en prime la propriété qu'on veut —
+deux jours consécutifs ne peuvent pas tomber sur la même formulation, puisque
+leurs numéros se suivent, donc leurs restes aussi. Un tirage au hasard
+retomberait sur le même texte une fois sur trois, c'est-à-dire exactement ce
+qu'on corrige ; le test l'éprouve sur **une année entière**, pas sur un
+exemple.
+
+**Chaque notification porte SES formulations, pas l'inverse.** Un « jeu de
+textes » complet par variante obligerait à écrire les quatre ensemble alors
+qu'elles ne partent jamais ensemble : le seuil le soir, le rappel le matin, la
+relance après quinze jours, la pesée le dimanche.
+
+**Le jour est un paramètre OBLIGATOIRE**, et c'est ce qui a désigné les quatre
+appelants. Rendu optionnel, un appelant qui l'oublie recevrait toujours la
+première formulation sans que rien ne le dise — le défaut qu'on corrige,
+réintroduit en silence, et le trou que ce journal reproche six fois. C'est ce
+qu'un changement de type fait de mieux.
+
+**Un jour illisible rend zéro plutôt que `NaN`**, et ce n'est pas de la
+politesse : `NaN` en indice de tableau rend `undefined`, donc un appel de
+fonction sur rien, donc le canal entier qui tombe. Une notification perdue
+parce qu'une date était mal écrite coûterait bien plus cher que la répétition
+qu'on corrige.
+
+**Et le garde de la couture CJK ne couvrait plus que le tiers de son sujet.**
+Il éprouvait `notifications.seuil` et `notifications.matin` sans jour, donc la
+première formulation seule : les deux autres pouvaient poser une espace latine
+au milieu d'idéogrammes, et elles seraient parties deux matins sur trois. Il
+balaie les trois rangs maintenant. C'est la forme la plus discrète du défaut
+que ce projet paie en boucle — un garde qui reste vert en n'examinant qu'une
+partie de ce qu'il croit couvrir.
+
+Sept sabotages : rang figé à zéro, rang tiré au hasard, `NaN` sur un jour
+illisible, une formulation qui félicite, un collage CJK retiré d'une
+formulation, deux langues qui partagent un texte — six échecs. Le septième,
+une formulation qui perd sa durée, **ne compile pas** : `noUnusedLocals` nomme
+le paramètre devenu inutile. C'est noté comme tel plutôt que compté comme un
+garde qui mord.
+
+**La suite navigateur ENTIÈRE, jouée sur la construction de V492** : 231
+passés en 13 min 12.
+
 ### Campagne de clôture du 7 septembre, après V487 à V491 — et les dix-huit pixels du banc d'essai
 Comparaison de rendu passée entre V486 et la tête, sur un compte de mesure
 neuf. Trente-neuf captures, huit pages, trois largeurs. **Dix différentes, et

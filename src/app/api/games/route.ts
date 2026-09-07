@@ -15,6 +15,7 @@ import {
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { toVariante, varianteApplicable } from "@/lib/variantes";
 import { textesNotification } from "@/lib/i18n/notifications";
+import { jourDansFuseau } from "@/lib/fuseau";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
@@ -469,7 +470,12 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
   try {
     const avant = await prisma.user.findUnique({
       where: { id: userId },
-      select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true, langue: true },
+      select: {
+        dettePointsDus: true, rappelSeuilSec: true, exercices: true, langue: true,
+        // Le fuseau ne sert qu'à choisir la FORMULATION du jour : la notification
+        // part le soir, et le jour se lit là où la personne est.
+        fuseau: true,
+      },
     });
     // L'incrément atomique ET la pose de la date de début vivent dans
     // `src/lib/dette.ts` : la correction du résultat d'une partie réévalue son
@@ -493,7 +499,7 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
           // Dans la langue du compte : le texte était écrit en dur en
           // français et partait tel quel à tout le monde, y compris à qui
           // n'a jamais vu un écran français.
-          const { titre, corps } = textesNotification(avant.langue)
+          const { titre, corps } = textesNotification(avant.langue, jourDansFuseau(new Date(), avant.fuseau))
             .seuil(formaterDuree(apresSec, etiquetteLocale(toLocale(avant.langue))));
           // Sans await : une notification lente ne doit pas retarder la réponse.
           notifier(userId, { titre, corps, tag: "wow-dette" }).catch(() => {});

@@ -234,7 +234,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 085 | Te montrer les deux formulaires d'inscription pour choisir | je te dois la maquette |
 
 ### Revenir
-*2 à faire · 9 faits.* Presque tout construit. C'est le bloc le plus avancé.
+*1 à faire · 10 faits.* Presque tout construit. C'est le bloc le plus avancé.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -248,7 +248,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 108 | La pastille sur l'icône de l'application desktop | — |
 | [ ] | 099 | Un gel de série à gagner ou à acheter | 1 nuit |
 | [x] | 103 | Trois notifications par semaine au maximum | — |
-| [ ] | 100 | Des notifications moins fades | ½ nuit |
+| [x] | 100 | Des notifications moins fades | — |
 
 ### Le multi-jeu et la détection
 *1 à faire · 8 faits.* 

@@ -117,7 +117,7 @@ export async function POST(req: Request) {
     const sec = Math.round(dureeAffichee(u.dettePointsDus, exercices));
     if (sec < MINIMUM_SEC) continue;
 
-    const { titre, corps } = textesNotification(u.langue).matin(formaterDuree(sec, etiquetteLocale(toLocale(u.langue))));
+    const { titre, corps } = textesNotification(u.langue, jourDansFuseau(maintenant, u.fuseau)).matin(formaterDuree(sec, etiquetteLocale(toLocale(u.langue))));
     // Un envoi raté ne doit pas empêcher les suivants : c'est une boucle sur
     // tous les comptes, et le premier abonnement périmé les arrêterait tous.
     const partis = await notifier(u.id, { titre, corps, tag: "wow-matin" }).catch(() => 0);
@@ -165,7 +165,7 @@ async function relancerLesAbsents(maintenant: Date): Promise<number> {
 
     const jours = Math.floor(
       (maintenant.getTime() - dernierePartie!.getTime()) / (24 * 3600_000));
-    const { titre, corps } = textesNotification(u.langue).relance(jours);
+    const { titre, corps } = textesNotification(u.langue, jourDansFuseau(maintenant, u.fuseau)).relance(jours);
     const partis = await notifier(u.id, { titre, corps, tag: "wow-relance" }).catch(() => 0);
     // La date se pose même si l'envoi n'a atteint personne : sans abonnement,
     // réessayer chaque jour ne changerait rien et referait le tour de la base.
@@ -206,7 +206,7 @@ async function rappelerLesPesees(maintenant: Date): Promise<number> {
     };
     if (!rappelerPesee(etat, maintenant)) continue;
 
-    const { titre, corps } = textesNotification(u.langue).pesee();
+    const { titre, corps } = textesNotification(u.langue, jourDansFuseau(maintenant, u.fuseau)).pesee();
     const partis = await notifier(u.id, { titre, corps, tag: "wow-pesee" }).catch(() => 0);
     // La marque se pose même si l'envoi n'a atteint personne, comme pour les
     // deux autres : sans abonnement, réessayer demain matin ne changerait rien
