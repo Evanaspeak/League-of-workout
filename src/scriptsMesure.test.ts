@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { sansCommentaires } from "@/test/sansCommentaires";
 
 /**
  * Les outils de mesure lisent leurs arguments de la MÊME façon.
@@ -137,6 +138,56 @@ describe("les outils de mesure lisent leurs arguments de la même façon", () =>
     expect(concernes.length).toBeGreaterThanOrEqual(2);
     const fautifs = concernes.filter(([, t]) => !t.includes("refuserPrefixe(")).map(([f]) => f);
     expect(fautifs).toEqual([]);
+  });
+
+  /**
+   * Un préchargement n'est pas un chargement, et l'outil doit les séparer.
+   *
+   * Le routeur de Next va chercher les routes liées depuis la navigation
+   * APRÈS le `load` : sur le tableau de bord, les fragments de `/settings`,
+   * `/history` et `/amis` arrivent une seconde plus tard. Comptés dans le
+   * poids de la page, ils gonflent le chiffre de plus du double — le journal
+   * portait « 453 ko » pour une page qui en charge 228.
+   *
+   * Et la conséquence est allée plus loin qu'un chiffre : les
+   * soixante-treize kilo-octets « apparus en V460 » étaient entièrement du
+   * préchargement, né de ce que cette version a rendu cent cinquante pages
+   * prérendues — le routeur ne préchargeait pas les routes dynamiques.
+   *
+   * Le piège est écrit au journal depuis la campagne du 23 août, sur cet
+   * outil-là. Ce test le ferme.
+   */
+  it("performance.mjs distingue ce qui est chargé de ce qui est préchargé", () => {
+    /**
+     * Le contrôle porte sur le BRANCHEMENT, pas sur la présence des mots.
+     *
+     * Mon premier jet cherchait « loadEventEnd » et « apresLoad » : poser
+     * `apresLoad: false`, ou remplacer l'expression de la frontière par zéro,
+     * laisse les deux mots en place — dans le code et dans le commentaire qui
+     * l'explique — et les deux sabotages passaient au vert. C'est la troisième
+     * fois cette nuit que ce piège se présente, et il est écrit au journal.
+     *
+     * La source est lue PRIVÉE de ses commentaires, sans quoi le garde se
+     * satisferait de sa propre explication.
+     */
+    const texte = sansCommentaires(readFileSync(join(SCRIPTS, "performance.mjs"), "utf8"));
+    // La frontière est l'INSTANT, et elle se COMPARE : une ressource demandée
+    // après la fin du `load` n'a pas été chargée par la page.
+    /**
+     * La frontière doit être DÉRIVÉE de la fin du `load`, et pas seulement
+     * mentionnée : `loadEventEnd` figure ailleurs dans ce fichier, pour le
+     * temps de chargement affiché. Remplacer l'expression par zéro laissait
+     * donc le mot en place et le sabotage passait — quatrième variante du même
+     * piège dans la même nuit.
+     */
+    expect(texte).toMatch(/\bfin\s*=\s*[^;]*loadEventEnd/);
+    expect(texte).toMatch(/startTime\s*>\s*\w+/);
+    // Et le résultat de cette comparaison doit AIGUILLER vers deux totaux
+    // distincts, sinon la distinction est calculée et jamais employée.
+    expect(texte).toMatch(/apresLoad\s*\?\s*\w+\s*:\s*\w+/);
+    // Enfin les deux se rendent séparément : une distinction qu'on ne dit pas
+    // ne sert à personne.
+    expect(texte).toMatch(/Préchargé/);
   });
 
   it("la dispense désigne encore un fichier vivant", () => {
