@@ -17,6 +17,19 @@
  * Sur un compte NEUF, `/api/games` rend deux octets et `/api/dashboard` presque
  * rien : la mesure serait juste et ne dirait rien. C'est pour ça que le semis
  * existe.
+ *
+ * **Ce qu'il pèse est le corps BRUT, et le serveur local ne compresse pas.**
+ * Vérifié : `next start` rend les mêmes 644 233 octets qu'on demande
+ * `identity`, `gzip` ou `br`. La production, elle, compresse — mesuré sur
+ * `/api/champions`, qui revient en `content-encoding: br`. Un chiffre d'ici
+ * n'est donc PAS un coût de réseau : c'est un coût de sérialisation, de
+ * transfert local, et surtout d'analyse dans le navigateur.
+ *
+ * La distinction n'est pas théorique. Sur 1 116 parties, la même réponse fait
+ * 644 ko bruts et **22,5 ko en brotli** — et une optimisation qui vaut 24 %
+ * sur le brut peut ne valoir que quatre-vingts octets sur le fil, parce que
+ * la compression fait déjà le même travail. Voir le journal, « L'optimisation
+ * qui valait quatre-vingts octets ».
  */
 import { readFileSync } from "node:fs";
 const BASE = process.env.BASE ?? "http://127.0.0.1:3311";

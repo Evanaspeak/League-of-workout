@@ -1150,6 +1150,134 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'optimisation qui valait quatre-vingts octets
+Le journal portait, depuis le resserrement des colonnes : « un cinquième de la
+réponse est le même objet de deux nombres, recopié soixante fois […] ce serait
+six kilo-octets sur trente-deux, contre une indirection dans la réponse et un
+composant qui doit la suivre. **Laissé en l'état** ». Et il portait ailleurs
+que `/api/dashboard` n'était pas optimisée « pour une charge qui n'existe
+pas ».
+
+**La charge existe maintenant** — le propriétaire est à neuf cent soixante
+parties — donc les deux se remesurent. Compte de mesure porté à **1 116
+parties**, trois exécutions consécutives, chiffres stables à deux
+millisecondes près.
+
+| route | 0 partie | 60 | 1 116 |
+|---|---|---|---|
+| `/api/dashboard` | 1 718 o · 10 ms | 5 598 o · 11 ms | **43 232 o · 21–24 ms** |
+| `/api/games` | 2 o · 11 ms | 34 254 o · 10 ms | **644 233 o · 23–25 ms** |
+| `/api/progression` | 1 528 o | 1 564 o | 1 579 o |
+| les quatre autres | plates | plates | plates |
+
+**`/api/dashboard` va bien, et c'était la question posée.** Elle charge toutes
+les parties pour les agréger ; à mille cent seize, ça coûte vingt-quatre
+millisecondes et quarante-trois kilo-octets d'agrégats. Il n'y a rien à
+corriger, et le dire suppose de l'avoir mesuré.
+
+**C'est `/api/games` qui grossit**, et la composition confirme le journal :
+
+| champ | octets | part |
+|---|---|---|
+| `ratios` | 155 124 | **24,1 %** |
+| `id` | 44 220 | 6,9 % |
+| `date` | 37 944 | 5,9 % |
+
+Un seul barème distinct sur les 1 116 lignes — le même objet de cent onze
+octets, recopié mille cent seize fois. La déduplication semblait donc valoir
+vingt-quatre pour cent, contre six kilo-octets à l'époque où elle a été
+écartée. De quoi rouvrir la décision.
+
+**Et la mesure suivante l'a refermée.**
+
+| | brut | gzip | brotli |
+|---|---|---|---|
+| tel quel | 644 233 | 41 101 | **22 577** |
+| dédupliqué | 489 261 | 28 865 | **22 497** |
+| gain | 154 972 (24,1 %) | 12 236 (29,8 %) | **80 octets (0,4 %)** |
+
+**La production sert du brotli** — vérifié sur `/api/champions`, qui revient
+en `content-encoding: br` — et brotli fait déjà exactement ce que la
+déduplication ferait : il reconnaît une sous-chaîne répétée. Le gain réel sur
+le fil est de **quatre-vingts octets**. L'optimisation reste écartée, et pour
+une raison mesurée cette fois plutôt que devinée.
+
+**Le piège qui rendait ça invisible : `next start` ne compresse pas.** Les
+mêmes 644 233 octets reviennent qu'on demande `identity`, `gzip` ou `br`. Un
+chiffre relevé par `routes.mjs` n'est donc pas un coût de RÉSEAU — c'est un
+coût de sérialisation et d'analyse. La note est en tête de l'outil
+maintenant, parce que le prochain qui lira « 644 ko » en conclura autre chose.
+
+**Ce que ces 644 kilo-octets coûtent QUAND MÊME**, et qu'il ne faut pas
+balayer : le serveur les sérialise, le navigateur les décompresse et les
+analyse, et mille cent seize objets sont alloués. C'est du processeur et de
+la mémoire, pas de la bande passante. Mesuré à l'écran : `/history` rend
+**392 ms sur poste et 1 276 ms sur téléphone bridé**, CLS 0,000 — l'écran
+tient largement, et le plus grand élément est son titre.
+
+**Ce qui reste ouvert, et qui n'est pas une décision technique.** La réponse
+grandit linéairement et pour toujours : une partie jouée ne se supprime pas.
+À dix mille parties elle fera six mégaoctets bruts. La réponse structurelle
+est la PAGINATION, et elle n'est pas gratuite — l'historique filtre et trie
+au navigateur, donc paginer change ce que l'écran sait faire. C'est un
+arbitrage de produit ; il part dans les questions avec ses chiffres.
+
+**Et le semis prend un nombre maintenant.** Il en posait soixante en dur, ce
+qui suffit à ce qu'une réponse ait une taille et ne dit rien d'un compte qui
+joue depuis un an. Le rang se lit par `positionnels`, comme les quatre outils
+de mesure — le garde `scriptsMesure.test.ts` a mordu au premier jet, qui
+lisait `process.argv[2]` : un `--langue=de` posé avant le nombre en aurait
+tenu lieu, et l'outil aurait semé `NaN` parties.
+
+**Le limiteur a mordu aussi**, et c'est le bon comportement : `/api/games`
+accepte soixante écritures par fenêtre et par compte. Les neuf cents
+suivantes ont été posées en dupliquant les lignes DÉJÀ écrites par le barème,
+en SQL — mesurer ne doit pas demander de désarmer une protection du produit.
+
+### Le témoin public de V460 : un en-tête de cache, et deux minutes au lieu d'une heure
+Suite de l'entrée ci-dessous. La procédure de fusion demande un témoin public
+de la version qu'on vient de publier ; celui-ci a rendu deux choses qu'aucune
+chaîne de caractères n'aurait données.
+
+**Le témoin n'est pas un texte, c'est un EN-TÊTE.** Les pages d'acquisition
+sortaient en `Cache-Control: private, no-store` avec `x-vercel-cache: MISS` —
+c'est-à-dire rendues par une fonction à chaque visite, jamais mises en cache
+par le réseau de diffusion. Elles sortent maintenant en :
+
+```
+/de/calculateur/overwatch   cache-control: public, max-age=0, must-revalidate
+                            x-vercel-cache: PRERENDER
+/fr/cgu                     idem
+/de                         private, no-store · MISS   ← l'accueil, qui lit auth()
+```
+
+`PRERENDER` est la preuve directe que la page vient du magasin de prérendu et
+non d'une exécution. Et l'accueil qui reste `MISS` est le contre-témoin : il
+appelle `auth()` pour adapter trois boutons, donc il est le seul écran public
+encore rendu à la demande. Sans lui, on ne saurait pas si l'en-tête a changé
+pour la bonne raison.
+
+**Et le déploiement a mis MOINS DE DEUX MINUTES.** Fusion à 13 h 10 UTC,
+témoin présent à 13 h 12, avec `age: 13` — donc déjà servi depuis le cache.
+Ce journal porte trois mesures du retard de déploiement : au moins 2 h 40,
+entre 66 et 84 minutes, 59 minutes. Celle-ci en est une quatrième, et elle
+est d'un autre ordre.
+
+**Ce qu'on peut en dire, et ce qu'on ne peut pas.** Les trois mesures
+précédentes portaient toutes sur des pages PUBLIQUES qui étaient, on le sait
+maintenant, rendues à la demande. Une page dynamique est servie par une
+fonction, et c'est la fonction qui doit être remplacée ; une page prérendue
+est un fichier déposé avec la construction. Que le retard disparaisse au
+moment exact où ces pages redeviennent statiques est cohérent — ça ne le
+DÉMONTRE pas. Une seule mesure n'est pas une mesure, et ce fichier le répète
+assez souvent pour ne pas l'oublier ici. La prochaine version qui touche une
+page publique le dira.
+
+**Ce qui reste vrai quoi qu'il arrive** : le témoin d'une version se choisit
+sur ce que la version a CHANGÉ, et ce n'est pas toujours un mot à l'écran.
+Ici la page était identique en français avant et après ; c'est l'en-tête qui
+disait tout.
+
 ### Zéro page prérendue, et le journal qui annonçait deux cent vingt-huit
 Ligne 302 du plan, « affiner la régénération des pages ». Je cherchais à savoir
 si `revalidate = 300`, posé sur la mise en page racine donc sur toutes les
@@ -4879,7 +5007,9 @@ champ par champ :
 | `jeu` | 1 560 | 4,9 % |
 
 **Un cinquième de la réponse est le même objet de deux nombres, recopié
-soixante fois.** L'historique le lit ligne par ligne — c'est ce qui empêche un
+soixante fois.** *(Remesuré à 1 116 parties : la déduplication vaut quatre-vingts
+octets une fois la réponse compressée — voir « L'optimisation qui valait
+quatre-vingts octets ».)* L'historique le lit ligne par ligne — c'est ce qui empêche un
 changement de barème de réécrire le passé, et cette décision-là ne se rouvre
 pas. Ce qu'on pourrait faire est de n'envoyer que les barèmes DISTINCTS avec un
 renvoi par ligne ; ce serait six kilo-octets sur trente-deux, contre une
