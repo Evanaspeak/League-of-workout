@@ -1166,6 +1166,44 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux rubriques que le balayage ne visitait pas, et l'année prise pour un nombre
+Le balayage des coutures ouvrait trois rubriques de réglages sur les cinq
+accessibles : **« Ton profil » et « Tes données » n'y étaient pas.** C'est sur
+« Ton profil » qu'a été trouvée, en V489, la couture de la date de
+consentement — donc un défaut de cette famille pouvait revenir sans être vu.
+Neuf pages désormais ; les deux nouvelles rendent 35 et 22 textes.
+
+**Et elles ont sorti trois faux positifs du premier coup** : « Accord donné le
+7 septembre 2026 », en français, en anglais et en allemand. « 2026 » est une
+ANNÉE dans une date mise en forme, pas un nombre brut.
+
+**Le partage entre langues est ce qui rend le cas instructif.** L'espagnol, le
+japonais et le chinois se taisaient : le premier écrit 2026 sans séparateur,
+les deux autres le suivent de 年, déjà exclu par le motif. Autrement dit, le
+silence de trois langues sur six ne prouvait rien — le défaut était là pour
+tout le monde, et seules trois écritures le rendaient visible. C'est la
+mécanique déjà notée pour l'espagnol du courriel hebdomadaire, retournée.
+
+**Les dates avaient pourtant été prévues** : le motif écarte 年, « / » et
+« - ». Ce qu'il ne connaissait pas est la date LONGUE latine, où l'année finit
+la phrase sans rien après elle.
+
+**Le discriminant est demandé à `Intl` lui aussi** — les noms de mois de la
+langue, longs et courts. Une liste écrite à la main en demanderait six, et
+elles vieilliraient ; c'est le même raisonnement que pour le groupement des
+milliers, deux entrées plus haut.
+
+**Sa limite est écrite plutôt que laissée à découvrir** : un texte qui nomme un
+mois ET qui porte par ailleurs un vrai nombre brut de quatre chiffres
+passerait. Le cas est étroit, et l'inverse — crier sur chaque date affichée —
+ferait cesser de lire le rapport.
+
+Trois sabotages, trois échecs : la règle débranchée, les noms de mois vidés, et
+la borne des années plausibles ouverte.
+
+Recensement après correction : **zéro constat, six langues, neuf pages**, entre
+787 et 809 textes lus par langue.
+
 ### Un commentaire promettait de ne pas dupliquer, au-dessus d'une duplication
 Trouvé en cherchant, par la FORME cette fois, d'autres endroits où une règle
 est réécrite alors qu'elle existe ailleurs. Le motif cherché était le
