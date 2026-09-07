@@ -1150,6 +1150,84 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Mille cent seize parties, et les quatre nombres que ça rend visibles
+Le compte de mesure venait d'être porté à l'échelle du propriétaire pour peser
+les routes. Il sert deux fois : sous mille, **un séparateur de milliers ne se
+pose pas**, donc aucun de ces défauts n'existe sur un compte de démonstration.
+
+Lu en japonais, le tableau de bord rendait :
+
+```
+試合数
+1116                    ← brut
+負債の合計
+8,905                   ← groupé
+次のレベルまで支払い済みポイント 100   ← le chiffre après son compteur
+```
+
+**Trois nombres, trois familles, et la quatrième est sur l'axe.**
+
+- **Le compte de parties** était le seul de sa rangée à ne pas passer par
+  `Intl` : `value={globalStats.totalGames}` là où ses deux voisines écrivent
+  `nombre(...)`. En français l'espace fine se lit comme rien ; en japonais et
+  en allemand le séparateur est visible, et « 1116 » à côté de « 8.905 » saute
+  aux yeux.
+- **Le résumé lu par un lecteur d'écran** — « Diagramm „Kumulierter Verlauf“ :
+  1116 Punkte, von 5 bis 8.905 » — mêlait un nombre BRUT et deux nombres
+  FORMATÉS dans la même phrase. Et il n'accordait pas son pluriel : à une
+  seule partie, il disait « 1 Punkte ». Personne de voyant ne le lira jamais.
+- **`souffranceAide`** plaçait le chiffre APRÈS son compteur en japonais :
+  「次のレベルまで支払い済みポイント 100」. Sa voisine `versLeNiveau`, **trois
+  lignes plus bas dans le même fichier**, avait été corrigée pour exactement
+  ce défaut — et son commentaire le raconte. C'est la correction qui n'en
+  répare qu'une moitié, dans le fichier qui la raconte.
+- **Les graduations d'axe.** `formaterAxe` rendait `String(q)` et recollait
+  « km », « s » et « min » à la main : « 10000 » sur un axe français où il
+  faut « 10 000 », dans les six langues. Elle est la voisine de QUARANTE
+  LIGNES de `formaterQuantite`, passée par `Intl` depuis longtemps. L'axe est
+  la surface la plus lue du tableau de bord : ses graduations sont les seuls
+  nombres qu'on regarde sans les chercher.
+
+**Le temps passe par le cadran commun, jamais par `uniteLocalisee` en
+direct.** Le japonais et le chinois y écrivent leur forme ronde à la main —
+「5分」et non「5 分」, que rend la donnée CLDR — pour s'accorder au composé
+「1分55秒」du même module. Mon premier jet réécrivait l'unité sur place et
+faisait diverger les deux moitiés ; le test l'a dit avant moi, en comparant
+「5分」à「5 分」.
+
+**Et une virgule latine au milieu des idéogrammes.** L'énumération du résumé
+se joignait par `", "` dans les six langues, sous une phrase qui finit par
+「。」: on lisait「月 8, 火 8, 水 8。」.
+
+`Intl.ListFormat` semblait être la réponse, et **la mesure l'a écartée** :
+avec `type: "unit"` il rend « A 8 B 12 » en japonais et « A 8B 12 » en
+chinois, c'est-à-dire aucun séparateur — ces listes-là sont faites pour
+« 5 ft 3 in ». Le séparateur vient donc du DICTIONNAIRE, ce qui est la règle
+déjà écrite pour le composé de durée : **la langue qui ne peut pas déléguer
+écrit sa forme elle-même.**
+
+**Un tiret cadratin est parti au passage.** Au-delà de huit barres, le repli
+composait « 12 — 5 … 20 ». Le garde qui les chasse ne lit que les
+dictionnaires ; celui-ci se composait dans un composant, donc hors de portée.
+
+**Sept sabotages, sept échecs — dont un qui a d'abord passé au vert.**
+Débrancher la langue de `formaterAxe` chez son seul appelant ne faisait
+tomber aucun test : le module était juste, et personne ne vérifiait qu'il
+soit branché. C'est le trou que ce projet paie en boucle, et `formaterAxe`
+rejoint donc les cinq formateurs dont `quantiteLocalisee.test.ts` compte
+l'arité chez leurs appelants.
+
+Vérifié à l'écran dans quatre langues : 「試合数 1,116」,「1.116」,「1 116」;
+「グラフ「累積の推移」：1,116 点、5 から 8,905 まで。」;
+「次のレベルまで支払い済み 100 ポイント」; et l'énumération en
+「月 8、火 8、水 8。」
+
+**Ce que ça apprend sur la méthode**, et c'est la raison pour laquelle le
+semis prend un nombre depuis ce matin : **un compte de mesure à soixante
+parties mesure une application à soixante parties.** Aucun de ces quatre
+défauts n'est visible en dessous du millier, et le propriétaire y est depuis
+des mois.
+
 ### L'optimisation qui valait quatre-vingts octets
 Le journal portait, depuis le resserrement des colonnes : « un cinquième de la
 réponse est le même objet de deux nombres, recopié soixante fois […] ce serait
