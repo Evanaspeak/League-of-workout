@@ -1150,6 +1150,44 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « il te manque 4011 points » sous une ligne qui écrit « 4 011 »
+Trouvé en lisant l'écran des amis à DEUX comptes, en japonais puis en chinois
+puis en français. Le classement rend deux lignes qui se suivent :
+
+```
+1 | タロウ | 4,011 努力ポイント     ← la colonne, mise en forme
+1 位まであと 4011 ポイントです。   ← la phrase, nombre NU
+```
+
+Le même nombre, deux écritures, à une ligne d'écart, dans les six langues.
+C'est la classe corrigée par V465 sur les paliers, dans un gabarit cette fois
+plutôt qu'en JSX nu.
+
+**Et la phrase n'accordait rien.** « Il te manque 1 points », « 1 more points »,
+« 1 puntos », « 1 Punkte » : l'écart peut valoir un, et c'est même le cas le
+plus fréquent quand deux comptes se suivent de près. Le gabarit prend donc les
+DEUX choses, comme `equipeDu` : le nombre mis en forme pour l'affichage, le
+compte pour l'accord.
+
+**Une seconde clé de la même famille, trouvée en recensant plutôt qu'à
+l'œil.** `profilParties` montre le nombre de parties d'un AMI — celui qui joue
+depuis un an passe le millier, et le profil de quelqu'un est précisément
+l'endroit où l'on regarde combien il a joué. Les autres gabarits numériques du
+fichier sont des séries, des rangs et des compteurs de membres : bornés par
+construction.
+
+**Le compilateur a nommé les trois endroits à reprendre**, dont le bloc
+japonais de `profilParties`, qui écrivait son motif autrement et que ma
+substitution avait manqué. C'est ce qu'un changement de type fait de mieux, et
+c'est la raison de préférer une signature élargie à un paramètre optionnel.
+
+Les deux clés rejoignent `gabaritsNombres.test.ts`, qui vérifie le RANG de
+l'argument affiché chez tous les appelants. Deux sabotages, deux échecs.
+
+Vérifié à l'écran dans trois langues : 「1 位まであと 4,011 ポイントです。」,
+「再有 4,011 点就能拿到第一。」, « Il te manque 4 011 points pour la première
+place. » Dix parcours sociaux verts.
+
 ### « ベータ版 · 26 juin 2026 施行 » : la date des documents juridiques était française pour tout le monde
 Trouvé en balayant les pages PUBLIQUES en japonais et en chinois — le probe des
 écrans connectés ne les regarde pas, et ce sont pourtant celles que des

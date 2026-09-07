@@ -125,6 +125,16 @@ describe("les gabarits qui reçoivent un grand nombre", () => {
       corpsImc: 0, corpsPeseeValeur: 0, corpsMasseGrasse: 0, multiplicateur: 0,
       corpsObjectifValeur: 0, corpsMaintienValeur: 0, energieSub: 0,
       activitesAndTotal: 0, recordsLigne: 1,
+      /**
+       * Les deux du classement entre amis.
+       *
+       * `ecartAuPremier` écrivait « il te manque 4011 points » sous une ligne
+       * qui affiche « 4 011 points d'effort » : le même nombre, deux
+       * écritures, à une ligne d'écart. Et `profilParties` montre le compte de
+       * parties d'un AMI, qui passe le millier chez quelqu'un qui joue depuis
+       * un an. Trouvés en lisant l'écran des amis à deux comptes en japonais.
+       */
+      ecartAuPremier: 0, profilParties: 0,
     };
     const fautifs: string[] = [];
     let appels = 0;

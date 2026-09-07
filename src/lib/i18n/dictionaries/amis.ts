@@ -11,7 +11,7 @@ export const amis = {
   fr: {
     voirProfil: "Voir",
     profilFerme: "Cette personne ne partage que son total.",
-    profilParties: (n: number) => (n === 1 ? "1 partie" : `${n} parties`),
+    profilParties: (formate: string, n: number) => (n === 1 ? "1 partie" : `${formate} parties`),
     profilSerie: (n: number) => (n === 1 ? "série de 1 jour" : `série de ${n} jours`),
     profilMeilleure: (n: number) => `meilleure série : ${n}`,
     profilJeu: "jeu le plus joué",
@@ -99,7 +99,8 @@ export const amis = {
     effortPaye: (formate: string, n: number) =>
       `${formate} point${n > 1 ? "s" : ""} d'effort`,
     enTete: "Tu mènes cette semaine.",
-    ecartAuPremier: (n: number) => `Il te manque ${n} points pour la première place.`,
+    ecartAuPremier: (formate: string, n: number) =>
+      `Il te manque ${formate} point${n > 1 ? "s" : ""} pour la première place.`,
     retardDepuis: (n: number) => (n === 1 ? "en retard depuis 1 jour" : `en retard depuis ${n} jours`),
 
 
@@ -135,7 +136,7 @@ export const amis = {
   en: {
     voirProfil: "View",
     profilFerme: "This person only shares their total.",
-    profilParties: (n: number) => (n === 1 ? "1 game" : `${n} games`),
+    profilParties: (formate: string, n: number) => (n === 1 ? "1 game" : `${formate} games`),
     profilSerie: (n: number) => (n === 1 ? "1 day streak" : `${n} day streak`),
     profilMeilleure: (n: number) => `best streak: ${n}`,
     profilJeu: "most played game",
@@ -208,7 +209,8 @@ export const amis = {
     colJoueur: "Player",
     effortPaye: (formate: string, n: number) => `${formate} effort point${n !== 1 ? "s" : ""}`,
     enTete: "You are leading this week.",
-    ecartAuPremier: (n: number) => `You need ${n} more points to take first place.`,
+    ecartAuPremier: (formate: string, n: number) =>
+      `You need ${formate} more point${n === 1 ? "" : "s"} to take first place.`,
     retardDepuis: (n: number) => (n === 1 ? "1 day late" : `${n} days late`),
 
 
@@ -244,7 +246,7 @@ export const amis = {
   es: {
     voirProfil: "Ver",
     profilFerme: "Esta persona solo comparte su total.",
-    profilParties: (n: number) => (n === 1 ? "1 partida" : `${n} partidas`),
+    profilParties: (formate: string, n: number) => (n === 1 ? "1 partida" : `${formate} partidas`),
     profilSerie: (n: number) => (n === 1 ? "racha de 1 día" : `racha de ${n} días`),
     profilMeilleure: (n: number) => `mejor racha: ${n}`,
     profilJeu: "juego más jugado",
@@ -317,7 +319,8 @@ export const amis = {
     colJoueur: "Jugador",
     effortPaye: (formate: string, n: number) => `${formate} punto${n !== 1 ? "s" : ""} de esfuerzo`,
     enTete: "Vas primero esta semana.",
-    ecartAuPremier: (n: number) => `Te faltan ${n} puntos para el primer puesto.`,
+    ecartAuPremier: (formate: string, n: number) =>
+      `Te falta${n === 1 ? "" : "n"} ${formate} punto${n === 1 ? "" : "s"} para el primer puesto.`,
     retardDepuis: (n: number) => (n === 1 ? "1 día de retraso" : `${n} días de retraso`),
 
 
@@ -353,7 +356,7 @@ export const amis = {
   de: {
     voirProfil: "Ansehen",
     profilFerme: "Diese Person teilt nur ihre Summe.",
-    profilParties: (n: number) => (n === 1 ? "1 Partie" : `${n} Partien`),
+    profilParties: (formate: string, n: number) => (n === 1 ? "1 Partie" : `${formate} Partien`),
     profilSerie: (n: number) => (n === 1 ? "Serie von 1 Tag" : `Serie von ${n} Tagen`),
     profilMeilleure: (n: number) => `beste Serie: ${n}`,
     profilJeu: "meistgespieltes Spiel",
@@ -426,7 +429,8 @@ export const amis = {
     colJoueur: "Spieler",
     effortPaye: (formate: string, n: number) => `${formate} Aufwandspunkt${n !== 1 ? "e" : ""}`,
     enTete: "Du führst diese Woche.",
-    ecartAuPremier: (n: number) => `Dir fehlen ${n} Punkte bis zum ersten Platz.`,
+    ecartAuPremier: (formate: string, n: number) =>
+      `Dir fehl${n === 1 ? "t" : "en"} ${formate} Punkt${n === 1 ? "" : "e"} bis zum ersten Platz.`,
     retardDepuis: (n: number) => (n === 1 ? "seit 1 Tag im Rückstand" : `seit ${n} Tagen im Rückstand`),
 
 
@@ -462,7 +466,7 @@ export const amis = {
   zh: {
     voirProfil: "查看",
     profilFerme: "这位玩家只分享总量。",
-    profilParties: (n: number) => `${n} 局`,
+    profilParties: (formate: string) => `${formate} 局`,
     profilSerie: (n: number) => `连续 ${n} 天`,
     profilMeilleure: (n: number) => `最长连续：${n} 天`,
     profilJeu: "最常玩的游戏",
@@ -535,7 +539,7 @@ export const amis = {
     colJoueur: "玩家",
     effortPaye: (formate: string, _n: number) => `${formate} 点努力值`,
     enTete: "本周你领先。",
-    ecartAuPremier: (n: number) => `再有 ${n} 点就能拿到第一。`,
+    ecartAuPremier: (formate: string) => `再有 ${formate} 点就能拿到第一。`,
     retardDepuis: (n: number) => `已拖欠 ${n} 天`,
 
 
@@ -567,7 +571,7 @@ export const amis = {
   ja: {
     voirProfil: "見る",
     profilFerme: "この人は合計のみを共有しています。",
-    profilParties: (n: number) => `${n} 試合`,
+    profilParties: (formate: string) => `${formate} 試合`,
     profilSerie: (n: number) => `${n} 日連続`,
     profilMeilleure: (n: number) => `最長 ${n} 日`,
     profilJeu: "最もよく遊ぶゲーム",
@@ -640,7 +644,7 @@ export const amis = {
     colJoueur: "プレイヤー",
     effortPaye: (formate: string, _n: number) => `${formate} 努力ポイント`,
     enTete: "今週はあなたが首位です。",
-    ecartAuPremier: (n: number) => `1 位まであと ${n} ポイントです。`,
+    ecartAuPremier: (formate: string) => `1 位まであと ${formate} ポイントです。`,
     retardDepuis: (n: number) => `${n} 日滞納中`,
 
 
