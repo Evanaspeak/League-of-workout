@@ -1166,6 +1166,61 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un nom d'événement écrit vingt-deux fois, dont une dans un script en ligne
+Même recensement, appliqué aux CHAÎNES cette fois : les identifiants
+techniques présents dans deux fichiers ou plus. Quatre-vingts, dont la
+plupart sont des classes CSS — et une famille qui compte.
+
+`wow-dette-changee` prévient la pastille, le rail, les paliers, la série, le
+défi du jour et l'écran des amis qu'un paiement vient d'avoir lieu. Il est
+écrit **vingt-deux fois, en clair, dans quinze fichiers**.
+
+**Une faute de frappe y est parfaitement muette.** `new Event("wow-dette-change")`
+compile, part, et personne ne l'entend : la dette reste affichée telle quelle
+après un paiement. C'est le défaut que ce journal appelle le pire de tous —
+celui qui vient de faire ses pompes voit sa dette intacte et en conclut que
+l'application ne marche pas.
+
+**Et le plus fragile n'est pas celui-là.** `wow-invite-installation` est émis
+depuis un **script en ligne** de la mise en page, à l'intérieur d'une chaîne,
+et écouté par une constante nommée dans un composant. Rien ne regarde à
+l'intérieur d'un `dangerouslySetInnerHTML` : ni `tsc`, ni le garde des textes
+en dur, ni le compilateur du script lui-même — qui n'existe pas. Le sabotage
+le confirme, et c'est le seul des trois où la faute serait indétectable
+autrement.
+
+**Le discriminant est une FORME et non une liste**, ce qui est la leçon déjà
+tirée du garde des nombres bruts : un événement du DOM s'écrit en lettres
+collées — `visibilitychange`, `beforeinstallprompt` — et ceux du projet
+portent un séparateur. Une liste des événements standards aurait vieilli ; la
+limite de la forme est écrite plutôt que laissée à découvrir, un événement
+rebaptisé sans séparateur sortirait du champ.
+
+**Le premier faux positif portait sur la correction la plus récente du
+journal.** Le garde a déclaré `wow-session-morte` émis par `chargerContexte`
+et écouté par personne — or `SessionGuard` l'écoute, par une constante
+IMPORTÉE. Mon résolveur ne lisait que le fichier courant. Vérifié avant de
+conclure, plutôt qu'écrit comme une trouvaille.
+
+**Ce que ça a changé dans le garde vaut plus que la correction elle-même : un
+identifiant qu'on ne sait pas résoudre ne se SAUTE pas, il se DIT.** Sauté, il
+fait passer son événement pour orphelin — c'est-à-dire qu'il envoie corriger
+ce qui va bien, et c'est précisément ce qui venait d'arriver. Un troisième
+contrôle rend donc la liste des noms non résolus, et il est vide aujourd'hui.
+C'est la parade générale au faux positif d'un garde structurel : ne jamais
+confondre « rien à signaler » avec « je n'ai pas compris ».
+
+Sept sabotages, sept échecs : la faute de frappe sur un émetteur, sur un
+`removeEventListener` — qui ressort par l'autre sens, celui de l'abonnement
+jamais retiré —, dans le script en ligne, le saut d'import retiré, un nom
+passé par une variable, et les deux motifs rendus aveugles.
+
+**Et le sixième a d'abord passé au vert sans avoir rien saboté** : mon `sed`
+n'avait pas trouvé son motif, échappé de travers dans une chaîne
+`String.raw`. C'est le piège écrit ici depuis la lecture d'issue de Riot, et
+il se reprend à chaque fois qu'on ne vérifie pas que le fichier a bougé —
+`git diff --stat` avant de lancer les tests.
+
 ### Le canal de connexion local était écrit deux fois, et le port est un contrat
 Suite du recensement des règles écrites deux fois, cherchées par la FORME.
 Celui-ci part des CONSTANTES NOMMÉES : toute constante numérique de `src/lib`
