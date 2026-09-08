@@ -1303,6 +1303,26 @@ ont alors tourné sur un arbre amputé, et le second a « mordu » pour la
 mauvaise raison — c'est le premier qui traînait encore. **Quatrième
 occurrence**, et la parade coûte une seconde : indexer AVANT de saboter.
 
+**Et la suite navigateur a rendu 76 passés sur 261, avec la signature de
+l'échec le plus connu de ce fichier** — `waitForURL` qui expire sur la
+CONNEXION, que le journal attribue depuis août à la contention bcrypt. Ce
+n'était pas ça. La sonde l'a dit en une exécution : un fragment JavaScript
+répondait **500**, le navigateur refusait de l'exécuter, la page ne
+s'hydratait jamais, et le formulaire de connexion ne faisait rien. Le serveur
+tournait depuis avant un `rm -rf .next` : il servait un manifeste dont les
+fragments n'existaient plus.
+
+C'est la QUATRIÈME occurrence de « après un `next build`, on relance le
+serveur », et la première où elle se déguise en contention. Serveur relancé,
+le même fichier passe en treize secondes contre une minute d'échecs ; la suite
+entière rend **258 passés sur 261**, l'unique échec étant un aléa de
+contention à deux workers qui repasse 2 sur 2 seul.
+
+**Ce que ça ajoute au diagnostic** : « la connexion expire » a maintenant
+DEUX causes connues, et elles se distinguent en une seconde — la console de la
+page. Un fragment en 500 dit le serveur périmé ; une console propre dit la
+file d'attente.
+
 Et `pkill -f`, deux fois, dont une sous une forme nouvelle. La première est
 classique — `ps -eo args | grep "[n]ext build"` attrape le shell qui LANCE la
 commande, parce que le motif figure dans son propre argv. La seconde est plus
