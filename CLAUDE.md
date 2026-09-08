@@ -1623,6 +1623,16 @@ les deux étalent un résultat qui porte DÉJÀ un `select`, donc une projection
 quelqu'un a décidé de ce qui sort. C'est exactement le discriminant du garde, et
 il fallait le vérifier plutôt que de compter les `...`.
 
+**Et l'angle mort du garde a été mesuré plutôt que supposé.** Il ne lit que
+`src/app/api` : une lecture faite un module plus loin lui serait invisible,
+c'est le piège déjà écrit ici pour le recensement des écritures bornées. Les
+huit modules de `src/lib` qui lisent des lignes ont donc été ouverts. Sept
+portent un `select` ou un `omit` ; le huitième — `push.ts` — lit des
+abonnements dont il a besoin ENTIERS pour envoyer, et ne rend qu'un compte.
+Aucune fonction de module ne rend une ligne qu'une route publie : vérifié sur
+les vingt appels de la forme `const x = await module()` d'une route, qui
+rendent tous des nombres, des booléens ou des données Riot.
+
 **Le garde regarde le DOSSIER et couvre tous les modèles**, là où celui de V520
 ne lisait que `prisma.user`. Il attrape deux formes, et la seconde est celle qui
 a mordu : la publication directe se voit en relisant la route, l'ÉTALEMENT non —
