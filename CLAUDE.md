@@ -251,6 +251,13 @@ publiait une fois par mois. Les copies déjà installées, elles, se mettent à
 jour toutes seules par `latest.yml` — le retard ne concerne que qui installe
 pour la première fois.
 
+**Et les deux requêtes doivent être SÉPARÉES, mesuré le 8 septembre.** Lancées
+dans la même boucle, à moins d'une seconde d'écart, elles rendent toutes deux
+l'ancienne version : la première déclenche bien la reconstruction, la seconde
+arrive avant qu'elle ait fini. C'est une troisième requête, un instant plus
+tard, qui a vu la 0.9.17 — cinq minutes et demie après la release. Le geste
+est donc « une requête, on attend, on vérifie », pas « deux d'affilée ».
+
 **Ce que la page doit toujours prévoir** : quelqu'un qui n'a pas mis à jour.
 Une méthode absente du pont ne se voit qu'à l'exécution, sur SA machine — ni
 TypeScript ni les parcours navigateur ne peuvent le dire, puisque les tests
