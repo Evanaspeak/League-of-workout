@@ -7,6 +7,7 @@ import {
 import { ROLE_DEFAUT } from "@/components/PartieDetectee";
 import type { ContextePartie, ScoreDirect } from "@/types/electron";
 import { lire } from "@/lib/stockage";
+import { JEUX_QUI_SE_RACONTENT } from "@/lib/jeux";
 import { seuilFranchi } from "@/lib/compteurDette";
 import { useDateLocale } from "@/lib/i18n/LocaleContext";
 
@@ -28,16 +29,6 @@ import { useDateLocale } from "@/lib/i18n/LocaleContext";
 /** Délai avant recalcul, pour ne pas relancer l'aperçu à chaque mort. */
 const DELAI_CALCUL_MS = 1500;
 
-/**
- * Jeux qui exposent une partie en cours à qui sait la lire.
- *
- * La même liste vit côté application desktop, qui s'en sert pour masquer les
- * lignes qu'elle ne pourra pas remplir. Ici elle décide de ce qu'on publie :
- * pour un jeu qui ne se raconte pas, il n'y a pas de projection à faire, mais
- * il reste l'effort déjà dû — et c'est justement le chiffre qu'on veut avoir
- * sous les yeux en jouant.
- */
-const JEUX_AVEC_RELEVE = new Set(["League of Legends", "Teamfight Tactics"]);
 
 type Projection = {
   /** Ce qu'il y aura à faire si la partie est gagnée. */
@@ -248,7 +239,7 @@ export function DetteDirecte() {
     if (!pont?.onJeuDetecte || !pont.publierDette) return;
 
     return pont.onJeuDetecte(async ({ type, jeu }) => {
-      if (JEUX_AVEC_RELEVE.has(jeu)) return;
+      if (JEUX_QUI_SE_RACONTENT.has(jeu)) return;
       if (type === "jeu-arrete") { publier(null); return; }
       await chargerAttente();
       publier({ victoire: "", defaite: "", enAttente: enAttenteRef.current });

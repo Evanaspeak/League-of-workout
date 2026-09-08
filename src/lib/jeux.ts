@@ -37,6 +37,19 @@ export type JeuDef = {
    * et ce qu'on a produit la rachète.
    */
   rl?: boolean;
+  /**
+   * Le jeu RACONTE sa partie en cours à qui sait l'écouter.
+   *
+   * L'API locale de Riot (port 2999) publie le score, l'horloge et la fin de
+   * partie ; League of Legends et Teamfight Tactics tournent dans le même
+   * client, donc les deux en profitent. Pour eux, la lecture d'écran n'a aucun
+   * intérêt — l'API dit tout, et plus vite — et la pastille peut annoncer ce
+   * qu'une victoire ou une défaite coûtera.
+   *
+   * Pour les autres, il n'y a pas de projection à faire : il reste l'effort
+   * déjà dû, et c'est justement le chiffre qu'on veut sous les yeux en jouant.
+   */
+  releveDirect?: boolean;
   /** Nombre de joueurs dans une partie, tous modes confondus. */
   joueurs?: number;
   /**
@@ -47,7 +60,7 @@ export type JeuDef = {
 };
 
 export const JEUX: JeuDef[] = [
-  { nom: "League of Legends", type: "parties", riot: true, roles: true, champions: true, kda: true },
+  { nom: "League of Legends", type: "parties", riot: true, roles: true, champions: true, kda: true, releveDirect: true },
   { nom: "Valorant", type: "parties", kda: true },
   { nom: "Counter-Strike 2", type: "parties", kda: true },
   { nom: "Fortnite", type: "parties", br: true, joueurs: 100, modes: [1, 2, 3, 4] },
@@ -84,7 +97,7 @@ export const JEUX: JeuDef[] = [
   { nom: "Rocket League", type: "parties", rl: true },
   // TFT se joue à huit et se termine par une place de 1 à 8 : c'est un
   // battle royale, avec une seule équipe par joueur.
-  { nom: "Teamfight Tactics", type: "parties", br: true, joueurs: 8, modes: [1] },
+  { nom: "Teamfight Tactics", type: "parties", br: true, joueurs: 8, modes: [1], releveDirect: true },
   { nom: "Minecraft", type: "temps" },
   { nom: "World of Warcraft", type: "temps" },
   { nom: "Grand Theft Auto V", type: "temps" },
@@ -167,6 +180,24 @@ export function capacitesDuJeu(nom: string | null | undefined, typeFourni?: unkn
 }
 
 export const JEU_DEFAUT = "League of Legends";
+
+/**
+ * Les jeux qui racontent leur partie en cours, DÉDUITS du catalogue.
+ *
+ * Elle était écrite TROIS fois à la main — la pastille du site, `main.js` et
+ * `overlay.js` — sous DEUX noms différents pour le même ensemble. Les trois
+ * coïncidaient, ce qui est le cas normal jusqu'au jour où l'une bouge : le
+ * site publierait alors une projection que la pastille ne montre pas, ou la
+ * pastille réserverait des lignes que personne ne remplit. Silencieux, et
+ * visible sur la machine de quelqu'un d'autre seulement.
+ *
+ * La coquille Electron se construit sans le paquet du site : elle garde sa
+ * copie, et `src/jeuxQuiSeRacontent.test.ts` les compare — c'est la règle déjà
+ * posée pour la table des processus surveillés.
+ */
+export const JEUX_QUI_SE_RACONTENT: ReadonlySet<string> = new Set(
+  JEUX.filter((j) => j.releveDirect).map((j) => j.nom),
+);
 
 export function isTypeJeu(v: unknown): v is TypeJeu {
   return v === "parties" || v === "temps";

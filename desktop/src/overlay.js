@@ -18,19 +18,7 @@
 const { BrowserWindow, screen, globalShortcut } = require("electron");
 const path = require("path");
 const { textes } = require("./textes");
-
-/**
- * Jeux qui exposent une partie en cours à qui sait la lire.
- *
- * League ouvre une API locale pendant la partie : horloge, KDA, champion. Rien
- * de tel chez Apex, Fortnite ou PUBG — et il ne s'agit pas d'un oubli, c'est
- * qu'aucune de ces éditions n'expose quoi que ce soit à un programme tiers.
- *
- * La distinction compte pour l'affichage : une ligne qui ne peut JAMAIS se
- * remplir doit disparaître, pas afficher un tiret. Un tiret se lit comme
- * « en attente », et on attend alors quelque chose qui ne viendra pas.
- */
-const JEUX_AVEC_RELEVE = new Set(["League of Legends", "Teamfight Tactics"]);
+const { JEUX_QUI_SE_RACONTENT } = require("./jeuxReleve");
 
 /** Marge depuis le bord de l'écran, en pixels. */
 const MARGE = 24;
@@ -383,7 +371,7 @@ function definirEnPartie(valeur, jeu = null) {
      * chargement ». La question EST cet écran.
      */
     partieEnCoursSec = 0;
-    const releve = JEUX_AVEC_RELEVE.has(jeu);
+    const releve = JEUX_QUI_SE_RACONTENT.has(jeu);
     // Sans relevé, personne ne viendra dire combien de temps s'est écoulé :
     // c'est l'horloge du poste qui compte, depuis maintenant.
     debutSansReleve = releve ? null : Date.now();
