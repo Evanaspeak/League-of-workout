@@ -1313,6 +1313,152 @@ chacune, **0 constat, aucune page laissée de côté**. C'est le second chiffre
 qui compte, et c'est celui que la première passe élargie ne pouvait pas
 donner — elle rangeait les cinq rubriques du côté des pages non mesurées.
 
+### Les abonnements posés dans un effet, recensés — et le garde qui n'a pas de dispense
+Suite du recensement des noms d'événements. Celui-ci tenait les NOMS : tout
+événement du projet a son émetteur et son auditeur. Il ne dit rien du CYCLE DE
+VIE, et c'est l'autre moitié du sujet — un `addEventListener` posé dans un
+`useEffect` sans son retrait survit au démontage, et le composant suivant en
+pose un deuxième.
+
+**Le résultat est NÉGATIF, et c'est écrit ici pour qu'on ne le refasse pas.**
+Trois cent quatre-vingt-douze fichiers, tous les abonnements de `src/` et de
+`desktop/src/` : **deux seulement** n'ont pas de retrait, et les deux sont
+justes.
+
+| abonnement | pourquoi il n'en a pas besoin |
+|---|---|
+| `beforeinstallprompt`, script en ligne de la mise en page | l'événement n'est émis qu'UNE fois et avant le paquet JavaScript — c'est toute la raison pour laquelle il vit là |
+| `focusin`, `usePiegeFocus` | posé au chargement du MODULE, pas au montage ; il suit le focus en continu, et c'est la correction écrite dans son commentaire |
+
+**Le discriminant est donc « dans un effet », et il ne se devine pas.** Un
+abonnement PERMANENT n'a pas à se retirer ; un abonnement posé au montage, si.
+La règle bornée à l'intérieur d'un `useEffect` sépare exactement les deux, et
+c'est pourquoi `src/abonnementsRetires.test.ts` **ne porte aucune dispense** —
+les deux cas légitimes tombent hors de son champ par construction, pas par
+exemption. C'est la mesure qui avait fait renoncer au garde des clés de
+stockage, appliquée dans l'autre sens : là il y avait trois faux positifs le
+jour de l'écriture, ici il y en a zéro.
+
+**Et la seconde règle est celle qu'on ne voit pas en relisant l'effet.** Un
+retrait ABSENT se remarque ; un retrait qui ne retire RIEN, non :
+
+```ts
+document.addEventListener("mousedown", (e) => handler(e));
+return () => document.removeEventListener("mousedown", (e) => handler(e));
+```
+
+Les deux lignes sont là, les noms s'accordent, et le retrait reçoit une AUTRE
+fonction — donc il ne retire rien. Le rappel doit être une constante NOMMÉE
+des deux côtés, et les deux seuls rappels écrits en ligne du dépôt sont
+précisément les deux abonnements permanents.
+
+**Le témoin du DÉCOUPAGE est distinct de celui du recensement**, et il fallait
+les deux : un découpage qui rendrait le fichier ENTIER laisserait les deux
+contrôles verts — un retrait posé dans un autre effet passerait pour celui
+qu'on cherche, et les deux abonnements permanents entreraient dans le champ.
+Le sabotage le montre : il fait tomber trois contrôles sur quatre.
+
+Cinq sabotages, cinq échecs : le retrait supprimé, le rappel écrit en ligne
+des deux côtés, le découpage élargi au fichier, le motif d'ajout rendu
+aveugle, et la recherche d'effets vidée.
+
+**Et `noUnusedLocals` a mordu sur mon propre garde** : je gardais le résultat
+d'`exec` sans jamais le lire — seule la position m'intéresse. C'est ce que ce
+journal reproche partout ailleurs, une ligne qui ne sert à rien et se relit
+comme une garantie, et le compilateur l'a dit avant moi.
+
+**Un troisième, sur les ERREURS DE CONSOLE.** Vingt pages ouvertes avec une
+session, en français : **quarante erreurs, et les quarante sont les deux
+mêmes** — le script de mesure d'audience de Vercel, qui n'existe pas en local
+et rend donc un 404 en `text/plain` que le navigateur refuse d'exécuter. Zéro
+erreur du PRODUIT.
+
+**Et c'est le témoin d'une correction ancienne**, vérifié plutôt que supposé :
+`/_vercel/insights/script.js` rend **200 en `application/javascript`** en
+production. Le défaut de matcher corrigé il y a deux semaines tient toujours,
+et le bruit local ne le concerne pas.
+
+L'outil ne s'écrit pas non plus, et pour une raison précise : le balayage des
+coutures ouvre déjà ces vingt pages, mais ses écoutes sont bornées à `/api/` —
+c'est ce qui l'empêche de ranger les vingt pages du côté NON MESURÉ sur ce
+bruit-là. Y ajouter les erreurs de console demanderait un filtre par adresse,
+c'est-à-dire une liste qui vieillit, pour un état sain déjà à zéro.
+
+**Un second recensement dans la même passe, négatif lui aussi.** Les vingt
+routes de `src/app/api` qui CRÉENT des lignes, et ce qui borne chacune : un
+plafond par compte, un limiteur par adresse, une contrainte d'unicité qui
+n'autorise qu'une ligne, ou la porte de l'administration. **Aucune n'est
+libre.**
+
+**Et il s'est trompé quatre fois avant de rendre ce résultat**, pour la raison
+déjà écrite deux fois cette nuit : il lisait le FICHIER de la route.
+`groupes/[id]/dette` paraissait sans borne — la sienne vit dans
+`decisionRelais` (`src/lib/detteGroupe.ts`), qui exige un entier positif et le
+ramène à `Math.min(points, du)`. C'est le même angle mort que le recensement
+des clés par littéral : **une borne posée un module plus loin est invisible à
+un motif qui ne lit qu'un fichier.**
+
+Le garde ne s'écrit donc pas, et pas seulement parce que le résultat est
+négatif : la question « cette écriture est-elle bornée » ne se répond pas par
+un motif — un plafond peut être un compte, un index unique, une clé étrangère
+ou une décision empruntée à un autre module. Un garde de cette forme rendrait
+des faux positifs sur les quatre routes ci-dessus le jour de son écriture.
+
+**Dépendances du 8 septembre** : `npm audit` rend les deux mêmes vulnérabilités
+`mysql2`, inatteignables et gardées par `src/dependanceMysql.test.ts` ; **zéro
+côté application de bureau**. Rien à prendre — tout ce qui est en retard l'est
+d'une MAJEURE (`typescript` 7, `eslint` 10, `@types/node` 26, `electron` 44),
+d'un `0.x` dont la mineure est le créneau des ruptures (`@libsql/client` 0.18)
+ou d'une version candidate (`prisma` 8). Donc **aucune version d'application de
+bureau à publier**.
+
+### Campagne de performance après V505 à V510, et la mesure qu'on ne fait pas
+Passée sur un compte semé à soixante parties, créé APRÈS la dernière suite
+navigateur — l'ordre est écrit ici depuis longtemps et il n'admet aucune
+exception.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 200 ms | 932 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 336 ms | **2172 ms** | 0,000 | l'image de saison |
+| `/amis` | 344 ms | 1136 ms | 0,014 | le paragraphe du classement |
+| `/dashboard` | 388 ms | 1172 ms | 0,000 | le bandeau d'attente Riot |
+| `/history` | 564 ms | 1116 ms | 0,000 | le titre |
+
+Les cinq sont dans les seuils. `/bilan` reste le plancher pour la raison
+écrite sept fois — son plus grand élément est l'image de saison — et **le
+chiffre se compare à son échelle** : 2 172 ms ici contre 2 024, 2 096, 2 120,
+2 128, 2 216 et 2 332 sur des comptes semés comparables. Il est au milieu de
+la bande.
+
+**Le poids au chargement n'a pas bougé d'un kilo-octet en six versions** :
+228 ko sur le tableau de bord contre 228, 200 sur l'historique contre 200,
+256 sur les réglages contre 257, 185 sur le bilan contre 186, 206 sur l'écran
+des amis contre 207. C'est ce qu'on attendait de six versions qui n'ajoutent
+que des gardes et des tests, et le dire suppose de l'avoir mesuré.
+
+**La comparaison de rendu n'a PAS été passée, et c'est une décision.** Cinq
+fichiers de la couche d'affichage ont changé entre V504 et la tête, et aucun
+ne peut peindre autrement :
+
+| fichier | ce qui a changé |
+|---|---|
+| `AmisClient` | un `<caption class="lecture-ecran">`, que le style met en `position: absolute` — donc hors du flux |
+| `ReglagesAvances`, `AdminUserList` | trois `aria-label`, c'est-à-dire des attributs |
+| `ConnexionAppClient`, `DesktopModeDetector` | des COMMENTAIRES, rien d'autre |
+
+Une comparaison de pixels y est un résultat écrit d'avance, et dix minutes de
+construction pour confirmer ce qu'une ligne de CSS établit. C'est la même
+discipline que celle qui a fait sauter la comparaison après V495 — on ne fait
+pas une mesure dont le résultat est déterminé, et on écrit pourquoi plutôt que
+de laisser croire à un oubli.
+
+**Et l'accessibilité non plus, pour une raison plus courte encore** : V510 ne
+touche AUCUN fichier de `src/` hors tests, et les trois corrections
+d'accessibilité de V509 — la légende du classement, les trois tableaux
+d'administration nommés — ont été mesurées le soir même, vingt et une pages
+dans six langues, zéro constat, aucune page laissée de côté.
+
 ### Le balayage ne visitait par défaut que la moitié du produit
 Trouvé en comparant deux outils de mesure plutôt qu'en lisant l'un d'eux.
 `accessibilite.mjs` couvre onze pages PUBLIQUES et quatre écrans connectés ;
