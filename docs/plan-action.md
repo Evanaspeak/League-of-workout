@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**111 construits · 46 restants**
+**112 construits · 46 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -300,7 +300,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 182 | Les jeux au temps : payer son temps de jeu | — |
 
 ### Mobile
-*2 à faire · 4 faits.* 
+*1 à faire · 5 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -309,7 +309,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 207 | Vibration à chaque répétition, en option | — |
 | [x] | 210 | Sur téléphone, ouvrir sur l'ajout de partie | — |
 | [ ] | 204 | Une application native, un jour | hors périmètre |
-| [ ] | 205 | Un mode séance plein écran — **débloqué le 8 septembre** : « fais-le », ce qui renverse le « plus tard » de la réponse 205 | 1 nuit |
+| [x] | 205 | Un mode séance plein écran — **débloqué le 8 septembre** : « fais-le », ce qui renverse le « plus tard » de la réponse 205. Deux temps : on se prépare, puis on commence — le chrono démarrait à l'ouverture et quinze secondes de lecture payaient quinze secondes de dette | — |
 
 ### L'argent
 *8 à faire · 0 faits.* Rien n'est construit, et une décision t'appartient avant tout le reste.
@@ -381,7 +381,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [ ] | 171 | Une version macOS, plus tard | — |
 
 ### Technique
-*1 à faire · 7 faits.* Le découpage des styles est fait : neuf fichiers
+*2 à faire · 7 faits.* Le découpage des styles est fait : neuf fichiers
 sous `src/app/styles/`, vérifiés à vingt-quatre captures d'écran. La
 régénération des pages l'est aussi, et elle a rendu plus que prévu : il n'y
 avait AUCUNE page prérendue — la 404 de la racine lisait `headers()`, ce qui
@@ -397,6 +397,7 @@ rend dynamique toute route de l'application. 0 avant, 150 après.
 | [x] | 299 | Découper le fichier des styles | — |
 | [x] | 302 | Affiner la régénération des pages | — |
 | [ ] | 300 | Uniformiser styles en ligne et classes utilitaires | 2 nuits |
+| [ ] | q1 | L'historique grandit pour toujours — **décidé le 8 septembre** : garder les 50 dernières parties à l'écran, archiver le reste, et que l'archive reste accessible | 1 nuit |
 
 ## Ce qui est dû au propriétaire du produit
 

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { PartageSeance } from "@/components/PartageSeance";
 import { aChronometrer, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
 import { conversionsProposees, surLePas } from "@/lib/conversionDette";
+import { exerciceCompte, veilleADemander, type TempsSeance } from "@/lib/seance";
+import { poserVeille, retirerVeille } from "@/lib/verrouVeille";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -46,6 +48,16 @@ export function CompteurDette() {
 
 
   const [chronoOuvert, setChronoOuvert] = useState(false);
+  /**
+   * Les deux temps d'une séance (ligne 205).
+   *
+   * La fenêtre s'ouvre sur la PRÉPARATION, et rien ne compte tant qu'on n'a
+   * pas commencé. C'est la correction d'un défaut mesuré : le chrono démarrait
+   * à l'ouverture, sur le même écran que les consignes d'exécution, et quinze
+   * secondes de lecture ramenaient une dette de 1 min 15 à une minute — un
+   * cinquième payé pour avoir lu.
+   */
+  const [temps, setTemps] = useState<TempsSeance>("preparation");
   const chronoRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -229,6 +241,7 @@ export function CompteurDette() {
     setRestantSec(total);
     setEnPause(false);
     setFini(false);
+    setTemps("preparation");
     setChronoOuvert(true);
     // Le clic est le geste utilisateur qu'exigent les navigateurs pour demander
     // l'autorisation de notifier.
@@ -239,7 +252,10 @@ export function CompteurDette() {
 
   // Décompte : il s'arrête seul à zéro, l'effort est alors entièrement payé.
   useEffect(() => {
-    if (!chronoOuvert || !aDuTemps || enPause || fini) { arreterTick(); return; }
+    // `temps === "encours"` : rien ne compte pendant la préparation. C'est la
+    // correction du défaut mesuré — quinze secondes de lecture payaient quinze
+    // secondes de dette.
+    if (!chronoOuvert || temps !== "encours" || !aDuTemps || enPause || fini) { arreterTick(); return; }
     tickRef.current = setInterval(() => {
       setRestantSec((r) => {
         if (r <= 1) { setFini(true); return 0; }
@@ -247,7 +263,31 @@ export function CompteurDette() {
       });
     }, 1000);
     return arreterTick;
-  }, [chronoOuvert, aDuTemps, enPause, fini]);
+  }, [chronoOuvert, temps, aDuTemps, enPause, fini]);
+
+  /**
+   * L'écran reste allumé PENDANT la séance, et seulement là.
+   *
+   * Un téléphone s'éteint au bout de trente secondes : une planche de cinq
+   * minutes se fait devant un écran noir qu'il faut déverrouiller les mains
+   * moites. Garder l'écran allumé sur une page qu'on ne regarde pas serait de
+   * la pile vidée pour rien, d'où la condition.
+   *
+   * Un refus ne se dit à personne : c'est un confort, pas une fonctionnalité,
+   * et la séance ne change pas d'un pixel sans lui — le chrono compte du temps
+   * réel, pas des tics d'animation.
+   */
+  useEffect(() => {
+    if (!veilleADemander(temps, chronoOuvert)) return;
+    let vivant = true;
+    let pose: Awaited<ReturnType<typeof poserVeille>> = null;
+    poserVeille().then((s) => {
+      // Le retrait a pu passer avant que la demande n'aboutisse : sans ce
+      // garde, on laisserait un verrou posé derrière une séance terminée.
+      if (vivant) pose = s; else retirerVeille(s);
+    });
+    return () => { vivant = false; retirerVeille(pose); };
+  }, [temps, chronoOuvert]);
 
   /** Acquitte la part réellement faite, puis referme. */
   /**
@@ -327,6 +367,7 @@ export function CompteurDette() {
       enfiler({ ...charge, jour: jourLocal() });
     }
     setChronoOuvert(false);
+    setTemps("preparation");
     setFini(false);
     setConversion(null);
     setFaits(0);
@@ -339,6 +380,15 @@ export function CompteurDette() {
                    : { secondes: Math.max(0, totalRef.current - restantSec) });
 
   const lignes = lignesDette;
+
+  /**
+   * L'exercice sur lequel la séance COMPTE (ligne 205).
+   *
+   * Le compteur de répétitions n'existait que pour les conversions : quelqu'un
+   * qui doit trente-huit pompes n'avait que « c'est fait » ou « plus tard »,
+   * c'est-à-dire tout ou rien. La décision vit dans `seance.ts`, avec sa raison.
+   */
+  const cible = exerciceCompte(dette?.exercices ?? [], conversion);
 
 
   // Rien en attente, ou page publique : la pastille ne s'affiche pas.
@@ -472,9 +522,30 @@ export function CompteurDette() {
       >
         <div className="lol-panel p-6 w-full max-w-sm mx-4 space-y-5 text-center">
           <h2 className="titre-section" style={{ justifyContent: "center" }}>
-            {fini ? t.detteChronoFini : t.detteChronoTitre}
+            {fini ? t.detteChronoFini
+                  : temps === "preparation" ? t.seancePrete : t.detteChronoTitre}
           </h2>
 
+          {/*
+            Ce qu'on s'apprête à faire, et non ce qu'on doit.
+
+            Choisir « squats » sous une dette en pompes laissait « 40 pompes »
+            en gros au milieu de la préparation, et ne disait NULLE PART combien
+            de squats — on commençait donc à l'aveugle, alors que c'est
+            exactement le chiffre sur lequel on décide de convertir. Le parcours
+            de conversion l'a dit avant qu'on s'en aperçoive.
+          */}
+          {temps === "preparation" && cible && conversion && (
+            <div>
+              <div className="mono-num text-xl font-bold gold-text">
+                {formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion, etiquette)}
+              </div>
+              <div className="text-xs" style={{ color: "var(--faint)" }}>
+                {minuscule(nomsExo[conversion])}
+              </div>
+            </div>
+          )}
+          {temps === "preparation" && !conversion && (
           <div className="flex flex-wrap justify-center gap-4">
             {lignes.map((ligne) => (
               <div key={ligne.id}>
@@ -487,10 +558,11 @@ export function CompteurDette() {
               </div>
             ))}
           </div>
+          )}
 
           {/* Consignes d'exécution, au moment exact où quelqu'un s'apprête à
               faire le mouvement — pas dans une page d'aide qu'on ne lit pas. */}
-          {lignes.length > 0 && (
+          {temps === "preparation" && lignes.length > 0 && (
             <div style={{
               textAlign: "left",
               padding: "10px 12px",
@@ -504,12 +576,19 @@ export function CompteurDette() {
               }}>
                 {t.formeTitre}
               </div>
-              {lignes.map((ligne) => (
-                <p key={ligne.id} style={{
+              {/*
+                La consigne suit ce qu'on va FAIRE, pas ce qu'on doit.
+                Convertir dix minutes de boxe en pompes et lire « garde haute,
+                coudes rentrés » n'aide personne — et c'est au moment de la
+                conversion qu'on a le plus besoin de savoir comment exécuter le
+                mouvement qu'on vient de choisir.
+              */}
+              {(cible ? [cible] : lignes.map((l) => l.id)).map((id) => (
+                <p key={id} style={{
                   fontSize: "0.76rem", lineHeight: 1.55,
                   color: "var(--muted)", margin: 0,
                 }}>
-                  {t.forme[ligne.id]}
+                  {t.forme[id]}
                 </p>
               ))}
               {/* Un simple rappel, quand la séance est assez longue pour que
@@ -538,12 +617,18 @@ export function CompteurDette() {
             </div>
           )}
 
-          {aDuTemps && (
+          {aDuTemps && !cible && temps === "encours" && (
             <div>
               <div
                 className="mono-num font-bold"
                 style={{
-                  fontSize: "clamp(3rem, 18vw, 4.5rem)", lineHeight: 1,
+                  /*
+                    Le chiffre a l'écran pour lui, et il est fait pour se lire
+                    à bout de bras : soixante-treize mots l'entouraient pendant
+                    la séance, ils ont été lus à la préparation et n'ont plus
+                    rien à dire.
+                  */
+                  fontSize: "clamp(4rem, 26vw, 7rem)", lineHeight: 1,
                   color: fini ? "var(--victory)" : "#ECEFF4",
                   fontVariantNumeric: "tabular-nums",
                 }}
@@ -578,7 +663,7 @@ export function CompteurDette() {
             pendant la série, et on corrige à la main quand on a compté dans sa
             tête.
           */}
-          {!conversion && conversionsProposees(dette?.exercices ?? []).length > 0 && (
+          {temps === "preparation" && !conversion && conversionsProposees(dette?.exercices ?? []).length > 0 && (
             <div>
               <div className="text-xs mb-2" style={{ color: "var(--faint)" }}>
                 {t.detteConvertirEn}
@@ -601,13 +686,31 @@ export function CompteurDette() {
             </div>
           )}
 
-          {conversion && (
+          {cible && temps === "encours" && (
             <div>
               <div className="text-xs mb-1" style={{ color: "var(--faint)" }}>
-                {t.detteConvertiObjectif(
-                  formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion, etiquette),
-                  nomsExo[conversion],
-                )}
+                {/*
+                  Ce qu'il reste à faire, dans l'unité de ce qu'on fait. La
+                  quantité vient du serveur pour une CONVERSION — c'est lui qui
+                  détient les ratios — et de la dette elle-même quand on compte
+                  ce qu'on doit déjà.
+                */}
+                {conversion
+                  ? t.detteConvertiObjectif(
+                      formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion, etiquette),
+                      nomsExo[conversion],
+                    )
+                  : t.seanceCompteur(
+                      /*
+                        La quantité vient de la LIGNE de dette, déjà mise en
+                        forme plus haut : la recalculer ici serait une seconde
+                        arithmétique à côté de celle qui produit le
+                        récapitulatif, et les deux divergeraient au premier
+                        arrondi — sur le même écran, à deux blocs d'écart.
+                      */
+                      lignes.find((l) => l.id === cible)?.valeur ?? "0",
+                      minuscule(nomsExo[cible]),
+                    )}
               </div>
               <div className="flex items-center justify-center gap-3 my-2">
                 <button
@@ -617,7 +720,7 @@ export function CompteurDette() {
                     background: "rgba(152,162,176,0.1)", color: "var(--muted)",
                     border: "1px solid rgba(152,162,176,0.2)", minWidth: 52,
                   }}
-                  onClick={() => setFaits((n) => Math.max(0, surLePas(n - EXERCICES[conversion].pas, conversion)))}
+                  onClick={() => setFaits((n) => Math.max(0, surLePas(n - EXERCICES[cible].pas, cible)))}
                 >
                   −
                 </button>
@@ -631,7 +734,7 @@ export function CompteurDette() {
                   type="number"
                   inputMode="decimal"
                   min={0}
-                  step={EXERCICES[conversion].pas}
+                  step={EXERCICES[cible].pas}
                   value={faits}
                   aria-label={t.detteFaitsLabel}
                   onChange={(ev) => {
@@ -663,7 +766,7 @@ export function CompteurDette() {
                       impulsion effacerait la distinction.
                     */
                     vibrerRepetition(typeof navigator === "undefined" ? undefined : navigator);
-                    setFaits((n) => surLePas(n + EXERCICES[conversion].pas, conversion));
+                    setFaits((n) => surLePas(n + EXERCICES[cible].pas, cible));
                   }}
                 >
                   +
@@ -673,15 +776,49 @@ export function CompteurDette() {
           )}
 
           {/*
-            Deux formes, et la différence n'est pas cosmétique. Avec un chrono,
-            le bouton principal n'acquitte que ce qui a RÉELLEMENT été fait —
-            d'où `cloturer(fini)`, qui paie tout à zéro et le prorata sinon.
-            Sans chrono, il n'y a rien à mesurer : on a fait ses pompes ou on
-            ne les a pas faites, donc `cloturer(true)` et un second bouton pour
-            remettre à plus tard sans rien acquitter.
+            Quatre états, et aucun n'est cosmétique.
+
+            La PRÉPARATION ne paie rien : on n'a rien fait, il n'y a rien à
+            acquitter.
+
+            Le COMPTEUR acquitte ce qu'on a COMPTÉ, pas la dette entière —
+            c'est tout son objet, et c'est ce qui distingue « j'ai fait la
+            moitié » de « j'ai tout fait ».
+
+            Le CHRONO n'acquitte que ce qui s'est réellement écoulé, d'où
+            `cloturer(fini)` : tout à zéro, le prorata sinon.
+
+            Reste le tout ou rien, et il ne concerne plus qu'une dette répartie
+            sur PLUSIEURS exercices sans chrono — la seule qui n'ait pas de
+            cible évidente à compter, parce que compter sur l'un des deux
+            paierait l'autre sans qu'on l'ait fait. La regrouper est justement
+            ce que la conversion permet, à la préparation.
           */}
           <div className="flex gap-2">
-            {conversion ? (
+            {temps === "preparation" ? (
+              /*
+                On se prépare, puis on commence. Rien ne compte avant ce bouton.
+                C'est la correction du défaut mesuré : le chrono démarrait à
+                l'ouverture de la fenêtre, sur le même écran que les consignes,
+                et quinze secondes de lecture ramenaient une dette de 1 min 15
+                à une minute — un cinquième payé pour avoir lu.
+
+                « Plus tard » referme sans rien acquitter, ce qui est vrai
+                puisque rien n'a été fait.
+              */
+              <>
+                <button
+                  className="py-2 px-4 rounded text-sm flex-1"
+                  style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                  onClick={() => { setChronoOuvert(false); setConversion(null); setFaits(0); }}
+                >
+                  {t.detteChronoAbandon}
+                </button>
+                <button className="lol-btn flex-1" onClick={() => setTemps("encours")}>
+                  {t.seanceCommencer}
+                </button>
+              </>
+            ) : cible ? (
               /*
                 En conversion, le bouton principal paie ce qu'on a COMPTÉ, pas
                 la dette entière : c'est tout l'objet du compteur. Zéro fait
@@ -690,20 +827,55 @@ export function CompteurDette() {
                 pour rien : on referme la conversion et on ne touche à rien.
               */
               <>
+                {/*
+                  Deux gestes différents sous le même bouton, et le libellé
+                  doit dire lequel. En CONVERSION, on revient à la préparation :
+                  on s'est trompé d'exercice, on en choisit un autre. Sur ce
+                  qu'on DOIT, il n'y a rien à dépicker — le bouton referme,
+                  comme partout ailleurs, et ne réclame rien pour ce qu'on a
+                  compté.
+                */}
                 <button
                   className="py-2 px-4 rounded text-sm flex-1"
                   style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
-                  onClick={() => { setConversion(null); setFaits(0); }}
+                  onClick={() => {
+                    setTemps("preparation");
+                    setConversion(null);
+                    setFaits(0);
+                    if (!conversion) setChronoOuvert(false);
+                  }}
                 >
-                  {t.detteConvertiAnnuler}
+                  {conversion ? t.detteConvertiAnnuler : t.detteChronoAbandon}
                 </button>
+                {/*
+                  Le compteur ne doit pas coûter une tape par pompe à qui les
+                  a toutes faites.
+
+                  Vingt-cinq pompes dues, c'est vingt-cinq tapes pour dire ce
+                  qu'un bouton disait avant en une seule — le parcours
+                  `dette-pompes` l'a dit avant moi, et il avait raison. Le
+                  compteur existe pour le paiement PARTIEL, pas pour rendre le
+                  cas courant pénible.
+
+                  D'où un libellé qui suit l'état, sans ambiguïté possible : à
+                  zéro compté on n'a rien à déclarer de partiel, donc le bouton
+                  dit « j'ai tout fait » ; dès qu'on a compté, il paie ce qu'on
+                  a compté.
+
+                  Sauf en CONVERSION, et la différence est réelle : on a choisi
+                  un exercice et on n'a rien fait — c'est un renoncement, pas
+                  une séance complète, et payer la dette entière là-dessus
+                  serait le pire résultat possible.
+                */}
                 <button
                   className="lol-btn flex-1"
-                  onClick={() => (faits > 0
-                    ? payer({ quantite: faits, exercice: conversion })
-                    : (setConversion(null), setFaits(0)))}
+                  onClick={() => {
+                    if (faits > 0) return payer({ quantite: faits, exercice: cible });
+                    if (!conversion) return payer({ tout: true });
+                    setTemps("preparation"); setConversion(null); setFaits(0);
+                  }}
                 >
-                  {t.detteChronoTermine}
+                  {faits > 0 || conversion ? t.detteChronoTermine : t.seanceToutFait}
                 </button>
               </>
             ) : aDuTemps ? (

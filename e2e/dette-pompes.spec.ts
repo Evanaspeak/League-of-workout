@@ -86,7 +86,24 @@ test("une défaite payée en pompes se solde d'une tape, et s'enregistre", async
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("dialog")).not.toContainText(/restant|remaining/i);
 
-  await page.getByRole("button", { name: /j'ai fini|i'm done/i }).first().click();
+  /**
+   * La séance commence sur un GESTE, depuis la ligne 205 : la fenêtre s'ouvre
+   * sur la préparation — les consignes, la prudence, ce vers quoi on peut
+   * convertir — et rien ne compte avant ce bouton. Le chrono démarrait à
+   * l'ouverture, et quinze secondes de lecture payaient quinze secondes.
+   */
+  await page.getByRole("button", { name: /^commencer$|^start$/i }).click();
+
+  /**
+   * Une tape, et c'est payé.
+   *
+   * La séance offre maintenant un compteur de répétitions sur la dette
+   * elle-même — mais qui a fait ses vingt-cinq pompes ne doit pas taper
+   * vingt-cinq fois pour le dire. À zéro compté, le bouton principal dit
+   * « j'ai tout fait » et solde ; dès qu'on a compté, il paie ce qu'on a
+   * compté. C'est ce parcours qui a signalé la régression.
+   */
+  await page.getByRole("button", { name: /tout fait|did it all/i }).first().click();
 
   /**
    * Le contrôle qui décide de tout : l'effort est en base.

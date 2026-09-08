@@ -76,6 +76,14 @@ test("convertir sa dette et n'en payer qu'une partie au compteur", async ({ brow
    * Les deux gestes comptent, et c'est ce que le propriétaire a demandé — on
    * tape pendant la série, on corrige quand on a compté dans sa tête.
    */
+  /**
+   * La séance commence sur un GESTE, depuis la ligne 205 : la fenêtre s'ouvre
+   * sur la préparation — les consignes, la prudence, ce vers quoi on peut
+   * convertir — et rien ne compte avant ce bouton. Le chrono démarrait à
+   * l'ouverture, et quinze secondes de lecture payaient quinze secondes.
+   */
+  await page.getByRole("button", { name: /^commencer$|^start$/i }).click();
+
   const plus = page.getByRole("button", { name: /^ajouter$|^add$/i });
   await plus.click();
   await plus.click();
