@@ -329,13 +329,21 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     }).catch(() => setChargementRate(true));
   };
 
-  // Charge au montage puis à chaque changement de périmètre consulté.
-  useEffect(() => { loadDash(filtreExo, filtreJeu); }, [filtreExo, filtreJeu]);
-
-  // Rafraîchit les stats globales à chaque nouvelle game loggée en session.
+  /**
+   * Charge au montage, à chaque changement de périmètre, et à chaque partie
+   * enregistrée en session.
+   *
+   * Un seul effet, et ce n'est pas un rangement. Le second appelait
+   * `loadDash()` SANS arguments, donc avec les filtres capturés au dernier
+   * changement de `sessionGames.length` : changer de filtre puis enregistrer
+   * une partie rechargeait le tableau avec le filtre d'AVANT, et l'écran
+   * restait faux jusqu'au geste suivant. Les filtres sont passés en clair et
+   * ils sont dans les dépendances — les deux effets faisaient de toute façon
+   * le même appel.
+   */
   useEffect(() => {
-    if (sessionGames.length > 0) loadDash();
-  }, [sessionGames.length]);
+    loadDash(filtreExo, filtreJeu);
+  }, [filtreExo, filtreJeu, sessionGames.length]);
 
   useEffect(() => {
     if (statsPeriod !== "daily") return;

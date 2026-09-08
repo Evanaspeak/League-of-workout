@@ -1604,6 +1604,53 @@ n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septem
 et c'est la troisième occurrence : la parade est de relancer la passe entière
 sans tube, jamais de deviner.
 
+### Trois fermetures qui gardaient la langue du chargement, et un filtre d'avant
+Suite directe : les vingt-huit avertissements que V522 a laissés visibles ont
+été TRIÉS, et huit d'entre eux disaient la même chose — une fonction déclare ne
+dépendre de rien et lit quelque chose qui bouge. Le tri sépare exactement en
+deux : cinq faux positifs que React ne peut pas distinguer, et **trois vrais
+défauts**.
+
+**Le plus cher est dans le mode session.** `notifier` dépend de `[tJeu,
+etiquette]`, tous deux refaits au changement de langue ; `doPoll` le capturait
+avec `[stopSession]` seul. Après un changement de langue, la boucle gardait
+donc le `notifier` du premier rendu — et c'est **le seul message que le produit
+envoie PENDANT qu'on joue**, c'est-à-dire le seul moment où l'on ne peut pas
+aller chercher le texte ailleurs. C'est la troisième fermeture de cette famille
+en une nuit, après celle de `DetteDirecte`.
+
+**Le second est un filtre qui revient en arrière.** Le tableau de bord portait
+DEUX effets qui appellent le même chargement : l'un sur les filtres, l'autre
+sur le nombre de parties de session — et le second appelait `loadDash()` SANS
+arguments, donc avec les filtres capturés au dernier changement de
+`sessionGames.length`. Filtrer par exercice, puis enregistrer une partie en
+session, rechargeait le tableau avec le filtre d'AVANT ; l'écran restait faux
+jusqu'au geste suivant.
+
+**Un seul effet remplace les deux, et c'est équivalent point par point** — au
+montage, au changement de filtre, à chaque partie : les deux faisaient déjà le
+même appel, et le `if (sessionGames.length > 0)` ne servait qu'à éviter un
+double chargement que la fusion supprime d'elle-même.
+
+**Le troisième est une constante qui n'en était pas une.** `PROFIL_DEFAUT`
+était déclaré DANS le composant des réglages : un objet neuf à chaque rendu.
+Rien ne cassait — `fusionner` compare par valeur, pas par identité — mais une
+constante qui se recrée soixante fois par seconde se relit comme un état, et
+c'est ce qui la rendait indéclarable en dépendance.
+
+**Les cinq faux positifs, écrits pour qu'on ne les réexamine pas.** Trois
+effets listent `t` et lisent `etiquette` : les deux dérivent de la langue et
+changent ENSEMBLE, donc lister `t` réarme bien l'effet — ESLint ne peut pas le
+savoir. Les deux autres portent sur `setImageKO` et `setEchouePour`, des
+poseurs d'état que React garantit stables.
+
+**Ce que ce tri apprend au-delà des trois corrections** : `exhaustive-deps` est
+un avertissement précisément parce qu'il se trompe souvent, et c'est ce qui
+fait qu'on cesse de le lire. Trois défauts sur huit, dont un sur le chemin le
+plus exposé du produit, disent que le rapport vaut la lecture — une fois. Les
+laisser en avertissement et les trier à la main est le bon régime ; les
+transformer en erreurs ferait rougir la CI sur cinq cas justes.
+
 ### Le linter ne tournait nulle part, et la règle du projet ne gardait rien
 Trouvé en lançant `npx eslint` par acquit de conscience : **cent vingt-deux
 constats, dont quatre-vingt-seize erreurs**. Le mot « lint » n'apparaît dans

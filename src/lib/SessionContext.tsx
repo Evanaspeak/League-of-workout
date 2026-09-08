@@ -330,7 +330,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       }
     } catch { /* retry next poll */ }
     setPolling(false);
-  }, [stopSession]);
+    /**
+     * `notifier` est dans les dépendances parce qu'il DÉPEND DE LA LANGUE :
+     * il lit `tJeu` et `etiquette`, tous deux refaits au changement de langue.
+     * Sans lui, cette boucle gardait le `notifier` du premier rendu, et le
+     * seul message que le produit envoie PENDANT qu'on joue serait parti dans
+     * la langue du chargement. Les deux effets qui listent `doPoll` se
+     * réarment alors, ce qui est exactement ce qu'on veut.
+     */
+  }, [stopSession, notifier]);
 
   const startSession = useCallback(async (niveau: number, jeu: string = JEU_DEFAUT) => {
     const type = typeDuJeu(jeu);
