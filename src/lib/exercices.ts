@@ -32,7 +32,25 @@ export type ExerciceId =
    * l'air à sa portée, et le module de calories, lui, chiffrait déjà « la
    * boxe au SAC ». La séparation remet les deux d'accord.
    */
-  | "shadow";
+  | "shadow"
+  /**
+   * L'élargissement du catalogue (réponses 061, 065 et 067).
+   *
+   * « Liste fermée plus grande », « le plus varié possible, diviser en sous
+   * catégories », et des groupes musculaires « pour que la rotation évite de
+   * faire trois jours de pectoraux d'affilée ». La liste reste FERMÉE — c'est
+   * ce qui permet de chiffrer une partie — et elle se range par groupe.
+   *
+   * Ce qui a décidé de CES exercices-là n'est pas le goût, c'est le
+   * déséquilibre : à neuf entrées, le bas du corps et le tronc en avaient UNE
+   * chacun contre trois au haut du corps et quatre au cardio. Une
+   * sous-catégorie à une entrée n'est pas une sous-catégorie, et une rotation
+   * qui doit éviter trois jours de pectoraux d'affilée n'a rien vers quoi
+   * tourner.
+   */
+  | "fentes" | "chaise"
+  | "abdos" | "gainageLateral"
+  | "burpees" | "corde" | "dips";
 
 export type UniteExercice = "reps" | "temps" | "distance";
 
@@ -42,6 +60,23 @@ export type UniteExercice = "reps" | "temps" | "distance";
  * plus tard supposerait de rouvrir six définitions et d'en oublier une.
  */
 export type GroupeMusculaire = "haut" | "bas" | "tronc" | "cardio";
+
+/**
+ * L'ordre des sous-catégories à l'écran (réponses 061 et 067).
+ *
+ * Il va du plus familier au plus spécialisé — le haut du corps est ce que tout
+ * le monde connaît, le cardio ce qu'on choisit — et il ne suit donc pas
+ * l'ordre du catalogue, qui est celui de l'histoire du produit.
+ *
+ * La table est un `Record` et non un tableau, et c'est ce qui la rend
+ * EXHAUSTIVE : un groupe ajouté au type sans être placé ici ne compile pas.
+ * Écrite en tableau, elle aurait laissé une sous-catégorie entière disparaître
+ * de l'écran sans que rien ne le dise.
+ */
+const RANG_GROUPE: Record<GroupeMusculaire, number> = { haut: 1, bas: 2, tronc: 3, cardio: 4 };
+
+export const GROUPES: GroupeMusculaire[] =
+  (Object.keys(RANG_GROUPE) as GroupeMusculaire[]).sort((a, b) => RANG_GROUPE[a] - RANG_GROUPE[b]);
 
 export type ExerciceDef = {
   id: ExerciceId;
@@ -105,6 +140,31 @@ export const RATIOS_DEFAUT: Record<ExerciceId, number> = {
   // petit est ce qui laisse le choix LIBRE — c'est le principe que
   // `tempsParPoint.test.ts` tient pour tout le catalogue.
   shadow: 7.5,
+  // ── Bas du corps ──
+  // Une fente et quart pour un point : le mouvement est unilatéral, donc plus
+  // lent qu'un squat, et il en faut un peu plus pour le même temps.
+  fentes: 1.2,
+  // Chaise contre un mur, en secondes. Sept par point : une position tenue se
+  // supporte plus longtemps qu'une planche, dont les cinq secondes sont le
+  // repère isométrique du catalogue.
+  chaise: 7,
+  // ── Tronc ──
+  // Deux abdos pour un point : le mouvement est court et la charge légère.
+  abdos: 2,
+  // Gainage latéral, en secondes. Le même repère que la planche : c'est la
+  // même position tenue, sur le côté.
+  gainageLateral: 5,
+  // ── Cardio ──
+  // Sept dixièmes de burpee pour un point, soit un peu plus d'un point par
+  // burpee : c'est l'exercice le plus complet du catalogue et le plus lent.
+  burpees: 0.7,
+  // Corde à sauter, en secondes. Six par point : la cadence ne laisse pas de
+  // temps mort, donc une seconde y achète un peu plus qu'au sac.
+  corde: 6,
+  // ── Haut du corps ──
+  // Un dip vaut deux points. Entre la pompe (un point) et la traction (cinq) :
+  // on pousse plus qu'au sol et moins qu'on ne tire à la barre.
+  dips: 0.5,
 };
 
 export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
@@ -135,9 +195,45 @@ export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   // Shadow boxing : les mêmes enchaînements, dans le vide. Rien à posséder,
   // rien à accrocher, et ça se fait dans deux mètres carrés.
   shadow: { id: "shadow", ratio: RATIOS_DEFAUT.shadow, unite: "temps", pas: 5, groupe: "cardio", materiel: false },
+  // Fentes : le bas du corps sans matériel, en alternant les jambes. Une
+  // répétition compte une jambe — c'est ainsi qu'on les compte en salle, et
+  // compter les deux ferait un chiffre qui ne ressemble à rien.
+  fentes: { id: "fentes", ratio: RATIOS_DEFAUT.fentes, unite: "reps", pas: 1, secondesParRep: 6, groupe: "bas", materiel: false },
+  // Chaise : dos au mur, cuisses à l'horizontale. Rien à posséder, et c'est
+  // le pendant de la planche pour les jambes.
+  chaise: { id: "chaise", ratio: RATIOS_DEFAUT.chaise, unite: "temps", pas: 5, groupe: "bas", materiel: false },
+  // Abdos : le mouvement court du tronc, celui que tout le monde sait faire.
+  abdos: { id: "abdos", ratio: RATIOS_DEFAUT.abdos, unite: "reps", pas: 1, secondesParRep: 3, groupe: "tronc", materiel: false },
+  // Gainage latéral : la même position tenue que la planche, sur le côté. Il
+  // travaille les obliques, que la planche de face ne prend presque pas.
+  gainageLateral: { id: "gainageLateral", ratio: RATIOS_DEFAUT.gainageLateral, unite: "temps", pas: 5, groupe: "tronc", materiel: false },
+  // Burpees : l'exercice le plus complet du catalogue, et le plus lent.
+  burpees: { id: "burpees", ratio: RATIOS_DEFAUT.burpees, unite: "reps", pas: 1, secondesParRep: 10, groupe: "cardio", materiel: false },
+  // Corde à sauter : une corde suffit, et c'est du matériel — le dire est la
+  // même règle que pour le sac et la barre de traction.
+  corde: { id: "corde", ratio: RATIOS_DEFAUT.corde, unite: "temps", pas: 5, groupe: "cardio", materiel: true },
+  // Dips : deux chaises ou des barres parallèles. Du matériel, donc, même
+  // improvisé.
+  dips: { id: "dips", ratio: RATIOS_DEFAUT.dips, unite: "reps", pas: 1, secondesParRep: 12, groupe: "haut", materiel: true },
 };
 
 export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
+
+/**
+ * Le catalogue rangé par sous-catégorie, dans l'ordre d'affichage.
+ *
+ * À seize exercices, une liste plate ne se lit plus — et une rotation censée
+ * éviter trois jours de pectoraux d'affilée n'a aucun moyen de se voir. Le
+ * rangement se fait ici plutôt que dans l'écran : trois composants montent ce
+ * sélecteur, et une règle écrite trois fois finit par n'être vraie qu'à deux
+ * endroits.
+ */
+export function exercicesParGroupe(): { groupe: GroupeMusculaire; ids: ExerciceId[] }[] {
+  return GROUPES.map((groupe) => ({
+    groupe,
+    ids: EXERCICE_IDS.filter((id) => EXERCICES[id].groupe === groupe),
+  }));
+}
 
 /**
  * Exercices dont le ratio se règle depuis l'administration.
@@ -183,6 +279,21 @@ export const RATIO_BORNES: Record<ExerciceId, { min: number; max: number }> = {
   // façon, et rien ne justifierait qu'un administrateur puisse régler l'un
   // dix fois plus loin que l'autre.
   shadow: { min: 1, max: 60 },
+  // Une fente ne peut pas coûter moins qu'un squat : le plancher est donc à
+  // celui des squats, et le plafond suit.
+  fentes: { min: 0.2, max: 10 },
+  chaise: { min: 1, max: 60 },
+  // Un abdo vaut au plus une pompe, et au moins un dixième : en deçà, une
+  // dette ordinaire demanderait plusieurs centaines de répétitions.
+  abdos: { min: 0.5, max: 10 },
+  gainageLateral: { min: 1, max: 60 },
+  // Un burpee ne peut pas coûter moins d'un point : c'est l'exercice le plus
+  // complet du lot, et le rendre moins cher qu'une pompe n'aurait pas de sens.
+  burpees: { min: 0.05, max: 1 },
+  corde: { min: 1, max: 60 },
+  // Un dip vaut au moins autant qu'une pompe, et au plus autant qu'une
+  // traction : c'est la fourchette qui l'encadre des deux côtés.
+  dips: { min: 0.05, max: 1 },
 };
 
 /** Ratios tels qu'ils circulent entre la base, le serveur et le navigateur. */
