@@ -17,19 +17,20 @@ import path from "node:path";
 const RACINE = path.join(process.cwd(), "src", "app", "api");
 
 /**
- * Les lectures qui doivent GARDER les parties sans enjeu, chacune avec sa
- * raison. Une septième devrait faire se demander si le garde sert encore.
+ * La dispense se déclare AU POINT D'APPEL, pas dans une liste ici.
+ *
+ * Elle vivait dans une table indexée par « route : opération », et cette
+ * clé-là ne distingue pas deux appels de MÊME nature dans un MÊME fichier.
+ * `games/route.ts` en porte désormais deux : le compte de maîtrise, qui doit
+ * écarter les parties sans enjeu, et le total de l'historique, qui doit les
+ * garder. Une dispense de route aurait couvert les deux — donc rendu le garde
+ * muet le jour où le premier perdrait son filtre, c'est-à-dire exactement ce
+ * qu'il existe pour dire.
+ *
+ * Le marqueur est un jeton qu'on n'écrit pas par accident, et la RAISON est à
+ * côté de lui, là où elle se relit quand on touche à l'appel.
  */
-const AVEC_SANS_ENJEU: Record<string, string> = {
-  "games : game.findMany":
-    "L'historique EST l'endroit où elles s'affichent : c'est tout l'objet de les enregistrer plutôt que de les jeter. Elles y portent leur annotation.",
-  "games/dates : game.findMany":
-    "La correction de date porte sur des parties choisies à la main dans l'historique : en écarter une la rendrait incorrigible.",
-  "user/export : game.findMany":
-    "Le droit à la portabilité couvre TOUT ce que l'application garde. En écarter une partie ferait un export incomplet, ce qui est le contraire de ce que l'article 20 demande.",
-  "riot/match-history : game.findMany":
-    "Cette lecture dit quelles parties Riot sont DÉJÀ enregistrées. Une partie sans enjeu l'est : l'écarter la ferait proposer à l'ajout une seconde fois.",
-};
+const MARQUEUR = "SANS_ENJEU_GARDEES";
 
 /**
  * `findFirst` n'y figure pas : lire UNE partie par son identifiant n'est
@@ -83,7 +84,6 @@ describe("les parties sans enjeu ne comptent pas", () => {
     for (const r of toutes) {
       for (const m of r.texte.matchAll(motif())) {
         const appel = `${r.nom} : game.${m[1]}`;
-        if (appel in AVEC_SANS_ENJEU) continue;
         /**
          * Six cents caractères, et non trois cents : le `where` du tableau de
          * bord vient APRÈS un commentaire qui explique pourquoi il est là.
@@ -92,24 +92,35 @@ describe("les parties sans enjeu ne comptent pas", () => {
          */
         const suite = r.texte.slice(m.index!, m.index! + 600);
         if (/sansEnjeu:\s*false/.test(suite)) continue;
+        if (suite.includes(MARQUEUR)) continue;
         nus.push(appel);
       }
     }
     expect(nus).toEqual([]);
   });
 
-  it("chaque exemption désigne encore une lecture qui existe", () => {
-    const vues = new Set<string>();
+  it("chaque marqueur est posé dans la fenêtre d'une lecture, et porte sa raison", () => {
+    /*
+      Deux façons pour ce contrôle de ne rien prouver, et il faut les deux :
+      un marqueur qui ne désigne plus aucune lecture est du code mort dans le
+      garde qui existe pour l'attraper ; un marqueur sans raison écrite est une
+      exemption qu'on relit comme une garantie.
+    */
+    let poses = 0;
     for (const r of toutes) {
-      for (const m of r.texte.matchAll(motif())) vues.add(`${r.nom} : game.${m[1]}`);
+      const fenetres = [...r.texte.matchAll(motif())]
+        .map((m) => r.texte.slice(m.index!, m.index! + 600));
+      for (const m of r.texte.matchAll(new RegExp(MARQUEUR, "g"))) {
+        poses += 1;
+        expect({ route: r.nom, dansUneFenetre: fenetres.some((f) => f.includes(MARQUEUR)) })
+          .toEqual({ route: r.nom, dansUneFenetre: true });
+        // La raison suit le marqueur, dans le même commentaire.
+        const apresMarqueur = r.texte.slice(m.index! + MARQUEUR.length, m.index! + MARQUEUR.length + 400);
+        const raison = apresMarqueur.split("*/")[0];
+        expect({ route: r.nom, raisonEcrite: raison.replace(/[\s*]/g, "").length > 60 })
+          .toEqual({ route: r.nom, raisonEcrite: true });
+      }
     }
-    const mortes = Object.keys(AVEC_SANS_ENJEU).filter((a) => !vues.has(a));
-    expect(mortes).toEqual([]);
-  });
-
-  it("chaque exemption porte sa raison écrite", () => {
-    for (const [appel, raison] of Object.entries(AVEC_SANS_ENJEU)) {
-      expect({ appel, longue: raison.length > 60 }).toEqual({ appel, longue: true });
-    }
+    expect(poses).toBeGreaterThan(4);
   });
 });

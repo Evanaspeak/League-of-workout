@@ -95,6 +95,11 @@ export async function GET() {
   }
 
   const logged = await prisma.game.findMany({
+    /*
+      SANS_ENJEU_GARDEES — cette lecture dit quelles parties Riot sont DÉJÀ
+      enregistrées. Une partie sans enjeu l'est : l'écarter la ferait proposer
+      à l'ajout une seconde fois, et on paierait deux fois une soirée refusée.
+    */
     where: { riotMatchId: { in: ids }, userId: user.id },
     select: { riotMatchId: true, pompesCalculees: true, exercice: true },
   });

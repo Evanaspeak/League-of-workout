@@ -1196,6 +1196,128 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un cinquième parcours du mode séance, que le découpage en projets cachait
+V532 est partie ROUGE, sur un seul travail : `bareme`. Les huit autres verts, et
+la durée — 10 min 18 — disait que les parcours avaient bien joué.
+
+C'est le même défaut que les quatre corrigés juste avant : `bareme-gele.spec.ts`
+ouvre la fenêtre de dette et cherche « Pause », qui n'existe qu'une fois la
+séance COMMENCÉE. Il traverse « Commencer » maintenant.
+
+**Ce qui l'a caché en local est le découpage en projets Playwright.** Le projet
+`bareme` déclare des `dependencies` sur les autres, précisément pour qu'il ne
+change pas le barème global sous leurs pieds. La conséquence n'était pas
+écrite : **un échec en amont le SAUTE**, donc il n'a pas tourné dans les deux
+suites complètes qui précédaient la fusion. La CI, elle, lui donne son propre
+travail et sa propre base — la protection y est structurelle — donc il tourne
+toujours. C'est le seul fichier du dépôt dont l'exécution locale dépende de la
+réussite des autres.
+
+**Et l'échec était illisible pour une raison qui vaut au-delà du cas.**
+`.click().catch(() => {})` sur un bouton qui n'apparaît jamais attend le BUDGET
+DU TEST — soixante secondes — avant de se taire. Le test expire alors sur la
+ligne SUIVANTE, en annonçant « Target page, context or browser has been
+closed », c'est-à-dire un message qui ne désigne pas le bouton manquant. Le
+délai est borné à cinq secondes maintenant : un clic facultatif se déclare
+facultatif ET borné, sinon il mange le budget de ce qui le suit.
+
+### Huit cent trente mille octets à chaque ouverture de l'historique
+Ligne q1, décidée par le propriétaire le 8 septembre : « garder les 50
+dernières parties à l'écran, archiver le reste, et que l'archive reste
+accessible ».
+
+`/api/games` rendait TOUTES les parties. Mesuré sur un compte semé à mille deux
+cents : **833 441 octets bruts**, et ça grandit pour toujours — une partie
+jouée ne se supprime pas. Après : **34 543 octets au chargement, 833 466 quand
+on ouvre l'archive**, soit un facteur vingt-quatre sur le cas courant.
+
+**Le prix n'est PAS de la bande passante**, et c'est écrit ici depuis la mesure
+du 2 septembre : brotli ramène cette réponse à vingt-deux kilo-octets sur le
+fil, et la déduplication du barème n'y valait que quatre-vingts octets. Ce
+qu'on paie est la SÉRIALISATION, l'analyse et l'allocation de mille deux cents
+objets — du processeur et de la mémoire chez qui regarde.
+
+**La forme de la réponse est la MÊME des deux côtés**, `{ parties, total }`.
+Deux formes pour une seule route est la divergence que ce projet paie en
+boucle ; et le total est justement ce dont l'écran a besoin pour dire qu'il ne
+montre pas tout. Il ne se déduit pas de `parties.length` — c'est l'ÉCART entre
+les deux qui porte l'information.
+
+**Filtrer ou trier par effort va chercher l'archive tout seul**, et c'est la
+décision de fond. Une question posée sur les cinquante dernières parties n'a
+pas de réponse vraie : « aucune partie en Support » chez quelqu'un qui en a une
+est un chiffre faux, pas une réponse partielle. Et trier par effort ne veut
+rien dire sur une fenêtre — la plus grosse soirée est très probablement
+ancienne. La règle vit dans un seul endroit (`enFiltrant`) : écrite sur les
+quatre contrôles, elle finirait appliquée à trois.
+
+**Deux chiffres DISPARAISSENT tant que l'archive n'est pas là**, et c'est le
+point le plus délicat. La colonne de cumul et le résumé par exercice sont des
+TOTAUX sur l'histoire entière ; calculés sur cinquante lignes, ils gardent leur
+libellé et changent de sens sous le lecteur — « 1 200 parties · 9 600 pompes »
+devient « 50 parties · 400 pompes » sans qu'un mot le dise. Une absence qui
+s'explique vaut mieux qu'un nombre qui ment, et les deux reviennent dès que
+tout est chargé. Un compte de trente parties ne voit rien changer : la réponse
+bornée contient déjà tout, donc `toutCharge` vaut vrai.
+
+**Le seed du cumul a été envisagé et écarté.** On pourrait envoyer, avec les
+cinquante, le cumul de tout ce qui est plus ancien. Ça ne marche pas : le cumul
+est calculé sur la liste FILTRÉE, donc un seed unique serait faux dès qu'un
+filtre est actif — et le calculer demande de toute façon de lire la queue,
+puisque la conversion en quantité dépend du barème GELÉ sur chaque partie.
+
+**Un garde a mordu, et sa correction vaut plus que la ligne du plan.**
+`statistiquesSansEnjeu.test.ts` indexait ses dispenses par « route :
+opération », et cette clé-là ne distingue pas deux appels de même nature dans
+un même fichier. `games/route.ts` en porte désormais deux : le compte de
+maîtrise, qui doit écarter les parties sans enjeu, et le total de l'historique,
+qui doit les garder. Une dispense de route aurait couvert les deux — donc rendu
+le garde muet le jour où le premier perdrait son filtre, c'est-à-dire
+exactement ce qu'il existe pour dire. **C'est le défaut de la dispense qui ne
+désigne rien de mesurable, rencontré deux heures plus tôt sur `relaisRecus`.**
+
+La dispense se déclare donc AU POINT D'APPEL, par un jeton qu'on n'écrit pas
+par accident, avec sa raison à côté — là où elle se relit quand on touche à
+l'appel. Les quatre dispenses existantes ont déménagé avec leurs raisons, et le
+garde ne porte plus qu'un mécanisme au lieu de deux.
+
+**Et le marqueur doit être DANS l'appel, pas au-dessus.** La fenêtre du garde
+part de l'appel et va vers l'avant : posé en commentaire avant, il n'est jamais
+lu. Quatre marqueurs posés au mauvais endroit, quatre contrôles rouges — ce qui
+est le bon comportement, et ce qui a fait choisir la forme finale.
+
+Trois sabotages sur le garde, trois échecs : un agrégat nu ajouté, un marqueur
+retiré d'une lecture, un marqueur posé loin de toute lecture. Trois au
+navigateur, trois échecs : la borne retirée, le chargement automatique
+débranché, la colonne de cumul rendue quand même.
+
+**Le premier sabotage navigateur est passé au vert, et c'était le piège du
+`-g`.** Filtrer par le nom du test écarte celui qui SÈME les cinquante-cinq
+parties : le contexte s'ouvre sans session, la page redirige, et l'échec ne
+dit plus rien de ce qu'on sabotait. C'est écrit ici depuis longtemps, et c'est
+la quatrième occurrence — le fichier se rejoue en entier.
+
+**Et le compte de mesure a été purgé par la suite navigateur, CINQUIÈME
+occurrence.** L'ordre n'admet aucune exception : la suite d'abord, le compte
+ensuite, le semis, la mesure enfin. Ce qui l'a dit est le contrôle
+d'atterrissage — la sonde a rendu vingt-huit octets et `{"error":"Non
+authentifié"}` au lieu d'un rapport flatteur.
+
+**Et la suite entière a rendu un cinquième sabotage que je n'avais pas fait.**
+`panne-serveur.spec.ts` fabriquait une réponse vide en TABLEAU nu, la forme
+d'avant : l'écran la refuse et annonce un échec de chargement, ce qui est le
+bon comportement et pas ce que le test éprouve. Une réponse d'API ne change pas
+en silence, et c'est le seul endroit du dépôt qui fabriquait celle-ci.
+
+Vérifié à l'écran dans trois langues, à mille deux cents parties : « Les 50
+dernières parties, sur 1 200 », « Die letzten 50 Partien, von 1.200 »,
+「直近 50 件（全 1,200 件）」 — les trois séparateurs de milliers sont ceux de
+la langue. La colonne CUMUL est absente ; l'archive s'ouvre en **805 ms**, la
+colonne revient, et le résumé rend « 1 200 parties · 9 600 pompes ».
+
+`/fr/history` mesuré après : **LCP 532 ms sur poste, 1 640 ms sur téléphone
+bridé, CLS 0,000**, avec le titre pour plus grand élément.
+
 ### Une décision rangée à une adresse qui n'existait pas
 Trouvé en préparant le chantier suivant, c'est-à-dire en SUIVANT une adresse
 plutôt qu'en la lisant. `docs/questions-ouvertes.md` porte un tableau des

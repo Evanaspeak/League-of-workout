@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**112 construits · 46 restants**
+**113 construits · 45 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -381,7 +381,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [ ] | 171 | Une version macOS, plus tard | — |
 
 ### Technique
-*2 à faire · 7 faits.* Le découpage des styles est fait : neuf fichiers
+*1 à faire · 8 faits.* Le découpage des styles est fait : neuf fichiers
 sous `src/app/styles/`, vérifiés à vingt-quatre captures d'écran. La
 régénération des pages l'est aussi, et elle a rendu plus que prévu : il n'y
 avait AUCUNE page prérendue — la 404 de la racine lisait `headers()`, ce qui
@@ -397,7 +397,7 @@ rend dynamique toute route de l'application. 0 avant, 150 après.
 | [x] | 299 | Découper le fichier des styles | — |
 | [x] | 302 | Affiner la régénération des pages | — |
 | [ ] | 300 | Uniformiser styles en ligne et classes utilitaires | 2 nuits |
-| [ ] | q1 | L'historique grandit pour toujours — **décidé le 8 septembre** : garder les 50 dernières parties à l'écran, archiver le reste, et que l'archive reste accessible | 1 nuit |
+| [x] | q1 | L'historique grandit pour toujours — **décidé le 8 septembre** : garder les 50 dernières parties à l'écran, archiver le reste, et que l'archive reste accessible | — |
 
 ## Ce qui est dû au propriétaire du produit
 

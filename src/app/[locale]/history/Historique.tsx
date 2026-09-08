@@ -218,6 +218,25 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const [games, setGames] = useState<Game[]>([]);
   const [loadingGames, setLoadingGames] = useState(true);
   /**
+   * Combien de parties le compte porte, borné ou non — le serveur le dit.
+   *
+   * Il ne se déduit pas de `games.length` : c'est justement l'écart entre les
+   * deux qui dit qu'on ne montre pas tout, et un écran qui présenterait
+   * cinquante lignes comme l'historique entier annoncerait un chiffre faux.
+   */
+  const [total, setTotal] = useState(0);
+  /**
+   * L'archive est chargée : la liste EST tout ce que le compte porte.
+   *
+   * Deux choses en dépendent, et pour la même raison — ce sont des TOTAUX sur
+   * l'histoire entière, pas sur ce qu'on regarde : la colonne de cumul et le
+   * résumé par exercice. Calculés sur cinquante lignes, ils gardent leur
+   * libellé et changent de sens sous le lecteur, ce qui est pire qu'une
+   * absence. Ils reviennent dès que tout est là.
+   */
+  const [toutCharge, setToutCharge] = useState(false);
+  const [chargementTout, setChargementTout] = useState(false);
+  /**
    * La liste n'a pas pu être chargée.
    *
    * Distinct de « la liste est vide » : l'échec était avalé, et l'écran
@@ -253,17 +272,71 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   const [editingResultId, setEditingResultId] = useState<string | null>(null);
   const [correctionEnCours, setCorrectionEnCours] = useState<string | null>(null);
 
+  /**
+   * Poser ce que la route a rendu, quelle que soit la porte par laquelle on
+   * l'a demandé.
+   *
+   * `toutCharge` ne vaut pas « on a demandé tout » mais « la liste EST
+   * complète » : un compte de trente parties reçoit tout par la porte bornée,
+   * et il n'a aucune raison de perdre sa colonne de cumul ni de se voir
+   * proposer une archive qu'il a déjà sous les yeux.
+   */
+  const poser = (data: unknown, demandeTout: boolean) => {
+    const rep = data as { parties?: unknown; total?: unknown };
+    if (!Array.isArray(rep?.parties) || typeof rep?.total !== "number") {
+      throw new Error("réponse inattendue");
+    }
+    setGames(rep.parties as Game[]);
+    setTotal(rep.total);
+    setToutCharge(demandeTout || rep.parties.length >= rep.total);
+  };
+
+  const charger = (demandeTout: boolean) =>
+    fetch(demandeTout ? "/api/games?tout=1" : "/api/games")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d) => poser(d, demandeTout));
+
   // ─── Chargement initial (games + parties Riot) ───────────────────────────
   useEffect(() => {
-    fetch("/api/games")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((data) => {
-        if (!Array.isArray(data)) throw new Error("réponse inattendue");
-        setGames(data);
-      })
+    charger(false)
       .catch(() => setChargementRate(true))
       .finally(() => setLoadingGames(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- au montage seulement
   }, []);
+
+  /**
+   * Aller chercher l'archive, et ne le faire qu'une fois.
+   *
+   * Un échec ne fait PAS repasser `toutCharge` à vrai : on reste sur ce qu'on
+   * a, l'écran continue d'annoncer qu'il ne montre pas tout, et le geste
+   * suivant réessaiera. Le contraire ferait disparaître la seule phrase qui
+   * dit que la liste est partielle.
+   */
+  const chargerTout = () => {
+    if (toutCharge || chargementTout) return;
+    setChargementTout(true);
+    charger(true)
+      .catch(() => setChargementRate(true))
+      .finally(() => setChargementTout(false));
+  };
+
+  /**
+   * Filtrer ou trier autrement que par date demande l'historique ENTIER.
+   *
+   * Une question posée sur les cinquante dernières parties n'a pas de réponse
+   * vraie : « trois parties de Valorant » chez quelqu'un qui en a deux cents
+   * est un chiffre faux, pas une réponse partielle. Et trier par effort ne
+   * veut rien dire sur une fenêtre — la plus grosse soirée est très
+   * probablement plus ancienne.
+   *
+   * La règle vit ICI et une seule fois : écrite sur les quatre contrôles, elle
+   * finirait appliquée à trois.
+   */
+  const enFiltrant = (poserLeFiltre: () => void) => {
+    poserLeFiltre();
+    setLigneDepliee(null);
+    chargerTout();
+  };
 
   // ─── Edit game date ──────────────────────────────────────────────────────
   const handleEditDate = async (id: string) => {
@@ -401,7 +474,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
         ? 1 + (afficherRole ? 1 : 0) + (afficherChampion ? 1 : 0) + (afficherKda ? 1 : 0)
           + (afficherPlacement ? 1 : 0) // + résultat
         : 1) // durée, ou détail
-    + 4; // niveau, dette, cumul, actions
+    + 3 + (toutCharge ? 1 : 0); // niveau, dette, [cumul], actions
   /**
    * Les lignes préparées une seule fois, pour les deux présentations.
    *
@@ -497,7 +570,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                       return (
                         <button
                           key={nom ?? "tous"}
-                          onClick={() => { setFiltreJeu(nom); setLigneDepliee(null); }}
+                          onClick={() => enFiltrant(() => setFiltreJeu(nom))}
                           aria-pressed={actif}
                           style={{
                             padding: "4px 12px", borderRadius: 999, fontSize: "0.75rem", cursor: "pointer",
@@ -521,7 +594,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                   {afficherRole && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs" style={{ color: "var(--steel)" }}>{t.roleLabel}</span>
-                      <select className="lol-select text-sm" value={filterRole} onChange={(e) => setFilterRole(e.target.value)}>
+                      <select className="lol-select text-sm" value={filterRole} onChange={(e) => enFiltrant(() => setFilterRole(e.target.value))}>
                         {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
                       </select>
                     </div>
@@ -530,7 +603,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                     <>
                       <div className="flex items-center gap-2">
                         <span className="text-xs" style={{ color: "var(--steel)" }}>{t.resultLabel}</span>
-                        <select className="lol-select text-sm" value={filterResult} onChange={(e) => setFilterResult(e.target.value)}>
+                        <select className="lol-select text-sm" value={filterResult} onChange={(e) => enFiltrant(() => setFilterResult(e.target.value))}>
                           <option value="Tous">{t.all}</option>
                           <option value="V">{t.victory}</option>
                           <option value="D">{t.defeat}</option>
@@ -540,14 +613,37 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                   )}
                   <div className="flex items-center gap-2">
                     <span className="text-xs" style={{ color: "var(--steel)" }}>{t.sortLabel}</span>
-                    <select className="lol-select text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "date" | "pompes")}>
+                    <select className="lol-select text-sm" value={sortBy} onChange={(e) => enFiltrant(() => setSortBy(e.target.value as "date" | "pompes"))}>
                       <option value="date">{t.date}</option>
                       <option value="pompes">{t.pompes}</option>
                     </select>
                   </div>
-                  <span className="ml-auto text-sm gold-text font-semibold">
-                    {t.activitesAndTotal(nombre(filtered.length), filtered.length, resumeParExo(totauxParExo))}
-                  </span>
+                  {/*
+                    Le résumé par exercice est un TOTAL sur l'histoire entière.
+                    Sur les cinquante dernières parties il garderait son
+                    libellé et changerait de sens : « 60 parties · 480 pompes »
+                    chez quelqu'un qui en a mille deux cents. Tant que
+                    l'archive n'est pas là, on annonce donc la fenêtre et le
+                    total réel, et on dit comment aller chercher le reste.
+                  */}
+                  {toutCharge ? (
+                    <span className="ml-auto text-sm gold-text font-semibold">
+                      {t.activitesAndTotal(nombre(filtered.length), filtered.length, resumeParExo(totauxParExo))}
+                    </span>
+                  ) : (
+                    <span className="ml-auto flex items-center gap-3 flex-wrap">
+                      <span className="text-sm" style={{ color: "var(--steel)" }}>
+                        {t.historiqueBorne(nombre(games.length), nombre(total))}
+                      </span>
+                      <button
+                        className="lol-btn text-xs"
+                        onClick={chargerTout}
+                        disabled={chargementTout}
+                      >
+                        {chargementTout ? "…" : t.historiqueToutVoir}
+                      </button>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -597,10 +693,10 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                   <CorrectionDates
                     parties={games.map((g) => ({ id: g.id, date: g.date }))}
                     surCorrection={() => {
-                      fetch("/api/games")
-                        .then((r) => r.json())
-                        .then((d) => { if (Array.isArray(d)) setGames(d); })
-                        .catch(() => {});
+                      // On recharge par la MÊME porte : revenir à la liste
+                      // bornée après avoir ouvert l'archive ferait disparaître
+                      // sous les yeux les parties qu'on venait de corriger.
+                      charger(toutCharge).catch(() => {});
                     }}
                   />
                 {/* Sur téléphone : une carte par activité, tout tient à
@@ -678,9 +774,11 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                 {part.id === "pompes" && g.variante === "genoux" && (
                                   <span className="carte-activite-variante">{tExo.varianteBadge}</span>
                                 )}
-                                <span style={{ marginLeft: 8, fontSize: "0.72rem", color: "var(--faint)" }}>
-                                  {minuscule(t.tableCumul)} {formaterQuantite(cumul[part.id] ?? 0, part.id, dateLocale)}
-                                </span>
+                                {toutCharge && (
+                                  <span style={{ marginLeft: 8, fontSize: "0.72rem", color: "var(--faint)" }}>
+                                    {minuscule(t.tableCumul)} {formaterQuantite(cumul[part.id] ?? 0, part.id, dateLocale)}
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -750,7 +848,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                         {modeColonnes === "mixte" && <th className="text-left px-3 py-1">{t.tableDetail}</th>}
                         <th className="text-center px-3 py-1">{t.tableLevel}</th>
                         <th className="text-right px-3 py-1">{t.tablePompes}</th>
-                        <th className="text-right px-3 py-1">{t.tableCumul}</th>
+                        {toutCharge && <th className="text-right px-3 py-1">{t.tableCumul}</th>}
                         <th className="px-3 py-1"></th>
                       </tr>
                     </thead>
@@ -915,11 +1013,13 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                   </div>
                                 ))}
                               </td>
-                              <td className="px-3 py-2 text-right" style={{ color: "var(--steel)", whiteSpace: "nowrap" }}>
-                                {parts.map((part) => (
-                                  <div key={part.id}>{formaterQuantite(cumul[part.id] ?? 0, part.id, dateLocale)}</div>
-                                ))}
-                              </td>
+                              {toutCharge && (
+                                <td className="px-3 py-2 text-right" style={{ color: "var(--steel)", whiteSpace: "nowrap" }}>
+                                  {parts.map((part) => (
+                                    <div key={part.id}>{formaterQuantite(cumul[part.id] ?? 0, part.id, dateLocale)}</div>
+                                  ))}
+                                </td>
+                              )}
                               <td className="px-3 py-2 text-center" style={{ whiteSpace: "nowrap" }}>
                                 <button
                                   onClick={() => setLigneDepliee(depliee ? null : g.id)}

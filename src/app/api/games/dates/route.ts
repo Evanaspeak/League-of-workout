@@ -67,6 +67,11 @@ export async function PATCH(req: Request) {
   // La sélection est refiltrée sur le compte : une liste d'identifiants vient
   // du navigateur, et rien n'empêche d'y glisser ceux de quelqu'un d'autre.
   const parties = await prisma.game.findMany({
+    /*
+      SANS_ENJEU_GARDEES — la correction de date porte sur des parties
+      choisies à la main dans l'historique : en écarter une la rendrait
+      incorrigible, alors qu'elle est affichée à l'écran d'où le geste part.
+    */
     where: { id: { in: ids as string[] }, userId: user.id },
     select: { id: true, date: true },
   });

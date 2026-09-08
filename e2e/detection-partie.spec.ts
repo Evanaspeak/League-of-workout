@@ -83,7 +83,7 @@ async function nombreDeParties(ctx: import("@playwright/test").BrowserContext) {
   const res = await ctx.request.get("/api/games");
   expect(res.status()).toBe(200);
   const corps = await res.json();
-  const liste = Array.isArray(corps) ? corps : (corps.games ?? []);
+  const liste = corps.parties;
   return liste as Array<{
     result: string; champion: string | null; role: string | null;
     sansEnjeu?: boolean; pompesCalculees?: number;

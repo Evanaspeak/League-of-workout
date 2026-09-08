@@ -129,8 +129,12 @@ test("un historique vide dit où enregistrer une activité", async ({ browser })
     } catch { /* stockage refusé */ }
   }, uid);
   // Une réponse vide : le compte de ce fichier a une partie, on la retire.
+  // La forme est celle de la route depuis la ligne q1 — `{ parties, total }`.
+  // Rendue en tableau nu, l'écran la refuse et annonce un échec de chargement,
+  // ce qui est le bon comportement et pas ce qu'on éprouve ici.
   await page.route("**/api/games", (r) => r.fulfill({
-    status: 200, contentType: "application/json", body: "[]",
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ parties: [], total: 0 }),
   }));
   await page.goto("/history", { waitUntil: "domcontentloaded" });
   await page.waitForTimeout(1500);
