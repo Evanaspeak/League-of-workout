@@ -1006,7 +1006,7 @@ l'état, faute d'un gain qui justifie la retouche.
 
 ## Scripts de mesure
 
-Six scripts, dont trois pilotent un Chromium sur l'application lancée en local.
+Huit scripts, dont quatre pilotent un Chromium sur l'application lancée en local.
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
 **Avant toute campagne : `rm -rf .next/cache`.** Ce dossier SURVIT à
@@ -1024,6 +1024,8 @@ node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
 node scripts/routes.mjs          # poids et temps de chaque route d'API
 node scripts/semer-parties.mjs   # de quoi mesurer autre chose qu'un compte vide
+node scripts/compte-mesure.mjs   # ouvre un compte neuf et dépose son jeton
+node scripts/coutures.mjs        # coutures CJK, nombres bruts, et --invariants=fr
 ```
 
 Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
@@ -1193,6 +1195,126 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le parcours qui accusait le produit d'être muet, et l'instrument qui a nommé la cause
+V525 est partie ROUGE, sur un seul tronçon et un seul test : « une correction
+refusée ne change rien à l'écran », dans `historique.spec.ts`, quarante-deux
+passés à côté. Le message était **« alerte introuvable »**, ce qui se lit comme
+« l'écran ne dit pas son échec » et envoie chercher le défaut dans le composant.
+
+**C'était faux, et le raisonnement suffit à le montrer.** `handleEditResult`
+pose le drapeau d'erreur sur les DEUX branches — réponse non-ok et exception —
+donc la seule façon de n'avoir aucune alerte est qu'aucune requête ne soit
+partie, ou que la vraie route ait répondu 200. Deux causes, un seul symptôme,
+et c'est exactement le piège déjà écrit ici pour `detection-partie.spec.ts` :
+« l'interception n'a pas pris, la vraie route a répondu ».
+
+**Le détournement se COMPTE désormais, et son compte s'éprouve AVANT le
+message.** L'instrument a rendu la réponse à la première exécution locale qui
+tombe : **`detourne = 0`** — aucun PATCH n'a jamais atteint le gestionnaire de
+route. Ce n'est donc ni l'interception ni le produit : c'est le CLIC qui n'a
+rien déclenché.
+
+**Et le bouton a une raison de ne rien déclencher.** `ResultatCell` écrit
+`valeur === result ? annuler() : choisir(valeur)` : cliquer « Victoire » sur une
+ligne que le composant croit DÉJÀ victorieuse annule l'édition — donc n'envoie
+aucune requête, donc n'affiche aucune alerte. C'est le symptôme observé, trait
+pour trait, et un clic aveugle ne distingue pas les deux états.
+
+Le test attend donc la PRÉCONDITION du geste — `aria-pressed="false"`, c'est-à-dire
+un bouton dont le clic va changer quelque chose — au lieu de cliquer à
+l'aveugle. Ce n'est pas un délai : c'est l'état dont dépend le sens du clic.
+
+**Ce qui n'est PAS établi, et il vaut mieux le dire que de conclure.** Je n'ai
+pas pu reprendre la main sur l'intermittence : deux échecs sur deux exécutions
+locales avant l'instrument, puis douze exécutions vertes d'affilée — quatre
+avec le clic aveugle remis, huit avec la précondition. Les quatre du milieu
+interdisent d'attribuer la guérison à la correction : la fenêtre s'était
+refermée d'elle-même entre-temps. Ce qui est acquis n'est donc pas le
+diagnostic, ce sont les deux instruments — le compteur, qui nommera la
+prochaine occurrence au lieu d'accuser le produit, et la précondition, qui
+retire un état sous lequel le geste ne veut rien dire.
+
+**Le journal portait déjà ce test comme « cause inconnue »**, avec l'hypothèse
+d'une machine chargée — « les deux échecs sont tombés pendant qu'une
+construction, un serveur, Playwright et un Chromium de mesure tournaient
+ensemble ». Cette occurrence-ci l'écarte : elle est tombée en intégration
+continue, sur un exécuteur d'UN SEUL worker, où rien d'autre ne tournait.
+
+**Et un piège d'outillage retombé dedans, pour la troisième fois recensée
+ici** : rejouer le test seul avec `-g` écarte celui qui OUVRE LE COMPTE, donc
+il n'y a plus de session et l'échec devient « la liste n'apparaît pas » —
+c'est-à-dire un symptôme qui n'a rien à voir. Le fichier se rejoue en entier.
+
+### Ce qui ne change pas d'une langue à l'autre, et le seul détecteur possible du texte en dur sans accent
+`texteEnDurComposants.test.ts` cherche des lettres ACCENTUÉES, et sa limite est
+écrite dans son propre commentaire depuis le premier jour : « une phrase
+française sans accent existe, mais elle est rare ». Le journal la paie
+pourtant trois fois — « Perfect » affiché pour un KDA sans mort, « Continuer
+avec Google » sur le premier écran de l'application installée, et
+`aria-label="Fermer"` en français dans les six langues. Un mot anglais sans
+accent est indistinguable d'un identifiant, et c'est l'angle mort par
+construction.
+
+**Le recensement statique est NÉGATIF, et c'est écrit pour qu'on ne le
+refasse pas.** Les attributs qui portent du texte visible — `aria-label`,
+`title`, `placeholder`, `alt` — ne contiennent que dix littéraux dans tout
+`src`, et les dix sont légitimes : quatre exemples de chiffres, un exemple de
+Riot ID, le nom du produit, et le sélecteur de langue, déjà dispensé.
+
+**Ce qui reste ne se cherche donc pas dans la SOURCE, mais à l'ÉCRAN.** Un
+texte qui ne CHANGE PAS entre le français et le japonais est soit un nom
+propre, soit du texte en dur — et il n'y a pas de troisième cas, puisqu'une
+traduction change forcément d'écriture. C'est la définition même du défaut,
+et elle ne demande aucun vocabulaire.
+
+**Mesuré avant d'écrire quoi que ce soit**, puis refait par l'outil sur ses
+dix-neuf pages par défaut : **1 273 textes japonais, 1 237 français, 51
+invariants portant du latin, et les cinquante et un sont des noms propres
+légitimes** — seize jeux, six champions, sept rôles, deux régions, le pseudo
+du compte de mesure, Riot Games, Vercel, Neon, la CNIL. Cinquante et une
+lignes se parcourent d'un coup d'œil ; mille deux cent soixante-treize ne se
+lisent pas.
+
+**Et deux régions sur seize seulement y figurent, ce qui confirme le seuil**
+plutôt que de le contredire : « EUW1 » et « EUN1 » portent trois lettres
+latines, « KR », « NA1 » et « VN2 » n'en portent que deux. Les seize options
+sont bien à l'écran — vérifié directement une heure plus tôt — c'est le motif
+qui les écarte, et il le fait pour la raison écrite.
+
+**Ce n'est donc PAS un garde, c'est une liste à parcourir**, et la distinction
+est délibérée. Un nom propre et une chaîne en dur sont tous deux INVARIANTS :
+aucune comparaison ne les sépare, seul un VOCABULAIRE le ferait. Et ce
+vocabulaire-là — cent soixante-dix champions, seize jeux, sept rôles, seize
+régions — doit être exhaustif pour rester muet, donc il CRIE le jour où Riot
+ajoute un champion. C'est exactement la façon dont meurt un garde, et c'est la
+raison pour laquelle celui des clés de stockage n'a pas été écrit.
+
+**La comparaison exige une langue à idéogrammes d'UN SEUL côté**, et l'outil
+refuse en erreur sinon. Entre deux langues latines, l'identité ne prouve rien :
+« Configuration » s'écrit pareil en français et en espagnol sans que personne
+ait rien oublié.
+
+**Sa limite est écrite plutôt que laissée à découvrir** : le seuil de trois
+lettres latines laisse passer un texte en dur de deux lettres ou moins.
+« 20V / 40D » était de cette forme, et c'est `dictionaries/resultat.ts` qui le
+tient depuis.
+
+Le drapeau est optionnel (`--invariants=fr`), donc le balayage ordinaire ne
+paie pas le second passage — il double la durée, et il n'a d'objet qu'une fois
+par campagne.
+
+Cinq sabotages, cinq échecs : le motif latin élargi à une seule lettre,
+l'ensemble des écritures CJK vidé, la parité des écritures retirée, le second
+balayage supprimé, et son décompte débranché.
+
+**Et l'outil s'est mordu lui-même à la première exécution réelle, ce qui est
+la meilleure démonstration possible.** Le compte de mesure venait d'être purgé
+par un parcours navigateur — l'ordre est écrit ici depuis longtemps, la suite
+d'abord, le compte ensuite, la mesure enfin, et je l'ai pris à l'envers pour
+la quatrième fois. Les dix-neuf pages sont sorties « NON MESURÉE », dans les
+deux langues, et le rapport s'est terminé sur « la comparaison ne prouve
+rien » au lieu de rendre zéro invariant sous une allure de succès.
 
 ### Sept régions Riot que le serveur acceptait et que l'écran n'offrait pas
 Trouvée en construisant tout autre chose : le vocabulaire d'un détecteur de

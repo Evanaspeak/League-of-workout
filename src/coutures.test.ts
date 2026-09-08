@@ -90,7 +90,11 @@ describe("et il dit ce qu'il n'a pas regardé", () => {
      * annonçant zéro constat sur des pages jamais ouvertes est l'inverse d'un
      * audit. L'outil compte donc, et sort en erreur sous vingt textes.
      */
-    expect(SRC).toMatch(/lus \+= textes\.length/);
+    // Le motif porte sur la FORME du décompte et non sur le nom de la
+    // variable : celui-ci a changé quand le balayage est devenu une
+    // fonction, et un garde épinglé sur un nom devient muet le jour du
+    // remaniement, c'est-à-dire le jour où l'on aurait besoin de lui.
+    expect(SRC).toMatch(/lus \+= \w+\.length/);
     expect(SRC).toMatch(/lus < 20/);
     expect(SRC).toMatch(/process\.exit\(1\)/);
   });
@@ -209,5 +213,73 @@ describe("et il dit ce qu'il n'a pas regardé", () => {
      * viens de le refaire.
      */
     expect(SRC).toMatch(/refuserPrefixe\s*\(/);
+  });
+});
+
+describe("ce qui ne change pas d'une langue à l'autre", () => {
+  /**
+   * Le seul détecteur possible du texte en dur SANS accent.
+   *
+   * `texteEnDurComposants.test.ts` cherche des lettres accentuées : « Perfect »,
+   * « Continuer avec Google » et `aria-label="Fermer"` lui échappent par
+   * construction, et c'est écrit trois fois au journal. Un texte qui ne CHANGE
+   * PAS entre le français et le japonais est soit un nom propre, soit du texte
+   * en dur — et il n'y a pas de troisième cas, puisqu'une traduction change
+   * forcément d'écriture.
+   *
+   * Ce n'est pas un garde : c'est une liste à parcourir. Mesuré avant d'être
+   * écrit — 51 invariants sur seize pages, tous des noms propres légitimes,
+   * dans un rapport qui lit 885 textes français et 896 japonais.
+   */
+  const LATIN = motif("LATIN");
+
+  it("trois lettres latines écartent les chiffres et les signes", () => {
+    // Ce motif ne DISTINGUE pas un nom propre d'une phrase en dur — rien ne
+    // le peut, les deux étant invariants — il écarte seulement ce qui ne
+    // porte pas de mot du tout.
+    expect(LATIN.test("Perfect")).toBe(true);
+    expect(LATIN.test("Continuer avec Google")).toBe(true);
+    expect(LATIN.test("League of Legends")).toBe(true);
+    expect(LATIN.test("1 543")).toBe(false);
+    expect(LATIN.test("· / —")).toBe(false);
+    expect(LATIN.test("勝率")).toBe(false);
+    // Deux lettres ne suffisent pas, et c'est la limite écrite dans l'outil :
+    // « 20V / 40D » était de cette forme, et c'est le dictionnaire des
+    // résultats qui le tient depuis.
+    expect(LATIN.test("20V / 40D")).toBe(false);
+  });
+
+  it("refuse deux langues de la même écriture", () => {
+    /**
+     * Entre deux langues latines, l'identité ne prouve rien : « Configuration »
+     * s'écrit pareil en français et en espagnol sans que personne ait rien
+     * oublié. La comparaison n'a de sens qu'avec une langue à idéogrammes d'UN
+     * SEUL côté.
+     */
+    const bloc = /const CJK = new Set\(\[([^\]]*)\]\);/.exec(SRC);
+    expect(bloc).not.toBeNull();
+    const langues = [...(bloc as RegExpExecArray)[1].matchAll(/"(\w+)"/g)].map((m) => m[1]);
+    // Le témoin : un ensemble vide rendrait la parité toujours vraie, donc la
+    // comparaison toujours refusée — et le contrôle ci-dessous vert sur rien.
+    expect(langues.length).toBeGreaterThanOrEqual(2);
+    expect(langues).toContain("ja");
+    expect(langues).toContain("zh");
+    for (const latine of ["fr", "en", "es", "de"]) expect(langues).not.toContain(latine);
+    // Et la parité est bien ce qui décide, avec une sortie en erreur.
+    expect(SRC).toMatch(/CJK\.has\(LANGUE\) === CJK\.has\(AUTRE\)/);
+  });
+
+  it("balaie vraiment une SECONDE langue, et compte ce qu'elle a lu", () => {
+    /**
+     * Sans second balayage, l'intersection porterait sur un ensemble vide et
+     * la liste serait vide — c'est-à-dire « rien à signaler » sur rien
+     * regardé, la faute que cet outil existe pour ne pas commettre. Le second
+     * balayage a donc son propre décompte et son propre refus.
+     */
+    expect(SRC).toMatch(/const second = AUTRE \? await balayer\(AUTRE\) : null;/);
+    expect(SRC).toMatch(/invariants\(textes, second\.textes\)/);
+    expect(SRC).toMatch(/second\.lus < 20/);
+    // Et ce qu'il n'a pas regardé se dit, comme pour le premier.
+    expect(SRC).toMatch(/second\.nonMesurees/);
   });
 });
