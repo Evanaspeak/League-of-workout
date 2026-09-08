@@ -22,6 +22,7 @@ import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
+import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -71,7 +72,8 @@ export async function POST(req: Request) {
   // seul jeu de valeurs dont on soit sûr qu'il corresponde à ce qui sera
   // affiché. Et il est toujours complet, quoi qu'ait rendu le chargement.
   const ratiosDuJour = JSON.stringify(ratiosActuels());
-  const body = await req.json();
+  const body = await lireCorps<CorpsLibre>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

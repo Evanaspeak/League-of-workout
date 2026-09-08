@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { normaliserCode, MAX_GROUPES, MAX_MEMBRES } from "@/lib/social";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Rejoindre un groupe avec son code.
@@ -15,12 +16,8 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  let body: { code?: unknown };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<{ code?: unknown }>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const code = normaliserCode(body.code);
   if (!code) return NextResponse.json({ error: "Code invalide" }, { status: 400 });

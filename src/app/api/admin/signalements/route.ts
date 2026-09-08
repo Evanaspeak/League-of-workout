@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { estAdmin } from "@/lib/admin";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Les problèmes signalés, pour la seule personne qui puisse les corriger.
@@ -54,12 +55,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
   const { id, statut } = (body ?? {}) as { id?: unknown; statut?: unknown };
   if (typeof id !== "string" || !id) {
     return NextResponse.json({ error: "Signalement manquant" }, { status: 400 });

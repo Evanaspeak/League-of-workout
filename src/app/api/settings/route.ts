@@ -13,6 +13,7 @@ import { PARTAGES, type Partage } from "@/lib/profilAmi";
 import { decisionProfilPublic } from "@/lib/profilPublic";
 import { NOMS, type ChoixNom } from "@/lib/nomAffiche";
 import { MULTIPLICATEURS } from "@/lib/objectifCalorique";
+import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -54,7 +55,8 @@ export async function PUT(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const body = await req.json();
+  const body = await lireCorps<CorpsLibre>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const updates: Promise<unknown>[] = [];
   let jetonRendu: string | null | undefined;

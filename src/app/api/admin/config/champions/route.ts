@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { CHAMPIONS } from "@/lib/champions";
 import { estAdmin } from "@/lib/admin";
+import { lireCorps } from "@/lib/corpsRequete";
 
 
 async function requireAdmin() {
@@ -27,7 +28,9 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   if (!await requireAdmin()) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  const { champions } = await req.json();
+  const corps = await lireCorps<{ champions?: unknown }>(req);
+  if (!corps) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
+  const { champions } = corps;
   if (!Array.isArray(champions)) return NextResponse.json({ error: "Format invalide" }, { status: 400 });
   const cleaned = champions.map((c: string) => String(c).trim()).filter(Boolean);
   try {

@@ -6,6 +6,7 @@ import { comptePublic } from "@/lib/compte";
 import { estAdmin } from "@/lib/admin";
 import { pseudoDejaPris, validerPseudo } from "@/lib/identite";
 import { REGIONS_RIOT, validerPuuid, validerRiotId } from "@/lib/riot-champs";
+import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
 
 export async function GET() {
   await seedDefaults();
@@ -40,7 +41,8 @@ export async function DELETE() {
 }
 
 export async function PUT(req: Request) {
-  const body = await req.json();
+  const body = await lireCorps<CorpsLibre>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 

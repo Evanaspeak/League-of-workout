@@ -54,6 +54,31 @@ beforeEach(() => {
  * ouverte sans limite de débit.
  */
 describe("POST /api/auth/register", () => {
+  /**
+   * Un corps illisible n'est pas une panne du serveur.
+   *
+   * La route rendait 500 « Erreur serveur » sur un corps tronqué. Avec
+   * `beta-access`, c'est l'une des deux seules routes que quelqu'un sans
+   * compte touche : on lui disait que le site est cassé au moment précis où
+   * l'on cherche à le faire entrer.
+   */
+  it("refuse un corps illisible en 400, sans accuser le serveur", async () => {
+    const r = await POST(new Request("http://localhost/api/auth/register", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: "{tronqu",
+    }));
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: "Corps illisible" });
+    expect(user.create).not.toHaveBeenCalled();
+  });
+
+  it("refuse un corps qui n'est pas un objet", async () => {
+    const r = await POST(new Request("http://localhost/api/auth/register", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: "42",
+    }));
+    expect(r.status).toBe(400);
+    expect(user.create).not.toHaveBeenCalled();
+  });
+
   it("compte la tentative sur l'adresse réseau", async () => {
     await inscrire(VALIDE);
     expect(recordAttempt).toHaveBeenCalledWith("203.0.113.7", "register");

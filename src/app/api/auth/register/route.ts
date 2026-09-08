@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
 import { MESSAGES_PORTE, porteMotDePasse } from "@/lib/porteBeta";
 import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
+import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
 
 
 export async function POST(request: Request) {
@@ -14,7 +15,8 @@ export async function POST(request: Request) {
     }
     await recordAttempt(ip, "register");
 
-    const body = await request.json();
+    const body = await lireCorps<CorpsLibre>(request);
+    if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
     const password = body.password;
 
     // L'adresse est ramenée à sa forme canonique AVANT le contrôle d'unicité

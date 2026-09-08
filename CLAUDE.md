@@ -1166,6 +1166,73 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Erreur serveur » pour un corps de requête tronqué
+Recensement mécanique : les routes qui lisent le corps d'une requête. Il y en a
+dix-neuf, et **neuf ne rattrapaient pas l'échec**. `request.json()` LÈVE sur un
+corps tronqué ou vide — un octet perdu sur un réseau mobile, un mandataire qui
+coupe, un client qui envoie du vide — et la route rendait alors **500 « Erreur
+serveur »**.
+
+**Les deux plus mal placées sont `beta-access` et `auth/register`**,
+c'est-à-dire les seules routes que quelqu'un sans compte touche. On lui disait
+que le site est cassé au moment précis où l'on cherche à le faire entrer, et on
+l'envoyait chercher une panne qui n'existe pas.
+
+**Mesuré avant de corriger**, sur le serveur, avec un corps `{"pseudo":` :
+
+| route | avant | après |
+|---|---|---|
+| `beta-access` | **500** « Erreur serveur » | 400 « Corps illisible » |
+| `auth/register` | **500** « Erreur serveur » | 400 « Corps illisible » |
+| `signalement` | 400 « Corps illisible » | inchangé |
+
+C'est le motif que ce projet paie en boucle sous sa forme la plus discrète :
+onze routes appliquaient la règle, huit ne l'appliquaient pas, et rien ne
+disait lesquelles. Aucune ne CASSAIT — elles répondaient toutes quelque chose.
+
+**La règle vit une seule fois maintenant**, dans `src/lib/corpsRequete.ts`. Les
+onze qui l'écrivaient à la main la lisent, avec exactement le même message et
+le même code : c'est de la déduplication sans changement de comportement.
+
+**Un corps qui n'est pas un OBJET est refusé aussi.** Toutes les routes de ce
+projet lisent des champs nommés : sur `null` la lecture lève, sur un nombre ou
+un tableau elle rend `undefined` et le refus tombe plus loin, sous un message
+qui parle d'autre chose.
+
+**Dix routes gardent leur propre `.catch`, et c'est écrit plutôt que tu.**
+Leur refus est plus PRÉCIS qu'un refus générique — « Lien invalide ou expiré »
+pour un lien de récupération, « Durée invalide » pour un décompte — et les
+réécrire changerait un texte que des gens voient déjà. Le garde ne demande donc
+pas `lireCorps` partout : il demande qu'une lecture du corps soit RATTRAPÉE,
+d'une façon ou d'une autre. Ce qui reste imprécis est nommé : un corps
+illisible envoyé à `/api/dette` s'annonce « Durée invalide », ce qui désigne la
+valeur alors que rien n'est arrivé.
+
+**Le défaut strict, et l'échappatoire nommée.** `lireCorps` rend
+`Record<string, unknown>` : une route neuve doit dire ce qu'elle attend.
+`CorpsLibre` existe pour les six qui validaient déjà chaque champ à la main et
+lisaient `any` — l'employer ailleurs revient à renoncer au compilateur, et son
+commentaire le dit.
+
+Quatre sabotages sur le garde, quatre échecs : une route qui relit le corps à
+nu, le module qui ne rattrape plus, le module qui accepte un tableau, et le
+motif rendu aveugle. Deux de plus sur les routes d'acquisition, deux échecs.
+
+**Et un de mes deux tests par route est plus faible que l'autre**, ce que seul
+le sabotage a dit : « refuse un corps qui n'est pas un objet » passe AVEC la
+lecture nue remise, parce que `42` s'analyse très bien et que le refus tombe
+ensuite sur un champ manquant. Il éprouve une propriété réelle, pas celle qui
+distingue. C'est écrit ici plutôt que compté comme un second garde.
+
+**Deux pièges d'outillage, tous deux les miens.** Mon insertion d'import
+cherchait la DERNIÈRE ligne commençant par `import ` — sur un import
+multiligne, c'est la ligne OUVRANTE, et la nouvelle ligne s'est glissée à
+l'intérieur des accolades. `tsc` l'a dit tout de suite, ce qui est le bon
+comportement. Et `pkill -f "next-server"` dans un script qui contient ce mot
+tue le script lui-même : sortie 144, aucun journal, et le sabotage reste sur le
+disque. **Troisième occurrence recensée ici** — on liste par
+`ps -eo pid,args` et on tue par numéro.
+
 ### Le partage entre exercices au choix (ligne 068)
 Réponse 068 : « au choix ». Dernière ligne non cochée de la section des
 exercices, et la seule décision qu'elle laissait ouverte est la FORME.

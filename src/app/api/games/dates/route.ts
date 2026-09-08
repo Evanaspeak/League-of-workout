@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Corriger la date de plusieurs parties d'un coup.
@@ -28,12 +29,8 @@ export async function PATCH(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
   const { ids, decalageMinutes, date } = (body ?? {}) as {
     ids?: unknown; decalageMinutes?: unknown; date?: unknown;
   };
