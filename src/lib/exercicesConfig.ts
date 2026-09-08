@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
-  appliquerRatios, normaliserRatios, RATIOS_DEFAUT, type RatiosExercices,
+  appliquerRatios, fusionnerRatios, normaliserRatios, RATIOS_DEFAUT,
+  type RatiosExercices,
 } from "@/lib/exercices";
 
 /** Clé de la table SystemConfig où vivent les ratios. */
@@ -20,14 +21,19 @@ const TTL_MS = 60_000;
 let cache: { valeurs: RatiosExercices; expire: number } | null = null;
 
 /**
- * Charge les ratios et les installe pour le processus courant.
+ * Le barème GLOBAL, sans l'installer sur le module.
  *
- * À appeler au début de tout rendu ou de toute route qui convertit des points
- * en répétitions. Ne jette jamais : une base injoignable ou une table absente
- * doit donner les ratios d'origine, pas une page en erreur.
+ * C'est la moitié qui compte depuis que les ratios peuvent être personnels
+ * (réponse 047) : `appliquerRatios` pose les valeurs sur un objet de MODULE,
+ * partagé par toutes les requêtes du processus. Installer là un barème de
+ * compte ferait convertir la dette de l'un avec les ratios de l'autre, sans
+ * erreur et sans rien qui le signale.
+ *
+ * Ne jette jamais : une base injoignable ou une table absente doit donner les
+ * ratios d'origine, pas une page en erreur.
  */
-export async function chargerRatios(): Promise<RatiosExercices> {
-  if (cache && Date.now() < cache.expire) return appliquerRatios(cache.valeurs);
+async function ratiosGlobaux(): Promise<RatiosExercices> {
+  if (cache && Date.now() < cache.expire) return cache.valeurs;
 
   let valeurs: RatiosExercices = { ...RATIOS_DEFAUT };
   try {
@@ -38,7 +44,34 @@ export async function chargerRatios(): Promise<RatiosExercices> {
   }
 
   cache = { valeurs, expire: Date.now() + TTL_MS };
-  return appliquerRatios(valeurs);
+  return valeurs;
+}
+
+/**
+ * Charge les ratios GLOBAUX et les installe pour le processus courant.
+ *
+ * À appeler au début de tout rendu ou de toute route qui convertit des points
+ * en répétitions SANS savoir de quel compte il s'agit — la mise en page
+ * racine, une page publique, la source de diffusion.
+ *
+ * Ce qu'elle installe est le barème commun, jamais celui d'un compte : un
+ * appelant qui oublierait de passer les ratios personnels retombe donc sur le
+ * global, ce qui est le comportement d'avant. C'est cette propriété qui rend
+ * la reprise des appelants sûre un par un.
+ */
+export async function chargerRatios(): Promise<RatiosExercices> {
+  return appliquerRatios(await ratiosGlobaux());
+}
+
+/**
+ * Le barème d'un COMPTE : le global, corrigé de ce que la personne a réglé.
+ *
+ * Il ne s'installe PAS sur le module — voir `ratiosGlobaux` — et se passe donc
+ * explicitement aux conversions. C'est plus verbeux, et c'est la seule forme
+ * qui tienne sur un serveur qui répond à plusieurs personnes à la fois.
+ */
+export async function ratiosPourCompte(perso: unknown): Promise<RatiosExercices> {
+  return fusionnerRatios(await ratiosGlobaux(), perso);
 }
 
 /** Vide le cache. Appelé après un enregistrement pour ne pas servir l'ancien. */

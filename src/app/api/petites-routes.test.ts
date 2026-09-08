@@ -24,12 +24,16 @@ jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedVa
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/exercicesConfig", () => ({
   chargerRatios: jest.fn().mockResolvedValue({ pompes: 1, squats: 2, boxe: 9 }),
+  // Le barème du COMPTE : distinct du global, et de valeurs assez différentes
+  // pour qu'un test qui confondrait les deux ne puisse pas passer.
+  ratiosPourCompte: jest.fn().mockResolvedValue({ pompes: 1, squats: 5, boxe: 20 }),
 }));
 
 import { POST as ouvrirTour } from "./auth/desktop-round/route";
 import { GET as listerChampions } from "./champions/route";
 import { GET as lireRatios } from "./exercices/ratios/route";
 import { GET as initialiser } from "./init/route";
+import { getCurrentUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { COOKIES_SESSION, COOKIE_TOUR_DESKTOP } from "@/lib/cookies";
 import { CHAMPIONS } from "@/lib/champions";
@@ -123,9 +127,29 @@ describe("GET /api/exercices/ratios", () => {
   it("sert les ratios en vigueur sans demander de session", async () => {
     // Ces trois nombres voyagent déjà dans le HTML de chaque page : exiger une
     // session rendrait la route inutilisable depuis la page d'accueil.
+    (getCurrentUser as jest.Mock).mockResolvedValue(null);
     const r = await lireRatios();
     expect(r.status).toBe(200);
     expect((await corps(r)).ratios).toEqual({ pompes: 1, squats: 2, boxe: 9 });
+  });
+
+  /**
+   * Le barème PERSONNEL arrive par cette route, et par elle seule.
+   *
+   * La mise en page rend le barème GLOBAL — elle est la racine de toutes les
+   * pages, y compris des prérendues, et y lire la session les rendrait
+   * dynamiques d'un coup. C'est donc cette relecture-ci, faite par le
+   * navigateur, qui porte les ratios du compte jusqu'à l'écran (réponse 047).
+   *
+   * Sans elle, une pastille de dette convertirait avec le barème commun
+   * pendant que le serveur, lui, compte avec celui de la personne : deux
+   * nombres pour la même dette, ce que ce fichier a déjà payé une fois.
+   */
+  it("sert le barème du COMPTE quand il y a une session", async () => {
+    (getCurrentUser as jest.Mock).mockResolvedValue({ id: "u1", ratiosExercices: null });
+    const r = await lireRatios();
+    expect(r.status).toBe(200);
+    expect((await corps(r)).ratios).toEqual({ pompes: 1, squats: 5, boxe: 20 });
   });
 
   /**

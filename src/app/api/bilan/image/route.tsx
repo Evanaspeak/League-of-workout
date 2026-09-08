@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { jourDansFuseau } from "@/lib/fuseau";
 import { calculerBilan, JOURS_SAISON, type Bilan } from "@/lib/bilanSaison";
 import { parseParts, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
@@ -95,7 +95,6 @@ function carte(
 }
 
 export async function GET() {
-  await chargerRatios();
   const user = await getCurrentUser();
   // Pas de session, pas d'image. Une image de bilan est une donnée du compte
   // comme une autre, même si elle est faite pour être montrée.
@@ -125,7 +124,18 @@ export async function GET() {
   // « 4 200 points » ne dit rien à personne. La quantité réelle, dans les
   // exercices du compte, en dit quelque chose.
   const etiquette = etiquetteLocale(estLocale(user.langue) ? user.langue : "en");
-  const parts = ventiler(repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices), parseParts(user.partsExercices)), null, etiquette);
+  /**
+   * La conversion se fait ICI, donc elle a besoin d'un barème — et c'est celui
+   * du COMPTE depuis la réponse 047. Il se lit après la session et se passe
+   * explicitement : posé sur le module, il servirait à l'image de la personne
+   * suivante.
+   */
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
+  const parts = ventiler(
+    repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices), parseParts(user.partsExercices)),
+    ratios,
+    etiquette,
+  );
   const effortPaye = parts.map((p) => p.valeur).join(" + ") || "0";
 
   return new ImageResponse(

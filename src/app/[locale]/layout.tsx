@@ -140,6 +140,15 @@ export default async function RootLayout({
   // Les ratios d'exercices se règlent depuis l'administration. Les charger ici
   // les installe pour le rendu serveur de toute la page, et la valeur descend
   // au navigateur pour qu'il convertisse à l'identique.
+  /**
+   * Le barème GLOBAL, et il doit le rester.
+   *
+   * Depuis la réponse 047 les ratios peuvent être personnels ; les lire ici
+   * demanderait la session, donc rendrait dynamique la racine de TOUTES les
+   * pages — les cent cinquante prérendues comprises. Le navigateur va chercher
+   * le barème du compte par `/api/exercices/ratios`, qui existe déjà pour
+   * corriger cette valeur-là.
+   */
   const ratios = await chargerRatios();
 
   return (

@@ -318,6 +318,57 @@ export function normaliserRatios(brut: unknown): RatiosExercices {
 }
 
 /**
+ * Les ratios d'un COMPTE : le barème global, corrigé de ce que la personne a
+ * réglé pour elle (réponse 047, « Oui, par utilisateur »).
+ *
+ * Un exercice absent de `perso` garde le ratio global — donc un compte qui n'a
+ * jamais ouvert ce réglage se comporte exactement comme avant. C'est ce qui
+ * rend la colonne sans effet sur l'existant, et c'est aussi ce qui rend la
+ * reprise des appelants sûre : un appel qui oublierait les ratios personnels
+ * retombe sur le global, jamais sur ceux de quelqu'un d'autre.
+ *
+ * **Les pompes ne se règlent pas**, et pas par prudence : elles sont l'unité
+ * de référence — un point d'effort vaut une pompe depuis le premier jour, et
+ * `Game.pompesCalculees` compte des points sous ce nom. Les laisser régler
+ * changerait le sens du registre entier, pas la difficulté d'un exercice.
+ *
+ * **Elle DÉLÈGUE la lecture à `parseRatiosPerso`, et ce n'est pas un détail de
+ * style.** Elle portait la même boucle en double, et cette copie-là ne lisait
+ * que les objets — or la colonne est un `String?`, donc ce qui arrive de la
+ * base est une CHAÎNE. Elle retombait alors sur le barème commun, sans erreur
+ * et sans qu'aucun test unitaire le voie : les tests lui passaient des objets.
+ * Seul le parcours navigateur l'a dit, en lisant la dette après le réglage.
+ */
+export function fusionnerRatios(base: RatiosExercices, perso: unknown): RatiosExercices {
+  return { ...base, ...parseRatiosPerso(perso) };
+}
+
+/**
+ * Lit ce qu'un compte a rangé en base, sans le fusionner à quoi que ce soit.
+ *
+ * Rend un objet PARTIEL : seuls les exercices réellement réglés y figurent.
+ * C'est ce que l'écran des réglages doit montrer — « tu as changé la boxe et
+ * rien d'autre » — là où un jeu complet ne dirait plus ce qui vient de la
+ * personne et ce qui vient du barème commun.
+ */
+export function parseRatiosPerso(brut: unknown): Partial<RatiosExercices> {
+  let objet: unknown = brut;
+  if (typeof brut === "string") {
+    try { objet = JSON.parse(brut); } catch { return {}; }
+  }
+  if (!objet || typeof objet !== "object") return {};
+  const source = objet as Record<string, unknown>;
+  const out: Partial<RatiosExercices> = {};
+  for (const id of EXERCICES_REGLABLES) {
+    const v = Number(source[id]);
+    if (!Number.isFinite(v)) continue;
+    const { min, max } = RATIO_BORNES[id];
+    out[id] = Math.min(max, Math.max(min, v));
+  }
+  return out;
+}
+
+/**
  * Installe les ratios pour tout le processus.
  *
  * La conversion points → répétitions est appelée depuis une dizaine d'écrans
@@ -762,14 +813,24 @@ export function partPourExercice(repartition: Repartition, exercice: ExerciceId)
 }
 
 
-/** Secondes de travail que représente un point d'effort, pour cet exercice. */
-export function secondesParPoint(exercice: ExerciceId): number {
+/**
+ * Secondes de travail que représente un point d'effort, pour cet exercice.
+ *
+ * Le jeu de ratios est OPTIONNEL, comme partout ailleurs ici : son absence
+ * emploie ceux installés sur le module, c'est-à-dire les ratios GLOBAUX au
+ * serveur et ceux du compte au navigateur, où il n'y a qu'une personne.
+ */
+export function secondesParPoint(
+  exercice: ExerciceId,
+  ratios?: RatiosExercices | null,
+): number {
   const def = EXERCICES[exercice];
+  const r = ratioDe(exercice, ratios);
   // Un exercice compté en temps donne déjà des secondes par point.
-  if (def.unite === "temps") return def.ratio;
+  if (def.unite === "temps") return r;
   // Pour une distance, `secondesParRep` porte les secondes par kilomètre :
   // c'est la même multiplication, avec une autre unité de départ.
-  return def.ratio * (def.secondesParRep ?? 0);
+  return r * (def.secondesParRep ?? 0);
 }
 
 /**
@@ -786,10 +847,11 @@ export function dureeEffort(
    * est exactement ce que ce journal reproche ailleurs à `totalPoints`.
    */
   parts?: PartsExercices | null,
+  ratios?: RatiosExercices | null,
 ): number {
   const repartition = repartirPoints(points, exercices, parts);
   return Object.entries(repartition).reduce(
-    (total, [id, pts]) => total + (pts ?? 0) * secondesParPoint(toExerciceId(id)),
+    (total, [id, pts]) => total + (pts ?? 0) * secondesParPoint(toExerciceId(id), ratios),
     0,
   );
 }
@@ -816,10 +878,11 @@ export function dureeAffichee(
    * est exactement ce que ce journal reproche ailleurs à `totalPoints`.
    */
   parts?: PartsExercices | null,
+  ratios?: RatiosExercices | null,
 ): number {
   const repartition = repartirPoints(points, exercices, parts);
   return Object.entries(repartition).reduce(
-    (total, [id, pts]) => total + quantite(pts ?? 0, toExerciceId(id)),
+    (total, [id, pts]) => total + quantite(pts ?? 0, toExerciceId(id), ratios),
     0,
   );
 }

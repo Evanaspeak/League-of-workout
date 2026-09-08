@@ -1,5 +1,6 @@
 import {
   dureeAffichee, parseParts, quantite, repartirPoints, toExerciceId, toExerciceIds,
+  type RatiosExercices,
 } from "@/lib/exercices";
 import { convertirDette, conversionsProposees } from "@/lib/conversionDette";
 
@@ -44,7 +45,17 @@ export function reponseDette(user: {
    * les poids valent un et le partage est celui d'avant, à parts égales.
    */
   partsExercices?: string | null;
-}) {
+},
+/**
+ * Le barème du COMPTE (réponse 047, « Oui, par utilisateur »).
+ *
+ * Optionnel, et son absence emploie celui installé sur le module — c'est-à-dire
+ * le barème GLOBAL au serveur. Un appelant qui l'oublie retombe donc sur le
+ * comportement d'avant, jamais sur les ratios de quelqu'un d'autre : c'est la
+ * propriété qui a permis de reprendre les appelants un par un.
+ */
+ratios?: RatiosExercices | null,
+) {
   const exercices = toExerciceIds(user.exercices);
   const parts = parseParts(user.partsExercices);
   // Sans exercice sélectionné du tout, il n'y a rien à répartir.
@@ -71,7 +82,7 @@ export function reponseDette(user: {
      */
     quantites: Object.fromEntries(
       Object.entries(repartirPoints(points, exercices, parts))
-        .map(([id, pts]) => [id, quantite(pts ?? 0, toExerciceId(id))]),
+        .map(([id, pts]) => [id, quantite(pts ?? 0, toExerciceId(id), ratios)]),
     ) as Record<string, number>,
     /**
      * La dette ENTIÈRE, exprimée dans chaque exercice qu'on peut proposer.
@@ -88,7 +99,7 @@ export function reponseDette(user: {
      * ne dois rien » à quelqu'un qui doit encore quelque chose.
      */
     conversions: Object.fromEntries(
-      conversionsProposees(exercices).map((e) => [e, convertirDette(points, e).quantite]),
+      conversionsProposees(exercices).map((e) => [e, convertirDette(points, e, ratios).quantite]),
     ) as Record<string, number>,
     /**
      * Temps de travail que ça représente, en secondes.
@@ -97,7 +108,7 @@ export function reponseDette(user: {
      * seuil d'alerte se compare à ce nombre, et il doit être celui qu'on
      * MONTRE. Sinon la pastille passe en alerte sous son propre seuil.
      */
-    dureeSec: Math.round(dureeAffichee(points, exercices, parts)),
+    dureeSec: Math.round(dureeAffichee(points, exercices, parts, ratios)),
     /** Seuil de déclenchement du rappel, en secondes d'effort. 0 = désactivé. */
     seuilSec: Math.max(0, user.rappelSeuilSec),
   };

@@ -17,8 +17,9 @@ trace de celles qui sont parties, et dit où elles sont allées : sans lui, une
 décision prise redevient introuvable au bout de deux semaines, ce qui est
 exactement le défaut que ce fichier existe pour corriger.
 
-**Le 8 septembre, quatorze des dix-huit questions ont été tranchées d'un
-coup.** Il en reste quatre, plus deux nées des décisions elles-mêmes.
+**Le 8 septembre, quinze des dix-neuf questions ont été tranchées d'un
+coup.** Il en reste quatre, plus quatre nées des décisions et des chantiers
+eux-mêmes.
 
 ---
 
@@ -53,7 +54,56 @@ avec le fait que la suppression de compte est déjà en cascade — c'est la
 formulation la plus probable, mais elle engage l'éditeur du site, donc elle
 n'est pas écrite sans accord.
 
-### 3 · La distance du consentement santé, dans une seule langue
+### 3 · Le cardio s'accumule, le reste se paie entre deux parties (ligne 049)
+**Née en construisant la ligne 047, et c'est une CONTRADICTION, pas une
+question neuve.** La réponse 049 dit : « la dette hormis pour la boxe ou pour
+toute activité cardio est à faire entre chaque partie, pas à cumuler ».
+
+Le produit fait l'inverse depuis V387, et pour une raison mesurée : tant que la
+dette ne s'accumulait que pour les exercices comptés au TEMPS, quelqu'un qui
+fait des pompes — le cas par défaut — ne voyait jamais rien monter. La pastille
+n'apparaissait pas, le compteur était inatteignable, et **aucune ligne
+`Paiement` n'était jamais écrite**. Neuf cent soixante parties, deux points
+payés : classement, mur des records et niveau restaient vides par
+construction.
+
+**Ce qui reste du raisonnement d'origine est déjà appliqué**, mais à l'ÉCRAN et
+non au registre : ce qui se compte en répétitions se solde d'une tape, ce qui se
+compte en temps garde son chrono.
+
+**À décider** : est-ce que « ne pas cumuler » veut dire ce que V387 a mis en
+place — le registre enregistre tout, l'écran distingue — ou est-ce qu'il faut
+vraiment que la dette en pompes disparaisse si elle n'est pas payée tout de
+suite ? La seconde lecture rouvre le trou mesuré en V387, et elle demande de
+décider ce qu'on fait de la dette non payée à la partie suivante : elle
+s'efface, ou elle s'ajoute quand même.
+
+**Ce que ça coûterait** : rien si la première lecture est la bonne — la ligne se
+coche avec sa raison. Une nuit et une migration si c'est la seconde, plus la
+perte de ce que V387 a réparé.
+
+### 4 · Deux questions du plan qui attendent une réponse de toi
+**Constatées en cochant la ligne 047**, en lisant les cinq lignes qui restent
+dans « Le calcul de la dette ». Deux d'entre elles ne sont pas des décisions
+prises : ce sont des questions qui te sont retournées, et le plan les portait
+avec un chiffrage d'effort comme si elles étaient prêtes à construire.
+
+- **052, « tenir compte de la durée de la partie »** → ta réponse est
+  « Explique l'effet ». Perdre en quinze minutes ne coûte pas comme perdre en
+  quarante-cinq ; aujourd'hui le barème ne regarde que le KDA et le résultat.
+  Ce qu'un facteur de durée changerait : une défaite courte coûterait moins,
+  une longue davantage — donc rester dans une partie perdue d'avance coûterait
+  plus cher que de la finir vite, ce qui n'est pas forcément ce qu'on veut.
+- **057, « annoncer la dette AVANT la partie »** → ta réponse est « pas compris
+  l'intérêt ». Et c'est en partie déjà là : **la pastille en jeu affiche « si
+  gagné » et « si perdu » pendant la partie**. Ce que la ligne ajouterait est de
+  le dire avant de lancer, sur le site.
+
+**Ce que ça coûterait** : rien tant qu'elles ne sont pas tranchées. Elles sont
+écrites ici pour ne pas être réexaminées à chaque passe — c'est ce qui est
+arrivé quatre fois aux lignes 051, 275, 280 et 287.
+
+### 5 · La distance du consentement santé, dans une seule langue
 **Née de la décision du 8 septembre.** « Tutoie partout, c'était un oubli » a
 fait tomber six dispenses de vouvoiement. La septième porte une raison d'une
 autre nature : `consentementSante.ts` vouvoie « exprès, c'est un avertissement,
@@ -79,7 +129,7 @@ qui recueille un consentement met de la distance à un lecteur sur six.
 
 ## Ce qui demande une machine qu'on n'a pas
 
-### 4 · La branche POST du canal de connexion local
+### 6 · La branche POST du canal de connexion local
 `desktop/src/main.js` sert `/set-session` en `GET` **et** en `POST`, et la
 branche POST n'a **plus aucun appelant** — recensé sur tout le dépôt. Ses
 quarante-cinq lignes réécrivent la validation de la branche GET.
@@ -90,7 +140,7 @@ d'application de bureau, et surtout **ça ne se vérifie pas d'ici** —
 de se connecter depuis une application installée. Toucher à un canal
 d'authentification sans pouvoir l'éprouver n'est pas un travail de nuit.
 
-### 5 · Le rôle deviné quand Riot ne le donne pas
+### 7 · Le rôle deviné quand Riot ne le donne pas
 `riot-role.ts` fait retomber une position inconnue sur « Mid ». Un support
 compté comme jungler paie ses morts **trois points au lieu de deux et deux
 dixièmes**.
@@ -104,7 +154,7 @@ une ISSUE inventée, qui crée une dette qu'on ne doit pas. Le repli est donc
 La clé Riot de production n'étant pas arrivée, aucune partie n'emprunte ce
 chemin aujourd'hui : la question ne se pose pour de vrai qu'à ce moment-là.
 
-### 6 · Rendre du React dans les tests unitaires
+### 8 · Rendre du React dans les tests unitaires
 Un seul composant sur soixante-douze est importé par un test. Le chiffre a
 l'air terrible et ne veut presque rien dire : la suite unitaire tourne en
 environnement Node, sans DOM, et les composants sont éprouvés par les parcours
@@ -144,3 +194,4 @@ d'adresse.
 | Supprimer les comptes inactifs (280) | **« finalement, ne supprime rien »** — renverse la réponse 280 | close ; ouvre la 279 ci-dessus |
 | La progression physique (152 et 153) | « fais la courbe de force maintenant » — débloque les deux | plan, ligne 152 · fait en V531 |
 | Un mode séance plein écran (205) | « fais-le » — renverse le « plus tard » de la réponse 205 | plan, ligne 205 · fait en V532 |
+| Des ratios personnels par utilisateur (047) | « Oui, par utilisateur » | plan, ligne 047 · fait en V536 |

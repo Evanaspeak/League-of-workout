@@ -176,6 +176,50 @@ describe("PUT /api/settings — préférences personnelles", () => {
   });
 
   /**
+   * Le barème PERSONNEL (réponse 047, « Oui, par utilisateur »).
+   *
+   * Mêmes refus que le partage juste au-dessus, et pour la même raison : « deux
+   * fois plus dur » et « dix fois plus dur » ne se ressemblent pas, donc un
+   * ratio hors bornes se refuse au lieu de se ramener en silence.
+   *
+   * Deux contrôles portent ce que la fusion ne peut pas distinguer d'elle-même.
+   * Les POMPES sont refusées et non ramenées : `RATIO_BORNES.pompes` vaut
+   * `{ min: 1, max: 1 }`, donc l'arithmétique les remettrait à un de toute
+   * façon — et le réglage aurait alors l'air d'avoir pris. Et un ratio n'est
+   * PAS un entier : deux secondes et demie de squats par point est un réglage
+   * sensé, que le contrôle du partage aurait rejeté.
+   */
+  it("accepte un barème dans les bornes, décimales comprises", async () => {
+    const r = await put({ userPrefs: { ratiosExercices: '{"squats":2.5,"boxe":12}' } });
+    expect(r.status).toBe(200);
+    expect(p.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ ratiosExercices: '{"squats":2.5,"boxe":12}' }),
+    }));
+  });
+
+  it("accepte null, qui rend le barème commun", async () => {
+    const r = await put({ userPrefs: { ratiosExercices: null } });
+    expect(r.status).toBe(200);
+    expect(p.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ ratiosExercices: null }),
+    }));
+  });
+
+  it.each([
+    ["les pompes, qui sont l'unité de référence", '{"pompes":4}'],
+    ["un exercice inconnu", '{"licorne":2}'],
+    ["au-dessus du plafond de l'exercice", '{"boxe":9000}'],
+    ["en dessous de son plancher", '{"boxe":0}'],
+    ["une valeur qui n'est pas un nombre", '{"boxe":"beaucoup"}'],
+    ["du JSON cassé", "{boxe:"],
+    ["un tableau", "[1,2]"],
+  ])("refuse %s dans le barème", async (_titre, brut) => {
+    const r = await put({ userPrefs: { ratiosExercices: brut } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
+  /**
    * Un poids sur un exercice DÉCOCHÉ est accepté : décocher puis recocher ne
    * doit pas effacer le réglage qu'on avait mis. C'est le pendant du gel de
    * `Game.repartition` — ce qui a été choisi ne se réécrit pas tout seul.

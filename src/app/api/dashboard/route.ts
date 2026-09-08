@@ -3,6 +3,7 @@ import { pointsSur, veiller } from "@/lib/veille";
 import { defaitesDAffilee } from "@/lib/serieDeDefaites";
 import { premiereSemaine } from "@/lib/premiereSemaine";
 import { caloriesDePoints, minutesDeMarche } from "@/lib/calories";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { prisma } from "@/lib/prisma";
 import { chargerBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -359,6 +360,26 @@ export async function GET(req: Request) {
     })
     .reduce((s, g) => s + g.pompesCalculees, 0);
 
+  /**
+   * L'énergie dépensée, calculée UNE fois.
+   *
+   * Elle l'était deux fois — le total, puis la même expression réinjectée dans
+   * l'équivalence en marche — donc deux fois la même arithmétique sur seize
+   * exercices, et deux endroits où le barème pouvait diverger.
+   *
+   * Elle dépend du barème du COMPTE (réponse 047) : ce qu'un point d'effort
+   * représente en temps de travail décide de ce qu'il brûle. Les ratios se
+   * passent explicitement, jamais par le module — cette route est appelée à
+   * chaque ouverture du tableau de bord, donc par plusieurs comptes à la fois.
+   */
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
+  const kcal = user.santeConsentiLe && user.poids
+    ? caloriesDePoints(
+        globalTotalPoints, toExerciceIds(user.exercices), user.poids,
+        parseParts(user.partsExercices), ratios,
+      )
+    : null;
+
   return NextResponse.json({
     totalGames,
     wins,
@@ -426,14 +447,8 @@ export async function GET(req: Request) {
      * Le chiffre est calculé ici et non dans le navigateur pour que le poids
      * n'ait pas à voyager pour ça.
      */
-    calories: user.santeConsentiLe && user.poids
-      ? {
-          total: caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids, parseParts(user.partsExercices)),
-          marcheMin: minutesDeMarche(
-            caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids, parseParts(user.partsExercices)),
-            user.poids,
-          ),
-        }
+    calories: kcal !== null && user.poids
+      ? { total: kcal, marcheMin: minutesDeMarche(kcal, user.poids) }
       : null,
     global: {
       totalGames: globalGames,

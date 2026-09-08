@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { getCurrentUser } from "@/lib/auth-helpers";
+import { chargerRatios, ratiosPourCompte } from "@/lib/exercicesConfig";
 
 /**
  * Ratios d'exercices en vigueur.
@@ -29,11 +30,34 @@ import { chargerRatios } from "@/lib/exercicesConfig";
  *
  * Une requête de plus par page coûte moins qu'un chiffre faux : c'est le seul
  * arbitrage ici, et il ne se discute pas dans ce sens-là.
+ *
+ * **Elle rend le barème du COMPTE quand il y en a un** (réponse 047). C'est
+ * elle qui porte les ratios personnels jusqu'au navigateur, et ce n'est pas un
+ * détournement : le mécanisme existe précisément pour que la valeur portée par
+ * le HTML puisse être corrigée à la source.
+ *
+ * La MISE EN PAGE, elle, continue de rendre le barème global, et il faut que
+ * ça reste ainsi : elle est la racine de toutes les pages, y compris des cent
+ * cinquante qui sont prérendues. Y lire la session les rendrait dynamiques
+ * d'un coup — c'est le défaut qui avait mis toutes les pages publiques du
+ * produit hors du magasin de prérendu, et il ne se refera pas pour trois
+ * nombres.
+ *
+ * Ce que ça coûte : sur un écran connecté, la première peinture convertit avec
+ * le barème commun, puis se corrige. C'est la fenêtre qui existe DÉJÀ pour un
+ * changement d'administration ; elle ne s'ouvre pas plus grand ici.
+ *
+ * Et une lecture de session de plus par page, mais seulement quand il y en a
+ * une : sans cookie, `getCurrentUser` rend `null` sans toucher la base, donc
+ * une page publique ne paie rien.
  */
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const ratios = await chargerRatios();
+  const user = await getCurrentUser();
+  const ratios = user
+    ? await ratiosPourCompte(user.ratiosExercices)
+    : await chargerRatios();
   return NextResponse.json({ ratios }, {
     headers: { "Cache-Control": "no-store, must-revalidate" },
   });

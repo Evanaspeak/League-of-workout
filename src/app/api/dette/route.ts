@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeEffort, exercicesEnTemps, parseParts, secondesParPoint, toExerciceIds,
 } from "@/lib/exercices";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { reponseDette } from "@/lib/contexteConnecte";
 import { estJourValide, jourLocal } from "@/lib/serie";
 import { partPayeeQuantite } from "@/lib/conversionDette";
@@ -15,12 +15,18 @@ import { DUREE_MAX_SEC, QUANTITE_MAX, entierBorne } from "@/lib/bornesSaisie";
 
 
 export async function GET() {
-  // La dette s'exprime en temps d'effort : sans les ratios réglés en
-  // administration, la durée renvoyée serait celle des valeurs d'origine.
-  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-  return NextResponse.json(reponseDette(user));
+  /**
+   * La dette s'exprime en temps d'effort, donc elle a besoin d'un barème — et
+   * depuis la réponse 047 c'est celui du COMPTE, pas le global.
+   *
+   * Il se lit APRÈS la session et se passe explicitement : l'installer sur le
+   * module ferait convertir la dette du visiteur suivant avec les ratios de
+   * celui-ci, sans erreur et sans rien qui le signale.
+   */
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
+  return NextResponse.json(reponseDette(user, ratios));
 }
 
 /**
@@ -40,11 +46,11 @@ export async function GET() {
  * serveur, et les deux annonçaient deux nombres différents pour la même dette.
  */
 export async function PATCH(req: Request) {
-  // La dette s'exprime en temps d'effort : sans les ratios réglés en
-  // administration, la durée renvoyée serait celle des valeurs d'origine.
-  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  // Le barème du compte (réponse 047), lu après la session et passé
+  // explicitement — voir la raison écrite sur le GET.
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
 
   const body = await req.json().catch(() => ({}));
   const exercices = exercicesEnTemps(toExerciceIds(user.exercices));
@@ -83,7 +89,7 @@ export async function PATCH(req: Request) {
     if (!Number.isFinite(faite) || faite < 0 || faite > QUANTITE_MAX) {
       return NextResponse.json({ error: "Quantité invalide" }, { status: 400 });
     }
-    const part = partPayeeQuantite(faite, dus, toExerciceId(exercice), await chargerRatios());
+    const part = partPayeeQuantite(faite, dus, toExerciceId(exercice), ratios);
     restant = Math.max(0, dus - Math.round(dus * part));
   } else if (!body?.tout) {
     /**
@@ -99,7 +105,7 @@ export async function PATCH(req: Request) {
     if (secondesFaites === null) {
       return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
     }
-    const totalSec = dureeEffort(dus, exercices, parseParts(user.partsExercices));
+    const totalSec = dureeEffort(dus, exercices, parseParts(user.partsExercices), ratios);
     // Un arrêt en cours de route ne paie que le temps réellement effectué.
     const partPayee = totalSec > 0 ? Math.min(1, secondesFaites / totalSec) : 1;
     restant = Math.max(0, dus - Math.round(dus * partPayee));
@@ -152,7 +158,7 @@ export async function PATCH(req: Request) {
     });
     // Le jeton d'un autre compte n'est pas une raison de refuser : il ne dit
     // rien de celui-ci. C'est le sien, et lui seul, qui vaut « déjà payé ».
-    if (deja?.userId === user.id) return NextResponse.json(reponseDette(user));
+    if (deja?.userId === user.id) return NextResponse.json(reponseDette(user, ratios));
   }
 
   /**
@@ -193,7 +199,7 @@ export async function PATCH(req: Request) {
           where: { id: user.id },
           select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
         });
-        return NextResponse.json(reponseDette(frais));
+        return NextResponse.json(reponseDette(frais, ratios));
       }
       throw e;
     }
@@ -230,7 +236,7 @@ export async function PATCH(req: Request) {
     where: { id: user.id },
     select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
   });
-  return NextResponse.json(reponseDette(maj));
+  return NextResponse.json(reponseDette(maj, ratios));
 }
 
 /**
@@ -238,11 +244,11 @@ export async function PATCH(req: Request) {
  * le rappel sans devoir enregistrer des parties jusqu'à franchir le seuil.
  */
 export async function PUT(req: Request) {
-  // La dette s'exprime en temps d'effort : sans les ratios réglés en
-  // administration, la durée renvoyée serait celle des valeurs d'origine.
-  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+  // Le barème du compte (réponse 047), lu après la session et passé
+  // explicitement — voir la raison écrite sur le GET.
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
 
   const body = await req.json().catch(() => ({}));
   const secondes = Number(body?.secondes);
@@ -258,7 +264,7 @@ export async function PUT(req: Request) {
 
   // Le compteur vit en points d'effort : on convertit la durée demandée avec
   // la même cadence que celle qui sert à l'afficher.
-  const parPoint = secondesParPoint(exercices[0]);
+  const parPoint = secondesParPoint(exercices[0], ratios);
   const points = parPoint > 0 ? Math.round(secondes / parPoint) : 0;
 
   const maj = await prisma.user.update({
@@ -266,5 +272,5 @@ export async function PUT(req: Request) {
     data: { dettePointsDus: points },
     select: { dettePointsDus: true, rappelSeuilSec: true, exercices: true },
   });
-  return NextResponse.json(reponseDette(maj));
+  return NextResponse.json(reponseDette(maj, ratios));
 }

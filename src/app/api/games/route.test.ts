@@ -15,7 +15,20 @@ jest.mock("@/lib/prisma", () => ({
 jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/rate-limit", () => ({ isRateLimited: jest.fn(), recordAttempt: jest.fn() }));
-jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
+jest.mock("@/lib/exercicesConfig", () => ({
+  chargerRatios: jest.fn(),
+  /*
+    Ici la doublure rend un barème COMPLET, et pas `undefined` comme ailleurs :
+    c'est celui-là qui est GELÉ sur la partie, donc un jeu vide ferait écrire
+    `undefined` dans `Game.ratios` et l'historique perdrait son barème sans que
+    rien ne le dise. Les valeurs d'origine conviennent — ce qu'on éprouve est
+    le gel, pas le contenu.
+  */
+  ratiosPourCompte: jest.fn(async () => {
+    const reel = jest.requireActual("@/lib/exercices");
+    return { ...reel.RATIOS_DEFAUT };
+  }),
+}));
 jest.mock("@/lib/push", () => ({ notifier: jest.fn().mockResolvedValue(undefined) }));
 
 import { GET, POST } from "./route";

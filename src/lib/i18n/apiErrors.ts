@@ -288,6 +288,10 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Invalid split", es: "Reparto inválido", de: "Ungültige Aufteilung",
     zh: "分配无效", ja: "配分が正しくありません",
   },
+  "Barème invalide": {
+    en: "Invalid rate", es: "Baremo inválido", de: "Ungültiger Umrechnungssatz",
+    zh: "换算比例无效", ja: "換算レートが正しくありません",
+  },
   "Exercice inconnu": {
     en: "Unknown exercise", es: "Ejercicio desconocido", de: "Unbekannte Übung",
     zh: "未知的运动", ja: "不明な種目です",

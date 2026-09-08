@@ -6,7 +6,7 @@ import { heureLocale, jourDansFuseau } from "@/lib/fuseau";
 import { rappelerPesee } from "@/lib/rappelPesee";
 import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/fenetreEnvoi";
 import { relancer } from "@/lib/relance";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { dureeAffichee, exercicesEnTemps, formaterDuree, parseParts, toExerciceIds } from "@/lib/exercices";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 import { secretProgrammeValide } from "@/lib/secretProgramme";
@@ -81,10 +81,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ examines: 0, envoyes: 0, relances: 0, pesees: 0, push: "absent" });
   }
 
-  // La dette s'exprime en temps d'effort : sans les ratios réglés en
-  // administration, la durée annoncée serait celle des valeurs d'origine.
-  await chargerRatios();
-
   const maintenant = new Date();
   const candidats = await prisma.user.findMany({
     where: { dettePointsDus: { gt: 0 }, fuseau: { not: null } },
@@ -93,6 +89,15 @@ export async function POST(req: Request) {
       // Le partage décide de la durée d'effort annoncée : sans lui, le rappel
       // du matin donnerait un nombre que la pastille n'affiche pas.
       partsExercices: true,
+      /**
+       * Le barème du COMPTE (réponse 047).
+       *
+       * C'est ici que le barème posé sur le module devient faux : cette boucle
+       * convertit la dette de plusieurs comptes à la suite, donc un barème
+       * unique pour toute la boucle annoncerait à chacun la durée d'un autre.
+       * Il se lit par compte et se passe explicitement.
+       */
+      ratiosExercices: true,
       rappelLe: true,
     },
   });
@@ -111,7 +116,12 @@ export async function POST(req: Request) {
     // La MÊME durée que celle affichée à l'écran : une notification qui
     // annonce un autre nombre que la pastille est un chiffre de plus à ne
     // pas comprendre.
-    const sec = Math.round(dureeAffichee(u.dettePointsDus, exercices, parseParts(u.partsExercices)));
+    const sec = Math.round(dureeAffichee(
+      u.dettePointsDus, exercices, parseParts(u.partsExercices),
+      // Le barème du compte, relu à chaque tour. Le global est en cache
+      // mémoire : ce tour-ci ne coûte donc pas un aller-retour de plus.
+      await ratiosPourCompte(u.ratiosExercices),
+    ));
     if (sec < MINIMUM_SEC) continue;
 
     const { titre, corps } = textesNotification(u.langue, jourDansFuseau(maintenant, u.fuseau)).matin(formaterDuree(sec, etiquetteLocale(toLocale(u.langue))));

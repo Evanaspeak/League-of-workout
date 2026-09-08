@@ -65,6 +65,11 @@ const PART_AU_NAVIGATEUR = new Set([
   // Le poids de chaque exercice dans le partage : c'est un réglage, et
   // l'écran des réglages doit pouvoir l'afficher et le changer.
   "partsExercices",
+  // Le barème PERSONNEL (réponse 047) : même chose, c'est un réglage, et
+  // c'est celui de la personne qui le lit. Il ne dit rien de personne d'autre
+  // et ne donne accès à rien — contrairement au jeton de diffusion, qui est
+  // un laissez-passer et qui, lui, ne sort pas.
+  "ratiosExercices",
   "rappelSeuilPoints", "rappelSeuilSec", "plafondQuotidien",
   // La conduite au démarrage d'un jeu : la page en a besoin pour savoir s'il
   // faut poser la question, la lancer seule, ou ne rien faire.
