@@ -1166,6 +1166,68 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le balayage ne visitait par défaut que la moitié du produit
+Trouvé en comparant deux outils de mesure plutôt qu'en lisant l'un d'eux.
+`accessibilite.mjs` couvre onze pages PUBLIQUES et quatre écrans connectés ;
+`coutures.mjs` n'en visitait par défaut que neuf, tous connectés. Les dix
+pages publiques n'y passaient que si on les nommait à la main.
+
+**C'est exactement la forme du défaut déjà corrigé sur les rubriques
+repliées** : l'outil SAIT les voir, son défaut ne les ouvre pas, et une
+exécution ordinaire rend « rien à signaler » sur la moitié du produit. Et
+c'est sur ces pages-là qu'a été trouvée la date des documents juridiques
+servie en français aux six langues — le défaut le plus cher de cette famille,
+sur les deux seuls textes qui ENGAGENT l'éditeur du site.
+
+La liste par défaut est désormais celle d'`accessibilite.mjs`, à dessein :
+deux outils qui regardent la même surface évitent d'avoir à se rappeler lequel
+voit quoi. Dix-neuf pages au lieu de neuf.
+
+**Et ça a rendu permanent un faux positif que le journal gardait exprès.**
+Le détecteur signalait 「ソロ/デュオ ランク」 sur la page d'accueil : le katakana
+appartient à la classe CJK, donc une espace entre deux mots en katakana
+ressemble à une couture. L'entrée d'alors concluait « il se reconnaît et se
+laisse » — ce qui tenait tant que la page d'accueil n'était pas balayée par
+défaut. Elle l'est ; le constat reviendrait à CHAQUE exécution, et un garde
+qui crie sur ce qui va bien finit par ne plus se lire.
+
+**Le resserrement est une FORME, pas une exemption** : une couture demande au
+moins un côté qui ne soit pas du katakana. Ce qu'il perd est écrit plutôt que
+laissé à découvrir — une valeur interpolée en katakana suivie d'un mot en
+katakana. Aucun des défauts que ce journal a payés n'est de cette forme, et
+「デッドバイデイライト を受け付けました」 le montre bien : il commence par du
+katakana, et c'est le côté DROIT qui décide. Les deux cas rejoignent le jeu de
+cas fabriqués, un de chaque côté.
+
+**Trois pièges d'outillage dans le même quart d'heure, tous les trois écrits
+ici depuis longtemps.**
+
+- **Importer un script le LANCE.** `await import('./scripts/coutures.mjs')`
+  pour vérifier sa syntaxe a ouvert un Chromium contre un serveur éteint. Un
+  `node --check` suffit.
+- **Le motif contient des espaces insécables.** Trois remplacements de suite
+  ont échoué sur `assert avant in s` : la chaîne recopiée porte une espace
+  ordinaire là où le fichier a `\xa0`. La parade est déjà au journal — on
+  ancre sur la ligne entière par une expression régulière, et on RECONSTRUIT
+  la nouvelle avec des points de code explicites.
+- **Le test lit le motif comme un LITTÉRAL dans la source**, pour éprouver
+  celui qui tourne plutôt qu'une copie. Le passer en `new RegExp(...)` le rend
+  introuvable : le contrôle lève, ce qui est le bon bruit, et la forme
+  littérale sur une ligne est désormais écrite comme une contrainte.
+
+Et une leçon de méthode, coûteuse : après trois écritures dont je ne savais
+plus laquelle avait pris, un bloc de commentaire s'est retrouvé inséré DEUX
+fois dans le jeu de cas. Ce qui l'a démêlé n'est pas de reconstruire
+l'historique des appels, c'est de **relire le fichier après chaque écriture**.
+
+**Éprouvé sur un compte semé à soixante parties, dans quatre langues** —
+japonais, chinois, allemand, français : dix-neuf pages chacune, **rien à
+signaler, et aucune page laissée de côté**. Ce second chiffre est celui qui
+compte : le contrôle d'atterrissage range une page qui redirige du côté NON
+MESURÉE, et le verdict rappelle leur nombre. Les pages publiques ajoutées se
+servent donc bien AVEC une session — `/login` en particulier, qui aurait pu
+renvoyer au tableau de bord et faire mesurer autre chose sous son nom.
+
 ### Les clés de stockage : rien à corriger, et un garde qu'on n'écrit pas
 Quatrième et dernière passe du recensement des chaînes. Elle est NÉGATIVE, et
 c'est écrit ici pour qu'on ne la refasse pas dans six semaines.

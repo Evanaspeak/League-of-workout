@@ -34,6 +34,9 @@ const CAS: Cas[] = [
   // ── Les défauts réels, recopiés du journal ───────────────────────────────
   { nom: "la pastille de seuil (V468)", texte: "5分 から効きます", couture: true, brut: false },
   { nom: "la date du mur des records", texte: "太郎、9月5日 に 300 ポイント", couture: true, brut: false },
+  // Le témoin du resserrement : le katakana n'est écarté que devant du
+  // katakana. Un nom de jeu suivi d'un hiragana reste une couture.
+  { nom: "un nom de jeu cousu (V488)", texte: "デッドバイデイライト を受け付けました。", couture: true, brut: false },
   { nom: "les paliers du rail", texte: "15360 / 25000", couture: false, brut: true },
   { nom: "le compte de parties", texte: "試合数 1116", couture: false, brut: true },
   // ── Ce que le motif doit LAISSER passer ─────────────────────────────────
@@ -44,6 +47,9 @@ const CAS: Cas[] = [
   { nom: "une date en barres obliques", texte: "Mid · 8/8/10 · 2026/9/6", couture: false, brut: false },
   { nom: "un chiffre latin séparé, qui est la convention", texte: "60 試合", couture: false, brut: false },
   { nom: "un composé japonais collé", texte: "1分55秒", couture: false, brut: false },
+  // Deux katakana séparés : c'est la convention pour un composé étranger, et
+  // c'est le seul faux positif que le détecteur ait jamais rendu.
+  { nom: "deux mots en katakana", texte: "ソロ/デュオ ランク", couture: false, brut: false },
   { nom: "une phrase sans nombre ni couture", texte: "溜まった負債は放っておいても消えません。", couture: false, brut: false },
 ];
 
