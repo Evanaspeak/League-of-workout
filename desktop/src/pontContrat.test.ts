@@ -97,3 +97,71 @@ describe("le contrat du pont Electron", () => {
       .toMatch(/auth:retour-connexion/);
   });
 });
+
+/**
+ * Ce que le pont TRANSPORTE, et non plus ce qu'il expose.
+ *
+ * Les noms de méthodes sont la moitié du contrat ; l'autre est le contenu de
+ * ce qui passe. La détection de jeu en est le cas le plus exposé, et sa chaîne
+ * traverse quatre fichiers :
+ *
+ *   `jeuxProcessus.js` émet { type: "jeu-demarre" | "jeu-arrete", jeu }
+ *   → `main.js` le transmet tel quel sur le canal `jeu:detecte`
+ *   → `preload.js` le rend à la page
+ *   → le SITE compare `type` à ces deux chaînes.
+ *
+ * **La moitié site est déjà tenue**, et par le compilateur : `electron.d.ts`
+ * déclare l'union des deux littéraux, donc une comparaison à un troisième
+ * n'aurait aucun recouvrement et `tsc` le nomme. **La moitié coquille l'est
+ * aussi**, par `jeuxProcessus.test.ts`, qui épingle les deux noms émis.
+ *
+ * Ce que rien ne tenait, c'est le lien ENTRE les deux épingles. Le renommage
+ * réel se fait dans cet ordre : on renomme dans `jeuxProcessus.js`, son test
+ * tombe, on met le test à jour — et personne ne pense au fichier de
+ * déclaration, qui vit dans l'autre paquet. Le site continue alors de
+ * comparer à une chaîne que la coquille n'envoie plus.
+ *
+ * Le symptôme est TOTAL et MUET, comme celui des méthodes absentes : la
+ * détection automatique de partie cesse entièrement. Pas de session, pas
+ * d'enregistrement, pas d'erreur. Et là encore la seule machine capable de le
+ * voir est celle de quelqu'un d'autre — les parcours posent un faux pont, où
+ * c'est le TEST qui choisit les chaînes.
+ */
+const detection = sansCommentaires("desktop/src/jeuxProcessus.js");
+/** Les types que la coquille émet vraiment, lus à la source. */
+const emis = [...detection.matchAll(/signaler\(\{\s*type:\s*"([^"]+)"/g)].map((m) => m[1]);
+/** Ceux que le site déclare attendre, lus dans l'union de `electron.d.ts`. */
+const attendus = (/type:\s*((?:"[^"]+"\s*\|\s*)*"[^"]+")\s*;\s*jeu:/.exec(dts)?.[1] ?? "")
+  .split("|")
+  .map((s) => s.trim().replace(/^"|"$/g, ""))
+  .filter(Boolean);
+
+describe("les types de la détection de jeu", () => {
+  it("se lisent vraiment des deux côtés", () => {
+    // Le témoin, et il porte tout le reste : deux listes vides s'accordent
+    // parfaitement, donc un motif devenu aveugle passerait au vert en n'ayant
+    // rien comparé.
+    expect(new Set(emis).size).toBeGreaterThanOrEqual(2);
+    expect(attendus.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("sont exactement ceux que le site déclare", () => {
+    // Les deux sens comptent. Un type émis que le site ne connaît pas est une
+    // détection qui n'arrive nulle part ; un type déclaré que la coquille
+    // n'envoie plus est une branche morte dans la page, qui attend un
+    // événement qui ne viendra jamais.
+    expect([...new Set(emis)].sort()).toEqual([...attendus].sort());
+  });
+
+  it("traversent la coquille sans être réécrits", () => {
+    /**
+     * Le maillon du milieu. `main.js` transmet `{ type, jeu, session }` en
+     * relayant la variable : s'il composait le type lui-même, les deux
+     * épingles pourraient s'accorder pendant que la page reçoit autre chose.
+     * C'est le trou que ce projet paie en boucle — deux moitiés justes et un
+     * branchement qui ne l'est pas.
+     */
+    const relais = sansCommentaires("desktop/src/main.js");
+    expect(relais).toMatch(/webContents\.send\("jeu:detecte",\s*\{\s*type\s*,/);
+  });
+});
