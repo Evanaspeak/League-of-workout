@@ -141,7 +141,10 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     // Les réglages sont rangés en rubriques repliées : il faut ouvrir « Ton
     // effort » avant de voir la liste des exercices.
     await page.getByRole("button", { name: /ton effort|your effort/i }).first().click();
-    const boxe = page.getByText(/^boxe$/i).first();
+    // Le libellé nomme le SAC depuis la séparation du shadow (réponse 078) :
+    // un motif ancré sur « boxe » seul ne trouve plus rien, et c'est ce que
+    // ce parcours a dit avant qu'on s'en aperçoive.
+    const boxe = page.getByText(/^boxe au sac$|^bag boxing$/i).first();
     await boxe.waitFor({ timeout: 10_000 });
     await boxe.click();
 

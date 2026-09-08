@@ -129,9 +129,10 @@ test("un réglage que le serveur refuse revient en arrière, et le dit", async (
     await route.continue();
   });
 
-  // La boxe n'est pas cochée sur un compte neuf : on la coche, le serveur
-  // refuse, elle doit se décocher.
-  const boxe = page.getByText(/^boxe$/i).first();
+  // La boxe au sac n'est pas cochée sur un compte neuf : on la coche, le
+  // serveur refuse, elle doit se décocher. Le libellé nomme le SAC depuis la
+  // séparation du shadow (réponse 078).
+  const boxe = page.getByText(/^boxe au sac$|^bag boxing$/i).first();
   await boxe.waitFor({ timeout: 10_000 });
   await boxe.click();
 

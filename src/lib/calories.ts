@@ -22,7 +22,8 @@ import {
  *
  * Les pompes relèvent de la gymnastique au poids du corps menée avec effort ;
  * les squats, du même registre mais moins coûteux à la minute ; la boxe au sac
- * est l'exercice le plus dépensier des trois.
+ * est l'exercice le plus dépensier des trois — le shadow, qui n'a ni impact ni
+ * résistance, se range juste en dessous.
  */
 export const MET: Record<ExerciceId, number> = {
   pompes: 8.0,
@@ -40,6 +41,10 @@ export const MET: Record<ExerciceId, number> = {
   pompesMurales: 3.5,
   // Marche à cinq kilomètres à l'heure sur terrain plat.
   marche: 3.5,
+  // Boxe sans sac : le mouvement et le rythme sont ceux du sac, l'impact et
+  // la résistance n'y sont pas. La ligne du Compendium qui décrit vraiment
+  // ça est en dessous de celle du sac, et c'est le bon sens de l'écart.
+  shadow: 6.5,
 };
 
 /**
@@ -72,6 +77,9 @@ export const PART_A_L_EFFORT: Record<ExerciceId, number> = {
   pompesMurales: 0.6,
   // On ne s'arrête pas en marchant non plus.
   marche: 1,
+  // On ne s'arrête pas en shadow non plus : comme le sac, il se compte en
+  // temps de travail effectif, donc il n'y a rien à retrancher.
+  shadow: 1,
 };
 
 /**

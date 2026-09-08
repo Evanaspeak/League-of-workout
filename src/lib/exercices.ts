@@ -21,7 +21,18 @@ export type ExerciceId =
   // qui ne peut pas faire de pompes peut se servir de l'application
   // aujourd'hui, et la réponse était « mal » : les six premiers exercices
   // supposent tous de pouvoir descendre au sol ou de courir.
-  | "pompesMurales" | "marche";
+  | "pompesMurales" | "marche"
+  /**
+   * Réponse 078 : « Les deux séparés ».
+   *
+   * La question partait d'un fait — un sac de frappe est du matériel que peu
+   * de gens ont — et le catalogue disait « sac ou shadow, au choix » sous une
+   * seule entrée marquée SANS matériel. Les deux moitiés étaient donc fausses
+   * l'une pour l'autre : celui qui n'a pas de sac lisait un exercice qui a
+   * l'air à sa portée, et le module de calories, lui, chiffrait déjà « la
+   * boxe au SAC ». La séparation remet les deux d'accord.
+   */
+  | "shadow";
 
 export type UniteExercice = "reps" | "temps" | "distance";
 
@@ -88,6 +99,12 @@ export const RATIOS_DEFAUT: Record<ExerciceId, number> = {
   // est le bon sens de l'écart pour un exercice moins intense — sans quoi
   // marcher deviendrait la façon d'effacer sa dette à bon compte.
   marche: 0.01,
+  // Sept secondes et demie pour un point, contre sept au sac. L'écart est
+  // petit et il est dans le bon sens : sans impact ni résistance, une seconde
+  // de shadow achète un peu moins d'effort qu'une seconde de sac. Le garder
+  // petit est ce qui laisse le choix LIBRE — c'est le principe que
+  // `tempsParPoint.test.ts` tient pour tout le catalogue.
+  shadow: 7.5,
 };
 
 export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
@@ -95,8 +112,11 @@ export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   pompes: { id: "pompes", ratio: RATIOS_DEFAUT.pompes, unite: "reps", pas: 1, secondesParRep: 6, groupe: "haut", materiel: false },
   // Les jambes encaissent plus de répétitions que le haut du corps.
   squats: { id: "squats", ratio: RATIOS_DEFAUT.squats, unite: "reps", pas: 1, secondesParRep: 5, groupe: "bas", materiel: false },
-  // Sac ou shadow : cardio soutenu, compté en temps de travail effectif.
-  boxe: { id: "boxe", ratio: RATIOS_DEFAUT.boxe, unite: "temps", pas: 5, groupe: "cardio", materiel: false },
+  // Boxe au SAC : cardio soutenu, compté en temps de travail effectif. Le sac
+  // est du matériel, et le dire est tout l'objet de la réponse 078 — l'entrée
+  // annonçait le contraire tandis que le module de calories chiffrait déjà
+  // « la boxe au sac ».
+  boxe: { id: "boxe", ratio: RATIOS_DEFAUT.boxe, unite: "temps", pas: 5, groupe: "cardio", materiel: true },
   // Gainage tenu, compté en secondes. Le même mouvement sert de test de force
   // pour les comptes qui n'ont pas encore fait le test de pompes.
   planche: { id: "planche", ratio: RATIOS_DEFAUT.planche, unite: "temps", pas: 5, groupe: "tronc", materiel: false },
@@ -112,6 +132,9 @@ export const EXERCICES: Record<ExerciceId, ExerciceDef> = {
   // Marche, en kilomètres. Douze minutes par kilomètre, soit cinq km/h : le
   // pas de quelqu'un qui marche pour de bon, pas celui d'une promenade.
   marche: { id: "marche", ratio: RATIOS_DEFAUT.marche, unite: "distance", pas: 0.1, secondesParRep: 720, groupe: "cardio", materiel: false },
+  // Shadow boxing : les mêmes enchaînements, dans le vide. Rien à posséder,
+  // rien à accrocher, et ça se fait dans deux mètres carrés.
+  shadow: { id: "shadow", ratio: RATIOS_DEFAUT.shadow, unite: "temps", pas: 5, groupe: "cardio", materiel: false },
 };
 
 export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
@@ -124,10 +147,15 @@ export const EXERCICE_IDS = Object.keys(EXERCICES) as ExerciceId[];
  * changer ce ratio-là relirait tout l'historique dans une autre unité sans
  * qu'aucun écran ne le dise. Régler les deux autres par rapport aux pompes
  * donne exactement le même pouvoir de réglage, en gardant une référence fixe.
+ *
+ * La liste se DÉDUIT du catalogue au lieu d'être écrite à la main. Elle valait
+ * « tout sauf les pompes » — c'est-à-dire la règle ci-dessus, écrite une
+ * seconde fois — et un test l'exigeait déjà des deux côtés. Un exercice ajouté
+ * demandait donc de venir ici, et de l'oublier rendait son ratio non
+ * réglable : le genre d'écart qui ne se voit qu'à l'usage, sur le panneau
+ * d'administration où personne ne compte les lignes.
  */
-export const EXERCICES_REGLABLES: ExerciceId[] = [
-  "squats", "boxe", "planche", "tractions", "course", "pompesMurales", "marche",
-];
+export const EXERCICES_REGLABLES: ExerciceId[] = EXERCICE_IDS.filter((id) => id !== "pompes");
 
 /**
  * Bornes acceptées pour chaque ratio. Elles ne sont pas décoratives : un
@@ -151,6 +179,10 @@ export const RATIO_BORNES: Record<ExerciceId, { min: number; max: number }> = {
   // Quatre mètres par point au minimum : en deçà, une dette ordinaire
   // demanderait un semi-marathon à quelqu'un qui vient d'arriver.
   marche: { min: 0.004, max: 0.05 },
+  // Les mêmes bornes que le sac : c'est le même geste, compté de la même
+  // façon, et rien ne justifierait qu'un administrateur puisse régler l'un
+  // dix fois plus loin que l'autre.
+  shadow: { min: 1, max: 60 },
 };
 
 /** Ratios tels qu'ils circulent entre la base, le serveur et le navigateur. */

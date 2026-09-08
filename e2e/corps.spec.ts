@@ -239,15 +239,16 @@ test("un exercice coché avant la fin de la lecture reste coché", async ({ brow
   // et la liste des exercices vit dedans. C'est le piège déjà écrit au journal.
   await page.getByRole("button", { name: /ton effort|your effort/i }).first().click();
 
-  // La boxe : elle n'est pas l'exercice par défaut, donc la cocher fait bien
-  // quitter la valeur de départ — sans quoi la fusion reprendrait le serveur
-  // et le test passerait sans rien éprouver.
-  const boxe = page.getByText(/^boxe$|^boxing$/i).first();
+  // La boxe au sac : elle n'est pas l'exercice par défaut, donc la cocher
+  // fait bien quitter la valeur de départ — sans quoi la fusion reprendrait
+  // le serveur et le test passerait sans rien éprouver. Le libellé nomme le
+  // SAC depuis la séparation du shadow (réponse 078).
+  const boxe = page.getByText(/^boxe au sac$|^bag boxing$/i).first();
   await boxe.waitFor({ state: "visible", timeout: 10_000 });
   await boxe.click();
   expect(retard.demandees).toBeGreaterThan(retard.rendues);
 
-  const case_ = page.getByRole("checkbox", { name: /boxe|boxing/i }).first();
+  const case_ = page.getByRole("checkbox", { name: /boxe au sac|bag boxing/i }).first();
   await page.waitForTimeout(2500);
   await expect(case_).toHaveAttribute("aria-checked", "true");
 

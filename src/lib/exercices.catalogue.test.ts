@@ -77,4 +77,24 @@ describe("catalogue", () => {
     expect(formaterCompact(100, "planche")).toMatch(/min|s$/);
     expect(formaterCompact(100, "pompes")).toBe("100");
   });
+
+  it("sépare la boxe au sac du shadow, et dit lequel demande du matériel", () => {
+    /**
+     * Réponse 078 : « Les deux séparés ».
+     *
+     * La question partait d'un fait — un sac est du matériel que peu de gens
+     * ont — et l'entrée unique le niait (`materiel: false`) pendant que le
+     * module de calories chiffrait déjà « la boxe au SAC ». C'est la
+     * contradiction que la séparation lève, et elle vaut d'être épinglée :
+     * remettre `materiel: false` sur le sac ne casserait rien, ça ferait
+     * seulement choisir un exercice qu'on ne peut pas faire — et on ne le
+     * découvrirait qu'une fois la dette due.
+     */
+    expect(EXERCICES.boxe.materiel).toBe(true);
+    expect(EXERCICES.shadow.materiel).toBe(false);
+    // Le shadow coûte un peu PLUS de temps : sans impact ni résistance, une
+    // seconde y achète moins d'effort. L'écart reste petit — c'est ce qui
+    // laisse le choix libre, et `tempsParPoint.test.ts` tient la bande.
+    expect(RATIOS_DEFAUT.shadow).toBeGreaterThan(RATIOS_DEFAUT.boxe);
+  });
 });
