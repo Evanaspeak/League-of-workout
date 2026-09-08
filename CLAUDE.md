@@ -1651,6 +1651,20 @@ changent ENSEMBLE, donc lister `t` réarme bien l'effet — ESLint ne peut pas l
 savoir. Les deux autres portent sur `setImageKO` et `setEchouePour`, des
 poseurs d'état que React garantit stables.
 
+**Et les quatre avertissements PERMANENTS portent maintenant leur dispense.**
+Deux `window.location.assign` vers `/login` NU — l'exception écrite pour les
+copies installées antérieures à 0.9.9 — et deux `<img>` : l'une sur une ROUTE
+qui dessine l'image à la demande, l'autre sur un domaine tiers dont l'adresse
+change à chaque version du jeu. Les quatre portaient déjà leur raison en
+commentaire ; ce qui manquait est que l'outil dise la même chose que la prose.
+Un rapport qui contient du bruit permanent se lit en diagonale, et eslint
+signale de lui-même une dispense devenue inutile — c'est le contrôle que ce
+projet écrit à la main pour ses propres gardes, rendu gratuitement ici.
+
+Vingt-cinq avertissements à **vingt et un**, et il ne reste que ce qui demande
+un arbitrage : onze effets qui lisent le navigateur, cinq dépendances qu'ESLint
+ne peut pas résoudre, et cinq dispenses de `desktop/`.
+
 **Ce que ce tri apprend au-delà des trois corrections** : `exhaustive-deps` est
 un avertissement précisément parce qu'il se trompe souvent, et c'est ce qui
 fait qu'on cesse de le lire. Trois défauts sur huit, dont un sur le chemin le

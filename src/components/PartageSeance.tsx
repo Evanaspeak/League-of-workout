@@ -32,6 +32,13 @@ export function PartageSeance({ points, onFermer }: { points: number; onFermer: 
           */
           <p role="alert" style={{ color: "var(--loss)" }}>{t.echec}</p>
         ) : (
+          /*
+            Une balise `img` et non `next/image` : la source est une ROUTE
+            qui dessine l'image à la demande, pas un fichier. L'optimiseur
+            de Next irait la chercher pour la retailler — un aller-retour de
+            plus sur une image déjà dimensionnée pour ce seul usage.
+          */
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src="/api/seance/image"
             alt={t.alt(points)}

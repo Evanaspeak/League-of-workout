@@ -50,6 +50,7 @@ export function DesktopAuthHandler() {
        * pour elles que cette exception existe — la même que celle du
        * middleware, avec la même date de péremption.
        */
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign(`/login?transfer_error=${raison}`);
     };
 
@@ -71,6 +72,8 @@ export function DesktopAuthHandler() {
         // compte. Le code accompagne la bannière : sans lui, deux pannes très
         // différentes présentent exactement le même écran.
         const code = typeof corps?.raison === "string" ? corps.raison : "inconnue";
+        // Même exception que ci-dessus : l'adresse doit rester NUE.
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
         window.location.assign(
           `/login?_desktop=1&n=${encodeURIComponent(nonce)}&reconnexion=1`
           + `&code=${encodeURIComponent(code)}`
