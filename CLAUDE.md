@@ -1604,6 +1604,125 @@ n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septem
 et c'est la troisième occurrence : la parade est de relancer la passe entière
 sans tube, jamais de deviner.
 
+### L'index évident sur le pseudo ne sert à rien, et c'est mesuré
+Recensement des colonnes qu'on FILTRE contre celles qui portent un index. Le
+journal note depuis longtemps que « les requêtes par compte sont indexées […]
+mais une mesure sur une base minuscule ne le prouve pas ». Elle est faite.
+
+Cent cinquante-sept requêtes portent un `where`. **Treize ne sont servies par
+aucun index**, et trois seulement sont sur un chemin chaud : la connexion par
+pseudo (`auth.ts`), le mur ouvert des records (`/api/classement`), et les trois
+lectures du travail programmé. Le reste est administratif ou porte sur des
+tables à deux lignes.
+
+**La connexion par pseudo est la plus exposée** — c'est la lecture que TOUT LE
+MONDE fait, et la seule dont la correction devient plus chère avec le temps.
+D'où le réflexe : poser un index fonctionnel sur `lower(pseudo)`, comme celui
+qui existe déjà sur `lower(email)`.
+
+**Il ne sert à RIEN, et il fallait l'EXPLAIN pour le savoir.** `mode:
+"insensitive"` fait émettre à Prisma un `ILIKE` (`~~*`), et un index sur
+`lower(pseudo)` ne répond pas à `ILIKE`. Mesuré sur une table jetable de
+cinquante mille lignes, index posé :
+
+| requête | plan |
+|---|---|
+| `pseudo ILIKE 'x'` | **Seq Scan**, 49 999 lignes écartées |
+| `lower(pseudo) = lower('x')` | **Index Scan using bench_lower** |
+
+C'est le pire genre de correction : elle compile, elle se relit comme une
+garantie, et le balayage continue. Quelqu'un l'aurait posée en croyant le
+problème réglé.
+
+**Et la pente dit qu'il n'y a rien à corriger aujourd'hui.** Le balayage coûte
+**1,9 ms à cent comptes et 29 ms à cinquante mille**. Le haché bcrypt coût 12
+de la même connexion prend un QUART DE SECONDE — c'est écrit dans ce fichier
+depuis l'échec d'août, et c'est lui qui a fait tomber des parcours entiers. Le
+balayage vaut donc un dixième du goulot réel à cinquante mille comptes, et un
+centième à cent.
+
+**Ce qu'il faudrait le jour venu, écrit plutôt que laissé à redécouvrir** : une
+colonne `pseudoNormalise` avec un index ordinaire, écrite comme
+`normaliserEmail` l'est déjà, et une égalité simple à la place du mode
+insensible. Pas un index fonctionnel, pas de SQL brut — `sqlBrut.test.ts`
+n'admet qu'une constante, et rouvrir cette exemption pour une optimisation
+coûterait plus que le balayage.
+
+**Le garde ne s'écrit PAS, et la raison est la même que pour les clés de
+stockage** : « toute colonne filtrée porte un index » ferait treize faux
+positifs le jour de son écriture, sur treize requêtes parfaitement justes — un
+`groupBy` d'administration, une purge de jetons éphémères, trois lectures d'un
+travail qui passe six fois par jour. Un garde qui crie sur ce qui va bien finit
+par ne plus se lire.
+
+**Et le recensement s'est trompé avant de rendre ce résultat** : il annonçait
+quarante-deux requêtes sans index, dont vingt-neuf où il n'avait lu AUCUNE
+colonne. Son motif cherchait `nom :` et ratait le raccourci d'objet
+(`where: { id }`) — le piège déjà payé sur `filtreParCompte`, qui recalait
+`where: { id, userId }` pour exactement la même raison. Treize après
+correction.
+
+### Une ligne de base qui traverse le réseau nomme ses colonnes
+Suite directe de la correction de `PUT /api/user`. Elle a porté sur SA route,
+comme les deux d'avant — `NextResponse.json(games)` et l'étalement de
+`/api/amis` — et rien ne disait ce qu'il fallait faire de la suivante. Trois
+corrections de la même famille sur trois routes différentes appellent un garde,
+pas une quatrième relecture.
+
+**Le recensement est ENTIÈREMENT NÉGATIF**, et c'est écrit ici pour qu'on ne le
+refasse pas. Cinquante-cinq lectures Prisma dans `src/app/api` : quarante-deux
+portent un `select` ou un `omit`, les treize autres ne traversent jamais le
+réseau — elles sèment une configuration, comptent, ou vérifient qu'une partie
+n'est pas déjà enregistrée.
+
+**Deux candidats ont demandé d'être ouverts avant d'être écartés.**
+`admin/signalements` fait `...l` et `groupes` fait `{ ...groupe, membres: 1 }` :
+les deux étalent un résultat qui porte DÉJÀ un `select`, donc une projection où
+quelqu'un a décidé de ce qui sort. C'est exactement le discriminant du garde, et
+il fallait le vérifier plutôt que de compter les `...`.
+
+**Et l'angle mort du garde a été mesuré plutôt que supposé.** Il ne lit que
+`src/app/api` : une lecture faite un module plus loin lui serait invisible,
+c'est le piège déjà écrit ici pour le recensement des écritures bornées. Les
+huit modules de `src/lib` qui lisent des lignes ont donc été ouverts. Sept
+portent un `select` ou un `omit` ; le huitième — `push.ts` — lit des
+abonnements dont il a besoin ENTIERS pour envoyer, et ne rend qu'un compte.
+Aucune fonction de module ne rend une ligne qu'une route publie : vérifié sur
+les vingt appels de la forme `const x = await module()` d'une route, qui
+rendent tous des nombres, des booléens ou des données Riot.
+
+**Le garde regarde le DOSSIER et couvre tous les modèles**, là où celui de V520
+ne lisait que `prisma.user`. Il attrape deux formes, et la seconde est celle qui
+a mordu : la publication directe se voit en relisant la route, l'ÉTALEMENT non —
+`{ ...ligne, membres: 1 }` se lit comme une composition alors qu'il publie tout
+ce qu'on lui remet.
+
+**Trois familles de méthodes sont hors champ, par construction et non par
+exemption.** `groupBy`, `count` et `aggregate` **n'acceptent pas de `select`** :
+les exiger ferait crier le garde sur du code auquel la règle ne peut pas
+s'appliquer. `updateMany`, `deleteMany` et `createMany` rendent `{ count }`. Le
+premier recensement les prenait, et il a rendu un faux positif sur
+`admin/mesures` — vérifié avant de conclure, plutôt qu'écrit comme une
+trouvaille.
+
+**Et le garde de V520 est DÉPLACÉ, pas doublé.** La même règle écrite deux fois
+finit avec une version en retard, et c'est le motif que ce projet paie en
+boucle. `compte.test.ts` garde ce qui est propre au compte — quelles colonnes
+ont le droit de sortir, quels défauts de confidentialité — et la règle générale
+vit dans `src/lignesBrutes.test.ts`.
+
+**Le témoin du DÉCOUPAGE est distinct de celui du recensement, et il fallait
+les deux.** Un découpage qui déborde rend le garde vert AUTREMENT que par la
+vacuité : il fait passer toutes les lectures pour des projections, puisqu'un
+`select` finit toujours par apparaître plus loin dans le fichier. Le sabotage le
+montre — le découpage cassé ne fait tomber QUE le contrôle fabriqué, parce que
+les treize lectures brutes vivent souvent dans des fichiers sans `select` après
+elles, donc le compte ne bouge pas. Deux témoins, deux trous différents.
+
+Sept sabotages, sept échecs : une ligne publiée telle quelle, une ligne étalée,
+le `select` retiré d'une route qui publie, le tri rendu aveugle dans les deux
+sens, le découpage qui rend le fichier entier, et le recensement vidé.
+
 ### La dernière étape de la seule porte de secours n'était ouverte par personne
 Troisième application de la même méthode en une nuit : comparer deux listes
 plutôt que de lire l'une d'elles. Ici, les pages du produit contre celles
