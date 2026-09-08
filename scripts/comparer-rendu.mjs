@@ -42,20 +42,47 @@ const PAGES = [
   "/settings#jeux", "/settings#donnees",
 ]
   .map((c) => enLangue(LANGUE_ADRESSE, c));
-const PAGES_INSTABLES = new Set(["_telechargement"]);
 /**
- * `/` à 360 px n'est PAS listé ici, et c'est délibéré.
+ * Les pages dont le contenu vient d'un SERVICE EXTÉRIEUR.
  *
- * Mesuré le 7 septembre : la même construction comparée à elle-même rend
- * DIX-HUIT pixels de différence sur `360_fr.png`, en deux bandes de trois et
- * deux lignes dans la barre de navigation, avec un écart de canal de 4 sur
- * 255. C'est de l'anticrénelage, invisible à l'œil.
+ * `/telechargement` ET `/` appellent toutes deux `dernierInstalleur()`, qui
+ * interroge l'API GitHub. Les deux pages sont PRÉRENDUES avec un délai de
+ * régénération : ce qu'on capture dépend donc de l'état du cache au moment de
+ * la capture, et pas du code.
  *
- * La déclarer instable la retirerait de la comparaison, et c'est la page la
- * plus visitée du produit. Le chiffre est écrit pour qu'une différence de cet
- * ordre s'y reconnaisse ; au-delà, elle se lit bande par bande comme partout
- * ailleurs.
+ * Mesuré le 8 septembre, et il a fallu quatre exécutions pour le voir : la
+ * même paire de constructions rend 9 différences, puis 5, puis 3, puis 3.
+ * Elles CONVERGENT. Le bouton « Télécharger pour Windows » porte « Version
+ * 0.9.18 » sur une capture et pas sur la suivante — donc il grandit d'une
+ * ligne et décale les trois mille pixels qui suivent. J'ai failli conclure à
+ * une régression de la page la plus visitée du produit.
+ *
+ * Les lister ne les retire PAS de la comparaison — le commentaire d'avant
+ * l'affirmait, et c'était faux : elles restent comptées, et leur différence
+ * est seulement présentée comme une QUESTION plutôt que comme un constat.
+ *
+ * Et la conséquence de méthode vaut au-delà de ces deux pages : une
+ * comparaison de rendu se lance DEUX fois. Une exécution unique sur une page
+ * régénérable ne mesure pas le code, elle mesure la chance.
+ *
+ * Sur `/`, une différence de l'ordre de DIX-HUIT pixels reste de
+ * l'anticrénelage : mesuré le 7 septembre, la même construction comparée à
+ * elle-même en rend autant dans la barre de navigation, avec un écart de canal
+ * de 4 sur 255. Au-delà, ça se lit bande par bande comme partout ailleurs.
  */
+/** Le suffixe de nom d'une capture, sans la largeur. Une seule écriture. */
+function nomCapture(chemin) {
+  return `${chemin.replace(/#/g, "-").replace(/\//g, "_") || "_accueil"}.png`;
+}
+const CHEMINS_INSTABLES = ["/telechargement", "/"];
+/**
+ * Le nom de fichier est construit par la même règle que la capture, sinon la
+ * liste désigne à côté : `/` devient `_fr.png` en français et `_de.png` en
+ * allemand, et une chaîne écrite à la main aurait raté cinq langues sur six.
+ */
+const PAGES_INSTABLES = new Set(
+  CHEMINS_INSTABLES.map((c) => nomCapture(enLangue(LANGUE_ADRESSE, c))),
+);
 const LARGEURS = [360, 768, 1280];
 
 const dossier = join(RACINE, MODE);
@@ -200,7 +227,7 @@ for (const largeur of LARGEURS) {
       await Promise.all(attentes);
     }).catch(() => {});
     await page.waitForTimeout(1500);
-    const nom = `${largeur}${chemin.replace(/#/g, "-").replace(/\//g, "_") || "_accueil"}.png`;
+    const nom = `${largeur}${nomCapture(chemin)}`;
     const image = await page.screenshot({ fullPage: true });
     writeFileSync(join(dossier, nom), image);
     empreintes[nom] = createHash("sha256").update(image).digest("hex").slice(0, 16);
