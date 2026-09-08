@@ -22,7 +22,7 @@ type Bilan = {
   parties: number; victoires: number; winrate: number | null;
   pointsDus: number; pointsPayes: number;
   joursActifs: number; meilleureSerie: number;
-  pireJour: { jour: string; points: number } | null;
+  jourPlusGrosseDette: { jour: string; points: number } | null;
   jeuPrincipal: { nom: string; parties: number } | null;
   championPrincipal: { nom: string; parties: number } | null;
   repartitionPayee: Record<string, number>;
@@ -234,8 +234,8 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
           <Case legende={tEffort.nom} valeur={effortPaye} />
           <Case legende={t.serie} valeur={nombre(bilan.meilleureSerie)} />
           <Case legende={t.joursActifs} valeur={nombre(bilan.joursActifs)} />
-          <Case legende={t.pireJour}
-                valeur={bilan.pireJour ? date(bilan.pireJour.jour) : t.aucun} />
+          <Case legende={t.jourPlusGrosseDette}
+                valeur={bilan.jourPlusGrosseDette ? date(bilan.jourPlusGrosseDette.jour) : t.aucun} />
           <Case legende={t.jeuPrincipal} valeur={bilan.jeuPrincipal?.nom ?? t.aucun} />
           <Case legende={t.championPrincipal} valeur={bilan.championPrincipal?.nom ?? t.aucun} />
         </div>

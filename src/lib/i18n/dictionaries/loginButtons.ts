@@ -29,7 +29,7 @@ export const loginButtons = {
     erreurMotDePasseDifferents: "Les mots de passe ne correspondent pas",
     erreurMotDePasseTropCourt: "Mot de passe trop court (min 8 caractères)",
     erreurCreationCompte: "Erreur lors de la création du compte",
-    compteCreeConnexion: "Compte créé ! Connectez-vous maintenant.",
+    compteCreeConnexion: "Compte créé ! Connecte-toi maintenant.",
     erreurServeur: "Erreur serveur, réessayez",
   },
   en: {

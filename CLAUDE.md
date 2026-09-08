@@ -1196,6 +1196,110 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le français vouvoyait seul dans six fichiers, et la mesure allait plus loin que la question
+Question 7 des questions ouvertes : `/telechargement` et `/calculateur`
+vouvoient en français et tutoient dans les cinq autres langues. Réponse du
+propriétaire : **« Tutoie partout, c'était un oubli. »**
+
+**Le témoin était déjà écrit ici** — « un choix de marque se prend dans les six
+langues ; un oubli n'en touche qu'une » — et il n'avait jamais été passé sur
+les dix fichiers dispensés, seulement sur les deux que la question nommait.
+Compté par fichier et par langue :
+
+| fichier | français | allemand | espagnol | verdict |
+|---|---|---|---|---|
+| `cgu` | 2 vous | 1 Sie, 0 du | 10 usted | choix, cohérent |
+| `confidentialite` | 107 vous | 78 Sie, 5 du | 68 usted, 2 tu | choix, cohérent |
+| `calculateur` | 8 vous | 0 Sie, 10 du | 0 usted, 7 tu | **le français est seul** |
+| `telechargement` | 4 vous | 1 Sie, 5 du | 1 usted, 2 tu | **le français est seul** |
+| `login` | 4 vous | 1 Sie, 9 du | — | **le français est seul** |
+| `loginButtons` | 1 vous | 0 Sie, 3 du | — | **le français est seul** |
+| `sourceObs` | 5 vous | 2 Sie, 5 du | 0 usted, 4 tu | **le français est seul** |
+| `signalement` | 4 vous | 0 Sie, 4 du | 0 usted, 1 tu | **le français est seul** |
+| `consentementSante` | 23 vous | 2 Sie, **15 du** | 0 usted, **19 tu** | **une décision écrite, appliquée à une langue** |
+
+**Six dispenses tombent au lieu de deux.** La question portait sur deux
+fichiers ; la règle que le propriétaire a énoncée en couvre six, et c'est la
+mesure qui les désigne — pas une extrapolation. Les deux documents juridiques
+sont formels dans les trois langues mesurées : c'est un vrai choix, il reste.
+
+**La neuvième ligne ne se tranche PAS seule, et elle part dans les
+questions.** `consentementSante` porte une raison de FOND — « la distance est
+voulue, c'est un avertissement, pas une conversation » — et pas un « page
+publique » de commodité. Mais la mesure dit que cette décision n'a jamais été
+appliquée qu'au français : l'allemand y écrit « du » quinze fois contre deux
+« Sie ». Ce qui n'est pas défendable est l'état actuel, où le texte qui
+recueille un consentement de santé met de la distance à un lecteur sur six.
+
+**Une clé reste au vouvoiement, et ce n'en est pas un** : `smartScreenIntro`
+CITE le message de Windows, « Windows a protégé votre ordinateur ». Le
+reformuler enverrait chercher une phrase qui n'existe pas, sur la page qui
+explique précisément comment passer cet avertissement. C'est une troisième
+famille de tolérance, à côté de la santé et du « vous » pluriel.
+
+**Deux témoins de garde ont dû être recalibrés, et c'est le prix normal.**
+Le premier comptait huit fichiers examinés, il en reste quatre. Le second est
+plus intéressant : le contrôle qui vérifie qu'une dispense « page publique »
+désigne une page réellement publique n'avait plus **aucune** dispense à
+examiner, donc il passait au vert en ne prouvant rien — et il serait resté vert
+le jour où quelqu'un reposerait une telle dispense sans fondement. Sa
+résolution s'éprouve maintenant sur deux cas RÉELS choisis : `calculateur.ts`
+est lu par une page publique et le reste, `amis.ts` vit derrière la porte. Le
+sabotage qui rend le tri aveugle fait tomber le contrôle.
+
+Trois sabotages, trois échecs : le vouvoiement remis, une dispense « page
+publique » posée sur un dictionnaire qui n'en est pas atteint, et le tri rendu
+aveugle.
+
+### Deux chiffres presque homonymes, et le nom qui les sépare
+Question 5 : le bilan de saison affiche « journée la plus chère », qui somme
+l'effort **généré** par les parties du jour ; le mur des records affiche le
+plus gros jour d'effort **payé**. Réponse : renommer le premier.
+
+**Le champ change de nom en même temps que le libellé, et c'est le nom qui
+compte.** `pireJour` était ambigu exactement comme le libellé, et c'est le
+genre de nom qui invite à le brancher sur les paiements six mois plus tard. Il
+s'appelle `jourPlusGrosseDette`, et c'est le compilateur qui a désigné les
+quatre endroits à suivre — la règle déjà écrite pour `pointsPayes` contre
+`totalPoints`, qui a coûté une nuit en juillet.
+
+**Le contrôle qui distingue demandait des données disjointes.** Un compte qui
+joue et paie le même jour rend le même résultat des deux façons : le test
+existant passait quelle que soit la source. Le nouveau pose des parties le
+1er juin et un paiement de neuf mille points le 5 ; brancher la valeur sur les
+paiements fait tomber trois contrôles.
+
+Le libellé, dans les six langues : « Jour de la plus grosse dette », « Day of
+the biggest debt », « Día de la mayor deuda », « Tag der größten Schuld »,
+「欠账最多的一天」,「負債が最も多かった日」. La valeur affichée est une DATE, donc
+le libellé nomme un jour et non un montant.
+
+### Le palier de volume tranché, et le commentaire qui avait tort
+Question 6 : `badges.ts` s'ouvrait sur « quelqu'un qui **paie** sa
+cinq-centième pompe », `progression.ts` écrivait « les paliers récompensent le
+volume **joué** », et le code suivait le second. Deux décisions écrites qui se
+contredisaient à deux fichiers d'écart.
+
+Réponse du propriétaire, et elle porte sa raison : **« tant qu'on n'a pas mis
+au point un système de vérification des exercices, on part du principe que les
+pompes dues sont faites entre chaque partie »**. Le paiement enregistré n'est
+qu'une déclaration ; la partie jouée est un fait. Compter sur la déclaration ne
+rendrait pas le palier plus vrai, seulement plus tardif.
+
+**C'est donc le commentaire qui change, pas la source** — ce qui est le
+résultat le moins spectaculaire et le plus sûr : changer la source ferait
+redescendre les paliers de tous ceux qui les ont obtenus en jouant.
+
+**Et la source a reçu le test qui lui manquait.** Rien ne la distinguait :
+`totalPoints` et `pointsPayes` sont deux nombres, et un jeu de données où l'on
+joue et paie autant rend le même résultat. Le contrôle pose six cents points
+générés et **zéro** paiement, avec un contre-témoin sur la série — sans lui, il
+passerait aussi bien sur un compte qui aurait tout payé. Sabotage : le palier
+branché sur l'effort payé fait tomber six contrôles.
+
+**Le jour où un système de vérification existera, l'arbitrage se rouvrira**, et
+il est écrit à l'endroit où on le rencontrera.
+
 ### La mécanique de rétention avait un déclencheur, elle n'avait pas d'heure
 Question 3 des questions ouvertes, tranchée par le propriétaire d'un « si
 c'est utile vas-y ». Ce qui la débloquait n'était pas la réponse : c'est

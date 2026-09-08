@@ -18,7 +18,7 @@ décision prise redevient introuvable au bout de deux semaines, ce qui est
 exactement le défaut que ce fichier existe pour corriger.
 
 **Le 8 septembre, quatorze des dix-huit questions ont été tranchées d'un
-coup.** Il en reste quatre, plus une qui est née de la quatorzième.
+coup.** Il en reste quatre, plus deux nées des décisions elles-mêmes.
 
 ---
 
@@ -53,11 +53,33 @@ avec le fait que la suppression de compte est déjà en cascade — c'est la
 formulation la plus probable, mais elle engage l'éditeur du site, donc elle
 n'est pas écrite sans accord.
 
+### 3 · La distance du consentement santé, dans une seule langue
+**Née de la décision du 8 septembre.** « Tutoie partout, c'était un oubli » a
+fait tomber six dispenses de vouvoiement. La septième porte une raison d'une
+autre nature : `consentementSante.ts` vouvoie « exprès, c'est un avertissement,
+pas une conversation ».
+
+**La mesure dit que cette décision n'a jamais été appliquée qu'au français** :
+
+| | français | allemand | espagnol |
+|---|---|---|---|
+| `consentementSante` | 23 vous | 2 Sie, **15 du** | 0 usted, **19 tu** |
+
+Le témoin de ce projet — « un choix de marque se prend dans les six langues ;
+un oubli n'en touche qu'une » — désigne donc le français comme l'exception.
+Mais ici, contrairement aux six autres, il existe une décision ÉCRITE qui dit
+le contraire, et elle porte sur des données de santé.
+
+**À décider**, et les deux réponses sont défendables : appliquer la distance
+aux six langues (donc reprendre l'allemand et l'espagnol), ou la retirer et
+tutoyer là aussi. Ce qui n'est pas défendable est l'état actuel, où le texte
+qui recueille un consentement met de la distance à un lecteur sur six.
+
 ---
 
 ## Ce qui demande une machine qu'on n'a pas
 
-### 3 · La branche POST du canal de connexion local
+### 4 · La branche POST du canal de connexion local
 `desktop/src/main.js` sert `/set-session` en `GET` **et** en `POST`, et la
 branche POST n'a **plus aucun appelant** — recensé sur tout le dépôt. Ses
 quarante-cinq lignes réécrivent la validation de la branche GET.
@@ -68,7 +90,7 @@ d'application de bureau, et surtout **ça ne se vérifie pas d'ici** —
 de se connecter depuis une application installée. Toucher à un canal
 d'authentification sans pouvoir l'éprouver n'est pas un travail de nuit.
 
-### 4 · Le rôle deviné quand Riot ne le donne pas
+### 5 · Le rôle deviné quand Riot ne le donne pas
 `riot-role.ts` fait retomber une position inconnue sur « Mid ». Un support
 compté comme jungler paie ses morts **trois points au lieu de deux et deux
 dixièmes**.
@@ -82,7 +104,7 @@ une ISSUE inventée, qui crée une dette qu'on ne doit pas. Le repli est donc
 La clé Riot de production n'étant pas arrivée, aucune partie n'emprunte ce
 chemin aujourd'hui : la question ne se pose pour de vrai qu'à ce moment-là.
 
-### 5 · Rendre du React dans les tests unitaires
+### 6 · Rendre du React dans les tests unitaires
 Un seul composant sur soixante-douze est importé par un test. Le chiffre a
 l'air terrible et ne veut presque rien dire : la suite unitaire tourne en
 environnement Node, sans DOM, et les composants sont éprouvés par les parcours

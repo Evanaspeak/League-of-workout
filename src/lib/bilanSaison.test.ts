@@ -77,18 +77,39 @@ describe("les jours", () => {
     expect(b.meilleureSerie).toBe(3);
   });
 
-  test("désigne la journée la plus chère", () => {
+  test("désigne le jour de la plus grosse dette", () => {
     const b = bilan([
       partie({ date: new Date("2026-06-01T10:00:00Z"), pompesCalculees: 30 }),
       partie({ date: new Date("2026-06-02T10:00:00Z"), pompesCalculees: 40 }),
       partie({ date: new Date("2026-06-02T22:00:00Z"), pompesCalculees: 35 }),
     ]);
-    expect(b.pireJour).toEqual({ jour: "2026-06-02", points: 75 });
+    expect(b.jourPlusGrosseDette).toEqual({ jour: "2026-06-02", points: 75 });
+  });
+
+  /**
+   * Le contrôle qui distingue les deux chiffres, et lui seul.
+   *
+   * `jourPlusGrosseDette` somme ce que les PARTIES ont produit ; le mur des
+   * records retient le plus gros jour d'effort PAYÉ. Les deux portaient
+   * presque le même nom, et rien ne les séparait : un jeu de données où l'on
+   * joue et paie le même jour rend le même résultat des deux façons, donc ne
+   * prouve rien.
+   *
+   * Ici les deux journées sont disjointes. Le 1er porte des parties et aucun
+   * paiement, le 5 un gros paiement et aucune partie. Brancher la valeur sur
+   * les paiements fait tomber ce test, et lui seul.
+   */
+  test("regarde les parties, jamais les paiements", () => {
+    const b = bilan(
+      [partie({ date: new Date("2026-06-01T10:00:00Z"), pompesCalculees: 30 })],
+      [{ points: 9000, jour: "2026-06-05" }],
+    );
+    expect(b.jourPlusGrosseDette).toEqual({ jour: "2026-06-01", points: 30 });
   });
 
   test("sans journée coûteuse, il n'y en a pas", () => {
-    expect(bilan([partie({ pompesCalculees: 0 })]).pireJour).toBeNull();
-    expect(bilan([]).pireJour).toBeNull();
+    expect(bilan([partie({ pompesCalculees: 0 })]).jourPlusGrosseDette).toBeNull();
+    expect(bilan([]).jourPlusGrosseDette).toBeNull();
   });
 
   test("le jour vient de la fonction passée, jamais de l'heure UTC", () => {
@@ -99,7 +120,7 @@ describe("les jours", () => {
       [], "2026-06-01", "2026-08-30",
       () => "2026-06-01",
     );
-    expect(b.pireJour?.jour).toBe("2026-06-01");
+    expect(b.jourPlusGrosseDette?.jour).toBe("2026-06-01");
   });
 });
 

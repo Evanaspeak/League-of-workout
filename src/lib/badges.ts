@@ -1,10 +1,34 @@
 /**
  * Les paliers et les badges.
  *
- * Aujourd'hui, quelqu'un qui paie sa cinq-centième pompe ne voit rien se
+ * Aujourd'hui, quelqu'un qui atteint sa cinq-centième pompe ne voit rien se
  * passer. Ce n'est pas qu'un manque de fête : sans repère, l'effort accumulé
  * n'existe nulle part, et la seule chose que l'application sache dire est ce
  * qu'on doit encore.
+ *
+ * **Le palier de VOLUME porte sur l'effort GÉNÉRÉ, pas sur l'effort payé, et
+ * c'est une décision.** Elle a été prise le 8 septembre, et elle a une raison
+ * qui n'est pas de commodité : tant qu'aucun système ne VÉRIFIE qu'un exercice
+ * a été fait, on part du principe que les pompes dues sont faites entre deux
+ * parties. Le paiement enregistré n'est qu'une déclaration ; la partie jouée,
+ * elle, est un fait. Compter sur la déclaration ne rendrait pas le palier plus
+ * vrai, ça le rendrait seulement plus tardif.
+ *
+ * Ce commentaire disait le contraire — « quelqu'un qui PAIE sa cinq-centième
+ * pompe » — pendant que le code lisait `totalPoints`. Deux décisions écrites
+ * se contredisaient à deux fichiers d'écart, et c'est le commentaire qui avait
+ * tort : `progression.ts` écrit « les paliers récompensent le volume joué »,
+ * ce que le code fait. Le panneau annonçait donc « Ce que tu as déjà fait ·
+ * 100 points d'effort » à quelqu'un qui n'a fait aucune pompe, et le libellé a
+ * été corrigé avant la source.
+ *
+ * **Le jour où un système de vérification existera, cet arbitrage se
+ * rouvrira** — et il coûtera cher : changer la source ferait redescendre les
+ * paliers de tous ceux qui les ont obtenus en jouant.
+ *
+ * Le niveau de compte, lui, reste sur l'effort PAYÉ : les deux mécaniques ne
+ * répondent pas à la même question, et c'est pourquoi `pointsPayes` porte un
+ * autre nom que `totalPoints`.
  *
  * Tout se déduit de ce qui est déjà en base — points, parties, paiements. Rien
  * n'est stocké : un badge rangé dans une table finit par diverger de ce qu'il
