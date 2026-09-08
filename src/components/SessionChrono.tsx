@@ -17,7 +17,7 @@ export function formaterChrono(totalSecondes: number): string {
  * l'écran : « 4 min 40 » ne doit pas passer à la ligne sur un téléphone.
  */
 const VALEUR_STYLE: React.CSSProperties = {
-  color: "#ECEFF4",
+  color: "var(--bone)",
   fontVariantNumeric: "tabular-nums",
   fontSize: "clamp(1.35rem, 6.5vw, 1.875rem)",
   lineHeight: 1.15,

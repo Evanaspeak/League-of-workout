@@ -114,7 +114,7 @@ export default async function PageProfilPublic(
           <span
             style={{
               fontSize: ".72rem", padding: "3px 8px", borderRadius: 999,
-              border: "1px solid var(--blue, #0bc4e3)", color: "var(--blue, #0bc4e3)",
+              border: "1px solid var(--signal)", color: "var(--signal)",
             }}
           >
             {tt[titre]}

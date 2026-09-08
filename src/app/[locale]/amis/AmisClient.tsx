@@ -541,7 +541,7 @@ export function AmisClient() {
                     <tr
                       key={l.id}
                       style={{
-                        borderTop: "1px solid var(--panel-border, rgba(255,255,255,.08))",
+                        borderTop: "1px solid var(--line)",
                         // Sa propre ligne se retrouve d'un coup d'œil dans une
                         // liste de cent : c'est la seule qu'on vient y chercher.
                         fontWeight: l.moi ? 700 : 400,
@@ -639,7 +639,7 @@ export function AmisClient() {
             vérité est « personne n'a choisi de figurer ici ».
           */}
           {classement?.recordsOuverts && (classement.recordsOuverts.mois || classement.recordsOuverts.toujours) && (
-            <div style={{ borderTop: "1px solid var(--line, rgba(255,255,255,.08))", paddingTop: 12 }}>
+            <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
               <h3 className="titre-section" style={{ fontSize: "0.95rem" }}>{t.recordsOuvertsTitre}</h3>
               <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginTop: 8 }}>
                 {([["recordsMois", classement.recordsOuverts.mois], ["recordsToujours", classement.recordsOuverts.toujours]] as const)

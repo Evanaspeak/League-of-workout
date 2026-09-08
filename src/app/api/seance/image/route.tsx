@@ -24,7 +24,7 @@ import { jourLocal } from "@/lib/serie";
  * effet de bord du fait qu'on voulait une image.
  */
 
-const OR = "#C8AA6E";
+const OR = "#FFB454";
 const FOND = "#0C0E11";
 const ACIER = "#98A2B0";
 

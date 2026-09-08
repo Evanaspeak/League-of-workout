@@ -69,8 +69,19 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
         position: "absolute", top: 10, right: 12,
         fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
         color: badgeColor, textTransform: "uppercase",
-        border: `1px solid ${badgeColor}55`, borderRadius: 4,
-        padding: "2px 7px", background: `${badgeColor}14`,
+        /*
+          `color-mix` plutôt qu'un alpha collé au bout de la chaîne.
+          `${badgeColor}55` ne marche que si `badgeColor` est un hexadécimal :
+          le jour où l'appelant passe `var(--amber)`, la chaîne devient
+          `var(--amber)55`, qui n'est pas du CSS — la bordure et le fond
+          disparaissent sans erreur. C'est ce qui a forcé les appelants à
+          écrire la couleur en dur, donc à s'écarter de la palette.
+          55 sur 255 fait un tiers, 14 sur 255 fait huit pour cent.
+        */
+        border: `1px solid color-mix(in srgb, ${badgeColor} 33%, transparent)`,
+        borderRadius: 4,
+        padding: "2px 7px",
+        background: `color-mix(in srgb, ${badgeColor} 8%, transparent)`,
       }}>{badge}</span>
 
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -78,7 +89,7 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
-            fontSize: "1.05rem", color: "#ECEFF4", lineHeight: 1.1,
+            fontSize: "1.05rem", color: "var(--bone)", lineHeight: 1.1,
             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}>{champ.name}</div>
           <div style={{ fontSize: "0.7rem", color: "var(--faint)", marginTop: 2 }}>
@@ -90,7 +101,7 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 14 }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 3 }}>{t.kda}</div>
-          <div style={{ fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)", fontSize: "0.95rem", color: "#ECEFF4" }}>{kdaLabel}</div>
+          <div style={{ fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)", fontSize: "0.95rem", color: "var(--bone)" }}>{kdaLabel}</div>
           <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>
             {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
           </div>

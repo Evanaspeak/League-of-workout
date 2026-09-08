@@ -66,7 +66,7 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
       ) : etat && etat.points > 0 ? (
         <>
           <span style={{
-            ...contour, color: etat.enRetard ? "#FF8A3D" : "#C8AA6E",
+            ...contour, color: etat.enRetard ? "#FF8A3D" : "var(--gold)",
             fontSize: 16, letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
             {(etat.textes ?? textesDiffusion(undefined)).aFaire}
@@ -78,7 +78,7 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
             {etat.lignes.join(" · ")}
           </span>
           {etat.serie > 0 && (
-            <span style={{ ...contour, color: "#2FD98A", fontSize: 18 }}>
+            <span style={{ ...contour, color: "var(--victory)", fontSize: 18 }}>
               {/* La série arrive DÉJÀ composée : le japonais et le chinois
                   n'écrivent pas d'espace entre le nombre et son compteur, et
                   le JSX en pose une entre deux expressions. Le repli garde

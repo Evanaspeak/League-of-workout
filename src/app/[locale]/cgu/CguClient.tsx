@@ -71,7 +71,7 @@ export default function CguClient({ locale }: { locale: string }) {
       <Section title={t.article9.title}>
         <p>
           {t.article9.contactPrefix}{" "}
-          <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "#ECEFF4" }}>{CONTACT_LEGAL}</a>
+          <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "var(--bone)" }}>{CONTACT_LEGAL}</a>
         </p>
       </Section>
 

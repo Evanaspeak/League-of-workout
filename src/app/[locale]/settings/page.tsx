@@ -1305,7 +1305,7 @@ export default function SettingsPage() {
         border: "1px solid rgba(255,90,71,0.3)",
         background: "rgba(255,90,71,0.04)",
       }}>
-        <h2 className="titre-section" style={{ color: "#FF5A47" }}>{t.zoneDeDanger}</h2>
+        <h2 className="titre-section" style={{ color: "var(--loss)" }}>{t.zoneDeDanger}</h2>
         <p style={{ fontSize: "0.8rem", color: "var(--faint)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
           {t.suppressionExplication}
         </p>
@@ -1317,7 +1317,7 @@ export default function SettingsPage() {
             background: "transparent",
             border: "1px solid rgba(255,90,71,0.5)",
             borderRadius: 4,
-            color: "#FF5A47",
+            color: "var(--loss)",
             fontSize: "0.85rem",
             fontWeight: 600,
             letterSpacing: "0.04em",
@@ -1351,13 +1351,13 @@ export default function SettingsPage() {
           >
             <h3 style={{
               fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
-              fontSize: "1.05rem", color: "#FF5A47", letterSpacing: "0.1em", marginBottom: "0.75rem",
+              fontSize: "1.05rem", color: "var(--loss)", letterSpacing: "0.1em", marginBottom: "0.75rem",
             }}>
               {t.supprimerLeCompte}
             </h3>
             <p style={{ fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "1rem" }}>
               {t.confirmPhraseAvant}
-              <strong style={{ color: "#FF5A47" }}>{t.confirmMot}</strong>
+              <strong style={{ color: "var(--loss)" }}>{t.confirmMot}</strong>
               {t.confirmPhraseApres}
             </p>
             <input
@@ -1430,7 +1430,7 @@ export default function SettingsPage() {
                 disabled={deleteConfirm !== t.confirmMot || deleting}
                 style={{
                   flex: 1, padding: "0.55rem",
-                  background: deleteConfirm === t.confirmMot ? "#FF5A47" : "rgba(255,90,71,0.25)",
+                  background: deleteConfirm === t.confirmMot ? "var(--loss)" : "rgba(255,90,71,0.25)",
                   border: "none", borderRadius: 4, color: "#fff",
                   fontSize: "0.85rem", fontWeight: 600,
                   cursor: deleteConfirm === t.confirmMot && !deleting ? "pointer" : "not-allowed",

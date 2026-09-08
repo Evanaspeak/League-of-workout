@@ -52,7 +52,7 @@ export function SyntheseJeu({
                     className="text-xs px-2 py-1 rounded"
                     style={{
                       background: vue === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                      color: vue === key ? "#ECEFF4" : "var(--faint)",
+                      color: vue === key ? "var(--bone)" : "var(--faint)",
                       border: `1px solid ${vue === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                     }}
                   >
@@ -83,10 +83,10 @@ export function SyntheseJeu({
       {(mostPlayed || leastEfficient) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {mostPlayed && (
-            <ChampionCard champ={mostPlayed} badge={t.mostPlayedBadge} badgeColor="#FFB454" t={t} />
+            <ChampionCard champ={mostPlayed} badge={t.mostPlayedBadge} badgeColor="var(--amber)" t={t} />
           )}
           {leastEfficient && (
-            <ChampionCard champ={leastEfficient} badge={t.leastEfficientBadge} badgeColor="#FF5A47" t={t} />
+            <ChampionCard champ={leastEfficient} badge={t.leastEfficientBadge} badgeColor="var(--loss)" t={t} />
           )}
         </div>
       )}

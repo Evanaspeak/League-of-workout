@@ -336,7 +336,7 @@ export function VisiteGuidee() {
           width: LARGEUR_BULLE,
           maxWidth: "calc(100vw - 24px)",
           padding: "16px 18px",
-          background: "var(--bg-raised, #14171C)",
+          background: "var(--bg-raised)",
           borderColor: "var(--line-strong)",
           boxShadow: "0 24px 60px rgba(0,0,0,0.6)",
           transition: `left ${glisse}, top ${glisse}, bottom ${glisse}`,

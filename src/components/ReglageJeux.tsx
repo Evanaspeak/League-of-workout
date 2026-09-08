@@ -186,7 +186,7 @@ export function ReglageJeux() {
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                 gap: 10, padding: "11px 14px", cursor: "pointer",
                 background: deplie ? "rgba(152,162,176,0.06)" : "transparent",
-                border: "none", color: "#ECEFF4", textAlign: "left",
+                border: "none", color: "var(--bone)", textAlign: "left",
                 fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontSize: "0.85rem", letterSpacing: "0.08em",
               }}

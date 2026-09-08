@@ -106,7 +106,7 @@ export function ExerciceSelector({
             >
               {actif && (
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
-                  stroke="#0C0E11" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                  stroke="var(--ink)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6 9 17l-5-5" />
                 </svg>
               )}

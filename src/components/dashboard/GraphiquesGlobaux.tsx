@@ -66,7 +66,7 @@ export function GraphiquesGlobaux({
                     className="text-xs px-2 py-1 rounded"
                     style={{
                       background: vue === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                      color: vue === key ? "#ECEFF4" : "var(--faint)",
+                      color: vue === key ? "var(--bone)" : "var(--faint)",
                       border: `1px solid ${vue === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
                     }}
                   >

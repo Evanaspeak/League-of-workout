@@ -27,7 +27,7 @@ import { estLocale, etiquetteLocale } from "@/lib/i18n/langues";
  * effet de bord.
  */
 
-const OR = "#C8AA6E";
+const OR = "#FFB454";
 const FOND = "#0C0E11";
 const ACIER = "#98A2B0";
 

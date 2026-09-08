@@ -20,7 +20,7 @@ const FIELD_STYLE = {
   colorScheme: "dark" as const,
 };
 
-const OPTION_STYLE = { background: "#14171C", color: "#ECEFF4" };
+const OPTION_STYLE = { background: "var(--carbon)", color: "var(--bone)" };
 
 const LABEL_STYLE = {
   display: "block",

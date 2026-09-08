@@ -54,7 +54,7 @@ export function GraphiquePeriode({
                   className="text-xs px-2 py-1 rounded"
                   style={{
                     background: mode === m ? "rgba(110,155,255,0.2)" : "rgba(152,162,176,0.06)",
-                    color: mode === m ? "#6E9BFF" : "var(--faint)",
+                    color: mode === m ? "var(--signal)" : "var(--faint)",
                     border: `1px solid ${mode === m ? "rgba(110,155,255,0.4)" : "rgba(152,162,176,0.12)"}`,
                   }}
                 >
@@ -71,7 +71,7 @@ export function GraphiquePeriode({
               className="text-xs px-2 py-1 rounded"
               style={{
                 background: periode === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
-                color: periode === key ? "#ECEFF4" : "var(--faint)",
+                color: periode === key ? "var(--bone)" : "var(--faint)",
                 border: `1px solid ${periode === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
               }}
             >

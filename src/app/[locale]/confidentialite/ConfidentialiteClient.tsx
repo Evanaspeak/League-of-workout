@@ -36,7 +36,7 @@ export default function ConfidentialiteClient({ locale }: { locale: string }) {
       <Section title={t.article1.title}>
         <p>
           {t.article1.role}<br />
-          {t.article1.contactLabel} <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "#ECEFF4" }}>{CONTACT_LEGAL}</a>
+          {t.article1.contactLabel} <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "var(--bone)" }}>{CONTACT_LEGAL}</a>
         </p>
       </Section>
 
@@ -99,7 +99,7 @@ export default function ConfidentialiteClient({ locale }: { locale: string }) {
         </ul>
         <p>
           {t.article7.exerciseLabel}{" "}
-          <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "#ECEFF4" }}>{CONTACT_LEGAL}</a>
+          <a href={`mailto:${CONTACT_LEGAL}`} style={{ color: "var(--bone)" }}>{CONTACT_LEGAL}</a>
         </p>
         <p>
           {t.article7.cnilPrefix}{" "}

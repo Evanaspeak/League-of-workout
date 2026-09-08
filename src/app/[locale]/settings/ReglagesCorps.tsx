@@ -285,12 +285,12 @@ export function ReglagesCorps({
                   {objectif.imc !== null && ` · ${t.corpsImc(decimal(objectif.imc))}`}
                 </div>
                 {objectif.sousPlancher && (
-                  <p role="note" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>
+                  <p role="note" className="text-xs" style={{ color: "var(--loss)" }}>
                     {t.corpsAvertPlancher}
                   </p>
                 )}
                 {objectif.imcBas && (
-                  <p role="note" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>
+                  <p role="note" className="text-xs" style={{ color: "var(--loss)" }}>
                     {t.corpsAvertImc}
                   </p>
                 )}
@@ -329,10 +329,10 @@ export function ReglagesCorps({
           </button>
         </div>
         {peseeEtat === "ok" && (
-          <p role="status" className="text-xs" style={{ color: "var(--victory, #4caf50)" }}>{t.enregistre}</p>
+          <p role="status" className="text-xs" style={{ color: "var(--victory)" }}>{t.enregistre}</p>
         )}
         {peseeEtat === "echec" && (
-          <p role="alert" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>{t.erreurSauvegarde}</p>
+          <p role="alert" className="text-xs" style={{ color: "var(--loss)" }}>{t.erreurSauvegarde}</p>
         )}
         {indice !== null && (
           <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsImc(decimal(indice))}</p>
@@ -374,7 +374,7 @@ export function ReglagesCorps({
         </div>
 
         {lectureRatee && (
-          <p role="alert" className="text-xs" style={{ color: "var(--loss, #ef5350)" }}>
+          <p role="alert" className="text-xs" style={{ color: "var(--loss)" }}>
             {t.corpsCourbeEchec}
           </p>
         )}
@@ -443,6 +443,6 @@ export function ReglagesCorps({
 
 function boutonStyle(actif: boolean): React.CSSProperties {
   return actif
-    ? { background: "var(--gold, #C8AA6E)", color: "#0b0d12", border: "1px solid var(--gold, #C8AA6E)" }
+    ? { background: "var(--gold)", color: "#0b0d12", border: "1px solid var(--gold)" }
     : { background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" };
 }

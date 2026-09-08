@@ -81,7 +81,7 @@ export function DefiDuJour() {
             */}
             <span
               className="mono-num"
-              style={{ fontSize: "0.72rem", color: fait ? "var(--win, #4caf50)" : "var(--gold)" }}
+              style={{ fontSize: "0.72rem", color: fait ? "var(--win)" : "var(--gold)" }}
             >
               {t.gain(xp)}
             </span>
@@ -92,7 +92,7 @@ export function DefiDuJour() {
           <div
             style={{
               height: "100%", borderRadius: 3,
-              background: fait ? "var(--win, #4caf50)" : "var(--gold)",
+              background: fait ? "var(--win)" : "var(--gold)",
               width: `${Math.round(part * 100)}%`,
             }}
           />
@@ -112,7 +112,7 @@ export function DefiDuJour() {
           <span
             style={{
               fontSize: "0.72rem", padding: "3px 8px", borderRadius: 999,
-              border: "1px solid var(--win, #4caf50)", color: "var(--win, #4caf50)",
+              border: "1px solid var(--win)", color: "var(--win)",
             }}
           >
             {t.fait}
@@ -159,7 +159,7 @@ export function DefiDuJour() {
               <div
                 style={{
                   height: "100%", borderRadius: 3,
-                  background: collectif.atteint ? "var(--win, #4caf50)" : "var(--gold)",
+                  background: collectif.atteint ? "var(--win)" : "var(--gold)",
                   width: `${Math.round(collectif.part * 100)}%`,
                 }}
               />

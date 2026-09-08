@@ -40,7 +40,7 @@ export function JournalSynchro() {
   };
 
   const couleur = (r: Entree["resultat"]) =>
-    r === "partie" ? "#2FD98A" : r === "rien" ? "var(--steel)" : "#FF8A3D";
+    r === "partie" ? "var(--victory)" : r === "rien" ? "var(--steel)" : "#FF8A3D";
 
   const nom = (r: Entree["resultat"]) =>
     r === "partie" ? t.partie : r === "rien" ? t.rien : r === "refus" ? t.refus : t.erreur;

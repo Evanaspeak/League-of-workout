@@ -67,7 +67,7 @@ export default function AdminTools() {
       <h2 style={{
         fontFamily: "var(--font-heading)",
         fontSize: "1rem",
-        color: "#ECEFF4",
+        color: "var(--bone)",
         letterSpacing: "0.1em",
         marginBottom: 16,
       }}>
@@ -91,7 +91,7 @@ export default function AdminTools() {
             style={{
               flex: 1, padding: "7px 12px", borderRadius: 6, fontSize: "0.85rem",
               background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
-              color: "#ECEFF4",
+              color: "var(--bone)",
             }}
           />
           <button
@@ -100,7 +100,7 @@ export default function AdminTools() {
             style={{
               padding: "7px 16px", borderRadius: 6, fontSize: "0.82rem", cursor: "pointer",
               background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.35)",
-              color: "#2FD98A", fontWeight: 600,
+              color: "var(--victory)", fontWeight: 600,
             }}
           >
             {saving ? "..." : t.authorize}
@@ -109,7 +109,7 @@ export default function AdminTools() {
         {msg && (
           <p style={{
             fontSize: "0.78rem", marginBottom: 8, display: "flex", alignItems: "center", gap: 6,
-            color: msg.ok ? "#2FD98A" : "#FF5A47",
+            color: msg.ok ? "var(--victory)" : "var(--loss)",
           }}>
             <Icone nom={msg.ok ? "coche" : "croix"} taille={13} />
             {msg.texte}
@@ -122,7 +122,7 @@ export default function AdminTools() {
                 <span style={{ fontSize: "0.82rem", color: "var(--bone)" }}>{e}</span>
                 <button
                   onClick={() => remove(e)}
-                  style={{ background: "none", border: "none", color: "#FF5A47", cursor: "pointer", fontSize: "0.85rem", padding: "0 4px" }}
+                  style={{ background: "none", border: "none", color: "var(--loss)", cursor: "pointer", fontSize: "0.85rem", padding: "0 4px" }}
                 >
                   <Icone nom="croix" taille={15} />
                 </button>

@@ -95,7 +95,7 @@ export function LanguageSwitcher() {
                 border: "none",
                 cursor: "pointer",
                 fontSize: "0.8rem",
-                color: o.code === locale ? "#ECEFF4" : "var(--muted)",
+                color: o.code === locale ? "var(--bone)" : "var(--muted)",
                 textAlign: "left",
               }}
             >

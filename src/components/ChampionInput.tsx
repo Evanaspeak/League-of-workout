@@ -113,7 +113,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
                 display: "block", width: "100%", textAlign: "left",
                 padding: "7px 12px", border: "none", cursor: "pointer", fontSize: "0.85rem",
                 background: i === activeIndex ? "rgba(152,162,176,0.15)" : "transparent",
-                color: i === activeIndex ? "#ECEFF4" : "rgba(236,239,244,0.8)",
+                color: i === activeIndex ? "var(--bone)" : "rgba(236,239,244,0.8)",
               }}
             >
               {s}
