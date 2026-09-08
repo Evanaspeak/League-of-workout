@@ -177,6 +177,61 @@ function estAnneeDansUneDate(n, texte, langue) {
   const bas = texte.toLowerCase();
   return moisDe(langue).some((mois) => bas.includes(mois));
 }
+/**
+ * Les langues à IDÉOGRAMMES, et pourquoi la comparaison n'a de sens qu'avec
+ * l'une d'elles d'un côté.
+ *
+ * Un texte identique d'une langue à l'autre est soit un NOM PROPRE, soit du
+ * texte en dur. Entre deux langues latines, l'identité ne prouve rien de
+ * plus : « Configuration » s'écrit pareil en français et en espagnol sans que
+ * personne ait rien oublié. Entre le français et le japonais, elle est la
+ * DÉFINITION de ce qu'on cherche — un texte traduit change forcément
+ * d'écriture.
+ */
+const CJK = new Set(["ja", "zh"]);
+
+/**
+ * Ce qui ne CHANGE PAS d'une langue à l'autre.
+ *
+ * C'est le seul détecteur possible du texte en dur SANS accent, angle mort
+ * écrit trois fois au journal : `texteEnDurComposants.test.ts` cherche des
+ * lettres accentuées, donc « Perfect », « Continuer avec Google » et
+ * `aria-label="Fermer"` lui échappent par construction — un mot anglais sans
+ * accent est indistinguable d'un identifiant.
+ *
+ * **Ce n'est pas un garde, c'est une LISTE À PARCOURIR**, et la distinction
+ * est délibérée. Un nom propre et une chaîne en dur sont tous deux
+ * invariants : aucune comparaison ne les sépare, seul un VOCABULAIRE le
+ * ferait — et un vocabulaire qui doit être exhaustif pour rester muet crie le
+ * jour où Riot ajoute un champion, ce qui est la façon dont meurt un garde.
+ * Mesuré avant d'être écrit : 51 invariants sur seize pages, tous des noms
+ * propres légitimes, dans un rapport qui lit 885 textes français et 896
+ * japonais. Cinquante et une lignes se parcourent d'un coup d'œil ; huit cents
+ * ne se lisent pas.
+ *
+ * Le seuil de trois lettres latines écarte les chiffres et la ponctuation.
+ * **Sa limite, écrite plutôt que laissée à découvrir** : un texte en dur de
+ * deux lettres ou moins lui échappe — « 20V / 40D » était de cette forme, et
+ * c'est `dictionaries/resultat.ts` qui le tient depuis.
+ */
+/**
+ * Trois lettres latines au moins : c'est ce qui écarte les chiffres, les
+ * signes et les segments d'adresse. Le motif reste un LITTÉRAL sur une
+ * ligne, comme `COUTURE` et `BRUT` : `src/coutures.test.ts` le lit dans
+ * cette source pour éprouver celui qui tourne, et non une copie qui
+ * dériverait.
+ */
+export const LATIN = /[A-Za-z]{3,}/;
+
+export function invariants(a, b) {
+  const communs = [];
+  for (const [texte, chemin] of a) {
+    if (!b.has(texte)) continue;
+    if (!LATIN.test(texte)) continue;
+    communs.push({ texte, chemin });
+  }
+  return communs;
+}
 
 if (import.meta.url !== `file://${process.argv[1]}`) {
   // Importé pour ses motifs : rien à balayer.
@@ -191,90 +246,111 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
     process.exit(1);
   }
 
-  const nav = await chromium.launch({ executablePath: CHROMIUM });
-  let lus = 0;
-  const constats = [];
-  const nonMesurees = [];
-  const parPage = [];
-
-  for (const chemin of PAGES) {
-    const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 } });
-    await ctx.addCookies([{
-      name: "authjs.session-token", value: jeton,
-      domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
-    }]);
-    await ctx.addInitScript((id) => {
-      localStorage.setItem(`low_onboarded:${id}`, "1");
-      localStorage.setItem(`low_visite:${id}`, "1");
-      localStorage.setItem("low_sante_consent", "1");
-    }, uid);
-    const page = await ctx.newPage();
-
-    /**
-     * Une page qui n'a pas eu ses données n'a rien montré, et ça ne se voit
-     * pas au nombre de textes.
-     *
-     * Mesuré, API coupée contre API branchée : le tableau de bord passe de 145
-     * à 25, l'historique de 295 à 27 — mais les RÉGLAGES rendent 137 contre
-     * 141, parce que cet écran est fait de texte fixe. Un plancher ne mordrait
-     * donc jamais là où il faut, et mordrait à tort sur un `/bilan` de compte
-     * neuf, qui est légitimement pauvre. Ce qui tranche n'est pas la quantité,
-     * c'est le RÉSEAU.
-     *
-     * C'est la séparation que l'audit d'accessibilité a déjà dû apprendre :
-     * un défaut TROUVÉ et une page non ATTEINTE ne se comptent pas ensemble,
-     * sinon « rien à signaler » veut dire « rien regardé ».
-     */
-    const echecs = [];
-    page.on("response", (r) => {
-      if (r.url().includes("/api/") && !r.ok()) {
-        echecs.push(`${r.status()} sur ${new URL(r.url()).pathname}`);
-      }
-    });
-    page.on("requestfailed", (r) => {
-      if (r.url().includes("/api/")) echecs.push(`réseau coupé sur ${new URL(r.url()).pathname}`);
-    });
-
-    const [nu, fragment] = chemin.split("#");
-    const adresse = BASE + enLangue(LANGUE, nu) + (fragment ? `#${fragment}` : "");
-    await page.goto(adresse, { waitUntil: "domcontentloaded" });
-    // Le contrôle d'atterrissage passe APRÈS l'attente : une page peut partir
-    // toute seule (la visite guidée navigue), et le vérifier avant ne le voit
-    // pas. C'est la variante du premier piège de ces outils, écrite au journal.
-    await page.waitForTimeout(4500);
-    const arrivee = new URL(page.url()).pathname;
-    if (!arrivee.endsWith(nu === "/" ? `/${LANGUE}` : nu)) {
-      nonMesurees.push(`${chemin} → ${arrivee}`);
-      await ctx.close();
-      continue;
-    }
-
-    if (echecs.length) {
-      nonMesurees.push(`${chemin} → ${echecs[0]}`);
-      await ctx.close();
-      continue;
-    }
-
-    const textes = await page.evaluate(() => {
-      const out = [];
-      for (const e of document.querySelectorAll("body *")) {
-        if (e.tagName === "SCRIPT" || e.tagName === "STYLE" || e.children.length) continue;
-        const t = (e.textContent || "").trim();
-        // Une adresse n'est pas une phrase : un lien de parrainage porte un
-        // code qui n'a ni à être groupé ni à être coupé.
-        if (t && t.length < 200 && !/^https?:/.test(t)) out.push(t);
-      }
-      return [...new Set(out)];
-    });
-    lus += textes.length;
-    parPage.push({ chemin, n: textes.length });
-    for (const t of textes) {
-      if (COUTURE.test(t)) constats.push(`${chemin}  COUTURE  « ${t.slice(0, 100)} »`);
-      else if (ecritAutrement(t, LANGUE)) constats.push(`${chemin}  NOMBRE   « ${t.slice(0, 100)} »`);
-    }
-    await ctx.close();
+  const drapeauInv = process.argv.find((a) => a.startsWith("--invariants="));
+  const AUTRE = drapeauInv ? drapeauInv.slice("--invariants=".length) : null;
+  if (AUTRE && CJK.has(LANGUE) === CJK.has(AUTRE)) {
+    console.error(`--invariants demande une langue à idéogrammes d'UN SEUL côté :`
+      + ` ${LANGUE} et ${AUTRE} sont toutes deux ${CJK.has(LANGUE) ? "" : "non "}CJK.`
+      + ` Entre deux écritures identiques, un texte identique ne prouve rien.`);
+    process.exit(1);
   }
+
+  const nav = await chromium.launch({ executablePath: CHROMIUM });
+
+  /** Un balayage complet dans une langue. */
+  async function balayer(langue) {
+    let lus = 0;
+    const textes = new Map();
+    const nonMesurees = [];
+    const parPage = [];
+
+    for (const chemin of PAGES) {
+      const ctx = await nav.newContext({ viewport: { width: 1280, height: 900 } });
+      await ctx.addCookies([{
+        name: "authjs.session-token", value: jeton,
+        domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
+      }]);
+      await ctx.addInitScript((id) => {
+        localStorage.setItem(`low_onboarded:${id}`, "1");
+        localStorage.setItem(`low_visite:${id}`, "1");
+        localStorage.setItem("low_sante_consent", "1");
+      }, uid);
+      const page = await ctx.newPage();
+
+      /**
+       * Une page qui n'a pas eu ses données n'a rien montré, et ça ne se voit
+       * pas au nombre de textes.
+       *
+       * Mesuré, API coupée contre API branchée : le tableau de bord passe de 145
+       * à 25, l'historique de 295 à 27 — mais les RÉGLAGES rendent 137 contre
+       * 141, parce que cet écran est fait de texte fixe. Un plancher ne mordrait
+       * donc jamais là où il faut, et mordrait à tort sur un `/bilan` de compte
+       * neuf, qui est légitimement pauvre. Ce qui tranche n'est pas la quantité,
+       * c'est le RÉSEAU.
+       *
+       * C'est la séparation que l'audit d'accessibilité a déjà dû apprendre :
+       * un défaut TROUVÉ et une page non ATTEINTE ne se comptent pas ensemble,
+       * sinon « rien à signaler » veut dire « rien regardé ».
+       */
+      const echecs = [];
+      page.on("response", (r) => {
+        if (r.url().includes("/api/") && !r.ok()) {
+          echecs.push(`${r.status()} sur ${new URL(r.url()).pathname}`);
+        }
+      });
+      page.on("requestfailed", (r) => {
+        if (r.url().includes("/api/")) echecs.push(`réseau coupé sur ${new URL(r.url()).pathname}`);
+      });
+
+      const [nu, fragment] = chemin.split("#");
+      const adresse = BASE + enLangue(langue, nu) + (fragment ? `#${fragment}` : "");
+      await page.goto(adresse, { waitUntil: "domcontentloaded" });
+      // Le contrôle d'atterrissage passe APRÈS l'attente : une page peut partir
+      // toute seule (la visite guidée navigue), et le vérifier avant ne le voit
+      // pas. C'est la variante du premier piège de ces outils, écrite au journal.
+      await page.waitForTimeout(4500);
+      const arrivee = new URL(page.url()).pathname;
+      if (!arrivee.endsWith(nu === "/" ? `/${langue}` : nu)) {
+        nonMesurees.push(`${chemin} → ${arrivee}`);
+        await ctx.close();
+        continue;
+      }
+
+      if (echecs.length) {
+        nonMesurees.push(`${chemin} → ${echecs[0]}`);
+        await ctx.close();
+        continue;
+      }
+
+      const vus = await page.evaluate(() => {
+        const out = [];
+        for (const e of document.querySelectorAll("body *")) {
+          if (e.tagName === "SCRIPT" || e.tagName === "STYLE" || e.children.length) continue;
+          const t = (e.textContent || "").trim();
+          // Une adresse n'est pas une phrase : un lien de parrainage porte un
+          // code qui n'a ni à être groupé ni à être coupé.
+          if (t && t.length < 200 && !/^https?:/.test(t)) out.push(t);
+        }
+        return [...new Set(out)];
+      });
+      lus += vus.length;
+      parPage.push({ chemin, n: vus.length });
+      for (const t of vus) if (!textes.has(t)) textes.set(t, chemin);
+      await ctx.close();
+    }
+    return { textes, lus, parPage, nonMesurees };
+  }
+
+  const principal = await balayer(LANGUE);
+  const second = AUTRE ? await balayer(AUTRE) : null;
   await nav.close();
+
+  const { textes, lus, parPage, nonMesurees } = principal;
+  const constats = [];
+  for (const [t, chemin] of textes) {
+    if (COUTURE.test(t)) constats.push(`${chemin}  COUTURE  « ${t.slice(0, 100)} »`);
+    else if (ecritAutrement(t, LANGUE)) constats.push(`${chemin}  NOMBRE   « ${t.slice(0, 100)} »`);
+  }
 
   console.log(`\nLangue ${LANGUE} · ${PAGES.length} page(s) demandée(s) · ${lus} textes lus`);
   for (const p of parPage) console.log(`  ${String(p.n).padStart(5)}  ${p.chemin}`);
@@ -296,6 +372,21 @@ if (import.meta.url !== `file://${process.argv[1]}`) {
       ? `\n${constats.length} constat(s)${reste}.`
       : `\nRien à signaler${reste || " sur les pages mesurées"}.`,
   );
+
+  if (second) {
+    const communs = invariants(textes, second.textes);
+    console.log(`\nSecond balayage en ${AUTRE} · ${second.lus} textes lus`
+      + (second.nonMesurees.length ? ` · ${second.nonMesurees.length} page(s) NON MESURÉE(S)` : ""));
+    for (const n of second.nonMesurees) console.log(`  ${n}`);
+    console.log(`\n${communs.length} texte(s) IDENTIQUE(S) entre ${LANGUE} et ${AUTRE} :`);
+    console.log("  (tous doivent être des noms propres — le reste est du texte en dur)");
+    for (const c of communs) console.log(`  ${c.chemin}\t« ${c.texte.slice(0, 90)} »`);
+    if (second.lus < 20) {
+      console.log("\nMoins de vingt textes lus au second balayage : la comparaison ne prouve rien.");
+      process.exit(1);
+    }
+  }
+
   if (lus < 20) {
     console.log("\nMoins de vingt textes lus : le balayage n'a rien regardé.");
     process.exit(1);
