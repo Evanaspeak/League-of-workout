@@ -1166,6 +1166,57 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture du 8 septembre, et une 404 servie depuis le cache
+Passée après V513 et V514, qui sont les premières de la série à PEINDRE
+autrement : le catalogue passe de neuf à seize exercices et le sélecteur gagne
+quatre sections. Une comparaison de rendu et un audit d'accessibilité sont donc
+justifiés ici, contrairement aux cinq versions d'avant où ils auraient rendu un
+résultat écrit d'avance.
+
+**Accessibilité : 0 constat**, vingt et une pages en français, en allemand et
+en japonais, et **aucune page laissée de côté** dans les trois. C'est le second
+chiffre qui compte, et il vaut d'autant plus ici que le balayage ouvre
+`/settings#effort` — c'est-à-dire précisément l'écran qui vient de tripler de
+hauteur. Les quatre sections nouvelles portent `role="group"` et
+`aria-labelledby`, donc un lecteur d'écran annonce le groupe avant ses cases ;
+sans ça, seize cases à la suite se lisent comme une liste plate.
+
+**La comparaison de rendu rend trois captures différentes sur trente-neuf, et
+les trois sont la même.** `settings-effort`, aux trois largeurs, et rien
+d'autre — ni le tableau de bord, ni l'historique, ni les amis, ni les cinq
+pages publiques. Les hauteurs disent ce qui s'est passé :
+
+| largeur | avant | après |
+|---|---|---|
+| 360 | 5 319 px | 6 524 px |
+| 768 | 3 745 px | 4 397 px |
+| 1280 | 3 553 px | 4 142 px |
+
+La rubrique GRANDIT, elle ne se déplace pas. C'est le signe qu'on attend de
+sept exercices ajoutés et de quatre titres de section : une différence qui se
+serait propagée aux autres captures aurait dit tout autre chose.
+
+**Et le balayage a trouvé une 404 qui n'en était pas une.**
+`/fr/calculateur/league-of-legends` rendait **404 en local** — 200 en
+production, vérifié — avec `x-nextjs-cache: HIT`. Ce n'est pas un défaut du
+produit : c'est une entrée de régénération incrémentale gardée dans
+`.next/cache` pendant un état intermédiaire de construction, et **le cache
+SURVIT à `next build`**. Vidé, les quinze pages rendent 200.
+
+Le piège est nouveau dans sa forme et il vaut d'être écrit : ce journal
+connaissait déjà « le serveur sert un `.next` d'avant la modification », qu'on
+corrige en relançant le serveur. Celui-ci résiste au redémarrage ET à la
+reconstruction, parce que ce qui est gardé n'est pas le binaire mais une
+RÉPONSE. Le témoin qui le distingue d'une régression est l'en-tête : un `HIT`
+sur une page qu'on vient de reconstruire dit qu'on regarde le passé.
+
+**Et le piège du tube, pour la troisième fois.** Le rapport d'accessibilité est
+passé par `tail -6`, qui coupe le décompte des pages RÉELLEMENT mesurées — la
+ligne « N page(s) NON MESURÉE(S) » ne s'imprime qu'au-dessus de zéro, donc je
+n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septembre
+et c'est la troisième occurrence : la parade est de relancer la passe entière
+sans tube, jamais de deviner.
+
 ### La dernière étape de la seule porte de secours n'était ouverte par personne
 Troisième application de la même méthode en une nuit : comparer deux listes
 plutôt que de lire l'une d'elles. Ici, les pages du produit contre celles
