@@ -314,6 +314,12 @@ précisément ce qui a laissé le trou s'ouvrir. Dans ce cas, on prend le témoi
 de la dernière version qui en avait un : constater que celui-ci est encore
 absent dit que le retard dure toujours.
 
+**Le témoin peut être un CODE de réponse, pas seulement un texte.** Une
+version qui ne touche aucune page publique n'a pas de témoin de PAGE ; si elle
+touche une ROUTE publique, elle en a un quand même. Mesuré sur V517 : un corps
+tronqué envoyé à `/api/beta-access` rendait 500, il rend 400 — et le
+changement était visible en ligne moins de neuf minutes après la fusion.
+
 **Et on lit la CI de la version PRÉCÉDENTE.** Pas celle qu'on vient de
 pousser — elle met huit minutes, et attendre à chaque fusion coûte plus que ça
 ne rapporte. Celle d'avant, elle, a fini : un appel, et le rouge se voit à la
@@ -1275,6 +1281,17 @@ le sabotage a dit : « refuse un corps qui n'est pas un objet » passe AVEC la
 lecture nue remise, parce que `42` s'analyse très bien et que le refus tombe
 ensuite sur un champ manquant. Il éprouve une propriété réelle, pas celle qui
 distingue. C'est écrit ici plutôt que compté comme un second garde.
+
+**Et le témoin public de cette version n'est pas un TEXTE, c'est un CODE.**
+`curl -X POST` avec un corps tronqué sur `/api/beta-access` : 500 avant, 400
+après, et la route est publique. Mesuré en production **moins de neuf minutes
+après la fusion** — 05 h 38 min 57 UTC, 400 « Corps illisible » à 05 h 47.
+
+C'est une forme de témoin qu'on n'avait jamais employée, et elle est plus
+souvent disponible que la précédente : une version qui touche une route
+publique en a un, alors qu'une version qui ne change aucune PAGE publique n'en
+avait aucun. Le journal note ailleurs que « une version qui ne touche aucune
+page publique n'a pas de témoin » — c'est vrai des pages, pas des routes.
 
 **Deux pièges d'outillage, tous deux les miens.** Mon insertion d'import
 cherchait la DERNIÈRE ligne commençant par `import ` — sur un import
