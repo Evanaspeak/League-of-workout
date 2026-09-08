@@ -66,6 +66,16 @@ type Rubrique = (typeof RUBRIQUES)[number];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
+/**
+ * Le profil tel qu'il vaut avant qu'on y touche.
+ *
+ * Hors du composant : déclaré dedans, il était un objet NEUF à chaque
+ * rendu, donc une dépendance qui change à chaque fois. `fusionner` le
+ * compare par VALEUR, donc rien ne cassait — mais une constante qui se
+ * recrée soixante fois par seconde se relit comme un état.
+ */
+const PROFIL_DEFAUT = { pseudo: "", objectifTotalPompes: 1000 };
+
 export default function SettingsPage() {
   const t = useT(settingsDict);
   const minuscule = useMinuscule();
@@ -92,7 +102,6 @@ export default function SettingsPage() {
   // ── Profile ──
   // Le compte Riot n'est plus ici : il vit dans le bloc « League of Legends »
   // des jeux, avec sa propre sauvegarde.
-  const PROFIL_DEFAUT = { pseudo: "", objectifTotalPompes: 1000 };
   const [profileForm, setProfileForm] = useState(PROFIL_DEFAUT);
   const [betaRank, setBetaRank] = useState<number | null>(null);
   // Les coefficients réglés dans la rubrique « avancé » sont communs à tous les

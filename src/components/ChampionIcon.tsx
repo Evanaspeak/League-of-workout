@@ -99,6 +99,14 @@ export function ChampionIcon({ name, size = 38 }: Props) {
   }
 
   return (
+    /*
+      Une balise `img` et non `next/image` : l'icône vient de Data Dragon,
+      un domaine tiers dont l'adresse change à chaque version du jeu.
+      L'optimiseur de Next la ferait transiter par notre serveur — une
+      indirection payée sur chaque ligne d'un historique qui en compte
+      soixante, pour une image de trente-deux pixels déjà dimensionnée.
+    */
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={imageRef}
       src={src}
