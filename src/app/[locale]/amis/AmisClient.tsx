@@ -520,6 +520,15 @@ export function AmisClient() {
             <>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                {/*
+                  Un tableau sans nom s'annonce par son nombre de colonnes et
+                  rien d'autre : « tableau, trois colonnes ». Le titre du
+                  panneau est au-dessus, mais rien ne le RELIE au tableau, donc
+                  un lecteur d'écran qui saute de tableau en tableau ne le voit
+                  jamais. La légende porte le nom, et `lecture-ecran` la garde
+                  hors de l'affichage — la mise en page est déjà titrée.
+                */}
+                <caption className="lecture-ecran">{t.classementTitre}</caption>
                 <thead>
                   <tr style={{ color: "var(--steel)", fontSize: ".8rem", textAlign: "left" }}>
                     <th scope="col" style={{ padding: "4px 8px 4px 0", width: "3rem" }}>{t.colRang}</th>
