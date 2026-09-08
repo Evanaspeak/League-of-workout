@@ -18,8 +18,7 @@ const { startLiveClientWatcher } = require("./liveclient");
 const overlay = require("./overlay");
 const { ATTENTE_MS, attenteCourante, nonceValide: validerNonce } = require("./attenteAuth");
 const {
-  JEU_DEFAUT, overlayNeutre: neutreOverlay, overlayTable: tableOverlay,
-  overlayDuJeu: reglageDuJeu, tableApresPatch,
+  JEU_DEFAUT, overlayDuJeu: reglageDuJeu, tableApresPatch,
 } = require("./reglagesOverlay");
 const { initTray, signalerVeille } = require("./tray");
 const { surveillerJeux, jeuxDetectables } = require("./jeuxProcessus");
@@ -530,23 +529,6 @@ function releveEcranActif() {
 //
 // L'entrée « defaut » sert de repli : c'est elle qui reçoit l'ancien réglage
 // global, et elle s'applique à tout jeu qu'on n'a jamais réglé.
-
-
-/** Réglage d'overlay tel qu'il vaut avant toute intervention. */
-function overlayNeutre() {
-  return neutreOverlay(overlay.COINS);
-}
-
-/**
- * Table des réglages, reprise de l'ancien format si besoin.
- *
- * La règle vit dans `reglagesOverlay.js`, avec ses onze cas : c'est la reprise
- * de l'ANCIEN format qui compte, et elle n'était éprouvée par rien. L'ignorer
- * remettrait tout le monde au coin par défaut sans prévenir.
- */
-function overlayTable() {
-  return tableOverlay(lireReglages(), overlay.COINS);
-}
 
 /** Réglage d'un jeu, complété par le défaut pour ce qu'il ne dit pas. */
 function overlayDuJeu(jeu) {
@@ -1319,6 +1301,12 @@ app.whenReady().then(() => {
    * de la déclencher toute seule en fin de partie. Un automatisme qu'on n'a
    * jamais vu marcher à la main ne se débogue pas.
    */
+  // Écrite ici, lue par le déclenchement AUTOMATIQUE que le commentaire
+  // ci-dessus annonce et qui n'existe pas encore. Ce n'est pas du code mort
+  // par accident : c'est la moitié posée d'une chaîne dont l'autre moitié
+  // attend d'être éprouvée sur une vraie machine. Le jour où elle arrive,
+  // c'est cette valeur qu'elle lira.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let dernieresElim = null;
 
   /**

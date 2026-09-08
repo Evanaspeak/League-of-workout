@@ -26,6 +26,12 @@ export function JournalSynchro() {
   }, []);
 
   const relatif = (quand: number) => {
+    // L'impureté est le SUJET : « il y a trois minutes » doit changer entre deux
+    // rendus, et l'effet au-dessus en provoque un toutes les quinze secondes
+    // pour cette seule raison. Le figer rendrait un journal qui vieillit sans
+    // le dire. Aucun risque d'hydratation : le journal se lit dans le stockage
+    // local, donc il est VIDE au rendu serveur et cette fonction n'y passe pas.
+    // eslint-disable-next-line react-hooks/purity
     const secondes = Math.round((quand - Date.now()) / 1000);
     const format = new Intl.RelativeTimeFormat(etiquette, { numeric: "auto" });
     if (Math.abs(secondes) < 60) return format.format(secondes, "second");

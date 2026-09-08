@@ -10,7 +10,7 @@
 // visible — et le premier masquage est annoncé, pour que personne ne croie
 // avoir quitté.
 
-const { app, Tray, Menu, nativeImage, Notification } = require("electron");
+const { Tray, Menu, nativeImage, Notification } = require("electron");
 const path = require("path");
 const { textes } = require("./textes");
 

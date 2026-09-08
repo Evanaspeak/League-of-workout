@@ -46,11 +46,15 @@ export default async function BilanPage(
    * Un compte sans partie ne verra pas l'image : la demander lui ferait
    * dessiner un bilan vide pour rien, côté serveur comme côté réseau.
    */
+  // `Date.now()` dans un composant SERVEUR : il s'exécute une fois par requête,
+  // pas à chaque rendu d'un arbre React. La règle `react-hooks/purity` vise le
+  // rendu client, où deux appels d'affilée donneraient deux résultats ; ici il
+  // n'y a qu'un appel, et sa valeur EST ce qu'on veut — la fenêtre de saison
+  // qui finit maintenant.
+  // eslint-disable-next-line react-hooks/purity
+  const debutSaison = new Date(Date.now() - JOURS_SAISON * 24 * 60 * 60 * 1000);
   const parties = await prisma.game.count({
-    where: {
-      userId: user.id,
-      date: { gte: new Date(Date.now() - JOURS_SAISON * 24 * 60 * 60 * 1000) },
-    },
+    where: { userId: user.id, date: { gte: debutSaison } },
   });
   return <BilanClient aDesParties={parties > 0} />;
 }
