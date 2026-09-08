@@ -32,6 +32,10 @@ import { getLevelParPompes, testAFaire, type LevelCfg } from "@/lib/scoring";
 import { StatCard, type ChampSummary } from "@/components/dashboard/Cartes";
 import { ComparatifJeux } from "@/components/dashboard/ComparatifJeux";
 import { PlaceGraphique } from "@/components/dashboard/Squelette";
+import { useIdCompte } from "@/lib/useIdCompte";
+import { cleOnboarding, cleVisite } from "@/lib/premiereVisite";
+import { estTelephone } from "@/lib/installation";
+import { PARAM_AJOUT, ouvrirSurAjout } from "@/lib/ouvertureTelephone";
 
 /**
  * Les graphiques arrivent à part.
@@ -184,6 +188,39 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
   const [chargementRate, setChargementRate] = useState(false);
   /** Modale ouverte depuis le rail latéral. */
   const [modale, setModale] = useState<"session" | "ajout" | null>(null);
+
+  const uidOuverture = useIdCompte();
+  /**
+   * Sur téléphone, l'application s'ouvre sur l'ajout de partie (réponse 210).
+   *
+   * Le manifeste porte le paramètre dans `start_url` : il n'est donc là que
+   * lorsque l'application vient d'être LANCÉE depuis l'écran d'accueil. Les
+   * décisions vivent dans `src/lib/ouvertureTelephone.ts`, avec leurs raisons.
+   *
+   * L'effet attend `data` : à ce moment-là les fenêtres de la mise en page ont
+   * eu le temps de se poser, donc lire le document dit l'état RÉEL au lieu de
+   * redériver les conditions de chacune. Et le paramètre est retiré tout de
+   * suite — sans quoi un rechargement rouvrirait le formulaire, ce qui n'est
+   * plus un lancement d'application.
+   */
+  useEffect(() => {
+    if (!data || uidOuverture === undefined) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has(PARAM_AJOUT)) return;
+    url.searchParams.delete(PARAM_AJOUT);
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    const ouvrir = ouvrirSurAjout({
+      demande: true,
+      telephone: estTelephone(),
+      fenetreOuverte: document.querySelector('[aria-modal="true"]') !== null,
+      // La MÊME lecture que chez ceux qui écrivent ces marques : ils testent
+      // la présence, pas la valeur. Être plus strict ici ferait rejouer
+      // l'ouverture pour qui porte encore une marque d'avant leur rattachement
+      // au compte.
+      introFaite: Boolean(lire(cleOnboarding(uidOuverture)) && lire(cleVisite(uidOuverture))),
+    });
+    if (ouvrir) setModale("ajout");
+  }, [data, uidOuverture]);
   const [statsPeriod, setStatsPeriod] = useState<"hour" | "weekday" | "month" | "daily">("weekday");
 
   const [statsMode, setStatsMode] = useState<"avg" | "total">("avg");

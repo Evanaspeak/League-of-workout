@@ -266,14 +266,14 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 182 | Les jeux au temps : payer son temps de jeu | — |
 
 ### Mobile
-*3 à faire · 3 faits.* 
+*2 à faire · 4 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
 | [x] | 203 | Proposer l'installation sur l'écran d'accueil à la troisième visite | — |
 | [x] | 209 | Le mode hors ligne, synchronisé au retour du réseau | — |
 | [x] | 207 | Vibration à chaque répétition, en option | — |
-| [ ] | 210 | Sur téléphone, ouvrir sur l'ajout de partie | ½ nuit |
+| [x] | 210 | Sur téléphone, ouvrir sur l'ajout de partie | — |
 | [ ] | 204 | Une application native, un jour | hors périmètre |
 | [ ] | 205 | Un mode séance plein écran | 1 nuit |
 

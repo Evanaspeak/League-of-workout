@@ -1313,6 +1313,73 @@ chacune, **0 constat, aucune page laissée de côté**. C'est le second chiffre
 qui compte, et c'est celui que la première passe élargie ne pouvait pas
 donner — elle rangeait les cinq rubriques du côté des pages non mesurées.
 
+### Sur téléphone, l'application s'ouvre sur l'ajout de partie (ligne 210)
+Réponse 210 : « Sur téléphone, quel écran devrait s'ouvrir en premier ?
+Aujourd'hui c'est le tableau de bord » → **« L'ajout de partie »**. Elle vaut
+plus qu'un confort tant que la clé Riot de production n'est pas arrivée : la
+saisie à la main est le SEUL moyen d'employer le produit, et elle était à deux
+touches — déplier le rail, puis ouvrir la fenêtre.
+
+**Le signal est le LANCEMENT de l'application, et c'est toute la décision.**
+Le manifeste porte `start_url: /dashboard?ajout=1`, donc le paramètre n'existe
+que lorsqu'on ouvre l'application depuis l'écran d'accueil. Une navigation
+ordinaire ne le porte jamais : personne n'est surpris par un formulaire en
+revenant de l'historique, et il n'y a **aucune heuristique** — ni compteur de
+visites, ni « première page de l'onglet », ni délai depuis le chargement.
+
+Les trois autres conditions ont chacune leur raison :
+
+- **le pointeur grossier.** Le manifeste sert aussi aux installations de
+  BUREAU, où la réponse ne dit rien — et où le rail est déplié de toute façon,
+  donc le geste y est déjà à une touche ;
+- **aucune fenêtre déjà ouverte.** Deux modales empilées, c'est le défaut que
+  ce journal a payé trois fois : la seconde recouvre la première et rien ne se
+  clique derrière. On lit l'état RÉEL du document (`[aria-modal="true"]`)
+  plutôt que de redériver les conditions de chacune, qui divergeraient à la
+  première correction ;
+- **l'intro passée.** La visite guidée NAVIGUE d'une page à l'autre, et elle
+  démarre quelques secondes après le chargement — donc APRÈS l'instant où l'on
+  regarde le document. Le contrôle de fenêtre ne peut pas la voir ; celui-ci,
+  si. Et un compte tout neuf qui lance l'application doit recevoir son accueil,
+  pas un formulaire de saisie.
+
+**Le paramètre est retiré tout de suite**, par `history.replaceState`. Sans ça
+un rechargement rouvrirait la fenêtre, et un rechargement n'est pas un
+lancement d'application.
+
+**Ce que ça ne couvre PAS, écrit plutôt que laissé à découvrir** : quelqu'un
+qui ouvre le site dans le navigateur de son téléphone, depuis un signet. On ne
+décide pas de ce qu'il a mis en signet, et ouvrir le formulaire à CHAQUE visite
+du tableau de bord serait une surprise désagréable au lieu d'un raccourci. Le
+jour où ça se décide autrement, c'est la valeur de `demande` qui change, et
+rien d'autre.
+
+**La lecture des marques d'intro est la MÊME que chez ceux qui les écrivent.**
+`OnboardingModal` et `VisiteGuidee` testent la PRÉSENCE (`if (lire(...))`), pas
+la valeur. Être plus strict ici — `=== "1"` — ferait rejouer l'ouverture pour
+qui porte encore une marque d'avant leur rattachement au compte.
+
+**Six parcours, cinq sabotages, cinq échecs**, chacun sur son propre
+contrôle : le manifeste qui ne pose plus le paramètre (test unitaire), le
+paramètre ignoré, le paramètre non retiré, le pointeur non regardé (l'écran de
+poste), et l'intro non regardée (le compte neuf). **Un sixième n'a pas
+compilé** plutôt que de faire tomber un test — retirer l'appel à
+`estTelephone` rend l'import inutilisé, et `noUnusedLocals` le nomme ; c'est
+noté comme tel, pas compté comme un garde qui mord.
+
+**Ce que le parcours n'isole PAS**, et il vaut mieux le dire : la condition
+« aucune fenêtre ouverte » n'a pas de cas à elle. Le seul état où une fenêtre
+est là au bon moment est celui d'un compte neuf, où l'intro n'est pas passée
+non plus — les deux conditions tombent ensemble. Elle est tenue par le test
+unitaire de la décision, pas par une lecture d'écran.
+
+**Et le piège du serveur, retombé dedans.** La première exécution est tombée
+sur un tableau de bord qui ignorait le paramètre : `reuseExistingServer` est
+vrai hors intégration continue, donc Playwright a réemployé le serveur monté
+sur la construction d'avant ma modification. C'est écrit au journal depuis la
+détection de partie — **après un `next build`, on relance le serveur** — et
+c'est la deuxième fois.
+
 ### Les abonnements posés dans un effet, recensés — et le garde qui n'a pas de dispense
 Suite du recensement des noms d'événements. Celui-ci tenait les NOMS : tout
 événement du projet a son émetteur et son auditeur. Il ne dit rien du CYCLE DE
