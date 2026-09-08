@@ -21,7 +21,7 @@ import { join } from "path";
 
 const PLAN = join(__dirname, "..", "docs/plan-action.md");
 
-type Section = { titre: string; annonce: [number, number] | null; reste: number; faits: number };
+type Section = { titre: string; annonce: [number, number] | null; reste: number; faits: number; tranchees: number };
 
 function sections(): Section[] {
   const trouvees: Section[] = [];
@@ -29,7 +29,7 @@ function sections(): Section[] {
   for (const ligne of readFileSync(PLAN, "utf8").split("\n")) {
     const titre = /^#{2,3} (.+)/.exec(ligne);
     if (titre) {
-      courante = { titre: titre[1].trim(), annonce: null, reste: 0, faits: 0 };
+      courante = { titre: titre[1].trim(), annonce: null, reste: 0, faits: 0, tranchees: 0 };
       trouvees.push(courante);
       continue;
     }
@@ -38,6 +38,7 @@ function sections(): Section[] {
     if (chiffre) { courante.annonce = [Number(chiffre[1]), Number(chiffre[2])]; continue; }
     if (ligne.startsWith("| [x]")) courante.faits += 1;
     else if (ligne.startsWith("| [ ]")) courante.reste += 1;
+    else if (ligne.startsWith("| [-]")) courante.tranchees += 1;
   }
   return trouvees;
 }
@@ -87,5 +88,47 @@ describe("les comptes du plan d'action", () => {
       .filter((s) => s.annonce![0] !== s.reste || s.annonce![1] !== s.faits)
       .map((s) => `${s.titre} : annoncé ${s.annonce![0]}/${s.annonce![1]}, réel ${s.reste}/${s.faits}`);
     expect(ecarts).toEqual([]);
+  });
+
+  /**
+   * Le troisième marqueur, et pourquoi il a besoin de son propre contrôle.
+   *
+   * `[-]` dit « tranché non » : le propriétaire a décidé que la ligne ne se
+   * ferait pas, et elle reste au tableau pour qu'on ne la repropose pas. Elle
+   * ne compte donc ni dans les faits ni dans le reste — ce qui est juste, et
+   * ce qui la rend INVISIBLE aux deux contrôles ci-dessus.
+   *
+   * D'où le trou : une coche mal écrite — `[X]`, `[·]`, une espace de trop —
+   * fait disparaître la ligne exactement de la même façon, sans que rien ne le
+   * dise. Le seul moyen de distinguer une ligne volontairement hors compte
+   * d'une ligne perdue est de fermer la liste des marqueurs permis.
+   */
+  it("aucune ligne de tableau ne porte un marqueur inconnu", () => {
+    const permis = new Set(["x", " ", "~", "-"]);
+    const inconnus: string[] = [];
+    for (const ligne of readFileSync(PLAN, "utf8").split("\n")) {
+      if (!ligne.startsWith("| [")) continue;
+      const m = /^\| \[(.)\]/.exec(ligne);
+      if (!m || !permis.has(m[1])) inconnus.push(ligne.slice(0, 60));
+    }
+    expect(inconnus).toEqual([]);
+    // Le témoin : sans lui, un plan dont plus aucune ligne ne commence par
+    // « | [ » rendrait une liste vide et passerait au vert.
+    const lignes = readFileSync(PLAN, "utf8").split("\n").filter((l) => l.startsWith("| ["));
+    expect(lignes.length).toBeGreaterThan(100);
+  });
+
+  /**
+   * Et une ligne tranchée non doit DIRE qu'elle l'est. Sans raison écrite, un
+   * `[-]` se lit comme un oubli de coche six semaines plus tard, et quelqu'un
+   * la reprend.
+   */
+  it("une ligne tranchée non porte sa raison", () => {
+    const muettes = readFileSync(PLAN, "utf8")
+      .split("\n")
+      .filter((l) => l.startsWith("| [-]"))
+      .filter((l) => !/tranché/i.test(l))
+      .map((l) => l.slice(0, 60));
+    expect(muettes).toEqual([]);
   });
 });
