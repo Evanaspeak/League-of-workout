@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { chargerBareme, oublierBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { comptePublic } from "@/lib/compte";
-import { isExerciceId, PART_MAX, PART_MIN, toExerciceIds } from "@/lib/exercices";
+import { chargerRatios } from "@/lib/exercicesConfig";
+import {
+  EXERCICES_REGLABLES, isExerciceId, PART_MAX, PART_MIN, RATIO_BORNES, toExerciceIds,
+} from "@/lib/exercices";
 import { toConduiteSession } from "@/lib/sessionAuto";
 import { estAdmin } from "@/lib/admin";
 import { toVariante } from "@/lib/variantes";
@@ -22,12 +25,25 @@ export async function GET() {
 
   // Le barème est global et mis en cache ; l'objectif appartient au compte et
   // se relit à chaque fois.
-  const [{ roleWeights, levelConfigs, masteryConfig }, goal] = await Promise.all([
+  const [{ roleWeights, levelConfigs, masteryConfig }, goal, ratiosCommuns] = await Promise.all([
     chargerBareme(),
     prisma.goal.findUnique({ where: { userId: user.id } }),
+    /**
+     * Le barème COMMUN, et pas celui du compte.
+     *
+     * L'écran des réglages est le seul endroit où les deux se comparent : il
+     * montre ce que chaque exercice coûte à la personne, et il a besoin du
+     * commun pour savoir de quoi elle s'écarte — c'est lui qui donne le pas
+     * des boutons, et c'est lui qu'on retrouve en effaçant son réglage.
+     *
+     * Le barème du compte, lui, arrive par `/api/exercices/ratios`, qui le
+     * pose dans le navigateur pour toutes les conversions de l'écran.
+     */
+    chargerRatios(),
   ]);
   return NextResponse.json({
-    roleWeights, levelConfigs, masteryConfig, goal, user: comptePublic(user),
+    roleWeights, levelConfigs, masteryConfig, goal, ratiosCommuns,
+    user: comptePublic(user),
   });
 }
 
@@ -69,6 +85,7 @@ export async function PUT(req: Request) {
 
     const data: {
       exercices?: string[]; partsExercices?: string | null;
+      ratiosExercices?: string | null;
       rappelSeuilPoints?: number;
       rappelSeuilSec?: number; plafondQuotidien?: number;
       pompesMax?: number; pompesMaxLe?: Date;
@@ -159,6 +176,56 @@ export async function PUT(req: Request) {
           }
         }
         data.partsExercices = JSON.stringify(objet);
+      }
+    }
+
+    /**
+     * Le barème PERSONNEL (réponse 047, « Oui, par utilisateur »).
+     *
+     * Même forme et mêmes refus que le partage juste au-dessus, et pour les
+     * mêmes raisons : un ratio hors bornes est REFUSÉ et non ramené — « deux
+     * fois plus dur » et « dix fois plus dur » ne se ressemblent pas, et
+     * enregistrer l'un pour l'autre en silence rendrait le réglage inutile.
+     *
+     * Deux différences, et elles portent :
+     *
+     * - **les pompes sont refusées**, pas ignorées. Elles sont l'unité de
+     *   référence : un point d'effort vaut une pompe depuis le premier jour, et
+     *   `Game.pompesCalculees` compte des points sous ce nom. Les laisser
+     *   régler ne changerait pas la difficulté d'un exercice, ça changerait le
+     *   sens du registre entier. Les ignorer en silence laisserait croire que
+     *   le réglage a pris ;
+     * - **un ratio n'est pas un entier**. Deux secondes et demie de squats par
+     *   point est un réglage parfaitement sensé, et `PART_MIN`/`PART_MAX`
+     *   n'ont rien à voir ici : ce sont les bornes du PARTAGE. Celles du
+     *   barème vivent dans `RATIO_BORNES`, exercice par exercice, et elles
+     *   valent déjà pour l'administration.
+     */
+    if (body.userPrefs.ratiosExercices !== undefined) {
+      const brut = body.userPrefs.ratiosExercices;
+      if (brut === null) {
+        data.ratiosExercices = null;
+      } else {
+        let objet: unknown;
+        try {
+          objet = JSON.parse(String(brut));
+        } catch {
+          return NextResponse.json({ error: "Barème invalide" }, { status: 400 });
+        }
+        if (objet === null || typeof objet !== "object" || Array.isArray(objet)) {
+          return NextResponse.json({ error: "Barème invalide" }, { status: 400 });
+        }
+        for (const [cle, valeur] of Object.entries(objet as Record<string, unknown>)) {
+          if (!isExerciceId(cle) || !EXERCICES_REGLABLES.includes(cle)) {
+            return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
+          }
+          const n = Number(valeur);
+          const { min, max } = RATIO_BORNES[cle];
+          if (!Number.isFinite(n) || n < min || n > max) {
+            return NextResponse.json({ error: "Barème invalide" }, { status: 400 });
+          }
+        }
+        data.ratiosExercices = JSON.stringify(objet);
       }
     }
 

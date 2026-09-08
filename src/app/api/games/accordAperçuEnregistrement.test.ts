@@ -29,7 +29,10 @@ jest.mock("@/lib/prisma", () => ({
 }));
 jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
-jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn().mockResolvedValue({}) }));
+jest.mock("@/lib/exercicesConfig", () => ({
+  chargerRatios: jest.fn(),
+  ratiosPourCompte: jest.fn().mockResolvedValue(undefined),
+}));
 
 import { POST as apercu } from "./preview/route";
 import { POST as enregistrer } from "./route";

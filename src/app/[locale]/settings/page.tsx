@@ -11,10 +11,12 @@ import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT,
   PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, formaterDuree, parseParts, toExerciceIds,
-  type ExerciceId, type PartsExercices,
+  RATIOS_DEFAUT, normaliserRatios, parseRatiosPerso,
+  type ExerciceId, type PartsExercices, type RatiosExercices,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
 import PartageExercices from "@/components/PartageExercices";
+import BaremePersonnel from "@/components/BaremePersonnel";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
 import { SimulateurDette } from "@/components/SimulateurDette";
 import { SuspensionExercice } from "@/components/SuspensionExercice";
@@ -150,6 +152,16 @@ export default function SettingsPage() {
    * quelqu'un qui n'ouvre jamais ce panneau ne doit rien voir changer.
    */
   const [partsSel, setPartsSel] = useState<PartsExercices>({});
+  /**
+   * Le barème PERSONNEL (réponse 047), et le barème COMMUN dont il s'écarte.
+   *
+   * Vide = rien de réglé, donc le barème commun s'applique tel quel — c'est le
+   * défaut, et quelqu'un qui n'ouvre jamais ce panneau ne doit rien voir
+   * changer. Le commun vient de la route des réglages : c'est le seul écran où
+   * les deux se comparent, et il donne le pas des boutons.
+   */
+  const [ratiosPerso, setRatiosPerso] = useState<Partial<RatiosExercices>>({});
+  const [ratiosCommuns, setRatiosCommuns] = useState<RatiosExercices>(RATIOS_DEFAUT);
   const [rappelSeuil, setRappelSeuil] = useState<number>(RAPPEL_SEUIL_DEFAUT);
   // Seuil du compteur de boxe, en secondes d'effort.
   const [seuilSec, setSeuilSec] = useState<number>(RAPPEL_SEUIL_SEC_DEFAUT);
@@ -311,6 +323,14 @@ export default function SettingsPage() {
         parseParts(s.user?.partsExercices),
         (a, b) => JSON.stringify(a) === JSON.stringify(b),
       ));
+      setRatiosPerso((avant) => fusionnerValeur(
+        "ratiosExercices", avant, {},
+        parseRatiosPerso(s.user?.ratiosExercices),
+        (a, b) => JSON.stringify(a) === JSON.stringify(b),
+      ));
+      // Le barème commun n'est pas un réglage de la personne : rien à fusionner,
+      // il se pose tel que le serveur le rend.
+      if (s.ratiosCommuns) setRatiosCommuns(normaliserRatios(s.ratiosCommuns));
       setCorps((avant) => fusionner(avant, CORPS_DEFAUT, {
         formuleCalorique: s.user?.formuleCalorique ?? null,
         niveauActivite: s.user?.niveauActivite ?? null,
@@ -466,6 +486,23 @@ export default function SettingsPage() {
     await enregistrerReglage(
       { partsExercices: Object.keys(prochain).length > 0 ? JSON.stringify(prochain) : null },
       () => setPartsSel(avant),
+    );
+  };
+
+  /**
+   * Le barème personnel s'enregistre AU CLIC, comme le partage juste au-dessus.
+   *
+   * Il part en JSON parce que c'est ainsi qu'il est rangé : la route le relit,
+   * le borne exercice par exercice, et REFUSE hors bornes plutôt que de
+   * ramener en silence. Un objet vide s'envoie `null`, ce qui dit « rien de
+   * réglé » — et rend donc le barème commun, y compris s'il bouge plus tard.
+   */
+  const handleSaveBareme = async (prochain: Partial<RatiosExercices>) => {
+    const avant = ratiosPerso;
+    setRatiosPerso(prochain);
+    await enregistrerReglage(
+      { ratiosExercices: Object.keys(prochain).length > 0 ? JSON.stringify(prochain) : null },
+      () => setRatiosPerso(avant),
     );
   };
 
@@ -784,6 +821,13 @@ export default function SettingsPage() {
             selection={exercicesSel}
             parts={partsSel}
             onChange={handleSavePoidsExercices}
+          />
+
+          <BaremePersonnel
+            selection={exercicesSel}
+            communs={ratiosCommuns}
+            perso={ratiosPerso}
+            onChange={handleSaveBareme}
           />
 
           {/* La variante ne se propose que si les pompes sont de la partie :

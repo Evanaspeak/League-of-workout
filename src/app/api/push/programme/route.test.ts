@@ -13,7 +13,10 @@ jest.mock("@/lib/push", () => ({
   notifier: jest.fn().mockResolvedValue(1),
   pushConfigure: () => configure(),
 }));
-jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
+jest.mock("@/lib/exercicesConfig", () => ({
+  chargerRatios: jest.fn(),
+  ratiosPourCompte: jest.fn().mockResolvedValue(undefined),
+}));
 
 import { POST, HEURE_RAPPEL, MINIMUM_SEC } from "./route";
 import { prisma } from "@/lib/prisma";

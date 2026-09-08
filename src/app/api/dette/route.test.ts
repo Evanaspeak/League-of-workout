@@ -15,7 +15,10 @@ jest.mock("@/lib/prisma", () => {
   };
 });
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
-jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn() }));
+jest.mock("@/lib/exercicesConfig", () => ({
+  chargerRatios: jest.fn(),
+  ratiosPourCompte: jest.fn().mockResolvedValue(undefined),
+}));
 
 import { GET, PATCH, PUT } from "./route";
 import { prisma } from "@/lib/prisma";

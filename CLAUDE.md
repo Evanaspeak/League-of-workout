@@ -1196,6 +1196,151 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Des ratios personnels, et le commentaire qui disait pourquoi c'était sans risque
+Réponse 047, « Oui, par utilisateur » : les ratios d'exercices se réglaient
+depuis l'administration, donc les mêmes pour tout le monde. Une seconde de
+boxe ne demande pas le même effort à chacun, et un barème unique oblige à
+choisir pour quelqu'un d'autre.
+
+**Ce n'est pas une colonne, c'est un GLOBAL à retirer.** `appliquerRatios`
+pose les valeurs sur un objet de MODULE, et son commentaire écrivait la raison
+pour laquelle c'était sans risque : « les ratios étant globaux — les mêmes
+pour tout le monde, pas un réglage par compte — les poser sur le module donne
+le même résultat sans propager un paramètre partout ». La réponse invalide la
+prémisse. Un objet de module est partagé par toutes les requêtes du
+processus : y poser le barème d'un compte fait convertir la dette de l'un avec
+les ratios de l'autre, sans erreur, sans test rouge, et seulement quand deux
+personnes jouent en même temps.
+
+**La propriété qui rend la reprise sûre, et qui a décidé de tout le reste :
+`chargerRatios` continue d'installer le barème GLOBAL, `ratiosPourCompte`
+n'installe rien.** Un appelant qui oublierait les ratios personnels retombe
+donc sur le commun — c'est-à-dire le comportement d'avant — jamais sur ceux de
+quelqu'un d'autre. C'est ce qui a permis de reprendre les appelants un par un
+au lieu de tous à la fois.
+
+**Le navigateur GARDE le module, et c'est juste** : il n'y a qu'une personne
+devant un navigateur. Ce qui change là-bas est la SOURCE —
+`/api/exercices/ratios` rend le barème du compte quand il y en a un. Cette
+route existe depuis qu'un cache défaisait ce pour quoi elle était faite ; elle
+porte maintenant les ratios personnels sans qu'on ait rien ajouté.
+
+**La mise en page, elle, ne bouge pas, et il faut que ça reste ainsi.** Elle
+est la racine de toutes les pages : y lire la session les rendrait dynamiques
+d'un coup, ce qui est le défaut qui avait mis les cent cinquante pages
+publiques hors du magasin de prérendu. Mesuré après : **161 pages prérendues**,
+c'est-à-dire le chiffre d'avant. Le prix est écrit plutôt que tu — sur un écran
+connecté, la première peinture convertit avec le barème commun puis se corrige,
+et c'est la fenêtre qui existe DÉJÀ pour un changement d'administration.
+
+**Le parcours navigateur a trouvé le défaut, et aucun test unitaire ne pouvait
+le voir.** `fusionnerRatios` portait sa propre boucle de lecture, qui ne lisait
+que les OBJETS. Or la colonne est un `String?` : ce qui sort de la base est une
+chaîne. Le barème personnel était donc ignoré, le commun s'appliquait, et tous
+les tests passaient — ils lui passaient des objets. La sonde l'a dit en une
+exécution : la base portait `{"boxe":5.4}` et la route rendait 100 s là où elle
+devait rendre 180.
+
+La correction fait disparaître la duplication qui l'avait causé : la fusion
+délègue à `parseRatiosPerso`, qui lisait déjà les deux formes. **Une même règle
+écrite deux fois, et c'est la seconde copie qui était fausse** — le motif que
+ce journal trouve le plus.
+
+**Le contrôle qui compte est celui des DEUX conversions.** Le serveur compte
+`dureeSec`, le navigateur peint la pastille avec ses propres ratios : ce sont
+deux chemins pour une seule dette, et c'est exactement le défaut déjà payé ici
+— « 6 min 05 » sur la pastille, « 2 min 41 » dans le chrono. Le parcours les
+compare, et il vérifie les deux sens : le réglage change la dette, la remise au
+barème commun la rend.
+
+**Ce que l'écran montre est le COÛT, pas le ratio.** « 0,14 » ne dit rien ;
+« 9 min pour 100 points » se lit. Et le chiffre passe par `quantite`,
+c'est-à-dire la fonction que le serveur emploie pour de vrai : une seconde
+arithmétique aurait l'air juste et divergerait au premier arrondi, sur un
+panneau qui existe pour PROMETTRE un chiffre. Le pas vaut un quart du barème
+commun de l'exercice — un pas fixe ne peut pas marcher, la boxe se règle entre
+1 et 60 et la course entre 0,005 et 0,2.
+
+**Revenir exactement au barème commun EFFACE la clé** au lieu de la recopier :
+c'est ce qui distingue « je n'ai rien réglé » de « j'ai réglé la même chose »,
+et ce qui laisse le barème commun bouger sous quelqu'un qui n'a rien demandé.
+
+**Les pompes sont refusées à l'écriture, pas ramenées en silence.** Elles sont
+l'unité de compte — un point d'effort vaut une pompe depuis le premier jour, et
+`Game.pompesCalculees` compte des points sous ce nom. Et un ratio n'est pas un
+entier : deux secondes et demie de squats par point est un réglage sensé, que
+les bornes du PARTAGE auraient rejeté.
+
+**Un de mes contrôles ne distingue rien, et c'est le sabotage qui l'a dit.**
+« La fusion ne laisse jamais régler les pompes » passe même en ouvrant la
+boucle à tous les exercices : `RATIO_BORNES.pompes` vaut `{ min: 1, max: 1 }`,
+donc l'arithmétique les ramène à un de toute façon. Les deux gardes coïncident,
+et aucun jeu de données ne peut les séparer. Ce qui les sépare vit ailleurs, et
+les deux mordent : `parseRatiosPerso`, qui rend un objet PARTIEL, et la route
+de réglages, qui refuse la clé. C'est écrit dans le test plutôt que laissé à
+croire.
+
+**Le garde porte sur le BRANCHEMENT**, comme celui du partage :
+`src/baremePersonnelBranche.test.ts` exige que toute conversion faite dans
+`src/app/api` passe ses ratios, et refuse qu'une route appelle
+`appliquerRatios`. Il vérifie le RANG de l'argument et pas l'arité :
+`ventiler(x, null, etiquette)` en porte trois et ne passe aucun barème —
+c'était la forme de toutes les routes avant cette reprise, et un contrôle
+d'arité l'aurait laissée passer.
+
+**Et il a mordu sur une route que j'avais manquée.** `/api/dashboard` calculait
+les calories sans barème — or ce qu'un point représente en temps de travail
+décide de ce qu'il brûle. Il les calculait en prime DEUX fois, la même
+expression réinjectée dans l'équivalence en marche : deux fois la même
+arithmétique sur seize exercices, et deux endroits où le barème pouvait
+diverger.
+
+**Deux trouvailles au passage, sans rapport avec la ligne.**
+
+`/api/bilan` chargeait un barème dont elle ne se servait pas, sous un
+commentaire qui annonçait « la conversion se fait ici parce que les ratios sont
+chargés ici ». Ni l'un ni l'autre : `repartirPoints` répartit des POINTS, elle
+ne convertit rien. C'est l'IMAGE du bilan qui convertit, et elle lit ces
+ratios pour de bon.
+
+Et **l'export de données perdait deux réglages TAPÉS par la personne** : le
+partage entre exercices et le barème personnel. C'est exactement la façon dont
+les pesées avaient été oubliées — ils ne paraissent nulle part ailleurs que sur
+l'écran qui les règle, donc personne ne les cherche dans un fichier. L'article
+20 couvre ce qui est « fourni par la personne », et deux nombres qu'elle a tapés
+le sont au sens le plus littéral.
+
+**Trois gardes ont mordu sur la colonne**, ce qui est leur travail :
+`compte.test.ts` a exigé qu'on la range d'un côté ou de l'autre de ce qui sort
+du compte, `politiqueComplete.test.ts` qu'on la décrive ou qu'on dise pourquoi
+elle en est dispensée, et le recensement des messages d'API a exigé « Barème
+invalide » dans les six langues. Le garde des tirets cadratins en a attrapé deux
+dans mes propres traductions, allemande et japonaise.
+
+**Une divergence de doublure, à noter pour la prochaine fois.** Les huit
+fichiers de test qui doublent `@/lib/exercicesConfig` remplacent le MODULE
+ENTIER : la fonction ajoutée n'y figurait pas, et cent vingt-deux tests sont
+tombés d'un coup. Sept d'entre eux rendent `undefined` — les conversions
+retombent alors sur le module, c'est-à-dire le comportement d'avant, ce qui
+garde le sens de leurs assertions. Le huitième, celui de `/api/games`, rend un
+barème COMPLET : c'est celui-là qui est GELÉ sur la partie, et `undefined`
+ferait écrire `undefined` dans `Game.ratios`.
+
+Quatre sabotages sur le garde, quatre échecs. Onze sur les modules, dix échecs
+— le onzième est celui des pompes décrit plus haut. Deux au navigateur, deux
+échecs ; deux autres n'ont pas compilé plutôt que de faire tomber un test,
+`noUnusedLocals` et `noUnusedParameters` nommant la variable devenue inutile.
+C'est noté comme tel, pas compté comme un garde qui mord.
+
+**Ce que la ligne 047 ne fait PAS**, écrit plutôt que laissé à découvrir : le
+barème personnel ne rejoue rien. `Game.ratios` gèle celui du jour de
+l'enregistrement, donc une partie d'hier coûte ce qu'elle coûtait — c'est la
+décision de V387, et elle vaut ici sans qu'on ait eu à la reprendre.
+
+La suite navigateur ENTIÈRE a été jouée, parce que ça touche une fondation —
+la conversion de la dette, la porte des réglages, la mise en page racine :
+**261 passés en 15 min 12**.
+
 ### Dépendances du 8 septembre au soir, et la seule qui se mesure
 `npm audit` rend les deux mêmes vulnérabilités `mysql2`, inatteignables et
 gardées par `src/dependanceMysql.test.ts` ; **zéro côté application de

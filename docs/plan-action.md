@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**113 construits · 45 restants**
+**114 construits · 44 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -206,11 +206,19 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 087 | Un système de niveau — **la même demande que 148**, cochée avec elle | — |
 
 ### Le calcul de la dette
-*6 à faire · 5 faits.* Le cœur du produit. Trois de tes décisions ne sont pas passées dans le code.
+*5 à faire · 6 faits.* Le cœur du produit. La section annonçait « trois de tes
+décisions ne sont pas passées dans le code » ; **aucune des cinq lignes qui
+restent n'est dans ce cas**, et 047 était la dernière. Les quatre premières
+attendent quelque chose de toi : 049 (« à voir si on ne peut pas cotiser à des
+jetons d'annulation ») est une piste et pas une décision, 052 (« explique
+l'effet ») et 057 (« pas compris l'intérêt ») sont des questions qui te sont
+posées, 051 demande de vraies données donc l'accès à la production. La
+cinquième, « le cardio se cumule, le reste se paie entre chaque partie »,
+CONTREDIT une correction déjà publiée — elle est dans les questions ouvertes.
 
 | | réf | | effort |
 |---|---|---|---|
-| [ ] | 047 | Des ratios personnels par utilisateur, pas globaux | 1 nuit |
+| [x] | 047 | Des ratios personnels par utilisateur, pas globaux | — |
 | [ ] | 049 | Des jetons d'annulation, cotisés, pour effacer une mauvaise partie | 2 nuits |
 | [ ] | 049 | Le cardio se cumule, le reste se paie entre deux parties | 1 nuit |
 | [ ] | 052 | Tenir compte de la durée de la partie | 1 nuit |

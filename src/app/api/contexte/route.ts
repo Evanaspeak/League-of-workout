@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { comptePublic } from "@/lib/compte";
 import { estAdmin } from "@/lib/admin";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { reponseConsentement, reponseDette } from "@/lib/contexteConnecte";
 
 /**
@@ -45,9 +45,16 @@ export async function GET() {
   // semis est mémoïsé pour le processus : après le premier appel, il ne coûte
   // qu'une promesse déjà résolue.
   await seedDefaults();
-  // La dette s'exprime en temps d'effort : sans les ratios réglés en
-  // administration, la durée rendue serait celle des valeurs d'origine.
-  await chargerRatios();
+  /**
+   * La dette s'exprime en temps d'effort, donc elle a besoin d'un barème — et
+   * depuis la réponse 047 c'est celui du COMPTE.
+   *
+   * Il se passe explicitement plutôt que de s'installer sur le module : cette
+   * route est appelée à chaque chargement d'écran connecté, donc plusieurs
+   * comptes la traversent en même temps, et un barème posé sur le module est
+   * partagé par tout le processus.
+   */
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
 
   return NextResponse.json({
     /**
@@ -57,7 +64,7 @@ export async function GET() {
      * produit dont la fonction est de s'afficher en direct.
      */
     user: { ...comptePublic(user), estAdmin: estAdmin(user.email) },
-    dette: reponseDette(user),
+    dette: reponseDette(user, ratios),
     consentement: reponseConsentement(user),
   });
 }

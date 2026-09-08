@@ -1,0 +1,19 @@
+-- Des ratios d'exercices personnels (réponse 047 : « Oui, par utilisateur »).
+--
+-- Ils se réglaient depuis l'administration, donc les mêmes pour tout le monde.
+-- Chacun doit pouvoir calibrer sa propre difficulté : une seconde de boxe ne
+-- vaut pas le même effort pour tout le monde, et un ratio global oblige à
+-- choisir pour quelqu'un d'autre.
+--
+-- Nulle par défaut, et un exercice absent retombe sur le ratio GLOBAL : la
+-- colonne est donc sans effet sur les comptes existants. C'est ce qui rend
+-- cette migration sûre à appliquer sur une base en service.
+--
+-- Elle ne réécrit rien : le barème d'une partie est gelé à l'enregistrement
+-- (`Game.ratios`), donc changer son ratio aujourd'hui ne change pas ce qu'une
+-- partie d'hier a coûté.
+--
+-- Conditionnelle, comme toutes les migrations de ce dépôt : une base neuve se
+-- construit depuis `prisma/migrations`, et une base déjà à jour ne doit rien
+-- avoir à faire ici.
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "ratiosExercices" TEXT;

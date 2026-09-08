@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { serieDiffusion, textesDiffusion } from "@/lib/i18n/diffusion";
 import { prisma } from "@/lib/prisma";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { exercicesEnTemps, parseParts, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
 import { etatRetard, longueurSerie } from "@/lib/serie";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
@@ -33,7 +33,6 @@ export async function GET(
     return NextResponse.json({ error: "Lien inconnu" }, { status: 404 });
   }
 
-  await chargerRatios();
   const user = await prisma.user.findUnique({
     where: { jetonObs: jeton },
     select: {
@@ -41,6 +40,11 @@ export async function GET(
       // Le poids de chaque exercice dans le partage : sans lui, la source de
       // diffusion annoncerait un partage différent de celui de la pastille.
       partsExercices: true,
+      // Le barème du COMPTE (réponse 047) : la source de diffusion convertit
+      // la même dette que la pastille, donc elle la convertit sous le même
+      // barème. Lu ici et passé explicitement, jamais installé sur le module —
+      // cette route sert un compte qu'on ne connaît que par son jeton.
+      ratiosExercices: true,
       // La langue du compte : la page de diffusion n'en a pas dans son adresse,
       // et ses trois mots s'affichaient en français devant le public d'un
       // stream. C'est la seule façon de la lui donner.
@@ -58,9 +62,14 @@ export async function GET(
     take: 400,
   });
 
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
   const retard = etatRetard(user.detteDepuis, user.dettePointsDus);
   return NextResponse.json({
-    lignes: ventiler(repartirPoints(points, exercices, parseParts(user.partsExercices)), null, etiquetteLocale(toLocale(user.langue))).map((l) => l.valeur),
+    lignes: ventiler(
+      repartirPoints(points, exercices, parseParts(user.partsExercices)),
+      ratios,
+      etiquetteLocale(toLocale(user.langue)),
+    ).map((l) => l.valeur),
     points,
     serie: longueurSerie(paiements.map((p) => p.jour)),
     /**

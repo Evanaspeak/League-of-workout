@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { chargerRatios } from "@/lib/exercicesConfig";
 import { jourDansFuseau } from "@/lib/fuseau";
 import { calculerBilan, JOURS_SAISON } from "@/lib/bilanSaison";
 import { parseParts, repartirPoints, toExerciceIds } from "@/lib/exercices";
@@ -19,7 +18,6 @@ import { parseParts, repartirPoints, toExerciceIds } from "@/lib/exercices";
  */
 export async function GET() {
   // La répartition s'exprime avec les ratios réglés en administration.
-  await chargerRatios();
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
@@ -45,11 +43,15 @@ export async function GET() {
     ...bilan,
     pseudo: user.pseudo,
     /**
-     * L'effort payé, exprimé dans les exercices du compte.
+     * L'effort payé, PARTAGÉ entre les exercices du compte — et toujours en
+     * points.
      *
-     * Le bilan vit en points, comme le reste ; mais « 4 200 points » ne dit
-     * rien à personne, et c'est une image qu'on va montrer. La conversion se
-     * fait ici parce que les ratios sont chargés ici.
+     * Le commentaire d'ici annonçait une conversion et la disait faite « parce
+     * que les ratios sont chargés ici ». Ni l'un ni l'autre : `repartirPoints`
+     * ne fait que répartir, elle ne convertit rien, et la route chargeait donc
+     * un barème dont elle ne se servait pas. C'est le navigateur qui convertit
+     * cette réponse, avec les ratios du compte — et l'IMAGE du bilan, elle, la
+     * convertit au serveur et lit ces ratios pour de bon.
      */
     repartitionPayee: repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices), parseParts(user.partsExercices)),
   });

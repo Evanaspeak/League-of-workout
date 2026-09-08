@@ -150,23 +150,6 @@ model User {
   jetonObs String? @unique
 
   /**
-   * Le parrainage.
-   * `codeParrain` se tire à la demande, comme `jetonObs` : un compte qui n'a
-   * jamais ouvert l'écran des amis n'en a pas, et une colonne nulle vaut mieux
-   * qu'un code engendré pour tout le monde à l'inscription.
-   * `parrainId` ne se pose QU'À la création du compte et ne change jamais.
-   * Le rouvrir permettrait de se réattribuer à quelqu'un d'autre après coup,
-   * donc de faire compter une inscription deux fois. `SetNull` plutôt que
-   * `Cascade` : si le parrain s'en va, le filleul reste — son compte n'a rien
-   * à voir avec celui qui l'a invité.
-   */
-  /**
-   * /**
-   * /**
-   * /**
-   * /**
-   * /**
-   * /**
    * Mode fantôme : participer aux classements sans y apparaître.
    * Réponse 129. Il ferme un trou que le classement a ouvert : celui-ci publie
    * le pseudo et l'état de retard à tous ses amis, et la seule façon d'en
@@ -239,6 +222,17 @@ model User {
    */
   recordsPublics Boolean @default(false)
 
+  /**
+   * Le parrainage.
+   * `codeParrain` se tire à la demande, comme `jetonObs` : un compte qui n'a
+   * jamais ouvert l'écran des amis n'en a pas, et une colonne nulle vaut mieux
+   * qu'un code engendré pour tout le monde à l'inscription.
+   * `parrainId` ne se pose QU'À la création du compte et ne change jamais.
+   * Le rouvrir permettrait de se réattribuer à quelqu'un d'autre après coup,
+   * donc de faire compter une inscription deux fois. `SetNull` plutôt que
+   * `Cascade` : si le parrain s'en va, le filleul reste — son compte n'a rien
+   * à voir avec celui qui l'a invité.
+   */
   codeParrain String? @unique
   parrainId   String?
   parrain     User?   @relation("Parrainage", fields: [parrainId], references: [id], onDelete: SetNull)
@@ -261,6 +255,22 @@ model User {
   // Elle ne réécrit rien : la ventilation d'une partie est gelée à
   // l'enregistrement (`Game.repartition`), comme `exercice` et `variante`.
   partsExercices     String?
+  // Ce que chaque exercice COÛTE, pour ce compte, en JSON :
+  // {"squats":2.5,"boxe":8}. Réponse 047 — « Oui, par utilisateur » : les
+  // ratios se réglaient depuis l'administration, donc les mêmes pour tout le
+  // monde, et chacun doit pouvoir calibrer sa propre difficulté.
+  //
+  // Nulle tant que personne n'y a touché, et un exercice absent retombe sur le
+  // ratio GLOBAL — donc exactement le comportement d'avant. C'est ce qui rend
+  // la colonne sans effet sur les comptes existants.
+  //
+  // Les pompes n'y figurent jamais : elles sont l'unité de référence, un point
+  // vaut une pompe depuis le premier jour, et laisser régler ça changerait le
+  // sens de tout le registre.
+  //
+  // Elle ne réécrit rien : le barème d'une partie est gelé à l'enregistrement
+  // (`Game.ratios`), comme `exercice`, `variante` et `repartition`.
+  ratiosExercices    String?
   // Depuis quand, pour pouvoir le rappeler sans le réclamer.
   suspensionDepuis   DateTime?
 

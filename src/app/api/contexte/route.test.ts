@@ -3,7 +3,10 @@ import { corps, utilisateur } from "@/test/api";
 jest.mock("@/lib/prisma", () => ({ prisma: { user: { update: jest.fn(), updateMany: jest.fn() } } }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
 jest.mock("@/lib/seed-defaults", () => ({ seedDefaults: jest.fn().mockResolvedValue(undefined) }));
-jest.mock("@/lib/exercicesConfig", () => ({ chargerRatios: jest.fn().mockResolvedValue({}) }));
+jest.mock("@/lib/exercicesConfig", () => ({
+  chargerRatios: jest.fn(),
+  ratiosPourCompte: jest.fn().mockResolvedValue(undefined),
+}));
 
 import { GET } from "./route";
 import { GET as GET_USER } from "../user/route";
@@ -11,7 +14,7 @@ import { GET as GET_DETTE } from "../dette/route";
 import { GET as GET_CONSENTEMENT } from "../consentement/route";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { seedDefaults } from "@/lib/seed-defaults";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 
 const session = getCurrentUser as jest.Mock;
 
@@ -49,7 +52,7 @@ describe("sans session", () => {
     session.mockResolvedValue(null);
     await GET();
     expect(seedDefaults).not.toHaveBeenCalled();
-    expect(chargerRatios).not.toHaveBeenCalled();
+    expect(ratiosPourCompte).not.toHaveBeenCalled();
   });
 
   // Sans ce témoin, un module qu'on cesserait d'appeler DES DEUX CÔTÉS rendrait
@@ -57,7 +60,7 @@ describe("sans session", () => {
   it("les appelle bien une fois la session connue", async () => {
     await GET();
     expect(seedDefaults).toHaveBeenCalled();
-    expect(chargerRatios).toHaveBeenCalled();
+    expect(ratiosPourCompte).toHaveBeenCalled();
   });
 });
 

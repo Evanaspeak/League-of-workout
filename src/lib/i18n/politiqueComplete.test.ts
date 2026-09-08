@@ -46,6 +46,12 @@ const HORS_POLITIQUE: Record<string, string> = {
    * est, et ça ne sort jamais du compte.
    */
   partsExercices: "réglage : poids de chaque exercice dans le partage",
+  /**
+   * Le barème personnel (réponse 047). Même nature que la ligne au-dessus, et
+   * même raison : ça dit à quel prix on veut payer, pas qui on est, ça ne sort
+   * jamais du compte, et ça ne dit rien de personne d'autre.
+   */
+  ratiosExercices: "réglage : ce que chaque exercice coûte, pour ce compte",
   rappelSeuilPoints: "réglage de rappel (ancienne version)",
   rappelSeuilSec: "réglage de rappel",
   plafondQuotidien: "réglage d'avertissement de volume",

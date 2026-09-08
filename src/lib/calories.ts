@@ -1,5 +1,6 @@
 import {
   EXERCICE_IDS, repartirPoints, secondesParPoint, toExerciceIds, type PartsExercices,
+  type RatiosExercices,
   type ExerciceId, type Repartition,
 } from "@/lib/exercices";
 
@@ -137,16 +138,25 @@ export function poidsRetenu(poids: number | null | undefined): number {
   return p;
 }
 
-/** Énergie d'une ventilation déjà faite, en kilocalories. */
+/**
+ * Énergie d'une ventilation déjà faite, en kilocalories.
+ *
+ * Les ratios sont OPTIONNELS et se propagent jusqu'à `secondesParPoint` : un
+ * point d'effort ne vaut pas le même temps de travail selon le barème, et une
+ * énergie calculée sous le barème de quelqu'un d'autre serait fausse dans les
+ * deux sens.
+ */
 export function caloriesDeRepartition(
-  repartition: Repartition, poids: number | null | undefined,
+  repartition: Repartition,
+  poids: number | null | undefined,
+  ratios?: RatiosExercices | null,
 ): number {
   const kg = poidsRetenu(poids);
   let kcal = 0;
   for (const id of EXERCICE_IDS) {
     const points = repartition[id] ?? 0;
     if (points <= 0) continue;
-    const heures = (points * secondesParPoint(id) * PART_A_L_EFFORT[id]) / 3600;
+    const heures = (points * secondesParPoint(id, ratios) * PART_A_L_EFFORT[id]) / 3600;
     kcal += MET[id] * kg * heures;
   }
   return Math.round(kcal);
@@ -166,9 +176,13 @@ export function caloriesDePoints(
   poids: number | null | undefined,
   /** Le poids de chaque exercice dans le partage (réponse 068). */
   parts?: PartsExercices | null,
+  /** Le barème du compte (réponse 047). Absent : celui du module. */
+  ratios?: RatiosExercices | null,
 ): number {
   const liste = toExerciceIds(exercices);
-  return caloriesDeRepartition(repartirPoints(Math.max(0, points), liste, parts), poids);
+  return caloriesDeRepartition(
+    repartirPoints(Math.max(0, points), liste, parts), poids, ratios,
+  );
 }
 
 /**

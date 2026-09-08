@@ -9,10 +9,10 @@ import {
 } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  dureeAffichee, exercicesEnTemps, formaterDuree, isExerciceId, ratiosActuels,
+  dureeAffichee, exercicesEnTemps, formaterDuree, isExerciceId,
   parseParts, repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
-import { chargerRatios } from "@/lib/exercicesConfig";
+import { ratiosPourCompte } from "@/lib/exercicesConfig";
 import { toVariante, varianteApplicable } from "@/lib/variantes";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { jourDansFuseau } from "@/lib/fuseau";
@@ -93,23 +93,26 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  // Enregistrer une partie fait franchir des seuils de rappel exprimés en
-  // secondes : la conversion doit utiliser les ratios en vigueur.
-  //
-  // Et on RETIENT ce qu'on vient de charger : ces ratios sont ceux sous
-  // lesquels la partie est chiffrée, et ils sont recopiés sur elle. Sans ça,
-  // un changement de barème réécrivait le coût de tout ce qui existait déjà.
-  await chargerRatios();
-  // On relit sur le module plutôt que d'utiliser ce que `chargerRatios` rend :
-  // c'est là que les conversions vont chercher leurs ratios, donc c'est le
-  // seul jeu de valeurs dont on soit sûr qu'il corresponde à ce qui sera
-  // affiché. Et il est toujours complet, quoi qu'ait rendu le chargement.
-  const ratiosDuJour = JSON.stringify(ratiosActuels());
   const body = await lireCorps<CorpsLibre>(req);
   if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+
+  /**
+   * Le barème sous lequel cette partie est chiffrée, et qui sera GELÉ sur elle.
+   *
+   * C'est celui du COMPTE depuis la réponse 047, et il se lit donc après la
+   * session — l'ordre a changé pour ça. Le geler reste ce qui empêche un
+   * changement de barème de réécrire le coût de tout ce qui existait déjà :
+   * `Game.ratios` porte celui du jour de l'enregistrement, pour toujours.
+   *
+   * Il se passe explicitement aux conversions au lieu de s'installer sur le
+   * module : deux parties enregistrées en même temps par deux comptes
+   * différents traverseraient sinon le même objet partagé.
+   */
+  const ratios = await ratiosPourCompte(user.ratiosExercices);
+  const ratiosDuJour = JSON.stringify(ratios);
 
   // Écrire une partie coûte plusieurs requêtes en base. La route était sans
   // limite : un script authentifié pouvait la marteler jusqu'à épuiser le
@@ -516,6 +519,9 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
         // Le fuseau ne sert qu'à choisir la FORMULATION du jour : la notification
         // part le soir, et le jour se lit là où la personne est.
         fuseau: true,
+        // Le barème du COMPTE : le seuil se compare à la durée AFFICHÉE, et
+        // celle-ci dépend des ratios de la personne depuis la réponse 047.
+        ratiosExercices: true,
       },
     });
     // L'incrément atomique ET la pose de la date de début vivent dans
@@ -535,8 +541,9 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
         // se franchir au même nombre que celui montré sur la pastille, et la
         // notification doit annoncer ce nombre-là. Trois producteurs de la
         // même durée s'étaient mis à diverger.
-        const avantSec = dureeAffichee(Math.max(0, avant.dettePointsDus), exercices, parts);
-        const apresSec = dureeAffichee(Math.max(0, total), exercices, parts);
+        const ratios = await ratiosPourCompte(avant.ratiosExercices);
+        const avantSec = dureeAffichee(Math.max(0, avant.dettePointsDus), exercices, parts, ratios);
+        const apresSec = dureeAffichee(Math.max(0, total), exercices, parts, ratios);
         if (avantSec < seuil && apresSec >= seuil) {
           // Dans la langue du compte : le texte était écrit en dur en
           // français et partait tel quel à tout le monde, y compris à qui

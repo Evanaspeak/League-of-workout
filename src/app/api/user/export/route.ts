@@ -156,6 +156,21 @@ export async function GET() {
       exercicesSuspendus: user.exercicesSuspendus,
       suspensionDepuis: user.suspensionDepuis,
       bilanHebdomadaire: user.bilanActif,
+      /**
+       * Le partage entre exercices, et le barème personnel.
+       *
+       * Deux réglages TAPÉS par la personne — donc « fournis par elle » au sens
+       * le plus littéral de l'article 20 — et aucun des deux ne sortait. C'est
+       * exactement la façon dont les pesées avaient été oubliées : ils ne
+       * paraissent nulle part ailleurs que sur l'écran qui les règle, donc
+       * personne ne les cherche dans un fichier.
+       *
+       * Ils sortent tels qu'ils sont rangés, c'est-à-dire PARTIELS : seuls les
+       * exercices réellement réglés y figurent, et c'est ce qui distingue ce
+       * que la personne a choisi de ce que le barème commun décide.
+       */
+      partageEntreExercices: user.partsExercices,
+      baremePersonnel: user.ratiosExercices,
     },
     detteEnAttentePoints: user.dettePointsDus,
     detteDepuis: user.detteDepuis,
