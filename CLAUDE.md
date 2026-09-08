@@ -1196,6 +1196,31 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un cinquième parcours du mode séance, que le découpage en projets cachait
+V532 est partie ROUGE, sur un seul travail : `bareme`. Les huit autres verts, et
+la durée — 10 min 18 — disait que les parcours avaient bien joué.
+
+C'est le même défaut que les quatre corrigés juste avant : `bareme-gele.spec.ts`
+ouvre la fenêtre de dette et cherche « Pause », qui n'existe qu'une fois la
+séance COMMENCÉE. Il traverse « Commencer » maintenant.
+
+**Ce qui l'a caché en local est le découpage en projets Playwright.** Le projet
+`bareme` déclare des `dependencies` sur les autres, précisément pour qu'il ne
+change pas le barème global sous leurs pieds. La conséquence n'était pas
+écrite : **un échec en amont le SAUTE**, donc il n'a pas tourné dans les deux
+suites complètes qui précédaient la fusion. La CI, elle, lui donne son propre
+travail et sa propre base — la protection y est structurelle — donc il tourne
+toujours. C'est le seul fichier du dépôt dont l'exécution locale dépende de la
+réussite des autres.
+
+**Et l'échec était illisible pour une raison qui vaut au-delà du cas.**
+`.click().catch(() => {})` sur un bouton qui n'apparaît jamais attend le BUDGET
+DU TEST — soixante secondes — avant de se taire. Le test expire alors sur la
+ligne SUIVANTE, en annonçant « Target page, context or browser has been
+closed », c'est-à-dire un message qui ne désigne pas le bouton manquant. Le
+délai est borné à cinq secondes maintenant : un clic facultatif se déclare
+facultatif ET borné, sinon il mange le budget de ce qui le suit.
+
 ### Huit cent trente mille octets à chaque ouverture de l'historique
 Ligne q1, décidée par le propriétaire le 8 septembre : « garder les 50
 dernières parties à l'écran, archiver le reste, et que l'archive reste

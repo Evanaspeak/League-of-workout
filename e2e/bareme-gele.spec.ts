@@ -190,9 +190,22 @@ test("la pastille de dette et son décompte annoncent le même nombre", async ({
   await pastille.click();
   const chrono = page.locator('[aria-modal="true"]');
   await chrono.waitFor({ timeout: 10_000 });
+  /*
+    La séance commence sur un GESTE depuis la ligne 205 : la fenêtre s'ouvre
+    sur la préparation, où il n'y a ni chrono ni bouton « Pause ». C'est la
+    correction du défaut mesuré — quinze secondes de lecture payaient quinze
+    secondes de dette.
+  */
+  await page.getByRole("button", { name: /^commencer$|^start$/i }).click();
   // On met en pause tout de suite : le décompte tourne, et comparer une valeur
   // qui bouge à une valeur figée ferait échouer le test une fois sur deux.
-  await page.getByRole("button", { name: /^pause$/i }).click().catch(() => {});
+  //
+  // Le délai est BORNÉ, et pas laissé au budget du test : un `.catch()` posé
+  // sur un clic sans borne attend soixante secondes avant de se taire, et
+  // l'échec tombe alors sur la ligne SUIVANTE en annonçant « la page a été
+  // fermée ». C'est ce qui a rendu illisible l'échec de V532.
+  await page.getByRole("button", { name: /^pause$/i })
+    .click({ timeout: 5_000 }).catch(() => {});
   const depart = enSecondes(await chrono.innerText());
 
   // Une seconde de tolérance : le tic peut tomber entre le clic et la lecture.
