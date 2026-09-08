@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { serieDiffusion, textesDiffusion } from "@/lib/i18n/diffusion";
 import { prisma } from "@/lib/prisma";
 import { chargerRatios } from "@/lib/exercicesConfig";
-import { exercicesEnTemps, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
+import { exercicesEnTemps, parseParts, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
 import { etatRetard, longueurSerie } from "@/lib/serie";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 
@@ -38,6 +38,9 @@ export async function GET(
     where: { jetonObs: jeton },
     select: {
       id: true, dettePointsDus: true, detteDepuis: true, exercices: true,
+      // Le poids de chaque exercice dans le partage : sans lui, la source de
+      // diffusion annoncerait un partage différent de celui de la pastille.
+      partsExercices: true,
       // La langue du compte : la page de diffusion n'en a pas dans son adresse,
       // et ses trois mots s'affichaient en français devant le public d'un
       // stream. C'est la seule façon de la lui donner.
@@ -57,7 +60,7 @@ export async function GET(
 
   const retard = etatRetard(user.detteDepuis, user.dettePointsDus);
   return NextResponse.json({
-    lignes: ventiler(repartirPoints(points, exercices), null, etiquetteLocale(toLocale(user.langue))).map((l) => l.valeur),
+    lignes: ventiler(repartirPoints(points, exercices, parseParts(user.partsExercices)), null, etiquetteLocale(toLocale(user.langue))).map((l) => l.valeur),
     points,
     serie: longueurSerie(paiements.map((p) => p.jour)),
     /**

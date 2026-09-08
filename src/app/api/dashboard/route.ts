@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { chargerBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  isExerciceId, parseRepartition, partPourExercice, toExerciceIds, RAPPEL_SEUIL_DEFAUT,
+  isExerciceId, parseParts, parseRepartition, partPourExercice, toExerciceIds, RAPPEL_SEUIL_DEFAUT,
 } from "@/lib/exercices";
 import { capacitesDuJeu, tailleEquipeDepuisEquipes, toTypeJeu, type TypeJeu } from "@/lib/jeux";
 
@@ -428,9 +428,9 @@ export async function GET(req: Request) {
      */
     calories: user.santeConsentiLe && user.poids
       ? {
-          total: caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids),
+          total: caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids, parseParts(user.partsExercices)),
           marcheMin: minutesDeMarche(
-            caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids),
+            caloriesDePoints(globalTotalPoints, toExerciceIds(user.exercices), user.poids, parseParts(user.partsExercices)),
             user.poids,
           ),
         }

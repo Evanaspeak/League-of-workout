@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { jourDansFuseau } from "@/lib/fuseau";
 import { calculerBilan, JOURS_SAISON, type Bilan } from "@/lib/bilanSaison";
-import { repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
+import { parseParts, repartirPoints, toExerciceIds, ventiler } from "@/lib/exercices";
 import { motsImage, type MotsImage } from "@/lib/i18n/imageBilan";
 import { estLocale, etiquetteLocale } from "@/lib/i18n/langues";
 
@@ -125,7 +125,7 @@ export async function GET() {
   // « 4 200 points » ne dit rien à personne. La quantité réelle, dans les
   // exercices du compte, en dit quelque chose.
   const etiquette = etiquetteLocale(estLocale(user.langue) ? user.langue : "en");
-  const parts = ventiler(repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices)), null, etiquette);
+  const parts = ventiler(repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices), parseParts(user.partsExercices)), null, etiquette);
   const effortPaye = parts.map((p) => p.valeur).join(" + ") || "0";
 
   return new ImageResponse(

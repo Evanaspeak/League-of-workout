@@ -62,6 +62,9 @@ const PART_AU_NAVIGATEUR = new Set([
   "exercicesSuspendus", "suspensionDepuis",
   "langue", "bilanActif", "bilanLe", "relanceLe", "rappelLe", "fuseau",
   "variantePompes", "exercice", "exercices",
+  // Le poids de chaque exercice dans le partage : c'est un réglage, et
+  // l'écran des réglages doit pouvoir l'afficher et le changer.
+  "partsExercices",
   "rappelSeuilPoints", "rappelSeuilSec", "plafondQuotidien",
   // La conduite au démarrage d'un jeu : la page en a besoin pour savoir s'il
   // faut poser la question, la lancer seule, ou ne rien faire.

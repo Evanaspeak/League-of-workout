@@ -1,5 +1,5 @@
 import {
-  EXERCICE_IDS, repartirPoints, secondesParPoint, toExerciceIds,
+  EXERCICE_IDS, repartirPoints, secondesParPoint, toExerciceIds, type PartsExercices,
   type ExerciceId, type Repartition,
 } from "@/lib/exercices";
 
@@ -160,10 +160,15 @@ export function caloriesDeRepartition(
  * l'énergie d'un effort que personne n'a produit.
  */
 export function caloriesDePoints(
-  points: number, exercices: ExerciceId[], poids: number | null | undefined,
+  points: number,
+  exercices: ExerciceId[],
+  /** Des KILOGRAMMES. `parts`, juste en dessous, est autre chose. */
+  poids: number | null | undefined,
+  /** Le poids de chaque exercice dans le partage (réponse 068). */
+  parts?: PartsExercices | null,
 ): number {
   const liste = toExerciceIds(exercices);
-  return caloriesDeRepartition(repartirPoints(Math.max(0, points), liste), poids);
+  return caloriesDeRepartition(repartirPoints(Math.max(0, points), liste, parts), poids);
 }
 
 /**

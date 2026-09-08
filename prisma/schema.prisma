@@ -247,6 +247,18 @@ model User {
   // ici qu'on les reprenne. Les garder à part évite de toucher aux six
   // endroits qui répartissent la dette, et donc d'en oublier un.
   exercicesSuspendus String[]  @default([])
+  // Ce que chaque exercice PÈSE dans le partage de la dette (réponse 068), en
+  // JSON : {"pompes":3,"squats":1}. Ce sont des poids et non des pourcentages,
+  // parce qu'un pourcentage force la somme à cent : décocher un exercice
+  // rendrait alors tous les autres faux.
+  //
+  // Nulle tant que personne n'a rien réglé, et un poids absent vaut UN — donc
+  // le partage à parts égales, c'est-à-dire le comportement d'avant. C'est ce
+  // qui rend la colonne sans effet sur les comptes existants.
+  //
+  // Elle ne réécrit rien : la ventilation d'une partie est gelée à
+  // l'enregistrement (`Game.repartition`), comme `exercice` et `variante`.
+  partsExercices     String?
   // Depuis quand, pour pouvoir le rappeler sans le réclamer.
   suspensionDepuis   DateTime?
 

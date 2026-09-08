@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { chargerBareme, oublierBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { comptePublic } from "@/lib/compte";
-import { isExerciceId, toExerciceIds } from "@/lib/exercices";
+import { isExerciceId, PART_MAX, PART_MIN, toExerciceIds } from "@/lib/exercices";
 import { toConduiteSession } from "@/lib/sessionAuto";
 import { estAdmin } from "@/lib/admin";
 import { toVariante } from "@/lib/variantes";
@@ -65,7 +65,8 @@ export async function PUT(req: Request) {
   if (body.userPrefs) {
 
     const data: {
-      exercices?: string[]; rappelSeuilPoints?: number;
+      exercices?: string[]; partsExercices?: string | null;
+      rappelSeuilPoints?: number;
       rappelSeuilSec?: number; plafondQuotidien?: number;
       pompesMax?: number; pompesMaxLe?: Date;
       variantePompes?: string | null;
@@ -117,6 +118,45 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
       }
       data.exercices = toExerciceIds(bruts);
+    }
+
+    /**
+     * Le poids de chaque exercice dans le partage (réponse 068).
+     *
+     * Un poids hors bornes est REFUSÉ et non ramené : « trois fois plus » et
+     * « dix fois plus » ne se ressemblent pas, et enregistrer l'un pour
+     * l'autre en silence rendrait le réglage inutile. C'est la règle déjà
+     * posée pour la conduite au démarrage d'un jeu.
+     *
+     * Un exercice inconnu est refusé de la même façon. Ce qui est en revanche
+     * ACCEPTÉ, c'est un poids sur un exercice qui n'est pas coché : décocher
+     * puis recocher ne doit pas effacer le réglage qu'on avait mis.
+     */
+    if (body.userPrefs.partsExercices !== undefined) {
+      const brut = body.userPrefs.partsExercices;
+      if (brut === null) {
+        data.partsExercices = null;
+      } else {
+        let objet: unknown;
+        try {
+          objet = JSON.parse(String(brut));
+        } catch {
+          return NextResponse.json({ error: "Partage invalide" }, { status: 400 });
+        }
+        if (objet === null || typeof objet !== "object" || Array.isArray(objet)) {
+          return NextResponse.json({ error: "Partage invalide" }, { status: 400 });
+        }
+        for (const [cle, valeur] of Object.entries(objet as Record<string, unknown>)) {
+          if (!isExerciceId(cle)) {
+            return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
+          }
+          const n = Number(valeur);
+          if (!Number.isInteger(n) || n < PART_MIN || n > PART_MAX) {
+            return NextResponse.json({ error: "Partage invalide" }, { status: 400 });
+          }
+        }
+        data.partsExercices = JSON.stringify(objet);
+      }
     }
 
     if (body.userPrefs.rappelSeuilPoints !== undefined) {

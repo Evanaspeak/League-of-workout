@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth-helpers";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { jourDansFuseau } from "@/lib/fuseau";
 import { calculerBilan, JOURS_SAISON } from "@/lib/bilanSaison";
-import { repartirPoints, toExerciceIds } from "@/lib/exercices";
+import { parseParts, repartirPoints, toExerciceIds } from "@/lib/exercices";
 
 /**
  * Le bilan des quatre-vingt-dix derniers jours.
@@ -51,6 +51,6 @@ export async function GET() {
      * rien à personne, et c'est une image qu'on va montrer. La conversion se
      * fait ici parce que les ratios sont chargés ici.
      */
-    repartitionPayee: repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices)),
+    repartitionPayee: repartirPoints(bilan.pointsPayes, toExerciceIds(user.exercices), parseParts(user.partsExercices)),
   });
 }

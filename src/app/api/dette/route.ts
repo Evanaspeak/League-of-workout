@@ -4,7 +4,7 @@ import { retirerDeLaDette } from "@/lib/dette";
 import { meriteEclair } from "@/lib/exploits";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
-  dureeEffort, exercicesEnTemps, secondesParPoint, toExerciceIds,
+  dureeEffort, exercicesEnTemps, parseParts, secondesParPoint, toExerciceIds,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { reponseDette } from "@/lib/contexteConnecte";
@@ -99,7 +99,7 @@ export async function PATCH(req: Request) {
     if (secondesFaites === null) {
       return NextResponse.json({ error: "Durée invalide" }, { status: 400 });
     }
-    const totalSec = dureeEffort(dus, exercices);
+    const totalSec = dureeEffort(dus, exercices, parseParts(user.partsExercices));
     // Un arrêt en cours de route ne paie que le temps réellement effectué.
     const partPayee = totalSec > 0 ? Math.min(1, secondesFaites / totalSec) : 1;
     restant = Math.max(0, dus - Math.round(dus * partPayee));

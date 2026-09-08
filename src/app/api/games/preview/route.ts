@@ -6,7 +6,7 @@ import {
   getLevel, getLevelParPompes, profilNeutre,
 } from "@/lib/scoring";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { isExerciceId, repartirPoints, toExerciceIds } from "@/lib/exercices";
+import { isExerciceId, parseParts, repartirPoints, toExerciceIds } from "@/lib/exercices";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
@@ -85,6 +85,9 @@ export async function POST(req: Request) {
 
   // Mêmes exercices que l'enregistrement réel : l'aperçu annonce exactement ce
   // qu'il y aura à faire.
+  // L'aperçu doit montrer le MÊME partage que l'enregistrement, sinon il
+  // annonce un chiffre qu'on ne paiera pas.
+  const parts = parseParts(user.partsExercices);
   const selection = isExerciceId(body.exercice)
     ? [body.exercice]
     : toExerciceIds(
@@ -108,7 +111,7 @@ export async function POST(req: Request) {
       gainageSec,
       exercice,
       exercices: selection,
-      repartition: repartirPoints(scoringTemps.pointsFinaux, selection),
+      repartition: repartirPoints(scoringTemps.pointsFinaux, selection, parts),
       typeJeu,
       dureeSec,
     });
@@ -135,7 +138,7 @@ export async function POST(req: Request) {
       gainageSec,
       exercice,
       exercices: selection,
-      repartition: repartirPoints(scoringBr.pompesFinales, selection),
+      repartition: repartirPoints(scoringBr.pompesFinales, selection, parts),
       placement,
       joueurs,
     });
@@ -156,7 +159,7 @@ export async function POST(req: Request) {
       gainageSec,
       exercice,
       exercices: selection,
-      repartition: repartirPoints(scoringRl.pompesFinales, selection),
+      repartition: repartirPoints(scoringRl.pompesFinales, selection, parts),
     });
   }
 
@@ -192,6 +195,6 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     scoring, partiesAvant, gainageSec, exercice, exercices: selection,
-    repartition: repartirPoints(scoring.pompesFinales, selection),
+    repartition: repartirPoints(scoring.pompesFinales, selection, parts),
   });
 }

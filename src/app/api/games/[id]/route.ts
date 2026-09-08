@@ -158,7 +158,17 @@ async function corrigerResultat(id: string, userId: string, brut: unknown) {
   // change plus tard. Seul le total qu'on répartit entre eux bouge.
   const ancienne = parseRepartition(game.repartition, game.exercice, game.pompesCalculees);
   const selection = Object.keys(ancienne).map(toExerciceId) as ExerciceId[];
-  const nouvelle = repartirPoints(scoring.pompesFinales, selection);
+  /**
+   * Et les PROPORTIONS d'origine sont gardées, pas celles d'aujourd'hui.
+   *
+   * La ventilation figée sert de poids : c'est exactement ce qu'elle est, un
+   * partage, et les poids étant relatifs elle rend les mêmes proportions sur
+   * le nouveau total. Repasser les poids du jour ferait bouger la répartition
+   * d'une vieille partie pour une raison sans rapport avec ce qu'on vient de
+   * corriger — c'est le défaut déjà payé sur les ratios d'exercices, et sa
+   * correction disait déjà « seul le total qu'on répartit entre eux bouge ».
+   */
+  const nouvelle = repartirPoints(scoring.pompesFinales, selection, ancienne);
 
   const maj = await prisma.game.updateMany({
     where: { id, userId },

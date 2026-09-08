@@ -1166,6 +1166,112 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le partage entre exercices au choix (ligne 068)
+Réponse 068 : « au choix ». Dernière ligne non cochée de la section des
+exercices, et la seule décision qu'elle laissait ouverte est la FORME.
+
+**Des poids, pas des pourcentages.** Un pourcentage force la somme à cent :
+décocher un exercice rend alors tous les autres faux, et il faut les recalculer
+sous les yeux de quelqu'un qui n'a rien demandé. Un poids survit à l'ajout
+comme au retrait — « deux fois plus de pompes que de squats » reste vrai quand
+la course s'en va.
+
+**Le défaut est UN partout, donc le partage à parts égales — c'est-à-dire
+exactement le comportement d'avant.** Ce n'est pas une approximation : le
+contrôle qui garde ce point compare `repartirPoints` sans poids à `repartir`,
+la fonction qui faisait le travail, sur **huit cents cas** — un à quatre
+exercices, tous les totaux de zéro à deux cents. Écrit sur trois exemples, il
+aurait laissé passer un défaut d'arrondi qui ne se voit qu'à un reste précis.
+
+**Zéro est refusé, et le plafond n'est pas une politesse.** « Ne rien mettre
+sur cet exercice » se dit déjà en le décochant : deux façons d'exprimer la même
+chose finissent par diverger, et c'est celle qui laisse l'exercice coché qui
+mentirait. Et à un contre mille, la petite part arrondit à zéro — un exercice
+coché qui ne reçoit jamais rien est pire que pas coché. Dix suffit à dire
+« beaucoup plus » et garde toute part au-dessus de zéro, ce qu'un test vérifie
+au pire écart permis.
+
+**Les bornes vivent à l'ENTRÉE, jamais dans l'arithmétique**, et c'est la
+décision qui a demandé le plus de réflexion. `PART_MIN` et `PART_MAX` disent ce
+qu'on a le droit de CHOISIR : la route de réglages refuse hors bornes,
+`parseParts` ramène en relisant la base. Les imposer au calcul lui interdirait
+de recevoir des poids qui ne viennent pas d'un réglage — or la correction d'un
+résultat en a besoin.
+
+**La correction d'un résultat garde les proportions d'ORIGINE.** Elle repasse
+la ventilation figée en guise de poids : c'est exactement ce qu'elle est, un
+partage, et les poids étant relatifs elle rend les mêmes proportions sur le
+nouveau total. Repasser les poids du jour ferait bouger la répartition d'une
+vieille partie pour une raison sans rapport avec ce qu'on vient de corriger —
+c'est le défaut déjà payé sur les ratios d'exercices, et sa correction écrivait
+déjà « seul le total qu'on répartit entre eux bouge ».
+
+**Vingt-sept appels répartissent une dette dans ce dépôt**, et l'argument est
+OPTIONNEL — c'est ce qui a permis de les reprendre un par un plutôt que tous à
+la fois. Le prix de cette souplesse est qu'un appelant qui l'oublie ne casse
+RIEN : il retombe silencieusement sur les parts égales et annonce un nombre que
+la pastille d'à côté n'affiche pas. `src/partageBranche.test.ts` compte donc
+les arguments, comme `quantiteLocalisee` le fait pour la langue. C'est lui, et
+lui seul, qui rend l'argument obligatoire en pratique.
+
+**Trois appels étaient hors du champ au premier jet**, et les trois auraient
+produit deux durées pour la même dette : `/api/dette`, qui calcule la
+proportion payée, `/api/push/programme`, qui annonce la dette du matin, et la
+projection de la pastille en jeu. C'est le défaut déjà écrit ici — « trois
+producteurs de la même durée s'étaient mis à diverger » — et il se serait
+reformé le jour même.
+
+**Le mot `poids` était déjà pris.** `caloriesDePoints` en prend un, et ce sont
+des KILOGRAMMES. Le partage s'appelle donc `parts` partout, et le commentaire
+le dit à l'endroit où les deux se croisent : deux sens sous un même nom est ce
+que ce journal reproche à `totalPoints` depuis le premier jour.
+
+**Le pourcentage affiché se déduit de `repartirPoints`**, pas d'une règle de
+trois. La fonction que le serveur emploie pour de vrai, sur cent points : une
+seconde arithmétique aurait l'air juste et divergerait au premier arrondi —
+l'écran annoncerait 33 % là où la dette en donne 34, sur un panneau qui existe
+pour PROMETTRE un partage.
+
+Dix sabotages, dix échecs : poids ignorés, bornes remises dans l'arithmétique,
+reste non distribué, zéro accepté, `parseParts` qui ne borne plus, un appelant
+qui oublie les poids, les calories qui les oublient, le défaut changé de
+valeur, le motif du garde rendu aveugle, et l'écran qui n'envoie rien.
+
+**Un onzième a PASSÉ, et c'est le plus instructif.** Débrancher les poids de
+l'appel qui alimente la dette, ou de celui qui remplit la réponse, laisse le
+parcours au vert : la somme reste exacte dans les deux cas, donc le total ne
+bouge pas. Le parcours ne couvre que la ventilation ÉCRITE ; les deux autres
+sont tenus par le compte d'arguments. Il fallait le sabotage pour le savoir, et
+sans lui le commentaire du parcours aurait promis plus qu'il ne prouve.
+
+**Et un budget de test allongé qui masquait un défaut de localisateur.** Le
+parcours débordait de sa minute ; j'ai porté son budget à cent cinquante
+secondes, et il a débordé de nouveau. La cause n'était pas la lenteur : après
+un rechargement, le fragment `#effort` survit, la rubrique s'ouvre seule, et
+« Ton effort » n'est alors plus un BOUTON mais le TITRE de la page — le
+chercher comme bouton attend indéfiniment. L'échec disait « Test ended », pas
+« bouton introuvable ». Le localisateur corrigé, le parcours passe en
+vingt-quatre secondes, et le budget allongé est reparti : une ligne qu'on peut
+retirer sans qu'un test tombe ne tient rien.
+
+**Et le piège du `pkill -f`, pour la troisième fois recensée ici.**
+`pkill -f "next-server"` dans un script qui contient ce mot tue le script
+lui-même : sortie 144, aucun journal, et le sabotage reste en place sur le
+disque. On liste par `ps -eo pid,args` et on tue par numéro.
+
+**Trois gardes ont mordu**, ce qui est leur travail : `compte.test.ts` a exigé
+qu'on range la colonne d'un côté ou de l'autre de ce qui sort du compte,
+`politiqueComplete.test.ts` qu'on la décrive ou qu'on dise pourquoi elle en est
+dispensée — c'est un réglage, il ne sort jamais du compte et ne dit rien de
+personne — et le recensement des messages d'API a exigé « Partage invalide »
+dans les six langues.
+
+Vérifié du panneau jusqu'à la base, et les chiffres sont relus en base plutôt
+qu'annoncés : poids 3 contre 1, une partie à vingt-cinq points enregistrée
+ensuite, `{"pompes":19,"squats":6}` — la somme est exacte et dix-neuf est bien
+l'arrondi de dix-huit et trois quarts. La colonne repasse à `null` à la fin du
+parcours, qui se termine sur « Revenir à parts égales ».
+
 ### Campagne de clôture du 8 septembre, et une 404 servie depuis le cache
 Passée après V513 et V514, qui sont les premières de la série à PEINDRE
 autrement : le catalogue passe de neuf à seize exercices et le sélecteur gagne

@@ -10,9 +10,11 @@ import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   EXERCICE_DEFAUT, RAPPEL_SEUIL_DEFAUT, RAPPEL_SEUILS_SEC, RAPPEL_SEUIL_SEC_DEFAUT,
-  PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, formaterDuree, toExerciceIds, type ExerciceId,
+  PLAFONDS_QUOTIDIENS, EXERCICE_IDS, formaterCompact, formaterDuree, parseParts, toExerciceIds,
+  type ExerciceId, type PartsExercices,
 } from "@/lib/exercices";
 import { ExerciceSelector } from "@/components/ExerciceSelector";
+import PartageExercices from "@/components/PartageExercices";
 import { MesuresPhysiques } from "@/components/MesuresPhysiques";
 import { SimulateurDette } from "@/components/SimulateurDette";
 import { SuspensionExercice } from "@/components/SuspensionExercice";
@@ -133,6 +135,12 @@ export default function SettingsPage() {
 
   // ── Exercice & rappel ──
   const [exercicesSel, setExercicesSel] = useState<ExerciceId[]>([EXERCICE_DEFAUT]);
+  /**
+   * Le poids de chaque exercice dans le partage (réponse 068). Vide = tous les
+   * poids valent un, donc le partage à parts égales : c'est le défaut, et
+   * quelqu'un qui n'ouvre jamais ce panneau ne doit rien voir changer.
+   */
+  const [partsSel, setPartsSel] = useState<PartsExercices>({});
   const [rappelSeuil, setRappelSeuil] = useState<number>(RAPPEL_SEUIL_DEFAUT);
   // Seuil du compteur de boxe, en secondes d'effort.
   const [seuilSec, setSeuilSec] = useState<number>(RAPPEL_SEUIL_SEC_DEFAUT);
@@ -266,6 +274,11 @@ export default function SettingsPage() {
         "exercices", avant, [EXERCICE_DEFAUT],
         toExerciceIds(s.user?.exercices), memesExercices,
       ));
+      setPartsSel((avant) => fusionnerValeur(
+        "partsExercices", avant, {},
+        parseParts(s.user?.partsExercices),
+        (a, b) => JSON.stringify(a) === JSON.stringify(b),
+      ));
       setCorps((avant) => fusionner(avant, CORPS_DEFAUT, {
         formuleCalorique: s.user?.formuleCalorique ?? null,
         niveauActivite: s.user?.niveauActivite ?? null,
@@ -394,6 +407,23 @@ export default function SettingsPage() {
       { pompesMax: valeur },
       () => { setPompesMax(avantMax); setPompesMaxLe(avantLe); },
     ));
+  };
+
+  /**
+   * Le partage s'enregistre AU CLIC, comme la sélection d'exercices.
+   *
+   * Les poids partent en JSON parce que c'est ainsi qu'ils sont rangés : la
+   * route les relit, les borne et les refuse hors bornes. Un objet vide
+   * s'envoie `null`, ce qui dit « rien de réglé » plutôt que « rien à
+   * partager » — les deux se ressemblent à l'écran et pas en base.
+   */
+  const handleSavePoidsExercices = async (prochain: PartsExercices) => {
+    const avant = partsSel;
+    setPartsSel(prochain);
+    await enregistrerReglage(
+      { partsExercices: Object.keys(prochain).length > 0 ? JSON.stringify(prochain) : null },
+      () => setPartsSel(avant),
+    );
   };
 
   const handleSaveExo = async (nextExercices: ExerciceId[], nextSeuil: number) => {
@@ -705,6 +735,12 @@ export default function SettingsPage() {
           {exercicesSel.length > 1 && (
             <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.rotationActive(exercicesSel.length)}</p>
           )}
+
+          <PartageExercices
+            selection={exercicesSel}
+            parts={partsSel}
+            onChange={handleSavePoidsExercices}
+          />
 
           {/* La variante ne se propose que si les pompes sont de la partie :
               ailleurs, elle ne qualifierait rien. */}

@@ -1,7 +1,8 @@
 "use client";
 import { useCallback, useEffect, useRef } from "react";
 import {
-  formaterCompact, repartirPoints, toExerciceIds, ventiler, type ExerciceId,
+  formaterCompact, parseParts, repartirPoints, toExerciceIds, ventiler,
+  type ExerciceId, type PartsExercices,
 } from "@/lib/exercices";
 import { ROLE_DEFAUT } from "@/components/PartieDetectee";
 import type { ContextePartie, ScoreDirect } from "@/types/electron";
@@ -49,6 +50,15 @@ type Projection = {
 
 export function DetteDirecte() {
   const exercicesRef = useRef<ExerciceId[]>(["pompes"]);
+  /**
+   * Le poids de chaque exercice dans le partage (réponse 068).
+   *
+   * Il vient du compte, avec la sélection : la projection annoncée par la
+   * pastille doit montrer le MÊME partage que la dette qu'on paiera. Deux
+   * partages pour la même partie, c'est le défaut déjà payé sur la durée —
+   * trois producteurs du même nombre qui s'étaient mis à diverger.
+   */
+  const partsRef = useRef<PartsExercices>({});
   const enAttenteRef = useRef("");
   /**
    * Le seuil de rappel est-il franchi ?
@@ -69,7 +79,7 @@ export function DetteDirecte() {
   const libelle = useCallback((points: number) => {
     const liste = exercicesRef.current;
     if (liste.length === 1) return formaterCompact(points, liste[0], null, etiquette);
-    return ventiler(repartirPoints(points, liste), null, etiquette).map((v) => v.valeur).join(" · ");
+    return ventiler(repartirPoints(points, liste, partsRef.current), null, etiquette).map((v) => v.valeur).join(" · ");
   }, [etiquette]);
 
   /**
@@ -100,6 +110,7 @@ export function DetteDirecte() {
     try {
       const u = await fetch("/api/user").then((r) => (r.ok ? r.json() : null));
       if (u?.exercices) exercicesRef.current = toExerciceIds(u.exercices);
+      partsRef.current = parseParts(u?.partsExercices);
     } catch { /* on garde la sélection connue */ }
     try {
       const res = await fetch("/api/dette");

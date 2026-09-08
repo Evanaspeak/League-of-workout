@@ -7,7 +7,7 @@ import { rappelerPesee } from "@/lib/rappelPesee";
 import { DEBUT_MATIN, dansLaFenetreDuMatin, dejaEnvoyeAujourdhui } from "@/lib/fenetreEnvoi";
 import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
-import { dureeAffichee, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
+import { dureeAffichee, exercicesEnTemps, formaterDuree, parseParts, toExerciceIds } from "@/lib/exercices";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 import { secretProgrammeValide } from "@/lib/secretProgramme";
 
@@ -90,6 +90,9 @@ export async function POST(req: Request) {
     where: { dettePointsDus: { gt: 0 }, fuseau: { not: null } },
     select: {
       id: true, dettePointsDus: true, exercices: true, langue: true, fuseau: true,
+      // Le partage décide de la durée d'effort annoncée : sans lui, le rappel
+      // du matin donnerait un nombre que la pastille n'affiche pas.
+      partsExercices: true,
       rappelLe: true,
     },
   });
@@ -108,7 +111,7 @@ export async function POST(req: Request) {
     // La MÊME durée que celle affichée à l'écran : une notification qui
     // annonce un autre nombre que la pastille est un chiffre de plus à ne
     // pas comprendre.
-    const sec = Math.round(dureeAffichee(u.dettePointsDus, exercices));
+    const sec = Math.round(dureeAffichee(u.dettePointsDus, exercices, parseParts(u.partsExercices)));
     if (sec < MINIMUM_SEC) continue;
 
     const { titre, corps } = textesNotification(u.langue, jourDansFuseau(maintenant, u.fuseau)).matin(formaterDuree(sec, etiquetteLocale(toLocale(u.langue))));
