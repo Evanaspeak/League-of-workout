@@ -1313,6 +1313,72 @@ chacune, **0 constat, aucune page laissée de côté**. C'est le second chiffre
 qui compte, et c'est celui que la première passe élargie ne pouvait pas
 donner — elle rangeait les cinq rubriques du côté des pages non mesurées.
 
+### Le sac et le shadow séparés, et l'entrée qui se contredisait (ligne 078)
+Réponse 078 : « Les deux séparés ». La question partait d'un fait — un sac de
+frappe est du matériel que peu de gens ont — et le catalogue, lui, disait
+« sac ou shadow, au choix » sous une entrée unique marquée **sans matériel**.
+
+**Les deux moitiés du produit se contredisaient déjà**, et c'est le
+recensement qui l'a montré plutôt qu'une relecture : `EXERCICES.boxe` portait
+`materiel: false` pendant que `calories.ts` chiffrait, en toutes lettres,
+« la boxe au SAC » à 7,8 MET. L'un des deux avait tort depuis le premier jour,
+et la séparation est ce qui les remet d'accord.
+
+**Le sac demande donc du matériel, et le dit.** C'est la moitié qui compte :
+découvrir qu'on ne peut pas faire son exercice une fois la dette due est la
+pire façon de l'apprendre — c'est écrit dans le catalogue depuis les
+tractions, et ça n'avait pas été appliqué ici.
+
+**Le shadow coûte sept secondes et demie par point contre sept au sac.**
+L'écart est petit et il est dans le bon sens : sans impact ni résistance, une
+seconde de shadow achète un peu moins d'effort. Le garder petit est ce qui
+laisse le choix LIBRE — si un exercice coûtait le double d'un autre, il n'y
+aurait plus de choix, il y aurait un piège. `tempsParPoint.test.ts` tient la
+bande, et le sabotage qui aligne les deux ratios tombe.
+
+**Aucune migration, et c'est la propriété qui rend l'opération sûre.**
+`Game.exercice` gèle l'exercice de chaque partie, `RATIOS_DEFAUT.boxe` ne
+bouge pas : une partie déjà enregistrée en « boxe » coûte exactement ce
+qu'elle coûtait, et change seulement de LIBELLÉ. Quelqu'un qui faisait du
+shadow sous l'ancienne entrée voit maintenant qu'elle parle du sac, et
+bascule — c'est précisément ce que la séparation existe pour permettre.
+
+**Et `EXERCICES_REGLABLES` était la règle écrite deux fois.** La liste valait
+« tout sauf les pompes », c'est-à-dire exactement ce que son commentaire
+explique et ce qu'un test exigeait déjà des deux côtés. Un exercice ajouté
+demandait donc de venir l'y inscrire, et l'oublier rendait son ratio non
+réglable — un écart qui ne se voit que sur le panneau d'administration, où
+personne ne compte les lignes. Elle se DÉDUIT du catalogue maintenant, ce qui
+retire un endroit à se rappeler pour l'élargissement à venir.
+
+**Le compilateur a nommé quatre des cinq endroits à suivre** — les deux
+tables de calories, les noms en jeu, les conseils de forme — parce que tout
+cela est indexé par `ExerciceId`. Le cinquième, les noms et descriptions, est
+tenu par `nomsExercices.test.ts`, qui a mordu tout de suite.
+
+**Un garde de plus, et il ne vise pas cette paire.** Deux exercices voisins ne
+peuvent pas porter le même nom dans une langue : c'est ce qui se recopie le
+plus facilement — deux entrées, un seul geste, six blocs à remplir — et une
+traduction paresseuse rendrait la séparation invisible, l'écran affichant deux
+fois « Boxe » sans dire laquelle demande un sac. Il porte sur tout le
+catalogue : le jour où l'on ajoutera les fentes à côté des squats, la question
+se reposera à l'identique.
+
+**Trois parcours se sont plaints, et c'est leur travail.** `parcours`,
+`reglages` et `corps` cliquent l'exercice par son LIBELLÉ, ancré
+(`/^boxe$/i`) : le renommage les a fait tomber l'un après l'autre. C'est la
+leçon déjà écrite pour le nombre mis en forme au classement — **un test qui
+compare une chaîne est lié au texte du jour où il a été écrit** — et le bon
+comportement : ils ont dit le changement avant qu'on s'en aperçoive.
+
+Quatre sabotages, quatre échecs : le sac rendu sans matériel, les deux ratios
+alignés, deux noms identiques en allemand, et la boucle du garde vidée.
+
+Vérifié à l'écran dans trois langues, rubrique « Ton effort » : « Boxe au
+sac » avec sa pastille **Matériel** et « Shadow boxing » sans elle ;
+« Sackboxen » / « Schattenboxen » ; 「サンドバッグ」 avec 「器具が必要」 et
+「シャドーボクシング」.
+
 ### Sur téléphone, l'application s'ouvre sur l'ajout de partie (ligne 210)
 Réponse 210 : « Sur téléphone, quel écran devrait s'ouvrir en premier ?
 Aujourd'hui c'est le tableau de bord » → **« L'ajout de partie »**. Elle vaut
@@ -1372,6 +1438,15 @@ noté comme tel, pas compté comme un garde qui mord.
 est là au bon moment est celui d'un compte neuf, où l'intro n'est pas passée
 non plus — les deux conditions tombent ensemble. Elle est tenue par le test
 unitaire de la décision, pas par une lecture d'écran.
+
+**Le témoin public est le MANIFESTE, pas une page.** V512 ne change aucun
+texte visible : ce que la version a modifié est un champ JSON d'une route
+engendrée, et c'est donc lui qu'on pousse — `curl -s
+https://winorworkout.com/manifest.webmanifest` doit rendre
+`"start_url":"/dashboard?ajout=1"`. Fusion à 02 h 24 min 52, témoin présent
+avant 02 h 37, soit **moins de douze minutes**. C'est le premier témoin de ce
+journal qui n'est pas une chaîne de page, et il vaut d'être noté : une version
+qui ne touche aucun écran public peut quand même en avoir un.
 
 **Et le piège du serveur, retombé dedans.** La première exécution est tombée
 sur un tableau de bord qui ignorait le paramètre : `reuseExistingServer` est

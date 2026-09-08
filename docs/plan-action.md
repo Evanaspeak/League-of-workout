@@ -189,7 +189,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 057 | Annoncer la dette AVANT la partie | 1 nuit |
 
 ### Les exercices
-*4 à faire · 6 faits.* Le gros du travail est fait. Reste l'ouverture du catalogue.
+*3 à faire · 7 faits.* Le gros du travail est fait. Reste l'ouverture du catalogue.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -197,7 +197,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 063 | Les tractions, avec mention du matériel requis | — |
 | [x] | 064 | La course, en kilomètres | — |
 | [x] | 067 | Des groupes musculaires pour la rotation | — |
-| [ ] | 078 | Sac et shadow boxing séparés | 1 nuit |
+| [x] | 078 | Sac et shadow boxing séparés | — |
 | [ ] | 065 | Une liste fermée mais beaucoup plus grande, en sous-catégories | 2 nuits |
 | [ ] | 061 | Le plus varié possible | voir ci-dessus |
 | [ ] | 068 | Le partage entre exercices au choix, pas à parts égales | 1 nuit |

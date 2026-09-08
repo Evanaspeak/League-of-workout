@@ -152,8 +152,9 @@ test("la pastille de dette et son décompte annoncent le même nombre", async ({
   ]);
   const uid = (await (await page.request.get("/api/user")).json()).id as string;
   await page.request.post("/api/consentement", { data: { accepte: true } });
-  // La boxe seule : c'est le seul exercice compté en temps du catalogue par
-  // défaut, et il faut que pastille et chrono parlent du même.
+  // La boxe au sac seule : il faut que pastille et chrono parlent du même
+  // exercice. Le catalogue en compte trois au temps depuis la séparation du
+  // shadow (réponse 078) — d'où le choix explicite plutôt qu'un « le seul ».
   await page.request.put("/api/settings", { data: { userPrefs: { exercices: ["boxe"] } } });
 
   const admin = (process.env.ADMIN_EMAILS || "evantocquet@gmail.com").split(",")[0].trim();

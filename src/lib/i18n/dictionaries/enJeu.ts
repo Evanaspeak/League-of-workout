@@ -31,7 +31,7 @@ export const enJeu = {
     partieNonLueCorps: "Aucun chiffre n'a pu être lu sur cette partie : ajoute-la à la main.",
     issueIllisible: "Issue de partie illisible",
     issueIllisibleCorps: (details: string) => `${details}. Victoire ou défaite n'a pas pu être lu : ajoute la partie à la main.`,
-    noms: { pompes: "pompes", squats: "squats", boxe: "de boxe", planche: "de planche", tractions: "tractions", course: "de course", pompesMurales: "pompes murales", marche: "de marche" },
+    noms: { pompes: "pompes", squats: "squats", boxe: "de boxe", planche: "de planche", tractions: "tractions", course: "de course", pompesMurales: "pompes murales", marche: "de marche", shadow: "de shadow" },
   },
   en: {
     dejaEnregistree: "Match already logged",
@@ -50,7 +50,7 @@ export const enJeu = {
     partieNonLueCorps: "No figures could be read from this match: add it by hand.",
     issueIllisible: "Match result unreadable",
     issueIllisibleCorps: (details: string) => `${details}. We could not tell a win from a loss: add the match by hand.`,
-    noms: { pompes: "push-ups", squats: "squats", boxe: "of boxing", planche: "of plank", tractions: "pull-ups", course: "of running", pompesMurales: "wall push-ups", marche: "of walking" },
+    noms: { pompes: "push-ups", squats: "squats", boxe: "of boxing", planche: "of plank", tractions: "pull-ups", course: "of running", pompesMurales: "wall push-ups", marche: "of walking", shadow: "of shadow boxing" },
   },
   es: {
     dejaEnregistree: "Partida ya registrada",
@@ -69,7 +69,7 @@ export const enJeu = {
     partieNonLueCorps: "No se ha podido leer ningún dato de esta partida: añádela a mano.",
     issueIllisible: "Resultado ilegible",
     issueIllisibleCorps: (details: string) => `${details}. No se ha podido saber si fue victoria o derrota: añade la partida a mano.`,
-    noms: { pompes: "flexiones", squats: "sentadillas", boxe: "de boxeo", planche: "de plancha", tractions: "dominadas", course: "de carrera", pompesMurales: "flexiones de pared", marche: "de caminata" },
+    noms: { pompes: "flexiones", squats: "sentadillas", boxe: "de boxeo", planche: "de plancha", tractions: "dominadas", course: "de carrera", pompesMurales: "flexiones de pared", marche: "de caminata", shadow: "de shadow boxing" },
   },
   de: {
     dejaEnregistree: "Partie schon eingetragen",
@@ -88,7 +88,7 @@ export const enJeu = {
     partieNonLueCorps: "Zu dieser Partie ließen sich keine Zahlen lesen: trag sie von Hand ein.",
     issueIllisible: "Ergebnis nicht lesbar",
     issueIllisibleCorps: (details: string) => `${details}. Sieg oder Niederlage ließ sich nicht erkennen: trag die Partie von Hand ein.`,
-    noms: { pompes: "Liegestütze", squats: "Kniebeugen", boxe: "Boxen", planche: "Planke", tractions: "Klimmzüge", course: "Laufen", pompesMurales: "Wandliegestütze", marche: "Gehen" },
+    noms: { pompes: "Liegestütze", squats: "Kniebeugen", boxe: "Boxen", planche: "Planke", tractions: "Klimmzüge", course: "Laufen", pompesMurales: "Wandliegestütze", marche: "Gehen", shadow: "Schattenboxen" },
   },
   zh: {
     dejaEnregistree: "这局已经记录过了",
@@ -107,7 +107,7 @@ export const enJeu = {
     partieNonLueCorps: "这局没能读到任何数据，请手动添加。",
     issueIllisible: "无法判断胜负",
     issueIllisibleCorps: (details: string) => `${details}。没能读到这局是胜是负，请手动添加。`,
-    noms: { pompes: "个俯卧撑", squats: "个深蹲", boxe: "拳击", planche: "平板支撑", tractions: "个引体向上", course: "跑步", pompesMurales: "个墙壁俯卧撑", marche: "步行" },
+    noms: { pompes: "个俯卧撑", squats: "个深蹲", boxe: "拳击", planche: "平板支撑", tractions: "个引体向上", course: "跑步", pompesMurales: "个墙壁俯卧撑", marche: "步行", shadow: "空击" },
   },
   ja: {
     dejaEnregistree: "この試合は記録済みです",
@@ -126,6 +126,6 @@ export const enJeu = {
     partieNonLueCorps: "この試合の数値をまったく読み取れませんでした。手動で追加してください。",
     issueIllisible: "勝敗を読み取れません",
     issueIllisibleCorps: (details: string) => `${details}。勝敗を判別できませんでした。手動で試合を追加してください。`,
-    noms: { pompes: "腕立て", squats: "スクワット", boxe: "のボクシング", planche: "のプランク", tractions: "懸垂", course: "のランニング", pompesMurales: "壁腕立て", marche: "のウォーキング" },
+    noms: { pompes: "腕立て", squats: "スクワット", boxe: "のボクシング", planche: "のプランク", tractions: "懸垂", course: "のランニング", pompesMurales: "壁腕立て", marche: "のウォーキング", shadow: "のシャドーボクシング" },
   },
 };
