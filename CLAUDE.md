@@ -1196,6 +1196,49 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les jeux qui racontent leur partie étaient écrits trois fois, sous deux noms
+Recensement mécanique des LISTES FERMÉES exportées de `src/lib` — trente
+candidates — confrontées à ce que les écrans écrivent à la main. C'est la
+méthode qui a rendu les sept régions Riot une heure plus tôt, appliquée
+exprès cette fois plutôt que par accident.
+
+**Le recensement est presque entièrement négatif**, et c'est écrit pour qu'on
+ne le refasse pas : les rôles, les langues, les périodes du classement, les
+conduites de session, les partages de profil, les titres, les cent
+soixante-treize champions — aucun écran n'en réécrit la liste. Une seule
+trouvaille, et elle est écrite TROIS fois.
+
+`JEUX_AVEC_RELEVE` dans la pastille du site, `JEUX_QUI_SE_RACONTENT` dans
+`desktop/src/main.js`, `JEUX_AVEC_RELEVE` dans `desktop/src/overlay.js` :
+**deux noms pour le même ensemble**, et le commentaire de chacune annonçait
+sereinement que « la même liste vit » ailleurs.
+
+**Ce que la divergence coûterait** : le site publierait une projection que la
+pastille ne montre pas, ou la pastille réserverait des lignes que personne ne
+remplit — un tiret qui se lit « en attente » pour quelque chose qui ne viendra
+jamais. Aucune erreur, aucun test rouge, et visible seulement PENDANT une
+partie, sur la machine de quelqu'un d'autre.
+
+**Le site la DÉDUIT du catalogue** : `releveDirect` rejoint `riot`, `roles`,
+`kda` et les autres drapeaux de `JeuDef`, avec sa raison — l'API locale de Riot
+publie le score et l'horloge, et League comme Teamfight Tactics tournent dans
+le même client. C'est une propriété du JEU, elle appartient au catalogue.
+
+**La coquille garde sa copie, et c'est voulu** : elle se construit sans le
+paquet du site, donc elle ne peut pas importer le catalogue. Ce qui ne peut
+pas s'importer se COMPARE — la règle est déjà posée pour la table des
+processus surveillés et pour les six langues. Ses deux copies deviennent une :
+`desktop/src/jeuxReleve.js`, requis par `main.js` et par `overlay.js`.
+
+Cinq sabotages, cinq échecs : la coquille divergente, le drapeau retiré du
+catalogue, la liste réécrite dans l'écran, la dérivation vidée — qui doit faire
+tomber le TÉMOIN plutôt que d'accorder deux ensembles vides — et une faute de
+frappe dans la coquille, qui est la forme réelle que prendrait la divergence.
+
+Application de bureau en **0.9.18**. Rien de ce qui s'installe ne change de
+comportement : les deux constantes valaient déjà la même chose, et le contrôle
+est là pour le jour où l'une bougerait.
+
 ### Le parcours qui accusait le produit d'être muet, et l'instrument qui a nommé la cause
 V525 est partie ROUGE, sur un seul tronçon et un seul test : « une correction
 refusée ne change rien à l'écran », dans `historique.spec.ts`, quarante-deux

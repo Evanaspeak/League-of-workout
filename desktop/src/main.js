@@ -15,6 +15,7 @@ const {
 const path = require("path");
 const http = require("http");
 const { startLiveClientWatcher } = require("./liveclient");
+const { JEUX_QUI_SE_RACONTENT } = require("./jeuxReleve");
 const overlay = require("./overlay");
 const { ATTENTE_MS, attenteCourante, nonceValide: validerNonce } = require("./attenteAuth");
 const {
@@ -499,15 +500,6 @@ function ecrireReglage(cle, valeur) {
     console.warn("[WOW] Réglage non enregistré :", err?.message ?? err);
   }
 }
-
-/**
- * Jeux qui exposent une partie en cours à qui sait la lire.
- *
- * Pour eux, la lecture d'écran n'a aucun intérêt : l'API locale dit tout, et
- * plus vite. La même liste vit dans `overlay.js`, qui s'en sert pour masquer
- * les lignes qu'il ne pourra pas remplir.
- */
-const JEUX_QUI_SE_RACONTENT = new Set(["League of Legends", "Teamfight Tactics"]);
 
 /**
  * Lire l'écran en boucle pendant la partie : actif par défaut.
