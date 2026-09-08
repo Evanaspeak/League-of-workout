@@ -23,40 +23,73 @@ import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
 import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
+import { PARTIES_A_L_ECRAN } from "@/lib/historiqueBorne";
 
-export async function GET() {
+/**
+ * L'historique, borné par défaut, avec l'archive à un geste (ligne q1).
+ *
+ * `?tout=1` rend TOUT. C'est ce que l'écran demande dès qu'on filtre ou qu'on
+ * trie par effort : une question posée sur les cinquante dernières parties n'a
+ * pas de réponse vraie — « trois parties de Valorant » chez quelqu'un qui en a
+ * deux cents est un chiffre faux, pas une réponse partielle.
+ *
+ * La forme de la réponse est la MÊME dans les deux cas. Deux formes pour une
+ * seule route, c'est la divergence que ce projet paie en boucle, et le total
+ * est justement ce dont l'écran a besoin pour dire qu'il ne montre pas tout.
+ */
+export async function GET(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const games = await prisma.game.findMany({
-    where: { userId: user.id },
-    orderBy: { date: "desc" },
-    /**
-     * Les colonnes que l'historique affiche, et pas les trente et une.
-     *
-     * `NextResponse.json(games)` publie tout ce qu'on lui remet — c'est le
-     * défaut déjà corrigé sur le compte, un modèle plus bas. Partaient ainsi
-     * `riotMatchId`, `file`, `fileClassee`, `gainageSec`, `partiesAvantCalcule`
-     * et `createdAt`, qu'aucun écran ne lit : rien de secret, mais un tiers de
-     * la plus grosse réponse de l'application pour rien.
-     *
-     * La liste ne se vérifie pas à la compilation : l'écran déclare son propre
-     * type `Game` de son côté, et une colonne retirée ici s'y traduirait par
-     * une case vide, sans erreur. C'est `src/colonnesHistorique.test.ts` qui
-     * tient les deux listes ensemble.
-     */
-    select: {
-      id: true, date: true, role: true, champion: true,
-      kills: true, deaths: true, assists: true, result: true,
-      niveauCalcule: true, scoreCalcule: true, malusCalcule: true,
-      surchargeCalculee: true, pompesCalculees: true, exercice: true,
-      sansEnjeu: true,
-      source: true, jeu: true, typeJeu: true, dureeSec: true,
-      placement: true, joueurs: true, repartition: true, variante: true,
-      ratios: true,
-    },
-  });
-  return NextResponse.json(games);
+  const tout = new URL(req.url).searchParams.get("tout") === "1";
+
+  const [total, games] = await Promise.all([
+    prisma.game.count({
+      /*
+        SANS_ENJEU_GARDEES — le total est la TAILLE de l'historique, et une
+        partie sans enjeu y figure : c'est tout l'objet de l'enregistrer
+        plutôt que de la jeter. L'écarter ferait annoncer « 50 sur 1 198 » à
+        quelqu'un dont l'archive en rend mille deux cents.
+      */
+      where: { userId: user.id },
+    }),
+    prisma.game.findMany({
+      /*
+        SANS_ENJEU_GARDEES — l'historique EST l'endroit où elles s'affichent :
+        c'est tout l'objet de les enregistrer plutôt que de les jeter. Elles y
+        portent leur annotation, et rien de ce que la liste montre n'est un
+        agrégat qu'elles fausseraient.
+      */
+      where: { userId: user.id },
+      orderBy: { date: "desc" },
+      ...(tout ? {} : { take: PARTIES_A_L_ECRAN }),
+      /**
+       * Les colonnes que l'historique affiche, et pas les trente et une.
+       *
+       * `NextResponse.json(games)` publie tout ce qu'on lui remet — c'est le
+       * défaut déjà corrigé sur le compte, un modèle plus bas. Partaient ainsi
+       * `riotMatchId`, `file`, `fileClassee`, `gainageSec`, `partiesAvantCalcule`
+       * et `createdAt`, qu'aucun écran ne lit : rien de secret, mais un tiers de
+       * la plus grosse réponse de l'application pour rien.
+       *
+       * La liste ne se vérifie pas à la compilation : l'écran déclare son propre
+       * type `Game` de son côté, et une colonne retirée ici s'y traduirait par
+       * une case vide, sans erreur. C'est `src/colonnesHistorique.test.ts` qui
+       * tient les deux listes ensemble.
+       */
+      select: {
+        id: true, date: true, role: true, champion: true,
+        kills: true, deaths: true, assists: true, result: true,
+        niveauCalcule: true, scoreCalcule: true, malusCalcule: true,
+        surchargeCalculee: true, pompesCalculees: true, exercice: true,
+        sansEnjeu: true,
+        source: true, jeu: true, typeJeu: true, dureeSec: true,
+        placement: true, joueurs: true, repartition: true, variante: true,
+        ratios: true,
+      },
+    }),
+  ]);
+  return NextResponse.json({ parties: games, total });
 }
 
 export async function POST(req: Request) {

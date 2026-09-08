@@ -26,6 +26,7 @@ import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { notifier } from "@/lib/push";
 import { textesNotification } from "@/lib/i18n/notifications";
 import { jourLocal } from "@/lib/serie";
+import { PARTIES_A_L_ECRAN } from "@/lib/historiqueBorne";
 
 const session = getCurrentUser as jest.Mock;
 const bride = isRateLimited as jest.Mock;
@@ -74,10 +75,12 @@ const partie = (extra: Record<string, unknown> = {}) => ({
   kills: 2, deaths: 9, assists: 4, result: "D", ...extra,
 });
 
+const lire = (cible = "/api/games") => GET(requete(cible));
+
 describe("GET /api/games", () => {
   it("refuse sans session", async () => {
     session.mockResolvedValue(null);
-    expect((await GET()).status).toBe(401);
+    expect((await lire()).status).toBe(401);
     expect(game.findMany).not.toHaveBeenCalled();
   });
 
@@ -86,8 +89,38 @@ describe("GET /api/games", () => {
     // route sert l'historique de tout le monde sans que rien ne change à
     // l'écran de celui qui l'a demandé.
     session.mockResolvedValue(utilisateur({ id: "u42" }));
-    await GET();
+    await lire();
     expect(game.findMany.mock.calls[0][0].where).toEqual({ userId: "u42" });
+  });
+
+  it("borne la liste par défaut", async () => {
+    session.mockResolvedValue(utilisateur({ id: "u42" }));
+    await lire();
+    expect(game.findMany.mock.calls[0][0].take).toBe(PARTIES_A_L_ECRAN);
+  });
+
+  it("rend tout quand on le demande", async () => {
+    // C'est l'archive, et c'est ce que l'écran va chercher dès qu'on filtre :
+    // une réponse tronquée ferait dire « trois parties de Valorant » à
+    // quelqu'un qui en a deux cents.
+    session.mockResolvedValue(utilisateur({ id: "u42" }));
+    await lire("/api/games?tout=1");
+    expect(game.findMany.mock.calls[0][0].take).toBeUndefined();
+  });
+
+  it("annonce le total, borné ou non", async () => {
+    /*
+      Sans lui, l'écran ne peut pas dire qu'il ne montre pas tout — et une
+      liste tronquée qui se présente comme l'historique entier est exactement
+      le chiffre faux qu'on cherche à éviter. Le compte porte le filtre par
+      compte comme la lecture : il dit ce que CETTE personne a joué.
+    */
+    session.mockResolvedValue(utilisateur({ id: "u42" }));
+    game.count.mockResolvedValue(1200);
+    game.findMany.mockResolvedValue([{ id: "g1" }]);
+    const rep = await lire();
+    expect(game.count.mock.calls[0][0].where).toEqual({ userId: "u42" });
+    expect(await corps(rep)).toEqual({ parties: [{ id: "g1" }], total: 1200 });
   });
 });
 

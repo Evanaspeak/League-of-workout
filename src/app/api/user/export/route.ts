@@ -21,7 +21,15 @@ export async function GET() {
     games, goal, abonnements, paiements, signalements, demandesJeux,
     pesees, testsForce, defis, relais, envois,
   ] = await Promise.all([
-    prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
+    prisma.game.findMany({
+      /*
+        SANS_ENJEU_GARDEES — le droit à la portabilité couvre TOUT ce que
+        l'application garde. En écarter une partie ferait un export
+        incomplet, ce qui est le contraire de ce que l'article 20 demande.
+      */
+      where: { userId: user.id },
+      orderBy: { date: "asc" },
+    }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
     prisma.pushSubscription.findMany({
       where: { userId: user.id },

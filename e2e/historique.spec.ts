@@ -431,7 +431,7 @@ test("une suppression refusée ne fait pas disparaître la partie", async ({ bro
 test("corriger une défaite en victoire rejoue le barème", async ({ browser }) => {
   const { ctx, page } = await historique(browser, 1280);
 
-  const avant = await (await page.request.get("/api/games")).json();
+  const avant = (await (await page.request.get("/api/games")).json()).parties;
   const kog = avant.find((g: { champion: string }) => g.champion === "Kog'Maw");
   expect(kog.result).toBe("D");
 
@@ -460,7 +460,7 @@ test("corriger une défaite en victoire rejoue le barème", async ({ browser }) 
 
   // Et la base le dit aussi. Sans ce second contrôle, un écran qui se contente
   // de réécrire la lettre chez lui passerait le test.
-  const apres = await (await page.request.get("/api/games")).json();
+  const apres = (await (await page.request.get("/api/games")).json()).parties;
   const corrigee = apres.find((g: { id: string }) => g.id === kog.id);
   expect(corrigee.result).toBe("V");
   // Le coût a suivi : une victoire ne se paie pas comme une défaite. Un champ
@@ -517,7 +517,7 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
   await expect(page.getByRole("alert").filter({ hasText: /n.a pas abouti|did not go through/i }))
     .toBeVisible({ timeout: 10_000 });
   // La ligne reste une défaite : c'est la base qui tranche, pas l'écran.
-  const apres = await (await page.request.get("/api/games")).json();
+  const apres = (await (await page.request.get("/api/games")).json()).parties;
   expect(apres.find((g: { champion: string }) => g.champion === "Maître Yi").result).toBe("D");
   await ctx.close();
 });
@@ -596,6 +596,88 @@ test("un historique vide dit quoi faire dès le HTML servi", async ({ browser })
   // Sans apostrophe : le HTML servi les échappe en `&#x27;`, et un contrôle
   // écrit avec le caractère lisible échouerait sur du texte pourtant présent.
   expect(html).toContain("depuis le tableau de bord");
+
+  await ctx.close();
+});
+
+/**
+ * L'historique est borné, et l'archive est à un geste (ligne q1).
+ *
+ * `/api/games` rendait TOUTES les parties : 833 441 octets bruts à mille deux
+ * cents parties, et ça grandit pour toujours. Le prix n'est pas de la bande
+ * passante — brotli ramène ça à quelques dizaines de kilo-octets — c'est du
+ * processeur et de la mémoire chez qui regarde : sérialiser, transférer,
+ * analyser, allouer mille deux cents objets.
+ *
+ * Le compte est semé à cinquante-cinq parties : au-dessus de la borne, et
+ * sous le budget d'écriture de soixante par quart d'heure. La plus ANCIENNE
+ * est la seule en Support — donc hors de la fenêtre, ce qui est ce qui rend
+ * le contrôle du filtre discriminant.
+ */
+let etatBorne: import("@playwright/test").BrowserContextOptions["storageState"];
+
+test("semer cinquante-cinq parties", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Borne");
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  for (let i = 0; i < 55; i++) {
+    const r = await page.request.post("/api/games", {
+      data: {
+        jeu: "League of Legends", exercice: "pompes",
+        role: i === 54 ? "Support" : "Mid", champion: "Yasuo",
+        kills: 1, deaths: 5, assists: 2, result: "D",
+        date: new Date(Date.now() - i * 3600_000).toISOString(),
+      },
+    });
+    expect(r.status(), await r.text()).toBe(200);
+  }
+  etatBorne = etat;
+  await ctx.close();
+});
+
+/**
+ * Les DEUX moitiés, et il faut les deux : la liste est bornée, ET le reste
+ * est atteignable. Sans la seconde, on aurait remplacé un écran lent par un
+ * écran qui ment sur ce qu'il garde.
+ */
+test("l'historique montre une fenêtre, et l'archive s'ouvre", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etatBorne, viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto("/fr/history");
+  await page.locator("tbody tr").first().waitFor({ timeout: 20_000 });
+
+  // La fenêtre, et le total réel à côté : c'est l'écart entre les deux qui
+  // dit qu'on ne montre pas tout.
+  expect(await page.locator("tbody tr").count()).toBe(50);
+  await expect(page.getByText(/50 dernières parties, sur 55/)).toBeVisible();
+
+  // La colonne de cumul est absente : c'est un TOTAL sur l'histoire entière,
+  // et sur cinquante lignes il garderait son libellé en changeant de sens.
+  await expect(page.getByRole("columnheader", { name: /^cumul$/i })).toHaveCount(0);
+
+  await page.getByRole("button", { name: /tout l.historique/i }).click();
+  await expect.poll(() => page.locator("tbody tr").count(), { timeout: 20_000 }).toBe(55);
+  await expect(page.getByRole("columnheader", { name: /^cumul$/i })).toHaveCount(1);
+
+  await ctx.close();
+});
+
+/**
+ * Filtrer va chercher l'archive tout seul.
+ *
+ * Une question posée sur les cinquante dernières parties n'a pas de réponse
+ * vraie : « aucune partie en Support » chez quelqu'un qui en a une est un
+ * chiffre faux, pas une réponse partielle.
+ */
+test("filtrer demande l'historique entier", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etatBorne, viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto("/fr/history");
+  await page.locator("tbody tr").first().waitFor({ timeout: 20_000 });
+  expect(await page.locator("tbody tr").count()).toBe(50);
+
+  await page.getByRole("combobox").first().selectOption("Support");
+  await expect.poll(() => page.locator("tbody tr").count(), { timeout: 20_000 }).toBe(1);
 
   await ctx.close();
 });

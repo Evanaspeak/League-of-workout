@@ -252,8 +252,10 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
 async function compterParties(page: Page): Promise<number> {
   const r = await page.request.get("/api/games");
   if (!r.ok()) return -1;
-  const liste = await r.json();
-  return Array.isArray(liste) ? liste.length : -1;
+  const corps = await r.json();
+  // Le total du serveur, et non la longueur de la liste : celle-ci est bornée
+  // aux cinquante dernières depuis la ligne q1.
+  return typeof corps?.total === "number" ? corps.total : -1;
 }
 
 /** Compteur de dette, vu du serveur. */
