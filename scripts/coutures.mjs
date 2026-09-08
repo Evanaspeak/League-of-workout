@@ -36,10 +36,35 @@ const [BASE = "http://127.0.0.1:3311", PAGES_ARG] = positionnels(process.argv);
 const LANGUE = langueDemandee(process.argv);
 const CHROMIUM = "/opt/pw-browsers/chromium";
 
+/**
+ * Ce que le balayage visite par DÉFAUT.
+ *
+ * Les neuf écrans connectés d'abord, rubriques dépliées comprises — une
+ * rubrique repliée ne rend rien, et c'est ce qui avait laissé la moitié des
+ * réglages hors de tout recensement.
+ *
+ * Puis les dix pages PUBLIQUES, et c'est ce qui manquait : le balayage ne les
+ * visitait que si on les nommait à la main. Or ce sont celles que des inconnus
+ * lisent, et c'est là qu'a été trouvée la date des documents juridiques servie
+ * en français aux six langues. La liste est celle de `accessibilite.mjs`, à
+ * dessein : deux outils qui regardent la même surface évitent d'avoir à se
+ * rappeler lequel voit quoi.
+ *
+ * `/obs/<jeton>` reste dehors pour la raison écrite là-bas — c'est une source
+ * de diffusion, pas une page qu'on ouvre — et `/p/<jeton>` aussi : son adresse
+ * demande un jeton qu'un balayage n'a pas.
+ */
+const PAR_DEFAUT = [
+  "/dashboard", "/history", "/amis", "/bilan",
+  "/settings#profil", "/settings#corps", "/settings#effort",
+  "/settings#jeux", "/settings#donnees",
+  "/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargement",
+  "/recuperation", "/calculateur", "/calculateur/league-of-legends",
+  "/connexion-app",
+].join(",");
+
 const drapeauPages = process.argv.find((a) => a.startsWith("--pages="));
-const PAGES = (drapeauPages ? drapeauPages.slice("--pages=".length) : PAGES_ARG
-  ?? "/dashboard,/history,/amis,/bilan,/settings#profil,/settings#corps"
-    + ",/settings#effort,/settings#jeux,/settings#donnees")
+const PAGES = (drapeauPages ? drapeauPages.slice("--pages=".length) : PAGES_ARG ?? PAR_DEFAUT)
   .split(",").map((c) => refuserPrefixe(c.split("#")[0]) && c);
 
 /**
@@ -48,15 +73,28 @@ const PAGES = (drapeauPages ? drapeauPages.slice("--pages=".length) : PAGES_ARG
  * L'espace qui suit un chiffre latin reste : c'est la convention, et un motif
  * qui la refuserait accuserait « 60 試合 », qui est juste.
  *
- * **Un faux positif connu, et il est gardé exprès** : 「ソロ/デュオ ランク」 sur
- * la page d'accueil. Le katakana appartient à la classe CJK, donc une espace
- * entre deux mots en katakana ressemble à une couture — et elle peut être
- * voulue, c'est ainsi qu'on sépare deux mots d'un composé. Réécrire du
- * japonais sur un jugement de style n'est pas une correction. Le motif reste
- * large parce que ses vrais cas sont des IDÉOGRAMMES ; celui-ci se reconnaît
- * et se laisse.
+ * **Deux katakana de part et d'autre ne comptent pas**, et c'est un
+ * resserrement, pas une exemption. 「ソロ/デュオ ランク」 sépare deux mots d'un
+ * composé étranger, ce qui est la convention japonaise ; le journal gardait ce
+ * constat comme un faux positif « qu'on reconnaît et qu'on laisse ». Ça tenait
+ * tant que la page d'accueil n'était pas balayée par DÉFAUT. Elle l'est
+ * depuis, donc le constat reviendrait à chaque exécution — et un garde qui
+ * crie sur ce qui va bien finit par ne plus se lire.
+ *
+ * **Ce que le resserrement perd, écrit plutôt que laissé à découvrir** : une
+ * valeur interpolée en katakana suivie d'un mot en katakana — un nom de jeu
+ * devant un libellé, par exemple. Aucun des défauts que ce journal a payés
+ * n'est de cette forme : ils cousent un idéogramme à un hiragana ou à un autre
+ * idéogramme. Et « デッドバイデイライト を受け付けました » commence pourtant par
+ * du katakana : c'est le côté DROIT qui décide, et il est en hiragana.
+ *
+ * Le motif reste un LITTÉRAL sur une ligne : `src/coutures.test.ts` le lit
+ * dans cette source pour éprouver celui qui tourne, et non une copie qui
+ * dériverait. La première classe porte le hiragana et les idéogrammes, la
+ * seconde y ajoute le katakana — une couture demande donc au moins un côté
+ * qui n'en soit pas.
  */
-export const COUTURE = /[぀-ヿ㐀-鿿][  ][぀-ヿ㐀-鿿]/;
+export const COUTURE = /[぀-ゟ㐀-鿿][  ][぀-ヿ㐀-鿿]|[぀-ヿ㐀-鿿][  ][぀-ゟ㐀-鿿]/;
 
 /**
  * Quatre chiffres ou plus, sans séparateur de milliers.
