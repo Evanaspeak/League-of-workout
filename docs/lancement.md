@@ -32,10 +32,21 @@ perdu.
 
 Élargir la fenêtre au-delà de midi ferait un « rappel de la journée », ce qui
 n'est pas la même promesse : c'est un arbitrage de produit, pas une tolérance
-d'implémentation. Le geste qui règle vraiment la question est un déclencheur
-fiable : les tâches planifiées de Vercel appellent les deux mêmes adresses avec
-le même secret, et elles partent à l'heure. C'est une décision
-d'infrastructure, elle vous revient.
+d'implémentation.
+
+**Réglé le 8 septembre.** `vercel.json` porte deux tâches planifiées, à 8 h et
+9 h UTC, qui appellent `/api/cron/matin` avec le même secret. Ça fait 10 h et
+11 h en France l'été, 9 h et 10 h l'hiver : quatre heures qui tombent toutes
+dans la fenêtre, aux deux saisons, et un test le vérifie plutôt que de
+l'affirmer. La matinée française est couverte pour de bon.
+
+**Ce qui vous revient encore, et c'est une ligne de facture, pas un réglage** :
+le PLAN Vercel. Sur Hobby les tâches sont limitées à deux et à un passage par
+jour — c'est exactement ce qui est écrit, donc ça tient, et c'est aussi la
+raison pour laquelle les deux crons passent par un aiguilleur plutôt que
+d'appeler chacun sa route. Sur Pro elles descendent à la minute, et un seul
+`0 * * * *` remplacerait les deux ET le travail GitHub, en couvrant tous les
+fuseaux au lieu du seul fuseau français.
 
 Ça compte pour un lancement : la rétention repose entièrement sur ces trois
 envois, et inviter cent personnes à un produit dont les relances ne partent pas

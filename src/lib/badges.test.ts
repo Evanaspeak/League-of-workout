@@ -83,6 +83,31 @@ describe("franchissement", () => {
 });
 
 describe("paliers de volume", () => {
+  /**
+   * La SOURCE du palier de volume, et pourquoi elle a besoin d'un test à elle.
+   *
+   * Deux chiffres du produit sont des totaux d'effort : `totalPoints`, ce que
+   * les parties ont produit, et `pointsPayes`, ce qui a été acquitté. Ils
+   * portent des noms différents précisément parce qu'on les a déjà confondus
+   * une fois — le niveau de compte annonçait « l'effort payé » et recevait
+   * l'effort généré, et aucun test ne les distinguait puisque les deux sont
+   * des nombres.
+   *
+   * Le palier de volume lit `totalPoints`, et c'est une décision du 8
+   * septembre : tant qu'aucun système ne vérifie qu'un exercice a été fait, on
+   * suppose les pompes dues faites entre deux parties. Un jeu de données où
+   * l'on joue et paie autant rend le même résultat des deux façons, donc ne
+   * prouve rien : ici les deux chiffres sont volontairement très écartés.
+   */
+  it("comptent l'effort généré, pas l'effort acquitté", () => {
+    const badges = tousLesBadges(source({ totalPoints: 600, parties: 10 }));
+    expect(badges.find((b) => b.cle === "volume500")?.obtenu).toBe(true);
+    // Et le contre-témoin : la source ne porte AUCUN paiement, donc un palier
+    // branché sur l'effort payé rendrait faux. Sans lui, ce contrôle passerait
+    // aussi bien sur un compte qui aurait tout payé.
+    expect(badges.find((b) => b.cle === "serie3")?.obtenu).toBe(false);
+  });
+
   it("montent, sans doublon", () => {
     // Un palier qu'on atteint sans s'en rendre compte ne récompense rien :
     // l'écart entre deux paliers fait le travail.

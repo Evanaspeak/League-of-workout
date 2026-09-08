@@ -1196,6 +1196,232 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le bouton d'inscription désactivé, et la règle que j'ai enfreinte en la connaissant
+Quatre parcours tombés sur 249, et les quatre disent la même chose. Le contexte
+d'erreur de Playwright le montre sans ambiguïté :
+
+```
+- textbox "TonPseudo" [active]          ← vide
+- button "Obtenir mon code" [disabled]  ← jamais activé
+```
+
+Le champ est VIDE et le bouton DÉSACTIVÉ : le formulaire a bien été rempli côté
+DOM, et l'état React ne l'a jamais reçu. C'est la page qui n'était pas hydratée
+au moment du `fill`. Le symptôme, lui, s'annonce « le code ne s'affiche pas »,
+c'est-à-dire un message qui ne ressemble en rien à sa cause — quatrième
+déguisement recensé ici pour cette panne.
+
+**Et la cause est moi.** J'ai lancé `npx jest` (2 601 tests), `npx tsc` et
+`npx eslint` **pendant** que la suite navigateur tournait, trois fois. Sur une
+machine à quatre cœurs qui héberge déjà deux Chromium, deux processus de test
+et le serveur Next, l'hydratation perd sa place dans la file.
+
+Ce fichier interdit ça depuis longtemps — « ne jamais reconstruire ni tuer le
+serveur pendant qu'un test navigateur tourne », « on ne mesure pas pendant
+qu'on construit » — et je le savais en le faisant : je croyais que la règle ne
+visait que la reconstruction, puisque `next start` sert un `.next` figé et
+qu'éditer des sources ne le change pas. C'est vrai du CONTENU servi et faux du
+PROCESSEUR : ce qui casse ici n'est pas ce qu'on sert, c'est le temps qu'on met
+à le servir.
+
+La règle est donc plus large qu'écrite : **rien de lourd ne tourne pendant une
+suite navigateur**, y compris ce qui ne touche pas au serveur. Un banc d'essai
+qui sature la machine ne mesure plus le produit, il mesure sa propre file
+d'attente — c'est la leçon des quatre workers, sous une forme que je n'avais
+pas reconnue parce que la charge venait d'à côté au lieu de venir de lui.
+
+**Rejouée à vide, la même suite passe.** C'est le geste qui distingue un aléa
+d'une régression, et il fallait le faire avant de conclure quoi que ce soit.
+
+### Le français vouvoyait seul dans six fichiers, et la mesure allait plus loin que la question
+Question 7 des questions ouvertes : `/telechargement` et `/calculateur`
+vouvoient en français et tutoient dans les cinq autres langues. Réponse du
+propriétaire : **« Tutoie partout, c'était un oubli. »**
+
+**Le témoin était déjà écrit ici** — « un choix de marque se prend dans les six
+langues ; un oubli n'en touche qu'une » — et il n'avait jamais été passé sur
+les dix fichiers dispensés, seulement sur les deux que la question nommait.
+Compté par fichier et par langue :
+
+| fichier | français | allemand | espagnol | verdict |
+|---|---|---|---|---|
+| `cgu` | 2 vous | 1 Sie, 0 du | 10 usted | choix, cohérent |
+| `confidentialite` | 107 vous | 78 Sie, 5 du | 68 usted, 2 tu | choix, cohérent |
+| `calculateur` | 8 vous | 0 Sie, 10 du | 0 usted, 7 tu | **le français est seul** |
+| `telechargement` | 4 vous | 1 Sie, 5 du | 1 usted, 2 tu | **le français est seul** |
+| `login` | 4 vous | 1 Sie, 9 du | — | **le français est seul** |
+| `loginButtons` | 1 vous | 0 Sie, 3 du | — | **le français est seul** |
+| `sourceObs` | 5 vous | 2 Sie, 5 du | 0 usted, 4 tu | **le français est seul** |
+| `signalement` | 4 vous | 0 Sie, 4 du | 0 usted, 1 tu | **le français est seul** |
+| `consentementSante` | 23 vous | 2 Sie, **15 du** | 0 usted, **19 tu** | **une décision écrite, appliquée à une langue** |
+
+**Six dispenses tombent au lieu de deux.** La question portait sur deux
+fichiers ; la règle que le propriétaire a énoncée en couvre six, et c'est la
+mesure qui les désigne — pas une extrapolation. Les deux documents juridiques
+sont formels dans les trois langues mesurées : c'est un vrai choix, il reste.
+
+**La neuvième ligne ne se tranche PAS seule, et elle part dans les
+questions.** `consentementSante` porte une raison de FOND — « la distance est
+voulue, c'est un avertissement, pas une conversation » — et pas un « page
+publique » de commodité. Mais la mesure dit que cette décision n'a jamais été
+appliquée qu'au français : l'allemand y écrit « du » quinze fois contre deux
+« Sie ». Ce qui n'est pas défendable est l'état actuel, où le texte qui
+recueille un consentement de santé met de la distance à un lecteur sur six.
+
+**Une clé reste au vouvoiement, et ce n'en est pas un** : `smartScreenIntro`
+CITE le message de Windows, « Windows a protégé votre ordinateur ». Le
+reformuler enverrait chercher une phrase qui n'existe pas, sur la page qui
+explique précisément comment passer cet avertissement. C'est une troisième
+famille de tolérance, à côté de la santé et du « vous » pluriel.
+
+**Deux témoins de garde ont dû être recalibrés, et c'est le prix normal.**
+Le premier comptait huit fichiers examinés, il en reste quatre. Le second est
+plus intéressant : le contrôle qui vérifie qu'une dispense « page publique »
+désigne une page réellement publique n'avait plus **aucune** dispense à
+examiner, donc il passait au vert en ne prouvant rien — et il serait resté vert
+le jour où quelqu'un reposerait une telle dispense sans fondement. Sa
+résolution s'éprouve maintenant sur deux cas RÉELS choisis : `calculateur.ts`
+est lu par une page publique et le reste, `amis.ts` vit derrière la porte. Le
+sabotage qui rend le tri aveugle fait tomber le contrôle.
+
+Trois sabotages, trois échecs : le vouvoiement remis, une dispense « page
+publique » posée sur un dictionnaire qui n'en est pas atteint, et le tri rendu
+aveugle.
+
+### Deux chiffres presque homonymes, et le nom qui les sépare
+Question 5 : le bilan de saison affiche « journée la plus chère », qui somme
+l'effort **généré** par les parties du jour ; le mur des records affiche le
+plus gros jour d'effort **payé**. Réponse : renommer le premier.
+
+**Le champ change de nom en même temps que le libellé, et c'est le nom qui
+compte.** `pireJour` était ambigu exactement comme le libellé, et c'est le
+genre de nom qui invite à le brancher sur les paiements six mois plus tard. Il
+s'appelle `jourPlusGrosseDette`, et c'est le compilateur qui a désigné les
+quatre endroits à suivre — la règle déjà écrite pour `pointsPayes` contre
+`totalPoints`, qui a coûté une nuit en juillet.
+
+**Le contrôle qui distingue demandait des données disjointes.** Un compte qui
+joue et paie le même jour rend le même résultat des deux façons : le test
+existant passait quelle que soit la source. Le nouveau pose des parties le
+1er juin et un paiement de neuf mille points le 5 ; brancher la valeur sur les
+paiements fait tomber trois contrôles.
+
+Le libellé, dans les six langues : « Jour de la plus grosse dette », « Day of
+the biggest debt », « Día de la mayor deuda », « Tag der größten Schuld »,
+「欠账最多的一天」,「負債が最も多かった日」. La valeur affichée est une DATE, donc
+le libellé nomme un jour et non un montant.
+
+### Le palier de volume tranché, et le commentaire qui avait tort
+Question 6 : `badges.ts` s'ouvrait sur « quelqu'un qui **paie** sa
+cinq-centième pompe », `progression.ts` écrivait « les paliers récompensent le
+volume **joué** », et le code suivait le second. Deux décisions écrites qui se
+contredisaient à deux fichiers d'écart.
+
+Réponse du propriétaire, et elle porte sa raison : **« tant qu'on n'a pas mis
+au point un système de vérification des exercices, on part du principe que les
+pompes dues sont faites entre chaque partie »**. Le paiement enregistré n'est
+qu'une déclaration ; la partie jouée est un fait. Compter sur la déclaration ne
+rendrait pas le palier plus vrai, seulement plus tardif.
+
+**C'est donc le commentaire qui change, pas la source** — ce qui est le
+résultat le moins spectaculaire et le plus sûr : changer la source ferait
+redescendre les paliers de tous ceux qui les ont obtenus en jouant.
+
+**Et la source a reçu le test qui lui manquait.** Rien ne la distinguait :
+`totalPoints` et `pointsPayes` sont deux nombres, et un jeu de données où l'on
+joue et paie autant rend le même résultat. Le contrôle pose six cents points
+générés et **zéro** paiement, avec un contre-témoin sur la série — sans lui, il
+passerait aussi bien sur un compte qui aurait tout payé. Sabotage : le palier
+branché sur l'effort payé fait tomber six contrôles.
+
+**Le jour où un système de vérification existera, l'arbitrage se rouvrira**, et
+il est écrit à l'endroit où on le rencontrera.
+
+### La mécanique de rétention avait un déclencheur, elle n'avait pas d'heure
+Question 3 des questions ouvertes, tranchée par le propriétaire d'un « si
+c'est utile vas-y ». Ce qui la débloquait n'était pas la réponse : c'est
+qu'elle n'avait pas lieu d'être posée.
+
+**Le plan annonçait depuis six jours que les tâches planifiées Vercel
+appartenaient au propriétaire.** C'est faux : une tâche planifiée Vercel est un
+`vercel.json` à la racine du dépôt, pas un réglage de tableau de bord. Donc du
+travail ordinaire, mis en attente pendant six jours derrière une décision qui
+n'existait pas. Le seul point qui le concerne est le PLAN — sur Hobby, deux
+tâches et un passage par jour ; sur Pro, la minute — et c'est une ligne de
+facture, pas un réglage.
+
+**Ce que ça répare est mesuré** : le `schedule` de GitHub passe 8,3 fois par
+jour au lieu de vingt-quatre, et rate la fenêtre de 9 h à midi **six jours sur
+douze**. Le rappel du matin partait un jour sur deux ; le bilan hebdomadaire,
+qui ne part que le lundi, perdait une semaine sur deux — et un lundi manqué ne
+se rattrape pas, la marque étant posée par jour local.
+
+**Deux crons à 8 h et 9 h UTC, et le choix des heures se démontre.** La fenêtre
+est en heure LOCALE, le cron est en UTC, et la France bouge de soixante minutes
+entre l'été et l'hiver. Il faut donc une heure `h` telle que `h + 1` ET `h + 2`
+tombent dans [9, 12) : ça ne laisse que 8 et 9. Un cron à 6 h UTC est
+parfaitement valable et n'enverrait **jamais** rien — 7 h en hiver, 8 h en
+été, deux fois hors de la fenêtre — et rien ne le dirait, puisque la route
+répondrait 200 avec zéro envoi, c'est-à-dire le symptôme exact qu'on vient de
+corriger. Un test le vérifie, et son sabotage nomme les heures fautives.
+
+**Un aiguilleur plutôt que deux crons directs**, pour trois raisons qui vont
+dans le même sens. Vercel appelle un CHEMIN en GET ; les deux routes d'envoi
+sont en POST et le restent, parce qu'une route qui écrit sur un GET se fait
+atteindre par un préchargeur. Le plan Hobby n'autorise que deux tâches : une
+par envoi donnerait une seule chance à chacun, un aiguilleur en donne deux aux
+deux. Et les deux routes restent la source de vérité — elles sont appelées par
+leur fonction, pas par un aller-retour HTTP, parce que recopier leur logique
+aurait créé une troisième vérité.
+
+**`allSettled` et non `all`** : le bilan du lundi n'a pas à sauter parce qu'un
+service de notification est en panne, et il ne se rattrape pas.
+
+**Le verrou apprend un second en-tête, comparé à la MÊME variable.** GitHub
+envoie ce qu'on lui dit d'envoyer ; Vercel non — il pose
+`Authorization: Bearer $CRON_SECRET`, et cet en-tête-là ne se choisit pas. Deux
+secrets à tenir d'accord finissent par ne plus l'être, et c'est celui qu'on
+relit le moins qui garde la version périmée : côté Vercel, `CRON_SECRET` vaut
+`RAPPEL_SECRET`.
+
+**Et ce verrou n'avait aucun test à lui.** Il était couvert INDIRECTEMENT — les
+tests des deux routes vérifient qu'un appel sans secret rend 401 — et cette
+couverture-là ne dit rien de la branche que la production emprunte. Une erreur
+y a deux formes, toutes deux muettes : le déclencheur refusé tous les matins
+sans que rien ne crie, ou la comparaison trop lâche et la porte ouverte. Le
+sabotage qui retire le préfixe `Bearer` fait tomber trois contrôles.
+
+**Le garde des envois programmés devait apprendre à lire `vercel.json`**, sinon
+une route appelée par ce déclencheur-là échappait à la règle « pas d'heure
+exacte ». Et à SUIVRE un saut d'aiguillage : `/api/cron/matin` ne compare
+aucune heure, donc il satisferait le garde en ne prouvant rien pendant que les
+vraies routes lui échapperaient. Ce n'est pas un trou théorique — le travail
+GitHub disparaîtra le jour où le plan permettra un cron horaire, et c'est ce
+jour-là que les deux routes sortiraient du champ sans que rien ne le dise.
+
+**Le saut s'éprouve sur des cas FABRIQUÉS**, et il fallait le voir : l'état
+sain du dépôt ne distingue pas un saut qui marche d'un saut cassé, puisque les
+deux routes sont ENCORE appelées directement par le workflow. `aiguillages`
+pourrait rendre une liste vide sans qu'aucun test ne rougisse.
+
+**Le travail GitHub RESTE, et pas par prudence.** Deux heures fixes couvrent un
+fuseau, pas le monde : un compte à Tokyo a sa matinée à une heure UTC que ces
+deux crons n'atteignent jamais. La loterie de GitHub lui donne ses chances.
+
+Neuf sabotages, neuf échecs : un cron hors fenêtre, le préfixe `Bearer` retiré,
+la branche `Bearer` supprimée, l'aiguillage rendu aveugle, `vercel.json` vidé,
+le refus retiré de l'aiguilleur, un seul envoi appelé, `all` à la place
+d'`allSettled`, et le secret oublié dans la requête fabriquée.
+
+Vérifié sur le serveur, parce qu'une porte se pousse : **401** sans secret,
+**401** sur un Bearer faux, **200** sur le Bearer juste comme sur l'en-tête de
+GitHub, et **405** sur un POST. Les deux enveloppes reviennent, `push` et
+`mail`, avec `"absent"` pour les deux canaux — ce qui est la réponse honnête
+d'un serveur local sans clés.
+
+**Le témoin public de cette version est un CODE**, et il est net :
+`/api/cron/matin` rendait 404 avant, il rend 401 après.
+
 ### Les jeux qui racontent leur partie étaient écrits trois fois, sous deux noms
 Recensement mécanique des LISTES FERMÉES exportées de `src/lib` — trente
 candidates — confrontées à ce que les écrans écrivent à la main. C'est la

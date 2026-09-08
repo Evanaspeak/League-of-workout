@@ -50,8 +50,17 @@ export type Bilan = {
   joursActifs: number;
   /** Plus longue suite de jours consécutifs avec un paiement. */
   meilleureSerie: number;
-  /** Journée la plus chère, et son coût. */
-  pireJour: { jour: Jour; points: number } | null;
+  /**
+   * Le jour où les PARTIES ont produit le plus d'effort — c'est-à-dire la plus
+   * grosse dette d'une journée, pas le plus gros paiement.
+   *
+   * Les deux existent, et ils portaient presque le même nom : le mur des
+   * records retient le plus gros jour d'effort PAYÉ. « Journée la plus
+   * chère » ne disait pas lequel des deux, sur un produit dont tout le reste
+   * du registre est en effort payé. Le nom porte la règle depuis, parce qu'un
+   * commentaire ne se relit pas au moment où l'on branche la valeur.
+   */
+  jourPlusGrosseDette: { jour: Jour; points: number } | null;
   jeuPrincipal: { nom: string; parties: number } | null;
   championPrincipal: { nom: string; parties: number } | null;
 };
@@ -92,9 +101,9 @@ export function calculerBilan(
     const j = jourDe(p.date);
     parJour.set(j, (parJour.get(j) ?? 0) + Math.max(0, p.pompesCalculees));
   }
-  let pireJour: { jour: Jour; points: number } | null = null;
+  let jourPlusGrosseDette: { jour: Jour; points: number } | null = null;
   for (const [jour, points] of parJour) {
-    if (points > 0 && (!pireJour || points > pireJour.points)) pireJour = { jour, points };
+    if (points > 0 && (!jourPlusGrosseDette || points > jourPlusGrosseDette.points)) jourPlusGrosseDette = { jour, points };
   }
 
   const joursPayes = [...new Set(paiements.filter((p) => p.points > 0).map((p) => p.jour))];
@@ -109,7 +118,7 @@ export function calculerBilan(
     pointsPayes: paiements.reduce((s, p) => s + Math.max(0, p.points), 0),
     joursActifs: joursPayes.length,
     meilleureSerie: meilleureSerie(joursPayes),
-    pireJour,
+    jourPlusGrosseDette,
     jeuPrincipal: plusFrequent(parties.map((p) => p.jeu)),
     championPrincipal: plusFrequent(parties.map((p) => p.champion)),
   };
