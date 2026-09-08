@@ -45,8 +45,22 @@
   --win:  #2FD98A;
   --loss: #FF5A47;
 
+  /*
+    La flamme : entre la braise et l'ambre, c'est la couleur de ce qu'on DOIT.
+    Elle peint la dette en cours sur la pastille en jeu et sur la source de
+    diffusion, l'état « en retard » sur le tableau de bord, et l'échec d'une
+    capture. Elle est aussi le point médian du dégradé de marque.
+
+    Elle n'avait pas de nom, et elle est écrite dans DEUX paquets : le site et
+    la coquille Electron, qui se construit sans le paquet du site et ne peut
+    donc pas l'importer. Ce qui ne peut pas s'importer se COMPARE —
+    `src/palette.test.ts` confronte les deux valeurs, comme le fait déjà le
+    test des six langues et celui de la table des processus surveillés.
+  */
+  --flame: #FF8A3D;
+
   /* Dégradé de marque : le feu, du rouge braise à l'ambre */
-  --brand-gradient: linear-gradient(135deg, #FF4D2E 0%, #FF8A3D 62%, #FFB454 100%);
+  --brand-gradient: linear-gradient(135deg, #FF4D2E 0%, var(--flame) 62%, #FFB454 100%);
 
   /* Aliases legacy (anciens tokens gold/cyan → nouvelle palette) */
   --bg-deep:   var(--ink);

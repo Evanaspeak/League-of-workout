@@ -18,7 +18,7 @@ décision prise redevient introuvable au bout de deux semaines, ce qui est
 exactement le défaut que ce fichier existe pour corriger.
 
 **Le 8 septembre, quinze des dix-neuf questions ont été tranchées d'un
-coup.** Il en reste quatre, plus quatre nées des décisions et des chantiers
+coup.** Il en reste quatre, plus cinq nées des décisions et des chantiers
 eux-mêmes.
 
 ---
@@ -125,11 +125,39 @@ aux six langues (donc reprendre l'allemand et l'espagnol), ou la retirer et
 tutoyer là aussi. Ce qui n'est pas défendable est l'état actuel, où le texte
 qui recueille un consentement met de la distance à un lecteur sur six.
 
+### 6 · Le bouton principal du produit n'a pas le dégradé de marque
+**Née du chantier de la palette (V538–V540).** Le dégradé de marque est nommé
+`--brand-gradient` et lu à cinq endroits. Il en existe **quatre versions
+différentes** dans le dépôt :
+
+| lieu | dégradé | employé par |
+|---|---|---|
+| `--brand-gradient` | `#FF4D2E → #FF8A3D 62 % → #FFB454` | le compteur de dette, deux blocs du tableau de bord, deux règles de titrage |
+| `.lol-btn` | `#FF4D2E → #FF7A35` | **le bouton principal, 92 emplois** |
+| l'appel à l'action de l'accueil | `#FF4D2E → #FF7A35 58 % → #FF9A3D` | un bouton, sur la page la plus visitée |
+| le bouton des courriels | `#FF4D2E → #FF8A3D` | le bilan hebdomadaire et le lien de récupération |
+
+`#FF7A35` et `#FF9A3D` n'existent nulle part ailleurs et n'ont pas de nom.
+
+**Ce qui est sûr, et ce qui ne l'est pas.** Celui des courriels est clairement
+une COPIE qui a dérivé : un client de messagerie ne lit aucune propriété
+personnalisée, donc le dégradé y a été réécrit à la main, en deux points au
+lieu de trois, en s'arrêtant au point médian. Les deux autres peuvent être des
+choix — un bouton se peint souvent plus court qu'un héros — et ça, ça ne se
+décide pas ici : c'est l'identité du bouton le plus employé du produit, et la
+réponse 251 dit que la marque visuelle est validée.
+
+**À décider** : est-ce que le bouton doit porter le dégradé de marque, ou
+est-ce que son dégradé à lui est voulu ? Dans le second cas il lui faut un nom,
+parce qu'aujourd'hui il n'en a pas et que rien n'empêche une cinquième version
+d'apparaître. Le coût est d'une demi-nuit dans les deux sens, et le garde de la
+palette est déjà là pour tenir la décision une fois prise.
+
 ---
 
 ## Ce qui demande une machine qu'on n'a pas
 
-### 6 · La branche POST du canal de connexion local
+### 7 · La branche POST du canal de connexion local
 `desktop/src/main.js` sert `/set-session` en `GET` **et** en `POST`, et la
 branche POST n'a **plus aucun appelant** — recensé sur tout le dépôt. Ses
 quarante-cinq lignes réécrivent la validation de la branche GET.
@@ -140,7 +168,7 @@ d'application de bureau, et surtout **ça ne se vérifie pas d'ici** —
 de se connecter depuis une application installée. Toucher à un canal
 d'authentification sans pouvoir l'éprouver n'est pas un travail de nuit.
 
-### 7 · Le rôle deviné quand Riot ne le donne pas
+### 8 · Le rôle deviné quand Riot ne le donne pas
 `riot-role.ts` fait retomber une position inconnue sur « Mid ». Un support
 compté comme jungler paie ses morts **trois points au lieu de deux et deux
 dixièmes**.
@@ -154,7 +182,7 @@ une ISSUE inventée, qui crée une dette qu'on ne doit pas. Le repli est donc
 La clé Riot de production n'étant pas arrivée, aucune partie n'emprunte ce
 chemin aujourd'hui : la question ne se pose pour de vrai qu'à ce moment-là.
 
-### 8 · Rendre du React dans les tests unitaires
+### 9 · Rendre du React dans les tests unitaires
 Un seul composant sur soixante-douze est importé par un test. Le chiffre a
 l'air terrible et ne veut presque rien dire : la suite unitaire tourne en
 environnement Node, sans DOM, et les composants sont éprouvés par les parcours

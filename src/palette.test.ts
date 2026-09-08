@@ -69,6 +69,8 @@ const SANS_FEUILLE: Record<string, string> = {
   "src/app/not-found.tsx": "frontière 404 de la racine : elle fournit son propre document, sans feuille",
   "src/components/CorpsIntrouvable.tsx": "rendu depuis cette frontière-là autant que depuis la page localisée",
   "src/app/[locale]/layout.tsx": "themeColor est une métadonnée lue par le navigateur, pas une valeur CSS",
+  "src/lib/email.ts": "un courriel HTML ne charge aucune feuille : les clients de messagerie ne résolvent pas les propriétés personnalisées",
+  "src/app/manifest.ts": "le manifeste est lu par le système d'exploitation, qui n'a pas de CSS",
 };
 
 /** Tout ce qui déclare une variable, quel que soit le moyen. */
@@ -131,9 +133,9 @@ describe("la palette", () => {
     const palette = valeursPalette();
     const fautifs: string[] = [];
     let examines = 0;
-    for (const f of fichiers(SRC, [".tsx"])) {
+    for (const f of fichiers(SRC, [".tsx", ".ts"])) {
       const rel = relatif(f);
-      if (rel in SANS_FEUILLE) continue;
+      if (rel in SANS_FEUILLE || rel.endsWith(".test.ts")) continue;
       examines += 1;
       for (const m of sansCommentaires(readFileSync(f, "utf8")).matchAll(COULEUR)) {
         const v = m[0].toLowerCase().replace(/\s+/g, "");
@@ -142,7 +144,7 @@ describe("la palette", () => {
       }
     }
     expect(fautifs).toEqual([]);
-    expect(examines).toBeGreaterThan(100); // témoin : un dossier renommé ne rend pas ce test vert
+    expect(examines).toBeGreaterThan(200); // témoin : un dossier renommé ne rend pas ce test vert
     expect(palette.size).toBeGreaterThan(8);
   });
 
@@ -159,6 +161,28 @@ describe("la palette", () => {
       if (!porte) inutiles.push(`${chemin} n'écrit plus aucune couleur de la palette`);
     }
     expect(inutiles).toEqual([]);
+  });
+
+  /**
+   * La coquille Electron se construit SANS le paquet du site : elle ne peut
+   * ni importer la palette ni lire `globals.css`. Ce qui ne peut pas
+   * s'importer se COMPARE — c'est la règle déjà posée pour les six langues de
+   * `desktop/src/langue.js` et pour la table des processus surveillés.
+   *
+   * La couleur en jeu est celle de ce qu'on DOIT : la pastille peint la dette
+   * en `--flame`, et la source de diffusion du site fait de même. Une
+   * divergence ne casserait rien et ne se verrait que sur la machine de
+   * quelqu'un d'autre, en jeu — c'est-à-dire jamais ici.
+   */
+  it("peint la dette de la même couleur des deux côtés du pont", () => {
+    const palette = valeursPalette();
+    const flamme = [...palette.entries()].find(([, noms]) => noms.includes("flame"))?.[0];
+    expect(flamme).toBeDefined();
+
+    const overlay = readFileSync(join(process.cwd(), "desktop/src/overlay.html"), "utf8");
+    const m = /\.ligne\s+b\.dette\s*\{[^}]*color:\s*([^;}]+)/.exec(overlay);
+    expect(m).not.toBeNull();
+    expect(m![1].trim().toLowerCase()).toBe(flamme);
   });
 
   /**

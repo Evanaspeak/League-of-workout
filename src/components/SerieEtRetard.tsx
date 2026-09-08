@@ -76,8 +76,8 @@ export function SerieEtRetard() {
       )}
 
       {etat.enRetard && (
-        <div className="lol-panel p-4" style={{ borderColor: "#FF8A3D" }}>
-          <div style={{ color: "#FF8A3D", fontWeight: 600, marginBottom: 4 }}>
+        <div className="lol-panel p-4" style={{ borderColor: "var(--flame)" }}>
+          <div style={{ color: "var(--flame)", fontWeight: 600, marginBottom: 4 }}>
             {t.retardTitre(etat.joursDeRetard)}
           </div>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", lineHeight: 1.5 }}>
