@@ -842,13 +842,19 @@ refuse le retour des deux façons de s'en écarter.
 - **Les noms que le produit emploie** : `--bone` (texte clair), `--steel`
   (texte secondaire), `--ink` / `--carbon` (fonds), `--amber` (l'or, aussi
   `--gold`), `--ember` (le rouge de marque), `--victory` et `--loss`,
-  `--signal` (le bleu d'information), `--line` et `--line-strong` (les
-  bordures). Le bloc « Aliases legacy » de `base.css` fait le pont pour les
+  `--signal` (le bleu d'information), `--flame` (ce qu'on DOIT : la dette en
+  cours, l'état en retard), `--line` et `--line-strong` (les bordures). Le bloc « Aliases legacy » de `base.css` fait le pont pour les
   anciens noms.
-- **Neuf fichiers ne peuvent pas lire la palette**, et écrivent donc des
+- **Onze fichiers ne peuvent pas lire la palette**, et écrivent donc des
   littéraux : les six images dessinées par `next/og`, la frontière 404 de la
-  racine et le bloc qu'elle rend, et le `themeColor` de la mise en page. Ils
-  sont déclarés dans le garde, avec leur raison.
+  racine et le bloc qu'elle rend, le `themeColor` de la mise en page, le
+  courriel HTML — aucun client de messagerie ne résout une propriété
+  personnalisée — et le manifeste, lu par le système d'exploitation. Ils sont
+  déclarés dans le garde, avec leur raison.
+- **`--flame` traverse le pont**, et c'est la seule valeur de la palette dans
+  ce cas : la coquille Electron peint la dette de la même couleur sans pouvoir
+  l'importer. Le garde compare les deux, comme il le fait déjà pour les six
+  langues et pour la table des processus surveillés.
 - **`src/lib/graphiques.ts` lit la palette aussi**, depuis qu'on a mesuré que
   `var()` se résout dans un attribut de présentation SVG. Ce qui y reste
   littéral — la bordure de l'infobulle à 15 %, le quadrillage à 10 % — n'a pas
@@ -1224,6 +1230,58 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Une couleur écrite dix fois, dans deux paquets, sans nom
+Suite du chantier de la palette. Les deux versions précédentes ont ramené les
+littéraux du site sur les variables ; il en restait une famille entière, et
+c'est la plus visible du produit : **`#FF8A3D`, dix occurrences dans six
+fichiers et DEUX paquets**, sans jamais être nommée.
+
+Elle porte trois choses, ce qui explique qu'elle ait échappé à un recensement
+par écran : la dette EN COURS sur la pastille en jeu et sur la source de
+diffusion, l'état « en retard » du tableau de bord, et l'échec d'une capture.
+Plus le point médian du dégradé de marque, où elle était écrite en clair.
+
+**`--flame` la nomme, et la moitié qui compte est de l'autre côté du pont.**
+La coquille Electron se construit SANS le paquet du site : elle ne peut ni
+importer la palette ni lire `globals.css`. Ce qui ne peut pas s'importer se
+COMPARE — c'est la règle déjà posée pour les six langues de
+`desktop/src/langue.js`, pour la table des processus surveillés et pour les
+jeux qui se racontent. `src/palette.test.ts` confronte donc la couleur de
+`.ligne b.dette` à celle de `--flame`.
+
+**Une divergence y serait parfaitement muette.** Rien ne casse, aucun test ne
+rougit, et la seule machine capable de la voir est celle de quelqu'un d'autre,
+en jeu — c'est-à-dire jamais ici. C'est exactement le mode de panne que ce
+journal recense le plus dans `desktop/`.
+
+**Le courriel garde ses littéraux, et sa raison est écrite.** Un client de
+messagerie ne résout aucune propriété personnalisée : le dégradé du bouton y
+est réécrit à la main, et il n'y a pas de correction possible — seulement une
+dispense qui dit pourquoi. Le manifeste rejoint la liste pour la même raison,
+étant lu par le système d'exploitation.
+
+**Le garde s'élargit aux `.ts`, et c'est ce qui a désigné ces deux-là.** Il ne
+lisait que les `.tsx` — donc la couche d'affichage — et les deux producteurs
+de couleur qui n'en sont pas lui échappaient. Son témoin passe de cent à deux
+cents fichiers examinés.
+
+**Ce que le chantier a trouvé et qui ne se décide pas ici** : il existe
+**quatre dégradés de marque différents** dans le dépôt, dont celui du bouton
+principal — quatre-vingt-douze emplois — qui n'est pas `--brand-gradient`.
+`#FF7A35` et `#FF9A3D` n'ont de nom nulle part. Celui des courriels est sans
+ambiguïté une copie qui a dérivé ; les deux autres peuvent être des choix, et
+c'est l'identité du bouton le plus employé du produit. La question part dans
+`docs/questions-ouvertes.md` plutôt que dans le code.
+
+Quatre sabotages, quatre échecs : la couleur remise en clair côté site, la
+même côté coquille, la dispense du courriel vidée, et le motif du recensement
+rendu aveugle.
+
+**Et un sabotage n'avait rien saboté**, pour la troisième fois recensée ici :
+mon `sed` n'avait pas trouvé son motif, les tests passaient, et j'allais
+conclure que le garde ne mordait pas. `git hash-object` avant et après le dit
+en une seconde.
 
 ### La dernière copie de la palette, et le test qui interdisait de la retirer
 Suite immédiate. `src/lib/graphiques.ts` recopiait sept valeurs de la palette,

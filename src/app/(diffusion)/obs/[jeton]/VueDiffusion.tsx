@@ -60,13 +60,13 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
       }}
     >
       {perdu ? (
-        <span style={{ ...contour, color: "#FF8A3D", fontSize: 22 }}>
+        <span style={{ ...contour, color: "var(--flame)", fontSize: 22 }}>
           {textesDiffusion(undefined).lienInvalide}
         </span>
       ) : etat && etat.points > 0 ? (
         <>
           <span style={{
-            ...contour, color: etat.enRetard ? "#FF8A3D" : "var(--gold)",
+            ...contour, color: etat.enRetard ? "var(--flame)" : "var(--gold)",
             fontSize: 16, letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
             {(etat.textes ?? textesDiffusion(undefined)).aFaire}
