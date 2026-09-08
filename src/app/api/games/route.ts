@@ -511,7 +511,7 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
           const { titre, corps } = textesNotification(avant.langue, jourDansFuseau(new Date(), avant.fuseau))
             .seuil(formaterDuree(apresSec, etiquetteLocale(toLocale(avant.langue))));
           // Sans await : une notification lente ne doit pas retarder la réponse.
-          notifier(userId, { titre, corps, tag: "wow-dette" }).catch(() => {});
+          notifier(userId, { titre, corps, tag: "wow-dette" }, { rang: 1 }).catch(() => {});
         }
       }
     }

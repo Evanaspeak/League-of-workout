@@ -88,6 +88,38 @@ function preparer(): boolean {
 export const NOTIFS_PAR_SEMAINE_MAX = 3;
 const FENETRE_MS = 7 * 24 * 3600 * 1000;
 
+/**
+ * Ce qui cède quand le budget est plein.
+ *
+ * Le plafond était PREMIER ARRIVÉ, PREMIER SERVI, et cette règle-là favorise
+ * systématiquement ce qui part à heure fixe. Le rappel du matin peut tirer
+ * sept fois par semaine ; la notification de SEUIL, elle, part le soir, quand
+ * la dette franchit la ligne pendant qu'on joue. Le matin épuisait donc le
+ * budget du lundi au mercredi, et le seuil — dont ce module écrit qu'il est la
+ * RAISON d'être du canal — ne passait plus du jeudi au dimanche. Le
+ * RATTRAPAGE dépensait le budget avant que le principal n'ait tiré.
+ *
+ * Le discriminant n'est pas « important » contre « accessoire », c'est le
+ * MOMENT : est-ce que ça arrive quand la personne peut agir, ou est-ce que ça
+ * lui demande de revenir ?
+ *
+ * - **rang 1** : le seuil, qui arrive pendant qu'on joue, et la relance des
+ *   absents, envoyée une fois par trimestre et seul message adressé à
+ *   quelqu'un qui a cessé de venir ;
+ * - **rang 2** : le rappel du matin et le rappel de pesée. Les deux disent
+ *   « reviens », les deux se répètent, et les deux sont interchangeables.
+ *
+ * La réserve est d'UNE place : le rang 2 ne peut pas remplir le dernier
+ * créneau. Ce n'est pas beaucoup, et c'est ce qui garantit qu'un seuil franchi
+ * passe toujours. La porter à deux priverait de son troisième rappel quelqu'un
+ * qui n'a réglé aucun seuil, c'est-à-dire quelqu'un pour qui le rang 1
+ * n'arrivera jamais : on lui retirerait une notification sans rien lui rendre.
+ */
+export const RESERVE_RANG_UN = 1;
+
+/** Rang par défaut : le plus prudent. */
+const RANG_DEFAUT = 2;
+
 export type Notification = {
   titre: string;
   corps: string;
@@ -108,7 +140,7 @@ export type Notification = {
 export async function notifier(
   userId: string,
   n: Notification,
-  options: { plafonne?: boolean } = {},
+  options: { plafonne?: boolean; rang?: 1 | 2 } = {},
 ): Promise<number> {
   if (!preparer()) return 0;
 
@@ -127,11 +159,21 @@ export async function notifier(
    */
   const plafonne = options.plafonne !== false;
   if (plafonne) {
+    /**
+     * Le rang par DÉFAUT est le plus prudent, et c'est le même raisonnement
+     * qu'au-dessus : un appelant ajouté demain qui oublie de se déclarer cède
+     * la place au lieu de la prendre. Le défaut d'un garde ne peut pas être
+     * plus permissif que ce qu'on demandait.
+     */
+    const rang = options.rang ?? RANG_DEFAUT;
+    const budget = rang === 1
+      ? NOTIFS_PAR_SEMAINE_MAX
+      : NOTIFS_PAR_SEMAINE_MAX - RESERVE_RANG_UN;
     const depuis = new Date(Date.now() - FENETRE_MS);
     const deja = await prisma.envoiPush
       .count({ where: { userId, quand: { gte: depuis } } })
       .catch(() => 0);
-    if (deja >= NOTIFS_PAR_SEMAINE_MAX) return 0;
+    if (deja >= budget) return 0;
   }
 
   /**
