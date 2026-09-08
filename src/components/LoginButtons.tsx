@@ -201,7 +201,7 @@ export function LoginButtons() {
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.25rem",
               background: "rgba(255,90,71,0.1)", border: "1px solid rgba(255,90,71,0.3)",
-              borderRadius: 4, fontSize: "0.82rem", color: "#FF5A47",
+              borderRadius: 4, fontSize: "0.82rem", color: "var(--loss)",
             }}>
               {error}
             </div>
@@ -286,7 +286,7 @@ export function LoginButtons() {
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
                 background: mode === "login" ? "rgba(152,162,176,0.15)" : "transparent",
-                color: mode === "login" ? "#ECEFF4" : "var(--faint)",
+                color: mode === "login" ? "var(--bone)" : "var(--faint)",
                 fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
@@ -299,7 +299,7 @@ export function LoginButtons() {
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
                 background: mode === "register" ? "rgba(152,162,176,0.15)" : "transparent",
-                color: mode === "register" ? "#ECEFF4" : "var(--faint)",
+                color: mode === "register" ? "var(--bone)" : "var(--faint)",
                 fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
               }}
@@ -312,7 +312,7 @@ export function LoginButtons() {
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
               background: "rgba(255,90,71,0.1)", border: "1px solid rgba(255,90,71,0.3)",
-              borderRadius: 4, fontSize: "0.82rem", color: "#FF5A47",
+              borderRadius: 4, fontSize: "0.82rem", color: "var(--loss)",
             }}>
               {error}
             </div>
@@ -321,7 +321,7 @@ export function LoginButtons() {
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
               background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)",
-              borderRadius: 4, fontSize: "0.82rem", color: "#2FD98A",
+              borderRadius: 4, fontSize: "0.82rem", color: "var(--victory)",
             }}>
               {success}
             </div>

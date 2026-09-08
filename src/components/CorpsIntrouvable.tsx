@@ -13,6 +13,14 @@ import type { Locale } from "@/lib/i18n/langues";
  *
  * Les styles sont en ligne, et c'est ce qui rend les deux emplois possibles :
  * le bloc se rend à l'identique avec ou sans la feuille de style du site.
+ *
+ * Ses couleurs sont donc des LITTÉRAUX, et pas `var(--gold)` : sans feuille de
+ * style il n'y a aucun `:root` où lire la variable, et la page de dernier
+ * recours perdrait ses couleurs. Le prix est qu'elles ne suivent pas la
+ * palette toutes seules — il a déjà été payé une fois, ce bouton est resté
+ * `#C8AA6E` après que l'or du produit soit passé à `#FFB454`, et la 404
+ * localisée montrait donc l'or d'avant à côté de celui d'aujourd'hui.
+ * `src/palette.test.ts` compare les deux depuis.
  */
 export function CorpsIntrouvable({ locale }: { locale: Locale }) {
   const t = textes(layout, locale);
@@ -36,7 +44,7 @@ export function CorpsIntrouvable({ locale }: { locale: Locale }) {
         {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" style={{
           display: "inline-block", padding: "12px 28px", textDecoration: "none",
-          border: "1px solid #C8AA6E", color: "#C8AA6E", borderRadius: 4,
+          border: "1px solid #FFB454", color: "#FFB454", borderRadius: 4,
         }}>
           {t.introuvableRetour}
         </a>

@@ -117,7 +117,7 @@ export function Paliers() {
             <span
               style={{
                 fontSize: "0.72rem", padding: "3px 8px", borderRadius: 999,
-                border: "1px solid var(--blue, #0bc4e3)", color: "var(--blue, #0bc4e3)",
+                border: "1px solid var(--signal)", color: "var(--signal)",
               }}
             >
               {tt[etat.titre]}
@@ -138,12 +138,12 @@ export function Paliers() {
       */}
       {etat.souffrance && (
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-          <span className="mono-num" style={{ fontSize: "1.1rem", color: "var(--loss, #ef5350)" }}>
+          <span className="mono-num" style={{ fontSize: "1.1rem", color: "var(--loss)" }}>
             {`${tt.souffrance} ${etat.souffrance.niveau}`}
           </span>
           <span
             className="mono-num"
-            style={{ fontSize: "0.9rem", color: "var(--loss, #ef5350)", opacity: 0.8 }}
+            style={{ fontSize: "0.9rem", color: "var(--loss)", opacity: 0.8 }}
           >
             {`${nombre.format(etat.souffrance.points)} ${tt.points}`}
           </span>
@@ -183,7 +183,7 @@ export function Paliers() {
               title={tt.eclairAide}
               style={{
                 fontSize: "0.72rem", padding: "3px 8px", borderRadius: 999,
-                border: "1px solid var(--blue, #0bc4e3)", color: "var(--blue, #0bc4e3)",
+                border: "1px solid var(--signal)", color: "var(--signal)",
               }}
             >
               {tt.eclair}

@@ -137,7 +137,7 @@ export function LoginClient({
           <div style={{
             padding: "0.7rem 0.9rem",
             marginBottom: "1.5rem",
-            background: "rgba(255,180,84,0.08)",
+            background: "var(--gold-subtle)",
             border: "1px solid rgba(255,180,84,0.3)",
             borderRadius: 8,
             fontSize: "0.82rem",

@@ -462,9 +462,9 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         gap: 12,
         alignItems: "flex-start",
       }}>
-        <Icone nom="recharger" taille={17} couleur="#6E9BFF" style={{ marginTop: 1 }} />
+        <Icone nom="recharger" taille={17} couleur="var(--signal)" style={{ marginTop: 1 }} />
         <div>
-          <p style={{ fontSize: "0.82rem", color: "#6E9BFF", fontWeight: 600, marginBottom: 4 }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--signal)", fontWeight: 600, marginBottom: 4 }}>
             {t.syncBannerTitle}
           </p>
           <p style={{ fontSize: "0.78rem", color: "var(--muted)", lineHeight: 1.6 }}>
@@ -1032,7 +1032,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
-              <div className="w-2 h-2 rounded-full" style={{ background: "#2FD98A", boxShadow: "0 0 6px #2FD98A", animation: "pulse 1.5s infinite" }} />
+              <div className="w-2 h-2 rounded-full" style={{ background: "var(--victory)", boxShadow: "0 0 6px var(--victory)", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">{t.sessionActive}</span>
               <span className="text-xs gold-text">{t.levelLabel(sessionNiveau)}</span>
               <span className="ml-auto text-xs" style={{ color: "var(--faint)" }}>

@@ -730,7 +730,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                   value={editDateVal}
                                   onChange={(e) => setEditDateVal(e.target.value)}
                                 />
-                                <button onClick={() => handleEditDate(g.id)} aria-label={t.editDateTitle} style={{ color: "#2FD98A" }}><Icone nom="coche" taille={15} /></button>
+                                <button onClick={() => handleEditDate(g.id)} aria-label={t.editDateTitle} style={{ color: "var(--victory)" }}><Icone nom="coche" taille={15} /></button>
                                 <button onClick={() => setEditingDateId(null)} aria-label={t.cancelTitle} style={{ color: "#e05555" }}><Icone nom="croix" taille={15} /></button>
                               </div>
                             ) : (
@@ -873,7 +873,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                       value={editDateVal}
                                       onChange={(e) => setEditDateVal(e.target.value)}
                                     />
-                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "#2FD98A", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}><Icone nom="coche" taille={15} /></button>
+                                    <button onClick={() => handleEditDate(g.id)} style={{ color: "var(--victory)", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}><Icone nom="coche" taille={15} /></button>
                                     <button onClick={() => setEditingDateId(null)} style={{ color: "#e05555", background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem" }}><Icone nom="croix" taille={15} /></button>
                                   </div>
                                 ) : (

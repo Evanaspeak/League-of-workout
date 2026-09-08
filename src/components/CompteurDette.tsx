@@ -629,7 +629,7 @@ export function CompteurDette() {
                     rien à dire.
                   */
                   fontSize: "clamp(4rem, 26vw, 7rem)", lineHeight: 1,
-                  color: fini ? "var(--victory)" : "#ECEFF4",
+                  color: fini ? "var(--victory)" : "var(--bone)",
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
@@ -747,7 +747,7 @@ export function CompteurDette() {
                   style={{
                     fontSize: "clamp(2.2rem, 12vw, 3.2rem)", lineHeight: 1,
                     width: "4.5em", background: "transparent", border: "none",
-                    color: "#ECEFF4", fontVariantNumeric: "tabular-nums",
+                    color: "var(--bone)", fontVariantNumeric: "tabular-nums",
                   }}
                 />
                 <button

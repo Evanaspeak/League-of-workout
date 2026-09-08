@@ -687,8 +687,8 @@ export function AjoutActivite({
                       <button key={r} className="flex-1 py-2 rounded text-sm font-bold"
                         style={{
                           background: addForm.result === r ? (r === "V" ? "rgba(47,217,138,0.25)" : "rgba(255,90,71,0.25)") : "rgba(152,162,176,0.08)",
-                          border: `1px solid ${addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "rgba(152,162,176,0.2)"}`,
-                          color: addForm.result === r ? (r === "V" ? "#2FD98A" : "#FF5A47") : "var(--muted)",
+                          border: `1px solid ${addForm.result === r ? (r === "V" ? "var(--victory)" : "var(--loss)") : "rgba(152,162,176,0.2)"}`,
+                          color: addForm.result === r ? (r === "V" ? "var(--victory)" : "var(--loss)") : "var(--muted)",
                         }}
                         onClick={() => { setAddForm((f) => ({ ...f, result: r })); }}>
                         {r === "V" ? t.victory : t.defeat}

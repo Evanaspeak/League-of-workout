@@ -53,7 +53,7 @@ function daysSince(date: string | null, t: ReturnType<typeof useT<typeof adminUs
 
 function ActivityDot({ value, max }: { value: number; max: number }) {
   const ratio = max > 0 ? value / max : 0;
-  const color = ratio === 0 ? "rgba(152,162,176,0.1)" : ratio < 0.3 ? "#FF5A47" : ratio < 0.7 ? "#ECEFF4" : "#2FD98A";
+  const color = ratio === 0 ? "rgba(152,162,176,0.1)" : ratio < 0.3 ? "var(--loss)" : ratio < 0.7 ? "var(--bone)" : "var(--victory)";
   return (
     <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
   );
@@ -176,7 +176,7 @@ export default function AdminUserList() {
   return (
     <div className="lol-panel p-4" style={{ marginTop: 24 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "#ECEFF4", letterSpacing: "0.1em" }}>
+        <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "1rem", color: "var(--bone)", letterSpacing: "0.1em" }}>
           {t.title(users.length)}
         </h2>
       </div>
@@ -190,7 +190,7 @@ export default function AdminUserList() {
         style={{
           width: "100%", marginBottom: 16, padding: "8px 12px", borderRadius: 6,
           background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
-          color: "#ECEFF4", fontSize: "0.85rem", boxSizing: "border-box",
+          color: "var(--bone)", fontSize: "0.85rem", boxSizing: "border-box",
         }}
       />
 
@@ -212,7 +212,7 @@ export default function AdminUserList() {
             >
               <ActivityDot value={u.gamesThisWeek} max={maxWeekly} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: "0.88rem", color: "#ECEFF4", fontWeight: 600 }}>{u.pseudo}</div>
+                <div style={{ fontSize: "0.88rem", color: "var(--bone)", fontWeight: 600 }}>{u.pseudo}</div>
                 <div style={{ fontSize: "0.72rem", color: "var(--faint)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {u.email}
                 </div>
@@ -227,8 +227,8 @@ export default function AdminUserList() {
                     sans compter, « 31/08 » non. La date exacte reste dans le
                     profil, elle n'a pas disparu. */}
                 <span style={{ color: "var(--faint)" }}>{t.joinedAgo(daysSince(u.createdAt, t) ?? "")}</span>
-                <span style={{ color: "#6E9BFF" }}>{u.totalGames} {t.gamesSuffix}</span>
-                <span style={{ color: "#ECEFF4" }}>{u.totalPompes} {t.pompesSuffix}</span>
+                <span style={{ color: "var(--signal)" }}>{u.totalGames} {t.gamesSuffix}</span>
+                <span style={{ color: "var(--bone)" }}>{u.totalPompes} {t.pompesSuffix}</span>
                 <span style={{ color: "var(--faint)" }}>
                   {u.gamesThisWeek > 0 ? t.perWeek(u.gamesThisWeek) : t.inactive}
                 </span>
@@ -268,7 +268,7 @@ export default function AdminUserList() {
                   {newPasswords[u.id] ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(47,217,138,0.08)", border: "1px solid rgba(47,217,138,0.3)" }}>
                       <span style={{ fontSize: "0.75rem", color: "var(--faint)" }}>{t.newPassword}</span>
-                      <code style={{ fontSize: "0.88rem", color: "#2FD98A", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
+                      <code style={{ fontSize: "0.88rem", color: "var(--victory)", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
                       <span style={{ fontSize: "0.7rem", color: "var(--faint)", marginLeft: 4 }}>{t.visibleOnce}</span>
                     </div>
                   ) : (
@@ -288,14 +288,14 @@ export default function AdminUserList() {
                       marginLeft: 8, padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem",
                       cursor: "pointer", background: "transparent",
                       border: `1px dashed ${rearme[u.id] ? "rgba(47,217,138,0.5)" : "rgba(152,162,176,0.35)"}`,
-                      color: rearme[u.id] ? "#2FD98A" : "var(--steel)",
+                      color: rearme[u.id] ? "var(--victory)" : "var(--steel)",
                     }}
                   >
                     {rearmeEnCours === u.id ? "..." : rearme[u.id] ? (
                       // La coche se dessine : tapée en caractère, elle n'a ni
                       // taille ni couleur, et le lecteur d'écran l'annonce.
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <Icone nom="coche" taille={13} couleur="#2FD98A" />
+                        <Icone nom="coche" taille={13} couleur="var(--victory)" />
                         {t.introRearmee}
                       </span>
                     ) : t.rejouerIntro}
@@ -334,7 +334,7 @@ export default function AdminUserList() {
                               background: l.niveau === u.niveauActuel ? "rgba(152,162,176,0.07)" : "transparent",
                             }}>
                               <td style={tdStyle}>
-                                <span style={{ color: l.niveau === u.niveauActuel ? "#ECEFF4" : "var(--muted)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
+                                <span style={{ color: l.niveau === u.niveauActuel ? "var(--bone)" : "var(--muted)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
                                   {t.levelAbrev(l.niveau)}{l.niveau === u.niveauActuel ? " ◀" : ""}
                                 </span>
                               </td>
@@ -367,12 +367,12 @@ export default function AdminUserList() {
                         <tbody>
                           {scoring.roles.map(r => (
                             <tr key={r.role} style={{ borderTop: "1px solid rgba(152,162,176,0.06)" }}>
-                              <td style={tdStyle}><span style={{ color: "#ECEFF4", fontWeight: 600 }}>{r.role}</span></td>
+                              <td style={tdStyle}><span style={{ color: "var(--bone)", fontWeight: 600 }}>{r.role}</span></td>
                               <td style={tdStyle}>{r.poidsMort}</td>
                               <td style={tdStyle}>{r.poidsKill}</td>
                               <td style={tdStyle}>{r.poidsAssist}</td>
                               <td style={tdStyle}>
-                                <span style={{ color: r.maitriseActive ? "#2FD98A" : "rgba(236,239,244,0.25)" }}>
+                                <span style={{ color: r.maitriseActive ? "var(--victory)" : "rgba(236,239,244,0.25)" }}>
                                   {r.maitriseActive ? t.yes : t.no}
                                 </span>
                               </td>
@@ -399,13 +399,13 @@ export default function AdminUserList() {
                 <div style={{ borderTop: "1px solid rgba(255,90,71,0.15)", paddingTop: 12 }}>
                   {confirmDelete === u.id ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.78rem", color: "#FF5A47" }}>
+                      <span style={{ fontSize: "0.78rem", color: "var(--loss)" }}>
                         {t.deleteConfirm}
                       </span>
                       <button
                         onClick={() => deleteUser(u.id)}
                         disabled={deleting === u.id}
-                        style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "rgba(255,90,71,0.15)", border: "1px solid rgba(255,90,71,0.5)", color: "#FF5A47", fontWeight: 600 }}
+                        style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "rgba(255,90,71,0.15)", border: "1px solid rgba(255,90,71,0.5)", color: "var(--loss)", fontWeight: 600 }}
                       >
                         {deleting === u.id ? "..." : t.confirm}
                       </button>

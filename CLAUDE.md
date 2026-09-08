@@ -829,10 +829,39 @@ Ce qui a été posé :
 - Page `/telechargement` : bouton download si `NEXT_PUBLIC_DOWNLOAD_URL` défini (Vercel env var)
 
 ## Conventions CSS
-- Classes utilitaires custom : `lol-panel`, `lol-btn`, `lol-input`, `lol-select`, `stat-card`
-- Couleurs : gold `#C8AA6E`, win `#4caf50`, loss `#ef5350`, blue `#0bc4e3`
-- Font heading : `var(--font-heading)` = Russo One
-- Tout inline style ou Tailwind, pas de modules CSS
+
+**Les couleurs se nomment, elles ne s'écrivent pas.** La palette vit dans
+`src/app/styles/base.css` ; un composant écrit `var(--amber)`, jamais
+`#FFB454`. Ce n'est pas de la cosmétique : un littéral ne bouge pas quand la
+palette bouge, et c'est exactement ce qui est arrivé — cette section-ci a
+annoncé pendant des mois « gold `#C8AA6E`, win `#4caf50`, loss `#ef5350`, blue
+`#0bc4e3` », c'est-à-dire la palette d'AVANT une migration qui a laissé des
+alias derrière elle. Le produit rendait les deux à la fois. `src/palette.test.ts`
+refuse le retour des deux façons de s'en écarter.
+
+- **Les noms que le produit emploie** : `--bone` (texte clair), `--steel`
+  (texte secondaire), `--ink` / `--carbon` (fonds), `--amber` (l'or, aussi
+  `--gold`), `--ember` (le rouge de marque), `--victory` et `--loss`,
+  `--signal` (le bleu d'information), `--line` et `--line-strong` (les
+  bordures). Le bloc « Aliases legacy » de `base.css` fait le pont pour les
+  anciens noms.
+- **Neuf fichiers ne peuvent pas lire la palette**, et écrivent donc des
+  littéraux : les six images dessinées par `next/og`, la frontière 404 de la
+  racine et le bloc qu'elle rend, et le `themeColor` de la mise en page. Ils
+  sont déclarés dans le garde, avec leur raison.
+- **`src/lib/graphiques.ts` garde aussi ses littéraux**, et ce n'est PAS une
+  contrainte de rendu — mesuré, `var()` se résout parfaitement dans un
+  attribut de présentation SVG. C'est que recharts manipule ces chaînes ; le
+  passage en `var()` reste à éprouver.
+- Classes utilitaires : `lol-panel` (102 emplois), `lol-btn` (92), `lol-input`
+  (43), `mono-num` (73), `lol-select` (14), `lecture-ecran` (8), `stat-card`
+  (2, en voie de disparition).
+- Polices : `var(--font-heading)` = **Chakra Petch**, `var(--font-body)` =
+  Barlow, `var(--font-mono)` = IBM Plex Mono. Elles sont posées par
+  `next/font` dans `src/app/[locale]/layout.tsx`, donc la coquille de
+  diffusion — qui n'en charge aucune — écrit un repli générique, et c'est le
+  seul repli de `var()` légitime du dépôt.
+- Tout inline style ou Tailwind, pas de modules CSS.
 
 ## Sécurité à respecter
 - Ne jamais afficher/committer d'identifiants ou tokens
@@ -1195,6 +1224,124 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Une variable qui n'existait nulle part rendait la couleur d'avant
+Ligne 300 du plan, « uniformiser styles en ligne et classes utilitaires ».
+Mesurée avant d'être prise : **1 358 styles en ligne dans 95 fichiers sur 140**.
+Ce n'est pas deux nuits de travail, et surtout ce n'est pas le sujet — la
+convention du projet dit « tout inline style ou Tailwind, pas de modules CSS ».
+Ce que la ligne vise n'est donc pas l'inline, c'est la DIVERGENCE : la même
+chose écrite tantôt par la palette, tantôt à la main.
+
+Recensée : **137 couleurs distinctes que la palette ne connaît pas, 370
+occurrences**, dont **107 qui redisent EXACTEMENT une variable déclarée**.
+
+**Le défaut n'était pas là où le recensement regardait.** Il est apparu en
+posant la question inverse — quelles variables sont EMPLOYÉES et déclarées par
+personne. Six, et quatre sont légitimes : les trois polices sont posées par
+`next/font`, et `--teinte` par la bande de jeux qui l'écrit en ligne sur chaque
+tuile. Les deux autres n'existent nulle part :
+
+| | employée | déclarée | ce qui rend |
+|---|---|---|---|
+| `--blue` | 6 fois | jamais | `#0bc4e3`, le cyan d'avant |
+| `--panel-border` | 1 fois | jamais | `rgba(255,255,255,.08)` |
+
+`var(--blue, #0bc4e3)` s'écrivait sur les pastilles de titre du rail — donc
+sur **tous les écrans connectés** — et sur le profil public, celui qu'on
+partage. Le repli rendait, à côté d'un `--signal` qui vaut `#6E9BFF`. Deux
+bleus à l'écran, aucune erreur, aucun test rouge.
+
+**La CSS raconte elle-même l'histoire**, et c'est ce qui a permis de la
+nommer : le bloc porte « Aliases legacy (anciens tokens gold/cyan → nouvelle
+palette) ». Le pont a été posé pour que le code d'avant continue de rendre la
+bonne couleur. Il couvrait `gold` et `cyan`. **Il lui manquait `blue`**, et les
+trois pastilles marchent sur la planche absente depuis.
+
+**Ajouter l'alias aurait été le réflexe, et il est faux** : ça pérennise un
+troisième nom pour un seul bleu. Les trois appels lisent `var(--signal)`, qui
+est le nom que le produit emploie déjà neuf fois — `--cyan`, l'alias, n'est
+employé nulle part.
+
+**Et l'or était écrit deux fois, dont une sur ce qu'on poste.** `#C8AA6E`
+survivait dans les deux images de partage, sur la 404 et sur la source de
+diffusion, pendant que `--gold` valait `#FFB454`. Ce n'est pas une couleur
+oubliée, c'est une correction faite à moitié : les deux images emploient
+**déjà** `--ink` et `--steel` à jour, donc deux couleurs sur trois avaient
+suivi. Et la carte partagée, elle, était en `#FFB454` — le produit envoyait
+donc deux ors différents sur Discord selon qu'on partageait un lien ou une
+séance.
+
+**Le défaut que j'allais introduire, attrapé en lisant.** `Cartes.tsx`
+composait `` `1px solid ${badgeColor}55` `` — un alpha hexadécimal collé au
+bout de la chaîne. Ça ne marche que si la couleur est un hexadécimal : passer
+`var(--amber)` donne `var(--amber)55`, qui n'est pas du CSS, et la bordure
+disparaît sans erreur. **C'est cette concaténation qui FORÇAIT les deux
+appelants à écrire la couleur en dur** — la divergence n'était pas de la
+négligence, elle était imposée par le composant. `color-mix` la remplace.
+
+**Une sonde a démenti ce que j'allais écrire dans le garde.** J'allais exempter
+un `stroke="#0C0E11"` au motif qu'un attribut de présentation SVG ne résout pas
+`var()`. Mesuré, sur trois rectangles — attribut, style, littéral — les trois
+rendent `rgb(255, 180, 84)`. **Il se résout.** L'exemption n'avait pas lieu
+d'être, l'attribut a été converti, et le garde porte une exemption de moins.
+
+**Le garde tient les deux moitiés**, et la première est celle qui a mordu :
+une `var(--x)` doit nommer une variable que QUELQUE CHOSE déclare — un fichier
+CSS, une variable de `next/font`, ou une affectation en ligne. La seconde
+refuse un littéral qui vaut exactement une variable. Neuf dispenses, toutes des
+fichiers qui se rendent sans feuille de style : les six images de `next/og`, la
+frontière 404 de la racine, le bloc qu'elle partage avec la page localisée, et
+le `themeColor` de la mise en page.
+
+**Il est tombé sur sa propre explication à la première exécution**, en
+signalant le `var(--blue)` du commentaire qui raconte le défaut. C'est le piège
+recensé trois fois ici, et `src/test/sansCommentaires.ts` existe pour lui — il
+sert maintenant à quatre gardes.
+
+**Ce que le garde ne couvre PAS, écrit plutôt que tu** : `src/lib/graphiques.ts`
+garde la palette des graphiques en littéraux. Ce n'est pas une contrainte de
+rendu — la sonde vient de le montrer — c'est que recharts manipule ces chaînes,
+et que le passage en `var()` n'a pas été éprouvé. C'est un chantier à part.
+
+**Et la section « Conventions CSS » de ce fichier était périmée sur cinq points
+sur cinq** : les quatre couleurs qu'elle annonce sont celles d'avant la
+migration, et la police de titrage est Chakra Petch depuis longtemps, pas Russo
+One. C'est le motif que ce journal reproche partout — une description qui a
+vieilli en garantie — dans le document qui le reproche.
+
+**La comparaison de rendu nomme ses bandes**, et il n'y en a que deux par
+largeur, aux hauteurs identiques au pixel :
+
+| bande (1280) | ce qui l'occupe |
+|---|---|
+| y 1259–1284 | « Niveau 4 · 950 XP · **Premier pas** » — la pastille de titre |
+| y 2892–2912 | « Plus joué » et « Plus difficile » — les deux badges de champion |
+
+C'est-à-dire exactement les deux corrections voulues, et rien d'autre. Les
+cinq pixels de `360_fr_cgu` sont l'anticrénelage déjà relevé au journal, au
+même endroit et au même compte ; `/` et `/telechargement` sont les deux pages
+que l'outil range à part depuis qu'elles lisent les releases GitHub.
+
+**161 pages prérendues**, le chiffre d'avant. Et la suite navigateur ENTIÈRE
+a été jouée — trente-cinq fichiers d'affichage touchés sur tous les écrans,
+c'est une fondation au sens où ce fichier l'entend : **261 passés en 15 min 06**.
+Aucun parcours ne compare de couleur, donc ce qu'elle éprouve n'est pas la
+teinte : c'est qu'aucune `var()` mal écrite n'a fait disparaître un élément
+ou effondrer une mise en page.
+
+Cinq sabotages, cinq échecs : la variable qui n'existe pas remise, un littéral
+remis, une dispense qui ne désigne plus rien, le retrait des commentaires
+débranché, et le recensement vidé — ce dernier fait tomber les quatre
+contrôles, ce qui est le travail des témoins.
+
+**Et le piège du motif qui se tue lui-même, QUATRIÈME occurrence.** Un
+`ps -eo pid,args | grep "[n]ext start" | kill` posé dans une commande qui
+contenait elle-même `next start` — le `nohup` de la relance — a tué le shell
+avant de relancer quoi que ce soit. Sortie 144, serveur mort, rien de relancé.
+La parade écrite pour `pkill -f` vaut donc aussi pour `ps | grep` : ce n'est
+pas l'outil qui piège, c'est le fait que la ligne de commande contienne le
+motif qu'elle cherche.
 
 ### La comparaison de rendu a isolé la seule rubrique qui devait bouger
 Campagne de clôture après V535 et V536, sur un compte semé à soixante parties

@@ -72,7 +72,7 @@ export function LigneRubrique({
         border: "none",
         borderTop: premiere ? "none" : "1px solid var(--line)",
         borderRadius: `${premiere ? "6px 6px" : "0 0"} ${derniere ? "6px 6px" : "0 0"}`,
-        color: "#ECEFF4",
+        color: "var(--bone)",
       }}
     >
       <Icone nom={icone} taille={19} couleur="var(--amber)" />

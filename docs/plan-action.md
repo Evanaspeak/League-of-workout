@@ -404,7 +404,7 @@ rend dynamique toute route de l'application. 0 avant, 150 après.
 | [x] | 301 | Mesurer et corriger la performance | — |
 | [x] | 299 | Découper le fichier des styles | — |
 | [x] | 302 | Affiner la régénération des pages | — |
-| [ ] | 300 | Uniformiser styles en ligne et classes utilitaires | 2 nuits |
+| [ ] | 300 | Uniformiser styles en ligne et classes utilitaires — **la moitié COULEUR est faite** : mesuré, il y a 1 358 styles en ligne dans 95 fichiers, donc la ligne ne peut pas vouloir dire « retirer l'inline », qui est la convention du projet. Ce qui divergeait, c'est la palette : 107 littéraux redisaient une variable, et deux variables employées n'étaient déclarées nulle part — `var(--blue, #0bc4e3)` rendait le cyan d'avant sur tous les écrans connectés. `src/palette.test.ts` garde les deux. Reste l'uniformisation inline / classes utilitaires elle-même | 1 nuit |
 | [x] | q1 | L'historique grandit pour toujours — **décidé le 8 septembre** : garder les 50 dernières parties à l'écran, archiver le reste, et que l'archive reste accessible | — |
 
 ## Ce qui est dû au propriétaire du produit

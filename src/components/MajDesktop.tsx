@@ -43,13 +43,13 @@ export function MajDesktop() {
         position: "fixed", left: 16, right: 76, bottom: 16, zIndex: 900,
         margin: "0 auto", maxWidth: 520,
         padding: "12px 16px", borderRadius: 10,
-        background: "var(--carbon, #14171C)",
-        border: `1px solid ${prete ? "var(--amber, #FFB454)" : "var(--line-strong, rgba(152,162,176,0.28))"}`,
+        background: "var(--carbon)",
+        border: `1px solid ${prete ? "var(--amber)" : "var(--line-strong)"}`,
         boxShadow: "0 10px 30px rgba(0,0,0,0.45)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <span style={{ flex: 1, minWidth: 190, fontSize: "0.85rem", color: "var(--bone, #ECEFF4)", lineHeight: 1.5 }}>
+        <span style={{ flex: 1, minWidth: 190, fontSize: "0.85rem", color: "var(--bone)", lineHeight: 1.5 }}>
           {prete
             ? (etat?.version ? t.preteVersion(etat.version) : t.prete)
             : (etat?.version ? t.telechargement(etat.version) : t.telechargementSansVersion)}
@@ -71,7 +71,7 @@ export function MajDesktop() {
             </button>
           </>
         ) : (
-          <span className="mono-num" style={{ fontSize: "0.85rem", color: "var(--amber, #FFB454)", fontWeight: 600 }}>
+          <span className="mono-num" style={{ fontSize: "0.85rem", color: "var(--amber)", fontWeight: 600 }}>
             {pourcent(pct)}
           </span>
         )}
@@ -91,7 +91,7 @@ export function MajDesktop() {
           <div style={{
             width: `${pct}%`, height: "100%", borderRadius: 999,
             // Le dégradé de la marque : l'ember vers l'ambre, comme le sigle.
-            background: "linear-gradient(90deg, var(--ember, #FF4D2E), var(--amber, #FFB454))",
+            background: "linear-gradient(90deg, var(--ember), var(--amber))",
             transition: "width 0.3s ease",
           }} />
         </div>

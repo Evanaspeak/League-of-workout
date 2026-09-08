@@ -43,11 +43,11 @@ export function JeuSelector({
         onChange={(e) => choisirDansListe(e.target.value)}
       >
         {JEUX.map((j) => (
-          <option key={j.nom} value={j.nom} style={{ background: "#14171C", color: "#ECEFF4" }}>
+          <option key={j.nom} value={j.nom} style={{ background: "var(--carbon)", color: "var(--bone)" }}>
             {j.nom}
           </option>
         ))}
-        <option value="__autre__" style={{ background: "#14171C", color: "#ECEFF4" }}>
+        <option value="__autre__" style={{ background: "var(--carbon)", color: "var(--bone)" }}>
           {t.autreJeu}
         </option>
       </select>
@@ -74,7 +74,7 @@ export function JeuSelector({
                   style={{
                     flex: 1, padding: "8px 12px", borderRadius: 8, cursor: "pointer",
                     fontSize: "0.8rem", textAlign: "left",
-                    background: actif ? "rgba(255,180,84,0.08)" : "transparent",
+                    background: actif ? "var(--gold-subtle)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                   }}

@@ -135,7 +135,7 @@ export default function AdminChampionEditor() {
         <div className="text-sm px-3 py-2 rounded" style={{
           background: msg.type === "ok" ? "rgba(47,217,138,0.1)" : "rgba(220,80,80,0.1)",
           border: `1px solid ${msg.type === "ok" ? "rgba(47,217,138,0.3)" : "rgba(220,80,80,0.3)"}`,
-          color: msg.type === "ok" ? "#2FD98A" : "#e05555",
+          color: msg.type === "ok" ? "var(--victory)" : "#e05555",
         }}>
           {msg.text}
         </div>
