@@ -1002,6 +1002,14 @@ l'état, faute d'un gain qui justifie la retouche.
 Six scripts, dont trois pilotent un Chromium sur l'application lancée en local.
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
+**Avant toute campagne : `rm -rf .next/cache`.** Ce dossier SURVIT à
+`next build`, et une réponse gardée pendant un état de construction
+intermédiaire — un sabotage, une branche à moitié écrite — continue d'être
+servie avec `x-nextjs-cache: HIT`. Deux campagnes ont mesuré une 404 sur une
+page qui rend 200 en production. Le témoin qui distingue ça d'une régression
+est l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on
+regarde le passé.
+
 ```bash
 node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
@@ -1178,6 +1186,65 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Campagne de clôture du 8 septembre au matin, après V516 à V518
+Passée sur un compte de mesure semé à soixante parties, créé APRÈS la suite
+navigateur complète — l'ordre est écrit ici depuis longtemps.
+
+**Accessibilité : 0 constat**, vingt et une pages en français, en allemand et
+en japonais, et **aucune page laissée de côté** dans les trois. Le panneau du
+partage entre exercices y entre pour la première fois : ses deux boutons par
+ligne portent un `aria-label` qui NOMME l'exercice, et sa ligne complète —
+nom, poids, part — est lue d'un tenant par un `lecture-ecran`, parce que trois
+chiffres lus séparément ne disent pas à quoi ils se rapportent.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 172 ms | 948 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 284 ms | **2132 ms** | 0,000 | l'image de saison |
+| `/amis` | 324 ms | 1136 ms | 0,032 | le paragraphe du classement |
+| `/dashboard` | 404 ms | 1136 ms | 0,000 | le bandeau d'attente Riot |
+| `/history` | 564 ms | 1112 ms | 0,000 | le titre |
+
+Les cinq sont dans les seuils. `/bilan` reste le plancher pour la raison écrite
+huit fois — son plus grand élément est l'image de saison — et 2 132 ms se
+compare aux 2 024, 2 092, 2 096, 2 120, 2 128, 2 172, 2 216 et 2 332 relevés
+sur des comptes semés comparables : il est au milieu de la bande.
+
+**Le poids au chargement a bougé, de ce qu'on attendait** : réglages 257 → 264
+ko, tableau de bord 228 → 235, historique 200 → 206, amis 207 → 212, bilan 186
+→ 192. Sept exercices de plus au catalogue, quatre titres de section et un
+panneau : cinq à sept kilo-octets par écran, partout la même chose, ce qui est
+la signature d'un dictionnaire qui grossit et non d'un module qui arrive.
+
+**Et la comparaison de rendu ne trouve AUCUNE différence sur trente-neuf
+captures**, ce qui n'est pas ce que j'attendais — V516 ajoute un panneau à la
+rubrique « Ton effort ». C'est la meilleure nouvelle possible, et il faut dire
+pourquoi : **le panneau ne paraît qu'à partir de DEUX exercices cochés**, et le
+compte de mesure n'en a qu'un. La comparaison prouve donc exactement ce que
+V516 promettait — quelqu'un qui n'ouvre jamais ce réglage ne voit rien changer.
+
+**Ce qu'elle n'exerce PAS**, écrit plutôt que laissé à découvrir : le panneau
+lui-même. Il demande deux exercices, et c'est `e2e/partage-exercices.spec.ts`
+qui le tient — du clic jusqu'à la ventilation écrite en base.
+
+**Et la 404 servie depuis le cache est revenue**, deux fois en une nuit.
+`/fr/calculateur/league-of-legends` rendait 404 en local avec
+`x-nextjs-cache: HIT`, 200 en production. La cause est la même : `.next/cache`
+survit à `next build`, et les constructions intermédiaires d'une série de
+sabotages y laissent des réponses d'un état cassé. **Le geste entre donc dans
+la procédure de campagne** : `rm -rf .next/cache` avant de mesurer, une fois
+pour toutes.
+
+Cette fois, ce n'est pas le hasard qui l'a dit : c'est le décompte des pages
+NON MESURÉES de l'audit, posé le 23 août précisément pour ça. Sans lui,
+j'aurais publié « 0 constat » en ayant laissé deux pages de côté.
+
+**Et le piège du tube, QUATRIÈME occurrence.** J'ai passé le rapport d'audit
+dans `tail -20`, ce qui coupe les quinze premières pages ET le détail des
+non mesurées. Je l'ai écrit ici il y a moins de deux heures. La parade ne
+change pas : on écrit dans un FICHIER et on grep dedans, jamais un tube sur la
+sortie d'un outil de mesure.
 
 ### Les minuteurs posés dans un effet, et le garde qui a dû suivre un saut
 Suite directe du recensement des abonnements : celui-ci tenait les
