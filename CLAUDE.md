@@ -1166,6 +1166,73 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La dernière étape de la seule porte de secours n'était ouverte par personne
+Troisième application de la même méthode en une nuit : comparer deux listes
+plutôt que de lire l'une d'elles. Ici, les pages du produit contre celles
+qu'un parcours navigateur OUVRE. Elle en rend deux.
+
+**`/recuperation/valider`, et c'est la plus chère.** Quelqu'un qui a perdu son
+code n'a aucun autre chemin : il demande un lien, il l'ouvre, et c'est là — et
+nulle part ailleurs — que l'ancien code cesse de valoir. Le module
+(`src/lib/recuperation.ts`) est éprouvé unitairement depuis longtemps ; la
+PAGE qui consomme le lien ne l'était par rien. Une régression y est invisible
+jusqu'au jour où quelqu'un en a besoin, c'est-à-dire au pire moment, et sans
+recours puisque c'est le recours.
+
+**`/connexion-app`**, le premier écran de la connexion depuis l'application
+installée. Ni parcours, ni contrôle des six langues — alors que son texte est
+précisément parti en français à tout le monde jusqu'à ce qu'on le corrige.
+Il entre dans `langues.spec.ts`, où il coûte le moins et attrape le plus.
+
+**Le jeton du parcours est fabriqué avec la fonction du PRODUIT.** La base ne
+porte que l'empreinte — c'est une décision du module, et elle est bonne — donc
+le clair ne peut venir que du test. Recopier le hachage y aurait fait éprouver
+le motif et non la règle, ce que ce journal reproche déjà au contrôle de la
+forme des dates. Le parcours importe `empreinte` et pose sa ligne.
+
+Quatre contrôles, choisis sur ce que leur absence coûte : le code neuf
+s'affiche ET il OUVRE — un code affiché qui ne connecte pas serait pire que
+pas de page ; le lien ne se rejoue pas, et la LIGNE a disparu de la base, ce
+qui est la seule preuve qu'il est consommé et non seulement refusé à
+l'affichage ; un lien d'il y a une heure ne donne rien ; sans jeton, la page
+le dit tout de suite au lieu d'attendre indéfiniment.
+
+**Et deux des quatre contrôles ne prouvaient RIEN, ce que seul le sabotage a
+dit.** Ils lisaient une ABSENCE — « aucun code à l'écran » — et
+`toHaveCount(0)` est vrai tout de suite : il passe avant même que la requête
+soit partie. Avec le contrôle d'expiration débranché dans la route, le test
+restait vert. C'est le piège déjà écrit ici pour la correction de résultat —
+« un test qui attend quelque chose de déjà vrai n'attend rien » — sous sa
+forme la plus discrète, puisqu'un contrôle d'absence a l'air d'attendre.
+L'échec se lit maintenant sur un texte PRÉSENT, le titre « Lien invalide ou
+expiré », et le contrôle tombe sous sabotage.
+
+**Et la piste a demandé quatre sondes avant de rendre la bonne cause.** J'ai
+d'abord soupçonné le limiteur par adresse IP, puis une construction que le
+serveur n'aurait pas rechargée — vérifié en cherchant le sabotage dans le
+paquet servi, il y était. Puis une sonde qui poussait la route directement a
+rendu 400 elle aussi, ce qui semblait innocenter le test : elle prenait un
+compte au hasard, et **le premier venu avait une adresse nulle**, donc la
+route le refusait pour une tout autre raison. Une sonde qui se trompe de sujet
+donne une réponse plausible, et c'est ce qui coûte le plus cher.
+
+**Et le garde qui va avec lit le source PRIVÉ de ses commentaires** — sans
+quoi le commentaire de ce parcours, qui NOMME `/connexion-app` pour dire
+qu'il ne la couvre pas, l'aurait fait passer pour couverte. Démontré dans les
+deux sens : page retirée du contrôle des langues, le garde passe au vert avec
+les commentaires et tombe sans eux. C'est le quatrième sens de ce piège, après
+« le commentaire cite le motif fautif », « il le calme », et « il repousse la
+légende hors de la fenêtre de lecture ».
+
+Une seule dispense, `/introuvable` : elle s'ouvre par son VRAI chemin — une
+adresse inconnue que le middleware réécrit — et la nommer dans un `goto`
+éprouverait autre chose que ce qui arrive à quelqu'un.
+
+Deux sabotages du PRODUIT, deux échecs : l'usage unique retiré de la route, et
+le contrôle d'expiration débranché. Le second a demandé une condition que
+TypeScript ne sait pas replier — `if (false)` casse la restriction de type et
+la construction échoue avant le test, ce qui n'est pas un test qui mord.
+
 ### Trois outils, trois listes de pages, et personne pour les comparer
 Suite directe de la correction du balayage. Si un outil de mesure pouvait ne
 visiter que la moitié du produit sans le dire, ses voisins le pouvaient aussi.
@@ -1241,9 +1308,10 @@ TROISIÈME défaut de couverture trouvé cette nuit, et les trois l'ont été de
 même façon — en confrontant deux outils, jamais en lisant l'un d'eux. Un outil
 seul ne peut pas dire ce qu'il ne regarde pas ; c'est son voisin qui le dit.
 
-**Mesuré après correction, en français** : vingt et une pages, **0 constat,
-aucune page laissée de côté**. C'est le second chiffre qui compte, et c'est
-celui que la première passe élargie ne pouvait pas donner.
+**Mesuré après correction, dans les SIX langues** : vingt et une pages
+chacune, **0 constat, aucune page laissée de côté**. C'est le second chiffre
+qui compte, et c'est celui que la première passe élargie ne pouvait pas
+donner — elle rangeait les cinq rubriques du côté des pages non mesurées.
 
 ### Le balayage ne visitait par défaut que la moitié du produit
 Trouvé en comparant deux outils de mesure plutôt qu'en lisant l'un d'eux.
