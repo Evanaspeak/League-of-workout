@@ -1240,6 +1240,64 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Sept pages du calculateur ne recevaient aucun lien
+Trouvé en cherchant ce qui, dans le produit, se mesure sans demander une
+décision. Chaque page par jeu propose « d'autres jeux » en bas, et elle en
+prenait les huit PREMIERS du catalogue :
+
+```tsx
+const autres = tousLesSlugs().filter((j) => j.slug !== slug).slice(0, 8);
+```
+
+Ce sont donc les huit MÊMES sur les seize pages. Compté :
+
+| liens entrants | jeux |
+|---|---|
+| 15 | League of Legends, Valorant, CS2, Fortnite, Apex, PUBG, Warzone, Call of Duty |
+| 8 | Overwatch |
+| **0** | **Rocket League, Teamfight Tactics, Minecraft, World of Warcraft, GTA V, Elden Ring, Les Sims** |
+
+**Sept pages n'étaient atteignables que depuis l'index.** Ce ne sont pas des
+pages ordinaires : le commentaire en tête du fichier écrit lui-même qu'elles
+« existent pour être trouvées » et que c'est « le seul canal d'acquisition qui
+travaille sans qu'on s'en occupe ». Un moteur suit les liens ; une page vers
+laquelle rien ne pointe est une page qu'on a écrite pour rien.
+
+**Rien ne pouvait le signaler**, et c'est ce qui rend le cas instructif :
+chaque page était JUSTE. Le titre, les métadonnées, la vignette, les six
+langues, le plan du site — tout a été audité et corrigé. C'est le GRAPHE qui
+était faux, et un graphe ne se lit sur aucune page.
+
+**La fenêtre devient CIRCULAIRE et part du jeu lui-même.** Chaque jeu paraît
+alors dans exactement huit fenêtres — mesuré, huit entrants partout, minimum
+comme maximum — et le graphe devient un anneau au lieu d'une étoile.
+
+**Le choix écarté, écrit plutôt que tu** : proposer les jeux de la même
+FAMILLE (d'autres MOBA, d'autres battle royale) se lirait mieux, et ça
+redéséquilibre — il y a six battle royale et cinq jeux comptés au temps. Ça
+mêle en prime une décision de contenu à une correction de structure. L'anneau
+ne change pas un mot de la page.
+
+**Deux gardes, parce que le défaut a deux moitiés.** Le test unitaire éprouve
+la FONCTION : personne ne se propose soi-même, tout le monde propose autant,
+et surtout **tout le monde reçoit au moins un lien** — c'est le contrôle qui
+aurait attrapé le défaut, et il tombe sur la version d'origine. Le parcours
+navigateur éprouve le BRANCHEMENT : il lit les seize pages SERVIES, reconstruit
+le graphe, et refuse une page orpheline. Revenir aux huit premiers dans la page
+ne fait échouer ni la compilation ni une lecture d'API — vérifié, la
+construction passe et seul ce parcours tombe.
+
+Quatre sabotages unitaires, quatre échecs — dont le défaut d'origine remis. Un
+au navigateur, un échec, puis le retour à l'état sain reverifié.
+
+**Et j'ai écrasé le fichier de tests existant avant de m'en apercevoir.**
+`src/lib/slugJeu.test.ts` portait déjà six contrôles ; j'ai écrit par-dessus
+sans regarder, et le résultat passait au vert — dix tests, tous les miens. Ce
+qui était perdu : le tour complet des seize jeux, et un cas d'accents. Restauré
+puis COMPLÉTÉ. La leçon est celle que ce journal reproche partout ailleurs :
+un fichier qu'on remplace au lieu de le lire emporte ce qu'on ne savait pas
+qu'il gardait, et le vert d'après ne dit rien.
+
 ### Campagne de clôture après V538 à V542, et deux témoins qui ne pouvaient pas s'allumer
 Cinq versions ont déplacé des couleurs sur toute la surface du produit. La
 mesure qui compte ici est le CONTRASTE, et elle est passée sur un compte semé
