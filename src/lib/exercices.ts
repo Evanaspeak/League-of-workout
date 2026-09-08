@@ -605,14 +605,131 @@ export function repartir(total: number, n: number): number[] {
 export type Repartition = Partial<Record<ExerciceId, number>>;
 
 /**
- * Découpe un coût entre les exercices retenus, à parts égales. La somme reste
- * exacte : les premières parts absorbent le reste de la division.
+ * Ce que chaque exercice pèse dans le partage (réponse 068, « au choix »).
+ *
+ * Ce sont des POIDS et non des pourcentages, et la différence décide de tout :
+ * un pourcentage force la somme à cent, donc décocher un exercice rend tous
+ * les autres faux et oblige à les recalculer sous les yeux de quelqu'un qui
+ * n'a rien demandé. Un poids, lui, survit à l'ajout comme au retrait — « deux
+ * fois plus de pompes que de squats » reste vrai quand la course s'en va.
  */
-export function repartirPoints(total: number, exercices: ExerciceId[]): Repartition {
+export type PartsExercices = Partial<Record<ExerciceId, number>>;
+
+/**
+ * Un poids vaut UN par défaut, donc le partage à parts égales — c'est-à-dire
+ * exactement le comportement d'avant. Quelqu'un qui n'ouvre jamais ce réglage
+ * ne doit rien voir changer.
+ */
+export const PART_DEFAUT = 1;
+
+/**
+ * Zéro est REFUSÉ, et ce n'est pas une pudeur : « ne rien mettre sur cet
+ * exercice » se dit déjà en le décochant. Deux façons d'exprimer la même chose
+ * finissent par diverger, et c'est celle qui laisse l'exercice coché qui
+ * mentirait — il figurerait dans la liste sans jamais rien recevoir.
+ */
+export const PART_MIN = 1;
+
+/**
+ * Le plafond n'est pas une politesse non plus. À un contre mille, la petite
+ * part arrondit à zéro : l'exercice est coché, il s'affiche, et il ne reçoit
+ * jamais rien. Dix suffit à dire « beaucoup plus », et garde toute part
+ * au-dessus de zéro tant que la dette dépasse le nombre d'exercices cochés.
+ */
+export const PART_MAX = 10;
+
+/** Ramène un poids dans ses bornes, en entier. Hors bornes vaut le défaut. */
+export function toPart(brut: unknown): number {
+  const n = Number(brut);
+  if (!Number.isFinite(n)) return PART_DEFAUT;
+  return Math.min(PART_MAX, Math.max(PART_MIN, Math.round(n)));
+}
+
+/**
+ * Relit les poids rangés en base.
+ *
+ * Ils y sont en JSON, comme la ventilation d'une partie. Un contenu illisible
+ * — une écriture d'une version antérieure, un octet perdu — retombe sur des
+ * poids vides, donc sur le partage à parts égales : le repli d'un réglage de
+ * confort ne peut pas être plus surprenant que son absence.
+ */
+export function parseParts(brut: unknown): PartsExercices {
+  if (typeof brut !== "string" || brut.length === 0) return {};
+  try {
+    const objet = JSON.parse(brut) as Record<string, unknown>;
+    if (objet === null || typeof objet !== "object" || Array.isArray(objet)) return {};
+    const out: PartsExercices = {};
+    for (const [cle, valeur] of Object.entries(objet)) {
+      if (isExerciceId(cle) && Number.isFinite(Number(valeur))) out[cle] = toPart(valeur);
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Découpe un coût entre les exercices retenus. La somme reste exacte.
+ *
+ * Sans poids, c'est le partage à parts égales d'avant, au point de code près :
+ * les premières parts absorbent le reste de la division. Avec des poids, c'est
+ * la méthode du plus grand reste — chacun reçoit sa part entière, puis les
+ * unités restantes vont aux fractions les plus grosses. À poids égaux les
+ * fractions le sont aussi, l'égalité se tranche par l'ordre, et on retombe
+ * donc sur `repartir` : le défaut n'est pas une seconde arithmétique qui
+ * ressemble à la première, c'est la même.
+ *
+ * L'argument est OPTIONNEL, et il devait l'être : dix-sept appelants lisent
+ * cette fonction, et son absence garde le rendu d'avant — ce qui a permis de
+ * les reprendre un par un plutôt que tous à la fois.
+ */
+export function repartirPoints(
+  total: number,
+  exercices: ExerciceId[],
+  parts?: PartsExercices | null,
+): Repartition {
   const liste = toExerciceIds(exercices);
-  const parts = repartir(Math.max(0, Math.round(total)), liste.length);
+  const points = Math.max(0, Math.round(total));
+
+  /**
+   * Les bornes ne s'appliquent PAS ici, et c'est délibéré.
+   *
+   * `PART_MIN` et `PART_MAX` disent ce qu'on a le droit de CHOISIR ; ce sont
+   * une règle de produit, posée là où la valeur entre — la route de réglages
+   * refuse, `parseParts` ramène. Les imposer à l'arithmétique lui interdirait
+   * de recevoir des poids qui ne viennent pas d'un réglage : la correction
+   * d'un résultat repasse la ventilation d'ORIGINE en guise de poids, pour
+   * garder les proportions d'une partie qu'on ne veut pas repartager.
+   *
+   * Un poids négatif ou illisible retombe sur le défaut ; une somme nulle rend
+   * le partage à parts égales, faute de quoi personne ne recevrait rien.
+   */
+  const bruts = liste.map((id) => {
+    const p = Number(parts?.[id] ?? PART_DEFAUT);
+    return Number.isFinite(p) && p >= 0 ? p : PART_DEFAUT;
+  });
+  const totalPoids = bruts.reduce((a, b) => a + b, 0);
+  const poids = totalPoids > 0 ? bruts : liste.map(() => PART_DEFAUT);
+  const somme = poids.reduce((a, b) => a + b, 0);
+
+  const exact = poids.map((p) => (points * p) / somme);
+  const entiers = exact.map((v) => Math.floor(v));
+  let reste = points - entiers.reduce((a, b) => a + b, 0);
+
+  // Les unités restantes vont aux plus grosses fractions ; à fraction égale,
+  // au premier de la liste. `sort` est stable depuis ES2019, donc l'égalité
+  // rend l'ordre d'origine et non un ordre de moteur.
+  const ordre = exact
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  for (const { i } of ordre) {
+    if (reste <= 0) break;
+    entiers[i] += 1;
+    reste -= 1;
+  }
+
   const out: Repartition = {};
-  liste.forEach((id, i) => { out[id] = parts[i]; });
+  liste.forEach((id, i) => { out[id] = entiers[i]; });
   return out;
 }
 
@@ -660,9 +777,18 @@ export function secondesParPoint(exercice: ExerciceId): number {
  * exercices retenus. C'est la seule façon de comparer 20 pompes et 2 min de
  * boxe : on les ramène au temps qu'il faut pour les faire.
  */
-export function dureeEffort(points: number, exercices: ExerciceId[]): number {
-  const parts = repartirPoints(points, exercices);
-  return Object.entries(parts).reduce(
+export function dureeEffort(
+  points: number,
+  exercices: ExerciceId[],
+  /**
+   * `parts` et jamais `poids` : dans ce projet, `poids` désigne des
+   * KILOGRAMMES — `caloriesDePoints` en prend un. Deux sens sous un même nom
+   * est exactement ce que ce journal reproche ailleurs à `totalPoints`.
+   */
+  parts?: PartsExercices | null,
+): number {
+  const repartition = repartirPoints(points, exercices, parts);
+  return Object.entries(repartition).reduce(
     (total, [id, pts]) => total + (pts ?? 0) * secondesParPoint(toExerciceId(id)),
     0,
   );
@@ -681,9 +807,18 @@ export function dureeEffort(points: number, exercices: ExerciceId[]): number {
  * seuil. `dureeEffort` reste la bonne pour un calcul de proportion, où
  * l'arrondi n'a rien à faire.
  */
-export function dureeAffichee(points: number, exercices: ExerciceId[]): number {
-  const parts = repartirPoints(points, exercices);
-  return Object.entries(parts).reduce(
+export function dureeAffichee(
+  points: number,
+  exercices: ExerciceId[],
+  /**
+   * `parts` et jamais `poids` : dans ce projet, `poids` désigne des
+   * KILOGRAMMES — `caloriesDePoints` en prend un. Deux sens sous un même nom
+   * est exactement ce que ce journal reproche ailleurs à `totalPoints`.
+   */
+  parts?: PartsExercices | null,
+): number {
+  const repartition = repartirPoints(points, exercices, parts);
+  return Object.entries(repartition).reduce(
     (total, [id, pts]) => total + quantite(pts ?? 0, toExerciceId(id)),
     0,
   );

@@ -10,7 +10,7 @@ import {
 import { getCurrentUser } from "@/lib/auth-helpers";
 import {
   dureeAffichee, exercicesEnTemps, formaterDuree, isExerciceId, ratiosActuels,
-  repartirPoints, toExerciceIds, type Repartition,
+  parseParts, repartirPoints, toExerciceIds, type Repartition,
 } from "@/lib/exercices";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { toVariante, varianteApplicable } from "@/lib/variantes";
@@ -199,6 +199,9 @@ export async function POST(req: Request) {
   // Exercices retenus pour cette activité. Quand il y en a plusieurs, la dette
   // se partage entre eux : on fait un peu de chaque, plutôt que d'alterner
   // d'une partie à l'autre.
+  // Le poids de chaque exercice dans le partage (réponse 068). Absent, tous
+  // les poids valent un : c'est le partage à parts égales d'avant.
+  const parts = parseParts(user.partsExercices);
   const selection = isExerciceId(body.exercice)
     ? [body.exercice]
     : toExerciceIds(
@@ -227,7 +230,7 @@ export async function POST(req: Request) {
 
   /** Ventilation à stocker — nulle quand un seul exercice est concerné. */
   const ventilation = (total: number) =>
-    selection.length > 1 ? JSON.stringify(repartirPoints(total, selection)) : null;
+    selection.length > 1 ? JSON.stringify(repartirPoints(total, selection, parts)) : null;
 
   if (typeJeu === "temps") {
     /**
@@ -282,11 +285,11 @@ export async function POST(req: Request) {
 
     const dus = sansEnjeu
       ? null
-      : await accumulerDette(user.id, repartirPoints(scoringTemps.pointsFinaux, selection));
+      : await accumulerDette(user.id, repartirPoints(scoringTemps.pointsFinaux, selection, parts));
     return NextResponse.json({
       game,
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
-      repartition: repartirPoints(scoringTemps.pointsFinaux, selection),
+      repartition: repartirPoints(scoringTemps.pointsFinaux, selection, parts),
       dettePointsDus: dus,
     });
   }
@@ -433,11 +436,11 @@ export async function POST(req: Request) {
 
   const dus = sansEnjeu
     ? null
-    : await accumulerDette(user.id, repartirPoints(scoring.pompesFinales, selection));
+    : await accumulerDette(user.id, repartirPoints(scoring.pompesFinales, selection, parts));
   return NextResponse.json({
     game,
     scoring,
-    repartition: repartirPoints(scoring.pompesFinales, selection),
+    repartition: repartirPoints(scoring.pompesFinales, selection, parts),
     dettePointsDus: dus,
   });
 }
@@ -472,6 +475,9 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
       where: { id: userId },
       select: {
         dettePointsDus: true, rappelSeuilSec: true, exercices: true, langue: true,
+        // Le partage décide de la DURÉE d'effort que représente la dette : sans
+        // lui, le seuil se compare à un nombre que la pastille n'affiche pas.
+        partsExercices: true,
         // Le fuseau ne sert qu'à choisir la FORMULATION du jour : la notification
         // part le soir, et le jour se lit là où la personne est.
         fuseau: true,
@@ -487,14 +493,15 @@ async function accumulerDette(userId: string, repartition: Repartition): Promise
     // prévenir dix fois dans la soirée ferait couper les notifications.
     if (avant) {
       const exercices = exercicesEnTemps(toExerciceIds(avant.exercices));
+      const parts = parseParts(avant.partsExercices);
       const seuil = Math.max(0, avant.rappelSeuilSec);
       if (exercices.length > 0 && seuil > 0) {
         // La durée AFFICHÉE, des deux côtés de la comparaison : le seuil doit
         // se franchir au même nombre que celui montré sur la pastille, et la
         // notification doit annoncer ce nombre-là. Trois producteurs de la
         // même durée s'étaient mis à diverger.
-        const avantSec = dureeAffichee(Math.max(0, avant.dettePointsDus), exercices);
-        const apresSec = dureeAffichee(Math.max(0, total), exercices);
+        const avantSec = dureeAffichee(Math.max(0, avant.dettePointsDus), exercices, parts);
+        const apresSec = dureeAffichee(Math.max(0, total), exercices, parts);
         if (avantSec < seuil && apresSec >= seuil) {
           // Dans la langue du compte : le texte était écrit en dur en
           // français et partait tel quel à tout le monde, y compris à qui

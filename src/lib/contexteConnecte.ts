@@ -1,5 +1,5 @@
 import {
-  dureeAffichee, quantite, repartirPoints, toExerciceId, toExerciceIds,
+  dureeAffichee, parseParts, quantite, repartirPoints, toExerciceId, toExerciceIds,
 } from "@/lib/exercices";
 import { convertirDette, conversionsProposees } from "@/lib/conversionDette";
 
@@ -39,15 +39,21 @@ export function reponseDette(user: {
   dettePointsDus: number;
   rappelSeuilSec: number;
   exercices: string[];
+  /**
+   * Le poids de chaque exercice dans le partage (réponse 068). Absent, tous
+   * les poids valent un et le partage est celui d'avant, à parts égales.
+   */
+  partsExercices?: string | null;
 }) {
   const exercices = toExerciceIds(user.exercices);
+  const parts = parseParts(user.partsExercices);
   // Sans exercice sélectionné du tout, il n'y a rien à répartir.
   const points = exercices.length > 0 ? Math.max(0, user.dettePointsDus) : 0;
   return {
     points,
     exercices,
     /** Ce qu'il y a à faire, exercice par exercice, en POINTS d'effort. */
-    repartition: repartirPoints(points, exercices),
+    repartition: repartirPoints(points, exercices, parts),
     /**
      * La même chose, déjà convertie : secondes pour un exercice au temps,
      * répétitions sinon.
@@ -64,7 +70,7 @@ export function reponseDette(user: {
      * navigateur affiche ce qu'on lui donne.
      */
     quantites: Object.fromEntries(
-      Object.entries(repartirPoints(points, exercices))
+      Object.entries(repartirPoints(points, exercices, parts))
         .map(([id, pts]) => [id, quantite(pts ?? 0, toExerciceId(id))]),
     ) as Record<string, number>,
     /**
@@ -91,7 +97,7 @@ export function reponseDette(user: {
      * seuil d'alerte se compare à ce nombre, et il doit être celui qu'on
      * MONTRE. Sinon la pastille passe en alerte sous son propre seuil.
      */
-    dureeSec: Math.round(dureeAffichee(points, exercices)),
+    dureeSec: Math.round(dureeAffichee(points, exercices, parts)),
     /** Seuil de déclenchement du rappel, en secondes d'effort. 0 = désactivé. */
     seuilSec: Math.max(0, user.rappelSeuilSec),
   };

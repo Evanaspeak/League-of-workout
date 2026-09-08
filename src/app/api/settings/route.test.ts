@@ -131,6 +131,59 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect((await put({ userPrefs: { exercices: [] } })).status).toBe(400);
   });
 
+  /**
+   * Le partage entre exercices (réponse 068).
+   *
+   * Un poids hors bornes se REFUSE et ne se ramène pas : « trois fois plus »
+   * et « dix fois plus » ne se ressemblent pas, et enregistrer l'un pour
+   * l'autre en silence rendrait le réglage inutile. C'est la règle déjà posée
+   * pour la conduite au démarrage d'un jeu, et pour le mode fantôme.
+   */
+  it("accepte des poids dans les bornes", async () => {
+    const r = await put({ userPrefs: { partsExercices: '{"pompes":3,"squats":1}' } });
+    expect(r.status).toBe(200);
+    expect(p.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ partsExercices: '{"pompes":3,"squats":1}' }),
+    }));
+  });
+
+  it("accepte null, qui remet le partage à parts égales", async () => {
+    const r = await put({ userPrefs: { partsExercices: null } });
+    expect(r.status).toBe(200);
+    expect(p.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ partsExercices: null }),
+    }));
+  });
+
+  it.each([
+    ["zéro, qui se dit déjà en décochant", '{"pompes":0}'],
+    ["au-dessus du plafond", '{"pompes":11}'],
+    ["un poids qui n'est pas entier", '{"pompes":1.5}'],
+    ["un poids qui n'est pas un nombre", '{"pompes":"beaucoup"}'],
+    ["du JSON cassé", "{pompes:"],
+    ["un tableau", "[1,2]"],
+  ])("refuse %s", async (_titre, brut) => {
+    const r = await put({ userPrefs: { partsExercices: brut } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
+  it("refuse un poids posé sur un exercice inconnu", async () => {
+    const r = await put({ userPrefs: { partsExercices: '{"licorne":2}' } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Un poids sur un exercice DÉCOCHÉ est accepté : décocher puis recocher ne
+   * doit pas effacer le réglage qu'on avait mis. C'est le pendant du gel de
+   * `Game.repartition` — ce qui a été choisi ne se réécrit pas tout seul.
+   */
+  it("accepte un poids sur un exercice qui n'est pas coché", async () => {
+    const r = await put({ userPrefs: { partsExercices: '{"corde":4}' } });
+    expect(r.status).toBe(200);
+  });
+
   it("refuse un seuil de rappel absurde", async () => {
     const r = await put({ userPrefs: { rappelSeuilSec: -50 } });
     expect(r.status).toBe(400);

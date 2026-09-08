@@ -284,6 +284,10 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Unknown behaviour", es: "Conducta desconocida", de: "Unbekanntes Verhalten",
     zh: "未知的行为", ja: "不明な動作です",
   },
+  "Partage invalide": {
+    en: "Invalid split", es: "Reparto inválido", de: "Ungültige Aufteilung",
+    zh: "分配无效", ja: "配分が正しくありません",
+  },
   "Exercice inconnu": {
     en: "Unknown exercise", es: "Ejercicio desconocido", de: "Unbekannte Übung",
     zh: "未知的运动", ja: "不明な種目です",

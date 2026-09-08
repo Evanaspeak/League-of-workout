@@ -40,6 +40,12 @@ const HORS_POLITIQUE: Record<string, string> = {
    */
   sessionAuto: "réglage de comportement de l'application",
   exercices: "réglage : exercices choisis pour payer",
+  /**
+   * Le poids de chaque exercice dans le partage de la dette. C'est la même
+   * nature que la ligne au-dessus : ça dit comment on veut payer, pas qui on
+   * est, et ça ne sort jamais du compte.
+   */
+  partsExercices: "réglage : poids de chaque exercice dans le partage",
   rappelSeuilPoints: "réglage de rappel (ancienne version)",
   rappelSeuilSec: "réglage de rappel",
   plafondQuotidien: "réglage d'avertissement de volume",
