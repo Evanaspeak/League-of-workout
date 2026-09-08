@@ -212,11 +212,18 @@ describe("la palette", () => {
     let examines = 0;
     for (const f of fichiers(SRC, [".tsx", ".ts", ".css"])) {
       const rel = relatif(f);
-      // `base.css` DÉCLARE ces valeurs : c'est le seul endroit où elles ont le
-      // droit d'être écrites en clair.
-      if (rel in SANS_FEUILLE || rel.endsWith(".test.ts") || rel === "src/app/styles/base.css") continue;
+      if (rel in SANS_FEUILLE || rel.endsWith(".test.ts")) continue;
       examines += 1;
-      for (const m of sansCommentaires(readFileSync(f, "utf8")).matchAll(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)/g)) {
+      const src = sansCommentaires(readFileSync(f, "utf8"));
+      for (const m of src.matchAll(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)/g)) {
+        // `base.css` DÉCLARE ces valeurs, et il en EMPLOIE aussi : les deux
+        // halos du fond y écrivaient --violet et --ember sous transparence,
+        // et l'exemption posée sur le FICHIER les laissait passer. Elle porte
+        // donc sur la déclaration d'une propriété personnalisée, et sur elle
+        // seule — c'est le seul endroit où une couleur a le droit d'être
+        // écrite en clair.
+        const debut = src.lastIndexOf("\n", m.index) + 1;
+        if (/^\s*--[a-z0-9-]+:/.test(src.slice(debut, m.index))) continue;
         const c = `${m[1]},${m[2]},${m[3]}`;
         const nom = rgb.get(c);
         if (!nom) continue;
@@ -230,6 +237,45 @@ describe("la palette", () => {
     expect(examines).toBeGreaterThan(200); // témoin : un dossier renommé ne rend pas ce test vert
     expect(rgb.size).toBeGreaterThan(8);
     expect(exact.size).toBeGreaterThan(5);
+  });
+
+  /**
+   * Une variable déclarée que personne ne lit est du code mort, et elle coûte
+   * ce que coûte tout code mort ici : on la relit, on se demande si elle sert,
+   * on n'ose pas la retirer. C'est le raisonnement de `codeMort.test.ts`,
+   * appliqué à la palette plutôt qu'aux fichiers.
+   *
+   * Elle vaut surtout pour le PONT posé lors de la migration : il existait
+   * pour que le code d'avant continue de rendre la bonne couleur, donc il est
+   * fait pour disparaître à mesure que ce code passe. Onze de ses treize
+   * planches n'avaient plus aucun lecteur.
+   *
+   * Le recensement lit `src` ET `desktop`, et la coquille de diffusion emploie
+   * des replis (`var(--font-heading, sans-serif)`) qui comptent comme des
+   * lectures — c'est bien la variable qui est nommée.
+   */
+  it("ne déclare pas une variable que personne ne lit", () => {
+    const declarees = new Map<string, string>();
+    for (const f of fichiers(SRC, [".css"])) {
+      for (const m of readFileSync(f, "utf8").matchAll(/^[ \t]*--([a-z0-9-]+):/gm)) {
+        if (!declarees.has(m[1])) declarees.set(m[1], relatif(f));
+      }
+    }
+    const lues = new Set<string>();
+    for (const racine of [SRC, join(process.cwd(), "desktop/src")]) {
+      for (const f of fichiers(racine, [".ts", ".tsx", ".css", ".js", ".html"])) {
+        const t = readFileSync(f, "utf8");
+        for (const m of t.matchAll(/var\(\s*--([a-z0-9-]+)/g)) lues.add(m[1]);
+        for (const m of t.matchAll(/variable:\s*"--([a-z0-9-]+)"/g)) lues.add(m[1]);
+      }
+    }
+    const mortes: string[] = [];
+    for (const [nom, ou] of declarees) {
+      if (!lues.has(nom)) mortes.push(`${ou} : --${nom} n'est lue par personne`);
+    }
+    expect(mortes).toEqual([]);
+    expect(declarees.size).toBeGreaterThan(20); // témoin : le recensement a lu quelque chose
+    expect(lues.size).toBeGreaterThan(20);
   });
 
   /**
