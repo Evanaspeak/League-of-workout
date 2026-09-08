@@ -1367,6 +1367,23 @@ d'`exec` sans jamais le lire — seule la position m'intéresse. C'est ce que ce
 journal reproche partout ailleurs, une ligne qui ne sert à rien et se relit
 comme une garantie, et le compilateur l'a dit avant moi.
 
+**Un troisième, sur les ERREURS DE CONSOLE.** Vingt pages ouvertes avec une
+session, en français : **quarante erreurs, et les quarante sont les deux
+mêmes** — le script de mesure d'audience de Vercel, qui n'existe pas en local
+et rend donc un 404 en `text/plain` que le navigateur refuse d'exécuter. Zéro
+erreur du PRODUIT.
+
+**Et c'est le témoin d'une correction ancienne**, vérifié plutôt que supposé :
+`/_vercel/insights/script.js` rend **200 en `application/javascript`** en
+production. Le défaut de matcher corrigé il y a deux semaines tient toujours,
+et le bruit local ne le concerne pas.
+
+L'outil ne s'écrit pas non plus, et pour une raison précise : le balayage des
+coutures ouvre déjà ces vingt pages, mais ses écoutes sont bornées à `/api/` —
+c'est ce qui l'empêche de ranger les vingt pages du côté NON MESURÉ sur ce
+bruit-là. Y ajouter les erreurs de console demanderait un filtre par adresse,
+c'est-à-dire une liste qui vieillit, pour un état sain déjà à zéro.
+
 **Un second recensement dans la même passe, négatif lui aussi.** Les vingt
 routes de `src/app/api` qui CRÉENT des lignes, et ce qui borne chacune : un
 plafond par compte, un limiteur par adresse, une contrainte d'unicité qui
