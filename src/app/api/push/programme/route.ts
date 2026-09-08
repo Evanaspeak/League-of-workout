@@ -9,6 +9,7 @@ import { relancer } from "@/lib/relance";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import { dureeAffichee, exercicesEnTemps, formaterDuree, toExerciceIds } from "@/lib/exercices";
 import { etiquetteLocale, toLocale } from "@/lib/i18n/langues";
+import { secretProgrammeValide } from "@/lib/secretProgramme";
 
 /**
  * Les envois programmés : ce que l'application dit d'elle-même, sans que
@@ -54,16 +55,9 @@ export const HEURE_RAPPEL = DEBUT_MATIN;
  */
 export const MINIMUM_SEC = 120;
 
-function autorise(req: Request): boolean {
-  const attendu = process.env.RAPPEL_SECRET;
-  // Sans secret configuré, la route ne fait rien plutôt que de s'ouvrir : une
-  // variable oubliée ne doit pas transformer un déclencheur en porte ouverte.
-  if (!attendu) return false;
-  return req.headers.get("x-rappel-secret") === attendu;
-}
 
 export async function POST(req: Request) {
-  if (!autorise(req)) {
+  if (!secretProgrammeValide(req)) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
   /**

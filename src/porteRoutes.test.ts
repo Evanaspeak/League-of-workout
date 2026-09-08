@@ -88,6 +88,7 @@ const VERROUS = [
   /isRateLimited/,      // limite par adresse IP ou par compte visé
   /INIT_SECRET/,        // secret partagé d'amorçage
   /RAPPEL_SECRET/,      // secret partagé des déclencheurs programmés
+  /secretProgrammeValide\s*\(/,  // le même, extrait : il était écrit deux fois
   /verificationToken/,  // jeton reçu par courriel
   /jetonObs/,           // adresse-laissez-passer d'une source de diffusion
   /\bauth\(\)/,         // session lue directement, sans getCurrentUser

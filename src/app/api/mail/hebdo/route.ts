@@ -6,6 +6,7 @@ import { bilanHebdo, bilanDu, vautUnBilan, JOURS_BILAN } from "@/lib/bilanHebdo"
 import { heureLocale } from "@/lib/fuseau";
 import { DEBUT_MATIN, dansLaFenetreDuMatin } from "@/lib/fenetreEnvoi";
 import { toLocale } from "@/lib/i18n/langues";
+import { secretProgrammeValide } from "@/lib/secretProgramme";
 
 /**
  * Le bilan hebdomadaire, par courriel.
@@ -41,15 +42,9 @@ export const HEURE_BILAN = DEBUT_MATIN;
 /** Jour d'envoi : lundi, quand la semaine passée vient de se refermer. */
 export const JOUR_BILAN = 1;
 
-function autorise(req: Request): boolean {
-  const attendu = process.env.RAPPEL_SECRET;
-  // Sans secret configuré, la route ne fait rien plutôt que de s'ouvrir.
-  if (!attendu) return false;
-  return req.headers.get("x-rappel-secret") === attendu;
-}
 
 export async function POST(req: Request) {
-  if (!autorise(req)) {
+  if (!secretProgrammeValide(req)) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 

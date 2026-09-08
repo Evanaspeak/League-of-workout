@@ -1166,6 +1166,54 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un test que minuit a fait tomber, et le secret des envois écrit deux fois
+Deux choses trouvées dans la même passe, l'une par le calendrier et l'autre par
+une recherche de FORME.
+
+**Le test que minuit a fait tomber.** `route.test.ts` vérifiait qu'un compte
+sans langue déclarée reçoit sa notification de seuil en ANGLAIS, et il le
+vérifiait en cherchant le mot « waiting » dans le corps. Or V493 fait tourner
+trois formulations par jour : le 8 septembre, l'anglais dit « The next game
+will not wait ». Le test est passé au vert jusqu'à minuit UTC et serait parti
+rouge en CI dans la foulée.
+
+C'est **mon** défaut, introduit en V493 et non gardé — et le journal portait
+déjà la leçon, écrite pour une branche de parcours prise un jour sur six : « un
+test dont le comportement dépend du JOUR est un test dont on ne connaît pas la
+couleur ». Le contrôle compare maintenant au TITRE anglais du jour, pris à la
+source, et le confronte au français : c'est exactement ce qu'il veut
+prouver — la langue, pas la formulation.
+
+**Le recensement des trois autres familles est négatif**, et il vaut d'être
+écrit : les assertions du dictionnaire bouclent sur tous les jours et toutes
+les langues, celle du japonais cherche un idéogramme, et celle de la relance
+cherche le nombre de jours — présent dans les trois formulations, vérifié.
+
+**Ce qui reste ouvert**, dit plutôt que tu : un test de ROUTE peut encore
+épingler une formulation, parce que le jour y vient de l'horloge réelle. Le
+garde qui fermerait vraiment la classe demanderait d'injecter le jour dans les
+routes ; ce n'est pas une retouche.
+
+**Et le secret des déclencheurs programmés était écrit deux fois.** Trouvé en
+cherchant, mécaniquement, les fragments de trois lignes partagés entre deux
+fichiers — la même méthode que pour l'arrondi au pas. `autorise(req)` vivait à
+l'identique dans `/api/mail/hebdo` et `/api/push/programme` : la lecture de
+`RAPPEL_SECRET`, le refus quand il manque, la comparaison de l'en-tête.
+
+C'est le pire endroit pour une duplication. Le jour où l'on resserre l'un des
+deux, l'autre garde la version lâche — et c'est celle-là que personne ne relit.
+`secretProgrammeValide` est partagée, et **le garde des portes a dû apprendre
+le nouveau nom** : il cherchait `RAPPEL_SECRET` dans le fichier de ROUTE, qui
+ne le contient plus. L'entrée ajoutée exige un APPEL et non une mention, ce qui
+est un cran au-dessus des autres verrous de la liste.
+
+**Ce que le recensement mécanique a rendu d'autre**, pour qu'on ne le refasse
+pas : quarante et une paires de fichiers partagent un fragment de trois
+lignes, et l'immense majorité est du style en ligne ou une signature de route
+Next — c'est-à-dire du bruit que la convention du projet assume. Restent une
+poignée de candidats déjà connus et voulus (les deux cadrans de durée, que le
+journal sépare exprès) et ceux traités ici.
+
 ### Quatre lignes du plan qui paraissent faisables et ne le sont pas d'ici
 Écrit pour que la passe suivante ne les réexamine pas une cinquième fois. Leur
 colonne d'effort annonce une demie ou une nuit, donc elles ressemblent à du
