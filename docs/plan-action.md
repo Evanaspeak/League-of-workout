@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**111 construits · 46 restants**
+**112 construits · 45 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -300,7 +300,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 182 | Les jeux au temps : payer son temps de jeu | — |
 
 ### Mobile
-*2 à faire · 4 faits.* 
+*1 à faire · 5 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -309,7 +309,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 207 | Vibration à chaque répétition, en option | — |
 | [x] | 210 | Sur téléphone, ouvrir sur l'ajout de partie | — |
 | [ ] | 204 | Une application native, un jour | hors périmètre |
-| [ ] | 205 | Un mode séance plein écran — **débloqué le 8 septembre** : « fais-le », ce qui renverse le « plus tard » de la réponse 205 | 1 nuit |
+| [x] | 205 | Un mode séance plein écran — **débloqué le 8 septembre** : « fais-le », ce qui renverse le « plus tard » de la réponse 205. Deux temps : on se prépare, puis on commence — le chrono démarrait à l'ouverture et quinze secondes de lecture payaient quinze secondes de dette | — |
 
 ### L'argent
 *8 à faire · 0 faits.* Rien n'est construit, et une décision t'appartient avant tout le reste.

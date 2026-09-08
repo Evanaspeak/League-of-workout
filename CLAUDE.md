@@ -1535,6 +1535,79 @@ d'un serveur local sans clés.
 **Le témoin public de cette version est un CODE**, et il est net :
 `/api/cron/matin` rendait 404 avant, il rend 401 après.
 
+### Quinze secondes de lecture payaient quinze secondes de dette
+Ligne 205 du plan, renversée par le propriétaire : « fais-le ». Un mode séance
+plein écran pour le téléphone, gros chiffre, compteur de répétitions.
+
+**La fenêtre occupait DÉJÀ l'écran entier**, et c'est ce qui rendait la ligne
+difficile à lire : il n'y avait rien à agrandir. Ce qui manquait s'est mesuré,
+sur un téléphone de 390 px et une dette de boxe de 1 min 15.
+
+**Le chrono démarrait à l'OUVERTURE de la fenêtre, sur le même écran que les
+consignes d'exécution.** Quinze secondes passées à LIRE, sans un seul coup de
+poing, ont ramené la dette à une minute : **75 → 60**. Un cinquième payé pour
+avoir lu, sur un produit dont tout le sujet est que la dette est réelle. C'est
+le seul défaut de la série qu'on ne pouvait pas laisser.
+
+D'où deux temps, et pas deux fenêtres : on se PRÉPARE — le total, l'exercice,
+comment le faire, la prudence, l'échauffement, ce vers quoi on peut convertir —
+puis on COMMENCE. Remesuré à l'identique : **75 → 75**.
+
+**Et le chiffre a l'écran pour lui.** Soixante-treize mots entouraient le chrono
+pendant la séance ; ils ont été lus à la préparation et n'ont plus rien à dire.
+**73 mots → 7**, et le chiffre passe de 18 vw à 26 vw — on le regarde à bout de
+bras, en sueur.
+
+**Le compteur de répétitions n'existait que pour les CONVERSIONS.** Quelqu'un
+qui doit vingt-cinq pompes n'avait que « c'est fait » ou « plus tard »,
+c'est-à-dire tout ou rien, pendant que celui qui convertissait dix minutes de
+boxe obtenait un compteur et un paiement partiel. Le raisonnement d'origine —
+« sans chrono, il n'y a rien à mesurer : on a fait ses pompes ou on ne les a pas
+faites » — est faux dès que le nombre dépasse une série, ce qui est le cas
+courant. Mesuré de bout en bout : **25 pompes dues, 5 comptées, 20 restantes.**
+
+**Une dette répartie sur PLUSIEURS exercices n'a pas de cible**, et c'est écrit
+plutôt que tu : compter sur l'un des deux paierait l'autre sans qu'on l'ait
+fait. C'est la conversion qui existe pour regrouper, et elle est proposée à la
+préparation.
+
+**L'écran s'éteignait, et personne ne l'aurait signalé.** Un téléphone dort au
+bout de trente secondes : une planche de cinq minutes se fait devant un écran
+noir qu'il faut déverrouiller les mains moites — et ça ressemble à un téléphone
+qui fait ce qu'un téléphone fait. Le verrou de veille est demandé PENDANT la
+séance et seulement là, un refus ne se dit à personne, et rien n'est promis :
+le chrono compte du temps réel, pas des tics d'animation. Ce n'est pas mesurable
+ici — un Chromium sans tête ne s'endort pas — et c'est écrit comme tel.
+
+**La consigne suit ce qu'on va FAIRE, pas ce qu'on doit.** Convertir dix minutes
+de boxe en pompes et lire « garde haute, coudes rentrés » n'aide personne, et
+c'est au moment de la conversion qu'on a le plus besoin de savoir exécuter le
+mouvement qu'on vient de choisir.
+
+**Un libellé mentait**, trouvé par la sonde : le bouton disait « Annuler la
+conversion » sous un compteur qui comptait la dette elle-même. Deux gestes
+différents sous le même bouton — revenir choisir un autre exercice, ou refermer
+sans rien réclamer — et le libellé dit lequel.
+
+**Huit sabotages, huit échecs — mais le premier est passé, et c'est lui qui a
+appris quelque chose.** Mon parcours lisait la DETTE après dix secondes de
+préparation. Or rien n'y est jamais payé, dans les deux cas : le paiement a lieu
+à la FERMETURE, et il porte sur ce que le chrono a décompté. C'est donc le
+CHRONO qu'il faut lire, et il doit partir du total ENTIER. Le contrôle corrigé
+tombe sur le défaut remis.
+
+C'est la mesure d'origine qui avait raison et le test qui regardait à côté : la
+sonde, elle, appuyait sur « Plus tard » APRÈS ses quinze secondes, c'est-à-dire
+au moment où le paiement a lieu. Un test écrit sur le bon symptôme au mauvais
+instant ne prouve rien.
+
+**Et le piège du serveur, retombé dedans.** Après le second sabotage, la suite a
+rendu un échec qui accusait le produit : les consignes visibles pendant la
+séance ET un chrono déjà entamé, c'est-à-dire les DEUX sabotages à la fois. Le
+`git checkout` avait bien restauré la source ; c'est le `.next` qui portait
+encore la construction sabotée. On relance le serveur APRÈS avoir reconstruit,
+et c'est la troisième occurrence recensée ici.
+
 ### La courbe de force, et l'export qui avait perdu les pesées
 Ligne 152 du plan, débloquée par le propriétaire : « fais la courbe de force
 maintenant ». Elle bloquait depuis des mois pour une raison qui tient en une
