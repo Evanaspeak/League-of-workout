@@ -1166,6 +1166,41 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les clés de stockage : rien à corriger, et un garde qu'on n'écrit pas
+Quatrième et dernière passe du recensement des chaînes. Elle est NÉGATIVE, et
+c'est écrit ici pour qu'on ne la refasse pas dans six semaines.
+
+Recensées par OPÉRATION plutôt que par occurrence — qui lit, qui écrit, qui
+efface — les sept clés `low_*` du dossier `src/` rendent trois « effacées par
+quelqu'un, écrites par personne » : `low_desktop_arme`, `low_onboarded` et
+`low_visite`.
+
+**Aucune n'est un défaut, et les trois sont la même chose** : un nettoyage
+d'ANCIENNE clé chez qui la porte encore. `low_onboarded` et `low_visite` sont
+les noms d'avant le rattachement au compte, et `oublierPremiereVisite` écrit
+pourquoi elle les retire ; `low_desktop_arme` portait l'horodatage du transfert
+de session, passé au serveur depuis.
+
+**Le garde évident ne s'écrit donc pas.** « Toute clé effacée doit être écrite
+par quelqu'un » ferait trois faux positifs le jour de son écriture, sur trois
+lignes parfaitement justes — et un garde qui crie sur ce qui va bien finit par
+ne plus se lire. C'est la même mesure qui avait fait renoncer au garde du
+libellé constant et à celui de la colonne d'effort du plan.
+
+**Ce qui a été corrigé tient en deux commentaires.** Les deux effacements de
+`low_desktop_arme` ne disaient pas ce qu'ils étaient : le commentaire voisin
+explique pourquoi l'horodatage a DÉMÉNAGÉ, pas pourquoi la ligne reste. Elle
+se relit donc comme du code vivant, et on va chercher qui alimente la clé —
+ce qui vient de coûter dix minutes. Une phrase les évite.
+
+**Et le recensement s'est trompé une fois avant de rendre ce résultat.** Il
+comptait `low_visite` et `low_onboarded` comme jamais écrites : elles le sont
+par un CONSTRUCTEUR de clé (`pour(cle, uid)`), donc sous une forme
+qu'aucun motif de littéral ne voit. C'est le même angle mort que celui du
+garde des événements une heure plus tôt — un nom qui ne se lit pas en clair au
+point d'emploi — et il vaut d'être noté : **un recensement de clés par
+littéral ne voit jamais les clés composées.**
+
 ### Deux épingles justes, et rien entre les deux
 Troisième passe du même recensement, sur les noms de canaux du pont Electron.
 Celui-ci ne rend pas un défaut vivant — il rend un TROU dans la façon dont
