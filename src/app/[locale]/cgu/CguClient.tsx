@@ -75,7 +75,7 @@ export default function CguClient({ locale }: { locale: string }) {
         </p>
       </Section>
 
-      <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(152,162,176,0.1)" }}>
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)" }}>
         <Lien href="/confidentialite" style={{ color: "var(--steel)", fontSize: "0.82rem" }}>
           {t.footerLink}
         </Lien>

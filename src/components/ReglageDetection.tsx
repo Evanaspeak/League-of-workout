@@ -10,7 +10,7 @@ const PASTILLE = (actif: boolean): React.CSSProperties => ({
   borderRadius: 999,
   cursor: "pointer",
   fontSize: "0.78rem",
-  background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+  background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
   border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
   color: actif ? "var(--amber)" : "var(--muted)",
   transition: "all 0.15s",

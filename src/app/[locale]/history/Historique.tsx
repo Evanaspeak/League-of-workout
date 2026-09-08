@@ -108,7 +108,7 @@ function BadgeSansEnjeu({ t }: { t: { sansEnjeu: string; sansEnjeuAide: string }
       style={{
         fontSize: ".68rem", textTransform: "uppercase", letterSpacing: ".06em",
         padding: "1px 6px", borderRadius: 4, whiteSpace: "nowrap",
-        border: "1px solid rgba(152,162,176,0.35)", color: "var(--steel)",
+        border: "1px solid color-mix(in srgb, var(--steel) 35%, transparent)", color: "var(--steel)",
       }}
     >
       {t.sansEnjeu}
@@ -574,7 +574,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                           aria-pressed={actif}
                           style={{
                             padding: "4px 12px", borderRadius: 999, fontSize: "0.75rem", cursor: "pointer",
-                            background: actif ? "rgba(110,155,255,0.1)" : "transparent",
+                            background: actif ? "var(--signal-soft)" : "transparent",
                             border: `1px solid ${actif ? "var(--signal)" : "var(--line-strong)"}`,
                             color: actif ? "var(--signal)" : "var(--muted)",
                             transition: "all 0.15s",
@@ -788,7 +788,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                               title={t.detailToggleTitle}
                               aria-label={t.detailToggleTitle}
                               aria-expanded={depliee}
-                              style={{ color: depliee ? "var(--amber)" : "rgba(152,162,176,0.6)" }}
+                              style={{ color: depliee ? "var(--amber)" : "color-mix(in srgb, var(--steel) 60%, transparent)" }}
                             >{depliee ? "▲" : "▼"}</button>
                             <button
                               onClick={() => handleDelete(g.id)}
@@ -855,7 +855,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                     <tbody>
                       {lignes.map(({ g, cumul, parts, type, corrigible }) => {
                           const depliee = ligneDepliee === g.id;
-                          const fond = { background: "var(--bg-raised)", borderBottom: "1px solid rgba(152,162,176,0.08)" };
+                          const fond = { background: "var(--bg-raised)", borderBottom: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)" };
                           return (
                             <Fragment key={g.id}>
                             <tr style={fond}>
@@ -1027,7 +1027,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                       aria-label={t.detailToggleTitle}
                                   aria-expanded={depliee}
                                   style={{
-                                    color: depliee ? "var(--amber)" : "rgba(152,162,176,0.5)",
+                                    color: depliee ? "var(--amber)" : "color-mix(in srgb, var(--steel) 50%, transparent)",
                                     background: "none", border: "none", cursor: "pointer",
                                     fontSize: "0.7rem", padding: "2px 6px", lineHeight: 1,
                                   }}
@@ -1049,7 +1049,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                             {/* Détail du calcul : replié par défaut, il n'est utile
                                 qu'à qui veut comprendre le chiffre. */}
                             {depliee && (
-                              <tr style={{ background: "rgba(152,162,176,0.05)" }}>
+                              <tr style={{ background: "color-mix(in srgb, var(--steel) 5%, transparent)" }}>
                                 <td colSpan={nbColonnes} className="px-3 py-2">
                                   <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs" style={{ color: "var(--muted)" }}>
                                     {type === "temps" ? (

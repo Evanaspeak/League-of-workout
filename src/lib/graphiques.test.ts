@@ -43,9 +43,13 @@ describe("les teintes des séries", () => {
     for (const c of Object.values(TEINTES)) expect(c).toMatch(/^var\(--[a-z0-9-]+\)$/);
     expect(INFOBULLE.background).toMatch(/^var\(--[a-z0-9-]+\)$/);
     expect(INFOBULLE.color).toMatch(/^var\(--[a-z0-9-]+\)$/);
-    // Le quadrillage et la bordure de l'infobulle n'ont pas de nom dans la
-    // palette : les nommer est une décision de palette, pas une correction.
-    expect(GRILLE_TRAIT).toMatch(/^rgba?\(/);
+    // Le quadrillage et la bordure de l'infobulle non plus. Ce commentaire
+    // disait l'inverse — « ils n'ont pas de nom dans la palette » — et c'était
+    // faux : ce sont --steel et --bone SOUS TRANSPARENCE, écrits en rgba parce
+    // qu'aucun garde ne regardait sous l'alpha. Une description qui a vieilli
+    // se relit comme une garantie, et celle-ci a tenu deux versions.
+    expect(GRILLE_TRAIT).toMatch(/^color-mix\(in srgb, var\(--[a-z0-9-]+\) /);
+    expect(INFOBULLE.border).toMatch(/color-mix\(in srgb, var\(--[a-z0-9-]+\) /);
   });
 });
 

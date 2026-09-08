@@ -51,9 +51,9 @@ export function SyntheseJeu({
                     onClick={() => setVue(key)}
                     className="text-xs px-2 py-1 rounded"
                     style={{
-                      background: vue === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
+                      background: vue === key ? "color-mix(in srgb, var(--steel) 25%, transparent)" : "color-mix(in srgb, var(--steel) 6%, transparent)",
                       color: vue === key ? "var(--bone)" : "var(--faint)",
-                      border: `1px solid ${vue === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
+                      border: `1px solid ${vue === key ? "color-mix(in srgb, var(--steel) 50%, transparent)" : "color-mix(in srgb, var(--steel) 12%, transparent)"}`,
                     }}
                   >
                     {key === "total" ? t.total : t.average}

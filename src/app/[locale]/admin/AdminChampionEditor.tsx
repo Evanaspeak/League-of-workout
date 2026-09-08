@@ -101,8 +101,8 @@ export default function AdminChampionEditor() {
           </p>
         </div>
         <span className="text-xs px-3 py-1 rounded" style={{
-          background: "rgba(152,162,176,0.1)",
-          border: "1px solid rgba(152,162,176,0.2)",
+          background: "color-mix(in srgb, var(--steel) 10%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
           color: "var(--steel)",
         }}>
           {loading ? t.loadingShort : t.championsCount(count)}
@@ -133,8 +133,8 @@ export default function AdminChampionEditor() {
 
       {msg && (
         <div className="text-sm px-3 py-2 rounded" style={{
-          background: msg.type === "ok" ? "rgba(47,217,138,0.1)" : "rgba(220,80,80,0.1)",
-          border: `1px solid ${msg.type === "ok" ? "rgba(47,217,138,0.3)" : "rgba(220,80,80,0.3)"}`,
+          background: msg.type === "ok" ? "var(--victory-soft)" : "rgba(220,80,80,0.1)",
+          border: `1px solid ${msg.type === "ok" ? "color-mix(in srgb, var(--victory) 30%, transparent)" : "rgba(220,80,80,0.3)"}`,
           color: msg.type === "ok" ? "var(--victory)" : "#e05555",
         }}>
           {msg.text}
@@ -154,9 +154,9 @@ export default function AdminChampionEditor() {
           disabled={saving || loading || isDefault}
           className="px-5 py-2 rounded text-sm"
           style={{
-            background: "rgba(152,162,176,0.08)",
-            border: "1px solid rgba(152,162,176,0.2)",
-            color: isDefault ? "rgba(236,239,244,0.2)" : "var(--steel)",
+            background: "color-mix(in srgb, var(--steel) 8%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
+            color: isDefault ? "color-mix(in srgb, var(--bone) 20%, transparent)" : "var(--steel)",
             cursor: isDefault ? "default" : "pointer",
           }}
         >

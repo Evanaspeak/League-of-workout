@@ -165,7 +165,7 @@ export function ReglageNotifications() {
           <p className="text-xs" style={{ color: "var(--victory)" }}>{t.desktopActives}</p>
           <button
             className="text-xs px-3 py-1.5 rounded"
-            style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
+            style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
             onClick={testerDesktop}
           >
             {t.tester}
@@ -195,7 +195,7 @@ export function ReglageNotifications() {
           <div className="flex flex-wrap gap-2">
             <button
               className="text-xs px-3 py-1.5 rounded"
-              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
+              style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
               onClick={tester}
               disabled={occupe}
             >
@@ -203,7 +203,7 @@ export function ReglageNotifications() {
             </button>
             <button
               className="text-xs px-3 py-1.5 rounded"
-              style={{ background: "rgba(255,77,46,0.08)", border: "1px solid rgba(255,77,46,0.3)", color: "var(--ember)", cursor: "pointer" }}
+              style={{ background: "color-mix(in srgb, var(--ember) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--ember) 30%, transparent)", color: "var(--ember)", cursor: "pointer" }}
               onClick={desactiver}
               disabled={occupe}
             >

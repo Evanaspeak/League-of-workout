@@ -429,9 +429,9 @@ export function CompteurDette() {
           padding: "10px 12px",
           textAlign: "left",
           cursor: "pointer",
-          borderColor: seuilAtteint ? "rgba(255,77,46,0.5)" : "var(--line)",
+          borderColor: seuilAtteint ? "color-mix(in srgb, var(--ember) 50%, transparent)" : "var(--line)",
           boxShadow: seuilAtteint
-            ? "0 12px 34px rgba(0,0,0,0.5), 0 0 24px rgba(255,77,46,0.16)"
+            ? "0 12px 34px rgba(0,0,0,0.5), 0 0 24px color-mix(in srgb, var(--ember) 16%, transparent)"
             : "0 10px 28px rgba(0,0,0,0.4)",
           transition: "border-color 0.3s, box-shadow 0.3s",
         }}
@@ -481,7 +481,7 @@ export function CompteurDette() {
 
         <div
           className="h-1 rounded-full overflow-hidden"
-          style={{ background: "rgba(152,162,176,0.16)", marginTop: 8 }}
+          style={{ background: "color-mix(in srgb, var(--steel) 16%, transparent)", marginTop: 8 }}
         >
           <div
             className="h-full rounded-full"
@@ -567,7 +567,7 @@ export function CompteurDette() {
               textAlign: "left",
               padding: "10px 12px",
               borderRadius: 8,
-              background: "rgba(152,162,176,0.06)",
+              background: "color-mix(in srgb, var(--steel) 6%, transparent)",
               border: "1px solid var(--line)",
             }}>
               <div style={{
@@ -674,8 +674,8 @@ export function CompteurDette() {
                     key={e}
                     className="py-2 px-3 rounded text-sm"
                     style={{
-                      background: "rgba(152,162,176,0.1)", color: "var(--muted)",
-                      border: "1px solid rgba(152,162,176,0.2)",
+                      background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)",
+                      border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
                     }}
                     onClick={() => { setConversion(e); setFaits(0); }}
                   >
@@ -717,8 +717,8 @@ export function CompteurDette() {
                   className="py-2 px-4 rounded text-lg"
                   aria-label={t.detteRetirerUn}
                   style={{
-                    background: "rgba(152,162,176,0.1)", color: "var(--muted)",
-                    border: "1px solid rgba(152,162,176,0.2)", minWidth: 52,
+                    background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)",
+                    border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)", minWidth: 52,
                   }}
                   onClick={() => setFaits((n) => Math.max(0, surLePas(n - EXERCICES[cible].pas, cible)))}
                 >
@@ -754,8 +754,8 @@ export function CompteurDette() {
                   className="py-2 px-4 rounded text-lg"
                   aria-label={t.detteAjouterUn}
                   style={{
-                    background: "rgba(152,162,176,0.1)", color: "var(--muted)",
-                    border: "1px solid rgba(152,162,176,0.2)", minWidth: 52,
+                    background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)",
+                    border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)", minWidth: 52,
                   }}
                   onClick={() => {
                     /*
@@ -809,7 +809,7 @@ export function CompteurDette() {
               <>
                 <button
                   className="py-2 px-4 rounded text-sm flex-1"
-                  style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                  style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)" }}
                   onClick={() => { setChronoOuvert(false); setConversion(null); setFaits(0); }}
                 >
                   {t.detteChronoAbandon}
@@ -837,7 +837,7 @@ export function CompteurDette() {
                 */}
                 <button
                   className="py-2 px-4 rounded text-sm flex-1"
-                  style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                  style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)" }}
                   onClick={() => {
                     setTemps("preparation");
                     setConversion(null);
@@ -883,7 +883,7 @@ export function CompteurDette() {
                 {!fini && (
                   <button
                     className="py-2 px-4 rounded text-sm flex-1"
-                    style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                    style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)" }}
                     onClick={() => setEnPause((p) => !p)}
                   >
                     {enPause ? t.detteChronoReprendre : t.detteChronoPause}
@@ -897,7 +897,7 @@ export function CompteurDette() {
               <>
                 <button
                   className="py-2 px-4 rounded text-sm flex-1"
-                  style={{ background: "rgba(152,162,176,0.1)", color: "var(--muted)", border: "1px solid rgba(152,162,176,0.2)" }}
+                  style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)" }}
                   onClick={() => setChronoOuvert(false)}
                 >
                   {t.detteChronoAbandon}

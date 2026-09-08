@@ -32,7 +32,7 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
 const INPUT_STYLE: React.CSSProperties = {
   width: "100%",
   padding: "0.65rem 0.85rem",
-  background: "rgba(12,14,17,0.6)",
+  background: "color-mix(in srgb, var(--ink) 60%, transparent)",
   border: "1px solid var(--line-strong)",
   borderRadius: 8,
   color: "var(--bone)",
@@ -200,7 +200,7 @@ export function LoginButtons() {
           {error && (
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.25rem",
-              background: "rgba(255,90,71,0.1)", border: "1px solid rgba(255,90,71,0.3)",
+              background: "color-mix(in srgb, var(--loss) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
               borderRadius: 4, fontSize: "0.82rem", color: "var(--loss)",
             }}>
               {error}
@@ -285,7 +285,7 @@ export function LoginButtons() {
               style={{
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
-                background: mode === "login" ? "rgba(152,162,176,0.15)" : "transparent",
+                background: mode === "login" ? "color-mix(in srgb, var(--steel) 15%, transparent)" : "transparent",
                 color: mode === "login" ? "var(--bone)" : "var(--faint)",
                 fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
@@ -298,7 +298,7 @@ export function LoginButtons() {
               style={{
                 flex: 1, padding: "0.4rem", fontSize: "0.77rem", border: "none", borderRadius: 3,
                 cursor: "pointer",
-                background: mode === "register" ? "rgba(152,162,176,0.15)" : "transparent",
+                background: mode === "register" ? "color-mix(in srgb, var(--steel) 15%, transparent)" : "transparent",
                 color: mode === "register" ? "var(--bone)" : "var(--faint)",
                 fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 letterSpacing: "0.05em", transition: "all 0.15s",
@@ -311,7 +311,7 @@ export function LoginButtons() {
           {error && (
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
-              background: "rgba(255,90,71,0.1)", border: "1px solid rgba(255,90,71,0.3)",
+              background: "color-mix(in srgb, var(--loss) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
               borderRadius: 4, fontSize: "0.82rem", color: "var(--loss)",
             }}>
               {error}
@@ -320,7 +320,7 @@ export function LoginButtons() {
           {success && (
             <div style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
-              background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)",
+              background: "var(--victory-soft)", border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)",
               borderRadius: 4, fontSize: "0.82rem", color: "var(--victory)",
             }}>
               {success}

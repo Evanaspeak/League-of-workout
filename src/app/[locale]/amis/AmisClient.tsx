@@ -813,7 +813,7 @@ export function AmisClient() {
                 {profilOuvert === p.id && (
                   <div style={{
                     fontSize: ".85rem", color: "var(--steel)",
-                    paddingLeft: 4, borderLeft: "2px solid rgba(152,162,176,0.25)",
+                    paddingLeft: 4, borderLeft: "2px solid color-mix(in srgb, var(--steel) 25%, transparent)",
                   }}>
                     {profil === null && <span role="status">{t.chargement}</span>}
                     {profil === "erreur" && <span role="alert">{t.profilErreur}</span>}

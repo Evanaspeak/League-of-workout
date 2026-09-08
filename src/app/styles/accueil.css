@@ -19,7 +19,7 @@
   padding: clamp(40px, 6vw, 76px) 24px clamp(48px, 6vw, 80px);
   position: relative;
   background:
-    radial-gradient(120% 90% at 50% 0%, rgba(255, 77, 46, 0.055) 0%, transparent 62%),
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--ember) 5.5%, transparent) 0%, transparent 62%),
     var(--ink);
 }
 .wow-hero {
@@ -132,7 +132,7 @@
   overflow: hidden;
   background: var(--carbon);
   border: 1px solid var(--line-strong);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(236, 239, 244, 0.04) inset;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 2px 0 color-mix(in srgb, var(--bone) 4%, transparent) inset;
 }
 .cadre-app-barre {
   display: flex;
@@ -140,15 +140,15 @@
   gap: 12px;
   height: 34px;
   padding: 0 14px;
-  background: rgba(236, 239, 244, 0.035);
+  background: color-mix(in srgb, var(--bone) 3.5%, transparent);
   border-bottom: 1px solid var(--line);
 }
 .cadre-app-pastilles { display: inline-flex; gap: 6px; flex-shrink: 0; }
 .cadre-app-pastilles i {
   width: 9px; height: 9px; border-radius: 50%;
-  background: rgba(236, 239, 244, 0.16);
+  background: color-mix(in srgb, var(--bone) 16%, transparent);
 }
-.cadre-app-pastilles i:first-child { background: rgba(255, 77, 46, 0.55); }
+.cadre-app-pastilles i:first-child { background: color-mix(in srgb, var(--ember) 55%, transparent); }
 .cadre-app-titre {
   font-family: var(--font-mono, 'IBM Plex Mono', monospace);
   font-size: 0.66rem;
@@ -346,7 +346,7 @@
   font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 999px;
 }
-.vign-etat.perdu { color: var(--loss); background: rgba(255, 90, 71, 0.1); border: 1px solid rgba(255, 90, 71, 0.3); }
+.vign-etat.perdu { color: var(--loss); background: color-mix(in srgb, var(--loss) 10%, transparent); border: 1px solid color-mix(in srgb, var(--loss) 30%, transparent); }
 .vign-kda {
   font-family: var(--font-mono, 'IBM Plex Mono', monospace);
   font-size: 2.4rem; font-weight: 600; line-height: 1;
@@ -390,7 +390,7 @@
   font-size: 0.68rem; padding: 5px 10px; border-radius: 999px;
   border: 1px solid var(--line); color: var(--faint);
 }
-.vign-puce.actif { border-color: rgba(255, 77, 46, 0.4); color: var(--ember); background: rgba(255, 77, 46, 0.08); }
+.vign-puce.actif { border-color: color-mix(in srgb, var(--ember) 40%, transparent); color: var(--ember); background: color-mix(in srgb, var(--ember) 8%, transparent); }
 
 /* ── Galerie de captures ─────────────────────────────────────────────────
    « Nike ne vend pas de chaussures sans en montrer une paire. » *
@@ -407,7 +407,7 @@
 .section-cta {
   border-top: 1px solid var(--line);
   background:
-    radial-gradient(90% 120% at 50% 100%, rgba(255, 77, 46, 0.06) 0%, transparent 60%),
+    radial-gradient(90% 120% at 50% 100%, color-mix(in srgb, var(--ember) 6%, transparent) 0%, transparent 60%),
     var(--carbon);
   padding: clamp(76px, 9vw, 118px) 24px;
   text-align: center;
@@ -484,8 +484,8 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .wow-ghost:hover {
-  border-color: rgba(236, 239, 244, 0.35);
-  background: rgba(236, 239, 244, 0.05);
+  border-color: color-mix(in srgb, var(--bone) 35%, transparent);
+  background: color-mix(in srgb, var(--bone) 5%, transparent);
 }
 .wow-ghost:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
 
@@ -614,8 +614,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, var(--ink) 0%, rgba(12,14,17,0.93) 33%, rgba(12,14,17,0.42) 60%, rgba(12,14,17,0.16) 100%),
-    linear-gradient(0deg, var(--ink) 0%, rgba(12,14,17,0) 32%);
+    linear-gradient(90deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 93%, transparent) 33%, color-mix(in srgb, var(--ink) 42%, transparent) 60%, color-mix(in srgb, var(--ink) 16%, transparent) 100%),
+    linear-gradient(0deg, var(--ink) 0%, color-mix(in srgb, var(--ink) 0%, transparent) 32%);
 }
 .hero-video .wow-hero { position: relative; }
 
@@ -626,8 +626,8 @@
   display: inline-flex; align-items: center; gap: 7px;
   padding: 7px 13px;
   border-radius: 999px;
-  border: 1px solid rgba(236, 239, 244, 0.2);
-  background: rgba(12, 14, 17, 0.66);
+  border: 1px solid color-mix(in srgb, var(--bone) 20%, transparent);
+  background: color-mix(in srgb, var(--ink) 66%, transparent);
   backdrop-filter: blur(8px);
   color: var(--bone);
   font-family: var(--font-heading, 'Chakra Petch', sans-serif);
@@ -635,7 +635,7 @@
   cursor: pointer;
   transition: background 0.16s ease, border-color 0.16s ease;
 }
-.video-fond-bouton:hover { background: rgba(12, 14, 17, 0.88); border-color: rgba(236, 239, 244, 0.4); }
+.video-fond-bouton:hover { background: color-mix(in srgb, var(--ink) 88%, transparent); border-color: color-mix(in srgb, var(--bone) 40%, transparent); }
 .video-fond-bouton:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
 
 /* Avec une vidéo derrière, le texte occupe le héros à lui seul : il prend un
@@ -650,7 +650,7 @@
   .video-fond video { opacity: 0.42; }
   .video-fond-voile {
     background:
-      linear-gradient(180deg, rgba(12,14,17,0.72) 0%, rgba(12,14,17,0.86) 55%, var(--ink) 100%);
+      linear-gradient(180deg, color-mix(in srgb, var(--ink) 72%, transparent) 0%, color-mix(in srgb, var(--ink) 86%, transparent) 55%, var(--ink) 100%);
   }
   .video-fond-bouton { right: 14px; bottom: 14px; }
 }

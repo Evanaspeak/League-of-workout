@@ -104,8 +104,8 @@ export function TelechargementClient({
             padding: "1rem 1.15rem",
             borderRadius: 6,
             textAlign: "left",
-            background: "rgba(255,180,84,0.06)",
-            border: "1px solid rgba(255,180,84,0.28)",
+            background: "color-mix(in srgb, var(--amber) 6%, transparent)",
+            border: "1px solid color-mix(in srgb, var(--amber) 28%, transparent)",
           }}>
             <p style={{
               display: "flex", alignItems: "center", gap: 8,
@@ -149,8 +149,8 @@ export function TelechargementClient({
             style={{
               padding: "1rem 1.25rem",
               borderRadius: 6,
-              background: "rgba(152,162,176,0.05)",
-              border: "1px solid rgba(152,162,176,0.15)",
+              background: "color-mix(in srgb, var(--steel) 5%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--steel) 15%, transparent)",
               fontSize: "0.85rem",
               color: "var(--faint)",
               lineHeight: 1.7,
@@ -164,7 +164,7 @@ export function TelechargementClient({
           style={{
             marginTop: "2rem",
             paddingTop: "1.5rem",
-            borderTop: "1px solid rgba(152,162,176,0.08)",
+            borderTop: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)",
             fontSize: "0.75rem",
             color: "var(--faint)",
             lineHeight: 1.8,

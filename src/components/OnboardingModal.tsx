@@ -137,7 +137,7 @@ export function OnboardingModal() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "rgba(12,14,17,0.85)",
+      background: "color-mix(in srgb, var(--ink) 85%, transparent)",
       backdropFilter: "blur(6px)",
       padding: "1rem",
       opacity: closing ? 0 : 1,
@@ -169,7 +169,7 @@ export function OnboardingModal() {
               width: i === step ? 20 : 6,
               height: 6,
               borderRadius: 3,
-              background: i === step ? "var(--ember)" : "rgba(236,239,244,0.15)",
+              background: i === step ? "var(--ember)" : "color-mix(in srgb, var(--bone) 15%, transparent)",
               transition: "all 0.3s ease",
             }} />
           ))}

@@ -110,7 +110,7 @@ export function ReglagesAvances({
                 </thead>
                 <tbody>
                   {roleWeights.map((rw) => (
-                    <tr key={rw.role} style={{ borderTop: "1px solid rgba(152,162,176,0.1)" }}>
+                    <tr key={rw.role} style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)" }}>
                       <td className="py-2 pr-3 gold-text font-medium">{rw.role}</td>
                       {(["poidsMort", "poidsKill", "poidsAssist"] as const).map((field) => (
                         <td key={field} className="py-2 px-2 text-center">
@@ -155,7 +155,7 @@ export function ReglagesAvances({
                 </thead>
                 <tbody>
                   {niveaux.map((lc) => (
-                    <tr key={lc.niveau} style={{ borderTop: "1px solid rgba(152,162,176,0.1)" }}>
+                    <tr key={lc.niveau} style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)" }}>
                       <td className="py-2 pr-3 gold-text font-bold">{t.niveauAbrev(lc.niveau)}</td>
                       <td className="py-2 px-2 text-center">
                         <input
@@ -224,7 +224,7 @@ export function ReglagesAvances({
           </button>
 
           {/* Outils de test bêta */}
-          <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: "1rem" }}>
+          <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)", paddingTop: "1rem" }}>
             <p style={{ fontSize: "0.7rem", color: "var(--faint)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
               {t.outilsDeTest}
             </p>
@@ -237,7 +237,7 @@ export function ReglagesAvances({
                 width: "100%",
                 padding: "0.55rem",
                 background: "transparent",
-                border: "1px dashed rgba(152,162,176,0.2)",
+                border: "1px dashed color-mix(in srgb, var(--steel) 20%, transparent)",
                 borderRadius: 4,
                 color: "var(--faint)",
                 fontSize: "0.78rem",

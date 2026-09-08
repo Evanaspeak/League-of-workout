@@ -67,7 +67,7 @@ export function ReglageOverlay() {
           padding: "8px 16px",
           borderRadius: 999,
           cursor: "pointer",
-          background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+          background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
           border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
           color: actif ? "var(--amber)" : "var(--muted)",
           transition: "all 0.15s",
@@ -103,7 +103,7 @@ export function ReglageOverlay() {
                   }}
                   style={{
                     padding: "6px 13px", borderRadius: 999, cursor: "pointer", fontSize: "0.78rem",
-                    background: choisi ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: choisi ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${choisi ? "var(--amber)" : "var(--line-strong)"}`,
                     color: choisi ? "var(--amber)" : "var(--muted)",
                   }}
@@ -129,7 +129,7 @@ export function ReglageOverlay() {
                 className="text-sm"
                 style={{
                   padding: "6px 14px", borderRadius: 999, cursor: "pointer",
-                  background: place.placement ? "rgba(47,217,138,0.12)" : "transparent",
+                  background: place.placement ? "color-mix(in srgb, var(--victory) 12%, transparent)" : "transparent",
                   border: `1px solid ${place.placement ? "var(--victory)" : "var(--line-strong)"}`,
                   color: place.placement ? "var(--victory)" : "var(--muted)",
                 }}

@@ -456,8 +456,8 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
       <div style={{
         padding: "12px 16px",
         borderRadius: 8,
-        background: "rgba(110,155,255,0.06)",
-        border: "1px solid rgba(110,155,255,0.25)",
+        background: "color-mix(in srgb, var(--signal) 6%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--signal) 25%, transparent)",
         display: "flex",
         gap: 12,
         alignItems: "flex-start",
@@ -622,8 +622,8 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
         <div style={{
           padding: "12px 16px",
           borderRadius: 8,
-          background: "rgba(255,180,84,0.07)",
-          border: "1px solid rgba(255,180,84,0.3)",
+          background: "color-mix(in srgb, var(--amber) 7%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
           display: "flex",
           gap: 12,
           alignItems: "flex-start",
@@ -720,7 +720,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             aria-valuenow={data.premiereSemaine.avancement}
             aria-label={t.debutTitre}
             className="h-2 rounded-full overflow-hidden"
-            style={{ background: "rgba(152,162,176,0.16)" }}
+            style={{ background: "color-mix(in srgb, var(--steel) 16%, transparent)" }}
           >
             <div
               className="h-full rounded-full"
@@ -816,13 +816,13 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             <span className="gold-text font-semibold">{t.objectiveLibre(fmt(data.objectifTotalPompes))}</span>
             <span className="mono-num" style={{ color: "var(--amber)", fontWeight: 600 }}>{pourcent(progress)}</span>
           </div>
-          <div className="h-3 rounded-full overflow-hidden" style={{ background: "rgba(152,162,176,0.15)" }}>
+          <div className="h-3 rounded-full overflow-hidden" style={{ background: "color-mix(in srgb, var(--steel) 15%, transparent)" }}>
             <div
               className="h-full rounded-full"
               style={{
                 width: `${progress}%`,
                 background: "var(--brand-gradient)",
-                boxShadow: "0 0 12px rgba(255,138,61,0.45)",
+                boxShadow: "0 0 12px color-mix(in srgb, var(--flame) 45%, transparent)",
                 transition: "width 1s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             />
@@ -849,7 +849,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
                 aria-pressed={actif}
                 style={{
                   padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
-                  background: actif ? "rgba(110,155,255,0.1)" : "transparent",
+                  background: actif ? "var(--signal-soft)" : "transparent",
                   border: `1px solid ${actif ? "var(--signal)" : "var(--line-strong)"}`,
                   color: actif ? "var(--signal)" : "var(--muted)",
                   transition: "all 0.15s",
@@ -877,7 +877,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
                     aria-pressed={actif}
                     style={{
                       padding: "5px 13px", borderRadius: 999, fontSize: "0.78rem", cursor: "pointer",
-                      background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                      background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                       border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                       color: actif ? "var(--amber)" : "var(--muted)",
                       transition: "all 0.15s",
@@ -931,7 +931,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           className="rail-action lol-panel"
           data-visite="rail-session"
           onClick={() => setModale("session")}
-          style={{ borderColor: sessionActive ? "rgba(47,217,138,0.5)" : undefined }}
+          style={{ borderColor: sessionActive ? "color-mix(in srgb, var(--victory) 50%, transparent)" : undefined }}
         >
           <div style={{ fontSize: "0.58rem", textTransform: "uppercase", letterSpacing: "0.13em", color: sessionActive ? "var(--victory)" : "var(--steel)" }}>
             {t.sessionModeTitle}
@@ -1031,7 +1031,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
           />
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
+            <div className="flex items-center gap-2 p-3 rounded" style={{ background: "var(--victory-soft)", border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)" }}>
               <div className="w-2 h-2 rounded-full" style={{ background: "var(--victory)", boxShadow: "0 0 6px var(--victory)", animation: "pulse 1.5s infinite" }} />
               <span className="text-sm win-text font-semibold">{t.sessionActive}</span>
               <span className="text-xs gold-text">{t.levelLabel(sessionNiveau)}</span>
@@ -1042,15 +1042,15 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
 
             {sessionGames.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
+                <div className="lol-panel p-3 text-center" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)" }}>
                   <div className="text-2xl font-bold gold-text">{sessionGames.length}</div>
                   <div className="text-xs" style={{ color: "var(--faint)" }}>games</div>
                 </div>
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
+                <div className="lol-panel p-3 text-center" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)" }}>
                   <div className="text-2xl font-bold gold-text">{totalSessionPompes}</div>
                   <div className="text-xs" style={{ color: "var(--faint)" }}>pompes</div>
                 </div>
-                <div className="lol-panel p-3 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
+                <div className="lol-panel p-3 text-center" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)" }}>
                   <div className="text-2xl font-bold win-text">
                     {sessionGames.filter((g) => g.result === "V").length}V
                   </div>
@@ -1075,7 +1075,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
                 <p className="text-xs gold-text font-semibold">{t.detail(fmt(totalSessionPompes))}</p>
                 {sessionGames.map((g, i) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-sm"
-                    style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.1)" }}>
+                    style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)" }}>
                     <span className={g.result === "V" ? "win-text font-bold" : "loss-text font-bold"}>
                       {g.result === "V" ? "V" : "D"}
                     </span>

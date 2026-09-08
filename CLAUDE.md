@@ -851,6 +851,11 @@ refuse le retour des deux façons de s'en écarter.
   courriel HTML — aucun client de messagerie ne résout une propriété
   personnalisée — et le manifeste, lu par le système d'exploitation. Ils sont
   déclarés dans le garde, avec leur raison.
+- **Une couleur SOUS TRANSPARENCE reste la même couleur.** Elle s'écrit
+  `color-mix(in srgb, var(--steel) 20%, transparent)`, jamais
+  `rgba(152,162,176,0.2)` — et quand la transparence a déjà un nom
+  (`--line`, `--faint`, les cinq `-soft`), c'est ce nom qu'on lit. Le garde
+  refuse les deux écarts.
 - **`--flame` traverse le pont**, et c'est la seule valeur de la palette dans
   ce cas : la coquille Electron peint la dette de la même couleur sans pouvoir
   l'importer. Le garde compare les deux, comme il le fait déjà pour les six
@@ -1230,6 +1235,83 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La même couleur sous transparence, et le garde qui ne regardait pas sous l'alpha
+Suite directe de `--flame`. Le garde de la palette refuse un littéral qui
+ÉGALE une valeur déclarée — il compare des CHAÎNES, donc `rgba(152,162,176,0.2)`
+ne ressemble en rien à `#98A2B0`. Toute une famille vivait dans cet angle mort.
+
+**Cent soixante-dix-huit littéraux, onze couleurs.** `--steel` cent
+trente-quatre fois à dix-neuf transparences, `--bone` trente-six fois à
+vingt-quatre, puis l'ambre, la défaite, l'encre, la victoire, la braise, le
+signal, le violet et la flamme qu'on venait de nommer.
+
+**Et dix d'entre eux avaient DÉJÀ un nom.** `--victory-soft`, `--signal-soft`,
+`--amber-soft`, `--gold-dim` sont déclarés dans la palette, et le même rgba
+était réécrit à la main à côté — dans sept écrans et dans une feuille de
+style. Deux façons d'écrire la même chose, dont une seule suit la palette.
+
+**Le témoin de la divergence est dans le recensement lui-même** :
+`rgba(236,239,244,0.60)` ET `rgba(236,239,244,0.6)` coexistaient. Personne ne
+lisait une valeur partagée, sinon elles n'auraient qu'une seule écriture.
+
+**Et un commentaire annonçait le contraire.** `graphiques.test.ts` écrivait
+« le quadrillage et la bordure de l'infobulle n'ont pas de nom dans la
+palette ». Ils en ont un : ce sont `--steel` et `--bone` sous transparence, et
+la phrase a tenu deux versions. Une description qui a vieilli se relit comme
+une garantie — c'est le défaut que ce journal reproche partout, et il était
+dans le test écrit la veille pour corriger exactement ça.
+
+**« Pixel-exact » aurait été une garantie FAUSSE, et il a fallu trois
+campagnes pour le savoir.** Sur un fond plat, les trois écritures — `rgba`,
+`color-mix`, `rgb(from …)` — composent le même pixel, mesuré : (46, 50, 57).
+Là où des transparences se superposent, la composition passe par un chemin
+flottant et s'écarte de **un à deux niveaux sur 255** : 51 732 pixels d'écart
+1 sur la page d'accueil, 27 091 d'écart 2 sur le tableau de bord.
+
+**Ce qui tranche est le PLANCHER, et il fallait le remesurer.** La même source
+reconstruite et recapturée rend **zéro pixel** sur ces deux pages. L'écart
+vient donc bien du changement, il est invisible, et il va dans le sens de plus
+de précision — mais ce n'est pas « rien », et le dire aurait été une
+description périmée de plus.
+
+**L'alternative exacte a été pesée et écartée** : déclarer chaque
+transparence en `rgba()` dans la palette, comme le font déjà `--line`,
+`--faint` et les cinq `-soft`. C'est la convention de la maison et c'est
+exact ; ça demande une cinquantaine de jetons, ou de FONDRE dix-neuf nuances
+en trois rôles — et fondre, c'est décider à la place du propriétaire que
+0,06 et 0,08 sont la même chose. Écrit ici plutôt que fait en silence.
+
+**Deux cas de bord mesurés plutôt que supposés.** `rgba(12,14,17,0)` dans un
+dégradé devient `color-mix(… 0%, transparent)` : les gradients interpolent en
+alpha prémultiplié, donc toute couleur à alpha zéro y est équivalente —
+vérifié au pixel sur trois dégradés. Et le quadrillage des graphiques part
+dans un attribut de présentation SVG, où `color-mix` se résout comme partout
+ailleurs.
+
+Quatre sabotages, quatre échecs : `--steel` remis en clair, une couleur déjà
+nommée réécrite — le garde répond « est DÉJÀ --victory-soft » —, un littéral
+dans une feuille CSS, et le recensement rendu aveugle.
+
+**Trois pièges d'outillage, tous les trois déjà écrits ici, tous les trois
+retombés dedans dans la même heure.**
+
+`git checkout --` restaure depuis l'INDEX. Mes corrections n'étaient pas
+indexées : la remise en état après le premier sabotage a effacé la conversion
+de trois fichiers ET la règle que je venais d'écrire. Les sabotages suivants
+ont alors tourné sur un arbre amputé, et le second a « mordu » pour la
+mauvaise raison — c'est le premier qui traînait encore. **Quatrième
+occurrence**, et la parade coûte une seconde : indexer AVANT de saboter.
+
+Et `pkill -f`, deux fois, dont une sous une forme nouvelle. La première est
+classique — `ps -eo args | grep "[n]ext build"` attrape le shell qui LANCE la
+commande, parce que le motif figure dans son propre argv. La seconde est plus
+sournoise : j'ai écrit le `pkill` dans un script par un **document en ligne**,
+donc le texte du script figurait dans l'argv du shell qui l'écrivait, et
+`pkill -f` l'a tué en même temps. Sortie 144, aucun journal. La parade
+s'élargit : **le motif ne doit jamais figurer dans la commande qui tue**, ni
+en clair ni dans un document en ligne. On écrit le script par `printf`, ou on
+tue par un numéro lu dans un fichier.
 
 ### Une couleur écrite dix fois, dans deux paquets, sans nom
 Suite du chantier de la palette. Les deux versions précédentes ont ramené les

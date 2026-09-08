@@ -106,7 +106,7 @@ export function ChampionCard({ champ, badge, badgeColor, t }: { champ: ChampSumm
             {champ.avgKills}/{champ.avgDeaths}/{champ.avgAssists}
           </div>
         </div>
-        <div style={{ textAlign: "center", borderLeft: "1px solid rgba(152,162,176,0.12)", borderRight: "1px solid rgba(152,162,176,0.12)" }}>
+        <div style={{ textAlign: "center", borderLeft: "1px solid color-mix(in srgb, var(--steel) 12%, transparent)", borderRight: "1px solid color-mix(in srgb, var(--steel) 12%, transparent)" }}>
           <div style={{ fontSize: "0.6rem", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--faint)", marginBottom: 3 }}>{t.avgPompes}</div>
           <div style={{ fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)", fontSize: "0.95rem", color: badgeColor }}>{champ.avgPompes}</div>
           <div style={{ fontSize: "0.65rem", color: "var(--faint)" }}>{t.perGame}</div>

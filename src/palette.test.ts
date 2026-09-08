@@ -30,12 +30,16 @@ import { sansCommentaires } from "@/test/sansCommentaires";
  * à `#FFB454`. La carte partagée, elle, avait suivi — donc le produit postait
  * deux ors différents sur Discord.
  *
- * **Ce que ce garde ne couvre PAS**, écrit plutôt que laissé à découvrir :
- * `src/lib/graphiques.ts` garde la palette des graphiques en littéraux. Ce
- * n'est pas une contrainte de rendu — mesuré, `var()` se résout parfaitement
- * dans un attribut de présentation SVG — c'est que recharts manipule ces
- * chaînes, et que le passage en `var()` n'a pas été éprouvé. C'est un chantier
- * à part, pas une exemption de confort.
+ * **Troisième défaut : la même couleur SOUS TRANSPARENCE.** Un littéral en
+ * `rgba()` ne ressemble à aucun hexadécimal, donc le contrôle ci-dessus lui
+ * était aveugle. Cent soixante-dix-huit occurrences y vivaient, onze couleurs,
+ * dont dix qui portaient DÉJÀ un nom dans la palette.
+ *
+ * **Ce que ce garde ne couvre PAS**, écrit plutôt que laissé à découvrir : la
+ * transparence en notation moderne (`#98A2B080`, `rgb(152 162 176 / 20%)`).
+ * Le dépôt n'en contient aucune — vérifié — et un motif qui les couvrirait
+ * demanderait de normaliser trois écritures avant de comparer. Le jour où
+ * l'une paraît, c'est ici qu'il faut l'ajouter.
  */
 
 const SRC = join(process.cwd(), "src");
@@ -161,6 +165,71 @@ describe("la palette", () => {
       if (!porte) inutiles.push(`${chemin} n'écrit plus aucune couleur de la palette`);
     }
     expect(inutiles).toEqual([]);
+  });
+
+  /**
+   * Une couleur de la palette SOUS TRANSPARENCE reste une couleur de la
+   * palette, et le contrôle d'au-dessus ne la voyait pas : il compare des
+   * chaînes, donc `rgba(152,162,176,0.2)` ne ressemble en rien à `#98A2B0`.
+   *
+   * Ce qui vivait dans cet angle mort : **178 littéraux, onze couleurs**, dont
+   * `--steel` cent trente-quatre fois à dix-neuf transparences et `--bone`
+   * trente-six fois à vingt-quatre. Et **dix d'entre eux avaient déjà un
+   * nom** — `--victory-soft`, `--signal-soft`, `--amber-soft`, `--gold-dim`
+   * sont déclarés dans la palette, et le même rgba était réécrit à la main à
+   * côté. Deux façons d'écrire la même chose, dont une seule suit la palette.
+   *
+   * Le témoin de la divergence est dans le recensement lui-même :
+   * `rgba(236,239,244,0.60)` ET `rgba(236,239,244,0.6)` coexistaient. Personne
+   * ne lisait une valeur partagée, sinon elles n'auraient qu'une écriture.
+   *
+   * **La VALEUR est identique, le PIXEL ne l'est pas tout à fait**, et il
+   * fallait mesurer pour le savoir : `color-mix(in srgb, var(--steel) 20%,
+   * transparent)` calcule `color(srgb 0.596078 0.635294 0.690196 / 0.2)`,
+   * c'est-à-dire 152, 162, 176 à deux dixièmes — et sur un fond plat il
+   * compose au pixel près, vérifié. Là où des transparences se superposent,
+   * la composition passe par un chemin flottant et s'écarte de **un à deux
+   * niveaux sur 255** : mesuré à 51 732 pixels d'écart 1 sur la page
+   * d'accueil, 27 091 d'écart 2 sur le tableau de bord, contre un plancher de
+   * ZÉRO pixel pour la même source reconstruite. C'est invisible, ce n'est pas
+   * rien, et l'annoncer « pixel-exact » aurait été une garantie fausse.
+   */
+  it("n'écrit pas en dur une couleur de la palette sous transparence", () => {
+    const palette = valeursPalette();
+    const rgb = new Map<string, string>();   // "r,g,b" -> nom
+    const exact = new Map<string, string>(); // "r,g,b,a" -> nom
+    for (const [val, noms] of palette) {
+      const h = /^#([0-9a-f]{6})$/.exec(val);
+      if (h) {
+        const c = [0, 2, 4].map((i) => parseInt(h[1].slice(i, i + 2), 16)).join(",");
+        if (!rgb.has(c)) rgb.set(c, noms[0]);
+      }
+      const a = /^rgba\((\d+),(\d+),(\d+),([0-9.]+)\)$/.exec(val);
+      if (a) exact.set(`${a[1]},${a[2]},${a[3]},${Number(a[4])}`, noms[0]);
+    }
+
+    const fautifs: string[] = [];
+    let examines = 0;
+    for (const f of fichiers(SRC, [".tsx", ".ts", ".css"])) {
+      const rel = relatif(f);
+      // `base.css` DÉCLARE ces valeurs : c'est le seul endroit où elles ont le
+      // droit d'être écrites en clair.
+      if (rel in SANS_FEUILLE || rel.endsWith(".test.ts") || rel === "src/app/styles/base.css") continue;
+      examines += 1;
+      for (const m of sansCommentaires(readFileSync(f, "utf8")).matchAll(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)/g)) {
+        const c = `${m[1]},${m[2]},${m[3]}`;
+        const nom = rgb.get(c);
+        if (!nom) continue;
+        const nomme = exact.get(`${c},${Number(m[4])}`);
+        fautifs.push(nomme
+          ? `${rel} : ${m[0]} est DÉJÀ --${nomme}`
+          : `${rel} : ${m[0]} est --${nom} sous transparence`);
+      }
+    }
+    expect(fautifs).toEqual([]);
+    expect(examines).toBeGreaterThan(200); // témoin : un dossier renommé ne rend pas ce test vert
+    expect(rgb.size).toBeGreaterThan(8);
+    expect(exact.size).toBeGreaterThan(5);
   });
 
   /**

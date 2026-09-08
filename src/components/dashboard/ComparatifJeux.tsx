@@ -79,12 +79,12 @@ export function ComparatifJeux({
                   </button>
                 </td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--bone)" }}>{j.games}</td>
-                <td className="px-3 py-2 text-right mono-num" style={{ color: j.winrate === null ? "rgba(152,162,176,0.35)" : "rgba(236,239,244,0.8)" }}>
+                <td className="px-3 py-2 text-right mono-num" style={{ color: j.winrate === null ? "color-mix(in srgb, var(--steel) 35%, transparent)" : "color-mix(in srgb, var(--bone) 80%, transparent)" }}>
                   {j.winrate === null ? t.sansObjet : pourcent(j.winrate)}
                 </td>
                 <td className="px-3 py-2 text-right mono-num gold-text font-semibold">{fmt(j.points)}</td>
                 <td className="px-3 py-2 text-right mono-num" style={{ color: "var(--muted)" }}>{fmt(j.detteMoyenne)}</td>
-                <td className="px-3 py-2 text-right mono-num" style={{ color: j.tempsJoueSec > 0 ? "rgba(236,239,244,0.8)" : "rgba(152,162,176,0.35)" }}>
+                <td className="px-3 py-2 text-right mono-num" style={{ color: j.tempsJoueSec > 0 ? "color-mix(in srgb, var(--bone) 80%, transparent)" : "color-mix(in srgb, var(--steel) 35%, transparent)" }}>
                   {j.tempsJoueSec > 0 ? formaterTemps(j.tempsJoueSec) : t.sansObjet}
                 </td>
               </tr>

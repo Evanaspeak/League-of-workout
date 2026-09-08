@@ -116,7 +116,7 @@ export default function ConfidentialiteClient({ locale }: { locale: string }) {
         {t.article9.paragraphs.map((p, i) => <p key={i}>{p}</p>)}
       </Section>
 
-      <div style={{ paddingTop: "1rem", borderTop: "1px solid rgba(152,162,176,0.1)" }}>
+      <div style={{ paddingTop: "1rem", borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)" }}>
         <Lien href="/cgu" style={{ color: "var(--steel)", fontSize: "0.82rem" }}>
           {t.footerLink}
         </Lien>

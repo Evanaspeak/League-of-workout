@@ -50,7 +50,7 @@ export function SessionChrono({
     <div className="space-y-3">
       <div
         className="flex items-center gap-2 p-3 rounded flex-wrap"
-        style={{ background: "rgba(110,155,255,0.08)", border: "1px solid rgba(110,155,255,0.3)" }}
+        style={{ background: "color-mix(in srgb, var(--signal) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--signal) 30%, transparent)" }}
       >
         <div
           className="w-2 h-2 rounded-full"
@@ -64,13 +64,13 @@ export function SessionChrono({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="lol-panel p-4 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
+        <div className="lol-panel p-4 text-center" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)" }}>
           <div className="mono-num font-bold" style={VALEUR_STYLE}>
             {formaterChrono(chronoSec)}
           </div>
           <div className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.chronoEcoule}</div>
         </div>
-        <div className="lol-panel p-4 text-center" style={{ background: "rgba(152,162,176,0.06)" }}>
+        <div className="lol-panel p-4 text-center" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)" }}>
           <div className="mono-num font-bold gold-text" style={{ ...VALEUR_STYLE, color: undefined }}>{dette}</div>
           <div className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.chronoDette}</div>
         </div>
@@ -90,9 +90,9 @@ export function SessionChrono({
         <button
           className="py-2 px-4 rounded text-sm"
           style={{
-            background: "rgba(152,162,176,0.1)",
+            background: "color-mix(in srgb, var(--steel) 10%, transparent)",
             color: "var(--muted)",
-            border: "1px solid rgba(152,162,176,0.2)",
+            border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
           }}
           onClick={onAnnuler}
         >

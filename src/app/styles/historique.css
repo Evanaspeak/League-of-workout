@@ -234,7 +234,7 @@
   cursor: pointer;
 }
 .choix-resultat[aria-pressed="true"] {
-  background: rgba(152, 162, 176, 0.16);
+  background: color-mix(in srgb, var(--steel) 16%, transparent);
 }
 .choix-resultat:disabled,
 .commande-resultat:disabled {

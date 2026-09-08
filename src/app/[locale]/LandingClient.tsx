@@ -53,7 +53,7 @@ export default function LandingClient({
       {/* NAV */}
       <nav style={{
         position: "sticky", top: 0, zIndex: 40,
-        background: "rgba(12,14,17,0.85)", backdropFilter: "blur(14px)",
+        background: "color-mix(in srgb, var(--ink) 85%, transparent)", backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         borderBottom: "1px solid var(--line)",
       }}>

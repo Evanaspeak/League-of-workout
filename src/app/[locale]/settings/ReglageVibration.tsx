@@ -70,7 +70,7 @@ export function ReglageVibration() {
                 fontSize: "0.8rem",
                 minHeight: 44,
                 opacity: dispo ? 1 : 0.45,
-                background: choisi ? "rgba(255,180,84,0.1)" : "transparent",
+                background: choisi ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                 border: `1px solid ${choisi ? "var(--amber)" : "var(--line-strong)"}`,
                 color: choisi ? "var(--amber)" : "var(--muted)",
                 transition: "all 0.15s",
