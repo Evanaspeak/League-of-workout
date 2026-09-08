@@ -8,6 +8,10 @@ jest.mock("@/lib/prisma", () => ({
     paiement: { findMany: jest.fn() },
     signalement: { findMany: jest.fn() },
     demandeJeu: { findMany: jest.fn() },
+    pesee: { findMany: jest.fn() },
+    testForce: { findMany: jest.fn() },
+    defiAccompli: { findMany: jest.fn() },
+    envoiPush: { findMany: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
@@ -55,6 +59,18 @@ beforeEach(() => {
   ]);
   (prisma.signalement.findMany as jest.Mock).mockResolvedValue([
     { createdAt: new Date("2026-07-01"), message: "le chrono saute", page: "/dashboard", statut: "ouvert" },
+  ]);
+  (prisma.pesee.findMany as jest.Mock).mockResolvedValue([
+    { jour: "2026-08-01", grammes: 78400, createdAt: new Date("2026-08-01T07:00:00Z") },
+  ]);
+  (prisma.testForce.findMany as jest.Mock).mockResolvedValue([
+    { jour: "2026-07-01", pompes: 30, createdAt: new Date("2026-07-01T18:00:00Z") },
+  ]);
+  (prisma.defiAccompli.findMany as jest.Mock).mockResolvedValue([
+    { cle: "paye300", periode: "2026-09-02", xp: 50, createdAt: new Date("2026-09-02T20:00:00Z") },
+  ]);
+  (prisma.envoiPush.findMany as jest.Mock).mockResolvedValue([
+    { tag: "wow-dette", quand: new Date("2026-09-03T22:00:00Z") },
   ]);
   (prisma.demandeJeu.findMany as jest.Mock).mockResolvedValue([
     { nom: "Dead by Daylight", quand: new Date("2026-09-01") },
@@ -186,6 +202,11 @@ describe("l'export porte tout ce qui appartient à la personne", () => {
     appareilsNotifies: "une date d'abonnement n'est pas ce qu'on vient chercher",
     signalements: "ce qu'on nous a écrit, qu'on avait déjà sous les yeux",
     jeuxDemandes: "un nom de jeu tapé une fois, à côté de ce qui compte",
+    pesees: "ce qu'on a saisi soi-même, à l'endroit où on l'a saisi",
+    testsDeForce: "le test, qu'on refait soi-même une fois par mois",
+    defisAccomplis: "des défis relevés, pas une donnée qu'on vient reprendre",
+    notificationsEnvoyees: "quand on nous a dérangé, à côté de ce qui compte",
+    relaisRecus: "ce qu'une équipe a payé à sa place, à côté de ce qu'on a fait",
   };
 
   it("annonce chaque bloc, ou dit pourquoi il n'est pas énuméré", async () => {

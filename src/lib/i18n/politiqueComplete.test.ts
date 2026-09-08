@@ -94,6 +94,14 @@ const ATTENDU: Record<string, RegExp> = {
   rappelPeseeActif: /rappel de pesée/i,
   rappelPeseeLe: /rappel de pesée/i,
   pompesMax: /nombre maximum de pompes/i,
+  /**
+   * L'HISTOIRE du test, distincte de sa valeur courante — et elle a sa propre
+   * ligne parce qu'elle a sa propre FINALITÉ. `pompesMax` sert à calculer un
+   * multiplicateur ; l'historique ne sert qu'à montrer une progression. Le
+   * journal porte déjà le cas d'une finalité périmée annoncée dans ce
+   * document : ce qui s'y écrit doit être exact, pas seulement plausible.
+   */
+  testsForce: /historique des tests de force/i,
   // Une seule ligne du tableau décrit les deux dates : c'est la même réponse,
   // acceptée ou refusée, et l'article 7.1 impose de pouvoir la prouver.
   santeConsentiLe: /réponse au consentement santé/i,

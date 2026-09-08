@@ -14,6 +14,7 @@ import { decisionProfilPublic } from "@/lib/profilPublic";
 import { NOMS, type ChoixNom } from "@/lib/nomAffiche";
 import { MULTIPLICATEURS } from "@/lib/objectifCalorique";
 import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
+import { jourLocal } from "@/lib/serie";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -401,8 +402,45 @@ export async function PUT(req: Request) {
       if (!Number.isFinite(max) || max < 0 || max > 500) {
         return NextResponse.json({ error: "Test de pompes invalide" }, { status: 400 });
       }
-      data.pompesMax = Math.round(max);
-      data.pompesMaxLe = new Date();
+      const pompes = Math.round(max);
+      const maintenant = new Date();
+      data.pompesMax = pompes;
+      data.pompesMaxLe = maintenant;
+
+      /**
+       * Le même test, écrit une seconde fois — et ce n'est pas une
+       * duplication : `pompesMax` est la valeur COURANTE, celle qui fixe le
+       * niveau ; `TestForce` est l'HISTOIRE, celle qui fait la courbe. Sans
+       * elle il n'y avait rien à tracer, et c'est ce qui bloquait la ligne 152
+       * du plan.
+       *
+       * Le jour et l'horodatage viennent du MÊME instant. Deux appels à
+       * `new Date()` peuvent tomber de part et d'autre de minuit, et la courbe
+       * porterait alors un point daté d'un autre jour que « test fait le… »
+       * affiché juste au-dessus — deux vérités pour un seul geste, ce que ce
+       * journal reproche partout ailleurs.
+       *
+       * Le jour vient du SERVEUR et non du navigateur, contrairement à une
+       * pesée. La raison est celle qui est déjà écrite deux lignes plus haut
+       * pour `pompesMaxLe` : une date fournie par le client permettrait de
+       * faire passer un test périmé pour récent. Le prix est une approximation
+       * d'un jour local pour qui vit loin du méridien, et elle ne coûte rien
+       * sur une courbe qui se lit en semaines.
+       *
+       * `upsert` : refaire son test dans la même journée corrige le point du
+       * jour plutôt que d'en ajouter un second. Deux points sur la même
+       * abscisse ne disent rien d'une progression, et un double clic en
+       * fabriquerait un. L'unicité est posée EN BASE, pas seulement ici : deux
+       * envois partis en même temps liraient tous deux « rien pour ce jour ».
+       */
+      const jour = jourLocal(maintenant);
+      updates.push(
+        prisma.testForce.upsert({
+          where: { userId_jour: { userId: user.id, jour } },
+          create: { userId: user.id, jour, pompes },
+          update: { pompes },
+        })
+      );
     }
 
     /**

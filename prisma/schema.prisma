@@ -111,6 +111,8 @@ model User {
 
   pesees Pesee[]
 
+  testsForce        TestForce[]
+
   // Consentement au traitement des données de santé ci-dessus.
   //
   // Deux dates plutôt qu'un booléen : il faut pouvoir distinguer trois états —
@@ -607,6 +609,31 @@ model Pesee {
 
   createdAt DateTime @default(now())
 
+  @@unique([userId, jour])
+  @@index([userId, jour])
+}
+
+/// Un test de force, un jour.
+///
+/// `User.pompesMax` ne garde que la valeur COURANTE : il n'y avait donc aucune
+/// histoire à montrer, et c'est ce qui bloquait la ligne 152 du plan. Le champ
+/// reste — c'est lui qui fixe le niveau, donc le multiplicateur de dette — et
+/// cette table est l'HISTOIRE, comme `Pesee` l'est du poids.
+model TestForce {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Jour LOCAL, « AAAA-MM-JJ », comme `Pesee.jour` et `Paiement.jour`.
+  jour   String
+  /// Pompes d'affilée. Même borne que `User.pompesMax` : [0, 500].
+  pompes Int
+
+  createdAt DateTime @default(now())
+
+  /// Un test par jour au maximum, posé EN BASE. Refaire son test dans la même
+  /// journée écrase le précédent plutôt que d'ajouter un second point : deux
+  /// points le même jour ne disent rien d'une progression.
   @@unique([userId, jour])
   @@index([userId, jour])
 }

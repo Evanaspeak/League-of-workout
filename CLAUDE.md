@@ -1535,6 +1535,112 @@ d'un serveur local sans clés.
 **Le témoin public de cette version est un CODE**, et il est net :
 `/api/cron/matin` rendait 404 avant, il rend 401 après.
 
+### La courbe de force, et l'export qui avait perdu les pesées
+Ligne 152 du plan, débloquée par le propriétaire : « fais la courbe de force
+maintenant ». Elle bloquait depuis des mois pour une raison qui tient en une
+phrase — **`User.pompesMax` ne garde que la valeur COURANTE.** Il n'y avait
+littéralement aucune histoire à tracer, et aucun test ne pouvait le dire :
+tout ce qui existait était juste.
+
+`TestForce` est l'histoire, calquée sur `Pesee` : des LIGNES et jamais un
+total, un point par jour, l'unicité posée EN BASE. `pompesMax` reste ce qui
+fixe le niveau — les deux ne se remplacent pas, et le nom de chacun le dit.
+
+**Le jour et l'horodatage viennent du MÊME instant**, et c'est le seul
+contrôle de la passe qui distingue vraiment quelque chose. Deux appels à
+`new Date()` peuvent tomber de part et d'autre de minuit : la courbe porterait
+alors un point daté d'un autre jour que « test fait le… » affiché juste
+au-dessus — deux vérités pour un seul geste.
+
+**Le jour vient du SERVEUR, contrairement à une pesée**, et la raison était
+déjà écrite deux lignes plus haut dans la même route : une date fournie par le
+client permettrait de faire passer un test périmé pour récent. Le prix est une
+approximation pour qui vit loin du méridien, sur une courbe qui se lit en
+semaines.
+
+**L'axe part de ZÉRO, et c'est l'inverse du choix fait pour le poids.**
+`CourbePoids` écrit sa raison — « personne ne pèse zéro », donc l'ancrer
+écrase deux ans de variations en une ligne plate. Ici zéro a un sens : c'est
+« je n'en fais aucune », et quelqu'un peut réellement en être proche. Douze
+pompes qui deviennent dix-huit, c'est une progression de moitié, et c'est
+exactement ce qu'un axe ancré rend fidèlement.
+
+**L'historique est une PROPRIÉTÉ du panneau, pas une lecture qu'il fait.**
+`TestPompes` est rendu à trois endroits, dont deux sur le tableau de bord où
+l'on ne montre pas la progression : un composant qui irait la chercher
+lui-même paierait trois appels pour un seul affichage, et le quatrième
+appelant qu'on ajoutera demain le paierait sans l'avoir décidé.
+
+**La migration SÈME le point qu'on a déjà.** Sans lui, la courbe est vide pour
+tous les comptes qui ont déjà fait le test — on aurait construit la table qui
+répare « aucune histoire à montrer » en laissant intacte l'absence
+d'histoire. Il n'a **jamais été exercé** par le déploiement local, la base
+n'ayant aucun compte à cet instant : éprouvé à la main, sur un compte à qui
+l'on donne un test daté du 14 juillet, puis rejoué — une ligne au premier
+passage, une au second.
+
+**Et le recensement qui va avec a trouvé bien pire que la ligne du plan.**
+Comparé mécaniquement les relations de `User` à ce que l'export de données
+lit : **les PESÉES n'y étaient pas**, depuis le jour où elles existent. C'est
+la donnée la plus sensible que l'application garde — de la santé au sens de
+l'article 9 — et elle est saisie à la main, donc « fournie par la personne »
+au sens le plus littéral de l'article 20.
+
+**Rien ne pouvait le signaler, et le garde existant explique pourquoi.** Il
+vérifie que chaque bloc PRÉSENT dans le fichier est annoncé par la phrase de
+l'écran, ou porte la raison pour laquelle il ne l'est pas. Il ne voit pas un
+modèle que l'export n'a jamais LU : un bloc absent n'est pas un bloc mal
+annoncé, c'est un bloc invisible. Le fichier était complet de tout ce qu'il
+contenait.
+
+Quatre blocs de plus avec elles : l'histoire des tests, les défis accomplis —
+la seule chose de la progression qui se range en base, donc la seule qu'un
+export puisse perdre — les notifications envoyées, que la politique décrit
+déjà, et les relais reçus d'un coéquipier.
+
+**Les deux seules raisons de ne pas exporter, et aucune n'est « ça
+n'intéresse personne »** — c'est précisément le raisonnement qui a laissé les
+pesées dehors. Ce qui NOMME quelqu'un d'autre : une amitié sans l'ami n'est
+pas une donnée, l'autre bout de la relation est l'identité d'une deuxième
+personne. Et ce qui EST un laissez-passer : `Account` porte les jetons OAuth,
+`Session` les identifiants de session, et les mettre dans un fichier qui
+circule par courriel serait une clé laissée sur la table.
+
+**Une de mes dispenses ne désignait rien de mesurable**, et je l'ai retirée
+plutôt que de la garder. Le garde rapproche par le NOM DU DÉLÉGUÉ Prisma,
+donc deux relations vers le même modèle sont indistinguables : `paiements` et
+`relaisRecus` pointent tous deux vers `Paiement`, et lire l'un satisfait le
+contrôle pour les deux. Une dispense que le garde ne saurait pas vérifier se
+relit comme une garantie — les deux sont donc exportés, et la limite est
+écrite dans le garde.
+
+**Et `filtreParCompte` avait un trou que cette écriture a révélé.**
+`pourUserId` ne figurait pas dans ses colonnes de compte : une lecture des
+relais reçus passait pour une lecture sans filtre. Le cas fabriqué qui le
+distingue est celui qu'il fallait — sans la borne arrière du motif,
+`pourUserId` contient `userId`, la liste n'aurait pas eu besoin de la seconde
+entrée, et rien ne l'aurait signalée.
+
+Huit sabotages unitaires, sept échecs. Le huitième — la section de la courbe
+retirée du panneau — ne fait tomber AUCUN test unitaire, et c'est attendu :
+le composant déclare `historique?`, donc un champ renommé côté route ne fait
+échouer ni la compilation ni une lecture d'API. La section disparaît, sans
+erreur et sans test rouge. C'est le défaut « un champ renommé vidait un
+panneau entier », et c'est exactement ce que le parcours navigateur existe
+pour attraper : deux sabotages, deux échecs — le seuil de la courbe porté à
+9 999, et `{ tests }` renommé `{ historique }` dans la réponse.
+
+**Un neuvième n'a pas compilé** plutôt que de faire tomber un test :
+`false && historique && …` fait perdre à TypeScript la restriction de type,
+et la construction échoue avant le parcours. C'est noté comme tel, pas compté
+comme un garde qui mord.
+
+**Le second point du parcours se sème en SQL, et il le faut.** L'unicité par
+jour est la bonne règle — refaire son test dans la même journée corrige le
+point plutôt que d'en ajouter un second — donc un parcours ne peut pas
+fabriquer deux abscisses en passant deux fois par l'écran, et attendre demain
+n'est pas une option.
+
 ### Les jeux qui racontent leur partie étaient écrits trois fois, sous deux noms
 Recensement mécanique des LISTES FERMÉES exportées de `src/lib` — trente
 candidates — confrontées à ce que les écrans écrivent à la main. C'est la

@@ -134,5 +134,5 @@ d'adresse se repose six semaines plus tard.
 | Le tableau de bord Vercel | « je te donne l'accès » | en cours |
 | Chiffrer poids et taille (275) | plus tard | plan, différée |
 | Supprimer les comptes inactifs (280) | **« finalement, ne supprime rien »** — renverse la réponse 280 | close ; ouvre la 279 ci-dessus |
-| La progression physique (152 et 153) | « fais la courbe de force maintenant » — débloque les deux | plan, section Progression |
+| La progression physique (152 et 153) | « fais la courbe de force maintenant » — débloque les deux | plan, section Progression · fait en V531 |
 | Un mode séance plein écran (205) | « fais-le » — renverse le « plus tard » de la réponse 205 | plan, section Mobile |

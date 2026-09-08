@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { chargerContexte } from "@/lib/chargerContexte";
 import { descriptionsExercices, nomsExercices } from "@/lib/nomsExercices";
@@ -256,6 +256,29 @@ export default function SettingsPage() {
   const [pompesMax, setPompesMax] = useState(0);
   const [pompesMaxLe, setPompesMaxLe] = useState<string | null>(null);
 
+  /**
+   * L'histoire des tests, pour la courbe (ligne 152 du plan).
+   *
+   * Elle vit dans son propre appel plutôt que dans `/api/settings`, qui est
+   * déjà la réponse la plus chargée de la page. Un lecteur qui n'ouvre jamais
+   * la rubrique « Ton effort » n'a aucune raison de payer une lecture de plus
+   * à chaque enregistrement de réglage.
+   *
+   * `null` tant qu'on ne sait pas, et il faut le distinguer du tableau vide :
+   * une lecture qui échoue ne doit pas afficher « un seul test pour l'instant »
+   * à quelqu'un qui en a dix. C'est la règle déjà posée pour les pesées.
+   */
+  const [testsForce, setTestsForce] = useState<{ jour: string; pompes: number }[] | null>(null);
+
+  const lireTestsForce = useCallback(() => {
+    fetch("/api/tests-force")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (Array.isArray(d?.tests)) setTestsForce(d.tests); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { lireTestsForce(); }, [lireTestsForce]);
+
   useEffect(() => {
     /**
      * Le compte vient du contexte commun, déjà lu une fois par page.
@@ -412,10 +435,21 @@ export default function SettingsPage() {
     setPompesMaxLe(new Date().toISOString());
     // Le résultat remonte au panneau, qui garde la saisie quand elle n'est pas
     // partie : refermer sur un échec efface ce qu'on vient de taper.
-    return Boolean(await enregistrerReglage(
+    const ok = Boolean(await enregistrerReglage(
       { pompesMax: valeur },
       () => { setPompesMax(avantMax); setPompesMaxLe(avantLe); },
     ));
+    /**
+     * La courbe se relit APRÈS un test enregistré, et seulement là.
+     *
+     * Composer le nouveau point à la main coûterait moins cher et ferait
+     * exactement ce que ce journal reproche partout : une seconde
+     * arithmétique du jour, à côté de celle du serveur, qui divergerait le
+     * soir où les deux tombent de part et d'autre de minuit. Une lecture par
+     * test — c'est-à-dire une par mois — n'a pas besoin d'être optimisée.
+     */
+    if (ok) lireTestsForce();
+    return ok;
   };
 
   /**
@@ -728,6 +762,7 @@ export default function SettingsPage() {
           faitLe={pompesMaxLe}
           niveaux={levelConfigs}
           onEnregistre={handleSavePompesMax}
+          historique={testsForce ?? undefined}
         />
 
         <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16 }} className="space-y-3">

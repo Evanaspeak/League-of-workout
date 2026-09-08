@@ -17,7 +17,10 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  const [games, goal, abonnements, paiements, signalements, demandesJeux] = await Promise.all([
+  const [
+    games, goal, abonnements, paiements, signalements, demandesJeux,
+    pesees, testsForce, defis, relais, envois,
+  ] = await Promise.all([
     prisma.game.findMany({ where: { userId: user.id }, orderBy: { date: "asc" } }),
     prisma.goal.findUnique({ where: { userId: user.id } }),
     prisma.pushSubscription.findMany({
@@ -47,6 +50,60 @@ export async function GET() {
       where: { userId: user.id },
       orderBy: { quand: "asc" },
       select: { nom: true, quand: true },
+    }),
+    /**
+     * Les pesées manquaient à cet export depuis qu'elles existent.
+     *
+     * C'est la donnée la plus sensible que l'application garde — de la santé
+     * au sens de l'article 9 — et elle est saisie à la main, donc « fournie
+     * par la personne » au sens le plus littéral de l'article 20. Rien ne
+     * pouvait le signaler : le garde de ce fichier vérifie que chaque bloc
+     * PRÉSENT est annoncé, et il ne voit pas un modèle qui n'a jamais été lu.
+     */
+    prisma.pesee.findMany({
+      where: { userId: user.id },
+      orderBy: { jour: "asc" },
+      select: { jour: true, grammes: true, createdAt: true },
+    }),
+    /** L'histoire des tests de force, celle qui fait la courbe. */
+    prisma.testForce.findMany({
+      where: { userId: user.id },
+      orderBy: { jour: "asc" },
+      select: { jour: true, pompes: true, createdAt: true },
+    }),
+    /**
+     * Les défis accomplis. C'est la seule chose de la progression qui se RANGE
+     * en base — tout le reste se déduit — donc la seule qu'un export puisse
+     * perdre.
+     */
+    prisma.defiAccompli.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "asc" },
+      select: { cle: true, periode: true, xp: true, createdAt: true },
+    }),
+    /**
+     * Ce qu'un coéquipier a payé POUR lui (ligne 118).
+     *
+     * C'est une chose qui est arrivée à sa dette, et qu'il n'a pas faite
+     * lui-même : sans elle, le fichier montre une dette qui baisse sans dire
+     * pourquoi — le défaut exact que la colonne `pourUserId` existe pour
+     * éviter. L'identité du payeur, elle, ne sort pas : elle nomme quelqu'un
+     * d'autre.
+     */
+    prisma.paiement.findMany({
+      where: { pourUserId: user.id },
+      orderBy: { jour: "asc" },
+      select: { jour: true, points: true, createdAt: true },
+    }),
+    /**
+     * Quand on l'a dérangé. La politique de confidentialité le décrit déjà —
+     * « une trace d'envoi dit quand on vous a dérangé » — et ce qui est décrit
+     * doit pouvoir se reprendre.
+     */
+    prisma.envoiPush.findMany({
+      where: { userId: user.id },
+      orderBy: { quand: "asc" },
+      select: { tag: true, quand: true },
     }),
   ]);
 
@@ -148,6 +205,18 @@ export async function GET() {
     })),
     /** Les jeux absents du catalogue qu'il nous a signalés. */
     jeuxDemandes: demandesJeux.map((d) => ({ nom: d.nom, demandeLe: d.quand })),
+    /** Chaque pesée, telle qu'elle a été saisie. Le poids voyage en GRAMMES. */
+    pesees: pesees.map((p) => ({ jour: p.jour, grammes: p.grammes, enregistreLe: p.createdAt })),
+    /** Chaque test de force, celui qui fixe le niveau comme les précédents. */
+    testsDeForce: testsForce.map((t) => ({ jour: t.jour, pompes: t.pompes, enregistreLe: t.createdAt })),
+    defisAccomplis: defis.map((d) => ({
+      defi: d.cle, periode: d.periode, xp: d.xp, accompliLe: d.createdAt,
+    })),
+    /** Ce qu'une équipe a payé à sa place, sans dire qui. */
+    relaisRecus: relais.map((p) => ({
+      jour: p.jour, pointsAcquittes: p.points, enregistreLe: p.createdAt,
+    })),
+    notificationsEnvoyees: envois.map((e) => ({ sorte: e.tag, envoyeeLe: e.quand })),
   };
 
   const jour = new Date().toISOString().slice(0, 10);

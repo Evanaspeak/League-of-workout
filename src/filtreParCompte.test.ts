@@ -54,7 +54,7 @@ const HORS_COMPTE: Record<string, string> = {
  * c'est filtrer `User` sur son propre compte, par une colonne qui pointe vers
  * lui.
  */
-const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId", "parrainId"];
+const COLONNES_DE_COMPTE = ["userId", "demandeurId", "receveurId", "parrainId", "pourUserId"];
 
 /**
  * Appels qui ne portent légitimement aucun compte, un par un.
@@ -235,6 +235,19 @@ describe("ce qui compte pour un filtre", () => {
     expect(porteUnFiltre("where: { userId: user.id }")).toBe(true);
     expect(porteUnFiltre("where: { id, userId }")).toBe(true);
     expect(porteUnFiltre("where: { demandeurId: moi }")).toBe(true);
+    /**
+     * `Paiement` porte DEUX colonnes de compte : `userId`, qui dit qui a
+     * fourni l'effort, et `pourUserId`, de quelle dette il a été retiré. La
+     * seconde manquait à la liste, et une lecture des relais reçus passait
+     * donc pour une lecture sans filtre — c'est l'export de données qui l'a
+     * révélé.
+     *
+     * La borne arrière du motif est ce qui les sépare : sans elle, `pourUserId`
+     * contient `userId`, et la liste n'aurait pas eu besoin de la seconde
+     * entrée pour être satisfaite — donc rien ne l'aurait signalée.
+     */
+    expect(porteUnFiltre("where: { pourUserId: moi }")).toBe(true);
+    expect(porteUnFiltre("where: { pourUserIdeal: moi }")).toBe(false);
   });
 
   it("REFUSE un axe de regroupement et une lecture de résultat", () => {

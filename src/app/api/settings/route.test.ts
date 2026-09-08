@@ -7,6 +7,7 @@ jest.mock("@/lib/prisma", () => ({
     roleWeight: { findMany: jest.fn(), update: jest.fn() },
     levelConfig: { findMany: jest.fn(), update: jest.fn() },
     masteryConfig: { findFirst: jest.fn(), update: jest.fn() },
+    testForce: { upsert: jest.fn() },
   },
 }));
 jest.mock("@/lib/auth-helpers", () => ({ getCurrentUser: jest.fn() }));
@@ -402,5 +403,79 @@ describe("mesures physiques", () => {
     session.mockResolvedValue(utilisateur({ santeConsentiLe: new Date() }));
     await mesures({ poids: 80 });
     expect(p.user.update.mock.calls[0][0].where).toEqual({ id: "u1" });
+  });
+});
+
+/**
+ * Le test de force écrit DEUX choses, et c'est délibéré.
+ *
+ * `User.pompesMax` est la valeur COURANTE, celle qui fixe le niveau donc le
+ * multiplicateur ; `TestForce` est l'HISTOIRE, celle qui fait la courbe. Sans
+ * elle il n'y avait littéralement rien à tracer, et c'est ce qui bloquait la
+ * ligne 152 du plan pendant des mois.
+ */
+describe("l'histoire du test de force", () => {
+  beforeEach(() => {
+    session.mockResolvedValue(utilisateur({ id: "moi" }));
+  });
+
+  it("range le test dans l'histoire en même temps que dans le compte", async () => {
+    await put({ userPrefs: { pompesMax: 42 } });
+    expect(p.testForce.upsert).toHaveBeenCalledTimes(1);
+    const appel = p.testForce.upsert.mock.calls[0][0];
+    expect(appel.create).toMatchObject({ userId: "moi", pompes: 42 });
+    expect(appel.update).toEqual({ pompes: 42 });
+  });
+
+  /**
+   * Le contrôle qui distingue, et lui seul.
+   *
+   * Deux appels à `new Date()` peuvent tomber de part et d'autre de minuit :
+   * la courbe porterait alors un point daté d'un autre jour que « test fait
+   * le… » affiché juste au-dessus — deux vérités pour un seul geste. Ici on
+   * relit les deux écritures et on exige qu'elles désignent le MÊME jour.
+   */
+  it("date le point du même jour que le compte", async () => {
+    await put({ userPrefs: { pompesMax: 42 } });
+    const pose = p.user.update.mock.calls[0][0].data.pompesMaxLe as Date;
+    const jour = p.testForce.upsert.mock.calls[0][0].create.jour as string;
+    const deux = (n: number) => String(n).padStart(2, "0");
+    expect(jour).toBe(
+      `${pose.getFullYear()}-${deux(pose.getMonth() + 1)}-${deux(pose.getDate())}`,
+    );
+  });
+
+  /**
+   * L'unicité est posée EN BASE, et l'`upsert` la lit.
+   *
+   * Refaire son test dans la même journée corrige le point du jour plutôt que
+   * d'en ajouter un second : deux points sur la même abscisse ne disent rien
+   * d'une progression, et un double clic en fabriquerait un. Un `create` nu
+   * échouerait sur la contrainte au lieu de corriger.
+   */
+  it("corrige le point du jour plutôt que d'en ajouter un second", async () => {
+    await put({ userPrefs: { pompesMax: 42 } });
+    const appel = p.testForce.upsert.mock.calls[0][0];
+    expect(appel.where.userId_jour).toEqual({
+      userId: "moi",
+      jour: appel.create.jour,
+    });
+  });
+
+  it("n'écrit rien dans l'histoire quand le chiffre est refusé", async () => {
+    const r = await put({ userPrefs: { pompesMax: 100000 } });
+    expect(r.status).toBe(400);
+    expect(p.testForce.upsert).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Le témoin : un enregistrement de réglage qui ne touche pas au test ne doit
+   * pas poser de point. Sans lui, une écriture inconditionnelle satisferait
+   * les quatre contrôles ci-dessus, et la courbe se remplirait d'un point par
+   * case cochée.
+   */
+  it("ne pose rien quand on enregistre autre chose", async () => {
+    await put({ userPrefs: { bilanActif: true } });
+    expect(p.testForce.upsert).not.toHaveBeenCalled();
   });
 });
