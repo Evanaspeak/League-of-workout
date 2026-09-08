@@ -22,6 +22,10 @@ function avecDisque(fichiers: string[]) {
   present.mockReset();
   present.mockImplementation((c: string) => fichiers.some((f) => c.endsWith(f)));
   let mod!: typeof import("@/lib/videoBoucle");
+  // `require` et non `import` : le module lit le disque au CHARGEMENT, donc il
+  // faut le recharger avec un disque différent à chaque cas. `isolateModules`
+  // est synchrone ; un `import()` y rendrait une promesse qu'elle n'attend pas.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   jest.isolateModules(() => { mod = require("@/lib/videoBoucle"); });
   return mod.videoBoucle();
 }

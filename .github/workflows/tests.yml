@@ -42,6 +42,18 @@ jobs:
       - name: Types
         run: npx tsc --noEmit
 
+      # Le linter ne tournait NULLE PART, et la règle que ce projet a écrite
+      # lui-même — les émojis et les pictogrammes tapés au clavier, quinze
+      # lignes de raison au-dessus — ne gardait donc rien. Elle est ici parce
+      # qu'aucun test jest ne peut la doubler : elle porte sur des noeuds de
+      # syntaxe, pas sur du texte.
+      #
+      # Les avertissements ne bloquent pas, et c'est voulu : ils restent à
+      # l'écran pour qu'on les lise, sans qu'une règle neuve d'une mise à jour
+      # de dépendance fasse rougir une CI le matin où personne ne l'attend.
+      - name: Linter
+        run: npx eslint
+
       - name: Tests
         run: npx jest --ci
 

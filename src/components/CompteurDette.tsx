@@ -81,8 +81,16 @@ export function CompteurDette() {
   const totalRef = useRef(0);
   const notifieRef = useRef(false);
 
-  const surPagePubliqueRef = useRef(false);
-  surPagePubliqueRef.current = estPagePublique(pathname);
+  /**
+   * Une variable locale, pas une ref.
+   *
+   * Elle était écrite au rendu et lue au rendu, à deux cent cinquante lignes
+   * d'écart : une ref n'apportait donc rien — elle ne portait aucune valeur
+   * d'un rendu au suivant, elle déguisait un calcul en état. Et la règle était
+   * écrite DEUX fois, ici et dans l'effet du renvoi de la file, ce qui est le
+   * motif que ce projet paie en boucle.
+   */
+  const surPagePublique = estPagePublique(pathname);
 
   /**
    * Séances faites sans réseau et pas encore envoyées.
@@ -154,7 +162,7 @@ export function CompteurDette() {
    * l'application est le geste qu'on fait de toute façon.
    */
   useEffect(() => {
-    if (estPagePublique(pathname)) return;
+    if (surPagePublique) return;
     const renvoyer = () => { viderFile().catch(() => {}); };
     renvoyer();
     window.addEventListener("online", renvoyer);
@@ -176,7 +184,7 @@ export function CompteurDette() {
       window.removeEventListener("online", renvoyer);
       clearInterval(reprise);
     };
-  }, [pathname]);
+  }, [surPagePublique]);
 
   const seuilAtteint = seuilFranchi(dette);
 
@@ -204,7 +212,7 @@ export function CompteurDette() {
     notifieRef.current = true;
     ecrire(CLE_SEUIL_NOTIFIE, "1");
     notifierSysteme("Win or Workout", t.detteRappelCorps(formaterDuree(dette!.dureeSec, etiquette)), "wow-dette");
-  }, [seuilAtteint, dette, t]);
+  }, [seuilAtteint, dette, t, etiquette]);
 
   const arreterTick = () => {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
@@ -334,7 +342,7 @@ export function CompteurDette() {
 
 
   // Rien en attente, ou page publique : la pastille ne s'affiche pas.
-  if (surPagePubliqueRef.current) return null;
+  if (surPagePublique) return null;
   if (!dette || dette.exercices.length === 0 || dette.dureeSec <= 0) {
     /**
      * La pastille disparaît, la proposition reste.

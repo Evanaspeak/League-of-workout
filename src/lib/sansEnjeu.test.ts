@@ -13,7 +13,7 @@ const T0 = 1_800_000_000_000;
  * `fileHorsLigne.test.ts`, où onze tests étaient tombés d'un coup.
  */
 function stockageFactice() {
-  let donnees: Record<string, string> = {};
+  const donnees: Record<string, string> = {};
   return {
     getItem: (k: string) => donnees[k] ?? null,
     setItem: (k: string, v: string) => { donnees[k] = v; },

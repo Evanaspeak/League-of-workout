@@ -1604,6 +1604,97 @@ n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septem
 et c'est la troisième occurrence : la parade est de relancer la passe entière
 sans tube, jamais de deviner.
 
+### Le linter ne tournait nulle part, et la règle du projet ne gardait rien
+Trouvé en lançant `npx eslint` par acquit de conscience : **cent vingt-deux
+constats, dont quatre-vingt-seize erreurs**. Le mot « lint » n'apparaît dans
+aucun travail de CI, et aucun test jest ne le double.
+
+**Ce qui rend le trou coûteux n'est pas le nombre, c'est ce qu'il laisse
+passer.** Ce projet a écrit sa PROPRE règle eslint contre les émojis et les
+pictogrammes tapés au clavier, avec quinze lignes de raison au-dessus — « un
+émoji n'a ni grille, ni graisse, ni alignement optique […] c'est la signature
+la plus reconnaissable d'une interface produite à la chaîne ». Elle ne gardait
+rien du tout, et elle ne peut pas être doublée par un test jest : elle porte
+sur des NŒUDS DE SYNTAXE, pas sur du texte.
+
+**Soixante et onze constats sur quatre-vingt-seize venaient de `desktop/`**,
+une coquille CommonJS où `require()` est la seule forme qui marche. C'était le
+linter pointé sur un paquet qui n'a pas ses règles, pas un défaut — et c'est
+exactement ce qui aurait fait renoncer à le brancher si on avait lu le total au
+lieu de la répartition.
+
+**Un seul vrai défaut de produit dans le lot, et il valait le détour.**
+`CompteurDette` portait `surPagePubliqueRef`, écrite au rendu et lue au rendu à
+deux cent cinquante lignes d'écart : une ref qui ne porte rien d'un rendu au
+suivant est une variable locale déguisée en état. Et la règle qu'elle calcule
+était écrite DEUX fois dans le fichier — ici et dans l'effet du renvoi de la
+file. Une constante remplace les deux.
+
+**Une fermeture qui gardait la langue du chargement.** `chargerAttente`, dans
+`DetteDirecte`, déclarait ne dépendre de rien et lisait `etiquette`. La
+pastille en jeu continuait donc de mettre les nombres en forme dans la langue
+du premier rendu, longtemps après un changement de langue. Le symptôme est
+minuscule et la déclaration était fausse : c'est ce que la règle des
+dépendances existe pour dire.
+
+**La flèche `→` sort de la règle, et c'est une CORRECTION plutôt qu'une
+exception de plus.** Recensée sur tout le dépôt : quatre-vingt-cinq
+occurrences, dont quatre-vingt-trois dans des COMMENTAIRES — que le sélecteur
+ne lit pas — et deux dans une chaîne, toutes deux de la forme « A → B » : la
+période d'un bilan de saison, l'avant/après d'une correction de date. C'est un
+opérateur de relation, comme « · » ou « % ». La configuration le disait déjà
+pour les tests (« la flèche y est de la ponctuation, pas une icône ») ; elle le
+dit maintenant partout, et l'exception de fichier rétrécit au lieu de grossir.
+Sa limite est écrite : une flèche seule dans un bouton passerait désormais.
+
+**Et l'image du bilan a été REGARDÉE avant qu'on décide.** Elle est dessinée
+par un moteur qui n'a que les polices qu'on lui donne, et le journal porte déjà
+le cas des idéogrammes rendus en carrés vides. La flèche s'y dessine
+correctement — plus légère que le texte autour, ce que la règle prédit, mais
+lisible. Rien à corriger, et il fallait le voir pour le dire.
+
+**Onze `set-state-in-effect` restent en AVERTISSEMENT, avec leur raison.** La
+plupart lisent une valeur que le serveur ne peut pas connaître —
+`localStorage`, `navigator.vibrate`, la file hors ligne — et en rendu serveur
+ça ne peut se lire qu'après le montage. « Corriger » ces effets-là remettrait
+la lecture dans le rendu, donc ROUVRIRAIT une divergence d'hydratation : c'est
+le défaut que la règle ferait naître. Deux cas sont bien ceux qu'elle vise, et
+ils demandent de restructurer un formulaire contrôlé — ça se pèse, ça ne se
+fait pas en passant. Les avertissements ne bloquent pas la CI, à dessein : une
+règle neuve arrivée par une mise à jour de dépendance ne doit pas faire rougir
+une exécution le matin où personne ne l'attend.
+
+**Et le linter a trouvé du code mort qu'AUCUN garde ne pouvait voir.** Quatre
+symboles dans `desktop/` : deux enveloppes de `main.js` qui n'étaient appelées
+par personne — et dont les imports n'existaient que pour elles, donc le bloc
+part d'un tenant — plus un `app` destructuré sans usage dans `tray.js`.
+`codeMort.test.ts` ne lit que `src/`, et `noUnusedLocals` ne s'applique pas au
+`.js` : c'était l'angle mort exact de deux gardes à la fois.
+
+`dernieresElim` est GARDÉE, avec sa raison écrite au-dessus : elle est écrite
+trois fois et lue par personne, mais c'est la moitié posée d'une chaîne dont
+l'autre moitié — le déclenchement automatique en fin de partie — attend d'être
+éprouvée sur une vraie machine. Ce n'est pas du code mort par accident.
+
+**Les cinq `eslint-disable` devenus inutiles sont partis avec.** Une exemption
+qui ne désigne plus rien est du code mort dans le garde qui existe pour
+l'attraper — et c'est le linter lui-même qui les a nommées.
+
+**Quatre-vingt-seize erreurs à zéro, vingt-huit avertissements qui restent
+visibles**, et `npx eslint` entre dans le travail `verifier` de la CI, entre
+les types et les tests.
+
+Application de bureau en **0.9.17**. Rien de ce qui s'installe ne change de
+comportement — les deux enveloppes retirées n'étaient appelées par personne —
+mais la règle du propriétaire ne souffre pas d'exception : dès qu'une
+modification touche `desktop/`, on publie.
+
+**Un parcours est tombé, et c'était l'aléa connu.** `hors-ligne.spec.ts` a
+expiré sur `waitForURL` à la CONNEXION, en exécution à trois fichiers — mot
+pour mot l'échec d'août, dont la cause est nommée ici : bcrypt coût 12 qui perd
+sa place dans la file. Rejoué seul : cinq sur cinq. Le geste qui distingue un
+aléa d'une régression est de relancer AVANT de conclure.
+
 ### L'index évident sur le pseudo ne sert à rien, et c'est mesuré
 Recensement des colonnes qu'on FILTRE contre celles qui portent un index. Le
 journal note depuis longtemps que « les requêtes par compte sont indexées […]

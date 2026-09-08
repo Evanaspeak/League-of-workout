@@ -23,7 +23,7 @@ function imageAvec(traits: Array<[number, number]>) {
       }
     }
   }
-  const vue = (ox: number, oy: number, w: number, h: number): any => ({
+  const vue = (ox: number, oy: number, w: number, h: number): VueImage => ({
     getSize: () => ({ width: w, height: h }),
     crop: (r: { x: number; y: number; width: number; height: number }) =>
       vue(ox + r.x, oy + r.y, r.width, r.height),
@@ -39,7 +39,25 @@ function imageAvec(traits: Array<[number, number]>) {
 }
 
 /** Les bornes du nombre, marge de découpe retirée. */
-const bornes = (g: any[]) => g.map((r) => [r.x + 2, r.x + r.width - 2]);
+const bornes = (g: Groupe[]) => g.map((r) => [r.x + 2, r.x + r.width - 2]);
+
+/**
+ * Ce que la lecture attend d'une image, et rien de plus.
+ *
+ * `NativeImage` d'Electron ne se construit pas hors d'Electron : le double
+ * n'implémente donc que ce que la lecture appelle réellement. Un `any` aurait
+ * suffi à compiler et n'aurait rien tenu — le jour où la lecture demandera une
+ * quatrième méthode, c'est ici qu'il faudra le dire.
+ */
+/** Ce que `groupesChiffres` rend : un rectangle par groupe retenu. */
+type Groupe = { x: number; width: number };
+
+type VueImage = {
+  getSize(): { width: number; height: number };
+  crop(r: { x: number; y: number; width: number; height: number }): VueImage;
+  toBitmap(): Buffer;
+};
+
 
 describe("groupesChiffres", () => {
   it("garde les chiffres et écarte les icônes", () => {

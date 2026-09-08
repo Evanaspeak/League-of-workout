@@ -30,6 +30,23 @@ jest.mock("electron", () => ({ nativeImage: {}, app: { isPackaged: false } }), {
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { groupesChiffres } = require("./lecteurApex.js");
 
+/**
+ * Ce que la lecture attend d'une image, et rien de plus.
+ *
+ * `NativeImage` d'Electron ne se construit pas hors d'Electron : le double
+ * n'implémente donc que ce que la lecture appelle réellement. Un `any` aurait
+ * suffi à compiler et n'aurait rien tenu — le jour où la lecture demandera une
+ * quatrième méthode, c'est ici qu'il faudra le dire.
+ */
+type VueImage = {
+  getSize(): { width: number; height: number };
+  crop(r: { x: number; y: number; width: number; height: number }): VueImage;
+  toBitmap(): Buffer;
+};
+
+/** Ce que `groupesChiffres` rend : un rectangle par groupe retenu. */
+type Groupe = { x: number; width: number };
+
 const L = 3440;
 const H = 1440;
 /** Bande du cartouche, telle que `zonesApex` la définit pour cette hauteur. */
@@ -50,7 +67,7 @@ function cadreAvecBande(tag: string, ancre: number) {
   for (let j = 0; j < BANDE.h; j++) {
     bande.copy(pixels, ((y0 + j) * L + BANDE.x) * 4, j * BANDE.w * 4, (j + 1) * BANDE.w * 4);
   }
-  const vue = (ox: number, oy: number, w: number, h: number): any => ({
+  const vue = (ox: number, oy: number, w: number, h: number): VueImage => ({
     getSize: () => ({ width: w, height: h }),
     crop: (r: { x: number; y: number; width: number; height: number }) =>
       vue(ox + r.x, oy + r.y, r.width, r.height),
@@ -66,7 +83,7 @@ function cadreAvecBande(tag: string, ancre: number) {
 }
 
 /** Les bornes de chaque nombre, marge de découpe retirée. */
-const bornes = (g: any[]) => g.map((r) => [r.x + 2, r.x + r.width - 2]);
+const bornes = (g: Groupe[]) => g.map((r) => [r.x + 2, r.x + r.width - 2]);
 
 describe("groupesChiffres, sur des captures réelles", () => {
   it("trouve les trois nombres du cartouche (capture a, bannière à 164)", () => {

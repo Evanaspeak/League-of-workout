@@ -125,7 +125,15 @@ export function DetteDirecte() {
       // contredisaient à l'écran, et le journal en porte l'entrée.
       seuilRef.current = seuilFranchi(dette);
     } catch { /* la prochaine partie relira */ }
-  }, []);
+    /**
+     * `etiquette` est dans les dépendances parce qu'elle est LUE ici, par
+     * `ventiler`. Avec un tableau vide, la fonction gardait pour toujours
+     * l'étiquette du premier rendu : la pastille en jeu continuait de mettre
+     * les nombres en forme dans la langue du chargement, longtemps après un
+     * changement de langue. Les quatre effets qui l'appellent la listent, donc
+     * ils se réabonnent et republient — ce qui est exactement ce qu'on veut.
+     */
+  }, [etiquette]);
 
   useEffect(() => {
     if (!window.electronLOL?.publierDette) return;
