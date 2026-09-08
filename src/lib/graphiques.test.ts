@@ -24,13 +24,27 @@ describe("les teintes des séries", () => {
   });
 
   /**
-   * Recharts ne lit pas la feuille de style : ses couleurs partent en
-   * propriétés JavaScript, donc elles doivent être des couleurs valides et non
-   * des noms de jetons CSS, qui ne seraient jamais résolus.
+   * Ce contrôle disait l'INVERSE, et il avait figé une prémisse fausse.
+   *
+   * Il exigeait un hexadécimal, au motif que « recharts ne lit pas la feuille
+   * de style, donc un nom de jeton ne serait jamais résolu ». Mesuré, sur
+   * trois rectangles SVG — attribut de présentation, style en ligne, littéral —
+   * les trois rendent la même couleur : `fill="var(--amber)"` se résout.
+   * Vérifié ensuite sur le vrai tableau de bord, huit barres et deux courbes :
+   * l'attribut vaut `var(--amber)` et la couleur CALCULÉE `rgb(255, 180, 84)`,
+   * aucune barre noire.
+   *
+   * C'est la forme la plus coûteuse d'un mauvais test : il ne se contentait
+   * pas de ne rien attraper, il interdisait la correction. Il dit maintenant
+   * ce qu'on veut vraiment — que les teintes viennent de la PALETTE, donc
+   * qu'un changement de marque les emporte au lieu de les laisser derrière.
    */
-  it("s'écrivent en couleurs que le navigateur comprend hors CSS", () => {
-    for (const c of Object.values(TEINTES)) expect(c).toMatch(/^#[0-9a-f]{6}$/i);
-    expect(INFOBULLE.background).toMatch(/^#[0-9a-f]{6}$/i);
+  it("lisent la palette plutôt que de la recopier", () => {
+    for (const c of Object.values(TEINTES)) expect(c).toMatch(/^var\(--[a-z0-9-]+\)$/);
+    expect(INFOBULLE.background).toMatch(/^var\(--[a-z0-9-]+\)$/);
+    expect(INFOBULLE.color).toMatch(/^var\(--[a-z0-9-]+\)$/);
+    // Le quadrillage et la bordure de l'infobulle n'ont pas de nom dans la
+    // palette : les nommer est une décision de palette, pas une correction.
     expect(GRILLE_TRAIT).toMatch(/^rgba?\(/);
   });
 });
