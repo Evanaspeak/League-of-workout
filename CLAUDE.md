@@ -1240,6 +1240,55 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture après V538 à V542, et deux témoins qui ne pouvaient pas s'allumer
+Cinq versions ont déplacé des couleurs sur toute la surface du produit. La
+mesure qui compte ici est le CONTRASTE, et elle est passée sur un compte semé
+à soixante parties, créé APRÈS la dernière suite navigateur.
+
+**Accessibilité : 0 constat**, vingt et une pages en français, en allemand et
+en japonais, et **soixante-trois « rien à signaler »** — c'est-à-dire aucune
+page laissée de côté dans aucune des trois. C'est le second chiffre qui
+compte, et il compte double après une nuit passée à changer des couleurs.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 136 ms | 924 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 236 ms | **2120 ms** | 0,000 | l'image de saison |
+| `/amis` | 268 ms | 1136 ms | 0,029 | le paragraphe du classement |
+| `/dashboard` | 292 ms | 1128 ms | 0,000 | le bandeau d'attente Riot |
+| `/history` | 524 ms | 1120 ms | 0,000 | le titre |
+
+**Le poids au chargement est identique au KILO-OCTET** à celui relevé avant la
+série — 268, 239, 210, 215 et 195 ko — ce qui est exactement ce qu'on attend
+de cinq versions qui ne touchent que la feuille de style, et qui ne se dit
+qu'après l'avoir mesuré.
+
+**Et `/history` a d'abord rendu 1652 ms**, ce qui aurait fait une entrée de
+journal sur une régression qui n'existe pas. Remesuré deux fois : 1280 puis
+1120. Une mesure unique n'est pas une mesure, et cette page est celle qui
+demande le plus de travail au processeur bridé.
+
+**Les deux témoins de publication ne pouvaient PAS s'allumer**, et c'est la
+trouvaille d'outillage de la campagne. Le premier cherchait la feuille sous
+`/_next/static/chunks/` : **en production elle est servie sous
+`/_next/static/immutable/chunks/`**, donc il ne trouvait aucune adresse et
+tournait dans le vide. Le second cherchait `color-mix(in srgb,var(--steel)`
+sans espaces, alors que la construction les CONSERVE — `color-mix(in srgb,
+var(--steel) 16%, transparent)`.
+
+Chacun aurait annoncé « pas encore en ligne » pendant une heure, sur une
+version parfaitement déployée. **Un témoin qui ne peut pas s'allumer est pire
+que pas de témoin** : il ne dit pas « je n'ai pas regardé », il dit « ce n'est
+pas là », et c'est la conclusion inverse. La parade est celle des scripts de
+mesure — on vérifie que le témoin s'allume sur l'état CONNU avant de s'en
+servir pour juger l'inconnu.
+
+Le témoin corrigé se lit en une ligne, et il vaut pour les deux versions à la
+fois : la feuille servie par la production porte **sept `var(--steel)` et
+soixante-quinze `color-mix`**, exactement comme la construction locale. V542,
+fusionnée à 22 h 50 UTC, était en ligne avant 23 h 13 — **moins de
+vingt-trois minutes**.
+
 ### Le garde dispensait le fichier qui DÉCLARE, et ce fichier EMPLOIE aussi
 Suite immédiate. La règle qui refuse une couleur de la palette sous
 transparence exemptait `base.css` — « c'est le seul endroit où ces valeurs ont
