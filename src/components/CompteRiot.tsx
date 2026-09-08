@@ -4,9 +4,8 @@ import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { settings as dict } from "@/lib/i18n/dictionaries/settings";
 import { translateApiError } from "@/lib/i18n/apiErrors";
+import { REGIONS_RIOT } from "@/lib/riot-champs";
 import { Icone } from "@/components/Icone";
-
-const REGIONS = ["EUW1", "EUN1", "NA1", "KR", "BR1", "JP1", "TR1", "RU", "OC1"];
 
 /**
  * Compte Riot rattaché à League of Legends.
@@ -106,7 +105,7 @@ export function CompteRiot() {
         <div>
           <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.region}</label>
           <select className="lol-select w-full" value={region} onChange={(e) => setRegion(e.target.value)}>
-            {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+            {REGIONS_RIOT.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
       </div>

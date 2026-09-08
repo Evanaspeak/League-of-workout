@@ -1194,6 +1194,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Sept régions Riot que le serveur acceptait et que l'écran n'offrait pas
+Trouvée en construisant tout autre chose : le vocabulaire d'un détecteur de
+texte en dur avait besoin de la liste des régions, et il y en avait **deux**.
+`REGIONS_RIOT` se déduit du routage (`riot-champs.ts`) et compte seize
+plateformes ; `CompteRiot.tsx` écrivait sa propre liste de neuf.
+
+**Elles avaient divergé, et dans le sens qui coûte.** Les sept manquantes —
+LA1, LA2, PH2, SG2, TH2, TW2, VN2 — sont l'Amérique latine et l'Asie du
+Sud-Est. Quelqu'un qui joue là-bas ne pouvait **pas rattacher son compte Riot
+du tout**, alors que le serveur l'aurait accepté sans broncher : c'est le seul
+chemin qui relie un compte, donc la synchronisation automatique lui était
+fermée entière.
+
+**Mesuré sur la route avant de corriger**, ce qui est la seule preuve qui
+vaille ici : `POST /api/riot/resolve-puuid` avec `VN2` et `SG2` rend **503**,
+c'est-à-dire le refus de la clé Riot absente — donc la région a passé la
+validation. Avec `XX9`, elle rend **400 « Région inconnue »**. Les sept étaient
+bien acceptées ; elles n'étaient qu'inaccessibles.
+
+**C'est le septième cas de règle écrite deux fois recensé ici, et le premier
+dont les deux copies avaient RÉELLEMENT divergé.** Les six autres coïncidaient
+encore — les sept rôles, les jeux de la bande, le secret des envois — et
+c'est le cas normal : une duplication ne se remarque jamais tant qu'elle n'a
+pas divergé, ce qui est précisément ce qui la rend chère. Celle-ci montre à
+quoi ressemble la facture.
+
+**Rien ne pouvait le signaler.** Les deux listes sont justes séparément,
+TypeScript ne compare pas deux tableaux de chaînes, et aucun parcours ne
+déroule ce sélecteur — la clé Riot de production n'étant pas arrivée, personne
+ne rattache de compte. Le symptôme, chez quelqu'un, est une absence : sa
+région n'est pas dans la liste, et il en conclut que le produit ne couvre pas
+son serveur.
+
+**Le garde regarde le DOSSIER**, comme celui des rôles regarde trois écrans
+nommés : tout `.tsx` de `src` qui écrit DEUX codes de région voisins entre
+guillemets réécrit la liste. C'est la forme qu'une liste réécrite prend
+forcément, et c'est ce qui la distingue d'un code mentionné seul — « EUW1 »
+dans un exemple de Riot ID est légitime.
+
+Trois sabotages, trois échecs : la liste en dur remise, l'import retiré sans
+remplacement, et le routage vidé — ce dernier devant faire tomber le TÉMOIN
+plutôt que de rendre les comparaisons vertes sur une liste vide.
+
+**Et mon premier sabotage du témoin n'en était pas un** : retirer trois
+régions sur seize laisse la borne à dix satisfaite, ce qui est le bon
+comportement. C'est le sabotage qui était mal placé, pas le garde qui ne
+mordait pas — la règle est déjà écrite ici pour les parcours, et elle se
+reprend à chaque fois qu'un sabotage passe au vert.
+
+Vérifié à l'écran, en français et en japonais : seize options dans le
+sélecteur, dans l'ordre du routage, EUW1 en tête comme avant.
+
 ### `PUT /api/user` publiait l'empreinte du mot de passe
 Recensement mécanique : ce que chaque route PUBLIE, par opposition à ce
 qu'elle FILTRE. `filtreParCompte` garde depuis longtemps le « à qui » ;
