@@ -1196,6 +1196,56 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le parcours qui accusait le produit d'être muet, et l'instrument qui a nommé la cause
+V525 est partie ROUGE, sur un seul tronçon et un seul test : « une correction
+refusée ne change rien à l'écran », dans `historique.spec.ts`, quarante-deux
+passés à côté. Le message était **« alerte introuvable »**, ce qui se lit comme
+« l'écran ne dit pas son échec » et envoie chercher le défaut dans le composant.
+
+**C'était faux, et le raisonnement suffit à le montrer.** `handleEditResult`
+pose le drapeau d'erreur sur les DEUX branches — réponse non-ok et exception —
+donc la seule façon de n'avoir aucune alerte est qu'aucune requête ne soit
+partie, ou que la vraie route ait répondu 200. Deux causes, un seul symptôme,
+et c'est exactement le piège déjà écrit ici pour `detection-partie.spec.ts` :
+« l'interception n'a pas pris, la vraie route a répondu ».
+
+**Le détournement se COMPTE désormais, et son compte s'éprouve AVANT le
+message.** L'instrument a rendu la réponse à la première exécution locale qui
+tombe : **`detourne = 0`** — aucun PATCH n'a jamais atteint le gestionnaire de
+route. Ce n'est donc ni l'interception ni le produit : c'est le CLIC qui n'a
+rien déclenché.
+
+**Et le bouton a une raison de ne rien déclencher.** `ResultatCell` écrit
+`valeur === result ? annuler() : choisir(valeur)` : cliquer « Victoire » sur une
+ligne que le composant croit DÉJÀ victorieuse annule l'édition — donc n'envoie
+aucune requête, donc n'affiche aucune alerte. C'est le symptôme observé, trait
+pour trait, et un clic aveugle ne distingue pas les deux états.
+
+Le test attend donc la PRÉCONDITION du geste — `aria-pressed="false"`, c'est-à-dire
+un bouton dont le clic va changer quelque chose — au lieu de cliquer à
+l'aveugle. Ce n'est pas un délai : c'est l'état dont dépend le sens du clic.
+
+**Ce qui n'est PAS établi, et il vaut mieux le dire que de conclure.** Je n'ai
+pas pu reprendre la main sur l'intermittence : deux échecs sur deux exécutions
+locales avant l'instrument, puis douze exécutions vertes d'affilée — quatre
+avec le clic aveugle remis, huit avec la précondition. Les quatre du milieu
+interdisent d'attribuer la guérison à la correction : la fenêtre s'était
+refermée d'elle-même entre-temps. Ce qui est acquis n'est donc pas le
+diagnostic, ce sont les deux instruments — le compteur, qui nommera la
+prochaine occurrence au lieu d'accuser le produit, et la précondition, qui
+retire un état sous lequel le geste ne veut rien dire.
+
+**Le journal portait déjà ce test comme « cause inconnue »**, avec l'hypothèse
+d'une machine chargée — « les deux échecs sont tombés pendant qu'une
+construction, un serveur, Playwright et un Chromium de mesure tournaient
+ensemble ». Cette occurrence-ci l'écarte : elle est tombée en intégration
+continue, sur un exécuteur d'UN SEUL worker, où rien d'autre ne tournait.
+
+**Et un piège d'outillage retombé dedans, pour la troisième fois recensée
+ici** : rejouer le test seul avec `-g` écarte celui qui OUVRE LE COMPTE, donc
+il n'y a plus de session et l'échec devient « la liste n'apparaît pas » —
+c'est-à-dire un symptôme qui n'a rien à voir. Le fichier se rejoue en entier.
+
 ### Ce qui ne change pas d'une langue à l'autre, et le seul détecteur possible du texte en dur sans accent
 `texteEnDurComposants.test.ts` cherche des lettres ACCENTUÉES, et sa limite est
 écrite dans son propre commentaire depuis le premier jour : « une phrase

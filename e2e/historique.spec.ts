@@ -472,8 +472,23 @@ test("corriger une défaite en victoire rejoue le barème", async ({ browser }) 
 test("une correction refusée ne change rien à l'écran", async ({ browser }) => {
   const { ctx, page } = await historique(browser, 1280);
 
+  /**
+   * Le détournement se COMPTE, et son compte s'éprouve AVANT le message.
+   *
+   * Ce test est tombé en intégration continue sur « alerte introuvable », ce
+   * qui se lit comme « l'écran ne dit pas son échec » et envoie chercher le
+   * défaut dans le composant. Or `handleEditResult` pose le drapeau sur les
+   * DEUX branches — réponse non-ok et exception — donc la seule façon de
+   * n'avoir aucune alerte est que la vraie route ait répondu 200, c'est-à-dire
+   * que l'interception n'ait pas pris. Deux causes, un seul symptôme.
+   *
+   * C'est le même piège que `detection-partie.spec.ts`, et la même parade : à
+   * zéro, l'échec nomme le détournement au lieu d'accuser le produit.
+   */
+  let detourne = 0;
   await page.route("**/api/games/*", async (route) => {
     if (route.request().method() === "PATCH") {
+      detourne += 1;
       return route.fulfill({ status: 500, contentType: "application/json", body: "{}" });
     }
     await route.continue();
@@ -481,8 +496,24 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
 
   const ligne = page.locator("tbody tr").filter({ hasText: "Maître Yi" }).first();
   await ligne.getByRole("button", { name: /corriger le résultat|correct the result/i }).click();
-  await ligne.getByRole("button", { name: /^victoire$|^victory$/i }).click();
 
+  /**
+   * On attend que l'éditeur soit OUVERT SUR UNE DÉFAITE avant de cliquer.
+   *
+   * `aria-pressed` porte la valeur courante, et le bouton s'en sert :
+   * `valeur === result ? annuler() : choisir(valeur)`. Cliquer « Victoire »
+   * sur une ligne que le composant croit déjà victorieuse ANNULE — donc
+   * n'envoie aucune requête, donc n'affiche aucune alerte. C'est exactement le
+   * symptôme observé, et un clic aveugle ne distingue pas les deux états.
+   *
+   * L'attente porte donc sur la PRÉCONDITION du geste, pas sur un délai : ce
+   * qu'on veut, c'est un bouton dont le clic va changer quelque chose.
+   */
+  const versVictoire = ligne.getByRole("button", { name: /^victoire$|^victory$/i });
+  await expect(versVictoire).toHaveAttribute("aria-pressed", "false");
+  await versVictoire.click();
+
+  await expect.poll(() => detourne, { timeout: 10_000 }).toBeGreaterThan(0);
   await expect(page.getByRole("alert").filter({ hasText: /n.a pas abouti|did not go through/i }))
     .toBeVisible({ timeout: 10_000 });
   // La ligne reste une défaite : c'est la base qui tranche, pas l'écran.
