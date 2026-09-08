@@ -1240,6 +1240,47 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le garde des pages orphelines ne regardait que dans un sens
+Suite directe des sept pages du calculateur. `pagesOrphelines.test.ts` vérifie
+qu'aucune PAGE n'est injoignable — que tout ce qui existe reçoit un lien. Il ne
+disait rien de la RÉCIPROQUE : qu'aucun lien ne mène nulle part.
+
+**Les deux défauts sont symétriques et se paient de la même façon, en
+silence.** Une page sans lien ne se voit pas ; un lien mort ne se voit qu'au
+clic, chez quelqu'un. Et il pèse le plus lourd sur les pages publiques, qui
+sont le seul canal d'acquisition du produit : un moteur qui suit un lien vers
+une 404 apprend quelque chose de faux sur le site.
+
+**Le recensement est NÉGATIF, et c'est écrit pour qu'on ne le refasse pas.**
+Mesuré avant d'écrire quoi que ce soit : sur toutes les cibles de navigation du
+dépôt, **deux seulement** ne désignent pas une page — `/api/bilan/image` et
+`/api/user/export` — et les deux sont légitimes. Ce sont des `<a href>` vers
+des routes d'API : l'image de saison et l'export de données, c'est-à-dire des
+FICHIERS qu'on ouvre, pas des écrans. D'où le second recensement, celui des
+routes, qui vit dans le garde à côté de celui des pages.
+
+**Le témoin des routes d'API ne peut PAS s'allumer aujourd'hui, et c'est écrit
+plutôt que laissé à croire.** Le sabotage qui vide `routesApi` fait tomber
+l'assertion PRINCIPALE — les deux cibles légitimes remontent comme mortes —
+avant que le compte n'ait son mot à dire. Il ne servira que le jour où plus
+aucun lien ne visera `/api/…`, c'est-à-dire le jour où la liste redeviendrait
+vide pour la bonne raison. C'est la deuxième fois de la série qu'un témoin est
+gardé pour un état futur ; la première coûtait une heure de sonde à chaque
+version.
+
+**Et le tri s'éprouve sur des cas FABRIQUÉS**, parce que l'état sain du dépôt
+est zéro trouvaille : les cibles réelles ne distinguent pas un tri juste d'un
+tri qui accepte tout. Trois formes légitimes doivent passer — une page, une
+route d'API, un segment dynamique — et une adresse inventée doit ressortir.
+C'est la méthode déjà employée pour le discriminant des longueurs CSS et pour
+`porteUnFiltre`, et elle a servi : le sabotage qui rend le tri toujours vrai ne
+fait tomber QUE ce contrôle-là.
+
+Quatre sabotages, quatre échecs : un lien mort posé dans le pied de page — qui
+le NOMME, `/mentions-legales` —, le recensement des routes vidé, le tri rendu
+toujours vrai, et le segment dynamique cessant d'être reconnu.
+
+
 ### Sept pages du calculateur ne recevaient aucun lien
 Trouvé en cherchant ce qui, dans le produit, se mesure sans demander une
 décision. Chaque page par jeu propose « d'autres jeux » en bas, et elle en
