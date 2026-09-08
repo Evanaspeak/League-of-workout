@@ -33,6 +33,17 @@ const ENTREES_EXTERNES: Record<string, string> = {
   "/introuvable": "cible d'une RÉÉCRITURE du middleware, pas d'un lien : personne ne clique vers sa propre 404, et l'adresse affichée reste celle qu'on avait demandée",
 };
 
+/** Toutes les ROUTES d'API, sous forme de chemin d'URL. */
+function routesApi(dossier: string, prefixe = "/api"): string[] {
+  const trouvees: string[] = [];
+  for (const entree of readdirSync(dossier)) {
+    const complet = join(dossier, entree);
+    if (statSync(complet).isDirectory()) trouvees.push(...routesApi(complet, `${prefixe}/${entree}`));
+    else if (entree === "route.ts" || entree === "route.tsx") trouvees.push(prefixe);
+  }
+  return trouvees;
+}
+
 /** Toutes les pages du dossier `app`, sous forme de chemin d'URL. */
 function pages(dossier: string, prefixe = ""): string[] {
   const trouvees: string[] = [];
@@ -117,6 +128,31 @@ function estAtteignable(route: string): boolean {
   });
 }
 
+/** Toutes les routes d'API, lues une fois. */
+const API = routesApi(join(RACINE, "api"));
+
+/**
+ * Les cibles de navigation qui ne mènent à rien.
+ *
+ * Une cible peut être une page OU une route d'API — l'image du bilan et
+ * l'export de données sont des `<a href>` vers `/api/…`, ce qui est légitime :
+ * ce sont des fichiers qu'on ouvre, pas des écrans.
+ */
+function mortes(cibles: string[], routes: string[]): string[] {
+  const existe = (c: string) =>
+    [...routes, ...API].some((r) => {
+      const i = r.indexOf("/[");
+      return i === -1 ? r === c : c.startsWith(r.slice(0, i + 1));
+    });
+  return [...new Set(cibles)]
+    .map((c) => c.split(/[?#]/)[0].replace(/\/+$/, "") || "/")
+    // Ce qui ne commence pas par « / » n'est pas une adresse interne : une
+    // ancre, un `mailto:`, un lien vers un autre site.
+    .filter((c) => c.startsWith("/") && !c.startsWith("//"))
+    .filter((c) => !existe(c))
+    .sort();
+}
+
 describe("les pages du site", () => {
   const routes = pages(RACINE).sort();
 
@@ -149,5 +185,44 @@ describe("les pages du site", () => {
   it("n'exempte que des pages qui existent", () => {
     const fantomes = Object.keys(ENTREES_EXTERNES).filter((r) => !routes.includes(r));
     expect({ fantomes }).toEqual({ fantomes: [] });
+  });
+
+  /**
+   * L'autre sens, et il manquait.
+   *
+   * Ce fichier vérifiait qu'aucune PAGE n'est orpheline — que tout ce qui
+   * existe est atteignable. Il ne disait rien de la réciproque : qu'aucun LIEN
+   * ne mène nulle part. Les deux défauts sont symétriques et se paient de la
+   * même façon, en silence : une page sans lien ne se voit pas, et un lien
+   * mort ne se voit qu'au clic, chez quelqu'un.
+   *
+   * Il pèse le plus lourd sur les pages publiques, qui sont le seul canal
+   * d'acquisition du produit : un moteur qui suit un lien vers une 404 apprend
+   * quelque chose de faux sur le site.
+   *
+   * Une cible peut être une page OU une route d'API — l'image du bilan et
+   * l'export de données sont des `<a href>` vers `/api/…`, ce qui est
+   * légitime : ce sont des fichiers qu'on ouvre, pas des écrans.
+   */
+  it("ne fait naviguer vers rien qui n'existe pas", () => {
+    const nulle_part = mortes(CIBLES, routes);
+    expect({ nulle_part }).toEqual({ nulle_part: [] });
+    // Témoin : les routes d'API ont été lues. Il ne sert que le jour où plus
+    // aucun lien ne vise `/api/…` — aujourd'hui les deux qui restent font
+    // tomber l'assertion d'au-dessus avant lui.
+    expect(API.length).toBeGreaterThan(30);
+  });
+
+  it("cherche vraiment — une cible inventée doit ressortir morte", () => {
+    // Le tri s'éprouve sur un cas FABRIQUÉ : l'état sain du dépôt est zéro
+    // trouvaille, donc les cibles réelles ne distinguent pas un tri juste d'un
+    // tri qui accepterait tout. Et il doit LAISSER passer les trois formes
+    // légitimes : une page, une route d'API, un segment dynamique.
+    expect(mortes(["/page-qui-nexiste-pas"], routes)).toEqual([
+      "/page-qui-nexiste-pas",
+    ]);
+    expect(
+      mortes(["/settings?rubrique=jeux", "/api/user/export", "/calculateur/valorant"], routes),
+    ).toEqual([]);
   });
 });
