@@ -95,7 +95,10 @@ export function ReglagesAvances({
           <div className="space-y-3">
             <h2 className="titre-section">{t.poidsParRole}</h2>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              {/* Le titre est au-dessus, mais rien ne le RELIE au tableau : un
+                  lecteur d'écran qui saute de tableau en tableau l'annoncerait
+                  « tableau, quatre colonnes » et rien d'autre. */}
+              <table className="w-full text-sm" aria-label={t.poidsParRole}>
                 <thead>
                   <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                     <th className="text-left py-2 pr-3">{t.role}</th>
@@ -141,7 +144,7 @@ export function ReglagesAvances({
               {t.niveauxExplication}
             </p>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" aria-label={t.niveauxGainage}>
                 <thead>
                   <tr style={{ color: "var(--steel)" }} className="text-xs uppercase tracking-wider">
                     <th className="text-left py-2 pr-3">{t.niveau}</th>

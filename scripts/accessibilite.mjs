@@ -64,7 +64,18 @@ const aTester = demandee ? [demandee] : LANGUES;
  * Pages qui demandent un compte. Le jeton se dépose dans un fichier par
  * l'appelant : le script ne sait pas en fabriquer, et n'a pas à savoir.
  */
-const PAGES_CONNECTEES = ["/dashboard", "/history", "/settings", "/bilan"];
+const PAGES_CONNECTEES = [
+  "/dashboard", "/history", "/bilan", "/amis",
+  // `/settings` nu ne rend que la LISTE des rubriques : tout ce qu'elles
+  // contiennent — les champs du corps, les cases d'exercices, les boutons de
+  // rappel, l'export — s'ouvre par un fragment, et une rubrique repliée ne
+  // rend rien. L'audit ne voyait donc aucun champ de formulaire des réglages,
+  // c'est-à-dire précisément ce qu'un audit existe pour regarder. C'est le
+  // défaut déjà corrigé sur le balayage des coutures, dans l'outil d'à côté.
+  "/settings",
+  "/settings#profil", "/settings#corps", "/settings#effort",
+  "/settings#jeux", "/settings#donnees",
+];
 const JETON = existsSync("/tmp/jeton.txt") ? readFileSync("/tmp/jeton.txt", "utf8").trim() : null;
 
 /**
@@ -236,6 +247,12 @@ for (const chemin of aVisiter) {
    * est dans l'adresse, et le serveur rend la bonne version du premier coup.
    */
   const adresse = enLangue(langue, chemin);
+  // Le contrôle d'atterrissage compare des CHEMINS : le fragment n'en fait
+  // pas partie, et une rubrique ouverte par `#effort` atterrit sur
+  // `/settings`. Sans ce retrait, les cinq rubriques sortaient « NON
+  // MESURÉE » — c'est-à-dire que l'outil disait honnêtement n'avoir rien
+  // regardé, mais pour une raison qui n'existait pas.
+  const adresseNue = adresse.split("#")[0];
   const reponse = await page.goto(BASE + adresse, { waitUntil: "networkidle" }).catch(() => null);
   if (!reponse || !reponse.ok()) {
     console.log(`\n${adresse} — injoignable (${reponse ? reponse.status() : "erreur"})`);
@@ -254,7 +271,7 @@ for (const chemin of aVisiter) {
    */
   const normaliser = (c) => c.replace(/\/+$/, "") || "/";
   const arrivee = normaliser(new URL(page.url()).pathname);
-  if (arrivee !== normaliser(adresse)) {
+  if (arrivee !== normaliser(adresseNue)) {
     console.log(`\n═══ ${langue} · ${chemin}`);
     console.log(`  NON MESURÉ : la navigation a abouti sur ${arrivee}`);
     nonMesurees += 1;
@@ -391,7 +408,7 @@ let horsLangue = 0;
     }
     // Ces deux passes-ci ne dépendent pas de la langue du texte : une seule
     // suffit, en français, qui est la langue écrite d'abord.
-    const adresse = enLangue("fr", chemin);
+    const adresse = enLangue("fr", chemin).split("#")[0];
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
@@ -444,7 +461,7 @@ let horsLangue = 0;
     }
     // Ces deux passes-ci ne dépendent pas de la langue du texte : une seule
     // suffit, en français, qui est la langue écrite d'abord.
-    const adresse = enLangue("fr", chemin);
+    const adresse = enLangue("fr", chemin).split("#")[0];
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;

@@ -318,7 +318,7 @@ export default function AdminUserList() {
                   <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.plankLevelsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                      <table aria-label={t.plankLevelsGlobal} style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                         <thead>
                           <tr style={thRowStyle}>
                             <th style={thStyle}>{t.level}</th>
@@ -354,7 +354,7 @@ export default function AdminUserList() {
                   <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.kdaWeightsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
+                      <table aria-label={t.kdaWeightsGlobal} style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
                         <thead>
                           <tr style={thRowStyle}>
                             <th style={thStyle}>{t.role}</th>

@@ -1166,6 +1166,85 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois outils, trois listes de pages, et personne pour les comparer
+Suite directe de la correction du balayage. Si un outil de mesure pouvait ne
+visiter que la moitié du produit sans le dire, ses voisins le pouvaient aussi.
+Le recensement se fait mécaniquement — on lit les trois listes à la source et
+on compare l'union.
+
+**L'audit d'accessibilité n'ouvrait ni `/amis` ni les cinq rubriques de
+réglages.** `/amis` ne figurait dans aucune de ses deux listes ; et `/settings`
+nu ne rend que la LISTE des rubriques, donc tout ce qu'elles contiennent — le
+poids, la taille, les cases d'exercices, les seuils de rappel, l'export —
+n'était audité par personne.
+
+C'est le pire endroit possible pour ce trou : **ce sont des champs de
+formulaire**, c'est-à-dire précisément ce qu'un audit d'accessibilité existe
+pour regarder. Et le journal porte un défaut de cette famille exacte, trouvé
+par un parcours navigateur et non par l'audit : « mes `<label>` n'étaient liés
+à aucun champ » sur le panneau du corps. L'outil n'aurait pas pu le voir.
+
+**Et l'élargissement a payé à sa PREMIÈRE exécution** : le tableau du
+classement, sur `/amis`, n'a ni `caption` ni `aria-label`. Un lecteur d'écran
+l'annonce « tableau, trois colonnes » et rien d'autre. Le titre du panneau est
+juste au-dessus, mais rien ne le RELIE au tableau : quelqu'un qui saute de
+tableau en tableau — ce que fait un lecteur d'écran — ne le voit jamais. Une
+légende le nomme, gardée hors de l'affichage par `lecture-ecran`, la mise en
+page étant déjà titrée pour qui voit.
+
+**Un bogue de ma correction, attrapé par l'outil lui-même.** Les cinq
+rubriques sortaient « NON MESURÉE : la navigation a abouti sur /fr/settings » :
+le contrôle d'atterrissage compare des CHEMINS, et le fragment n'en fait pas
+partie. C'est le bon comportement de l'outil — il a dit qu'il n'avait pas
+regardé plutôt que de rendre un zéro — pour une raison qui n'existait pas. Le
+fragment est retiré avant la comparaison, dans les trois passes qui la font.
+
+**Ce que le recensement rend d'autre**, écrit plutôt que corrigé de travers :
+`comparer-rendu.mjs` ne capture ni `/amis`, ni `/bilan`, ni
+`/confidentialite`, ni les deux pages du calculateur. C'est le même trou ; le
+combler coûte trois captures de chaque côté par page, et le vérifier demande
+deux campagnes. Ça se pèse, ça ne se fait pas en passant — et c'est écrit dans
+la dispense plutôt que dans un coin de tête.
+
+**Le garde ne demande PAS que les trois listes soient identiques.** Elles ne
+mesurent pas la même chose : le balayage ouvre les cinq rubriques et se passe
+de la liste nue, qui n'a aucune valeur interpolée ; la comparaison de rendu
+n'a rien à faire d'une page sans mise en page. Ce qu'il exige est que chaque
+écart soit DÉCLARÉ avec sa raison — la seule forme qui ne vieillisse pas en
+silence, et celle que ce projet emploie déjà pour les routes sans session et
+pour les textes en dur.
+
+Il refuse aussi une dispense qui ne désigne plus rien : une page qu'un outil
+s'est mis à regarder, ou qu'aucun des trois ne connaît plus, laisse une ligne
+morte dans le garde qui existe pour l'attraper. La dispense que j'avais posée
+sur `/settings#profil` est tombée dès le correctif appliqué, ce qui est
+exactement le comportement voulu.
+
+**Et quatre autres tableaux étaient sans nom, qu'aucun audit ne pouvait
+atteindre** : les deux de la rubrique avancée des réglages, qui ne se rendent
+que pour un administrateur, et les deux du panneau `/admin`, sur un écran qui
+résiste à l'emprunt d'adresse — limite déjà écrite au journal. D'où un test
+STATIQUE en plus de l'audit, `src/tableauxNommes.test.ts` : c'est le
+raisonnement de `modalesAnnoncees`, mot pour mot, et il vaut pour la même
+raison — le test statique voit aussi ce qui n'est pas ouvert au moment où l'on
+regarde. Les quatre réemploient le titre déjà traduit qui les surmonte, donc
+aucune clé nouvelle dans six langues.
+
+Et il est tombé sur ma propre correction avant de passer : le bloc de
+commentaire posé entre la balise et sa légende repoussait celle-ci hors de la
+fenêtre de lecture, et le garde accusait un tableau parfaitement nommé. Il lit
+le source privé de ses commentaires — le troisième sens de ce piège, après
+« le commentaire CITE le motif fautif » et « le commentaire le CALME ».
+
+**Ce que la comparaison mécanique apprend au-delà des trois trous** : c'est le
+TROISIÈME défaut de couverture trouvé cette nuit, et les trois l'ont été de la
+même façon — en confrontant deux outils, jamais en lisant l'un d'eux. Un outil
+seul ne peut pas dire ce qu'il ne regarde pas ; c'est son voisin qui le dit.
+
+**Mesuré après correction, en français** : vingt et une pages, **0 constat,
+aucune page laissée de côté**. C'est le second chiffre qui compte, et c'est
+celui que la première passe élargie ne pouvait pas donner.
+
 ### Le balayage ne visitait par défaut que la moitié du produit
 Trouvé en comparant deux outils de mesure plutôt qu'en lisant l'un d'eux.
 `accessibilite.mjs` couvre onze pages PUBLIQUES et quatre écrans connectés ;
