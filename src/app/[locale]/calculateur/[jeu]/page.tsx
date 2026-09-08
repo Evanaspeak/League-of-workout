@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Lien } from "@/components/Lien";
 import { notFound } from "next/navigation";
 import { Calculateur } from "./Calculateur";
-import { jeuDepuisSlug, tousLesSlugs } from "@/lib/slugJeu";
+import { jeuDepuisSlug, tousLesSlugs, voisinsDe } from "@/lib/slugJeu";
 import { metadonneesJeu } from "@/lib/i18n/metadonnees";
 import { textes } from "@/lib/i18n/textes";
 import { calculateur } from "@/lib/i18n/dictionaries/calculateur";
@@ -44,7 +44,7 @@ export default async function PageCalculateur(
   // un moteur de recherche, et ça évite d'indexer des pages qui ne disent rien.
   if (!jeu) notFound();
 
-  const autres = tousLesSlugs().filter((j) => j.slug !== slug).slice(0, 8);
+  const autres = voisinsDe(slug);
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto" }} className="flex flex-col gap-6">

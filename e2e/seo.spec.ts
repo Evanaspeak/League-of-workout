@@ -280,3 +280,40 @@ test("la carte partagée et l'icône répondent dans les six langues", async ({ 
     }
   }
 });
+
+/**
+ * Le maillage des pages par jeu, mesuré sur ce qui est SERVI.
+ *
+ * Chaque page propose « d'autres jeux » en bas, et elle en prenait les huit
+ * PREMIERS du catalogue — donc les huit mêmes partout. Huit jeux recevaient
+ * quinze liens entrants, un en recevait huit, et **sept n'en recevaient
+ * aucun**. Ces pages n'existent que pour être trouvées ; une page vers
+ * laquelle rien ne pointe est une page qu'on a écrite pour rien.
+ *
+ * Le test unitaire éprouve la FONCTION ; celui-ci éprouve le BRANCHEMENT.
+ * Rien d'autre ne l'attraperait : revenir à la liste des huit premiers dans la
+ * page ne fait échouer ni la compilation ni une lecture d'API, et l'écran
+ * reste parfaitement normal.
+ */
+test("chaque page par jeu reçoit des liens des autres", async ({ request }) => {
+  const index = await request.get(enLangue("fr", "/calculateur"));
+  expect(index.status()).toBe(200);
+  const slugs = [...new Set(
+    [...(await index.text()).matchAll(/\/fr\/calculateur\/([a-z0-9-]+)/g)].map((m) => m[1]),
+  )];
+  expect(slugs.length).toBeGreaterThan(10); // témoin : l'index a bien été lu
+
+  const entrants = new Map(slugs.map((s) => [s, 0]));
+  for (const s of slugs) {
+    const r = await request.get(enLangue("fr", `/calculateur/${s}`));
+    expect(r.status(), s).toBe(200);
+    const vus = new Set(
+      [...(await r.text()).matchAll(/\/fr\/calculateur\/([a-z0-9-]+)/g)].map((m) => m[1]),
+    );
+    vus.delete(s);
+    for (const v of vus) if (entrants.has(v)) entrants.set(v, entrants.get(v)! + 1);
+  }
+
+  const orphelines = [...entrants].filter(([, n]) => n === 0).map(([s]) => s);
+  expect(orphelines).toEqual([]);
+});
