@@ -1196,6 +1196,43 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le bouton d'inscription désactivé, et la règle que j'ai enfreinte en la connaissant
+Quatre parcours tombés sur 249, et les quatre disent la même chose. Le contexte
+d'erreur de Playwright le montre sans ambiguïté :
+
+```
+- textbox "TonPseudo" [active]          ← vide
+- button "Obtenir mon code" [disabled]  ← jamais activé
+```
+
+Le champ est VIDE et le bouton DÉSACTIVÉ : le formulaire a bien été rempli côté
+DOM, et l'état React ne l'a jamais reçu. C'est la page qui n'était pas hydratée
+au moment du `fill`. Le symptôme, lui, s'annonce « le code ne s'affiche pas »,
+c'est-à-dire un message qui ne ressemble en rien à sa cause — quatrième
+déguisement recensé ici pour cette panne.
+
+**Et la cause est moi.** J'ai lancé `npx jest` (2 601 tests), `npx tsc` et
+`npx eslint` **pendant** que la suite navigateur tournait, trois fois. Sur une
+machine à quatre cœurs qui héberge déjà deux Chromium, deux processus de test
+et le serveur Next, l'hydratation perd sa place dans la file.
+
+Ce fichier interdit ça depuis longtemps — « ne jamais reconstruire ni tuer le
+serveur pendant qu'un test navigateur tourne », « on ne mesure pas pendant
+qu'on construit » — et je le savais en le faisant : je croyais que la règle ne
+visait que la reconstruction, puisque `next start` sert un `.next` figé et
+qu'éditer des sources ne le change pas. C'est vrai du CONTENU servi et faux du
+PROCESSEUR : ce qui casse ici n'est pas ce qu'on sert, c'est le temps qu'on met
+à le servir.
+
+La règle est donc plus large qu'écrite : **rien de lourd ne tourne pendant une
+suite navigateur**, y compris ce qui ne touche pas au serveur. Un banc d'essai
+qui sature la machine ne mesure plus le produit, il mesure sa propre file
+d'attente — c'est la leçon des quatre workers, sous une forme que je n'avais
+pas reconnue parce que la charge venait d'à côté au lieu de venir de lui.
+
+**Rejouée à vide, la même suite passe.** C'est le geste qui distingue un aléa
+d'une régression, et il fallait le faire avant de conclure quoi que ce soit.
+
 ### Le français vouvoyait seul dans six fichiers, et la mesure allait plus loin que la question
 Question 7 des questions ouvertes : `/telechargement` et `/calculateur`
 vouvoient en français et tutoient dans les cinq autres langues. Réponse du
