@@ -1611,6 +1611,53 @@ n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septem
 et c'est la troisième occurrence : la parade est de relancer la passe entière
 sans tube, jamais de deviner.
 
+### Campagne de clôture du 8 septembre, après V520 à V523
+Passée sur un compte semé à soixante parties, créé APRÈS la suite navigateur
+entière — **249 passés en 14 min 48**, verte sur l'arbre de V523.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 152 ms | 960 ms | 0,000 | la mention Riot, en pied |
+| `/amis` | 320 ms | 1128 ms | 0,031 | le paragraphe du classement |
+| `/bilan` | 332 ms | **2168 ms** | 0,000 | l'image de saison |
+| `/dashboard` | 340 ms | 1132 ms | 0,000 | le bandeau d'attente Riot |
+| `/history` | 568 ms | 1136 ms | 0,000 | le titre |
+
+Les cinq sont dans les seuils, et `/bilan` reste le plancher pour la raison
+écrite neuf fois — son plus grand élément est l'image de saison. 2 168 ms se
+compare aux 2 024, 2 092, 2 096, 2 120, 2 128, 2 132, 2 172, 2 216 et 2 332
+relevés sur des comptes semés comparables : il est au milieu de la bande.
+
+**Le poids au chargement est IDENTIQUE au kilo-octet** à celui de V519 :
+réglages 264, tableau de bord 235, amis 212, historique 206, bilan 192. C'est
+ce qu'on attend de quatre versions qui n'ajoutent que des gardes, des
+commentaires et des tableaux de dépendances, et le dire suppose de l'avoir
+mesuré.
+
+**La seule mesure qui n'était PAS écrite d'avance a été faite, et elle seule.**
+V523 fusionne deux effets du tableau de bord en un ; deux effets fusionnés
+peuvent doubler une requête sans qu'aucun parcours ne s'en aperçoive, puisque
+la page rendrait exactement la même chose. Compté au navigateur : **cinq
+appels d'API au montage, dont UN seul `/api/dashboard`, aucun doublon.** C'est
+le chiffre d'avant.
+
+**Et la comparaison de rendu n'a PAS été passée, avec sa raison.** Onze
+fichiers de la couche d'affichage ont changé depuis V519, et le `git diff`
+dit ce qu'ils sont : cinq ne portent QUE des commentaires — les quatre
+dispenses d'avertissement et deux blocs de raison en JSX — trois ne changent
+qu'un tableau de dépendances, un hisse une constante hors du composant sans
+toucher sa valeur, et les deux derniers remplacent une ref par une constante
+locale et fusionnent deux effets qui faisaient déjà le même appel. **Aucun ne
+peut peindre autrement.** Une comparaison de pixels y est un résultat écrit
+d'avance, et dix minutes de construction pour confirmer ce qu'une lecture du
+diff établit. C'est la discipline déjà appliquée après V495 et après V510.
+
+**L'audit d'accessibilité non plus, pour la même raison** : aucun attribut
+ARIA, aucun élément, aucun texte n'a bougé. Ce qui aurait pu changer sans se
+voir — la règle qui décide si la pastille de dette paraît, réécrite en
+constante locale — est tenu par la suite entière, qui la vérifie à l'étape 5
+du parcours complet et qui est verte.
+
 ### Trois fermetures qui gardaient la langue du chargement, et un filtre d'avant
 Suite directe : les vingt-huit avertissements que V522 a laissés visibles ont
 été TRIÉS, et huit d'entre eux disaient la même chose — une fonction déclare ne
