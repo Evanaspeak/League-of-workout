@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
 import { comptePublic } from "./compte";
 
 /**
@@ -217,5 +217,106 @@ describe("les défauts des réglages de confidentialité", () => {
     const ligne = modele.split("\n").find((l) => new RegExp(`^\\s*${colonne}\\s`).test(l));
     expect(ligne).toBeDefined();
     expect(ligne).toContain(`@default(${defaut})`);
+  });
+});
+
+/**
+ * Et le compte ne sort JAMAIS autrement que par `comptePublic`.
+ *
+ * Le recensement des colonnes, plus haut, dit ce qui a le droit de sortir. Il
+ * ne disait rien des routes qui ne passent pas par le filtre : `PUT /api/user`
+ * rendait `prisma.user.update()` tel quel — **soixante champs mesurés**, dont
+ * l'empreinte du mot de passe, le jeton de diffusion, le code de parrainage et
+ * l'identifiant du parrain. Au navigateur de la personne, donc dans son cache,
+ * dans son onglet réseau, et chez tout ce qui s'interpose.
+ *
+ * C'est exactement le défaut pour lequel `comptePublic` a été écrit, sur la
+ * seule route qui ne l'employait pas — et le garde des colonnes ne pouvait pas
+ * le voir : il éprouve la FONCTION, pas ses appelants. C'est le trou que ce
+ * projet paie en boucle.
+ */
+describe("le compte ne sort que par le filtre", () => {
+  const API = join(process.cwd(), "src", "app", "api");
+
+  /**
+   * Aucune dispense, et ce n'est pas un oubli.
+   *
+   * Le panneau d'administration lit les autres comptes — c'est tout son objet
+   * — et il pourrait sembler mériter une exemption. Il n'en a pas besoin, pour
+   * une raison qu'il vaut mieux dire exactement : **il ne publie pas la
+   * variable**, il rend `{ users: result }`, une liste qu'il a recomposée. Le
+   * motif ne l'a donc jamais désigné.
+   *
+   * Le tri sur `select` juste en dessous ne le sauve donc PAS aujourd'hui —
+   * vérifié par sabotage, le retirer ne rend personne fautif. Il est gardé
+   * pour le cas qui viendra : une route qui publie directement une ligne
+   * SÉLECTIONNÉE, où quelqu'un a déjà décidé de ce qui sort. Comme il n'a
+   * aucun cas réel, il s'éprouve sur des cas FABRIQUÉS, juste après.
+   */
+  const DISPENSES: Record<string, string> = {};
+
+  /** Le tri qui distingue une ligne BRUTE d'une projection choisie. */
+  const estBrut = (appel: string) => !/\bselect\s*:|\bomit\s*:/.test(appel);
+
+  function routes(dossier: string, out: string[] = []): string[] {
+    for (const e of readdirSync(dossier, { withFileTypes: true })) {
+      const c = join(dossier, e.name);
+      if (e.isDirectory()) routes(c, out);
+      else if (/^route\.tsx?$/.test(e.name)) out.push(c);
+    }
+    return out;
+  }
+
+  it("aucune route ne publie une ligne de compte telle qu'elle vient", () => {
+    const fautives: string[] = [];
+    let lectures = 0;
+
+    for (const f of routes(API)) {
+      const rel = relative(API, f).split("\\").join("/");
+      if (DISPENSES[rel]) continue;
+      const texte = readFileSync(f, "utf8");
+      // Les noms qui reçoivent une ligne de compte.
+      const noms = new Set<string>();
+      for (const m of texte.matchAll(
+        /(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+prisma\.user\.(?:update|create|upsert|findUnique|findFirst|findMany)/g,
+      )) {
+        lectures += 1;
+        /**
+         * Une requête qui porte un `select` ou un `omit` ne rend PAS une
+         * ligne : elle rend une projection choisie, donc quelqu'un a décidé
+         * de ce qui sort. C'est le cas du panneau d'administration, et c'est
+         * pourquoi il n'a pas besoin d'exemption.
+         */
+        const appel = texte.slice(m.index, m.index + 900);
+        if (!estBrut(appel)) continue;
+        noms.add(m[1]);
+      }
+      for (const nom of noms) {
+        const publie = new RegExp(
+          String.raw`NextResponse\.json\(\s*(?:\{\s*\.\.\.\s*)?${nom}\b`,
+        );
+        if (publie.test(texte)) fautives.push(`${rel} : publie ${nom} sans comptePublic`);
+      }
+    }
+
+    expect(fautives).toEqual([]);
+    // Sans ce témoin, un motif devenu aveugle rendrait le contrôle vert en
+    // n'ayant reconnu aucune lecture de compte.
+    expect(lectures).toBeGreaterThanOrEqual(5);
+  });
+
+  it("distingue une ligne brute d'une projection choisie", () => {
+    // Éprouvé sur des cas fabriqués : le dépôt n'en contient aucun où le tri
+    // change quelque chose, donc les fichiers réels ne le distinguent pas
+    // d'un tri cassé.
+    expect(estBrut("const u = await prisma.user.update({ where: { id }, data });")).toBe(true);
+    expect(estBrut("const u = await prisma.user.update({ where: { id }, data, select: { pseudo: true } });")).toBe(false);
+    expect(estBrut("const u = await prisma.user.findUnique({ where: { id }, omit: { passwordHash: true } });")).toBe(false);
+  });
+
+  it("chaque dispense, s'il en revient une, désigne une route qui existe", () => {
+    for (const rel of Object.keys(DISPENSES)) {
+      expect(existsSync(join(API, rel))).toBe(true);
+    }
   });
 });

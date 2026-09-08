@@ -1187,6 +1187,77 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### `PUT /api/user` publiait l'empreinte du mot de passe
+Recensement mécanique : ce que chaque route PUBLIE, par opposition à ce
+qu'elle FILTRE. `filtreParCompte` garde depuis longtemps le « à qui » ;
+personne ne gardait le « quoi ».
+
+`comptePublic` existe précisément pour ça — le journal porte l'entrée « un
+`{ ...user }` publie tout ce qu'on lui remet », et `src/lib/compte.test.ts`
+range chaque colonne du modèle d'un côté ou de l'autre. **Il éprouve la
+FONCTION, pas ses appelants**, et une route ne l'employait pas.
+
+**Mesuré sur le serveur avant de corriger** : `PUT /api/user` rendait
+`prisma.user.update()` tel quel, soit **soixante champs**, dont
+`passwordHash`, `jetonObs`, `sessionEpoch`, `codeParrain` et `parrainId`.
+Après : **quarante-quatre**, et les trois premiers ont disparu.
+
+**Ce que ça vaut, et ce que ça ne vaut pas.** Ce n'est pas une fuite VERS
+quelqu'un d'autre : la route est filtrée par compte, et la personne recevait
+ses propres données. Mais l'empreinte bcrypt de son code d'accès partait dans
+son navigateur — donc dans son cache, dans son onglet réseau, chez tout ce qui
+s'interpose et dans toute extension qui lit les réponses. Et `jetonObs` est un
+LAISSEZ-PASSER : le journal raconte déjà la fois où il partait à chaque
+chargement de page, et `comptePublic` est né de là. La route qui l'a réintroduit
+est celle qu'on emploie pour changer son pseudo et pour relier son compte Riot.
+
+**Le garde porte sur le BRANCHEMENT**, ce qui est la leçon déjà écrite pour
+`formaterAxe` et pour le partage entre exercices : aucune route ne peut publier
+une ligne de compte telle qu'elle vient. Il reconnaît les cinq façons de la
+lire — `update`, `create`, `upsert`, `findUnique`, `findFirst`, `findMany` — et
+les deux façons de la publier : nue, ou étalée.
+
+**Aucune dispense, et la raison est écrite exactement.** Le panneau
+d'administration lit les autres comptes, ce qui est tout son objet, et il
+pourrait sembler mériter une exemption. Il n'en a pas besoin parce qu'**il ne
+publie pas la variable** : il rend `{ users: result }`, une liste qu'il a
+recomposée. Le motif ne l'a jamais désigné.
+
+**Et le tri sur `select` ne le sauve donc PAS**, ce que seul le sabotage a dit.
+Je l'avais écrit comme la raison pour laquelle l'administration passe ; c'était
+faux, et un commentaire faux se relit comme une garantie. Le retirer ne rend
+personne fautif. Il est gardé pour le cas qui viendra — une route qui publie
+directement une ligne SÉLECTIONNÉE, où quelqu'un a déjà décidé de ce qui sort —
+et comme il n'a aucun cas réel, il s'éprouve sur des cas FABRIQUÉS. C'est la
+méthode déjà employée pour le discriminant des longueurs CSS et pour
+`porteUnFiltre` : un tri qu'aucun fichier réel ne distingue d'un tri cassé se
+prouve ailleurs.
+
+**Et le garde a mordu sur ma propre liste de dispenses** avant de passer : j'y
+avais écrit `admin/reset-password/route.ts`, qui n'existe pas. Le contrôle qui
+refuse une exemption sans objet l'a dit tout de suite — c'est exactement son
+travail, et c'est la deuxième fois cette nuit qu'un garde attrape son auteur.
+
+Cinq sabotages, cinq échecs : la ligne republiée telle quelle, la ligne étalée,
+le motif de lecture rendu aveugle, la dispense qui ne désigne rien, et le tri
+rendu inopérant.
+
+**Un piège d'outillage, déjà écrit ici, retombé dedans.** Le jeton de session
+ne s'envoie pas nu en en-tête `cookie` : Auth.js le DÉCOUPE au-delà de trois
+mille cinq cents caractères. Envoyé d'un bloc, la sonde reçoit 307 vers la
+connexion — et un 307 vers `/login` ressemble beaucoup à une route qui refuse.
+`scripts/routes.mjs` porte le découpage depuis le jour où ça a coûté sept
+chiffres identiques ; une sonde écrite à côté ne l'a pas.
+
+**Ce que le recensement a trouvé d'AUTRE, et qui est laissé** : `POST
+/api/groupes` rend `{ ...groupe, membres: 1, proprietaire: true }`. Le modèle
+`Groupe` ne porte que quatre colonnes — identifiant, nom, code, date — et le
+code est fait pour être partagé à tous les membres. Il n'y a rien à retirer
+aujourd'hui. Ce qui reste vrai est la forme du risque : une colonne ajoutée
+demain sortirait sans que personne l'ait décidé, exactement comme `jetonObs`.
+Le garde ne couvre que `User`, parce que c'est le seul modèle qui porte un
+secret.
+
 ### Campagne de clôture du 8 septembre au matin, après V516 à V518
 Passée sur un compte de mesure semé à soixante parties, créé APRÈS la suite
 navigateur complète — l'ordre est écrit ici depuis longtemps.
