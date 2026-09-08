@@ -1196,6 +1196,68 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La page d'accueil a failli passer pour une régression, et il a fallu quatre exécutions
+Campagne de clôture après V532 et V533, entre V531 et la tête, sur un compte
+semé à soixante parties.
+
+La première comparaison rend **neuf captures différentes sur trente-neuf**, dont
+les trois de la page d'ACCUEIL — que ni V532 ni V533 ne touchent. Le `git diff`
+le confirme : aucun de ses fichiers n'a bougé.
+
+**Les bandes ont été LUES, et c'est la seule chose qui ait tranché.** Recadrées
+et regardées côte à côte, les deux captures montrent le même écran décalé d'une
+ligne : le bouton « Télécharger pour Windows » porte **« Version 0.9.18 »** sur
+l'une et pas sur l'autre. Il grandit donc d'une ligne, et les trois mille
+pixels qui suivent se décalent.
+
+**La cause n'est pas le code, c'est le CACHE de régénération.** `/` appelle
+`dernierInstalleur()`, qui interroge l'API GitHub — exactement comme
+`/telechargement`, que l'outil range à part depuis longtemps. Les deux pages
+sont prérendues avec un délai de régénération : ce qu'on capture dépend de
+l'état du cache au moment de la capture.
+
+**Et il a fallu QUATRE exécutions pour le voir**, parce que le résultat
+converge : 9 différences, puis 5, puis 3, puis 3. La quatrième rend
+**zéro pixel** sur `1280_fr.png`. Une exécution unique sur une page
+régénérable ne mesure pas le code, elle mesure la chance — c'est « une mesure
+unique n'est pas une mesure » appliqué à un outil qui semblait déterministe.
+
+**Le commentaire qui excluait `/` de la liste des pages instables disait une
+chose fausse** : « la déclarer instable la retirerait de la comparaison ». Le
+code ne fait pas ça — `PAGES_INSTABLES` filtre les captures DIFFÉRENTES pour
+les signaler à part, et elles restent comptées. La raison de ne pas la lister
+n'existait donc pas. C'est le motif que ce journal reproche partout : une
+garantie décrite qui n'existe pas se relit comme une garantie.
+
+**La liste se DÉDUIT des chemins maintenant**, par la même fonction qui nomme
+les captures : `/` devient `_fr.png` en français et `_de.png` en allemand, et
+une chaîne écrite à la main aurait raté cinq langues sur six.
+
+**Ce que la campagne établit, une fois ces deux pages écartées :** les trois
+captures de `/history` diffèrent, et elles seules. La page RÉTRÉCIT —
+3 283 → 2 823 px à 1280, 7 660 → 6 568 à 360 — ce qui est la signature de
+soixante lignes ramenées à cinquante et d'une colonne retirée. **Aucune autre
+page ne bouge** : ni les cinq pages publiques, ni le tableau de bord, ni les
+cinq rubriques de réglages. C'est le contrôle qui comptait, parce que V532
+remanie `CompteurDette` de deux cent trente-quatre lignes et que ce composant
+est rendu sur TOUS les écrans connectés.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 160 ms | 944 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 248 ms | **2136 ms** | 0,000 | l'image de saison |
+| `/dashboard` | 304 ms | 1132 ms | 0,000 | le bandeau d'attente Riot |
+| `/amis` | 356 ms | 1136 ms | 0,029 | le paragraphe du classement |
+| `/history` | 528 ms | 1284 ms | 0,000 | le titre, puis le pied de page |
+
+Les cinq sont dans les seuils, et `/bilan` reste le plancher pour la raison
+écrite dix fois. Le poids au chargement — 194 à 267 ko — bouge de trois
+kilo-octets par écran depuis la campagne du matin : la signature d'un
+dictionnaire qui grossit, pas d'un module qui arrive.
+
+**Accessibilité : 0 constat**, vingt et une pages en français, en allemand et
+en japonais, et **aucune page laissée de côté** dans les trois.
+
 ### Un cinquième parcours du mode séance, que le découpage en projets cachait
 V532 est partie ROUGE, sur un seul travail : `bareme`. Les huit autres verts, et
 la durée — 10 min 18 — disait que les parcours avaient bien joué.
