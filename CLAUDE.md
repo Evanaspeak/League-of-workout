@@ -1196,6 +1196,42 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dépendances du 8 septembre au soir, et la seule qui se mesure
+`npm audit` rend les deux mêmes vulnérabilités `mysql2`, inatteignables et
+gardées par `src/dependanceMysql.test.ts` ; **zéro côté application de
+bureau**.
+
+**Une seule mise à jour à prendre, et c'est la bibliothèque qui DESSINE** :
+`lucide-react` 1.42 → 1.43. Tout le reste de ce qui est en retard l'est d'une
+MAJEURE (`typescript` 7, `eslint` 10, `@types/node` 26, `electron` 44), d'un
+`0.x` dont la mineure est le créneau des ruptures (`@libsql/client` 0.18), ou
+d'une version candidate (`prisma` 8). Et `next-auth` s'affiche « en retard »
+sur 4.24.15, ce qui est faux à chaque audit : c'est l'ancienne branche stable.
+
+**Une bibliothèque d'icônes se MESURE**, comme recharts le 5 septembre : c'est
+la seule dépendance du lot qui peint quelque chose, et un changement de rendu
+n'y fait tomber aucun test. **Trente-neuf captures, aucune différence** — et le
+tableau de bord, l'historique, l'écran des amis et les cinq rubriques de
+réglages en font partie, donc toutes les surfaces qui portent des icônes.
+
+**Deux exécutions, comme la règle vient d'être écrite dans l'outil.** Une
+comparaison unique sur des pages régénérables ne mesure pas le code, elle
+mesure l'état du cache — c'est ce qui a failli faire passer la page d'accueil
+pour une régression quelques heures plus tôt. Les deux rendent zéro.
+
+**Aucune version d'application de bureau à publier** : `desktop/` n'a pas été
+touché, et la règle du propriétaire ne se déclenche que sur ce dossier.
+
+**Et le piège du `cd`, retombé dedans.** Un `cd desktop` posé dans la commande
+d'audit a fait installer `lucide-react` dans le paquet de la COQUILLE : la
+construction suivante a échoué sur « Couldn't find any `pages` or `app`
+directory », c'est-à-dire un symptôme qui ne ressemble en rien à sa cause. Le
+journal porte déjà ce piège depuis le 7 septembre, sous sa forme la plus
+douce — un `npm outdated` qui rendait la liste de l'application de bureau en
+annonçant celle du site. Ici il a produit une construction cassée, puis un
+serveur relancé dessus. La parade est la même et elle coûte une seconde :
+`npm --prefix <chemin>` plutôt qu'un `cd`.
+
 ### La page d'accueil a failli passer pour une régression, et il a fallu quatre exécutions
 Campagne de clôture après V532 et V533, entre V531 et la tête, sur un compte
 semé à soixante parties.
