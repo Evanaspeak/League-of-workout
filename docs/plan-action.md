@@ -60,10 +60,20 @@ bord : c'est un fichier, donc c'est du travail ordinaire. La ligne attendait
 une décision qui n'avait pas lieu d'être, et le propriétaire l'a tranchée le
 8 septembre d'un « si c'est utile vas-y ».
 
+**Posé le 8 septembre (V529).** `vercel.json` porte deux tâches à 8 h et 9 h
+UTC, qui appellent `/api/cron/matin` avec le même secret : 10 h et 11 h en
+France l'été, 9 h et 10 h l'hiver, quatre heures qui tombent toutes dans la
+fenêtre. La matinée française est couverte, et un test le vérifie plutôt que de
+l'affirmer.
+
 Le seul point qui reste chez lui est le PLAN Vercel : sur Hobby, les tâches
-sont limitées à deux et à un passage par jour ; sur Pro, elles descendent à la
-minute. Le projet a exactement deux routes programmées, donc les deux plans
-peuvent convenir — mais la fenêtre qu'on écrit dans le cron n'est pas la même.
+sont limitées à deux et à un passage par jour — c'est exactement ce qui est
+écrit, donc ça tient — ; sur Pro, elles descendent à la minute, et un seul
+`0 * * * *` remplacerait les deux ET le travail GitHub, en couvrant tous les
+fuseaux au lieu du seul fuseau français.
+
+Il reste donc, chez lui : envoyer un message, ouvrir un endroit où on lui
+répond.
 
 ### [~] 02 — Le social minimal — amis, classement, parrainage
 *5 à 6 nuits*

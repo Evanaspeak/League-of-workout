@@ -77,6 +77,12 @@ export const PREFIXES_PUBLICS = [
   // vingt-quatre courriels d'échec par jour.
   "/api/push/programme",
   "/api/mail/hebdo",
+  // L'aiguilleur du matin, appelé par les tâches planifiées de Vercel. Même
+  // raison, même verrou : il n'a pas de session à lire, et le secret partagé
+  // le garde. Il vit à part parce que Vercel appelle un CHEMIN en GET, quand
+  // les deux routes d'envoi sont en POST et le restent — une route qui écrit
+  // sur un GET se fait atteindre par un préchargeur.
+  "/api/cron/matin",
   // L'amorçage de la configuration, avant qu'il existe le moindre compte.
   // Exiger une session pour créer les données dont dépend la première
   // session n'a pas de sens ; c'est INIT_SECRET qui la garde.

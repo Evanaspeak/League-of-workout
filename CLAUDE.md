@@ -1196,6 +1196,91 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La mécanique de rétention avait un déclencheur, elle n'avait pas d'heure
+Question 3 des questions ouvertes, tranchée par le propriétaire d'un « si
+c'est utile vas-y ». Ce qui la débloquait n'était pas la réponse : c'est
+qu'elle n'avait pas lieu d'être posée.
+
+**Le plan annonçait depuis six jours que les tâches planifiées Vercel
+appartenaient au propriétaire.** C'est faux : une tâche planifiée Vercel est un
+`vercel.json` à la racine du dépôt, pas un réglage de tableau de bord. Donc du
+travail ordinaire, mis en attente pendant six jours derrière une décision qui
+n'existait pas. Le seul point qui le concerne est le PLAN — sur Hobby, deux
+tâches et un passage par jour ; sur Pro, la minute — et c'est une ligne de
+facture, pas un réglage.
+
+**Ce que ça répare est mesuré** : le `schedule` de GitHub passe 8,3 fois par
+jour au lieu de vingt-quatre, et rate la fenêtre de 9 h à midi **six jours sur
+douze**. Le rappel du matin partait un jour sur deux ; le bilan hebdomadaire,
+qui ne part que le lundi, perdait une semaine sur deux — et un lundi manqué ne
+se rattrape pas, la marque étant posée par jour local.
+
+**Deux crons à 8 h et 9 h UTC, et le choix des heures se démontre.** La fenêtre
+est en heure LOCALE, le cron est en UTC, et la France bouge de soixante minutes
+entre l'été et l'hiver. Il faut donc une heure `h` telle que `h + 1` ET `h + 2`
+tombent dans [9, 12) : ça ne laisse que 8 et 9. Un cron à 6 h UTC est
+parfaitement valable et n'enverrait **jamais** rien — 7 h en hiver, 8 h en
+été, deux fois hors de la fenêtre — et rien ne le dirait, puisque la route
+répondrait 200 avec zéro envoi, c'est-à-dire le symptôme exact qu'on vient de
+corriger. Un test le vérifie, et son sabotage nomme les heures fautives.
+
+**Un aiguilleur plutôt que deux crons directs**, pour trois raisons qui vont
+dans le même sens. Vercel appelle un CHEMIN en GET ; les deux routes d'envoi
+sont en POST et le restent, parce qu'une route qui écrit sur un GET se fait
+atteindre par un préchargeur. Le plan Hobby n'autorise que deux tâches : une
+par envoi donnerait une seule chance à chacun, un aiguilleur en donne deux aux
+deux. Et les deux routes restent la source de vérité — elles sont appelées par
+leur fonction, pas par un aller-retour HTTP, parce que recopier leur logique
+aurait créé une troisième vérité.
+
+**`allSettled` et non `all`** : le bilan du lundi n'a pas à sauter parce qu'un
+service de notification est en panne, et il ne se rattrape pas.
+
+**Le verrou apprend un second en-tête, comparé à la MÊME variable.** GitHub
+envoie ce qu'on lui dit d'envoyer ; Vercel non — il pose
+`Authorization: Bearer $CRON_SECRET`, et cet en-tête-là ne se choisit pas. Deux
+secrets à tenir d'accord finissent par ne plus l'être, et c'est celui qu'on
+relit le moins qui garde la version périmée : côté Vercel, `CRON_SECRET` vaut
+`RAPPEL_SECRET`.
+
+**Et ce verrou n'avait aucun test à lui.** Il était couvert INDIRECTEMENT — les
+tests des deux routes vérifient qu'un appel sans secret rend 401 — et cette
+couverture-là ne dit rien de la branche que la production emprunte. Une erreur
+y a deux formes, toutes deux muettes : le déclencheur refusé tous les matins
+sans que rien ne crie, ou la comparaison trop lâche et la porte ouverte. Le
+sabotage qui retire le préfixe `Bearer` fait tomber trois contrôles.
+
+**Le garde des envois programmés devait apprendre à lire `vercel.json`**, sinon
+une route appelée par ce déclencheur-là échappait à la règle « pas d'heure
+exacte ». Et à SUIVRE un saut d'aiguillage : `/api/cron/matin` ne compare
+aucune heure, donc il satisferait le garde en ne prouvant rien pendant que les
+vraies routes lui échapperaient. Ce n'est pas un trou théorique — le travail
+GitHub disparaîtra le jour où le plan permettra un cron horaire, et c'est ce
+jour-là que les deux routes sortiraient du champ sans que rien ne le dise.
+
+**Le saut s'éprouve sur des cas FABRIQUÉS**, et il fallait le voir : l'état
+sain du dépôt ne distingue pas un saut qui marche d'un saut cassé, puisque les
+deux routes sont ENCORE appelées directement par le workflow. `aiguillages`
+pourrait rendre une liste vide sans qu'aucun test ne rougisse.
+
+**Le travail GitHub RESTE, et pas par prudence.** Deux heures fixes couvrent un
+fuseau, pas le monde : un compte à Tokyo a sa matinée à une heure UTC que ces
+deux crons n'atteignent jamais. La loterie de GitHub lui donne ses chances.
+
+Neuf sabotages, neuf échecs : un cron hors fenêtre, le préfixe `Bearer` retiré,
+la branche `Bearer` supprimée, l'aiguillage rendu aveugle, `vercel.json` vidé,
+le refus retiré de l'aiguilleur, un seul envoi appelé, `all` à la place
+d'`allSettled`, et le secret oublié dans la requête fabriquée.
+
+Vérifié sur le serveur, parce qu'une porte se pousse : **401** sans secret,
+**401** sur un Bearer faux, **200** sur le Bearer juste comme sur l'en-tête de
+GitHub, et **405** sur un POST. Les deux enveloppes reviennent, `push` et
+`mail`, avec `"absent"` pour les deux canaux — ce qui est la réponse honnête
+d'un serveur local sans clés.
+
+**Le témoin public de cette version est un CODE**, et il est net :
+`/api/cron/matin` rendait 404 avant, il rend 401 après.
+
 ### Les jeux qui racontent leur partie étaient écrits trois fois, sous deux noms
 Recensement mécanique des LISTES FERMÉES exportées de `src/lib` — trente
 candidates — confrontées à ce que les écrans écrivent à la main. C'est la

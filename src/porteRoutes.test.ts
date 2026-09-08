@@ -52,6 +52,8 @@ const SANS_SESSION: Record<string, string> = {
     "trois nombres de configuration, déjà présents dans le HTML de chaque page",
   "init":
     "amorçage de la configuration avant qu'il existe le moindre compte ; protégée par INIT_SECRET",
+  "cron/matin":
+    "déclencheur programmé appelé par les tâches planifiées Vercel ; protégée par RAPPEL_SECRET, comparé aussi à l'en-tête Bearer que Vercel pose et qui ne se choisit pas",
   "mail/hebdo":
     "déclencheur programmé appelé par GitHub Actions ; protégée par RAPPEL_SECRET",
   "obs/[jeton]":

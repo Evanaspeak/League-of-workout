@@ -18,9 +18,19 @@
 # parti, plutôt qu'une heure exacte qu'on ne touche presque jamais.
 #
 # Ça rend le système tolérant ; ça ne le rend pas ponctuel. Trois passages par
-# jour restent une loterie à trois cases sur vingt-quatre. Un déclencheur
-# fiable — les tâches planifiées de Vercel appellent les mêmes adresses avec le
-# même secret — est une décision d'infrastructure, notée dans docs/lancement.md.
+# jour restent une loterie à trois cases sur vingt-quatre.
+#
+# **Depuis le 8 septembre, ce travail n'est plus le déclencheur principal.**
+# `vercel.json` porte deux tâches planifiées, à 8 h et 9 h UTC, qui appellent
+# `/api/cron/matin` — c'est-à-dire 10 h et 11 h en France l'été, 9 h et 10 h
+# l'hiver : quatre heures qui tombent toutes dans la fenêtre, aux deux saisons.
+# La matinée française est donc couverte pour de bon.
+#
+# Ce travail RESTE, et pas par prudence : deux heures fixes couvrent un fuseau,
+# pas le monde. Un compte à Tokyo a sa matinée à une heure UTC que ces deux
+# crons n'atteignent jamais, et c'est la loterie de GitHub qui lui donne ses
+# chances. Le jour où le plan Vercel permettra un « 0 * * * * », ce fichier
+# pourra partir.
 #
 # Ce travail ne CRIE JAMAIS. Il tourne toutes les heures : un échec y vaut
 # vingt-quatre courriels par jour, tous identiques. Quand le site va mal, c'est
