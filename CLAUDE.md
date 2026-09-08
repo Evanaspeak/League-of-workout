@@ -840,7 +840,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2373 tests unitaires, 227 suites (au 7 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2495 tests unitaires, 238 suites (au 8 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -865,7 +865,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 229 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 231 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
