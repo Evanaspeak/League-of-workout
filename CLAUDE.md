@@ -35,6 +35,13 @@ Un plan qu'on ne tient pas à jour ment, et on lui obéit quand même.
 `docs/interrogatoire-2.txt` porte les 308 réponses dont le plan dérive. Quand
 une ligne du plan est ambiguë, la réponse fait foi.
 
+**`docs/questions-ouvertes.md` porte ce qui attend une décision**, et c'est là
+que part tout ce qu'on ne tranche pas seul. Dix-sept arbitrages étaient écrits
+au journal, à l'endroit du chantier qui les avait rencontrés — donc
+introuvables sans les chercher au mot près, et invisibles à qui devait y
+répondre. Chacun y porte ce qui est MESURÉ et ce que ça coûterait ; une
+question tranchée quitte le fichier et devient une ligne du plan.
+
 Ce qui relève de la correction, de l'audit, de la mesure ou d'un garde de test
 ne figure PAS dans le plan : ça vit dans le journal, plus bas.
 
