@@ -1196,6 +1196,79 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La comparaison de rendu a isolé la seule rubrique qui devait bouger
+Campagne de clôture après V535 et V536, sur un compte semé à soixante parties
+et **deux exercices cochés** — pompes et boxe. C'est la condition pour que le
+panneau du barème personnel se rende : les pompes sont l'unité de compte et ne
+se règlent pas, donc un compte qui n'a qu'elles ne voit rien du tout.
+
+**Trois captures différentes sur trente-neuf, et les trois sont la même
+rubrique.** `settings-effort`, aux trois largeurs, et rien d'autre — ni le
+tableau de bord, ni l'historique, ni l'écran des amis, ni le bilan, ni les cinq
+pages publiques. Les hauteurs disent ce qui s'est passé :
+
+| largeur | avant | après |
+|---|---|---|
+| 360 | 6 807 px | 7 020 px |
+| 768 | 4 660 px | 4 806 px |
+| 1280 | 4 386 px | 4 512 px |
+
+La rubrique **GRANDIT**, elle ne se déplace pas. C'est la signature d'un
+panneau ajouté ; une différence qui se serait propagée aux autres captures
+aurait dit tout autre chose.
+
+**Deux exécutions, mêmes trois différences.** La règle est écrite depuis que la
+page d'accueil a failli passer pour une régression : une comparaison unique sur
+des pages régénérables ne mesure pas le code, elle mesure l'état du cache.
+
+**C'est le contrôle qui comptait, et il vaut plus que la ligne du plan.** V536
+change la CONVERSION de la dette — `dureeAffichee`, `quantite`,
+`formaterCompact`, `ventiler`, `caloriesDePoints` ont toutes changé de
+signature, et elles sont lues par la pastille, le décompte, l'historique, le
+tableau de bord, le bilan et la source de diffusion. Qu'aucun de ces écrans ne
+bouge d'un pixel est ce qu'on venait vérifier.
+
+**Ce que la campagne n'exerce PAS**, écrit plutôt que laissé à découvrir : le
+compte de mesure porte `ratiosExercices` à `null`. La comparaison prouve donc
+que le panneau ne déplace rien et ce qu'il coûte ; elle ne dit rien de ce que
+le barème personnel rend une fois réglé. Ça, c'est `bareme-personnel.spec.ts`
+qui le tient, du clic jusqu'à la dette relue en base — et il vérifie les deux
+sens, le réglage qui change la dette et la remise au commun qui la rend.
+
+**Accessibilité : 0 constat**, vingt et une pages en français, en allemand et
+en japonais, et **aucune page laissée de côté** dans les trois. Le panneau
+neuf y entre pour la première fois : chacun de ses deux boutons par ligne
+porte un `aria-label` qui NOMME l'exercice et le sens du geste, et sa ligne
+complète — l'exercice et ce qu'il coûte — est lue d'un tenant par un
+`lecture-ecran`, parce qu'un nombre lu seul ne dit pas à quoi il se rapporte.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 124 ms | 940 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 252 ms | **2152 ms** | 0,000 | l'image de saison |
+| `/dashboard` | 276 ms | 1128 ms | 0,000 | le bandeau d'attente Riot |
+| `/amis` | 284 ms | 1168 ms | 0,032 | le paragraphe du classement |
+| `/history` | 528 ms | 1128 ms | 0,000 | le titre |
+
+Les cinq sont dans les seuils, et `/bilan` reste le plancher pour la raison
+écrite dix fois — son plus grand élément est l'image de saison. 2 152 ms se
+compare aux 2 024, 2 092, 2 096, 2 120, 2 128, 2 132, 2 136, 2 172, 2 216 et
+2 332 relevés sur des comptes semés comparables : il est au milieu de la bande.
+
+**Le poids au chargement bouge d'UN kilo-octet par écran** — 195 à 268 ko,
+contre 194 à 267 à la campagne du matin. C'est la signature d'un dictionnaire
+qui grossit, pas d'un module qui arrive, et ça vaut d'être noté : un panneau
+neuf de cent soixante lignes, avec ses libellés dans les six langues, coûte un
+kilo-octet compressé sur l'écran qui le porte. Le reste du produit ne le paie
+pas.
+
+**Et V536 n'a PAS de témoin public**, ce qui est dit plutôt que tu. Elle ne
+change aucune page publique, et la seule route publique qu'elle touche —
+`/api/exercices/ratios` — rend exactement la même chose à un visiteur anonyme :
+c'est la présence d'une SESSION qui fait basculer sur le barème du compte. On
+se rabat donc sur le témoin de la dernière version qui en avait un, et il est
+là : la production rend `/fr` en 200 et `/api/sante` répond `{"ok":true}`.
+
 ### Des ratios personnels, et le commentaire qui disait pourquoi c'était sans risque
 Réponse 047, « Oui, par utilisateur » : les ratios d'exercices se réglaient
 depuis l'administration, donc les mêmes pour tout le monde. Une seconde de
