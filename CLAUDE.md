@@ -845,6 +845,10 @@ refuse le retour des deux façons de s'en écarter.
   `--signal` (le bleu d'information), `--flame` (ce qu'on DOIT : la dette en
   cours, l'état en retard), `--line` et `--line-strong` (les bordures). Le bloc « Aliases legacy » de `base.css` fait le pont pour les
   anciens noms.
+- **Une variable déclarée que personne ne lit part.** Le pont de la migration
+  en portait treize, onze n'étaient plus lues, et un douzième jeton est tombé
+  avec elles. Le garde le refuse, et la palette annonce donc exactement ce
+  qu'elle emploie.
 - **Onze fichiers ne peuvent pas lire la palette**, et écrivent donc des
   littéraux : les six images dessinées par `next/og`, la frontière 404 de la
   racine et le bloc qu'elle rend, le `themeColor` de la mise en page, le
@@ -1236,6 +1240,72 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le garde dispensait le fichier qui DÉCLARE, et ce fichier EMPLOIE aussi
+Suite immédiate. La règle qui refuse une couleur de la palette sous
+transparence exemptait `base.css` — « c'est le seul endroit où ces valeurs ont
+le droit d'être écrites en clair ». La raison était bonne pour les
+DÉCLARATIONS ; elle était fausse pour le reste du fichier, et le reste du
+fichier peint quelque chose.
+
+**Les deux halos du fond y écrivaient `--violet` et `--ember` sous
+transparence**, sur le `body`, donc sur toutes les pages du produit. La
+dispense portait sur le FICHIER ; elle porte maintenant sur la ligne — une
+couleur en clair n'est tolérée que dans la déclaration d'une propriété
+personnalisée.
+
+**Et le dégradé de marque écrivait deux de ses trois couleurs en clair** tout
+en lisant la troisième par son nom, depuis qu'on avait nommé `--flame` la
+veille. Une correction qui n'en répare qu'une partie est le motif que ce
+journal trouve le plus, et il était dans la ligne qu'il venait d'écrire.
+
+**Douze variables n'avaient plus aucun lecteur**, et onze sont le PONT posé
+lors de la migration de palette : `--bg-deep`, `--bg-base`, `--bg-high`,
+`--border`, `--border-hover`, `--cyan`, `--red`, `--gold-light`, plus trois
+variantes douces jamais employées. Un pont existe pour que le code d'avant
+continue de rendre la bonne couleur : il est fait pour disparaître à mesure
+que ce code passe, et il avait fini de servir sans que personne le retire.
+
+**Le douzième est sorti du retrait lui-même.** `--ember-deep` n'était lue que
+par `--red`, une planche du pont. Retirer le pont l'a rendue orpheline, et
+c'est le garde qui l'a dit — sur la correction qui venait de l'écrire, à la
+seconde où elle l'écrivait.
+
+La quatrième règle refuse donc une variable déclarée que rien ne lit. C'est le
+raisonnement de `codeMort.test.ts` appliqué à la palette : le coût d'un jeton
+mort est humain, pas technique — on le relit, on se demande s'il sert, on
+n'ose pas le retirer.
+
+Quatre sabotages, quatre échecs : un halo remis en clair, une variable
+déclarée sans lecteur, le dernier lecteur d'une variable vivante retiré — il a
+fallu les DIX fichiers, la première tentative en avait manqué quatre et
+passait au vert pour cette seule raison — et le recensement des déclarations
+rendu aveugle.
+
+**Et l'outillage a coûté plus cher que le chantier, sur un piège que ce
+journal connaît sous une autre forme.** Construire pendant qu'un ANCIEN
+serveur tourne sur le même `.next` produit un arbre MIXTE : le HTML prérendu
+désignait un fragment CSS que la construction n'avait pas émis. Le symptôme
+est spectaculaire et ne ressemble pas à sa cause — la page se rend **sans
+aucune feuille de style**, `background-image` à `none`, `--brand-gradient`
+vide. J'ai failli conclure que le retrait des onze variables avait cassé la
+palette. Reconstruit serveur éteint, le fond rend `rgb(12, 14, 17)`, les halos
+rendent `color(srgb 0.615686 0.486274 1 / 0.08)` — le violet à huit pour cent —
+et la console est muette.
+
+**Trois raisons pour lesquelles le serveur ne s'éteignait pas**, et les trois
+valent d'être écrites :
+
+- `echo $!` après `setsid nohup … &` enregistre le PID de l'ENVELOPPE, pas
+  celui du serveur. Le fichier de PID ne tuait donc rien, et le `next start`
+  suivant sortait sur EADDRINUSE dans un journal que personne ne lit — pendant
+  que l'ancien continuait de servir ;
+- un balayage de `/proc` qui cherche le motif tue le shell qui le LANCE, parce
+  que le motif figure dans son propre argv. C'est `pkill -f` sous un troisième
+  déguisement, et la sixième occurrence de la nuit ;
+- la parade qui marche : **le motif se lit dans un FICHIER**, jamais écrit dans
+  la commande qui tue, et le balayage écarte son propre PID et celui de son
+  parent.
+
 ### La même couleur sous transparence, et le garde qui ne regardait pas sous l'alpha
 Suite directe de `--flame`. Le garde de la palette refuse un littéral qui
 ÉGALE une valeur déclarée — il compare des CHAÎNES, donc `rgba(152,162,176,0.2)`
@@ -1302,6 +1372,26 @@ de trois fichiers ET la règle que je venais d'écrire. Les sabotages suivants
 ont alors tourné sur un arbre amputé, et le second a « mordu » pour la
 mauvaise raison — c'est le premier qui traînait encore. **Quatrième
 occurrence**, et la parade coûte une seconde : indexer AVANT de saboter.
+
+**Et la suite navigateur a rendu 76 passés sur 261, avec la signature de
+l'échec le plus connu de ce fichier** — `waitForURL` qui expire sur la
+CONNEXION, que le journal attribue depuis août à la contention bcrypt. Ce
+n'était pas ça. La sonde l'a dit en une exécution : un fragment JavaScript
+répondait **500**, le navigateur refusait de l'exécuter, la page ne
+s'hydratait jamais, et le formulaire de connexion ne faisait rien. Le serveur
+tournait depuis avant un `rm -rf .next` : il servait un manifeste dont les
+fragments n'existaient plus.
+
+C'est la QUATRIÈME occurrence de « après un `next build`, on relance le
+serveur », et la première où elle se déguise en contention. Serveur relancé,
+le même fichier passe en treize secondes contre une minute d'échecs ; la suite
+entière rend **258 passés sur 261**, l'unique échec étant un aléa de
+contention à deux workers qui repasse 2 sur 2 seul.
+
+**Ce que ça ajoute au diagnostic** : « la connexion expire » a maintenant
+DEUX causes connues, et elles se distinguent en une seconde — la console de la
+page. Un fragment en 500 dit le serveur périmé ; une console propre dit la
+file d'attente.
 
 Et `pkill -f`, deux fois, dont une sous une forme nouvelle. La première est
 classique — `ps -eo args | grep "[n]ext build"` attrape le shell qui LANCE la
