@@ -212,6 +212,16 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     await expect(pastille).toContainText(/\d/);
     await pastille.click();
 
+    /**
+     * La séance commence sur un GESTE (ligne 205).
+     *
+     * La fenêtre s'ouvre sur la préparation — les consignes, la prudence, ce
+     * vers quoi on peut convertir — et RIEN ne compte avant ce bouton. Le
+     * chrono démarrait à l'ouverture, sur le même écran que les consignes :
+     * quinze secondes de lecture payaient quinze secondes de dette.
+     */
+    await page.getByRole("button", { name: /^commencer$|^start$/i }).click();
+
     // Le chrono ne propose « J'ai fini » qu'une fois la durée écoulée — ici
     // plus de quatre minutes. On s'arrête en cours de route, ce que fait la
     // plupart du monde, et on vérifie que seule la part faite est créditée :

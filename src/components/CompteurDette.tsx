@@ -526,7 +526,26 @@ export function CompteurDette() {
                   : temps === "preparation" ? t.seancePrete : t.detteChronoTitre}
           </h2>
 
-          {temps === "preparation" && (
+          {/*
+            Ce qu'on s'apprête à faire, et non ce qu'on doit.
+
+            Choisir « squats » sous une dette en pompes laissait « 40 pompes »
+            en gros au milieu de la préparation, et ne disait NULLE PART combien
+            de squats — on commençait donc à l'aveugle, alors que c'est
+            exactement le chiffre sur lequel on décide de convertir. Le parcours
+            de conversion l'a dit avant qu'on s'en aperçoive.
+          */}
+          {temps === "preparation" && cible && conversion && (
+            <div>
+              <div className="mono-num text-xl font-bold gold-text">
+                {formaterQuantite(dette?.conversions?.[conversion] ?? 0, conversion, etiquette)}
+              </div>
+              <div className="text-xs" style={{ color: "var(--faint)" }}>
+                {minuscule(nomsExo[conversion])}
+              </div>
+            </div>
+          )}
+          {temps === "preparation" && !conversion && (
           <div className="flex flex-wrap justify-center gap-4">
             {lignes.map((ligne) => (
               <div key={ligne.id}>
@@ -828,13 +847,35 @@ export function CompteurDette() {
                 >
                   {conversion ? t.detteConvertiAnnuler : t.detteChronoAbandon}
                 </button>
+                {/*
+                  Le compteur ne doit pas coûter une tape par pompe à qui les
+                  a toutes faites.
+
+                  Vingt-cinq pompes dues, c'est vingt-cinq tapes pour dire ce
+                  qu'un bouton disait avant en une seule — le parcours
+                  `dette-pompes` l'a dit avant moi, et il avait raison. Le
+                  compteur existe pour le paiement PARTIEL, pas pour rendre le
+                  cas courant pénible.
+
+                  D'où un libellé qui suit l'état, sans ambiguïté possible : à
+                  zéro compté on n'a rien à déclarer de partiel, donc le bouton
+                  dit « j'ai tout fait » ; dès qu'on a compté, il paie ce qu'on
+                  a compté.
+
+                  Sauf en CONVERSION, et la différence est réelle : on a choisi
+                  un exercice et on n'a rien fait — c'est un renoncement, pas
+                  une séance complète, et payer la dette entière là-dessus
+                  serait le pire résultat possible.
+                */}
                 <button
                   className="lol-btn flex-1"
-                  onClick={() => (faits > 0
-                    ? payer({ quantite: faits, exercice: cible })
-                    : (setTemps("preparation"), setConversion(null), setFaits(0)))}
+                  onClick={() => {
+                    if (faits > 0) return payer({ quantite: faits, exercice: cible });
+                    if (!conversion) return payer({ tout: true });
+                    setTemps("preparation"); setConversion(null); setFaits(0);
+                  }}
                 >
-                  {t.detteChronoTermine}
+                  {faits > 0 || conversion ? t.detteChronoTermine : t.seanceToutFait}
                 </button>
               </>
             ) : aDuTemps ? (

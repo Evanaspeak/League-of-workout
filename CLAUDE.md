@@ -1196,6 +1196,259 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une décision rangée à une adresse qui n'existait pas
+Trouvé en préparant le chantier suivant, c'est-à-dire en SUIVANT une adresse
+plutôt qu'en la lisant. `docs/questions-ouvertes.md` porte un tableau des
+questions parties, écrit pour qu'une décision reste retrouvable — « une
+question qui disparaît sans laisser d'adresse se repose six semaines plus
+tard ». Il a menti dès sa première version.
+
+« L'historique grandit pour toujours » y était rangé sous **« plan, section
+Technique »**. La section existe ; **la ligne n'existait pas**. La décision
+était écrite, son adresse était écrite, et il n'y avait rien au bout.
+
+C'est pire que pas d'adresse : une adresse fait CESSER de chercher. Et c'est
+exactement le défaut que ce tableau existe pour empêcher, commis dans le
+tableau lui-même, le jour de son écriture.
+
+**Le nom de section était le trou.** « Section Technique » est une adresse
+approximative : elle désigne quinze lignes, donc elle ne désigne rien de
+vérifiable. Les cinq destinations qui disent « plan » nomment maintenant leur
+LIGNE (`plan, ligne 152`) ou leur ÉTAPE (`plan, étape 01`), et
+`src/decisionsRangees.test.ts` va voir si elle existe.
+
+**Les treize autres destinations tiennent**, vérifiées une par une avant
+d'écrire le garde — c'était la seule qui pointait dans le vide.
+
+**Et le garde est tombé sur son propre motif avant de passer.** `\bétape \d+`
+ne trouve jamais rien : le `\b` de JavaScript repose sur `[A-Za-z0-9_]`, donc
+« é » y est un caractère NON-mot et il n'y a aucune frontière entre l'espace qui
+précède et lui. Le contrôle accusait « plan, étape 01 », qui est parfaitement
+juste. C'est le piège déjà payé sur le garde du registre, à l'identique, et il
+se reprend à chaque motif qui commence par une lettre accentuée.
+
+Cinq sabotages, cinq échecs : la destination redevenue vague, une ligne qui
+n'existe pas, une étape qui n'existe pas, la lecture du tableau rendue aveugle,
+et les réfs du plan qu'on ne lit plus.
+
+### Quinze secondes de lecture payaient quinze secondes de dette
+Ligne 205 du plan, renversée par le propriétaire : « fais-le ». Un mode séance
+plein écran pour le téléphone, gros chiffre, compteur de répétitions.
+
+**La fenêtre occupait DÉJÀ l'écran entier**, et c'est ce qui rendait la ligne
+difficile à lire : il n'y avait rien à agrandir. Ce qui manquait s'est mesuré,
+sur un téléphone de 390 px et une dette de boxe de 1 min 15.
+
+**Le chrono démarrait à l'OUVERTURE de la fenêtre, sur le même écran que les
+consignes d'exécution.** Quinze secondes passées à LIRE, sans un seul coup de
+poing, ont ramené la dette à une minute : **75 → 60**. Un cinquième payé pour
+avoir lu, sur un produit dont tout le sujet est que la dette est réelle. C'est
+le seul défaut de la série qu'on ne pouvait pas laisser.
+
+D'où deux temps, et pas deux fenêtres : on se PRÉPARE — le total, l'exercice,
+comment le faire, la prudence, l'échauffement, ce vers quoi on peut convertir —
+puis on COMMENCE. Remesuré à l'identique : **75 → 75**.
+
+**Et le chiffre a l'écran pour lui.** Soixante-treize mots entouraient le chrono
+pendant la séance ; ils ont été lus à la préparation et n'ont plus rien à dire.
+**73 mots → 7**, et le chiffre passe de 18 vw à 26 vw — on le regarde à bout de
+bras, en sueur.
+
+**Le compteur de répétitions n'existait que pour les CONVERSIONS.** Quelqu'un
+qui doit vingt-cinq pompes n'avait que « c'est fait » ou « plus tard »,
+c'est-à-dire tout ou rien, pendant que celui qui convertissait dix minutes de
+boxe obtenait un compteur et un paiement partiel. Le raisonnement d'origine —
+« sans chrono, il n'y a rien à mesurer : on a fait ses pompes ou on ne les a pas
+faites » — est faux dès que le nombre dépasse une série, ce qui est le cas
+courant. Mesuré de bout en bout : **25 pompes dues, 5 comptées, 20 restantes.**
+
+**Une dette répartie sur PLUSIEURS exercices n'a pas de cible**, et c'est écrit
+plutôt que tu : compter sur l'un des deux paierait l'autre sans qu'on l'ait
+fait. C'est la conversion qui existe pour regrouper, et elle est proposée à la
+préparation.
+
+**L'écran s'éteignait, et personne ne l'aurait signalé.** Un téléphone dort au
+bout de trente secondes : une planche de cinq minutes se fait devant un écran
+noir qu'il faut déverrouiller les mains moites — et ça ressemble à un téléphone
+qui fait ce qu'un téléphone fait. Le verrou de veille est demandé PENDANT la
+séance et seulement là, un refus ne se dit à personne, et rien n'est promis :
+le chrono compte du temps réel, pas des tics d'animation. Ce n'est pas mesurable
+ici — un Chromium sans tête ne s'endort pas — et c'est écrit comme tel.
+
+**La consigne suit ce qu'on va FAIRE, pas ce qu'on doit.** Convertir dix minutes
+de boxe en pompes et lire « garde haute, coudes rentrés » n'aide personne, et
+c'est au moment de la conversion qu'on a le plus besoin de savoir exécuter le
+mouvement qu'on vient de choisir.
+
+**Un libellé mentait**, trouvé par la sonde : le bouton disait « Annuler la
+conversion » sous un compteur qui comptait la dette elle-même. Deux gestes
+différents sous le même bouton — revenir choisir un autre exercice, ou refermer
+sans rien réclamer — et le libellé dit lequel.
+
+**Huit sabotages, huit échecs — mais le premier est passé, et c'est lui qui a
+appris quelque chose.** Mon parcours lisait la DETTE après dix secondes de
+préparation. Or rien n'y est jamais payé, dans les deux cas : le paiement a lieu
+à la FERMETURE, et il porte sur ce que le chrono a décompté. C'est donc le
+CHRONO qu'il faut lire, et il doit partir du total ENTIER. Le contrôle corrigé
+tombe sur le défaut remis.
+
+C'est la mesure d'origine qui avait raison et le test qui regardait à côté : la
+sonde, elle, appuyait sur « Plus tard » APRÈS ses quinze secondes, c'est-à-dire
+au moment où le paiement a lieu. Un test écrit sur le bon symptôme au mauvais
+instant ne prouve rien.
+
+**Et le piège du serveur, retombé dedans.** Après le second sabotage, la suite a
+rendu un échec qui accusait le produit : les consignes visibles pendant la
+séance ET un chrono déjà entamé, c'est-à-dire les DEUX sabotages à la fois. Le
+`git checkout` avait bien restauré la source ; c'est le `.next` qui portait
+encore la construction sabotée. On relance le serveur APRÈS avoir reconstruit,
+et c'est la troisième occurrence recensée ici.
+
+### Quatre parcours ont dit ce que le mode séance coûtait vraiment
+Suite de la ligne 205. Le mode séance introduit un TEMPS de préparation avant
+que quoi que ce soit ne compte — c'est la correction du défaut mesuré, quinze
+secondes de lecture qui payaient quinze secondes de dette. La suite entière l'a
+fait payer sur quatre fichiers, et **deux des quatre n'étaient pas des tests à
+mettre à jour : c'étaient des défauts de produit.**
+
+**Vingt-cinq pompes dues demandaient vingt-cinq tapes.** `dette-pompes` cliquait
+« j'ai tout fait » ; le compteur de répétitions l'avait remplacé par un bouton
+qui paie ce qu'on a COMPTÉ, donc zéro. Le compteur existe pour le paiement
+PARTIEL ; il ne doit pas rendre le cas courant pénible. Le libellé suit l'état
+maintenant — à zéro compté il dit « j'ai tout fait », dès qu'on a compté il paie
+ce qu'on a compté. **Sauf en CONVERSION**, où zéro compté est un renoncement et
+non une séance complète : payer la dette entière là-dessus serait le pire
+résultat possible.
+
+**Et une conversion choisie ne disait pas combien.** `conversion-dette` est
+tombé sur un écran qui annonçait encore « 40 pompes » après avoir choisi les
+squats, sans jamais dire combien de squats. On commençait donc à l'aveugle. La
+quantité cible entre dans l'écran de préparation.
+
+**Les deux autres étaient bien des tests, et ils disent deux choses
+différentes.** `hors-ligne` traverse maintenant « Commencer » avant de mettre
+de côté — sans quoi « plus tard » referme à la préparation sans rien acquitter,
+et le test ne prouve plus rien. `parcours` de même. Ce sont les deux mêmes
+lignes, et **le premier jet du parcours de séance était tombé dans le même
+piège** : il lisait la DETTE pendant la préparation, où rien n'est jamais payé
+dans un sens comme dans l'autre. Il lit le CHRONO.
+
+**Un piège de sélecteur, écrit ici plutôt que redécouvert** :
+`hors-ligne.spec.ts` porte une dette au TEMPS, donc ses deux boutons sont
+« Pause » et « Plus tard » — jamais « j'ai fini ». Un libellé de compteur
+cherché sur un chrono ne trouve rien, et l'échec accuse la fenêtre de ne pas
+s'ouvrir.
+
+**Et le piège du `.next` périmé, TROISIÈME occurrence recensée.** Les deux
+sabotages étaient visibles à l'écran en même temps, ce qui est impossible : le
+serveur servait la construction d'avant. On reconstruit ET on relance.
+
+### La courbe de force, et l'export qui avait perdu les pesées
+Ligne 152 du plan, débloquée par le propriétaire : « fais la courbe de force
+maintenant ». Elle bloquait depuis des mois pour une raison qui tient en une
+phrase — **`User.pompesMax` ne garde que la valeur COURANTE.** Il n'y avait
+littéralement aucune histoire à tracer, et aucun test ne pouvait le dire :
+tout ce qui existait était juste.
+
+`TestForce` est l'histoire, calquée sur `Pesee` : des LIGNES et jamais un
+total, un point par jour, l'unicité posée EN BASE. `pompesMax` reste ce qui
+fixe le niveau — les deux ne se remplacent pas, et le nom de chacun le dit.
+
+**Le jour et l'horodatage viennent du MÊME instant**, et c'est le seul
+contrôle de la passe qui distingue vraiment quelque chose. Deux appels à
+`new Date()` peuvent tomber de part et d'autre de minuit : la courbe porterait
+alors un point daté d'un autre jour que « test fait le… » affiché juste
+au-dessus — deux vérités pour un seul geste.
+
+**Le jour vient du SERVEUR, contrairement à une pesée**, et la raison était
+déjà écrite deux lignes plus haut dans la même route : une date fournie par le
+client permettrait de faire passer un test périmé pour récent. Le prix est une
+approximation pour qui vit loin du méridien, sur une courbe qui se lit en
+semaines.
+
+**L'axe part de ZÉRO, et c'est l'inverse du choix fait pour le poids.**
+`CourbePoids` écrit sa raison — « personne ne pèse zéro », donc l'ancrer
+écrase deux ans de variations en une ligne plate. Ici zéro a un sens : c'est
+« je n'en fais aucune », et quelqu'un peut réellement en être proche. Douze
+pompes qui deviennent dix-huit, c'est une progression de moitié, et c'est
+exactement ce qu'un axe ancré rend fidèlement.
+
+**L'historique est une PROPRIÉTÉ du panneau, pas une lecture qu'il fait.**
+`TestPompes` est rendu à trois endroits, dont deux sur le tableau de bord où
+l'on ne montre pas la progression : un composant qui irait la chercher
+lui-même paierait trois appels pour un seul affichage, et le quatrième
+appelant qu'on ajoutera demain le paierait sans l'avoir décidé.
+
+**La migration SÈME le point qu'on a déjà.** Sans lui, la courbe est vide pour
+tous les comptes qui ont déjà fait le test — on aurait construit la table qui
+répare « aucune histoire à montrer » en laissant intacte l'absence
+d'histoire. Il n'a **jamais été exercé** par le déploiement local, la base
+n'ayant aucun compte à cet instant : éprouvé à la main, sur un compte à qui
+l'on donne un test daté du 14 juillet, puis rejoué — une ligne au premier
+passage, une au second.
+
+**Et le recensement qui va avec a trouvé bien pire que la ligne du plan.**
+Comparé mécaniquement les relations de `User` à ce que l'export de données
+lit : **les PESÉES n'y étaient pas**, depuis le jour où elles existent. C'est
+la donnée la plus sensible que l'application garde — de la santé au sens de
+l'article 9 — et elle est saisie à la main, donc « fournie par la personne »
+au sens le plus littéral de l'article 20.
+
+**Rien ne pouvait le signaler, et le garde existant explique pourquoi.** Il
+vérifie que chaque bloc PRÉSENT dans le fichier est annoncé par la phrase de
+l'écran, ou porte la raison pour laquelle il ne l'est pas. Il ne voit pas un
+modèle que l'export n'a jamais LU : un bloc absent n'est pas un bloc mal
+annoncé, c'est un bloc invisible. Le fichier était complet de tout ce qu'il
+contenait.
+
+Quatre blocs de plus avec elles : l'histoire des tests, les défis accomplis —
+la seule chose de la progression qui se range en base, donc la seule qu'un
+export puisse perdre — les notifications envoyées, que la politique décrit
+déjà, et les relais reçus d'un coéquipier.
+
+**Les deux seules raisons de ne pas exporter, et aucune n'est « ça
+n'intéresse personne »** — c'est précisément le raisonnement qui a laissé les
+pesées dehors. Ce qui NOMME quelqu'un d'autre : une amitié sans l'ami n'est
+pas une donnée, l'autre bout de la relation est l'identité d'une deuxième
+personne. Et ce qui EST un laissez-passer : `Account` porte les jetons OAuth,
+`Session` les identifiants de session, et les mettre dans un fichier qui
+circule par courriel serait une clé laissée sur la table.
+
+**Une de mes dispenses ne désignait rien de mesurable**, et je l'ai retirée
+plutôt que de la garder. Le garde rapproche par le NOM DU DÉLÉGUÉ Prisma,
+donc deux relations vers le même modèle sont indistinguables : `paiements` et
+`relaisRecus` pointent tous deux vers `Paiement`, et lire l'un satisfait le
+contrôle pour les deux. Une dispense que le garde ne saurait pas vérifier se
+relit comme une garantie — les deux sont donc exportés, et la limite est
+écrite dans le garde.
+
+**Et `filtreParCompte` avait un trou que cette écriture a révélé.**
+`pourUserId` ne figurait pas dans ses colonnes de compte : une lecture des
+relais reçus passait pour une lecture sans filtre. Le cas fabriqué qui le
+distingue est celui qu'il fallait — sans la borne arrière du motif,
+`pourUserId` contient `userId`, la liste n'aurait pas eu besoin de la seconde
+entrée, et rien ne l'aurait signalée.
+
+Huit sabotages unitaires, sept échecs. Le huitième — la section de la courbe
+retirée du panneau — ne fait tomber AUCUN test unitaire, et c'est attendu :
+le composant déclare `historique?`, donc un champ renommé côté route ne fait
+échouer ni la compilation ni une lecture d'API. La section disparaît, sans
+erreur et sans test rouge. C'est le défaut « un champ renommé vidait un
+panneau entier », et c'est exactement ce que le parcours navigateur existe
+pour attraper : deux sabotages, deux échecs — le seuil de la courbe porté à
+9 999, et `{ tests }` renommé `{ historique }` dans la réponse.
+
+**Un neuvième n'a pas compilé** plutôt que de faire tomber un test :
+`false && historique && …` fait perdre à TypeScript la restriction de type,
+et la construction échoue avant le parcours. C'est noté comme tel, pas compté
+comme un garde qui mord.
+
+**Le second point du parcours se sème en SQL, et il le faut.** L'unicité par
+jour est la bonne règle — refaire son test dans la même journée corrige le
+point plutôt que d'en ajouter un second — donc un parcours ne peut pas
+fabriquer deux abscisses en passant deux fois par l'écran, et attendre demain
+n'est pas une option.
+
 ### La page d'accueil ne décide plus, elle demande
 Question 2 des questions ouvertes, et la réponse du propriétaire était un
 refus : **« trouve autre chose »**. La page d'accueil lisait `auth()` pour
@@ -1534,220 +1787,6 @@ d'un serveur local sans clés.
 
 **Le témoin public de cette version est un CODE**, et il est net :
 `/api/cron/matin` rendait 404 avant, il rend 401 après.
-
-### Une décision rangée à une adresse qui n'existait pas
-Trouvé en préparant le chantier suivant, c'est-à-dire en SUIVANT une adresse
-plutôt qu'en la lisant. `docs/questions-ouvertes.md` porte un tableau des
-questions parties, écrit pour qu'une décision reste retrouvable — « une
-question qui disparaît sans laisser d'adresse se repose six semaines plus
-tard ». Il a menti dès sa première version.
-
-« L'historique grandit pour toujours » y était rangé sous **« plan, section
-Technique »**. La section existe ; **la ligne n'existait pas**. La décision
-était écrite, son adresse était écrite, et il n'y avait rien au bout.
-
-C'est pire que pas d'adresse : une adresse fait CESSER de chercher. Et c'est
-exactement le défaut que ce tableau existe pour empêcher, commis dans le
-tableau lui-même, le jour de son écriture.
-
-**Le nom de section était le trou.** « Section Technique » est une adresse
-approximative : elle désigne quinze lignes, donc elle ne désigne rien de
-vérifiable. Les cinq destinations qui disent « plan » nomment maintenant leur
-LIGNE (`plan, ligne 152`) ou leur ÉTAPE (`plan, étape 01`), et
-`src/decisionsRangees.test.ts` va voir si elle existe.
-
-**Les treize autres destinations tiennent**, vérifiées une par une avant
-d'écrire le garde — c'était la seule qui pointait dans le vide.
-
-**Et le garde est tombé sur son propre motif avant de passer.** `\bétape \d+`
-ne trouve jamais rien : le `\b` de JavaScript repose sur `[A-Za-z0-9_]`, donc
-« é » y est un caractère NON-mot et il n'y a aucune frontière entre l'espace qui
-précède et lui. Le contrôle accusait « plan, étape 01 », qui est parfaitement
-juste. C'est le piège déjà payé sur le garde du registre, à l'identique, et il
-se reprend à chaque motif qui commence par une lettre accentuée.
-
-Cinq sabotages, cinq échecs : la destination redevenue vague, une ligne qui
-n'existe pas, une étape qui n'existe pas, la lecture du tableau rendue aveugle,
-et les réfs du plan qu'on ne lit plus.
-
-### Quinze secondes de lecture payaient quinze secondes de dette
-Ligne 205 du plan, renversée par le propriétaire : « fais-le ». Un mode séance
-plein écran pour le téléphone, gros chiffre, compteur de répétitions.
-
-**La fenêtre occupait DÉJÀ l'écran entier**, et c'est ce qui rendait la ligne
-difficile à lire : il n'y avait rien à agrandir. Ce qui manquait s'est mesuré,
-sur un téléphone de 390 px et une dette de boxe de 1 min 15.
-
-**Le chrono démarrait à l'OUVERTURE de la fenêtre, sur le même écran que les
-consignes d'exécution.** Quinze secondes passées à LIRE, sans un seul coup de
-poing, ont ramené la dette à une minute : **75 → 60**. Un cinquième payé pour
-avoir lu, sur un produit dont tout le sujet est que la dette est réelle. C'est
-le seul défaut de la série qu'on ne pouvait pas laisser.
-
-D'où deux temps, et pas deux fenêtres : on se PRÉPARE — le total, l'exercice,
-comment le faire, la prudence, l'échauffement, ce vers quoi on peut convertir —
-puis on COMMENCE. Remesuré à l'identique : **75 → 75**.
-
-**Et le chiffre a l'écran pour lui.** Soixante-treize mots entouraient le chrono
-pendant la séance ; ils ont été lus à la préparation et n'ont plus rien à dire.
-**73 mots → 7**, et le chiffre passe de 18 vw à 26 vw — on le regarde à bout de
-bras, en sueur.
-
-**Le compteur de répétitions n'existait que pour les CONVERSIONS.** Quelqu'un
-qui doit vingt-cinq pompes n'avait que « c'est fait » ou « plus tard »,
-c'est-à-dire tout ou rien, pendant que celui qui convertissait dix minutes de
-boxe obtenait un compteur et un paiement partiel. Le raisonnement d'origine —
-« sans chrono, il n'y a rien à mesurer : on a fait ses pompes ou on ne les a pas
-faites » — est faux dès que le nombre dépasse une série, ce qui est le cas
-courant. Mesuré de bout en bout : **25 pompes dues, 5 comptées, 20 restantes.**
-
-**Une dette répartie sur PLUSIEURS exercices n'a pas de cible**, et c'est écrit
-plutôt que tu : compter sur l'un des deux paierait l'autre sans qu'on l'ait
-fait. C'est la conversion qui existe pour regrouper, et elle est proposée à la
-préparation.
-
-**L'écran s'éteignait, et personne ne l'aurait signalé.** Un téléphone dort au
-bout de trente secondes : une planche de cinq minutes se fait devant un écran
-noir qu'il faut déverrouiller les mains moites — et ça ressemble à un téléphone
-qui fait ce qu'un téléphone fait. Le verrou de veille est demandé PENDANT la
-séance et seulement là, un refus ne se dit à personne, et rien n'est promis :
-le chrono compte du temps réel, pas des tics d'animation. Ce n'est pas mesurable
-ici — un Chromium sans tête ne s'endort pas — et c'est écrit comme tel.
-
-**La consigne suit ce qu'on va FAIRE, pas ce qu'on doit.** Convertir dix minutes
-de boxe en pompes et lire « garde haute, coudes rentrés » n'aide personne, et
-c'est au moment de la conversion qu'on a le plus besoin de savoir exécuter le
-mouvement qu'on vient de choisir.
-
-**Un libellé mentait**, trouvé par la sonde : le bouton disait « Annuler la
-conversion » sous un compteur qui comptait la dette elle-même. Deux gestes
-différents sous le même bouton — revenir choisir un autre exercice, ou refermer
-sans rien réclamer — et le libellé dit lequel.
-
-**Huit sabotages, huit échecs — mais le premier est passé, et c'est lui qui a
-appris quelque chose.** Mon parcours lisait la DETTE après dix secondes de
-préparation. Or rien n'y est jamais payé, dans les deux cas : le paiement a lieu
-à la FERMETURE, et il porte sur ce que le chrono a décompté. C'est donc le
-CHRONO qu'il faut lire, et il doit partir du total ENTIER. Le contrôle corrigé
-tombe sur le défaut remis.
-
-C'est la mesure d'origine qui avait raison et le test qui regardait à côté : la
-sonde, elle, appuyait sur « Plus tard » APRÈS ses quinze secondes, c'est-à-dire
-au moment où le paiement a lieu. Un test écrit sur le bon symptôme au mauvais
-instant ne prouve rien.
-
-**Et le piège du serveur, retombé dedans.** Après le second sabotage, la suite a
-rendu un échec qui accusait le produit : les consignes visibles pendant la
-séance ET un chrono déjà entamé, c'est-à-dire les DEUX sabotages à la fois. Le
-`git checkout` avait bien restauré la source ; c'est le `.next` qui portait
-encore la construction sabotée. On relance le serveur APRÈS avoir reconstruit,
-et c'est la troisième occurrence recensée ici.
-
-### La courbe de force, et l'export qui avait perdu les pesées
-Ligne 152 du plan, débloquée par le propriétaire : « fais la courbe de force
-maintenant ». Elle bloquait depuis des mois pour une raison qui tient en une
-phrase — **`User.pompesMax` ne garde que la valeur COURANTE.** Il n'y avait
-littéralement aucune histoire à tracer, et aucun test ne pouvait le dire :
-tout ce qui existait était juste.
-
-`TestForce` est l'histoire, calquée sur `Pesee` : des LIGNES et jamais un
-total, un point par jour, l'unicité posée EN BASE. `pompesMax` reste ce qui
-fixe le niveau — les deux ne se remplacent pas, et le nom de chacun le dit.
-
-**Le jour et l'horodatage viennent du MÊME instant**, et c'est le seul
-contrôle de la passe qui distingue vraiment quelque chose. Deux appels à
-`new Date()` peuvent tomber de part et d'autre de minuit : la courbe porterait
-alors un point daté d'un autre jour que « test fait le… » affiché juste
-au-dessus — deux vérités pour un seul geste.
-
-**Le jour vient du SERVEUR, contrairement à une pesée**, et la raison était
-déjà écrite deux lignes plus haut dans la même route : une date fournie par le
-client permettrait de faire passer un test périmé pour récent. Le prix est une
-approximation pour qui vit loin du méridien, sur une courbe qui se lit en
-semaines.
-
-**L'axe part de ZÉRO, et c'est l'inverse du choix fait pour le poids.**
-`CourbePoids` écrit sa raison — « personne ne pèse zéro », donc l'ancrer
-écrase deux ans de variations en une ligne plate. Ici zéro a un sens : c'est
-« je n'en fais aucune », et quelqu'un peut réellement en être proche. Douze
-pompes qui deviennent dix-huit, c'est une progression de moitié, et c'est
-exactement ce qu'un axe ancré rend fidèlement.
-
-**L'historique est une PROPRIÉTÉ du panneau, pas une lecture qu'il fait.**
-`TestPompes` est rendu à trois endroits, dont deux sur le tableau de bord où
-l'on ne montre pas la progression : un composant qui irait la chercher
-lui-même paierait trois appels pour un seul affichage, et le quatrième
-appelant qu'on ajoutera demain le paierait sans l'avoir décidé.
-
-**La migration SÈME le point qu'on a déjà.** Sans lui, la courbe est vide pour
-tous les comptes qui ont déjà fait le test — on aurait construit la table qui
-répare « aucune histoire à montrer » en laissant intacte l'absence
-d'histoire. Il n'a **jamais été exercé** par le déploiement local, la base
-n'ayant aucun compte à cet instant : éprouvé à la main, sur un compte à qui
-l'on donne un test daté du 14 juillet, puis rejoué — une ligne au premier
-passage, une au second.
-
-**Et le recensement qui va avec a trouvé bien pire que la ligne du plan.**
-Comparé mécaniquement les relations de `User` à ce que l'export de données
-lit : **les PESÉES n'y étaient pas**, depuis le jour où elles existent. C'est
-la donnée la plus sensible que l'application garde — de la santé au sens de
-l'article 9 — et elle est saisie à la main, donc « fournie par la personne »
-au sens le plus littéral de l'article 20.
-
-**Rien ne pouvait le signaler, et le garde existant explique pourquoi.** Il
-vérifie que chaque bloc PRÉSENT dans le fichier est annoncé par la phrase de
-l'écran, ou porte la raison pour laquelle il ne l'est pas. Il ne voit pas un
-modèle que l'export n'a jamais LU : un bloc absent n'est pas un bloc mal
-annoncé, c'est un bloc invisible. Le fichier était complet de tout ce qu'il
-contenait.
-
-Quatre blocs de plus avec elles : l'histoire des tests, les défis accomplis —
-la seule chose de la progression qui se range en base, donc la seule qu'un
-export puisse perdre — les notifications envoyées, que la politique décrit
-déjà, et les relais reçus d'un coéquipier.
-
-**Les deux seules raisons de ne pas exporter, et aucune n'est « ça
-n'intéresse personne »** — c'est précisément le raisonnement qui a laissé les
-pesées dehors. Ce qui NOMME quelqu'un d'autre : une amitié sans l'ami n'est
-pas une donnée, l'autre bout de la relation est l'identité d'une deuxième
-personne. Et ce qui EST un laissez-passer : `Account` porte les jetons OAuth,
-`Session` les identifiants de session, et les mettre dans un fichier qui
-circule par courriel serait une clé laissée sur la table.
-
-**Une de mes dispenses ne désignait rien de mesurable**, et je l'ai retirée
-plutôt que de la garder. Le garde rapproche par le NOM DU DÉLÉGUÉ Prisma,
-donc deux relations vers le même modèle sont indistinguables : `paiements` et
-`relaisRecus` pointent tous deux vers `Paiement`, et lire l'un satisfait le
-contrôle pour les deux. Une dispense que le garde ne saurait pas vérifier se
-relit comme une garantie — les deux sont donc exportés, et la limite est
-écrite dans le garde.
-
-**Et `filtreParCompte` avait un trou que cette écriture a révélé.**
-`pourUserId` ne figurait pas dans ses colonnes de compte : une lecture des
-relais reçus passait pour une lecture sans filtre. Le cas fabriqué qui le
-distingue est celui qu'il fallait — sans la borne arrière du motif,
-`pourUserId` contient `userId`, la liste n'aurait pas eu besoin de la seconde
-entrée, et rien ne l'aurait signalée.
-
-Huit sabotages unitaires, sept échecs. Le huitième — la section de la courbe
-retirée du panneau — ne fait tomber AUCUN test unitaire, et c'est attendu :
-le composant déclare `historique?`, donc un champ renommé côté route ne fait
-échouer ni la compilation ni une lecture d'API. La section disparaît, sans
-erreur et sans test rouge. C'est le défaut « un champ renommé vidait un
-panneau entier », et c'est exactement ce que le parcours navigateur existe
-pour attraper : deux sabotages, deux échecs — le seuil de la courbe porté à
-9 999, et `{ tests }` renommé `{ historique }` dans la réponse.
-
-**Un neuvième n'a pas compilé** plutôt que de faire tomber un test :
-`false && historique && …` fait perdre à TypeScript la restriction de type,
-et la construction échoue avant le parcours. C'est noté comme tel, pas compté
-comme un garde qui mord.
-
-**Le second point du parcours se sème en SQL, et il le faut.** L'unicité par
-jour est la bonne règle — refaire son test dans la même journée corrige le
-point plutôt que d'en ajouter un second — donc un parcours ne peut pas
-fabriquer deux abscisses en passant deux fois par l'écran, et attendre demain
-n'est pas une option.
 
 ### Les jeux qui racontent leur partie étaient écrits trois fois, sous deux noms
 Recensement mécanique des LISTES FERMÉES exportées de `src/lib` — trente

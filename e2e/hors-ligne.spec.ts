@@ -101,9 +101,23 @@ test("sans réseau, la séance est gardée au lieu d'être perdue", async ({ bro
     .or(page.locator(".pastille-dette")).first().click();
   await expect(page.getByRole("dialog")).toBeVisible();
 
+  /**
+   * La séance commence sur un GESTE, depuis la ligne 205 : la fenêtre s'ouvre
+   * sur la préparation, et « plus tard » y referme sans rien acquitter — ce
+   * qui est vrai, puisque rien n'a été fait. Il n'y aurait donc rien à mettre
+   * de côté, et c'est ce que ce parcours a dit avant qu'on s'en aperçoive.
+   */
+  await page.getByRole("button", { name: /^commencer$|^start$/i }).click();
+
   // Le réseau tombe pendant la séance : c'est le cas d'une salle en sous-sol.
   await ctx.setOffline(true);
-  await page.getByRole("button", { name: /plus tard|j'ai fini/i }).first().click();
+  /*
+    « Plus tard » PENDANT la séance acquitte le prorata de ce qui s'est écoulé —
+    ce n'est pas le même geste qu'à la préparation, où il referme sans rien
+    payer parce que rien n'a été fait. C'est toute la différence que les deux
+    temps introduisent.
+  */
+  await page.getByRole("button", { name: /plus tard|later/i }).first().click();
 
   // La fenêtre se referme — on a demandé à fermer — mais l'effort est gardé.
   await expect(page.getByRole("dialog")).toBeHidden();
@@ -219,7 +233,12 @@ test("quand le serveur répond 500, la séance est gardée aussi", async ({ brow
   await page.getByRole("button", { name: /lancer le chrono|en attente/i }).first()
     .or(page.locator(".pastille-dette")).first().click();
   await expect(page.getByRole("dialog")).toBeVisible();
-  await page.getByRole("button", { name: /plus tard|j'ai fini/i }).first().click();
+
+  // La séance commence sur un GESTE depuis la ligne 205 : « plus tard » à la
+  // préparation referme sans rien acquitter, donc il n'y aurait rien à mettre
+  // de côté et ce test ne prouverait plus rien.
+  await page.getByRole("button", { name: /^commencer$|^start$/i }).click();
+  await page.getByRole("button", { name: /plus tard|later/i }).first().click();
   await expect(page.getByRole("dialog")).toBeHidden();
 
   const file = await page.evaluate(() =>
