@@ -123,12 +123,12 @@ d'adresse se repose six semaines plus tard.
 | question | réponse | où |
 |---|---|---|
 | L'historique grandit pour toujours | garder les 50 dernières, archiver le reste, et que l'archive reste accessible | plan, section Technique |
-| La page d'accueil rendue à la demande | « trouve autre chose » que le scintillement | plan, section La marque |
-| Les envois programmés partent un jour sur deux | poser les tâches Vercel, « si c'est utile vas-y » | plan, étape 01 |
-| Trois notifications par semaine | « je te laisse trancher » le rang | journal |
-| « Journée la plus chère » contre le mur des records | renommer « journée la plus chère » | journal |
-| Sur quoi porte le palier de VOLUME | le volume JOUÉ : tant qu'aucun système ne vérifie les exercices, on suppose les pompes faites entre deux parties | journal |
-| Le vouvoiement des deux pages d'acquisition | « tutoie partout, c'était un oubli » | journal |
+| La page d'accueil rendue à la demande | « trouve autre chose » que le scintillement | journal (V530) : `/commencer` aiguille au clic, la page est prérendue |
+| Les envois programmés partent un jour sur deux | poser les tâches Vercel, « si c'est utile vas-y » | plan, étape 01 · fait en V529 |
+| Trois notifications par semaine | « je te laisse trancher » le rang | journal (V530) : rang 1 le seuil et la relance, rang 2 le matin et la pesée |
+| « Journée la plus chère » contre le mur des records | renommer « journée la plus chère » | journal (V529) |
+| Sur quoi porte le palier de VOLUME | le volume JOUÉ : tant qu'aucun système ne vérifie les exercices, on suppose les pompes faites entre deux parties | journal (V529) |
+| Le vouvoiement des deux pages d'acquisition | « tutoie partout, c'était un oubli » | journal (V529) : six fichiers, pas deux |
 | « qui vous a invité » | laisser, c'est du juridique | close |
 | Le bouton du rail sur téléphone | laisser, « je verrai à l'usage » | close |
 | Le tableau de bord Vercel | « je te donne l'accès » | en cours |

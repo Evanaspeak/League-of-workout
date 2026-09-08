@@ -28,7 +28,7 @@ jest.mock("./prisma", () => ({
 }));
 
 import webpush from "web-push";
-import { notifier, NOTIFS_PAR_SEMAINE_MAX } from "./push";
+import { notifier, NOTIFS_PAR_SEMAINE_MAX, RESERVE_RANG_UN } from "./push";
 import { prisma } from "./prisma";
 
 const envoi = (webpush as unknown as { sendNotification: jest.Mock }).sendNotification;
@@ -97,15 +97,38 @@ describe("l'adresse d'une notification", () => {
  */
 describe("le plafond hebdomadaire", () => {
   it("laisse passer tant qu'on est en dessous", async () => {
-    envois.count.mockResolvedValue(NOTIFS_PAR_SEMAINE_MAX - 1);
+    envois.count.mockResolvedValue(NOTIFS_PAR_SEMAINE_MAX - 1 - RESERVE_RANG_UN);
     expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(1);
     expect(envoi).toHaveBeenCalled();
   });
 
   it("refuse au-delà, sans rien envoyer", async () => {
     envois.count.mockResolvedValue(NOTIFS_PAR_SEMAINE_MAX);
+    expect(await notifier("u1", { titre: "t", corps: "c" }, { rang: 1 })).toBe(0);
+    expect(envoi).not.toHaveBeenCalled();
+  });
+
+  /**
+   * La réserve, et le seul jeu de données qui la montre.
+   *
+   * À `MAX - RESERVE` envois déjà partis, le budget du rang 2 est atteint et
+   * celui du rang 1 ne l'est pas : c'est exactement l'état où le rappel du
+   * matin cède la place au seuil. Un compte à zéro envoi ou à `MAX` rendrait
+   * le même résultat pour les deux rangs, donc ne prouverait rien.
+   */
+  it("garde la dernière place pour le rang 1", async () => {
+    envois.count.mockResolvedValue(NOTIFS_PAR_SEMAINE_MAX - RESERVE_RANG_UN);
+
+    // Le rang 2 — rappel du matin, rappel de pesée — cède.
+    expect(await notifier("u1", { titre: "t", corps: "c" }, { rang: 2 })).toBe(0);
+    // Et il cède AUSSI quand personne ne l'a déclaré : le défaut est le plus
+    // prudent, sinon un appelant ajouté demain reprendrait la place.
     expect(await notifier("u1", { titre: "t", corps: "c" })).toBe(0);
     expect(envoi).not.toHaveBeenCalled();
+
+    // Le seuil passe.
+    expect(await notifier("u1", { titre: "t", corps: "c" }, { rang: 1 })).toBe(1);
+    expect(envoi).toHaveBeenCalled();
   });
 
   it("compte sur une fenêtre GLISSANTE de sept jours", async () => {

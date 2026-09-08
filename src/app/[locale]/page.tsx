@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { descriptionPage, metadonneesPage } from "@/lib/i18n/metadonnees";
 import { LANGUES, toLocale, type Locale } from "@/lib/i18n/langues";
-import { auth } from "@/auth";
 import LandingClient from "./LandingClient";
 import { dernierInstalleur, PAGE_RELEASES } from "@/lib/release";
 import { logosDisponibles } from "@/lib/logosJeux";
@@ -38,13 +37,23 @@ export default async function LandingPage(
   { params }: { params: Promise<{ locale: string }> },
 ) {
   const locale = toLocale((await params).locale);
-  // On lit la session pour adapter le bouton de la nav, mais on NE redirige plus :
-  // la page d'accueil reste accessible même connecté.
-  // Le bouton principal de la page est un bouton de téléchargement : il doit
-  // pointer sur l'installeur réel et dire quelle version il livre. Les deux
-  // appels sont indépendants, donc simultanés.
-  const [session, installeur] = await Promise.all([auth(), dernierInstalleur()]);
-  const isLoggedIn = !!session?.user;
+  /**
+   * Plus AUCUNE lecture de session ici, et c'est ce qui rend la page statique.
+   *
+   * Elle lisait `auth()` pour choisir entre « Créer mon compte » et « Mon
+   * espace » sur trois boutons. Une lecture de session est une lecture de la
+   * requête : la page la plus visitée du produit était donc la seule page
+   * publique rendue à la demande, et elle payait des démarrages à froid
+   * mesurés à 1,42 s et 2,11 s là où une page prérendue n'a jamais dépassé
+   * 0,28 s.
+   *
+   * Les deux gros boutons pointent maintenant sur `/commencer`, qui aiguille
+   * au CLIC ; le lien discret de la barre se résout au navigateur, comme
+   * `Nav` le fait partout ailleurs. `dernierInstalleur`, lui, ne lit pas la
+   * requête : il lit l'API GitHub avec `revalidate: 300`, ce qui est
+   * exactement ce qu'une page prérendue sait faire.
+   */
+  const installeur = await dernierInstalleur();
 
   return (
     <>
@@ -53,7 +62,6 @@ export default async function LandingPage(
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(locale)) }}
       />
       <LandingClient locale={locale}
-        isLoggedIn={isLoggedIn}
         telechargement={installeur?.url ?? PAGE_RELEASES}
         version={installeur?.version ?? null}
         logosJeux={logosDisponibles()}

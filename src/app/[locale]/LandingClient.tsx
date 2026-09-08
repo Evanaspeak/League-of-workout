@@ -12,11 +12,11 @@ import { CadreApp } from "@/components/landing/CadreApp";
 import { LogoWindows } from "@/components/landing/LogoOS";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { JEUX } from "@/lib/jeux";
+import { LienEspace } from "@/components/landing/LienEspace";
 
 export default function LandingClient({
-  isLoggedIn, telechargement, version, logosJeux, video, locale,
+  telechargement, version, logosJeux, video, locale,
 }: {
-  isLoggedIn: boolean;
   /** L'installeur de la dernière version, résolu côté serveur. */
   telechargement: string;
   version: string | null;
@@ -63,9 +63,7 @@ export default function LandingClient({
           </Lien>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <LanguageSwitcher />
-            <Lien href={isLoggedIn ? "/dashboard" : "/login"} className="wow-ghost wow-ghost-nav">
-              {isLoggedIn ? t.navLoggedIn : t.navLoggedOut}
-            </Lien>
+            <LienEspace locale={locale} />
           </div>
         </div>
       </nav>
@@ -111,8 +109,8 @@ export default function LandingClient({
                   {version && <em>{t.heroVersion(version)}</em>}
                 </span>
               </a>
-              <Lien href={isLoggedIn ? "/dashboard" : "/beta"} className="wow-ghost hero-ghost">
-                {isLoggedIn ? t.navLoggedIn : t.heroBeta}
+              <Lien href="/commencer" className="wow-ghost hero-ghost">
+                {t.heroBeta}
               </Lien>
             </div>
 
@@ -174,8 +172,8 @@ export default function LandingClient({
                 {version && <em>{t.heroVersion(version)}</em>}
               </span>
             </a>
-            <Lien href={isLoggedIn ? "/dashboard" : "/beta"} className="wow-ghost hero-ghost">
-              {isLoggedIn ? t.navLoggedIn : t.ctaBeta}
+            <Lien href="/commencer" className="wow-ghost hero-ghost">
+              {t.ctaBeta}
             </Lien>
           </div>
           <p className="hero-note" style={{ marginTop: 18 }}>{t.heroTelechargerNote}</p>

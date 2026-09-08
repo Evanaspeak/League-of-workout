@@ -1196,6 +1196,119 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La page d'accueil ne décide plus, elle demande
+Question 2 des questions ouvertes, et la réponse du propriétaire était un
+refus : **« trouve autre chose »**. La page d'accueil lisait `auth()` pour
+choisir entre « Créer mon compte » et « Mon espace » sur trois boutons — donc
+la page la plus visitée du produit était la SEULE page publique rendue à la
+demande. Mesuré en production, huit relevés de chaque : à chaud l'écart n'est
+que de soixante millisecondes, mais la page dynamique a rendu **1,42 s puis
+2,11 s** sur deux séries, quand la prérendue n'a jamais dépassé 0,28 s. Un
+démarrage à froid tombe exactement sur qui arrive de loin.
+
+**Ce qu'on refusait** était de laisser les trois boutons se corriger après
+hydratation : quelqu'un de connecté verrait « Créer mon compte » sur sa propre
+page d'accueil.
+
+**L'autre chose** : le bouton ne DÉCIDE plus, il DEMANDE. Les deux gros boutons
+pointent sur `/commencer`, une page qui ne rend aucun HTML et redirige vers le
+tableau de bord ou vers l'inscription. La question « qui est-ce ? » ne se pose
+donc qu'au CLIC, sur une adresse que seul quelqu'un qui a décidé d'entrer
+atteint — et jamais sur la page que tout le monde charge.
+
+**Le lien discret de la barre, lui, reste client**, et c'est le prix assumé :
+il dit « Se connecter » pendant un aller-retour, puis « Mon espace ». C'est
+mot pour mot ce que `Nav` fait sur toutes les autres pages publiques, avec sa
+raison déjà écrite — « sur une page publique on ne sait pas encore, et on ne
+promet rien avant de savoir ». Un lien de vingt pixels en haut à droite ne se
+compare pas au bouton principal du héros, qui ne bouge plus.
+
+**Le libellé reste celui du nouveau venu**, et c'est écrit plutôt que tu : une
+page d'accueil existe pour les gens qui n'ont pas de compte. Quelqu'un de
+connecté qui clique « Créer mon compte » atterrit sur son tableau de bord, ce
+qui est ce qu'il voulait. Le jour où ça gêne, c'est une ligne à changer.
+
+**Mesuré : 155 pages prérendues, 161 après.** Les six pages d'accueil ont
+rejoint le lot, et `/[locale]` a perdu sa marque `ƒ` dans la table de
+construction.
+
+**Et le parcours a attrapé le défaut du premier coup.** `/commencer` n'était
+pas dans les chemins publics : le middleware l'envoyait vers `/login` avant
+qu'elle atteigne sa propre logique, donc un visiteur anonyme n'arrivait jamais
+sur l'inscription. C'est le défaut déjà payé sur les quatre routes d'envoi
+programmé — « dispensées de session et injoignables » — sous sa forme page, et
+il ne se voit qu'en cliquant.
+
+**Le témoin qui compte n'est aucun des deux parcours d'atterrissage** : ils
+passeraient aussi bien sur la page d'AVANT, qui envoyait déjà chacun au bon
+endroit. Ce qui distingue les deux états est le HTML SERVI, et c'est un
+troisième test qui le lit — le fragment du bouton doit être identique octet
+pour octet pour un anonyme et pour un compte connecté. Sabotage : la page
+remise à lire la session, deux contrôles tombent.
+
+**Et un sabotage n'a pas compilé plutôt que de faire tomber un test.** Retirer
+la pose d'état du lien de la barre rendait son paramètre inutilisé, et
+`noUnusedParameters` le nomme. Réécrit en inversant la condition, il fait
+tomber le contrôle du lien. C'est noté comme tel, pas compté comme un garde qui
+mord.
+
+### Le rattrapage dépensait le budget avant que le principal n'ait tiré
+Question 4 des questions ouvertes, et le propriétaire a répondu « je te laisse
+trancher ». Le plafond de trois notifications par semaine (réponse 103) était
+PREMIER ARRIVÉ, PREMIER SERVI — une règle qui favorise systématiquement ce qui
+part à heure fixe.
+
+Le rappel du matin peut tirer sept fois par semaine ; la notification de SEUIL,
+elle, part le soir, quand la dette franchit la ligne pendant qu'on joue. Le
+matin épuisait donc le budget du lundi au mercredi, et le seuil ne passait plus
+du jeudi au dimanche. Or `push.ts` écrit lui-même que le seuil est la RAISON
+d'être du canal, et le journal que le rappel du matin en est le RATTRAPAGE :
+c'est la relation qui était inversée.
+
+**Le discriminant n'est pas « important » contre « accessoire », c'est le
+MOMENT** : est-ce que ça arrive quand la personne peut agir, ou est-ce que ça
+lui demande de revenir ?
+
+- **rang 1** : le seuil, et la relance des absents — une fois par trimestre,
+  et seul message adressé à quelqu'un qui a cessé de venir. Le perdre au profit
+  d'un rappel du matin l'échangerait contre sa propre répétition ;
+- **rang 2** : le rappel du matin et le rappel de pesée. Les deux disent
+  « reviens », les deux se répètent, et les deux sont interchangeables.
+
+**La réserve est d'UNE place, et ce chiffre a été pesé.** Le rang 2 ne peut pas
+remplir le dernier créneau, donc un seuil franchi passe toujours. La porter à
+deux priverait de son troisième rappel quelqu'un qui n'a réglé AUCUN seuil,
+c'est-à-dire quelqu'un pour qui le rang 1 n'arrivera jamais : on lui retirerait
+une notification sans rien lui rendre. C'est pour la même raison que la réserve
+n'est pas conditionnée à la présence d'un seuil — ça coupleraient le module
+d'envoi à un réglage de dette pour gagner une notification par semaine chez une
+minorité.
+
+**Le rang par défaut est 2, donc le plus prudent**, et c'est ce qui rend son
+oubli silencieux dans l'autre sens : retirer `{ rang: 1 }` du seuil ne casse
+rien, ne fait rougir aucun test de route, et rend la réserve entièrement
+INERTE. D'où un garde qui nomme les deux notifications qui doivent le déclarer,
+et qui les trouve par leur TAG plutôt que par leur fichier — une route peut
+envoyer plusieurs notifications, et c'est celle-ci qu'on veut.
+
+**Le seul jeu de données qui montre la réserve est celui du milieu.** À zéro
+envoi comme à trois, les deux rangs rendent le même résultat : il faut
+exactement `MAX − RESERVE` envois déjà partis pour que le budget du rang 2 soit
+atteint et pas celui du rang 1. Un test écrit sur les bornes n'aurait rien
+prouvé.
+
+**Et le garde ne peut pas importer le module.** `requireActual("@/lib/push")`
+tire prisma derrière lui, que jest ne sait pas charger ici : les deux constantes
+se lisent dans la SOURCE, comme tout le reste de ce fichier.
+
+Quatre sabotages, quatre échecs : le rang 1 retiré du seuil, le budget qui ne
+dépend plus du rang, la réserve à zéro, et le défaut basculé au rang 1.
+
+**Deux témoins existants ont mordu**, ce qui est leur travail : le garde
+épinglait `deja >= NOTIFS_PAR_SEMAINE_MAX`, qui n'est plus la forme, et le test
+« laisse passer tant qu'on est en dessous » comparait à un budget qui a changé
+pour le rang par défaut. Les deux disent maintenant la nouvelle règle.
+
 ### Le bouton d'inscription désactivé, et la règle que j'ai enfreinte en la connaissant
 Quatre parcours tombés sur 249, et les quatre disent la même chose. Le contexte
 d'erreur de Playwright le montre sans ambiguïté :

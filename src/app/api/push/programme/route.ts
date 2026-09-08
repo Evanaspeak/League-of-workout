@@ -163,7 +163,7 @@ async function relancerLesAbsents(maintenant: Date): Promise<number> {
     const jours = Math.floor(
       (maintenant.getTime() - dernierePartie!.getTime()) / (24 * 3600_000));
     const { titre, corps } = textesNotification(u.langue, jourDansFuseau(maintenant, u.fuseau)).relance(jours);
-    const partis = await notifier(u.id, { titre, corps, tag: "wow-relance" }).catch(() => 0);
+    const partis = await notifier(u.id, { titre, corps, tag: "wow-relance" }, { rang: 1 }).catch(() => 0);
     // La date se pose même si l'envoi n'a atteint personne : sans abonnement,
     // réessayer chaque jour ne changerait rien et referait le tour de la base.
     await prisma.user.update({ where: { id: u.id }, data: { relanceLe: maintenant } })
