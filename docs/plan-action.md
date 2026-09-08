@@ -9,9 +9,16 @@
 > commit que le code. Un plan qui n'est pas tenu à jour ment, et c'est pire
 > qu'un plan absent : on lui obéit quand même.
 
-Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-02.
+Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**55 construits · 102 restants · ~60 nuits de travail**
+**109 construits · 48 restants**
+
+> Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
+> restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
+> ligne. `planCompte.test.ts` compare chaque en-tête de SECTION au tableau qui
+> le suit ; celui-ci n'est suivi d'aucun tableau, donc rien ne le gardait. Il
+> se déduit désormais de la somme des sections, et c'est ce que le garde
+> vérifie.
 
 ## Ce que le recensement montre, et qui n'est pas confortable
 

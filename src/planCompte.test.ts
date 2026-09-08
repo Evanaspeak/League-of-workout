@@ -57,6 +57,30 @@ describe("les comptes du plan d'action", () => {
     expect(chiffrees.filter((s) => s.reste + s.faits === 0)).toEqual([]);
   });
 
+  /**
+   * L'en-tête GLOBAL, qui n'est suivi d'aucun tableau.
+   *
+   * Il a menti six jours — « 55 construits · 102 restants » pendant que les
+   * dix-sept sections étaient tenues à jour ligne par ligne — parce que le
+   * contrôle ci-dessous compare un en-tête au tableau qui le suit, et que
+   * celui-là n'en a pas. C'est le défaut que ce plan reproche lui-même : un
+   * plan qu'on ne tient pas à jour ment, et on lui obéit quand même.
+   *
+   * Il se compare donc à la SOMME des sections, qui est la seule chose dont il
+   * puisse être la synthèse.
+   */
+  it("l'en-tête global dit la somme des sections", () => {
+    const toutes = sections();
+    const faits = toutes.reduce((n, s) => n + s.faits, 0);
+    const reste = toutes.reduce((n, s) => n + s.reste, 0);
+    // Le témoin : un plan vidé rendrait deux zéros, et « 0 construits · 0
+    // restants » se comparerait très bien à lui-même.
+    expect(faits + reste).toBeGreaterThan(100);
+    const m = /\*\*(\d+) construits · (\d+) restants\*\*/.exec(readFileSync(PLAN, "utf8"));
+    expect(m).not.toBeNull();
+    expect({ faits: Number(m![1]), reste: Number(m![2]) }).toEqual({ faits, reste });
+  });
+
   it("chaque en-tête chiffré dit ce que son tableau contient", () => {
     const ecarts = sections()
       .filter((s) => s.annonce)
