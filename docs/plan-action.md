@@ -9,9 +9,16 @@
 > commit que le code. Un plan qui n'est pas tenu à jour ment, et c'est pire
 > qu'un plan absent : on lui obéit quand même.
 
-Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-02.
+Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**55 construits · 102 restants · ~60 nuits de travail**
+**109 construits · 47 restants**
+
+> Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
+> restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
+> ligne. `planCompte.test.ts` compare chaque en-tête de SECTION au tableau qui
+> le suit ; celui-ci n'est suivi d'aucun tableau, donc rien ne le gardait. Il
+> se déduit désormais de la somme des sections, et c'est ce que le garde
+> vérifie.
 
 ## Ce que le recensement montre, et qui n'est pas confortable
 
@@ -36,14 +43,27 @@ aurait été la même erreur en plus grand.
 
 Rien de ce qui suit ne se décide correctement sans retours. Le déclencheur des envois programmés se règle en trente minutes ; les messages Reddit et Discord sont écrits depuis un mois. Dix personnes qui te disent ce qui manque valent mieux que mes soixante nuits d'hypothèses.
 
-Ce qu'il te reste à faire toi-même : poser les tâches planifiées Vercel, envoyer un message, ouvrir un endroit où on te répond.
+Ce qu'il te reste à faire toi-même : envoyer un message, ouvrir un endroit où on te répond. Les tâches planifiées, elles, sont un fichier du dépôt — voir plus bas.
 
 **État au 2 septembre, dans la soirée.** Le message est parti sur un serveur
 Discord d'une cinquantaine de membres, avec un second message plus court dans
-le chat général. Il reste **une moitié, et elle appartient au propriétaire du
-produit** : poser les tâches planifiées Vercel. Sans elles, le rappel du matin
-et la relance des absents restent suspendus au `schedule` de GitHub Actions,
-qui passe trois à six fois par jour à des heures imprévisibles.
+le chat général. Il restait **une moitié** : poser les tâches planifiées
+Vercel. Sans elles, le rappel du matin et la relance des absents restent
+suspendus au `schedule` de GitHub Actions, qui passe trois à six fois par jour
+à des heures imprévisibles — mesuré sur cent exécutions : **six jours sur
+douze sans aucun passage dans la fenêtre de 9 h à midi**.
+
+**Et cette moitié n'appartenait pas au propriétaire**, contrairement à ce que
+cette section a annoncé pendant six jours. Une tâche planifiée Vercel se
+déclare dans un `vercel.json` à la racine du dépôt, pas dans le tableau de
+bord : c'est un fichier, donc c'est du travail ordinaire. La ligne attendait
+une décision qui n'avait pas lieu d'être, et le propriétaire l'a tranchée le
+8 septembre d'un « si c'est utile vas-y ».
+
+Le seul point qui reste chez lui est le PLAN Vercel : sur Hobby, les tâches
+sont limitées à deux et à un passage par jour ; sur Pro, elles descendent à la
+minute. Le projet a exactement deux routes programmées, donc les deux plans
+peuvent convenir — mais la fenêtre qu'on écrit dans le cron n'est pas la même.
 
 ### [~] 02 — Le social minimal — amis, classement, parrainage
 *5 à 6 nuits*
@@ -98,7 +118,10 @@ Catalogue d'exercices élargi, Overwatch, deux tons au choix, exercices adaptés
 
 ## Le détail, domaine par domaine
 
-Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'écriture du plan.
+Coche `[x]` = construit, `[~]` = entamé, `[-]` = **tranché non** : le
+propriétaire a décidé que ça ne se ferait pas, et la ligne reste pour qu'on ne
+la repropose pas. Une ligne `[-]` ne compte ni dans les faits ni dans le
+reste. Les efforts sont ceux estimés à l'écriture du plan.
 
 ### Le corps, les calories, la santé
 *1 à faire · 14 faits.* Le pilier est construit (V407) : calculateur Mifflin-St Jeor, trois modes, poids cible, courbe de pesées, rappel hebdomadaire optionnel, masse grasse au mètre-ruban, et les deux avertissements qui n'empêchent jamais d'afficher. Reste la vidéo de forme par exercice (026), qui demande un tournage.
@@ -167,7 +190,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 149 | Un titre affiché à côté du pseudo, gagné par l'usage | 1 nuit |
 | [ ] | 150 | Des cosmétiques : couleurs, cadres, thèmes | 2 nuits |
 | [ ] | 151 | Un thème visuel par jeu | 1 nuit |
-| [ ] | 152 | Progression physique ET volume, les deux | 1 nuit |
+| [ ] | 152 | Progression physique ET volume, les deux — **débloquée le 8 septembre** : « fais la courbe de force maintenant », ce qui lève aussi le « plus tard » de la réponse 153 | 1 nuit |
 | [x] | 154 | Inciter à la photo avant-après sans jamais la transmettre | — |
 | [x] | 087 | Un système de niveau — **la même demande que 148**, cochée avec elle | — |
 
@@ -275,7 +298,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 207 | Vibration à chaque répétition, en option | — |
 | [x] | 210 | Sur téléphone, ouvrir sur l'ajout de partie | — |
 | [ ] | 204 | Une application native, un jour | hors périmètre |
-| [ ] | 205 | Un mode séance plein écran | 1 nuit |
+| [ ] | 205 | Un mode séance plein écran — **débloqué le 8 septembre** : « fais-le », ce qui renverse le « plus tard » de la réponse 205 | 1 nuit |
 
 ### L'argent
 *8 à faire · 0 faits.* Rien n'est construit, et une décision t'appartient avant tout le reste.
@@ -318,7 +341,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 261 | Rendre l'application utilisable en fauteuil | 2 nuits |
 
 ### Données, confiance, incidents
-*5 à faire · 6 faits.* 
+*4 à faire · 6 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -326,9 +349,9 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 283 | Une supervision qui alerte quand le site tombe | — |
 | [x] | 286 | Un bouton « signaler un problème » dans l'application | — |
 | [x] | 277 | CGU et confidentialité relues et complétées | — |
-| [ ] | 279 | Définir une durée de conservation des données | décision + ½ nuit |
-| [ ] | 280 | Supprimer les comptes inactifs depuis deux ans, après avertissement | 1 nuit |
-| [ ] | 275 | Chiffrer poids et taille au niveau des colonnes | 1 nuit |
+| [ ] | 279 | Définir une durée de conservation des données — **plus visible depuis que 280 est close** : sans suppression, il faut quand même l'annoncer | décision + ½ nuit |
+| [-] | 280 | ~~Supprimer les comptes inactifs depuis deux ans~~ — **tranché le 8 septembre : « finalement, ne supprime rien »**, ce qui renverse la réponse 280 | — |
+| [ ] | 275 | Chiffrer poids et taille au niveau des colonnes — **« plus tard »** le 8 septembre, l'explication a été donnée | 1 nuit |
 | [ ] | 287 | Voir les erreurs qui se produisent chez les utilisateurs | 1 nuit |
 | [x] | 290 | Un message de prévention en cas d'excès manifeste | — |
 | [x] | 291 | Une alerte admin quand un compte dépasse un volume anormal | — |

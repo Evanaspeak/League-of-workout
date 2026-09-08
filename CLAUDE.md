@@ -25,7 +25,7 @@ plan a été établi avec le propriétaire, à partir de ses 308 réponses au Se
 Interrogatoire, et proposer autre chose sans le dire revient à défaire une
 décision qu'il a prise.
 
-Il porte huit étapes ordonnées et cent trois lignes cochables. La raison de
+Il porte huit étapes ordonnées et cent cinquante-sept lignes cochables. La raison de
 l'ordre est écrite dans le document ; s'en écarter se discute, mais ça se
 discute — ça ne se fait pas en silence.
 
