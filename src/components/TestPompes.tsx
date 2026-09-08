@@ -1,8 +1,22 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useT, useNombre } from "@/lib/i18n/LocaleContext";
 import { testPompes as dict } from "@/lib/i18n/dictionaries/testPompes";
 import { getLevelParPompes, testAFaire, type LevelCfg } from "@/lib/scoring";
+
+/**
+ * La courbe arrive à la demande, et jamais avec ce fichier.
+ *
+ * `recharts` pèse cent kilo-octets, et ce composant est rendu à trois endroits
+ * dont deux sur le tableau de bord, où l'on ne montre pas l'histoire. Un
+ * `import` ordinaire du même module ailleurs annulerait ce découpage — c'est la
+ * règle que `pontsDeChargement.test.ts` garde, et il n'y en a aucun.
+ */
+const CourbeForce = dynamic(
+  () => import("@/components/CourbeForce").then((m) => m.CourbeForce),
+  { ssr: false },
+);
 
 /**
  * Test de pompes maximales : le nombre que quelqu'un enchaîne d'affilée fixe
@@ -18,6 +32,7 @@ export function TestPompes({
   faitLe,
   niveaux,
   onEnregistre,
+  historique,
   autonome = false,
 }: {
   pompesMax: number;
@@ -32,6 +47,16 @@ export function TestPompes({
    * enregistré. C'est ce test qui fixe le niveau, donc toute la dette.
    */
   onEnregistre: (valeur: number) => Promise<boolean>;
+  /**
+   * L'histoire des tests, pour la courbe (ligne 152 du plan).
+   *
+   * Elle est OPTIONNELLE, et c'est le point : l'écran des réglages la donne,
+   * le tableau de bord non — le test n'y est qu'un rappel, et une courbe de
+   * progression n'y a rien à faire. Un composant qui irait la chercher
+   * lui-même paierait donc trois appels pour un seul affichage, et le
+   * troisième appelant qu'on ajoutera demain le paierait sans l'avoir décidé.
+   */
+  historique?: { jour: string; pompes: number }[];
   /**
    * Le test est présenté seul, dans son propre encadré — sur le tableau de
    * bord. Il n'a alors pas de section au-dessus dont il faudrait se séparer
@@ -49,6 +74,13 @@ export function TestPompes({
    * sept. Ce n'est pas de la typographie, c'est un chiffre faux.
    */
   const decimal = useNombre({ maximumFractionDigits: 1 });
+  /**
+   * Le nombre de l'infobulle passe par `Intl` comme partout ailleurs. Il ne
+   * dépassera pas le millier — la borne du test est cinq cents — mais une
+   * seconde façon d'écrire un nombre à côté de la première est exactement ce
+   * qui finit par diverger.
+   */
+  const nombre = useNombre();
   const [saisie, setSaisie] = useState("");
   const [ouvert, setOuvert] = useState(false);
   const [occupe, setOccupe] = useState(false);
@@ -106,6 +138,27 @@ export function TestPompes({
         <p className="text-xs" style={{ color: "var(--amber)" }}>
           {pompesMax > 0 ? t.perime : t.jamaisFait}
         </p>
+      )}
+
+      {/*
+        Deux points au minimum : une courbe d'un seul point est un point, et
+        l'afficher promet une tendance qui n'existe pas encore. C'est la règle
+        déjà posée pour la courbe de poids.
+      */}
+      {historique && historique.length >= 2 && (
+        <div className="space-y-2" style={{ paddingTop: 4 }}>
+          <h3 className="text-sm" style={{ color: "var(--bone)", fontWeight: 600 }}>
+            {t.courbeTitre}
+          </h3>
+          <CourbeForce
+            points={historique}
+            formaterJour={(j) => j.slice(5)}
+            formaterPompes={(n) => t.courbeValeur(nombre(n))}
+          />
+        </div>
+      )}
+      {historique && historique.length === 1 && (
+        <p className="text-xs" style={{ color: "var(--faint)" }}>{t.courbeUnTest}</p>
       )}
 
       {!ouvert && (

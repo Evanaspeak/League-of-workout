@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**109 construits · 47 restants**
+**111 construits · 46 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -190,7 +190,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
 
 ### Progression et récompenses
-*3 à faire · 6 faits.* Les paliers, le niveau de compte, le titre et l'exploit de la dette payée dans l'heure.
+*2 à faire · 8 faits.* Les paliers, le niveau de compte, le titre, l'exploit de la dette payée dans l'heure et la courbe de force.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -200,7 +200,8 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 149 | Un titre affiché à côté du pseudo, gagné par l'usage | 1 nuit |
 | [ ] | 150 | Des cosmétiques : couleurs, cadres, thèmes | 2 nuits |
 | [ ] | 151 | Un thème visuel par jeu | 1 nuit |
-| [ ] | 152 | Progression physique ET volume, les deux — **débloquée le 8 septembre** : « fais la courbe de force maintenant », ce qui lève aussi le « plus tard » de la réponse 153 | 1 nuit |
+| [x] | 152 | Progression physique ET volume, les deux — **débloquée le 8 septembre** : « fais la courbe de force maintenant », ce qui lève aussi le « plus tard » de la réponse 153. `TestForce` porte l'histoire, `pompesMax` reste la valeur courante | — |
+| [x] | 153 | Une courbe de force dans le temps — **levée avec la 152**, c'est la même courbe | — |
 | [x] | 154 | Inciter à la photo avant-après sans jamais la transmettre | — |
 | [x] | 087 | Un système de niveau — **la même demande que 148**, cochée avec elle | — |
 
