@@ -19,7 +19,13 @@ export async function ouvrirCompte(
   browser: Browser,
   prefixe: string,
   options: { consentement?: boolean; parrain?: string } = {},
-): Promise<{ etat: Awaited<ReturnType<BrowserContext["storageState"]>>; compte: { pseudo: string; email: string } }> {
+): Promise<{
+  etat: Awaited<ReturnType<BrowserContext["storageState"]>>;
+  compte: { pseudo: string; email: string };
+  /** Le code d'accès tiré à l'inscription — un parcours de récupération doit
+   *  pouvoir prouver qu'il ne marche PLUS après un échange. */
+  code: string;
+}> {
   const marque = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
   const compte = { pseudo: `${prefixe}${marque}`, email: `${prefixe.toLowerCase()}-${marque}@example.test` };
 
@@ -96,7 +102,7 @@ export async function ouvrirCompte(
 
   const etat = await ctx.storageState();
   await ctx.close();
-  return { etat, compte };
+  return { etat, compte, code };
 }
 
 async function remplirJusquACeQueCaPrenne(

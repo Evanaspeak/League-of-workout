@@ -26,6 +26,13 @@ import { enLangue, sansLangue } from "./chemin";
 const PAGES = [
   "/", "/beta", "/login", "/telechargement", "/recuperation",
   "/calculateur", "/calculateur/league-of-legends", "/cgu", "/confidentialite",
+  // Le PREMIER écran de la connexion depuis l'application installée. Sans
+  // aléa dans l'adresse il rend son repli — le bouton manuel — donc il a du
+  // texte à montrer. Il entre ici parce qu'un recensement des pages du produit
+  // contre celles qu'un parcours ouvre l'a trouvé visité par personne, et que
+  // son texte est parti en français à tout le monde jusqu'à ce qu'on le
+  // corrige : c'est exactement ce que ce fichier existe pour attraper.
+  "/connexion-app",
   // La liste d'attente y entre en même temps qu'elle devient atteignable.
   // C'est une page qu'on ne voit qu'une fois, au pire moment, et son texte est
   // le plus long des six langues confondues.
