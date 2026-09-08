@@ -1604,6 +1604,64 @@ n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septem
 et c'est la troisième occurrence : la parade est de relancer la passe entière
 sans tube, jamais de deviner.
 
+### L'index évident sur le pseudo ne sert à rien, et c'est mesuré
+Recensement des colonnes qu'on FILTRE contre celles qui portent un index. Le
+journal note depuis longtemps que « les requêtes par compte sont indexées […]
+mais une mesure sur une base minuscule ne le prouve pas ». Elle est faite.
+
+Cent cinquante-sept requêtes portent un `where`. **Treize ne sont servies par
+aucun index**, et trois seulement sont sur un chemin chaud : la connexion par
+pseudo (`auth.ts`), le mur ouvert des records (`/api/classement`), et les trois
+lectures du travail programmé. Le reste est administratif ou porte sur des
+tables à deux lignes.
+
+**La connexion par pseudo est la plus exposée** — c'est la lecture que TOUT LE
+MONDE fait, et la seule dont la correction devient plus chère avec le temps.
+D'où le réflexe : poser un index fonctionnel sur `lower(pseudo)`, comme celui
+qui existe déjà sur `lower(email)`.
+
+**Il ne sert à RIEN, et il fallait l'EXPLAIN pour le savoir.** `mode:
+"insensitive"` fait émettre à Prisma un `ILIKE` (`~~*`), et un index sur
+`lower(pseudo)` ne répond pas à `ILIKE`. Mesuré sur une table jetable de
+cinquante mille lignes, index posé :
+
+| requête | plan |
+|---|---|
+| `pseudo ILIKE 'x'` | **Seq Scan**, 49 999 lignes écartées |
+| `lower(pseudo) = lower('x')` | **Index Scan using bench_lower** |
+
+C'est le pire genre de correction : elle compile, elle se relit comme une
+garantie, et le balayage continue. Quelqu'un l'aurait posée en croyant le
+problème réglé.
+
+**Et la pente dit qu'il n'y a rien à corriger aujourd'hui.** Le balayage coûte
+**1,9 ms à cent comptes et 29 ms à cinquante mille**. Le haché bcrypt coût 12
+de la même connexion prend un QUART DE SECONDE — c'est écrit dans ce fichier
+depuis l'échec d'août, et c'est lui qui a fait tomber des parcours entiers. Le
+balayage vaut donc un dixième du goulot réel à cinquante mille comptes, et un
+centième à cent.
+
+**Ce qu'il faudrait le jour venu, écrit plutôt que laissé à redécouvrir** : une
+colonne `pseudoNormalise` avec un index ordinaire, écrite comme
+`normaliserEmail` l'est déjà, et une égalité simple à la place du mode
+insensible. Pas un index fonctionnel, pas de SQL brut — `sqlBrut.test.ts`
+n'admet qu'une constante, et rouvrir cette exemption pour une optimisation
+coûterait plus que le balayage.
+
+**Le garde ne s'écrit PAS, et la raison est la même que pour les clés de
+stockage** : « toute colonne filtrée porte un index » ferait treize faux
+positifs le jour de son écriture, sur treize requêtes parfaitement justes — un
+`groupBy` d'administration, une purge de jetons éphémères, trois lectures d'un
+travail qui passe six fois par jour. Un garde qui crie sur ce qui va bien finit
+par ne plus se lire.
+
+**Et le recensement s'est trompé avant de rendre ce résultat** : il annonçait
+quarante-deux requêtes sans index, dont vingt-neuf où il n'avait lu AUCUNE
+colonne. Son motif cherchait `nom :` et ratait le raccourci d'objet
+(`where: { id }`) — le piège déjà payé sur `filtreParCompte`, qui recalait
+`where: { id, userId }` pour exactement la même raison. Treize après
+correction.
+
 ### Une ligne de base qui traverse le réseau nomme ses colonnes
 Suite directe de la correction de `PUT /api/user`. Elle a porté sur SA route,
 comme les deux d'avant — `NextResponse.json(games)` et l'étalement de
