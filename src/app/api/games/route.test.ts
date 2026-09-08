@@ -24,6 +24,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { notifier } from "@/lib/push";
+import { textesNotification } from "@/lib/i18n/notifications";
+import { jourLocal } from "@/lib/serie";
 
 const session = getCurrentUser as jest.Mock;
 const bride = isRateLimited as jest.Mock;
@@ -452,9 +454,28 @@ describe("langue de la notification de seuil", () => {
   });
 
   it("retombe sur l'anglais quand le compte n'en déclare aucune", async () => {
+    /**
+     * Le contrôle porte sur la LANGUE, pas sur la formulation.
+     *
+     * Il épinglait le mot « waiting », c'est-à-dire UNE des trois
+     * formulations que V493 fait tourner par jour. Il est passé au vert
+     * jusqu'au 7 septembre et serait devenu rouge à minuit — un test dont la
+     * couleur dépend du jour est un test dont on ne connaît pas la couleur,
+     * et le journal porte déjà cette leçon pour une branche de parcours prise
+     * un jour sur six.
+     *
+     * On compare donc aux textes ANGLAIS du jour, pris à la source : c'est
+     * exactement ce que ce test veut prouver — qu'un compte sans langue
+     * déclarée reçoit l'anglais, et non le français.
+     */
     const sans = await franchirLeSeuil(null);
-    // L'anglais et non le français : c'est déjà la règle du navigateur.
-    expect(sans.corps).toMatch(/waiting/i);
+    const jour = jourLocal();
+    // La durée passée ne compte pas ici : c'est le TITRE qu'on compare, et il
+    // n'en dépend pas.
+    const en = textesNotification("en", jour).seuil("x");
+    const fr = textesNotification("fr", jour).seuil("x");
+    expect(sans.titre).toBe(en.titre);
+    expect(sans.titre).not.toBe(fr.titre);
   });
 });
 
