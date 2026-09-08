@@ -3,7 +3,7 @@ import { useT, useMinuscule, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { nomsExercices, descriptionsExercices } from "@/lib/nomsExercices";
 import { exercices as exercicesDict } from "@/lib/i18n/dictionaries/exercices";
 import {
-  EXERCICES, EXERCICE_IDS, formaterCompact, type ExerciceId,
+  EXERCICES, EXERCICE_IDS, exercicesParGroupe, formaterCompact, type ExerciceId,
 } from "@/lib/exercices";
 
 /**
@@ -37,13 +37,39 @@ export function ExerciceSelector({
     onChange(EXERCICE_IDS.filter((x) => next.includes(x)));
   };
 
+  /**
+   * Une section par sous-catégorie (réponses 061 et 067).
+   *
+   * À seize exercices, la liste plate ne se lit plus — et la rotation censée
+   * éviter trois jours de pectoraux d'affilée n'a aucun moyen de se voir.
+   *
+   * Chaque section porte `role="group"` et se NOMME par son titre : un
+   * intitulé posé devant une rangée de cases n'étiquette rien tout seul, un
+   * lecteur d'écran le lit comme un texte quelconque. C'est le défaut déjà
+   * corrigé sur le panneau du corps, et il se reprend ici.
+   */
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: compact ? "1fr" : "repeat(auto-fit, minmax(190px, 1fr))",
-      gap: compact ? 8 : 10,
-    }}>
-      {EXERCICE_IDS.map((id) => {
+    <div style={{ display: "grid", gap: compact ? 14 : 20 }}>
+      {exercicesParGroupe().map(({ groupe, ids }) => (
+        <section key={groupe} role="group" aria-labelledby={`exo-groupe-${groupe}`}>
+          <h4
+            id={`exo-groupe-${groupe}`}
+            style={{
+              margin: compact ? "0 0 6px" : "0 0 10px",
+              fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
+              fontSize: compact ? "0.72rem" : "0.78rem",
+              textTransform: "uppercase", letterSpacing: "0.08em",
+              color: "var(--faint)", fontWeight: 600,
+            }}
+          >
+            {t.groupeNom[groupe]}
+          </h4>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: compact ? "1fr" : "repeat(auto-fit, minmax(190px, 1fr))",
+            gap: compact ? 8 : 10,
+          }}>
+      {ids.map((id) => {
         const actif = selection.includes(id);
         const seul = actif && selection.length === 1;
         return (
@@ -102,19 +128,15 @@ export function ExerciceSelector({
                   {descs[id]}
                 </span>
               )}
-              {/* Le groupe travaillé et le matériel nécessaire, dits avant le
-                  choix. Découvrir qu'on n'a pas de barre une fois la dette due
-                  est la pire façon de l'apprendre. */}
+              {/* Le matériel nécessaire, dit avant le choix : découvrir qu'on
+                  n'a pas de barre une fois la dette due est la pire façon de
+                  l'apprendre. Le groupe travaillé, lui, a quitté la carte pour
+                  le titre de sa section — le répéter seize fois n'apprenait
+                  plus rien. */}
               {!compact && (
                 <span style={{
                   display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6,
                 }}>
-                  <span style={{
-                    fontSize: "0.68rem", padding: "2px 6px", borderRadius: 999,
-                    border: "1px solid var(--line)", color: "var(--faint)",
-                  }}>
-                    {t.groupeNom[EXERCICES[id].groupe]}
-                  </span>
                   {EXERCICES[id].materiel && (
                     <span style={{
                       fontSize: "0.68rem", padding: "2px 6px", borderRadius: 999,
@@ -136,6 +158,9 @@ export function ExerciceSelector({
           </button>
         );
       })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

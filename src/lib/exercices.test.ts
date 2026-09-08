@@ -143,21 +143,31 @@ describe("le compteur de dette ne retient que les exercices au temps", () => {
 
 // ── Lecture défensive des valeurs venues de la base ────────────────────────
 
+/**
+ * L'inconnu se choisit hors de la LANGUE du produit, pas parmi ses idées.
+ *
+ * Ces trois contrôles employaient « burpees » comme exemple d'identifiant
+ * absent. Ils sont tombés le jour où le catalogue s'est élargi — l'exemple
+ * était devenu un vrai exercice, et le test disait donc l'inverse de ce qu'il
+ * voulait dire. Un nom plausible finit par exister ; celui-ci ne peut pas.
+ */
+const JAMAIS_UN_EXERCICE = "pas-un-exercice";
+
 describe("les identifiants d'exercice venus de la base", () => {
   test("une valeur inconnue retombe sur les pompes plutôt que de casser", () => {
-    expect(toExerciceId("burpees")).toBe("pompes");
+    expect(toExerciceId(JAMAIS_UN_EXERCICE)).toBe("pompes");
     expect(toExerciceId(null)).toBe("pompes");
     expect(toExerciceId(undefined)).toBe("pompes");
   });
 
   test("isExerciceId ne reconnaît que les exercices du catalogue", () => {
     expect(isExerciceId("boxe")).toBe(true);
-    expect(isExerciceId("burpees")).toBe(false);
+    expect(isExerciceId(JAMAIS_UN_EXERCICE)).toBe(false);
     expect(isExerciceId(42)).toBe(false);
   });
 
   test("toExerciceIds nettoie une liste et n'en rend jamais une vide", () => {
-    expect(toExerciceIds(["boxe", "burpees", "squats"])).toEqual(["squats", "boxe"]);
+    expect(toExerciceIds(["boxe", JAMAIS_UN_EXERCICE, "squats"])).toEqual(["squats", "boxe"]);
     expect(toExerciceIds([])).toEqual(["pompes"]);
     expect(toExerciceIds("pas une liste")).toEqual(["pompes"]);
   });

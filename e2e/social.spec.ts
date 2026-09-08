@@ -52,7 +52,13 @@ async function ouvrirEcranAmis(
   await page.goto("/amis");
   // Si le titre manque, on dit OÙ l'on a atterri : « élément introuvable » sur
   // une page de connexion envoie chercher un défaut de l'écran des amis.
-  await expect(page.getByRole("heading", { name: /tes amis|your friends/i }), 
+  //
+  // Le NIVEAU compte : le mur des records a gagné en V509 une section
+  // « Parmi tes amis », et un motif non ancré trouvait donc deux titres — le
+  // mode strict de Playwright tombe alors sur une page parfaitement normale,
+  // et le message accuse l'écran des amis d'être absent. Le titre de la page
+  // est le `h1`, et lui seul.
+  await expect(page.getByRole("heading", { level: 1, name: /tes amis|your friends/i }), 
     `écran des amis introuvable — page rendue : ${page.url()}`).toBeVisible();
   return { ctx, page };
 }
@@ -420,7 +426,7 @@ test("un lien de parrainage cassé n'empêche pas de créer un compte", async ({
 
   // Le compte existe et s'ouvre : c'est tout ce qui compte ici.
   const { ctx, page } = await ouvrirEcranAmis(browser, filleul.etat);
-  await expect(page.getByRole("heading", { name: /tes amis|your friends/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /tes amis|your friends/i })).toBeVisible();
   await ctx.close();
 });
 

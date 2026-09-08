@@ -189,7 +189,7 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [ ] | 057 | Annoncer la dette AVANT la partie | 1 nuit |
 
 ### Les exercices
-*3 à faire · 7 faits.* Le gros du travail est fait. Reste l'ouverture du catalogue.
+*1 à faire · 9 faits.* Le catalogue compte seize exercices rangés en quatre sous-catégories. Il reste FERMÉ, et c'est la réponse 065 : c'est ce qui permet de chiffrer une partie. Reste le partage au choix entre exercices cochés (068).
 
 | | réf | | effort |
 |---|---|---|---|
@@ -198,8 +198,8 @@ Coche `[x]` = construit, `[~]` = entamé. Les efforts sont ceux estimés à l'é
 | [x] | 064 | La course, en kilomètres | — |
 | [x] | 067 | Des groupes musculaires pour la rotation | — |
 | [x] | 078 | Sac et shadow boxing séparés | — |
-| [ ] | 065 | Une liste fermée mais beaucoup plus grande, en sous-catégories | 2 nuits |
-| [ ] | 061 | Le plus varié possible | voir ci-dessus |
+| [x] | 065 | Une liste fermée mais beaucoup plus grande, en sous-catégories | — |
+| [x] | 061 | Le plus varié possible | — |
 | [ ] | 068 | Le partage entre exercices au choix, pas à parts égales | 1 nuit |
 | [x] | 071 | Refaire le test de force tous les mois — **fait depuis `VALIDITE_TEST_JOURS = 30` : `testAFaire` redevient vrai au bout d'un mois, et le tableau de bord remonte le panneau du test** | — |
 | [x] | 073 | Un rappel d'échauffement avant une grosse dette | — |

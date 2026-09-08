@@ -45,6 +45,24 @@ export const MET: Record<ExerciceId, number> = {
   // la résistance n'y sont pas. La ligne du Compendium qui décrit vraiment
   // ça est en dessous de celle du sac, et c'est le bon sens de l'écart.
   shadow: 6.5,
+  // Fentes : même registre que les squats, avec la composante d'équilibre en
+  // plus.
+  fentes: 5.5,
+  // Chaise contre un mur : isométrique, comme la planche.
+  chaise: 4.0,
+  // La ligne « abdominaux, effort modéré » du Compendium.
+  abdos: 3.8,
+  // Le gainage latéral est isométrique lui aussi : la même valeur que la
+  // planche, dont il ne diffère que par l'angle.
+  gainageLateral: 4.0,
+  // Gymnastique au poids du corps à effort VIGOUREUX : le burpees enchaîne
+  // une flexion, une planche et un saut.
+  burpees: 8.0,
+  // Corde à sauter à cadence tenue, pas à celle d'une compétition — le
+  // Compendium monte à 11,8 pour un rythme soutenu.
+  corde: 10.0,
+  // Poussée au poids du corps, comme les pompes et les tractions.
+  dips: 8.0,
 };
 
 /**
@@ -80,6 +98,23 @@ export const PART_A_L_EFFORT: Record<ExerciceId, number> = {
   // On ne s'arrête pas en shadow non plus : comme le sac, il se compte en
   // temps de travail effectif, donc il n'y a rien à retrancher.
   shadow: 1,
+  // Six secondes par fente, repos compris : la moitié est du mouvement, comme
+  // pour les squats.
+  fentes: 0.5,
+  // Une chaise se tient sans pause : tout le temps compté est sous tension.
+  chaise: 1,
+  // Trois secondes par abdo, dont environ la moitié de contraction.
+  abdos: 0.5,
+  // Un gainage latéral se tient sans pause, comme la planche.
+  gainageLateral: 1,
+  // Dix secondes par burpee, dont six de mouvement réel : c'est le plus long
+  // du catalogue, et il laisse le temps de souffler entre deux.
+  burpees: 0.6,
+  // On ne s'arrête pas à la corde.
+  corde: 1,
+  // Douze secondes par dip, repos compris, dont quatre de poussée : entre la
+  // pompe et la traction, comme le reste de ses réglages.
+  dips: 0.35,
 };
 
 /**

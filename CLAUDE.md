@@ -1313,6 +1313,122 @@ chacune, **0 constat, aucune page laissée de côté**. C'est le second chiffre
 qui compte, et c'est celui que la première passe élargie ne pouvait pas
 donner — elle rangeait les cinq rubriques du côté des pages non mesurées.
 
+### « Parmi tes amis » a fait tomber le titre de la page, et ma boucle d'attente m'a menti
+Deux défauts trouvés en jouant la suite entière, et aucun des deux ne vient du
+chantier en cours.
+
+**Le premier est une COLLISION de titres, et elle date de V509.** Le mur des
+records a gagné ce soir-là une section « Parmi tes amis » — la correction du
+mur qui se contredisait. `e2e/social.spec.ts` cherche, lui, le titre de la
+page par un motif non ancré :
+
+```ts
+page.getByRole("heading", { name: /tes amis|your friends/i })
+```
+
+Deux titres correspondent désormais, le mode strict de Playwright refuse, et
+**le message accuse l'écran des amis d'être absent** sur une page parfaitement
+normale — « écran des amis introuvable », précisément le message qu'on avait
+écrit pour aider. Deux tests sont tombés, deux autres ont été sautés derrière
+eux, en mode série.
+
+Le titre d'une page est son `h1`, et lui seul : `{ level: 1 }` tranche là où un
+motif de texte ne peut pas. C'est la même famille que le nombre lu par
+sous-chaîne — **un motif qui n'est pas ancré finit par désigner autre chose**,
+et ce qui le déclenche est un ajout parfaitement légitime ailleurs.
+
+**Le second est ma boucle d'attente**, et il est plus instructif. Pour attendre
+la fin d'une suite de fond, j'écrivais :
+
+```sh
+until grep -qE "^ +[0-9]+ (passed|failed)|Error:" "$L"; do sleep 20; done
+```
+
+La seconde alternative casse la boucle à la PREMIÈRE ligne d'erreur, c'est-à-dire
+au milieu de l'exécution. J'ai donc lancé `social.spec.ts` par-dessus une suite
+encore en cours : deux Playwright, un seul serveur, une seule base. Un test du
+mur ouvert est tombé, et il repasse dix fois sur dix une fois seul.
+
+Ce que ça apprend : **une attente se cale sur la FIN, jamais sur un symptôme
+qui peut apparaître avant.** Le journal interdit déjà de reconstruire pendant
+qu'un test tourne et d'installer des paquets pendant une mesure ; c'est la même
+règle, et je l'ai contournée par une boucle qui croyait attendre.
+
+Et le compte de processus s'est trompé dans la foulée : `ps | grep -c
+"[p]laywright"` rendait 1 alors qu'il n'y en avait aucun — la ligne de commande
+du shell qui LANCE la vérification contient elle-même le mot. C'est le piège du
+`pkill -f`, déjà payé trois fois ici, sous sa forme inoffensive. On regarde
+l'ÂGE des processus, pas leur nombre.
+
+### Seize exercices, quatre sous-catégories (lignes 061, 065 et 067)
+« Liste fermée plus grande », « le plus varié possible, diviser en sous
+catégories », et des groupes musculaires « pour que la rotation évite de faire
+trois jours de pectoraux d'affilée ». La liste reste **FERMÉE** — c'est ce qui
+permet de chiffrer une partie — et elle passe de neuf à seize entrées.
+
+**Ce qui a décidé de CES exercices-là n'est pas le goût, c'est le
+déséquilibre.** À neuf entrées, le bas du corps et le tronc en avaient UNE
+chacun contre trois au haut du corps et quatre au cardio. Une sous-catégorie à
+une entrée n'est pas une sous-catégorie, et une rotation censée éviter trois
+jours de pectoraux d'affilée n'a rien vers quoi tourner. Le catalogue rend
+maintenant 4 / 3 / 3 / 6.
+
+| ajouté | groupe | unité | matériel | s/point |
+|---|---|---|---|---|
+| fentes | bas | répétitions | non | 7,2 |
+| chaise | bas | temps | non | 7 |
+| abdos | tronc | répétitions | non | 6 |
+| gainage latéral | tronc | temps | non | 5 |
+| burpees | cardio | répétitions | non | 7 |
+| corde à sauter | cardio | temps | **oui** | 6 |
+| dips | haut | répétitions | **oui** | 6 |
+
+Les sept tiennent dans la bande de `tempsParPoint.test.ts` — c'est le principe
+qui rend le choix d'exercice LIBRE, et il n'a pas besoin d'être surveillé à la
+main : le garde existait avant eux.
+
+**L'ordre des sous-catégories est un `Record`, pas un tableau.** Écrit en
+tableau, un groupe ajouté au type sans y être placé aurait fait disparaître une
+sous-catégorie entière de l'écran sans que rien ne le dise. En `Record`, ça ne
+compile pas.
+
+**Et le rangement lui-même a son garde**, pour le défaut qui ne se voit pas :
+le sélecteur ne montre plus `EXERCICE_IDS` mais le résultat
+d'`exercicesParGroupe()`. Un exercice tombé hors des groupes ne rendrait ni
+erreur ni case vide — il n'existerait simplement plus, et personne ne pourrait
+le choisir. L'union des groupes doit donc redonner le catalogue, aucune
+sous-catégorie ne peut être vide, et aucune ne peut retomber sous deux entrées
+— ce dernier contrôle porte la raison des sept ajouts.
+
+**La pastille du groupe a quitté les cartes.** Elle disait déjà ce que le titre
+de section dit maintenant, et la répéter seize fois n'apprenait plus rien. Le
+matériel, lui, reste sur la carte : c'est un renseignement sur l'exercice, pas
+sur la famille.
+
+**Chaque section porte `role="group"` et se NOMME par son titre.** Un intitulé
+posé devant une rangée de cases n'étiquette rien tout seul — un lecteur d'écran
+le lit comme un texte quelconque. C'est le défaut déjà corrigé sur le panneau du
+corps, repris ici avant qu'il ne se produise.
+
+**Un test est tombé, et c'est la plus jolie trouvaille de la passe.** Trois
+contrôles employaient **« burpees »** comme exemple d'identifiant ABSENT du
+catalogue. Ils sont tombés le jour où le catalogue s'est élargi : l'exemple
+était devenu un vrai exercice, et le test disait donc l'inverse de ce qu'il
+voulait dire. La leçon est petite et vaut pour tous les tests de rejet : **un
+inconnu se choisit hors de la langue du produit, pas parmi ses idées** — un nom
+plausible finit par exister.
+
+Trois sabotages, trois échecs : un exercice tombé hors des groupes, une
+sous-catégorie ramenée à une entrée, un burpee rendu à vingt points. Un
+quatrième n'a rien fait tomber et c'était le sabotage qui était faux — retirer
+UNE entrée du bas du corps en laisse deux, ce que le contrôle accepte ; il
+fallait en retirer deux. C'est noté comme tel plutôt que compté comme un garde
+qui ne mord pas.
+
+Vérifié à l'écran dans trois langues, rubrique « Ton effort » : quatre sections
+de 4, 3, 3 et 6 entrées, les pastilles de matériel sur les tractions, les dips,
+le sac et la corde, et **aucun débordement horizontal**.
+
 ### Le sac et le shadow séparés, et l'entrée qui se contredisait (ligne 078)
 Réponse 078 : « Les deux séparés ». La question partait d'un fait — un sac de
 frappe est du matériel que peu de gens ont — et le catalogue, lui, disait

@@ -1,6 +1,6 @@
 import {
-  EXERCICES, EXERCICE_IDS, EXERCICES_REGLABLES, RATIO_BORNES, RATIOS_DEFAUT,
-  dureeEffort, formaterCompact, quantite,
+  EXERCICES, EXERCICE_IDS, EXERCICES_REGLABLES, GROUPES, RATIO_BORNES, RATIOS_DEFAUT,
+  dureeEffort, exercicesParGroupe, formaterCompact, quantite,
 } from "./exercices";
 
 /**
@@ -96,5 +96,44 @@ describe("catalogue", () => {
     // seconde y achète moins d'effort. L'écart reste petit — c'est ce qui
     // laisse le choix libre, et `tempsParPoint.test.ts` tient la bande.
     expect(RATIOS_DEFAUT.shadow).toBeGreaterThan(RATIOS_DEFAUT.boxe);
+  });
+
+  it("range chaque exercice dans une sous-catégorie, et n'en perd aucun", () => {
+    /**
+     * Le défaut silencieux du rangement.
+     *
+     * Le sélecteur ne montre plus `EXERCICE_IDS` mais le résultat de
+     * `exercicesParGroupe()`. Un exercice qui tomberait hors des groupes
+     * disparaîtrait donc de l'écran — pas d'erreur, pas de case vide : il
+     * n'existerait simplement plus, et personne ne pourrait le choisir. C'est
+     * exactement la forme de défaut que ce journal appelle la pire.
+     */
+    const ranges = exercicesParGroupe().flatMap((g) => g.ids);
+    expect([...ranges].sort()).toEqual([...EXERCICE_IDS].sort());
+  });
+
+  it("et ne laisse aucune sous-catégorie vide", () => {
+    /**
+     * Une sous-catégorie à zéro entrée rendrait un titre suivi de rien. Le
+     * cas se produit dès qu'on ajoute un groupe au type sans lui donner
+     * d'exercice — et le `Record` de rangs, qui rend `GROUPES` exhaustif,
+     * garantit qu'on le verra ici plutôt qu'à l'écran.
+     */
+    const vides = exercicesParGroupe().filter((g) => g.ids.length === 0).map((g) => g.groupe);
+    expect(vides).toEqual([]);
+    // Témoin : les quatre groupes sont bien parcourus.
+    expect(GROUPES).toHaveLength(4);
+    expect(exercicesParGroupe()).toHaveLength(GROUPES.length);
+  });
+
+  it("donne à chaque sous-catégorie de quoi tourner", () => {
+    /**
+     * Réponse 067 : les groupes existent « pour que la rotation évite de faire
+     * trois jours de pectoraux d'affilée ». Une sous-catégorie à UNE entrée ne
+     * permet pas ça — c'est le déséquilibre qui a décidé des sept exercices
+     * ajoutés, et le contrôle dit pourquoi ils sont là.
+     */
+    const maigres = exercicesParGroupe().filter((g) => g.ids.length < 2).map((g) => g.groupe);
+    expect(maigres).toEqual([]);
   });
 });
