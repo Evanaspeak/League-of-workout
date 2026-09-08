@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { DEPART_TELEPHONE } from "@/lib/ouvertureTelephone";
 
 /**
  * Manifeste d'application installable.
@@ -22,8 +23,14 @@ export default function manifest(): MetadataRoute.Manifest {
      * middleware rattrape l'adresse et la renvoie vers la langue négociée, ce
      * qui coûte un aller-retour au lancement et donne le bon écran. Y figer une
      * langue donnerait le mauvais à cinq personnes sur six.
+     *
+     * Le PARAMÈTRE, lui, dit que l'application vient d'être LANCÉE, et le
+     * tableau de bord ouvre alors l'ajout de partie (réponse 210). Il ne peut
+     * pas se poser sur une navigation ordinaire, donc personne n'est surpris
+     * par un formulaire en revenant de l'historique. Il survit à la
+     * redirection de langue, comme le jeton d'un lien de récupération.
      */
-    start_url: "/dashboard",
+    start_url: DEPART_TELEPHONE,
     scope: "/",
     display: "standalone",
     orientation: "portrait",
