@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 import { estAdmin } from "@/lib/admin";
+import { lireCorps } from "@/lib/corpsRequete";
 
 const CONFIG_KEY = "betaWhitelistEmails";
 
@@ -20,7 +21,9 @@ export async function POST(req: Request) {
   const me = await getCurrentUser();
   if (!me || !estAdmin(me.email)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const { email } = await req.json();
+  const corps = await lireCorps<{ email?: unknown }>(req);
+  if (!corps) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
+  const { email } = corps;
   const clean = String(email ?? "").trim().toLowerCase();
   if (!clean || !clean.includes("@")) return NextResponse.json({ error: "Email invalide" }, { status: 400 });
 
@@ -40,7 +43,9 @@ export async function DELETE(req: Request) {
   const me = await getCurrentUser();
   if (!me || !estAdmin(me.email)) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
 
-  const { email } = await req.json();
+  const corps = await lireCorps<{ email?: unknown }>(req);
+  if (!corps) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
+  const { email } = corps;
   const clean = String(email ?? "").trim().toLowerCase();
   const list = (await getList()).filter(e => e !== clean);
   await prisma.systemConfig.upsert({

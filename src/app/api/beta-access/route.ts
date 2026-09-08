@@ -6,6 +6,7 @@ import { isRateLimited, recordAttempt, getClientIp } from "@/lib/rate-limit";
 import { autoriserAdresse } from "@/lib/porteBeta";
 import { normaliserEmail, pseudoDejaPris, validerPseudo } from "@/lib/identite";
 import { decisionParrainage, normaliserCode } from "@/lib/parrainage";
+import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
 
 
 // Code lisible : pas de caractères ambigus (0/O, 1/l/I).
@@ -29,7 +30,8 @@ export async function POST(request: Request) {
     }
     await recordAttempt(ip, "register");
 
-    const body = await request.json();
+    const body = await lireCorps<CorpsLibre>(request);
+    if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
     // Pseudo : seul champ obligatoire. Les règles vivent dans `identite`, avec
     // celles des deux autres chemins d'écriture — c'est leur divergence qui a
     // ouvert l'escalade d'administrateur.

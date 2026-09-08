@@ -103,6 +103,32 @@ describe("le parrainage", () => {
  * genre, âge, poids et taille.
  */
 describe("POST /api/beta-access", () => {
+  /**
+   * Un corps illisible n'est pas une panne du serveur.
+   *
+   * `request.json()` lève sur un corps tronqué — un octet perdu sur un réseau
+   * mobile, un mandataire qui coupe — et la route rendait 500 « Erreur
+   * serveur ». C'est la pire des dix-neuf routes pour ce défaut : quelqu'un
+   * qui essaie d'ouvrir un compte lisait que le site est cassé, au moment
+   * précis où l'on cherche à le faire entrer.
+   */
+  it("refuse un corps illisible en 400, sans accuser le serveur", async () => {
+    const r = await POST(new Request("http://localhost/api/beta-access", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: "{tronqu",
+    }));
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: "Corps illisible" });
+    expect(user.create).not.toHaveBeenCalled();
+  });
+
+  it("refuse un corps qui n'est pas un objet", async () => {
+    const r = await POST(new Request("http://localhost/api/beta-access", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: "[1,2]",
+    }));
+    expect(r.status).toBe(400);
+    expect(user.create).not.toHaveBeenCalled();
+  });
+
   it("refuse quand le budget de tentatives est épuisé", async () => {
     bride.mockResolvedValue(true);
     expect((await acceder({ pseudo: "Joueur" })).status).toBe(429);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { DEMANDES_MAX, examinerDemande } from "@/lib/demandeJeu";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Déclarer un jeu absent du catalogue (réponse 180).
@@ -19,12 +20,8 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const examen = examinerDemande((body as { nom?: unknown } | null)?.nom);
   if (!examen.ok) {

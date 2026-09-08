@@ -7,6 +7,7 @@ import {
   EXERCICES_REGLABLES, RATIOS_DEFAUT, RATIO_BORNES, normaliserRatios,
 } from "@/lib/exercices";
 import { CLE_RATIOS, oublierRatios } from "@/lib/exercicesConfig";
+import { lireCorps } from "@/lib/corpsRequete";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -62,12 +63,8 @@ export async function GET() {
 export async function PUT(req: Request) {
   if (!await requireAdmin()) return refus();
 
-  let corps: unknown;
-  try {
-    corps = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const corps = await lireCorps<unknown>(req);
+  if (!corps) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const brut = (corps as { ratios?: unknown } | null)?.ratios;
   if (!brut || typeof brut !== "object") {

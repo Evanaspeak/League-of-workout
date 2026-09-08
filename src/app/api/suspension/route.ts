@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { isExerciceId, toExerciceIds, type ExerciceId } from "@/lib/exercices";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Mettre un exercice de côté, et le reprendre.
@@ -34,12 +35,8 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
   const exercice = (body as { exercice?: unknown } | null)?.exercice;
   if (!isExerciceId(exercice)) {
     return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });
@@ -87,12 +84,8 @@ export async function DELETE(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
   const exercice = (body as { exercice?: unknown } | null)?.exercice;
   if (!isExerciceId(exercice)) {
     return NextResponse.json({ error: "Exercice inconnu" }, { status: 400 });

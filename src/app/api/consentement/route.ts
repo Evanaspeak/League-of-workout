@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { reponseConsentement } from "@/lib/contexteConnecte";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Consentement au traitement des données de santé.
@@ -47,12 +48,8 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
   const accepte = (body as { accepte?: unknown } | null)?.accepte;
   if (typeof accepte !== "boolean") {
     return NextResponse.json({ error: "Réponse manquante" }, { status: 400 });

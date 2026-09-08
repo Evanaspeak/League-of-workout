@@ -10,10 +10,12 @@ import { isExerciceId, parseParts, repartirPoints, toExerciceIds } from "@/lib/e
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
+import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
 export async function POST(req: Request) {
-  const body = await req.json();
+  const body = await lireCorps<CorpsLibre>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { getClientIp, isRateLimited, recordAttempt } from "@/lib/rate-limit";
+import { lireCorps } from "@/lib/corpsRequete";
 
 /**
  * Un problème signalé depuis l'application.
@@ -55,12 +56,8 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
-  }
+  const body = await lireCorps<unknown>(req);
+  if (!body) return NextResponse.json({ error: "Corps illisible" }, { status: 400 });
 
   const brut = (body ?? {}) as Record<string, unknown>;
   const message = String(brut.message ?? "").trim().slice(0, MAX_MESSAGE);
