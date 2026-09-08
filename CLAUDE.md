@@ -1604,6 +1604,57 @@ n'avais que la moitié négative du témoin. C'est écrit ici depuis le 5 septem
 et c'est la troisième occurrence : la parade est de relancer la passe entière
 sans tube, jamais de deviner.
 
+### Une ligne de base qui traverse le réseau nomme ses colonnes
+Suite directe de la correction de `PUT /api/user`. Elle a porté sur SA route,
+comme les deux d'avant — `NextResponse.json(games)` et l'étalement de
+`/api/amis` — et rien ne disait ce qu'il fallait faire de la suivante. Trois
+corrections de la même famille sur trois routes différentes appellent un garde,
+pas une quatrième relecture.
+
+**Le recensement est ENTIÈREMENT NÉGATIF**, et c'est écrit ici pour qu'on ne le
+refasse pas. Cinquante-cinq lectures Prisma dans `src/app/api` : quarante-deux
+portent un `select` ou un `omit`, les treize autres ne traversent jamais le
+réseau — elles sèment une configuration, comptent, ou vérifient qu'une partie
+n'est pas déjà enregistrée.
+
+**Deux candidats ont demandé d'être ouverts avant d'être écartés.**
+`admin/signalements` fait `...l` et `groupes` fait `{ ...groupe, membres: 1 }` :
+les deux étalent un résultat qui porte DÉJÀ un `select`, donc une projection où
+quelqu'un a décidé de ce qui sort. C'est exactement le discriminant du garde, et
+il fallait le vérifier plutôt que de compter les `...`.
+
+**Le garde regarde le DOSSIER et couvre tous les modèles**, là où celui de V520
+ne lisait que `prisma.user`. Il attrape deux formes, et la seconde est celle qui
+a mordu : la publication directe se voit en relisant la route, l'ÉTALEMENT non —
+`{ ...ligne, membres: 1 }` se lit comme une composition alors qu'il publie tout
+ce qu'on lui remet.
+
+**Trois familles de méthodes sont hors champ, par construction et non par
+exemption.** `groupBy`, `count` et `aggregate` **n'acceptent pas de `select`** :
+les exiger ferait crier le garde sur du code auquel la règle ne peut pas
+s'appliquer. `updateMany`, `deleteMany` et `createMany` rendent `{ count }`. Le
+premier recensement les prenait, et il a rendu un faux positif sur
+`admin/mesures` — vérifié avant de conclure, plutôt qu'écrit comme une
+trouvaille.
+
+**Et le garde de V520 est DÉPLACÉ, pas doublé.** La même règle écrite deux fois
+finit avec une version en retard, et c'est le motif que ce projet paie en
+boucle. `compte.test.ts` garde ce qui est propre au compte — quelles colonnes
+ont le droit de sortir, quels défauts de confidentialité — et la règle générale
+vit dans `src/lignesBrutes.test.ts`.
+
+**Le témoin du DÉCOUPAGE est distinct de celui du recensement, et il fallait
+les deux.** Un découpage qui déborde rend le garde vert AUTREMENT que par la
+vacuité : il fait passer toutes les lectures pour des projections, puisqu'un
+`select` finit toujours par apparaître plus loin dans le fichier. Le sabotage le
+montre — le découpage cassé ne fait tomber QUE le contrôle fabriqué, parce que
+les treize lectures brutes vivent souvent dans des fichiers sans `select` après
+elles, donc le compte ne bouge pas. Deux témoins, deux trous différents.
+
+Sept sabotages, sept échecs : une ligne publiée telle quelle, une ligne étalée,
+le `select` retiré d'une route qui publie, le tri rendu aveugle dans les deux
+sens, le découpage qui rend le fichier entier, et le recensement vidé.
+
 ### La dernière étape de la seule porte de secours n'était ouverte par personne
 Troisième application de la même méthode en une nuit : comparer deux listes
 plutôt que de lire l'une d'elles. Ici, les pages du produit contre celles
