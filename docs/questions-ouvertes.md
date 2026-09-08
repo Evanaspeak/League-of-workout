@@ -120,9 +120,17 @@ Quatorze questions, répondues le 8 septembre. Le tableau existe pour qu'une
 décision prise reste retrouvable : une question qui disparaît sans laisser
 d'adresse se repose six semaines plus tard.
 
+**Une destination qui dit « plan » NOMME ce qu'elle désigne** — `plan, ligne 152`
+ou `plan, étape 01` — et
+`src/decisionsRangees.test.ts` vérifie que cette ligne existe. La convention
+n'est pas une coquetterie : la première version de ce tableau annonçait « plan,
+section Technique » pour l'historique à cinquante parties, et **la ligne
+n'existait pas**. Une adresse qu'on n'a pas vérifiée ne vaut pas mieux que pas
+d'adresse.
+
 | question | réponse | où |
 |---|---|---|
-| L'historique grandit pour toujours | garder les 50 dernières, archiver le reste, et que l'archive reste accessible | plan, section Technique |
+| L'historique grandit pour toujours | garder les 50 dernières, archiver le reste, et que l'archive reste accessible | plan, ligne q1 |
 | La page d'accueil rendue à la demande | « trouve autre chose » que le scintillement | journal (V530) : `/commencer` aiguille au clic, la page est prérendue |
 | Les envois programmés partent un jour sur deux | poser les tâches Vercel, « si c'est utile vas-y » | plan, étape 01 · fait en V529 |
 | Trois notifications par semaine | « je te laisse trancher » le rang | journal (V530) : rang 1 le seuil et la relance, rang 2 le matin et la pesée |
@@ -132,7 +140,7 @@ d'adresse se repose six semaines plus tard.
 | « qui vous a invité » | laisser, c'est du juridique | close |
 | Le bouton du rail sur téléphone | laisser, « je verrai à l'usage » | close |
 | Le tableau de bord Vercel | « je te donne l'accès » | en cours |
-| Chiffrer poids et taille (275) | plus tard | plan, différée |
+| Chiffrer poids et taille (275) | plus tard | plan, ligne 275 · différée |
 | Supprimer les comptes inactifs (280) | **« finalement, ne supprime rien »** — renverse la réponse 280 | close ; ouvre la 279 ci-dessus |
-| La progression physique (152 et 153) | « fais la courbe de force maintenant » — débloque les deux | plan, section Progression · fait en V531 |
-| Un mode séance plein écran (205) | « fais-le » — renverse le « plus tard » de la réponse 205 | plan, section Mobile · fait en V532 |
+| La progression physique (152 et 153) | « fais la courbe de force maintenant » — débloque les deux | plan, ligne 152 · fait en V531 |
+| Un mode séance plein écran (205) | « fais-le » — renverse le « plus tard » de la réponse 205 | plan, ligne 205 · fait en V532 |

@@ -1535,6 +1535,41 @@ d'un serveur local sans clés.
 **Le témoin public de cette version est un CODE**, et il est net :
 `/api/cron/matin` rendait 404 avant, il rend 401 après.
 
+### Une décision rangée à une adresse qui n'existait pas
+Trouvé en préparant le chantier suivant, c'est-à-dire en SUIVANT une adresse
+plutôt qu'en la lisant. `docs/questions-ouvertes.md` porte un tableau des
+questions parties, écrit pour qu'une décision reste retrouvable — « une
+question qui disparaît sans laisser d'adresse se repose six semaines plus
+tard ». Il a menti dès sa première version.
+
+« L'historique grandit pour toujours » y était rangé sous **« plan, section
+Technique »**. La section existe ; **la ligne n'existait pas**. La décision
+était écrite, son adresse était écrite, et il n'y avait rien au bout.
+
+C'est pire que pas d'adresse : une adresse fait CESSER de chercher. Et c'est
+exactement le défaut que ce tableau existe pour empêcher, commis dans le
+tableau lui-même, le jour de son écriture.
+
+**Le nom de section était le trou.** « Section Technique » est une adresse
+approximative : elle désigne quinze lignes, donc elle ne désigne rien de
+vérifiable. Les cinq destinations qui disent « plan » nomment maintenant leur
+LIGNE (`plan, ligne 152`) ou leur ÉTAPE (`plan, étape 01`), et
+`src/decisionsRangees.test.ts` va voir si elle existe.
+
+**Les treize autres destinations tiennent**, vérifiées une par une avant
+d'écrire le garde — c'était la seule qui pointait dans le vide.
+
+**Et le garde est tombé sur son propre motif avant de passer.** `\bétape \d+`
+ne trouve jamais rien : le `\b` de JavaScript repose sur `[A-Za-z0-9_]`, donc
+« é » y est un caractère NON-mot et il n'y a aucune frontière entre l'espace qui
+précède et lui. Le contrôle accusait « plan, étape 01 », qui est parfaitement
+juste. C'est le piège déjà payé sur le garde du registre, à l'identique, et il
+se reprend à chaque motif qui commence par une lettre accentuée.
+
+Cinq sabotages, cinq échecs : la destination redevenue vague, une ligne qui
+n'existe pas, une étape qui n'existe pas, la lecture du tableau rendue aveugle,
+et les réfs du plan qu'on ne lit plus.
+
 ### Quinze secondes de lecture payaient quinze secondes de dette
 Ligne 205 du plan, renversée par le propriétaire : « fais-le ». Un mode séance
 plein écran pour le téléphone, gros chiffre, compteur de répétitions.
