@@ -171,7 +171,7 @@ export function TestPompes({
         <div className="space-y-3" style={{
           padding: "14px 16px",
           borderRadius: 8,
-          background: "rgba(152,162,176,0.05)",
+          background: "color-mix(in srgb, var(--steel) 5%, transparent)",
           border: "1px solid var(--line)",
         }}>
           <p className="text-xs" style={{ color: "var(--muted)", lineHeight: 1.6 }}>
@@ -207,7 +207,7 @@ export function TestPompes({
           <div className="flex gap-2">
             <button
               className="text-xs px-3 py-2 rounded flex-1"
-              style={{ background: "rgba(152,162,176,0.1)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
+              style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", border: "1px solid var(--line-strong)", color: "var(--bone)", cursor: "pointer" }}
               onClick={() => { setOuvert(false); setSaisie(""); }}
             >
               {t.annuler}

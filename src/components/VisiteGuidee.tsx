@@ -320,7 +320,7 @@ export function VisiteGuidee() {
           ...trou,
           borderRadius: 12,
           border: "1px solid var(--amber)",
-          boxShadow: "0 0 0 9999px rgba(6,8,10,0.82), 0 0 26px rgba(255,180,84,0.35)",
+          boxShadow: "0 0 0 9999px rgba(6,8,10,0.82), 0 0 26px color-mix(in srgb, var(--amber) 35%, transparent)",
           pointerEvents: "none",
           transition: `left ${glisse}, top ${glisse}, width ${glisse}, height ${glisse}`,
         }}
@@ -351,7 +351,7 @@ export function VisiteGuidee() {
                 key={i}
                 style={{
                   width: i === affiche ? 14 : 5, height: 5, borderRadius: 999,
-                  background: i <= affiche ? "var(--amber)" : "rgba(152,162,176,0.28)",
+                  background: i <= affiche ? "var(--amber)" : "color-mix(in srgb, var(--steel) 28%, transparent)",
                   transition: `width 0.3s ease, background 0.3s ease`,
                 }}
               />

@@ -53,15 +53,15 @@ export function GraphiquePeriode({
                   onClick={() => setMode(m)}
                   className="text-xs px-2 py-1 rounded"
                   style={{
-                    background: mode === m ? "rgba(110,155,255,0.2)" : "rgba(152,162,176,0.06)",
+                    background: mode === m ? "color-mix(in srgb, var(--signal) 20%, transparent)" : "color-mix(in srgb, var(--steel) 6%, transparent)",
                     color: mode === m ? "var(--signal)" : "var(--faint)",
-                    border: `1px solid ${mode === m ? "rgba(110,155,255,0.4)" : "rgba(152,162,176,0.12)"}`,
+                    border: `1px solid ${mode === m ? "color-mix(in srgb, var(--signal) 40%, transparent)" : "color-mix(in srgb, var(--steel) 12%, transparent)"}`,
                   }}
                 >
                   {m === "avg" ? t.average : t.total}
                 </button>
               ))}
-              <span style={{ width: 1, background: "rgba(152,162,176,0.15)", margin: "0 2px" }} />
+              <span style={{ width: 1, background: "color-mix(in srgb, var(--steel) 15%, transparent)", margin: "0 2px" }} />
             </>
           )}
           {(["hour", "weekday", "month", "daily"] as const).map((key) => (
@@ -70,9 +70,9 @@ export function GraphiquePeriode({
               onClick={() => setPeriode(key)}
               className="text-xs px-2 py-1 rounded"
               style={{
-                background: periode === key ? "rgba(152,162,176,0.25)" : "rgba(152,162,176,0.06)",
+                background: periode === key ? "color-mix(in srgb, var(--steel) 25%, transparent)" : "color-mix(in srgb, var(--steel) 6%, transparent)",
                 color: periode === key ? "var(--bone)" : "var(--faint)",
-                border: `1px solid ${periode === key ? "rgba(152,162,176,0.5)" : "rgba(152,162,176,0.12)"}`,
+                border: `1px solid ${periode === key ? "color-mix(in srgb, var(--steel) 50%, transparent)" : "color-mix(in srgb, var(--steel) 12%, transparent)"}`,
               }}
             >
               {key === "hour" ? t.hour : key === "weekday" ? t.weekday : key === "month" ? t.month : t.calendar}

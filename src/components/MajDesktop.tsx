@@ -85,7 +85,7 @@ export function MajDesktop() {
           aria-valuemax={100}
           style={{
             marginTop: 10, height: 4, borderRadius: 999, overflow: "hidden",
-            background: "rgba(152,162,176,0.16)",
+            background: "color-mix(in srgb, var(--steel) 16%, transparent)",
           }}
         >
           <div style={{

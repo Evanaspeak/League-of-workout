@@ -86,7 +86,7 @@ export default function Nav() {
 
   return (
     <nav style={{
-      background: "rgba(12,14,17,0.85)",
+      background: "color-mix(in srgb, var(--ink) 85%, transparent)",
       backdropFilter: "blur(14px)",
       WebkitBackdropFilter: "blur(14px)",
       borderBottom: "1px solid var(--line)",
@@ -168,7 +168,7 @@ export default function Nav() {
               padding: "4px 12px",
               borderRadius: 999,
               background: "var(--victory-soft)",
-              border: "1px solid rgba(47,217,138,0.3)",
+              border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)",
             }}>
               <span style={{
                 width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
@@ -196,8 +196,8 @@ export default function Nav() {
               style={{
                 width: 28, height: 28,
                 borderRadius: "50%",
-                background: "rgba(255,90,71,0.12)",
-                border: "1px solid rgba(255,90,71,0.3)",
+                background: "color-mix(in srgb, var(--loss) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
                 color: "var(--loss)",
                 cursor: "pointer",
                 display: "flex",

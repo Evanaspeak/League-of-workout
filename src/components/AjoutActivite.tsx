@@ -477,7 +477,7 @@ export function AjoutActivite({
               de ce jeu. Sur n'importe quel autre jeu, ce bloc n'a rien à
               proposer — il ne s'affiche donc pas. */}
           {jeu === JEU_DEFAUT && (
-          <div className="lol-panel p-4 space-y-3" style={{ borderColor: "rgba(152,162,176,0.22)" }}>
+          <div className="lol-panel p-4 space-y-3" style={{ borderColor: "color-mix(in srgb, var(--steel) 22%, transparent)" }}>
             <div>
               <h2 className="titre-bloc">{t.lolSectionTitle}</h2>
               <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.lolSectionDesc}</p>
@@ -488,7 +488,7 @@ export function AjoutActivite({
             </button>
             {riotError && <p className="text-sm loss-text">{riotError}</p>}
 
-            <div className="flex items-start gap-3 p-3 rounded" style={{ background: "rgba(152,162,176,0.06)", border: "1px solid rgba(152,162,176,0.16)" }}>
+            <div className="flex items-start gap-3 p-3 rounded" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 16%, transparent)" }}>
               <Icone nom="alerte" taille={18} couleur="var(--amber)" />
               <div className="flex-1 space-y-2">
                 <p className="text-sm" style={{ color: "var(--bone)" }}>
@@ -517,7 +517,7 @@ export function AjoutActivite({
               </div>
 
               {addLogged && (
-                <div className="text-center p-3 rounded" style={{ background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.3)" }}>
+                <div className="text-center p-3 rounded" style={{ background: "var(--victory-soft)", border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)" }}>
                   <span className="win-text font-semibold">{t.gameLogged}</span>
                 </div>
               )}
@@ -591,8 +591,8 @@ export function AjoutActivite({
                           style={{
                             flex: 1, padding: "8px 4px", borderRadius: 8, cursor: "pointer",
                             fontSize: "0.82rem", fontWeight: 600,
-                            background: actif ? "rgba(255,180,84,0.1)" : "rgba(152,162,176,0.06)",
-                            border: `1px solid ${actif ? "var(--amber)" : "rgba(152,162,176,0.2)"}`,
+                            background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "color-mix(in srgb, var(--steel) 6%, transparent)",
+                            border: `1px solid ${actif ? "var(--amber)" : "color-mix(in srgb, var(--steel) 20%, transparent)"}`,
                             color: actif ? "var(--amber)" : "var(--muted)",
                             transition: "all 0.15s",
                           }}
@@ -686,8 +686,8 @@ export function AjoutActivite({
                     {(["V", "D"] as const).map((r) => (
                       <button key={r} className="flex-1 py-2 rounded text-sm font-bold"
                         style={{
-                          background: addForm.result === r ? (r === "V" ? "rgba(47,217,138,0.25)" : "rgba(255,90,71,0.25)") : "rgba(152,162,176,0.08)",
-                          border: `1px solid ${addForm.result === r ? (r === "V" ? "var(--victory)" : "var(--loss)") : "rgba(152,162,176,0.2)"}`,
+                          background: addForm.result === r ? (r === "V" ? "color-mix(in srgb, var(--victory) 25%, transparent)" : "color-mix(in srgb, var(--loss) 25%, transparent)") : "color-mix(in srgb, var(--steel) 8%, transparent)",
+                          border: `1px solid ${addForm.result === r ? (r === "V" ? "var(--victory)" : "var(--loss)") : "color-mix(in srgb, var(--steel) 20%, transparent)"}`,
                           color: addForm.result === r ? (r === "V" ? "var(--victory)" : "var(--loss)") : "var(--muted)",
                         }}
                         onClick={() => { setAddForm((f) => ({ ...f, result: r })); }}>
@@ -721,7 +721,7 @@ export function AjoutActivite({
                   </label>
                   <span
                     className="text-xs"
-                    style={{ color: coutVivant !== undefined ? "var(--amber)" : "rgba(152,162,176,0.45)" }}
+                    style={{ color: coutVivant !== undefined ? "var(--amber)" : "color-mix(in srgb, var(--steel) 45%, transparent)" }}
                   >
                     {previewLoading
                       ? t.calculating
@@ -764,11 +764,11 @@ export function AjoutActivite({
                   <>
                   {typeJeu === "temps" ? (
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                         <span style={{ color: "var(--muted)" }}>{t.level}</span>
                         <span className="gold-text font-bold">{preview.scoring.niveau}</span>
                       </div>
-                      <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                         <span style={{ color: "var(--muted)" }}>{tJeux.dureeLabel}</span>
                         <span className="gold-text font-bold mono-num">
                           {(Number(dureeH) || 0) > 0 ? `${Number(dureeH)} ${tJeux.heures} ` : ""}
@@ -778,20 +778,20 @@ export function AjoutActivite({
                     </div>
                   ) : (
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                       <span style={{ color: "var(--muted)" }}>{t.level}</span>
                       <span className="gold-text font-bold">{preview.scoring.niveau}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                       <span style={{ color: "var(--muted)" }}>{t.multiplier}</span>
                       <span className="gold-text font-bold">×{preview.scoring.multiplicateur}</span>
                     </div>
-                    <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                    <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                       <span style={{ color: "var(--muted)" }}>{t.baseScore}</span>
                       <span className="gold-text font-bold">{preview.scoring.scoreBase}</span>
                     </div>
                     {capacites.br ? (
-                      <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                      <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                         <span style={{ color: "var(--muted)" }}>{t.placementLabel}</span>
                         <span className="gold-text font-bold mono-num">
                           {t.placementAffiche(preview.placement ?? 0, preview.joueurs ?? 0)}
@@ -799,11 +799,11 @@ export function AjoutActivite({
                       </div>
                     ) : (
                       <>
-                        <div className="flex justify-between p-2 rounded" style={{ background: "rgba(152,162,176,0.08)" }}>
+                        <div className="flex justify-between p-2 rounded" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                           <span style={{ color: "var(--muted)" }}>{t.defeatMalus}</span>
                           <span className={preview.scoring.malus > 0 ? "loss-text font-bold" : "gold-text font-bold"}>+{preview.scoring.malus}</span>
                         </div>
-                        <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "rgba(152,162,176,0.08)" }}>
+                        <div className="flex justify-between p-2 rounded col-span-2" style={{ background: "color-mix(in srgb, var(--steel) 8%, transparent)" }}>
                           <span style={{ color: "var(--muted)" }}>{t.mastery(preview.partiesAvant)}</span>
                           <span className="blue-text font-bold">+{pourcent(Math.round(preview.scoring.surcharge * 100))}</span>
                         </div>
@@ -811,7 +811,7 @@ export function AjoutActivite({
                     )}
                   </div>
                   )}
-                  <div className="text-center p-4 rounded" style={{ background: "rgba(152,162,176,0.1)", border: "1px solid rgba(152,162,176,0.3)" }}>
+                  <div className="text-center p-4 rounded" style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 30%, transparent)" }}>
                     {(() => {
                       // Tout ce qu'il y a à faire, dans l'unité de chaque exercice.
                       const parts = Object.entries(preview.repartition ?? {})
@@ -868,7 +868,7 @@ export function AjoutActivite({
               </p>
               {erreurAjoutRiot && (
                 <div className="text-center p-3 rounded loss-text" role="status" style={{
-                  background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+                  background: "color-mix(in srgb, var(--loss) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
                   fontSize: "0.86rem",
                 }}>
                   {erreurAjoutRiot}
@@ -915,7 +915,7 @@ export function AjoutActivite({
                     ) : m.alreadyLogged ? (
                       <>
                         <span className="text-sm gold-text font-bold">{formaterCompact(m.pompesCalculees ?? 0, toExerciceId(m.exercice), null, dateLocale)}</span>
-                        <span className="text-xs px-3 py-1 rounded" style={{ background: "rgba(152,162,176,0.1)", color: "var(--faint)" }}>
+                        <span className="text-xs px-3 py-1 rounded" style={{ background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--faint)" }}>
                           {t.loggedBadge}
                         </span>
                       </>

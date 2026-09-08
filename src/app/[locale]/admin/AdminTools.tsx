@@ -90,7 +90,7 @@ export default function AdminTools() {
             placeholder={t.emailPlaceholder}
             style={{
               flex: 1, padding: "7px 12px", borderRadius: 6, fontSize: "0.85rem",
-              background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
+              background: "color-mix(in srgb, var(--bone) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
               color: "var(--bone)",
             }}
           />
@@ -99,7 +99,7 @@ export default function AdminTools() {
             disabled={saving || !input.trim()}
             style={{
               padding: "7px 16px", borderRadius: 6, fontSize: "0.82rem", cursor: "pointer",
-              background: "rgba(47,217,138,0.1)", border: "1px solid rgba(47,217,138,0.35)",
+              background: "var(--victory-soft)", border: "1px solid color-mix(in srgb, var(--victory) 35%, transparent)",
               color: "var(--victory)", fontWeight: 600,
             }}
           >
@@ -118,7 +118,7 @@ export default function AdminTools() {
         {emails.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {emails.map(e => (
-              <div key={e} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", borderRadius: 4, background: "rgba(47,217,138,0.06)", border: "1px solid rgba(47,217,138,0.15)" }}>
+              <div key={e} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "5px 10px", borderRadius: 4, background: "color-mix(in srgb, var(--victory) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--victory) 15%, transparent)" }}>
                 <span style={{ fontSize: "0.82rem", color: "var(--bone)" }}>{e}</span>
                 <button
                   onClick={() => remove(e)}
@@ -136,7 +136,7 @@ export default function AdminTools() {
       </div>
 
       {/* Rejouer intro */}
-      <div style={{ borderTop: "1px solid rgba(152,162,176,0.1)", paddingTop: 14 }}>
+      <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)", paddingTop: 14 }}>
         <p style={{ fontSize: "0.7rem", color: "var(--faint)", letterSpacing: "0.08em", marginBottom: "0.6rem" }}>
           {t.testSection}
         </p>
@@ -149,7 +149,7 @@ export default function AdminTools() {
             width: "100%",
             padding: "0.55rem",
             background: "transparent",
-            border: "1px dashed rgba(152,162,176,0.2)",
+            border: "1px dashed color-mix(in srgb, var(--steel) 20%, transparent)",
             borderRadius: 4,
             color: "var(--faint)",
             fontSize: "0.78rem",

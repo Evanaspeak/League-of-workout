@@ -88,7 +88,7 @@ export function DefiDuJour() {
             <b className="mono-num" style={{ fontSize: "0.8rem" }}>{`${nombre(ou)} / ${nombre(cible)}`}</b>
           </span>
         </div>
-        <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
+        <div style={{ height: 6, background: "color-mix(in srgb, var(--steel) 15%, transparent)", borderRadius: 3 }}>
           <div
             style={{
               height: "100%", borderRadius: 3,
@@ -155,7 +155,7 @@ export function DefiDuJour() {
                 {`${nombre(collectif.points)} / ${nombre(collectif.cible)}`}
               </b>
             </div>
-            <div style={{ height: 6, background: "rgba(152,162,176,0.15)", borderRadius: 3 }}>
+            <div style={{ height: 6, background: "color-mix(in srgb, var(--steel) 15%, transparent)", borderRadius: 3 }}>
               <div
                 style={{
                   height: "100%", borderRadius: 3,

@@ -111,5 +111,5 @@
 /* ── Scrollbar ──────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--ink); }
-::-webkit-scrollbar-thumb { background: rgba(236, 239, 244, 0.14); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(236, 239, 244, 0.26); }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--bone) 14%, transparent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--bone) 26%, transparent); }

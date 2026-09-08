@@ -50,7 +50,7 @@ export const AXE_TICK_FORT_DENSE = { fill: BONE, fontSize: 10 } as const;
 /** Cadre de l'infobulle : le panneau de l'application, en plus dense. */
 export const INFOBULLE = {
   background: CARBON,
-  border: "1px solid rgba(236,239,244,0.15)",
+  border: "1px solid color-mix(in srgb, var(--bone) 15%, transparent)",
   color: BONE,
 } as const;
 
@@ -58,7 +58,7 @@ export const INFOBULLE = {
 export const RAYON_BARRE: [number, number, number, number] = [2, 2, 0, 0];
 
 /** Quadrillage discret, sous les courbes uniquement. */
-export const GRILLE_TRAIT = "rgba(152,162,176,0.1)";
+export const GRILLE_TRAIT = "color-mix(in srgb, var(--steel) 10%, transparent)";
 
 /**
  * Teintes des séries. Une couleur par nature de donnée, jamais deux pour la

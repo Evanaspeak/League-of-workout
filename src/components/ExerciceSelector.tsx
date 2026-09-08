@@ -88,7 +88,7 @@ export function ExerciceSelector({
               padding: compact ? "10px 12px" : "14px 16px",
               borderRadius: 10,
               cursor: seul ? "default" : "pointer",
-              background: actif ? "rgba(255,180,84,0.07)" : "rgba(236,239,244,0.02)",
+              background: actif ? "color-mix(in srgb, var(--amber) 7%, transparent)" : "color-mix(in srgb, var(--bone) 2%, transparent)",
               border: `1px solid ${actif ? "var(--amber)" : "var(--line)"}`,
               transition: "border-color 0.15s, background 0.15s",
             }}

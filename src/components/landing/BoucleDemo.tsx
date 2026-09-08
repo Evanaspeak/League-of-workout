@@ -182,7 +182,7 @@ function TempsPaiement({ actif, l }: { actif: boolean; l: LibellesVignettes }) {
           </div>
         </div>
         <svg className="vign-anneau" width="64" height="64" viewBox="0 0 64 64" aria-hidden>
-          <circle cx="32" cy="32" r={RAYON} fill="none" stroke="rgba(236,239,244,0.1)" strokeWidth="4" />
+          <circle cx="32" cy="32" r={RAYON} fill="none" stroke="color-mix(in srgb, var(--bone) 10%, transparent)" strokeWidth="4" />
           <circle
             cx="32" cy="32" r={RAYON} fill="none"
             stroke={part >= 1 ? "var(--victory)" : "var(--ember)"} strokeWidth="4" strokeLinecap="round"

@@ -83,7 +83,7 @@ function Valider() {
               className="eyebrow"
               style={{
                 display: "inline-block", marginBottom: 20, padding: "4px 16px",
-                borderRadius: 999, border: "1px solid rgba(47,217,138,0.3)",
+                borderRadius: 999, border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)",
                 background: "var(--victory-soft)", color: "var(--victory)",
               }}
             >
@@ -96,7 +96,7 @@ function Valider() {
               className="mono-num"
               style={{
                 fontSize: "1.7rem", fontWeight: 700, letterSpacing: "0.2em",
-                color: "var(--bone)", background: "rgba(12,14,17,0.7)",
+                color: "var(--bone)", background: "color-mix(in srgb, var(--ink) 70%, transparent)",
                 border: "1px dashed var(--line-strong)", borderRadius: 10,
                 padding: "16px 8px", marginBottom: 20, wordBreak: "break-all",
               }}
@@ -147,7 +147,7 @@ export default function PageValider() {
       <nav
         style={{
           position: "sticky", top: 0, zIndex: 40,
-          background: "rgba(12,14,17,0.85)", backdropFilter: "blur(14px)",
+          background: "color-mix(in srgb, var(--ink) 85%, transparent)", backdropFilter: "blur(14px)",
           WebkitBackdropFilter: "blur(14px)", borderBottom: "1px solid var(--line)",
         }}
       >

@@ -19,7 +19,7 @@ const PASTILLE = (actif: boolean): React.CSSProperties => ({
   borderRadius: 999,
   cursor: "pointer",
   fontSize: "0.78rem",
-  background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+  background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
   border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
   color: actif ? "var(--amber)" : "var(--muted)",
   transition: "all 0.15s",
@@ -185,7 +185,7 @@ export function ReglageJeux() {
               style={{
                 width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                 gap: 10, padding: "11px 14px", cursor: "pointer",
-                background: deplie ? "rgba(152,162,176,0.06)" : "transparent",
+                background: deplie ? "color-mix(in srgb, var(--steel) 6%, transparent)" : "transparent",
                 border: "none", color: "var(--bone)", textAlign: "left",
                 fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
                 fontSize: "0.85rem", letterSpacing: "0.08em",
@@ -195,7 +195,7 @@ export function ReglageJeux() {
               <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
                 {config && (
                   <span className="text-xs" style={{
-                    color: config.actif ? "var(--amber)" : "rgba(152,162,176,0.45)",
+                    color: config.actif ? "var(--amber)" : "color-mix(in srgb, var(--steel) 45%, transparent)",
                     letterSpacing: 0, fontFamily: "var(--font-body, sans-serif)",
                   }}>
                     {config.actif ? t.jeuAffiche : t.jeuMasque}
@@ -258,7 +258,7 @@ export function ReglageJeux() {
                           className="text-sm"
                           style={{
                             padding: "6px 14px", borderRadius: 999, cursor: "pointer",
-                            background: jeux!.placement ? "rgba(47,217,138,0.12)" : "transparent",
+                            background: jeux!.placement ? "color-mix(in srgb, var(--victory) 12%, transparent)" : "transparent",
                             border: `1px solid ${jeux!.placement ? "var(--victory)" : "var(--line-strong)"}`,
                             color: jeux!.placement ? "var(--victory)" : "var(--muted)",
                           }}

@@ -692,7 +692,7 @@ export default function SettingsPage() {
           {betaRank !== null && (
             <span style={{
               fontSize: "0.65rem", letterSpacing: "0.1em", color: "var(--faint)",
-              background: "rgba(152,162,176,0.07)", border: "1px solid rgba(152,162,176,0.15)",
+              background: "color-mix(in srgb, var(--steel) 7%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 15%, transparent)",
               borderRadius: 3, padding: "2px 8px",
             }}>
               {t.betaRank(betaRank)}
@@ -856,7 +856,7 @@ export default function SettingsPage() {
                         borderRadius: 999,
                         cursor: "pointer",
                         fontSize: "0.8rem",
-                        background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                        background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                         border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                         color: actif ? "var(--amber)" : "var(--muted)",
                         transition: "all 0.15s",
@@ -890,7 +890,7 @@ export default function SettingsPage() {
                     borderRadius: 999,
                     cursor: "pointer",
                     fontSize: "0.8rem",
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -935,7 +935,7 @@ export default function SettingsPage() {
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     minHeight: 44,
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -975,7 +975,7 @@ export default function SettingsPage() {
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     minHeight: 44,
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -1015,7 +1015,7 @@ export default function SettingsPage() {
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     minHeight: 44,
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -1051,7 +1051,7 @@ export default function SettingsPage() {
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     minHeight: 44,
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -1087,7 +1087,7 @@ export default function SettingsPage() {
                     cursor: "pointer",
                     fontSize: "0.8rem",
                     minHeight: 44,
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -1145,7 +1145,7 @@ export default function SettingsPage() {
                   style={{
                     padding: "7px 14px", borderRadius: 999, cursor: "pointer",
                     fontSize: "0.8rem", minHeight: 44,
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -1177,7 +1177,7 @@ export default function SettingsPage() {
                     borderRadius: 999,
                     cursor: "pointer",
                     fontSize: "0.8rem",
-                    background: actif ? "rgba(255,180,84,0.1)" : "transparent",
+                    background: actif ? "color-mix(in srgb, var(--amber) 10%, transparent)" : "transparent",
                     border: `1px solid ${actif ? "var(--amber)" : "var(--line-strong)"}`,
                     color: actif ? "var(--amber)" : "var(--muted)",
                     transition: "all 0.15s",
@@ -1302,8 +1302,8 @@ export default function SettingsPage() {
         marginTop: "1.5rem",
         padding: "1.25rem",
         borderRadius: 6,
-        border: "1px solid rgba(255,90,71,0.3)",
-        background: "rgba(255,90,71,0.04)",
+        border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
+        background: "color-mix(in srgb, var(--loss) 4%, transparent)",
       }}>
         <h2 className="titre-section" style={{ color: "var(--loss)" }}>{t.zoneDeDanger}</h2>
         <p style={{ fontSize: "0.8rem", color: "var(--faint)", lineHeight: 1.6, margin: "0.75rem 0 1rem" }}>
@@ -1315,7 +1315,7 @@ export default function SettingsPage() {
             width: "100%",
             padding: "0.6rem",
             background: "transparent",
-            border: "1px solid rgba(255,90,71,0.5)",
+            border: "1px solid color-mix(in srgb, var(--loss) 50%, transparent)",
             borderRadius: 4,
             color: "var(--loss)",
             fontSize: "0.85rem",
@@ -1382,7 +1382,7 @@ export default function SettingsPage() {
                 style={{
                   flex: 1, padding: "0.55rem",
                   background: "transparent",
-                  border: "1px solid rgba(152,162,176,0.3)",
+                  border: "1px solid color-mix(in srgb, var(--steel) 30%, transparent)",
                   borderRadius: 4, color: "var(--bone)",
                   fontSize: "0.85rem", cursor: "pointer",
                 }}
@@ -1430,7 +1430,7 @@ export default function SettingsPage() {
                 disabled={deleteConfirm !== t.confirmMot || deleting}
                 style={{
                   flex: 1, padding: "0.55rem",
-                  background: deleteConfirm === t.confirmMot ? "var(--loss)" : "rgba(255,90,71,0.25)",
+                  background: deleteConfirm === t.confirmMot ? "var(--loss)" : "color-mix(in srgb, var(--loss) 25%, transparent)",
                   border: "none", borderRadius: 4, color: "#fff",
                   fontSize: "0.85rem", fontWeight: 600,
                   cursor: deleteConfirm === t.confirmMot && !deleting ? "pointer" : "not-allowed",

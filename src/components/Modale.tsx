@@ -81,7 +81,7 @@ export function Modale({
             aria-label={t.fermer}
             style={{
               flexShrink: 0, width: 28, height: 28, borderRadius: 6,
-              background: "rgba(152,162,176,0.08)",
+              background: "color-mix(in srgb, var(--steel) 8%, transparent)",
               border: "1px solid var(--line)",
               color: "var(--muted)",
               cursor: "pointer",

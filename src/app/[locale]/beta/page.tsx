@@ -8,7 +8,7 @@ import { Wordmark } from "@/components/Wordmark";
 
 const FIELD_STYLE = {
   width: "100%",
-  background: "rgba(12,14,17,0.6)",
+  background: "color-mix(in srgb, var(--ink) 60%, transparent)",
   border: "1px solid var(--line-strong)",
   borderRadius: 8,
   padding: "12px 14px",
@@ -118,7 +118,7 @@ export default function BetaPage() {
     }}>
       <nav style={{
         position: "sticky", top: 0, zIndex: 40,
-        background: "rgba(12,14,17,0.85)", backdropFilter: "blur(14px)",
+        background: "color-mix(in srgb, var(--ink) 85%, transparent)", backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         borderBottom: "1px solid var(--line)",
       }}>
@@ -148,7 +148,7 @@ export default function BetaPage() {
             }} />
             <div style={{
               display: "inline-block", marginBottom: 20, padding: "4px 16px", borderRadius: 999,
-              border: "1px solid rgba(47,217,138,0.3)", background: "var(--victory-soft)",
+              border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)", background: "var(--victory-soft)",
               fontFamily: "var(--font-mono, 'IBM Plex Mono', monospace)",
               fontSize: "0.68rem", letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--victory)",
             }}>
@@ -172,7 +172,7 @@ export default function BetaPage() {
                 style={{
                   fontSize: "1.9rem", fontWeight: 600, letterSpacing: "0.22em",
                   color: "var(--bone)", cursor: "pointer", userSelect: "all",
-                  padding: "14px", borderRadius: 10, background: "rgba(12,14,17,0.7)",
+                  padding: "14px", borderRadius: 10, background: "color-mix(in srgb, var(--ink) 70%, transparent)",
                   border: "1px dashed var(--line-strong)",
                 }}
                 title={t.copy}
@@ -283,7 +283,7 @@ export default function BetaPage() {
 
               {error && (
                 <div style={{
-                  background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+                  background: "color-mix(in srgb, var(--loss) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
                   borderRadius: 8, padding: "10px 16px", fontSize: "0.875rem", color: "var(--loss)",
                 }}>
                   {error}

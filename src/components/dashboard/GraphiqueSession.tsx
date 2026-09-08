@@ -20,7 +20,7 @@ export function GraphiqueSession({
   fmtAxe: (points: number) => string;
 }) {
   return (
-    <div className="lol-panel p-3" style={{ background: "rgba(152,162,176,0.04)" }}>
+    <div className="lol-panel p-3" style={{ background: "color-mix(in srgb, var(--steel) 4%, transparent)" }}>
       <h3 className="titre-bloc mb-2">{titre}</h3>
       <ResponsiveContainer width="100%" height={140}>
         <BarChart data={points}>

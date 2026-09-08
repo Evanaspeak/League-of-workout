@@ -53,7 +53,7 @@ function daysSince(date: string | null, t: ReturnType<typeof useT<typeof adminUs
 
 function ActivityDot({ value, max }: { value: number; max: number }) {
   const ratio = max > 0 ? value / max : 0;
-  const color = ratio === 0 ? "rgba(152,162,176,0.1)" : ratio < 0.3 ? "var(--loss)" : ratio < 0.7 ? "var(--bone)" : "var(--victory)";
+  const color = ratio === 0 ? "color-mix(in srgb, var(--steel) 10%, transparent)" : ratio < 0.3 ? "var(--loss)" : ratio < 0.7 ? "var(--bone)" : "var(--victory)";
   return (
     <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0 }} />
   );
@@ -166,7 +166,7 @@ export default function AdminUserList() {
   /** Le bandeau d'échec, affiché au-dessus de la liste. */
   const bandeauErreur = erreurAction ? (
     <div className="loss-text" role="status" style={{
-      background: "rgba(255,90,71,0.08)", border: "1px solid rgba(255,90,71,0.3)",
+      background: "color-mix(in srgb, var(--loss) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
       borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: "0.86rem",
     }}>
       {erreurAction}
@@ -189,7 +189,7 @@ export default function AdminUserList() {
         placeholder={t.searchPlaceholder}
         style={{
           width: "100%", marginBottom: 16, padding: "8px 12px", borderRadius: 6,
-          background: "rgba(236,239,244,0.04)", border: "1px solid rgba(152,162,176,0.2)",
+          background: "color-mix(in srgb, var(--bone) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
           color: "var(--bone)", fontSize: "0.85rem", boxSizing: "border-box",
         }}
       />
@@ -200,14 +200,14 @@ export default function AdminUserList() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filtered.map(u => (
-          <div key={u.id} style={{ border: "1px solid rgba(152,162,176,0.12)", borderRadius: 8, overflow: "hidden" }}>
+          <div key={u.id} style={{ border: "1px solid color-mix(in srgb, var(--steel) 12%, transparent)", borderRadius: 8, overflow: "hidden" }}>
 
             {/* Ligne compacte */}
             <div
               onClick={() => setExpanded(expanded === u.id ? null : u.id)}
               style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-                cursor: "pointer", background: expanded === u.id ? "rgba(152,162,176,0.04)" : "transparent",
+                cursor: "pointer", background: expanded === u.id ? "color-mix(in srgb, var(--steel) 4%, transparent)" : "transparent",
               }}
             >
               <ActivityDot value={u.gamesThisWeek} max={maxWeekly} />
@@ -237,7 +237,7 @@ export default function AdminUserList() {
 
             {/* Profil déroulant */}
             {expanded === u.id && (
-              <div style={{ padding: "14px 18px 18px", borderTop: "1px solid rgba(152,162,176,0.1)", background: "rgba(12,14,17,0.4)" }}>
+              <div style={{ padding: "14px 18px 18px", borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)", background: "color-mix(in srgb, var(--ink) 40%, transparent)" }}>
 
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 14 }}>
@@ -252,7 +252,7 @@ export default function AdminUserList() {
                 </div>
 
                 {/* Infos perso */}
-                <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.profile}</SectionTitle>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 12 }}>
                     <Stat label={t.email} value={u.email ?? t.notProvided} />
@@ -266,7 +266,7 @@ export default function AdminUserList() {
                     <Stat label={t.sportPerWeek} value={u.sportsHoursPerWeek != null ? uniteLocalisee(u.sportsHoursPerWeek, "hour", dateLocale, 1) : t.notProvided} />
                   </div>
                   {newPasswords[u.id] ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "rgba(47,217,138,0.08)", border: "1px solid rgba(47,217,138,0.3)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, background: "color-mix(in srgb, var(--victory) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)" }}>
                       <span style={{ fontSize: "0.75rem", color: "var(--faint)" }}>{t.newPassword}</span>
                       <code style={{ fontSize: "0.88rem", color: "var(--victory)", fontWeight: 700, letterSpacing: "0.05em" }}>{newPasswords[u.id]}</code>
                       <span style={{ fontSize: "0.7rem", color: "var(--faint)", marginLeft: 4 }}>{t.visibleOnce}</span>
@@ -275,7 +275,7 @@ export default function AdminUserList() {
                     <button
                       onClick={e => { e.stopPropagation(); resetPassword(u.id); }}
                       disabled={resettingPwd === u.id}
-                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(152,162,176,0.35)", color: "var(--steel)" }}
+                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed color-mix(in srgb, var(--steel) 35%, transparent)", color: "var(--steel)" }}
                     >
                       {resettingPwd === u.id ? "..." : t.resetPassword}
                     </button>
@@ -287,7 +287,7 @@ export default function AdminUserList() {
                     style={{
                       marginLeft: 8, padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem",
                       cursor: "pointer", background: "transparent",
-                      border: `1px dashed ${rearme[u.id] ? "rgba(47,217,138,0.5)" : "rgba(152,162,176,0.35)"}`,
+                      border: `1px dashed ${rearme[u.id] ? "color-mix(in srgb, var(--victory) 50%, transparent)" : "color-mix(in srgb, var(--steel) 35%, transparent)"}`,
                       color: rearme[u.id] ? "var(--victory)" : "var(--steel)",
                     }}
                   >
@@ -303,7 +303,7 @@ export default function AdminUserList() {
                 </div>
 
                 {/* Test de force & niveau */}
-                <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)", paddingTop: 12, marginBottom: 14 }}>
                   <SectionTitle>{t.plankSettings}</SectionTitle>
                   <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
                     <Stat label={t.plankMax} value={nombre(u.pompesMax)} />
@@ -315,7 +315,7 @@ export default function AdminUserList() {
 
                 {/* Niveaux */}
                 {scoring.levels.length > 0 && (
-                  <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                  <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.plankLevelsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
                       <table aria-label={t.plankLevelsGlobal} style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
@@ -330,8 +330,8 @@ export default function AdminUserList() {
                         <tbody>
                           {scoring.levels.map(l => (
                             <tr key={l.niveau} style={{
-                              borderTop: "1px solid rgba(152,162,176,0.06)",
-                              background: l.niveau === u.niveauActuel ? "rgba(152,162,176,0.07)" : "transparent",
+                              borderTop: "1px solid color-mix(in srgb, var(--steel) 6%, transparent)",
+                              background: l.niveau === u.niveauActuel ? "color-mix(in srgb, var(--steel) 7%, transparent)" : "transparent",
                             }}>
                               <td style={tdStyle}>
                                 <span style={{ color: l.niveau === u.niveauActuel ? "var(--bone)" : "var(--muted)", fontWeight: l.niveau === u.niveauActuel ? 700 : 400 }}>
@@ -351,7 +351,7 @@ export default function AdminUserList() {
 
                 {/* Poids par rôle */}
                 {scoring.roles.length > 0 && (
-                  <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                  <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.kdaWeightsGlobal}</SectionTitle>
                     <div style={{ overflowX: "auto" }}>
                       <table aria-label={t.kdaWeightsGlobal} style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem" }}>
@@ -366,13 +366,13 @@ export default function AdminUserList() {
                         </thead>
                         <tbody>
                           {scoring.roles.map(r => (
-                            <tr key={r.role} style={{ borderTop: "1px solid rgba(152,162,176,0.06)" }}>
+                            <tr key={r.role} style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 6%, transparent)" }}>
                               <td style={tdStyle}><span style={{ color: "var(--bone)", fontWeight: 600 }}>{r.role}</span></td>
                               <td style={tdStyle}>{r.poidsMort}</td>
                               <td style={tdStyle}>{r.poidsKill}</td>
                               <td style={tdStyle}>{r.poidsAssist}</td>
                               <td style={tdStyle}>
-                                <span style={{ color: r.maitriseActive ? "var(--victory)" : "rgba(236,239,244,0.25)" }}>
+                                <span style={{ color: r.maitriseActive ? "var(--victory)" : "color-mix(in srgb, var(--bone) 25%, transparent)" }}>
                                   {r.maitriseActive ? t.yes : t.no}
                                 </span>
                               </td>
@@ -386,7 +386,7 @@ export default function AdminUserList() {
 
                 {/* Maîtrise */}
                 {scoring.mastery && (
-                  <div style={{ borderTop: "1px solid rgba(152,162,176,0.08)", paddingTop: 12, marginBottom: 14 }}>
+                  <div style={{ borderTop: "1px solid color-mix(in srgb, var(--steel) 8%, transparent)", paddingTop: 12, marginBottom: 14 }}>
                     <SectionTitle>{t.championMasteryGlobal}</SectionTitle>
                     <div style={{ display: "flex", gap: 24 }}>
                       <Stat label={t.maxOverload} value={`+${pourcent(scoring.mastery.surchargeMax * 100)}`} />
@@ -396,7 +396,7 @@ export default function AdminUserList() {
                 )}
 
                 {/* Suppression */}
-                <div style={{ borderTop: "1px solid rgba(255,90,71,0.15)", paddingTop: 12 }}>
+                <div style={{ borderTop: "1px solid color-mix(in srgb, var(--loss) 15%, transparent)", paddingTop: 12 }}>
                   {confirmDelete === u.id ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                       <span style={{ fontSize: "0.78rem", color: "var(--loss)" }}>
@@ -405,13 +405,13 @@ export default function AdminUserList() {
                       <button
                         onClick={() => deleteUser(u.id)}
                         disabled={deleting === u.id}
-                        style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "rgba(255,90,71,0.15)", border: "1px solid rgba(255,90,71,0.5)", color: "var(--loss)", fontWeight: 600 }}
+                        style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "color-mix(in srgb, var(--loss) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 50%, transparent)", color: "var(--loss)", fontWeight: 600 }}
                       >
                         {deleting === u.id ? "..." : t.confirm}
                       </button>
                       <button
                         onClick={() => setConfirmDelete(null)}
-                        style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid rgba(236,239,244,0.15)", color: "var(--faint)" }}
+                        style={{ padding: "5px 10px", borderRadius: 5, fontSize: "0.78rem", cursor: "pointer", background: "transparent", border: "1px solid color-mix(in srgb, var(--bone) 15%, transparent)", color: "var(--faint)" }}
                       >
                         {t.cancel}
                       </button>
@@ -419,7 +419,7 @@ export default function AdminUserList() {
                   ) : (
                     <button
                       onClick={e => { e.stopPropagation(); setConfirmDelete(u.id); }}
-                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed rgba(255,90,71,0.3)", color: "rgba(255,90,71,0.6)" }}
+                      style={{ padding: "5px 12px", borderRadius: 5, fontSize: "0.75rem", cursor: "pointer", background: "transparent", border: "1px dashed color-mix(in srgb, var(--loss) 30%, transparent)", color: "color-mix(in srgb, var(--loss) 60%, transparent)" }}
                     >
                       {t.deleteAccount}
                     </button>

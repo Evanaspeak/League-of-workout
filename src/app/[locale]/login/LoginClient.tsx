@@ -124,7 +124,7 @@ export function LoginClient({
             padding: "0.7rem 0.9rem",
             marginBottom: "1.5rem",
             background: "var(--victory-soft)",
-            border: "1px solid rgba(47,217,138,0.3)",
+            border: "1px solid color-mix(in srgb, var(--victory) 30%, transparent)",
             borderRadius: 8,
             fontSize: "0.82rem",
             color: "var(--victory)",
@@ -138,7 +138,7 @@ export function LoginClient({
             padding: "0.7rem 0.9rem",
             marginBottom: "1.5rem",
             background: "var(--gold-subtle)",
-            border: "1px solid rgba(255,180,84,0.3)",
+            border: "1px solid color-mix(in srgb, var(--amber) 30%, transparent)",
             borderRadius: 8,
             fontSize: "0.82rem",
             color: "var(--amber)",
@@ -175,7 +175,7 @@ export function LoginClient({
             <div style={{
               padding: "1rem",
               borderRadius: 10,
-              background: "rgba(236,239,244,0.04)",
+              background: "color-mix(in srgb, var(--bone) 4%, transparent)",
               border: "1px solid var(--line-strong)",
             }}>
               <p style={{ fontWeight: 600, color: "var(--bone)", marginBottom: "0.3rem" }}>{t.candidatureEnCours}</p>
@@ -189,8 +189,8 @@ export function LoginClient({
             <div style={{
               padding: "1rem",
               borderRadius: 10,
-              background: "rgba(255,90,71,0.08)",
-              border: "1px solid rgba(255,90,71,0.28)",
+              background: "color-mix(in srgb, var(--loss) 8%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--loss) 28%, transparent)",
             }}>
               <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>{t.candidatureNonRetenue}</p>
               <p style={{ fontSize: "0.82rem", color: "var(--muted)", lineHeight: 1.6 }}>
@@ -203,8 +203,8 @@ export function LoginClient({
             <div style={{
               padding: "1rem",
               borderRadius: 10,
-              background: "rgba(255,90,71,0.08)",
-              border: "1px solid rgba(255,90,71,0.28)",
+              background: "color-mix(in srgb, var(--loss) 8%, transparent)",
+              border: "1px solid color-mix(in srgb, var(--loss) 28%, transparent)",
             }}>
               <p className="loss-text" style={{ fontWeight: 600, marginBottom: "0.3rem" }}>{t.accesRefuse}</p>
               <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
