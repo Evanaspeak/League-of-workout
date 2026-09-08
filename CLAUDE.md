@@ -1278,6 +1278,12 @@ ensuite, le semis, la mesure enfin. Ce qui l'a dit est le contrôle
 d'atterrissage — la sonde a rendu vingt-huit octets et `{"error":"Non
 authentifié"}` au lieu d'un rapport flatteur.
 
+**Et la suite entière a rendu un cinquième sabotage que je n'avais pas fait.**
+`panne-serveur.spec.ts` fabriquait une réponse vide en TABLEAU nu, la forme
+d'avant : l'écran la refuse et annonce un échec de chargement, ce qui est le
+bon comportement et pas ce que le test éprouve. Une réponse d'API ne change pas
+en silence, et c'est le seul endroit du dépôt qui fabriquait celle-ci.
+
 Vérifié à l'écran dans trois langues, à mille deux cents parties : « Les 50
 dernières parties, sur 1 200 », « Die letzten 50 Partien, von 1.200 »,
 「直近 50 件（全 1,200 件）」 — les trois séparateurs de milliers sont ceux de
