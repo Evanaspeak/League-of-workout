@@ -36,6 +36,8 @@ export function ConnexionAppClient({
     if (!nonce) return;
     ecrire("low_desktop_handoff", "1");
     ecrire("low_desktop_nonce", nonce);
+    // Nettoyage d'une ancienne clé, plus rien ne l'écrit — voir
+    // `DesktopModeDetector`, qui porte la raison.
     effacer("low_desktop_arme");
 
     let vivant = true;

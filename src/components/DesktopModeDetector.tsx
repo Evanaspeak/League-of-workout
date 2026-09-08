@@ -28,6 +28,12 @@ export function DesktopModeDetector() {
     // cette session-là vers l'application, sans que personne ne se soit
     // authentifié. L'horodatage vivait ici, dans le navigateur ; il vit
     // désormais là où on le relira, ce qui évite de comparer deux horloges.
+    //
+    // L'effacement qui suit ne sert donc plus qu'à NETTOYER l'ancienne clé
+    // chez qui la porte encore. Plus rien ne l'écrit ni ne la lit : sans cette
+    // phrase, la ligne se relit comme du code vivant, et on va chercher qui
+    // l'alimente. C'est la même raison que les anciens noms sans compte
+    // qu'efface `oublierPremiereVisite`.
     effacer("low_desktop_arme");
     fetch("/api/auth/desktop-round", { method: "POST" }).catch(() => {});
   }, []);

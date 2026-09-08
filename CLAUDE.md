@@ -1166,6 +1166,89 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les clés de stockage : rien à corriger, et un garde qu'on n'écrit pas
+Quatrième et dernière passe du recensement des chaînes. Elle est NÉGATIVE, et
+c'est écrit ici pour qu'on ne la refasse pas dans six semaines.
+
+Recensées par OPÉRATION plutôt que par occurrence — qui lit, qui écrit, qui
+efface — les sept clés `low_*` du dossier `src/` rendent trois « effacées par
+quelqu'un, écrites par personne » : `low_desktop_arme`, `low_onboarded` et
+`low_visite`.
+
+**Aucune n'est un défaut, et les trois sont la même chose** : un nettoyage
+d'ANCIENNE clé chez qui la porte encore. `low_onboarded` et `low_visite` sont
+les noms d'avant le rattachement au compte, et `oublierPremiereVisite` écrit
+pourquoi elle les retire ; `low_desktop_arme` portait l'horodatage du transfert
+de session, passé au serveur depuis.
+
+**Le garde évident ne s'écrit donc pas.** « Toute clé effacée doit être écrite
+par quelqu'un » ferait trois faux positifs le jour de son écriture, sur trois
+lignes parfaitement justes — et un garde qui crie sur ce qui va bien finit par
+ne plus se lire. C'est la même mesure qui avait fait renoncer au garde du
+libellé constant et à celui de la colonne d'effort du plan.
+
+**Ce qui a été corrigé tient en deux commentaires.** Les deux effacements de
+`low_desktop_arme` ne disaient pas ce qu'ils étaient : le commentaire voisin
+explique pourquoi l'horodatage a DÉMÉNAGÉ, pas pourquoi la ligne reste. Elle
+se relit donc comme du code vivant, et on va chercher qui alimente la clé —
+ce qui vient de coûter dix minutes. Une phrase les évite.
+
+**Et le recensement s'est trompé une fois avant de rendre ce résultat.** Il
+comptait `low_visite` et `low_onboarded` comme jamais écrites : elles le sont
+par un CONSTRUCTEUR de clé (`pour(cle, uid)`), donc sous une forme
+qu'aucun motif de littéral ne voit. C'est le même angle mort que celui du
+garde des événements une heure plus tôt — un nom qui ne se lit pas en clair au
+point d'emploi — et il vaut d'être noté : **un recensement de clés par
+littéral ne voit jamais les clés composées.**
+
+### Deux épingles justes, et rien entre les deux
+Troisième passe du même recensement, sur les noms de canaux du pont Electron.
+Celui-ci ne rend pas un défaut vivant — il rend un TROU dans la façon dont
+deux gardes se répartissent le travail, et c'est plus instructif.
+
+La détection de jeu traverse quatre fichiers : `jeuxProcessus.js` émet
+`{ type: "jeu-demarre" | "jeu-arrete", jeu }`, `main.js` le transmet tel quel
+sur le canal `jeu:detecte`, `preload.js` le rend à la page, et le site compare
+`type` à ces deux chaînes.
+
+**Les deux bouts sont déjà tenus, chacun de son côté.** Le site l'est par le
+COMPILATEUR : `electron.d.ts` déclare l'union des deux littéraux, donc une
+comparaison à un troisième n'aurait aucun recouvrement et `tsc` le nomme. La
+coquille l'est par `jeuxProcessus.test.ts`, qui épingle les deux noms émis.
+
+**Ce que rien ne tenait, c'est le lien ENTRE les deux épingles**, et le
+renommage réel se fait précisément dans l'ordre qui l'exploite : on renomme
+dans `jeuxProcessus.js`, son test tombe, on met le test à jour — et personne
+ne pense au fichier de déclaration, qui vit dans l'autre paquet. Le site
+continue alors de comparer à une chaîne que la coquille n'envoie plus.
+
+Le symptôme est le même que celui des méthodes absentes du pont : **la
+détection automatique de partie cesse entièrement, sans erreur**, et la seule
+machine capable de le voir est celle de quelqu'un d'autre — les parcours
+posent un faux pont, où c'est le TEST qui choisit les chaînes.
+
+**Et le maillon du milieu a son propre contrôle**, parce que deux épingles qui
+s'accordent ne disent rien du branchement : `main.js` doit RELAYER la
+variable, pas recomposer le type. S'il le composait lui-même, les deux
+listes resteraient d'accord pendant que la page reçoit autre chose. C'est le
+trou que ce projet paie en boucle, et il valait un test à lui.
+
+Le garde vit dans `pontContrat.test.ts` plutôt que dans un fichier neuf : ce
+qu'un pont TRANSPORTE fait partie de son contrat autant que ce qu'il expose,
+et le fichier lisait déjà les deux côtés de la frontière.
+
+Quatre sabotages, quatre échecs : le type renommé de chaque côté, `main.js`
+qui recompose au lieu de relayer, et le motif d'émission rendu aveugle — ce
+dernier devant faire tomber le TÉMOIN, deux listes vides s'accordant
+parfaitement.
+
+**Ce que la passe n'a PAS trouvé, écrit pour qu'on ne la refasse pas.**
+`game-started` et `game-ended` ne traversent pas la frontière : ils vivent
+entre `liveclient.js`, `main.js` et `preload.js`, et leurs trois fichiers ont
+chacun leur test. Les noms de coins de la pastille (`haut-droite`…) sont
+partagés entre `desktop/overlay.js` et un dictionnaire du site, mais le
+dictionnaire n'y porte que des LIBELLÉS — la valeur, elle, ne traverse pas.
+
 ### Un nom d'événement écrit vingt-deux fois, dont une dans un script en ligne
 Même recensement, appliqué aux CHAÎNES cette fois : les identifiants
 techniques présents dans deux fichiers ou plus. Quatre-vingts, dont la
