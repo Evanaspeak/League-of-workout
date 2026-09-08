@@ -1166,6 +1166,120 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un nom d'événement écrit vingt-deux fois, dont une dans un script en ligne
+Même recensement, appliqué aux CHAÎNES cette fois : les identifiants
+techniques présents dans deux fichiers ou plus. Quatre-vingts, dont la
+plupart sont des classes CSS — et une famille qui compte.
+
+`wow-dette-changee` prévient la pastille, le rail, les paliers, la série, le
+défi du jour et l'écran des amis qu'un paiement vient d'avoir lieu. Il est
+écrit **vingt-deux fois, en clair, dans quinze fichiers**.
+
+**Une faute de frappe y est parfaitement muette.** `new Event("wow-dette-change")`
+compile, part, et personne ne l'entend : la dette reste affichée telle quelle
+après un paiement. C'est le défaut que ce journal appelle le pire de tous —
+celui qui vient de faire ses pompes voit sa dette intacte et en conclut que
+l'application ne marche pas.
+
+**Et le plus fragile n'est pas celui-là.** `wow-invite-installation` est émis
+depuis un **script en ligne** de la mise en page, à l'intérieur d'une chaîne,
+et écouté par une constante nommée dans un composant. Rien ne regarde à
+l'intérieur d'un `dangerouslySetInnerHTML` : ni `tsc`, ni le garde des textes
+en dur, ni le compilateur du script lui-même — qui n'existe pas. Le sabotage
+le confirme, et c'est le seul des trois où la faute serait indétectable
+autrement.
+
+**Le discriminant est une FORME et non une liste**, ce qui est la leçon déjà
+tirée du garde des nombres bruts : un événement du DOM s'écrit en lettres
+collées — `visibilitychange`, `beforeinstallprompt` — et ceux du projet
+portent un séparateur. Une liste des événements standards aurait vieilli ; la
+limite de la forme est écrite plutôt que laissée à découvrir, un événement
+rebaptisé sans séparateur sortirait du champ.
+
+**Le premier faux positif portait sur la correction la plus récente du
+journal.** Le garde a déclaré `wow-session-morte` émis par `chargerContexte`
+et écouté par personne — or `SessionGuard` l'écoute, par une constante
+IMPORTÉE. Mon résolveur ne lisait que le fichier courant. Vérifié avant de
+conclure, plutôt qu'écrit comme une trouvaille.
+
+**Ce que ça a changé dans le garde vaut plus que la correction elle-même : un
+identifiant qu'on ne sait pas résoudre ne se SAUTE pas, il se DIT.** Sauté, il
+fait passer son événement pour orphelin — c'est-à-dire qu'il envoie corriger
+ce qui va bien, et c'est précisément ce qui venait d'arriver. Un troisième
+contrôle rend donc la liste des noms non résolus, et il est vide aujourd'hui.
+C'est la parade générale au faux positif d'un garde structurel : ne jamais
+confondre « rien à signaler » avec « je n'ai pas compris ».
+
+Sept sabotages, sept échecs : la faute de frappe sur un émetteur, sur un
+`removeEventListener` — qui ressort par l'autre sens, celui de l'abonnement
+jamais retiré —, dans le script en ligne, le saut d'import retiré, un nom
+passé par une variable, et les deux motifs rendus aveugles.
+
+**Et le sixième a d'abord passé au vert sans avoir rien saboté** : mon `sed`
+n'avait pas trouvé son motif, échappé de travers dans une chaîne
+`String.raw`. C'est le piège écrit ici depuis la lecture d'issue de Riot, et
+il se reprend à chaque fois qu'on ne vérifie pas que le fichier a bougé —
+`git diff --stat` avant de lancer les tests.
+
+### Le canal de connexion local était écrit deux fois, et le port est un contrat
+Suite du recensement des règles écrites deux fois, cherchées par la FORME.
+Celui-ci part des CONSTANTES NOMMÉES : toute constante numérique de `src/lib`
+ou de `desktop/src` dont la valeur reparaît en littéral brut ailleurs.
+
+**Le recensement est bruyant, et c'est sa limite.** Cinquante-deux constantes
+à valeur non banale, et la plupart des correspondances sont des collisions —
+`30` est un nombre de jours ici et un poids minimal là, `90` est une saison et
+un délai de relance. Un motif qui cherche une VALEUR ne peut pas savoir de
+quoi elle parle. Une seule ligne comptait.
+
+**`3099` : le port du canal de connexion local, constante nommée côté
+application, littéral brut côté site.** L'application ouvre Chrome pour la
+connexion Google puis attend le jeton sur un serveur local ; le site le lui
+pousse en NAVIGUANT vers `http://127.0.0.1:3099/set-session?t=…&n=…`. Ce sont
+**quatre** choses écrites deux fois, pas une : le port, le chemin, le nom du
+jeton et celui de l'aléa.
+
+**Le symptôme d'une divergence est total et muet.** Le site navigue vers une
+adresse que personne ne sert, Chrome montre sa propre page d'erreur, et la
+connexion par Google depuis l'application installée devient impossible. Rien
+dans le dépôt ne peut le dire : `tsc` ne voit qu'une chaîne, les parcours
+posent un FAUX pont, et la seule machine capable de constater la panne est
+celle de quelqu'un d'autre. C'est exactement la famille du préfixe de langue
+sur `/login`.
+
+**Et le port fait partie du contrat avec les copies DÉJÀ INSTALLÉES.** Une
+copie installée écoute le port qu'elle connaît : le changer côté site casse
+toutes celles d'avant, le changer côté coquille casse toutes celles d'après
+jusqu'à la mise à jour. Le garde ne l'interdit donc pas — il exige que les
+deux moitiés bougent ensemble, et il porte la raison pour le jour où
+quelqu'un voudra les bouger.
+
+**Un piège d'extraction, et il rendait le garde aveugle à la moitié qui
+compte le plus.** Le motif extérieur consommait le `?` de l'adresse : le
+premier paramètre n'avait plus de séparateur devant lui, et le recensement
+n'en voyait qu'un sur deux — celui de l'aléa. Un renommage du JETON, qui est
+le plus grave des deux, passait donc au vert. Le `?` reste dans la capture.
+
+**Ce que le recensement a trouvé d'autre et qui n'est PAS corrigé, avec sa
+raison.** La coquille sert `/set-session` en `GET` **et** en `POST`, et la
+branche POST n'a plus aucun appelant — recensé sur tout le dépôt, il n'y en a
+qu'un, la navigation. Ses quarante-cinq lignes réécrivent la validation de la
+branche GET : contrôle de l'aléa, contrôle du jeton, pose du cookie,
+chargement du tableau de bord. C'est la duplication que ce recensement
+cherche, dans le fichier même qu'il vient d'ouvrir.
+
+Elle n'est pas retirée cette nuit pour deux raisons écrites plutôt que tues :
+ça demande une version d'application de bureau, et surtout **ça ne se vérifie
+pas d'ici** — `main.js` ne se charge pas dans les tests, et le seul contrôle
+possible serait de se connecter depuis une application installée. Toucher à
+un canal d'authentification sans pouvoir l'éprouver n'est pas un travail de
+nuit. Ça part dans les questions.
+
+Six sabotages, six échecs : le port changé de chaque côté, le chemin changé,
+l'aléa renommé côté site, le jeton renommé côté coquille — celui auquel la
+première version était aveugle — et la constante renommée, qui doit faire
+tomber le TÉMOIN plutôt que de rendre deux ensembles vides qui s'accordent.
+
 ### Un test que minuit a fait tomber, et le secret des envois écrit deux fois
 Deux choses trouvées dans la même passe, l'une par le calendrier et l'autre par
 une recherche de FORME.
