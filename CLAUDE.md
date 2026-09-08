@@ -1166,6 +1166,65 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le canal de connexion local était écrit deux fois, et le port est un contrat
+Suite du recensement des règles écrites deux fois, cherchées par la FORME.
+Celui-ci part des CONSTANTES NOMMÉES : toute constante numérique de `src/lib`
+ou de `desktop/src` dont la valeur reparaît en littéral brut ailleurs.
+
+**Le recensement est bruyant, et c'est sa limite.** Cinquante-deux constantes
+à valeur non banale, et la plupart des correspondances sont des collisions —
+`30` est un nombre de jours ici et un poids minimal là, `90` est une saison et
+un délai de relance. Un motif qui cherche une VALEUR ne peut pas savoir de
+quoi elle parle. Une seule ligne comptait.
+
+**`3099` : le port du canal de connexion local, constante nommée côté
+application, littéral brut côté site.** L'application ouvre Chrome pour la
+connexion Google puis attend le jeton sur un serveur local ; le site le lui
+pousse en NAVIGUANT vers `http://127.0.0.1:3099/set-session?t=…&n=…`. Ce sont
+**quatre** choses écrites deux fois, pas une : le port, le chemin, le nom du
+jeton et celui de l'aléa.
+
+**Le symptôme d'une divergence est total et muet.** Le site navigue vers une
+adresse que personne ne sert, Chrome montre sa propre page d'erreur, et la
+connexion par Google depuis l'application installée devient impossible. Rien
+dans le dépôt ne peut le dire : `tsc` ne voit qu'une chaîne, les parcours
+posent un FAUX pont, et la seule machine capable de constater la panne est
+celle de quelqu'un d'autre. C'est exactement la famille du préfixe de langue
+sur `/login`.
+
+**Et le port fait partie du contrat avec les copies DÉJÀ INSTALLÉES.** Une
+copie installée écoute le port qu'elle connaît : le changer côté site casse
+toutes celles d'avant, le changer côté coquille casse toutes celles d'après
+jusqu'à la mise à jour. Le garde ne l'interdit donc pas — il exige que les
+deux moitiés bougent ensemble, et il porte la raison pour le jour où
+quelqu'un voudra les bouger.
+
+**Un piège d'extraction, et il rendait le garde aveugle à la moitié qui
+compte le plus.** Le motif extérieur consommait le `?` de l'adresse : le
+premier paramètre n'avait plus de séparateur devant lui, et le recensement
+n'en voyait qu'un sur deux — celui de l'aléa. Un renommage du JETON, qui est
+le plus grave des deux, passait donc au vert. Le `?` reste dans la capture.
+
+**Ce que le recensement a trouvé d'autre et qui n'est PAS corrigé, avec sa
+raison.** La coquille sert `/set-session` en `GET` **et** en `POST`, et la
+branche POST n'a plus aucun appelant — recensé sur tout le dépôt, il n'y en a
+qu'un, la navigation. Ses quarante-cinq lignes réécrivent la validation de la
+branche GET : contrôle de l'aléa, contrôle du jeton, pose du cookie,
+chargement du tableau de bord. C'est la duplication que ce recensement
+cherche, dans le fichier même qu'il vient d'ouvrir.
+
+Elle n'est pas retirée cette nuit pour deux raisons écrites plutôt que tues :
+ça demande une version d'application de bureau, et surtout **ça ne se vérifie
+pas d'ici** — `main.js` ne se charge pas dans les tests, et le seul contrôle
+possible serait de se connecter depuis une application installée. Toucher à
+un canal d'authentification sans pouvoir l'éprouver n'est pas un travail de
+nuit. Ça part dans les questions.
+
+Six sabotages, six échecs : le port changé de chaque côté, le chemin changé,
+l'aléa renommé côté site, le jeton renommé côté coquille — celui auquel la
+première version était aveugle — et la constante renommée, qui doit faire
+tomber le TÉMOIN plutôt que de rendre deux ensembles vides qui s'accordent.
+
 ### Un test que minuit a fait tomber, et le secret des envois écrit deux fois
 Deux choses trouvées dans la même passe, l'une par le calendrier et l'autre par
 une recherche de FORME.
