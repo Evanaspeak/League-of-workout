@@ -849,10 +849,10 @@ refuse le retour des deux façons de s'en écarter.
   littéraux : les six images dessinées par `next/og`, la frontière 404 de la
   racine et le bloc qu'elle rend, et le `themeColor` de la mise en page. Ils
   sont déclarés dans le garde, avec leur raison.
-- **`src/lib/graphiques.ts` garde aussi ses littéraux**, et ce n'est PAS une
-  contrainte de rendu — mesuré, `var()` se résout parfaitement dans un
-  attribut de présentation SVG. C'est que recharts manipule ces chaînes ; le
-  passage en `var()` reste à éprouver.
+- **`src/lib/graphiques.ts` lit la palette aussi**, depuis qu'on a mesuré que
+  `var()` se résout dans un attribut de présentation SVG. Ce qui y reste
+  littéral — la bordure de l'infobulle à 15 %, le quadrillage à 10 % — n'a pas
+  de nom dans la palette.
 - Classes utilitaires : `lol-panel` (102 emplois), `lol-btn` (92), `lol-input`
   (43), `mono-num` (73), `lol-select` (14), `lecture-ecran` (8), `stat-card`
   (2, en voie de disparition).
@@ -1225,6 +1225,66 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La dernière copie de la palette, et le test qui interdisait de la retirer
+Suite immédiate. `src/lib/graphiques.ts` recopiait sept valeurs de la palette,
+sous un commentaire qui donnait la raison : « recopiées puisqu'on ne peut pas y
+faire référence depuis une propriété JavaScript ».
+
+**C'est faux, et la sonde de l'entrée précédente le disait déjà.** Trois
+rectangles SVG — attribut de présentation, style en ligne, littéral — rendent
+tous les trois `rgb(255, 180, 84)`. Vérifié ensuite sur le VRAI tableau de
+bord, ce qui est le seul contrôle qui compte : l'attribut vaut `var(--amber)`,
+la couleur **calculée** vaut `rgb(255, 180, 84)`, et sur huit barres, deux
+courbes et cinquante graduations, **aucune n'est noire** — c'est la sanction
+franche d'une `var()` qui ne se résout pas, donc son absence prouve que les
+soixante se résolvent.
+
+**Un test avait figé la prémisse fausse en garantie.** Il s'appelait « s'écrivent
+en couleurs que le navigateur comprend hors CSS » et exigeait `/^#[0-9a-f]{6}$/`.
+C'est la forme la plus coûteuse d'un mauvais test, et le journal la nomme déjà
+deux fois — l'en-tête de cache des ratios, la partie qui levait son propre
+silence : il ne se contente pas de ne rien attraper, **il interdit la
+correction**. Il dit maintenant ce qu'on veut vraiment, que les teintes VIENNENT
+de la palette, donc qu'un changement de marque les emporte au lieu de les
+laisser derrière.
+
+**`--violet` avait zéro lecteur à cause de cette copie**, et c'est ce qui l'avait
+fait ressortir au recensement des variables déclarées que personne n'emploie.
+Elle en a un.
+
+**Ce qui reste littéral n'est PAS dans la palette**, et c'est écrit plutôt que
+tu : la bordure de l'infobulle à 15 % et le quadrillage à 10 % n'ont pas de nom.
+Les nommer est une décision de palette, pas une correction.
+
+**Et la comparaison de rendu a demandé une expérience de plus pour être lue.**
+Elle rend cinq captures différentes : les trois de la page d'accueil, que
+l'outil range déjà à part, et deux de `/settings` — cinq pixels sur l'une,
+vingt-deux sur l'autre, avec des écarts de canal de 4 et de 2 sur 255. Or ni
+`/settings` nu ni `/settings#donnees` ne rend le moindre graphique.
+
+Deux exécutions de la même construction rendent **zéro** : l'outil est
+déterministe. La tentation était donc de conclure que ma conversion touchait
+deux pages sans graphique. **Le contrôle qui tranche est de remiser le
+changement, de RECONSTRUIRE la même source, et de comparer.** Résultat : les
+**cinq mêmes** différences.
+
+C'est-à-dire que le plancher de bruit de cet outil n'est pas l'EXÉCUTION, c'est
+la RECONSTRUCTION — une vingtaine de pixels sous-visuels sur des bords arrondis.
+La règle des deux exécutions, écrite pour les pages régénérables, ne suffit donc
+pas : **pour prouver qu'un changement de source ne coûte aucun pixel, il faut le
+comparer à une reconstruction de la même source**, pas à la capture d'avant. La
+conversion des graphiques vaut zéro pixel, et il a fallu ce troisième terme pour
+le dire.
+
+Trois sabotages, trois échecs : une teinte remise en dur, deux séries de la même
+teinte, et une teinte qui nomme `var(--mauve)` — celle-ci attrapée par le garde
+de la palette, qui lit les `.ts` autant que les `.tsx`.
+
+**Un parcours est tombé une fois et repasse**, ce qui est noté comme tel :
+`corps.spec.ts` a rendu un échec dans une exécution à trois fichiers, puis 6/6
+seul et 25/25 sur la même combinaison rejouée. Le geste qui distingue un aléa
+d'une régression est de relancer avant de conclure.
+
 ### Une variable qui n'existait nulle part rendait la couleur d'avant
 Ligne 300 du plan, « uniformiser styles en ligne et classes utilitaires ».
 Mesurée avant d'être prise : **1 358 styles en ligne dans 95 fichiers sur 140**.
@@ -1334,6 +1394,14 @@ Cinq sabotages, cinq échecs : la variable qui n'existe pas remise, un littéral
 remis, une dispense qui ne désigne plus rien, le retrait des commentaires
 débranché, et le recensement vidé — ce dernier fait tomber les quatre
 contrôles, ce qui est le travail des témoins.
+
+**Le témoin public est net, et c'est une chaîne qui BASCULE** : `/fr/nimportequoi`
+rend la 404, dont le bouton passe de `#C8AA6E` à `#FFB454`. Avant la fusion, la
+production servait une occurrence de l'ancien et zéro du neuf — donc le témoin
+distingue vraiment les deux états, ce qu'un simple « la chaîne est présente »
+ne prouve pas. Fusion à 20 h 56 min 52, témoin en ligne à 20 h 59 min 21 :
+**deux minutes vingt-neuf**, la deuxième mesure la plus courte du journal après
+les moins de deux minutes de V460.
 
 **Et le piège du motif qui se tue lui-même, QUATRIÈME occurrence.** Un
 `ps -eo pid,args | grep "[n]ext start" | kill` posé dans une commande qui

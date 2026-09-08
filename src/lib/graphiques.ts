@@ -1,18 +1,30 @@
 /**
  * Styles communs aux graphiques.
  *
- * Recharts ne lit pas les feuilles de style : ses couleurs se passent en
- * propriétés, ce qui les avait dispersées en dur dans sept graphiques du
- * tableau de bord. Les rassembler ici évite qu'un changement de teinte n'en
- * oublie la moitié — et rend une refonte visuelle possible depuis un seul
- * endroit.
+ * Les couleurs de recharts se passent en propriétés, ce qui les avait
+ * dispersées en dur dans sept graphiques du tableau de bord. Les rassembler
+ * ici évite qu'un changement de teinte n'en oublie la moitié.
  *
- * Les valeurs reprennent les jetons de `globals.css`, recopiées puisqu'on ne
- * peut pas y faire référence depuis une propriété JavaScript.
+ * **Elles lisent la palette, et le commentaire d'avant disait le contraire.**
+ * Il annonçait « recopiées puisqu'on ne peut pas y faire référence depuis une
+ * propriété JavaScript ». Mesuré, sur trois rectangles SVG — attribut de
+ * présentation, style en ligne, littéral — les trois rendent la même couleur :
+ * `fill="var(--amber)"` se résout parfaitement. Recharts pose ces valeurs sur
+ * des attributs et sur le style de l'infobulle, donc les deux cas éprouvés.
+ * La copie n'avait pas lieu d'être, et c'est elle qui laissait `--violet`
+ * déclaré sans un seul lecteur.
+ *
+ * Ce qui reste littéral ici n'est pas dans la palette : la bordure de
+ * l'infobulle à 15 % et le quadrillage à 10 % n'ont pas de nom. Les nommer est
+ * une décision de palette, pas une correction.
+ *
+ * La sanction d'une erreur est franche : une `var()` qui ne se résout pas fait
+ * retomber `fill` sur le noir. Le tableau de bord et les deux courbes des
+ * réglages sont capturés par `scripts/comparer-rendu.mjs` aux trois largeurs.
  */
 
-const BONE = "#ECEFF4";
-const CARBON = "#191D23";
+const BONE = "var(--bone)";
+const CARBON = "var(--carbon-2)";
 
 /**
  * Graduations d'un axe : lisibles sans capter l'attention.
@@ -21,10 +33,10 @@ const CARBON = "#191D23";
  * 10 ou 11 — sans qu'aucune ne réponde à un besoin. Elles sont ramenées à deux
  * rôles : la densité de l'axe décide, pas l'endroit où on l'a écrit.
  */
-export const AXE_TICK = { fill: "rgba(236,239,244,0.5)", fontSize: 11 } as const;
+export const AXE_TICK = { fill: "var(--faint)", fontSize: 11 } as const;
 
 /** Même rôle, sur un axe chargé où le corps 11 se chevaucherait. */
-export const AXE_TICK_DENSE = { fill: "rgba(236,239,244,0.5)", fontSize: 10 } as const;
+export const AXE_TICK_DENSE = { fill: "var(--faint)", fontSize: 10 } as const;
 
 /** Axe dont les libellés portent du sens : un rôle, un champion. */
 export const AXE_TICK_FORT = { fill: BONE, fontSize: 11 } as const;
@@ -54,8 +66,8 @@ export const GRILLE_TRAIT = "rgba(152,162,176,0.1)";
  * d'une période violet, la moyenne verte — seule courbe qui peut descendre.
  */
 export const TEINTES = {
-  dette: "#FFB454",
-  jeux: "#6E9BFF",
-  periode: "#9D7CFF",
-  moyenne: "#2FD98A",
+  dette: "var(--amber)",
+  jeux: "var(--signal)",
+  periode: "var(--violet)",
+  moyenne: "var(--victory)",
 } as const;
