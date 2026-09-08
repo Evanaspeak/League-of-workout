@@ -425,10 +425,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const lol = typeof window !== "undefined" ? window.electronLOL : undefined;
     if (!lol?.onGameEnded) return;
-    return lol.onGameEnded(() => {
+    /**
+     * Le report se retient pour pouvoir s'annuler.
+     *
+     * Il était posé sans être gardé : un effet qui repart — la dépendance
+     * change — laissait le précédent en vol, et deux fins de partie
+     * rapprochées empilaient deux sondages. Le garde de `sessionActiveRef`
+     * empêchait l'action après démontage, il n'empêchait pas l'empilement.
+     */
+    let report: ReturnType<typeof setTimeout> | null = null;
+    const desabonner = lol.onGameEnded(() => {
       if (!sessionActiveRef.current) return;
-      setTimeout(() => { if (sessionActiveRef.current) doPoll(); }, POST_GAME_DELAY_MS);
+      if (report) clearTimeout(report);
+      report = setTimeout(() => { if (sessionActiveRef.current) doPoll(); }, POST_GAME_DELAY_MS);
     });
+    return () => {
+      if (report) clearTimeout(report);
+      desabonner?.();
+    };
   }, [doPoll]);
 
   // Un chrono en cours survit à un rechargement de page : sans cela, deux

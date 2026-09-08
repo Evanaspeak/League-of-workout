@@ -1166,6 +1166,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les minuteurs posés dans un effet, et le garde qui a dû suivre un saut
+Suite directe du recensement des abonnements : celui-ci tenait les
+`addEventListener`, il ne disait rien des `setInterval` et des `setTimeout`.
+C'est la même famille — un effet qui repart en pose un deuxième, et rien ne
+l'arrête — mais un INTERVALLE coûte bien plus cher qu'un abonnement : il ne
+fait pas qu'attendre, il TRAVAILLE. Un sondage qui survit à son composant
+continue d'appeler le serveur pour personne, indéfiniment.
+
+**Le recensement est presque négatif** : vingt-trois minuteurs posés dans un
+effet, un seul sans arrêt. `SessionContext` reportait un sondage après une fin
+de partie sans retenir le report — un effet qui repart laissait le précédent en
+vol, et deux fins rapprochées empilaient deux sondages. Le garde de
+`sessionActiveRef` empêchait l'action après démontage ; il n'empêchait pas
+l'empilement.
+
+**Le garde a demandé trois jets, et les deux premiers laissaient un trou.**
+
+- Le premier cherchait `clearInterval` dans le corps de l'effet. Or le retrait
+  n'est presque jamais écrit sur place : un effet rend souvent une fonction
+  NOMMÉE (`return arreterTick`) dont le corps vit ailleurs. Faux positif sur le
+  décompte de la dette, c'est-à-dire sur du code parfaitement juste.
+- Le deuxième suivait ce nom, et laissait encore passer `return () => {
+  arreter(); }` — un nettoyage écrit sur place qui DÉLÈGUE. Il suit donc UN
+  saut, pas davantage : au-delà il ne dirait plus rien de précis, et c'est la
+  borne déjà posée pour le garde du nom publié.
+- Le troisième a été trouvé par le SABOTAGE : chercher `clearInterval` quelque
+  part dans le nettoyage laisse passer l'effet qui pose trois minuteurs et n'en
+  arrête que deux. Le contrôle apparie maintenant chaque pose au NOM qui la
+  retient, et refuse une pose que rien ne retient — un minuteur que personne ne
+  tient ne PEUT pas être arrêté.
+
+**Une exclusion de forme, et une seule** : `new Promise((r) => setTimeout(r,
+1500))` est la façon d'écrire une attente, pas une action différée. Il n'y a
+rien à annuler — la promesse perdante d'une course est simplement ignorée. La
+forme le distingue, ce qu'une liste d'exemptions n'aurait pas fait sans
+vieillir.
+
+**Sa portée s'arrête à l'EFFET, et c'est écrit dans le garde.** Les trois
+sondages de `SessionContext` sont posés dans un RAPPEL, pas dans un effet :
+leur cycle de vie demande de connaître toute la machine à états du composant,
+et c'est exactement là qu'un garde fabrique des faux positifs. Ils sont arrêtés
+par `stopSession` et par un effet de démontage dédié ; c'est une relecture qui
+le tient.
+
+**Et un de mes cinq sabotages a passé pour une raison qui n'en est pas une** :
+il visait `stopSession`, donc du code hors du champ du garde. Ce n'était pas un
+trou, c'était un sabotage mal placé — et j'ai failli l'écrire comme une
+faiblesse. La règle est celle déjà notée pour les parcours : un sabotage qui ne
+fait rien tomber doit d'abord se faire relire lui-même.
+
+Quatre sabotages sur cinq, quatre échecs.
+
 ### « Erreur serveur » pour un corps de requête tronqué
 Recensement mécanique : les routes qui lisent le corps d'une requête. Il y en a
 dix-neuf, et **neuf ne rattrapaient pas l'échec**. `request.json()` LÈVE sur un

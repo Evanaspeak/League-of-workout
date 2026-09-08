@@ -46,7 +46,7 @@ function fichiersSource(dossier: string, out: string[] = []): string[] {
  */
 
 /** L'intérieur d'un appel, suivi à la PROFONDEUR des parenthèses. */
-function corpsDesEffets(source: string): string[] {
+export function corpsDesEffets(source: string): string[] {
   const out: string[] = [];
   const motif = /useEffect\s*\(/g;
   // La position rendue par `exec` suffit : la VALEUR du résultat n'est jamais
