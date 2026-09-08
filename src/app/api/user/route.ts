@@ -109,5 +109,15 @@ export async function PUT(req: Request) {
     });
   }
 
-  return NextResponse.json(updated);
+  /**
+   * Par `comptePublic`, et jamais la ligne telle qu'elle vient.
+   *
+   * `prisma.user.update()` rend le compte ENTIER — soixante champs, mesurés :
+   * l'empreinte du mot de passe, le jeton de diffusion, le code de parrainage,
+   * l'identifiant du parrain. La route les publiait tous, au navigateur de la
+   * personne : dans son cache, dans son onglet réseau, et chez tout ce qui
+   * s'interpose. C'est exactement le défaut pour lequel `comptePublic` existe,
+   * sur la seule route qui ne l'employait pas.
+   */
+  return NextResponse.json(comptePublic(updated));
 }
