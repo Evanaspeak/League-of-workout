@@ -1196,6 +1196,62 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La page d'accueil ne décide plus, elle demande
+Question 2 des questions ouvertes, et la réponse du propriétaire était un
+refus : **« trouve autre chose »**. La page d'accueil lisait `auth()` pour
+choisir entre « Créer mon compte » et « Mon espace » sur trois boutons — donc
+la page la plus visitée du produit était la SEULE page publique rendue à la
+demande. Mesuré en production, huit relevés de chaque : à chaud l'écart n'est
+que de soixante millisecondes, mais la page dynamique a rendu **1,42 s puis
+2,11 s** sur deux séries, quand la prérendue n'a jamais dépassé 0,28 s. Un
+démarrage à froid tombe exactement sur qui arrive de loin.
+
+**Ce qu'on refusait** était de laisser les trois boutons se corriger après
+hydratation : quelqu'un de connecté verrait « Créer mon compte » sur sa propre
+page d'accueil.
+
+**L'autre chose** : le bouton ne DÉCIDE plus, il DEMANDE. Les deux gros boutons
+pointent sur `/commencer`, une page qui ne rend aucun HTML et redirige vers le
+tableau de bord ou vers l'inscription. La question « qui est-ce ? » ne se pose
+donc qu'au CLIC, sur une adresse que seul quelqu'un qui a décidé d'entrer
+atteint — et jamais sur la page que tout le monde charge.
+
+**Le lien discret de la barre, lui, reste client**, et c'est le prix assumé :
+il dit « Se connecter » pendant un aller-retour, puis « Mon espace ». C'est
+mot pour mot ce que `Nav` fait sur toutes les autres pages publiques, avec sa
+raison déjà écrite — « sur une page publique on ne sait pas encore, et on ne
+promet rien avant de savoir ». Un lien de vingt pixels en haut à droite ne se
+compare pas au bouton principal du héros, qui ne bouge plus.
+
+**Le libellé reste celui du nouveau venu**, et c'est écrit plutôt que tu : une
+page d'accueil existe pour les gens qui n'ont pas de compte. Quelqu'un de
+connecté qui clique « Créer mon compte » atterrit sur son tableau de bord, ce
+qui est ce qu'il voulait. Le jour où ça gêne, c'est une ligne à changer.
+
+**Mesuré : 155 pages prérendues, 161 après.** Les six pages d'accueil ont
+rejoint le lot, et `/[locale]` a perdu sa marque `ƒ` dans la table de
+construction.
+
+**Et le parcours a attrapé le défaut du premier coup.** `/commencer` n'était
+pas dans les chemins publics : le middleware l'envoyait vers `/login` avant
+qu'elle atteigne sa propre logique, donc un visiteur anonyme n'arrivait jamais
+sur l'inscription. C'est le défaut déjà payé sur les quatre routes d'envoi
+programmé — « dispensées de session et injoignables » — sous sa forme page, et
+il ne se voit qu'en cliquant.
+
+**Le témoin qui compte n'est aucun des deux parcours d'atterrissage** : ils
+passeraient aussi bien sur la page d'AVANT, qui envoyait déjà chacun au bon
+endroit. Ce qui distingue les deux états est le HTML SERVI, et c'est un
+troisième test qui le lit — le fragment du bouton doit être identique octet
+pour octet pour un anonyme et pour un compte connecté. Sabotage : la page
+remise à lire la session, deux contrôles tombent.
+
+**Et un sabotage n'a pas compilé plutôt que de faire tomber un test.** Retirer
+la pose d'état du lien de la barre rendait son paramètre inutilisé, et
+`noUnusedParameters` le nomme. Réécrit en inversant la condition, il fait
+tomber le contrôle du lien. C'est noté comme tel, pas compté comme un garde qui
+mord.
+
 ### Le rattrapage dépensait le budget avant que le principal n'ait tiré
 Question 4 des questions ouvertes, et le propriétaire a répondu « je te laisse
 trancher ». Le plafond de trois notifications par semaine (réponse 103) était

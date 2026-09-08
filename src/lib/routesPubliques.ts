@@ -16,6 +16,13 @@
 import { CHEMIN_INTROUVABLE } from "@/lib/cheminIntrouvable";
 
 export const PREFIXES_PUBLICS = [
+  // L'aiguillage du bouton principal de la page d'accueil. Il DÉCIDE où
+  // envoyer, y compris quelqu'un qui n'a pas de compte : le laisser hors de
+  // cette liste le faisait rediriger vers /login avant qu'il atteigne sa
+  // propre logique, et le visiteur anonyme n'arrivait jamais sur /beta. C'est
+  // le défaut déjà payé sur les quatre routes d'envoi programmé, sous sa forme
+  // page.
+  "/commencer",
   "/beta",
   /**
    * La 404 du site.

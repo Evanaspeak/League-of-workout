@@ -43,6 +43,7 @@ export const PAGES_CONNUES = [
   "/admin",
   "/amis",
   "/beta",
+  "/commencer",
   "/bilan",
   "/calculateur",
   /**
