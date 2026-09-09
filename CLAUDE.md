@@ -1582,6 +1582,28 @@ la marque visuelle est validée. Trois options chiffrées partent dans les
 questions — dont celle qui corrige sans redessiner : un jeton propre aux CHAMPS,
 qui touche soixante-quatre éléments et laisse les cent quatre panneaux.
 
+**Et l'outil sait ÉCHOUER, ce qui est la moitié qui compte.** Le jeton
+`--line-strong` porté à 0,36, reconstruit, l'audit rejoué : la ligne des styles
+en ligne **disparaît** — elle passe le seuil — pendant que `.lol-input` et
+`.lol-select` restent à 1,22. Et **seize champs examinés des deux côtés**, donc
+le témoin de non-vacuité tient : ce n'est pas une liste vide qui a fait taire le
+constat, c'est le constat qui a été réparé. Sans cette exécution, « deux
+constats » et « je n'ai pas regardé » se ressembleraient exactement.
+
+**Le garde, lui, tient la DIRECTION et non la valeur.**
+`src/bordureChamps.test.ts` refuse qu'un traitement DESCENDE sous ce qu'il vaut
+aujourd'hui — parce que le geste évident de la ligne 300, passer les trois
+écrans d'acquisition sur `.lol-input`, ferait tomber leur bordure de 1,67 à
+1,22. Épingler « la bordure est encore sous 3:1 » aurait été pire : ça ferait
+échouer la CORRECTION, comme l'en-tête de cache des ratios en août. Un second
+contrôle refuse en revanche qu'elle se fasse en SILENCE — les opacités du code
+doivent rester celles que la question 13 annonce.
+
+**Un piège d'outillage, cinquième occurrence.** `pgrep -f "scripts/accessibilite"`
+ne rend jamais la main : le motif figure dans la ligne de commande du shell qui
+attend. Et dans le script de sabotage, le motif du `kill` se lit dans un
+FICHIER, jamais écrit dans la commande qui tue.
+
 ### La question de la montre, et l'export qui perdait seize réglages tapés
 Ligne 035 du plan, réponse « Oui, ajoute-la » : une question à l'inscription,
 « portes-tu une montre ou un bracelet connecté ? ». Une demi-nuit annoncée.
