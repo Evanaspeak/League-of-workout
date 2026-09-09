@@ -34,7 +34,8 @@ import { TestPompes } from "@/components/TestPompes";
 import { useValeurClient } from "@/lib/valeurClient";
 import { getLevelParPompes } from "@/lib/scoring";
 import {
-  EnteteRubrique, LigneRubrique, ouvrirRubrique, useRubrique,
+  EnteteRubrique, LigneRubrique, RUBRIQUES, ouvrirRubrique, useRubrique,
+  type Rubrique,
 } from "@/components/ListeReglages";
 import type { NomIcone } from "@/components/Icone";
 import { ReglagesAvances, type LevelConfig } from "./ReglagesAvances";
@@ -61,12 +62,6 @@ const MENSURATIONS_DEFAUT: Mensurations = { poids: null, taille: null, age: null
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 
-/**
- * Rubriques des réglages, dans l'ordre de la liste. L'identifiant est aussi le
- * fragment d'adresse : `/settings#jeux` ouvre les jeux.
- */
-const RUBRIQUES = ["profil", "corps", "effort", "jeux", "application", "donnees", "avance"] as const;
-type Rubrique = (typeof RUBRIQUES)[number];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 

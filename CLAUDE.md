@@ -1337,6 +1337,79 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les deux premières étapes d'un compte neuf n'ouvraient rien
+
+Trouvé par un recensement des PARAMÈTRES D'ADRESSE — écrits d'un côté, lus de
+l'autre, sans compilateur entre les deux. C'est la même famille que les contrats
+avec les workflows, un étage plus bas.
+
+`PremiersPas` envoyait vers `/settings?rubrique=effort` et
+`/settings?rubrique=jeux`. **Personne ne lit `?rubrique=`** : la rubrique
+ouverte vit dans le FRAGMENT, et `useRubrique` lit `window.location.hash`. Les
+deux liens arrivaient donc sur la LISTE des rubriques, et il fallait trouver
+« Ton effort » soi-même — sur le premier écran d'un compte neuf, c'est-à-dire à
+l'endroit qui décide si quelqu'un revient.
+
+**La règle était écrite, et le voisin ne la suivait pas.** `RUBRIQUES` portait
+en commentaire, dans l'écran des réglages : « L'identifiant est aussi le
+fragment d'adresse : `/settings#jeux` ouvre les jeux. » Exact, et à trois
+fichiers de distance du lien qui l'ignorait. C'est le motif que ce journal
+trouve le plus, sous sa forme la plus discrète — une règle juste, énoncée à
+côté du code qui ne l'applique pas.
+
+**Et le journal le savait à moitié.** Il porte, à l'entrée du partage entre
+exercices : « la rubrique des réglages s'ouvre par le FRAGMENT et non par un
+paramètre — `/settings` seul rend la liste ». C'était noté comme un piège
+d'ÉCRITURE DE TEST, jamais comme un défaut de produit. Un piège qu'on
+documente sans regarder qui d'autre tombe dedans se retombe dedans.
+
+**C'est le défaut de l'étape 3, sous une forme plus douce.** Celui-là renvoyait
+vers `/history`, qui renvoie au tableau de bord, et le journal en a tiré : « une
+étape qui décrit un geste doit l'ouvrir ; indiquer une adresse où il n'existe
+pas est pire que de se taire ». Ici la PAGE était la bonne et rien ne s'y
+ouvrait — donc rien ne signalait l'écart, pas même en cliquant.
+
+**La correction met la règle sous le compilateur.** `RUBRIQUES` et
+`versRubrique` déménagent dans `ListeReglages.tsx`, c'est-à-dire dans le module
+qui LIT le fragment ; l'écran des réglages les importe au lieu de les
+redéclarer. C'est le choix déjà fait pour `PARAM_AJOUT`, écrit une fois et lu du
+manifeste comme du tableau de bord.
+
+**Le type ne suffit pas, et le sabotage le dit.** Un identifiant inventé ne
+compile pas (`"effrot"` n'est pas assignable) et un identifiant renommé fait
+tomber la construction chez les appelants — mais **le retour à `?rubrique=`
+compile parfaitement et n'ouvre rien**. C'est exactement le trou d'origine, et
+seul un test de FORME le ferme.
+
+**Le meilleur sabotage de la série n'a pas été fabriqué.** Le parcours a
+d'abord échoué sur un serveur qui servait le `.next` d'avant la correction, en
+rendant `Received string: "/fr/settings?rubrique=effort"` — c'est-à-dire le
+défaut, à l'écran, par accident. Le piège coûte d'ordinaire une demi-heure de
+diagnostic ; ici il a prouvé gratuitement que le contrôle mord sur l'état
+d'avant. Reconstruit et rejoué : **8 sur 8**.
+
+**Ce que le parcours prouve et qu'aucun test unitaire ne peut voir** : que le
+fragment OUVRE réellement la rubrique. La forme de l'adresse est épinglée par le
+test unitaire ; le branchement — jusqu'au titre de la rubrique ouverte, qui
+n'existe pas dans la liste — ne se vérifie qu'en cliquant.
+
+**Et le lien se cherche par le TITRE de l'étape**, pas par le libellé
+« Réglages » posé à côté : celui-ci désigne aussi l'entrée de la barre de
+navigation, donc le viser rend deux éléments.
+
+Deux sabotages unitaires, deux échecs ; un naturel au navigateur, un échec.
+
+**Le reste du recensement est NÉGATIF, et c'est écrit pour qu'on ne le refasse
+pas.** Vingt-huit paramètres d'adresse recensés dans `src/` et `desktop/src/` ;
+tous les autres écarts sont des faux positifs de mon détecteur, et ils se
+rangent en quatre familles : ce qui part chez Riot (`api_key`, `count`,
+`start`), les EN-TÊTES HTTP que `.get("…")` attrape aussi (`authorization`,
+`secret`), les paramètres construits par `URLSearchParams.set` que mon motif
+d'écriture ne voit pas (`jeu`, `exercice`), et **les constantes partagées** —
+`PARAM_AJOUT` est écrite une fois et lue des deux côtés, donc invisible à un
+détecteur de littéraux. Cette dernière famille est précisément la forme
+CORRECTE, et c'est celle que la correction ci-dessus vient d'adopter.
+
 ### La supervision lit quatre champs, et rien ne les tenait
 
 `/api/sante` est la seule chose du système qui CRIE — le journal l'écrit
