@@ -507,6 +507,148 @@ let horsLangue = 0;
   await ctx.close();
 }
 
+/**
+ * Le contraste des FRONTIÈRES, que le contrôle du texte ne peut pas voir.
+ *
+ * Le critère 1.4.11 des WCAG demande 3:1 entre ce qui IDENTIFIE une commande
+ * et ce qui l'entoure. Pour un champ de saisie, c'est sa bordure ou son fond :
+ * sans l'un des deux, on ne sait pas où taper. Les trois autres contrôles de ce
+ * fichier portent tous sur du TEXTE (1.4.3), donc aucun ne regarde là.
+ *
+ * axe-core non plus, et c'est vérifié plutôt que supposé : sur ses cent cinq
+ * règles, les deux seules de contraste sont `color-contrast` (1.4.3) et
+ * `color-contrast-enhanced` (1.4.6), toutes deux sur le texte. 1.4.11 n'y est
+ * pas — il est rangé du côté de ce qui se vérifie à la main. Un audit qui rend
+ * « 0 constat » disait donc vrai en n'ayant jamais regardé les bordures.
+ *
+ * On retient le MEILLEUR des deux, et c'est la règle qui compte : un champ dont
+ * le fond se détache assez de la page n'a pas besoin d'une bordure, et un champ
+ * sans fond propre est identifié par sa bordure seule. Exiger les deux ferait
+ * crier sur des champs parfaitement lisibles.
+ *
+ * Les cases à cocher, les boutons radio, les curseurs et les sélecteurs de
+ * couleur sont écartés : ce sont les contrôles que le navigateur DESSINE
+ * lui-même, et leur style calculé ne dit rien de ce qui est peint à l'écran.
+ * Les boutons le sont aussi, faute d'avoir été mesurés : y étendre la règle
+ * demande de regarder ce qu'elle rendrait sur un bouton fantôme avant de le
+ * publier.
+ *
+ * Le rapport groupe par TRAITEMENT — la classe et les couleurs — et non par
+ * élément : il y a quarante-huit `.lol-input` dans le produit, et quarante-huit
+ * lignes identiques ne se lisent pas.
+ */
+{
+  const ctx = await navigateur.newContext();
+  const page = await ctx.newPage();
+  page.setDefaultNavigationTimeout(60_000);
+  /** clé de traitement → { bord, fond, meilleur, pages } */
+  const traitements = new Map();
+  let examines = 0;
+
+  for (const chemin of aVisiter) {
+    if (JETON) {
+      await ctx.addCookies([{
+        name: "authjs.session-token", value: JETON,
+        domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
+      }]);
+    }
+    const adresse = enLangue("fr", chemin).split("#")[0];
+    await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
+    const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
+    if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
+
+    const champs = await page.evaluate(() => {
+      const luminance = (c) => {
+        const [r, g, b] = c.map((v) => {
+          const s = v / 255;
+          return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const lire = (couleur) => {
+        const m = String(couleur).match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const v = m[1].split(",").map((x) => parseFloat(x));
+        return { rgb: v.slice(0, 3), a: v.length > 3 ? v[3] : 1 };
+      };
+      /** Compose une couleur transparente sur un fond opaque. */
+      const composer = (av, arriere) =>
+        av ? av.rgb.map((c, i) => c * av.a + arriere[i] * (1 - av.a)) : arriere;
+      /** Fond effectif : on remonte les ancêtres jusqu'à une couleur opaque. */
+      const fondOpaque = (el) => {
+        let n = el;
+        while (n && n !== document.documentElement) {
+          const c = lire(getComputedStyle(n).backgroundColor);
+          if (c && c.a >= 0.95) return c.rgb;
+          n = n.parentElement;
+        }
+        return [12, 14, 17];
+      };
+      const ratio = (a, b) => {
+        const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+        return (x + 0.05) / (y + 0.05);
+      };
+
+      const DESSINES_PAR_LE_NAVIGATEUR = [
+        "hidden", "submit", "button", "reset", "checkbox", "radio", "range", "color", "file",
+      ];
+      const out = [];
+      for (const el of document.querySelectorAll("input, select, textarea")) {
+        if (DESSINES_PAR_LE_NAVIGATEUR.includes(String(el.type || "").toLowerCase())) continue;
+        const s = getComputedStyle(el);
+        if (s.display === "none" || s.visibility === "hidden" || s.opacity === "0") continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+
+        const autour = fondOpaque(el.parentElement);
+        const dedans = composer(lire(s.backgroundColor), autour);
+        // Une bordure de largeur nulle ne peint rien : elle n'identifie rien.
+        const largeur = parseFloat(s.borderTopWidth) || 0;
+        const parBord = largeur > 0 ? ratio(composer(lire(s.borderTopColor), dedans), dedans) : 0;
+        const parFond = ratio(dedans, autour);
+        const classe = String(el.className || "").trim().split(/\s+/)[0];
+        out.push({
+          cle: `${el.tagName.toLowerCase()}${classe ? "." + classe : " (style en ligne)"}`,
+          bord: Math.round(parBord * 100) / 100,
+          fond: Math.round(parFond * 100) / 100,
+          meilleur: Math.round(Math.max(parBord, parFond) * 100) / 100,
+        });
+      }
+      return out;
+    });
+
+    examines += champs.length;
+    for (const c of champs) {
+      if (c.meilleur >= 3) continue;
+      const vu = traitements.get(c.cle);
+      if (vu) vu.pages.add(chemin);
+      else traitements.set(c.cle, { ...c, pages: new Set([chemin]) });
+    }
+  }
+
+  /**
+   * Le témoin : sans lui, « aucune frontière à signaler » et « aucune frontière
+   * REGARDÉE » s'écrivent de la même façon — un sélecteur devenu aveugle
+   * rendrait le contrôle vert en n'ayant rien mesuré. C'est le défaut que ce
+   * fichier attrape déjà pour les pages non mesurées, un cran plus bas.
+   */
+  console.log(`\n═══ frontières de commande (WCAG 1.4.11, 3:1) — ${examines} champ(s) examiné(s)`);
+  if (!examines) {
+    console.log("  AUCUN champ examiné — le zéro ci-dessous ne prouve rien.");
+    horsLangue += 1;
+  } else if (!traitements.size) {
+    console.log("  rien à signaler");
+  }
+  for (const [cle, t] of traitements) {
+    console.log(
+      `  ${cle} — bordure ${t.bord}:1, fond ${t.fond}:1 ` +
+      `(${t.pages.size} page(s) : ${[...t.pages].join(", ")})`,
+    );
+  }
+  horsLangue += traitements.size;
+  await ctx.close();
+}
+
 total += horsLangue;
 
 console.log(`\n${total} constat(s).`);

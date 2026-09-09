@@ -1518,6 +1518,92 @@ chercher un `chrome-headless-shell` qui n'est pas installé. Le message envoie
 lancer `npx playwright install`, ce qui n'a rien à voir. La sonde passe
 l'`executablePath`, comme la configuration.
 
+### Aucune bordure de champ n'atteint 3:1, et l'audit disait vrai en ne regardant pas
+Seconde moitié de la ligne 300, que j'avais mise de côté comme une affaire de
+GOÛT : passer les trois écrans qui écrivent leur champ à la main sur
+`.lol-input` fait tomber la bordure de `--line-strong` (alpha 0,18) à `--line`
+(alpha 0,08), donc pâlit les champs de l'entonnoir d'acquisition. Un arbitrage,
+pas une correction.
+
+**La mesure renverse la conclusion.** Le critère 1.4.11 des WCAG demande 3:1
+entre ce qui IDENTIFIE une commande et ce qui l'entoure. Mesuré au navigateur,
+sur les pixels réellement composés :
+
+| traitement | emplois | bordure / champ | fond / autour |
+|---|---|---|---|
+| `.lol-input`, `.lol-select` | 64 | **1,22:1** | **1:1** |
+| style en ligne (inscription, connexion, récupération) | 3 écrans | **1,67:1** | **1:1** |
+
+**Les deux échouent, et le fond ne rattrape RIEN — au sens strict.** Il rend
+`1:1`, et ce n'est pas un défaut de l'instrument : le fond d'un champ est
+`color-mix(in srgb, var(--ink) 60%, transparent)` et le fond de la page est
+`--ink`. De l'encre à 60 % sur de l'encre donne de l'encre. Le fond du champ ne
+peint donc **exactement rien** ; la bordure est le seul repère, et elle est à
+1,22.
+
+Uniformiser irait par conséquent dans le MAUVAIS sens — de 1,67 à 1,22 — sur les
+trois écrans par lesquels tout le monde entre. Ce n'est pas un arbitrage entre
+deux valeurs acceptables : c'est le choix entre deux valeurs qui ne le sont ni
+l'une ni l'autre.
+
+**Et `.lol-input` n'est pas qu'un écran connecté** : l'outil le trouve sur
+`/calculateur/league-of-legends`, c'est-à-dire sur une page publique.
+
+**Aucun des quatre contrôles de `accessibilite.mjs` ne regardait là**, et c'est
+la vraie trouvaille : les trois qu'il porte sont tous du TEXTE (1.4.3), donc
+1.4.11 lui était invisible par construction. Un audit qui rend « 0 constat sur
+vingt et une pages » disait donc la vérité en n'ayant jamais ouvert la question.
+
+**Et axe-core non plus — vérifié plutôt que supposé.** Sur ses **cent cinq**
+règles, les deux seules de contraste sont `color-contrast` (1.4.3) et
+`color-contrast-enhanced` (1.4.6), toutes deux sur le texte. 1.4.11 n'y figure
+pas : il est rangé du côté de ce qui se vérifie à la main. Le zéro de tous les
+audits de ce journal reste vrai ; il ne couvrait simplement pas cette famille.
+
+**Ce que l'outil fait maintenant, et ce qu'il ÉCARTE avec sa raison.** Il retient
+le MEILLEUR des deux — un champ dont le fond se détache assez n'a pas besoin de
+bordure, et l'inverse — parce qu'exiger les deux ferait crier sur des champs
+parfaitement lisibles. Il écarte les cases à cocher, les boutons radio, les
+curseurs et les sélecteurs de couleur : ce sont les contrôles que le NAVIGATEUR
+dessine, et leur style calculé ne dit rien de ce qui est peint. Et il écarte les
+boutons, faute de les avoir mesurés — un bouton plein passerait sur son fond, un
+bouton fantôme probablement pas, et publier la règle sans avoir regardé serait
+exactement le défaut que ce journal reproche partout.
+
+**Le rapport groupe par TRAITEMENT, pas par élément.** Il y a quarante-huit
+`.lol-input` dans le produit ; quarante-huit lignes identiques ne se lisent pas,
+et un garde qu'on ne lit plus ne garde rien.
+
+**La correction, elle, ne se fait PAS seule**, et le chiffre dit pourquoi :
+l'opacité devrait monter à **0,36**, contre 0,08 et 0,18. `--line` est lu
+**91 fois** et `--line-strong` **46** ; `.lol-panel` seul en compte 104. Monter
+le jeton commun redessine le chrome du produit entier, et la réponse 251 dit que
+la marque visuelle est validée. Trois options chiffrées partent dans les
+questions — dont celle qui corrige sans redessiner : un jeton propre aux CHAMPS,
+qui touche soixante-quatre éléments et laisse les cent quatre panneaux.
+
+**Et l'outil sait ÉCHOUER, ce qui est la moitié qui compte.** Le jeton
+`--line-strong` porté à 0,36, reconstruit, l'audit rejoué : la ligne des styles
+en ligne **disparaît** — elle passe le seuil — pendant que `.lol-input` et
+`.lol-select` restent à 1,22. Et **seize champs examinés des deux côtés**, donc
+le témoin de non-vacuité tient : ce n'est pas une liste vide qui a fait taire le
+constat, c'est le constat qui a été réparé. Sans cette exécution, « deux
+constats » et « je n'ai pas regardé » se ressembleraient exactement.
+
+**Le garde, lui, tient la DIRECTION et non la valeur.**
+`src/bordureChamps.test.ts` refuse qu'un traitement DESCENDE sous ce qu'il vaut
+aujourd'hui — parce que le geste évident de la ligne 300, passer les trois
+écrans d'acquisition sur `.lol-input`, ferait tomber leur bordure de 1,67 à
+1,22. Épingler « la bordure est encore sous 3:1 » aurait été pire : ça ferait
+échouer la CORRECTION, comme l'en-tête de cache des ratios en août. Un second
+contrôle refuse en revanche qu'elle se fasse en SILENCE — les opacités du code
+doivent rester celles que la question 13 annonce.
+
+**Un piège d'outillage, cinquième occurrence.** `pgrep -f "scripts/accessibilite"`
+ne rend jamais la main : le motif figure dans la ligne de commande du shell qui
+attend. Et dans le script de sabotage, le motif du `kill` se lit dans un
+FICHIER, jamais écrit dans la commande qui tue.
+
 ### La question de la montre, et l'export qui perdait seize réglages tapés
 Ligne 035 du plan, réponse « Oui, ajoute-la » : une question à l'inscription,
 « portes-tu une montre ou un bracelet connecté ? ». Une demi-nuit annoncée.
