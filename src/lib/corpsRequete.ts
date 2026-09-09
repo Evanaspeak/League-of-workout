@@ -18,6 +18,25 @@
  * sur un nombre ou un tableau elle rend `undefined` et le refus tombe plus
  * loin, sous un message qui parle d'autre chose.
  */
+/**
+ * Ce que chaque condition tient, mesuré par sabotage plutôt que supposé.
+ *
+ * - `Array.isArray` seul attrape le tableau, dont le `typeof` vaut aussi
+ *   « object ».
+ * - `typeof brut !== "object"` seul attrape le nombre, la chaîne et le
+ *   booléen — et c'est celle qui coûtait : sans elle, la porte d'entrée du
+ *   produit répondait « Pseudo manquant » sur un corps qui est un nombre,
+ *   c'est-à-dire qu'elle accusait la saisie de quelqu'un. Une chaîne est le
+ *   pire cas du lot, parce qu'elle PORTE des propriétés : `"abc".length` vaut
+ *   trois, donc une route qui lit un champ homonyme en tirerait un chiffre
+ *   venu de nulle part au lieu d'un refus.
+ * - `brut === null` **ne se distingue ni par un test ni par le compilateur.**
+ *   Retirée, `null` ne passe plus par le refus mais par le chemin de succès,
+ *   qui rend `brut` — donc `null`. L'appelant reçoit la même valeur, et `tsc`
+ *   se tait sur le `as T`. Elle reste parce qu'elle DIT que `null` est refusé,
+ *   là où le chemin de succès l'affirmerait « objet » ; c'est écrit ici plutôt
+ *   que laissé croire qu'un test la tient.
+ */
 export async function lireCorps<T = Record<string, unknown>>(
   requete: Request,
 ): Promise<T | null> {

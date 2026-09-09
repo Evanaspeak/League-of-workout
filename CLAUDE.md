@@ -1337,6 +1337,73 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le module que dix-neuf routes appellent n'avait aucun test à lui
+
+Trouvé en refaisant le recensement des modules sans test, qui datait du
+2 septembre. Sur les 128 modules de `src/lib` et `src/test`, **quatorze**
+n'étaient importés par aucun test. Onze sont des crochets React — donc un DOM,
+donc un autre régime — ou des enveloppes d'Auth.js déjà déclarées hors champ.
+Le douzième est celui que dix-neuf routes appellent : `corpsRequete.ts`.
+
+**Ce qui le tenait éprouvait le MOTIF, pas la RÈGLE.** `corpsIllisible.test.ts`
+lisait sa propre source et exigeait deux chaînes — `catch { return null; }` et
+`Array.isArray(brut)`. C'est le défaut que ce journal reproche déjà deux fois,
+et il laissait ici un trou complet : la condition de TYPE n'était pas dans le
+motif.
+
+**Mesuré avant d'écrire quoi que ce soit.** La condition retirée, le garde
+reste vert et **2854 tests passent**. Puis la même sonde sur la vraie route,
+qui est la porte d'entrée du produit :
+
+| corps envoyé | avec la condition | sans elle |
+|---|---|---|
+| `42` | 400 « Corps illisible » | 400 **« Pseudo manquant »** |
+| `"abc"` | 400 « Corps illisible » | 400 **« Pseudo manquant »** |
+| `true` | 400 « Corps illisible » | 400 **« Pseudo manquant »** |
+
+Le code ne bouge pas ; ce qui bouge est l'ACCUSATION. On dit à quelqu'un qu'il
+a oublié son pseudo alors qu'on n'a rien pu lire de ce qu'il a envoyé — sur le
+seul écran par lequel il entre. C'est exactement ce que le module existe pour
+empêcher, et son commentaire l'écrit depuis le premier jour.
+
+**Le pire cas du lot est la CHAÎNE, et il n'est pas évident** : elle PORTE des
+propriétés. `"abc".length` vaut trois, donc une route qui lit un champ homonyme
+en tirerait un chiffre venu de nulle part au lieu d'un refus.
+
+**Le garde tient maintenant ce qu'un motif ne peut pas simuler : être
+APPELÉ.** Il exige que le module ait un test qui l'importe ET l'appelle — un
+import seul est une intention, pas un comportement, et c'est le défaut déjà payé
+sur le garde du nom publié comme sur celui de la porte des routes. La règle est
+bornée à ce module-ci, avec sa raison : c'est le seul dont dix-neuf routes
+dépendent pour décider ce qu'elles font d'un corps mal donné.
+
+**Et le sabotage a corrigé mon propre commentaire**, ce qui est la trouvaille
+de la passe. J'avais écrit que les trois conditions ont chacune leur cas. Il y
+en a **deux** : `brut === null` n'est distinguable ni par un test ni par le
+compilateur. Retirée, `null` ne passe plus par le refus mais par le chemin de
+succès — qui rend `brut`, c'est-à-dire `null`. L'appelant reçoit la même
+valeur, et `tsc` se tait sur le `as T`.
+
+Elle reste, et la raison est écrite des deux côtés plutôt que laissée à
+croire : elle DIT que `null` est refusé, là où le chemin de succès
+l'affirmerait « objet ». Ce qui change est que le test ne prétend plus la
+tenir — il éprouve le CONTRAT (un corps `null` vaut refus), pas
+l'implémentation. C'est la moitié qu'on préfère taire, et c'est celle qui
+distingue un garde d'un satisfecit.
+
+Six sabotages, cinq échecs : la condition de type, `Array.isArray`, le `catch`,
+le test du module supprimé, et le test qui importe sans appeler. Le sixième est
+celui ci-dessus.
+
+**Ce que le recensement laisse dehors, avec sa raison** : `valeurClient`,
+`usePiegeFocus`, `useChemin`, `useIdCompte`, `LocaleContext`,
+`ContexteConnecte` et `SessionContext` sont des crochets React — les éprouver
+demande un rendu, donc un DOM, et la suite tourne en environnement Node ;
+`actions.ts` et `auth-actions.ts` sont des enveloppes de trois lignes autour
+d'Auth.js, donc les éprouver reviendrait à éprouver la doublure ; et
+`progression.ts` est couvert indirectement, un test comparant déjà champ par
+champ les réponses de la route fusionnée et des deux d'origine.
+
 ### Les deux premières étapes d'un compte neuf n'ouvraient rien
 
 Trouvé par un recensement des PARAMÈTRES D'ADRESSE — écrits d'un côté, lus de
