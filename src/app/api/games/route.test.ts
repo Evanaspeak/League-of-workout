@@ -662,4 +662,52 @@ describe("une partie sans enjeu", () => {
     expect(data.sansEnjeu).toBe(false);
     expect(data.pompesCalculees).toBeGreaterThan(0);
   });
+
+  /**
+   * La RÉPONSE aussi, et c'est le trou que les quatre contrôles ci-dessus
+   * laissaient ouvert.
+   *
+   * Ils regardent ce qui est ÉCRIT et ce que la dette devient. Le champ
+   * `repartition` de la réponse, lui, était calculé sur le coût que la partie
+   * aurait eu — et c'est LUI que la notification en jeu lit pour dire « X
+   * pompes à faire ». On lisait donc « sans enjeu » dans l'historique et une
+   * demande de pompes sur le bureau, à la même seconde. Signalé par le
+   * propriétaire du produit, et par personne d'autre : rien ne pouvait le
+   * voir.
+   */
+  it("n'annonce aucune quantité dans sa réponse", async () => {
+    const r = await post(partie({ sansEnjeu: true }));
+    const corps = await r.json();
+    const total = Object.values(corps.repartition as Record<string, number>)
+      .reduce((a, b) => a + b, 0);
+    expect(total).toBe(0);
+    expect(corps.dettePointsDus).toBeNull();
+  });
+
+  /**
+   * Le témoin, sans lequel le contrôle ci-dessus serait vrai d'une route qui
+   * ne rendrait plus jamais de quantité à personne.
+   */
+  it("alors qu'une partie ordinaire en annonce une", async () => {
+    const r = await post(partie());
+    const corps = await r.json();
+    const total = Object.values(corps.repartition as Record<string, number>)
+      .reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThan(0);
+  });
+
+  /**
+   * La même règle sur l'autre branche. Elle y était écrite deux fois aussi, et
+   * une correction qui n'en répare qu'une moitié est le motif que ce dépôt
+   * paie le plus souvent.
+   */
+  it("vaut aussi pour une séance comptée au temps", async () => {
+    const r = await post({ jeu: "Minecraft", typeJeu: "temps", dureeSec: 3600, sansEnjeu: true });
+    expect(r.status).toBe(200);
+    const corps = await r.json();
+    const total = Object.values(corps.repartition as Record<string, number>)
+      .reduce((a, b) => a + b, 0);
+    expect(total).toBe(0);
+    expect(game.create.mock.calls[0][0].data.pompesCalculees).toBe(0);
+  });
 });

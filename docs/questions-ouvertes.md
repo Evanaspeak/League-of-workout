@@ -498,6 +498,39 @@ boucle ailleurs.
 **Aucune traduction à écrire dans les trois cas** : les six langues portent déjà
 le texte, c'est le `placeholder` qui le rend aujourd'hui.
 
+### 20 · Un refus au lancement couvre-t-il la soirée, ou la partie ?
+
+**Ce qui est fait, et qui ne se discute pas** : refuser une session ne fait plus
+réclamer de pompes. La partie s'enregistre sans enjeu, la dette ne bouge pas, et
+la notification le dit sans rien demander. C'était le défaut que tu as signalé le
+9 septembre, et il touchait aussi Apex, en sens inverse — un refus au lancement y
+laissait la partie suivante créer sa dette entière.
+
+**Ce qui reste, et qui t'appartient.** La question « on lance une session ? » ne
+se pose pas au même RYTHME selon le jeu :
+
+| | quand la question tombe | ce qu'un « non » couvre aujourd'hui |
+|---|---|---|
+| League of Legends | à chaque partie, par les phases du lanceur | cette partie, et elle seule |
+| tous les autres | une fois, au démarrage du processus | la première partie qui suit |
+
+Pour League c'est exact : une question, une partie. Pour Apex, Rocket League ou
+Warzone, le jeu n'annonce que son LANCEMENT — donc une seule question tombe pour
+toute la soirée, et le refus ne couvre que la première partie. Les suivantes
+comptent normalement, sans qu'on ait reposé la question.
+
+**Deux façons de faire, chiffrées :**
+
+| | ce que ça donne | ce que ça coûte |
+|---|---|---|
+| **A · laisser** | une question, une partie, la même règle partout | il faut refermer le jeu pour refuser la soirée |
+| **B · le refus tient jusqu'à la fermeture du jeu** | « non » veut dire « pas ce soir » sur ces jeux-là | la marque cesse d'être consommée et suit la fin de processus ; une demi-nuit, et un cas de test par jeu |
+
+**Ce qui penche pour A** : c'est la règle de League, elle est déjà écrite, et
+elle ne surprend personne. **Ce qui penche pour B** : sur ces jeux-là, personne
+ne se dit « je refuse cette partie-ci » — on refuse la soirée, et c'est le seul
+moment où on peut le dire.
+
 ### 13 · Une seule frontière du produit atteint le contraste exigé (ligne 300)
 **Née en mesurant la seconde moitié de la ligne 300**, qui demande d'uniformiser
 les styles en ligne et les classes utilitaires. Trois écrans écrivent leur champ

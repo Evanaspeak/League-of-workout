@@ -1338,6 +1338,68 @@ lire leurs boîtes. C'est la méthode déjà employée pour la résolution de `v
 dans un attribut SVG — quand l'outil ne peut pas atteindre le cas, on fabrique
 le cas.
 
+### « Sans enjeu » dans l'historique, « 36 pompes à faire » sur le bureau
+Signalé par le propriétaire du produit : « je viens de faire une partie sans
+enjeu, donc dans l'historique j'ai bien sans enjeu de marqué, par contre je
+reçois quand même la notification de l'appli qui me dit combien de pompes je
+dois ».
+
+**La règle était appliquée à trois de ses quatre endroits.** Une partie refusée
+à l'écran de chargement coûte zéro, et `/api/games` l'écrivait correctement :
+`pompesCalculees` à zéro, la ventilation figée sur la ligne à zéro, la dette
+non alimentée. Le champ `repartition` de la RÉPONSE, lui, était calculé sur
+`scoring.pompesFinales` sans condition — c'est-à-dire sur le coût que la partie
+AURAIT eu. Et c'est celui-là que la notification en jeu lit.
+
+**Reproduit, avant de corriger quoi que ce soit**, en remettant l'état
+d'origine et en jouant le parcours :
+
+```
+Partie terminée | 36 pompes à faire.     ← la notification
+sansEnjeu: true, pompesCalculees: 0      ← la ligne, à la même seconde
+```
+
+**Les quatre dérivent maintenant d'une seule valeur**, `pointsPortes`, calculée
+une fois par branche. Ce n'est pas une correction de plus au bon endroit :
+c'est ce qui rend la divergence impossible au lieu de détectable — le motif que
+ce journal trouve plus souvent que tout le reste.
+
+**Et le même défaut existait EN SENS INVERSE sur l'autre chemin de détection.**
+La question « on lance une session ? » est posée pour TOUS les jeux — League par
+les phases du lanceur, les autres au démarrage de leur processus — et un « non »
+y pose la même marque. `PartieApexLue` ne la lisait pas : refuser au lancement
+d'Apex laissait la partie suivante créer sa dette entière, c'est-à-dire
+exactement l'inverse de ce qu'on venait de répondre. Elle la lit et la consomme
+maintenant, comme du côté de League : une question, une partie.
+
+**Rien ne pouvait le signaler, et les quatre tests existants disent pourquoi.**
+Ils regardent ce qui est ÉCRIT en base et ce que la dette devient ; aucun ne
+regardait la RÉPONSE. Le parcours navigateur, lui, lisait la ligne
+d'historique — donc le bon chiffre — et jamais la notification, alors que le
+faux pont la capture déjà depuis des semaines.
+
+**Trois sabotages, trois échecs, et chacun sur son propre garde** :
+
+| ce qu'on remet | ce qui tombe |
+|---|---|
+| la réponse recalculée sur le coût plein | les deux tests de route, une branche chacun |
+| la branche du composant retirée | le parcours — `__dits` **vide** |
+| **les deux** | le parcours, sur « 36 pompes à faire » |
+
+La deuxième ligne est celle qui a appris quelque chose : avec la route corrigée
+et la branche retirée, la ventilation est vide, donc `quantite` aussi, donc
+**rien ne partait du tout**. Un enregistrement entièrement muet est le défaut
+que ce projet corrige en boucle — on a joué, on ne sait pas si la partie est
+entrée. D'où la ligne « Enregistrée sans enjeu : rien à faire. », dans les six
+langues : elle ne demande rien et elle dit que c'est passé.
+
+**Ce qui ne se décide pas ici, et qui part dans les questions** : pour un jeu
+qui n'annonce QUE son lancement — Apex, Rocket League, tout ce qui n'a pas de
+lanceur bavard — une seule question couvre toute une soirée. La consommer à la
+première partie est ce que fait League, donc c'est la règle qu'on ne réinvente
+pas ; savoir si un refus au lancement devrait couvrir la soirée entière est un
+arbitrage de produit.
+
 ### Quarante champs, et l'audit ne regardait que les boutons
 Trouvé en ouvrant `/beta` — la SEULE porte d'entrée du produit — et en lui
 demandant le nom accessible de ses champs. **Huit champs, zéro nom**, dont deux

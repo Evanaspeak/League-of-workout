@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { ventiler } from "@/lib/exercices";
+import { estSansEnjeu, oublierSansEnjeu } from "@/lib/sansEnjeu";
 import { useT, useDateLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { enJeu } from "@/lib/i18n/dictionaries/enJeu";
 
@@ -43,6 +44,22 @@ export function PartieApexLue() {
         return dire(t.dejaEnregistree, false);
       }
 
+      /**
+       * La partie avait-elle été refusée au lancement du jeu ?
+       *
+       * La question est posée pour TOUS les jeux — League par les phases du
+       * lanceur, les autres au démarrage de leur processus — et un « non » y
+       * pose la même marque. Ce chemin-ci ne la lisait pas : refuser au
+       * lancement d'Apex laissait quand même la partie suivante créer sa
+       * dette, c'est-à-dire l'inverse exact de ce qu'on venait de répondre.
+       *
+       * Lue et consommée ici comme du côté de League : une question, une
+       * partie. Ce qu'un lancement de jeu qui n'annonce QUE son lancement
+       * devrait couvrir — la partie suivante, ou toute la soirée — est un
+       * arbitrage, et il part dans les questions.
+       */
+      const sansEnjeu = estSansEnjeu();
+      oublierSansEnjeu();
       try {
         const res = await fetch("/api/games", {
           method: "POST",
@@ -50,6 +67,7 @@ export function PartieApexLue() {
           body: JSON.stringify({
             jeu: lu.jeu,
             typeJeu: "parties",
+            sansEnjeu,
             placement: lu.classement,
             kills: lu.eliminations,
           }),
@@ -63,9 +81,13 @@ export function PartieApexLue() {
         const { scoring, repartition } = await res.json();
         // La quantité réelle plutôt qu'un nombre de points : « 30 s de boxe »
         // n'est pas « 30 pompes », et c'est la page qui connaît l'exercice
-        // choisi. Sans ventilation, on retombe sur le total.
-        const du = ventiler(repartition ?? {}, null, etiquette).map((v) => v.valeur).join(" · ")
-          || nombre(Number(scoring?.pompesFinales) || 0);
+        // choisi. Sans ventilation, on retombe sur le total — sauf sans
+        // enjeu, où `pompesFinales` reste le coût que la partie AURAIT eu :
+        // le repli annoncerait alors une dette qu'on ne doit pas.
+        const du = sansEnjeu
+          ? t.sansEnjeu
+          : ventiler(repartition ?? {}, null, etiquette).map((v) => v.valeur).join(" · ")
+            || nombre(Number(scoring?.pompesFinales) || 0);
         // Le doute de la lecture se dit : si les modes ne se sont pas accordés,
         // le chiffre mérite d'être vérifié dans l'historique.
         const doute = lu.accord < lu.essais || !lu.elimSures ? t.aVerifier : "";

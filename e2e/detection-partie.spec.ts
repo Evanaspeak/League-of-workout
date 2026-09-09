@@ -298,6 +298,27 @@ test("une partie refusée s'enregistre sans enjeu, et ne crée pas de dette", as
   expect({ sansEnjeu: ligne.sansEnjeu, points: ligne.pompesCalculees })
     .toEqual({ sansEnjeu: true, points: 0 });
 
+  /**
+   * Et la NOTIFICATION ne réclame rien.
+   *
+   * C'est le défaut signalé par le propriétaire du produit : l'historique
+   * disait « sans enjeu » et le bureau demandait des pompes, à la même
+   * seconde. Les contrôles ci-dessus regardaient la ligne écrite en base ;
+   * le champ `repartition` de la réponse, lui, portait encore le coût que la
+   * partie AURAIT eu, et c'est celui-là que la notification lit.
+   *
+   * On refuse donc une DEMANDE — un nombre suivi d'un exercice — et on exige
+   * que l'enregistrement se dise quand même : muet, on ne saurait pas si la
+   * partie est entrée.
+   */
+  await expect.poll(
+    () => page.evaluate(() => (window as unknown as { __dits: string[] }).__dits),
+    { timeout: 15_000 },
+  ).not.toHaveLength(0);
+  const dit = (await page.evaluate(() => (window as unknown as { __dits: string[] }).__dits)).join(" ");
+  expect(dit).not.toMatch(/\d+\s*pompes/i);
+  expect(dit).toMatch(/sans enjeu/i);
+
   // Le souvenir est consommé : la partie suivante compte normalement.
   const reste = await page.evaluate(() => localStorage.getItem("low_partie_sans_enjeu"));
   expect(reste).toBeNull();
