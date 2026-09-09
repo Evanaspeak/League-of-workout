@@ -1311,6 +1311,90 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le champ PROPOSAIT « Cho'Gath » pendant que le bouton refusait « Chogath »
+
+Trouvé en ouvrant le formulaire d'ajout et en tapant, plutôt qu'en le relisant.
+Deux règles répondaient à une seule question, et elles ne répondaient pas
+pareil : la liste déroulante APLATIT les accents et la ponctuation
+(`suggererChampions`), la validation comparait la chaîne EXACTE
+(`championConnu`).
+
+**Ce que ça donne à l'écran est une contradiction, pas un silence.** On tape
+« Chogath » : la liste propose « Cho'Gath » — donc le produit sait de qui on
+parle — et **au même instant** le champ s'annonce invalide, le message « champion
+non reconnu » paraît, et le bouton d'enregistrement DISPARAÎT. Ce n'est pas
+qu'on ne dise rien ; c'est que l'écran se contredit lui-même à trois
+centimètres d'écart.
+
+Et c'est le SEUL moyen d'enregistrer une partie tant que la clé Riot de
+production n'est pas arrivée.
+
+**La correction se fait dans le CHAMP, pas au moment d'envoyer.** Résoudre à
+l'envoi marcherait et ferait dire deux choses à l'écran et à la base : ce qu'on
+lit doit être ce qu'on enregistre. `resoudreChampion` s'appelle donc en quittant
+le champ et sur Entrée, et remplace la saisie par le nom canonique.
+
+**Elle ne rend un nom que si l'aplatissement en désigne UN SEUL.** Deviner entre
+deux champions serait enregistrer une partie qui n'est pas celle qu'on a jouée —
+`Game.champion` porte cette chaîne, l'icône s'en déduit et le compte de maîtrise
+regroupe dessus.
+
+**Et le cas qui distingue ne peut pas venir de la vraie liste**, ce qui vaut
+d'être noté : elle n'a AUCUNE collision aujourd'hui — un test l'éprouve sur les
+173 — donc elle ne sépare pas un tri juste d'un tri qui devine. Deux noms
+fabriqués le font (`["Kai'Sa", "Kai-Sa"]`), et mon premier jeu de cas était
+mauvais : `["Kaisa", "Kai'Sa"]` passe par la correspondance EXACTE avant même
+d'atteindre l'aplatissement.
+
+**La mesure a décidé de la table d'alias, plutôt qu'une intuition.** Confrontée
+à Data Dragon 16.17.1, notre liste EST exactement `en_US`, 173 sur 173. Ce qui
+change d'une langue à l'autre se compte, et les fonctions réelles du produit
+disent ce qu'elles en font :
+
+| langue | noms traduits | refusés avant | refusés après |
+|---|---|---|---|
+| allemand | 1 | 0 | 0 |
+| espagnol | 3 | 3 | **0** |
+| français | 5 | 2 | **0** |
+| japonais | 173 | 173 | **173** |
+| chinois | 173 | 173 | **173** |
+
+Cinq entrées ferment donc les trois langues latines. **Le japonais et le chinois
+traduisent TOUT, et rien n'y passe** : c'est une décision de données — 346
+entrées qui pourrissent à chaque champion ajouté — et elle part dans les
+questions, avec l'option qui ne pourrit pas (les engendrer depuis le CDN).
+
+**Les alias nourrissent aussi les SUGGESTIONS, et pas seulement la
+résolution.** Sans ça, « Maî » ne rend rien : le champ reste muet devant
+quelqu'un qui tape le nom qu'il lit dans son client, et il n'a alors aucune
+raison de deviner qu'un autre nom marcherait. Ce qui s'AFFICHE reste le nom
+anglais, parce que c'est lui qu'on enregistre — proposer « Maître Yi » puis
+stocker « Master Yi » ferait deux vérités.
+
+**Ce qu'aucun test unitaire ne peut voir est le BRANCHEMENT** : `resoudreChampion`
+peut être parfaite et n'être appelée nulle part. `e2e/champion.spec.ts` tape,
+quitte le champ, et lit la valeur du champ ET le retour du bouton.
+
+**Son témoin est le bouton d'enregistrement, et il a fallu un échec pour le
+comprendre.** Ma première version attendait `toBeEnabled()` : le bouton vit dans
+un `{isAddReady && …}` et **n'existe pas** tant que le KDA n'est pas rempli.
+L'absence du bouton ne prouvait donc rien — elle était vraie pour une tout autre
+raison. Le parcours remplit le KDA et exige que le bouton soit VISIBLE **avant**
+de toucher au champ du champion ; c'est seulement à partir de là que sa
+disparition veut dire quelque chose.
+
+Cinq sabotages, cinq échecs : la résolution débranchée du `onBlur` — le parcours
+tombe, et les deux suivants ne jouent pas, mode série — l'aplatissement rendu
+aveugle, la garde de collision retirée, la table d'alias vidée, et les alias
+retirés des suggestions.
+
+**Et le piège du motif qui se tue lui-même, SIXIÈME occurrence.** Un
+`ps -eo pid,args | grep … | xargs kill` écrit dans une commande qui contient
+elle-même `next start` a tué le shell : sortie 144, aucun journal, serveur
+survivant. La parade s'élargit encore — le motif s'écrit dans un FICHIER et se
+relit (`grep -F "$MOTIF"`), pour qu'il ne figure jamais dans la ligne de commande
+qui tue.
+
 ### Une adresse de garde qui n'existait pas, dans le fichier qu'elle explique
 
 Suite du même audit, descendu d'un étage : après les affirmations de

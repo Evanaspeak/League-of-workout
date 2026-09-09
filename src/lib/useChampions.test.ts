@@ -13,9 +13,9 @@
  * Les deux fonctions sont pures ; le crochet React et la mémoire de la liste
  * ne le sont pas et restent couverts par les parcours navigateur.
  */
-import { CHAMPIONS } from "@/lib/champions";
+import { ALIAS_CHAMPIONS, CHAMPIONS } from "@/lib/champions";
 import {
-  championConnu, chargerChampions, invaliderChampions, suggererChampions,
+  championConnu, chargerChampions, invaliderChampions, resoudreChampion, suggererChampions,
 } from "@/lib/useChampions";
 
 describe("championConnu", () => {
@@ -166,5 +166,111 @@ describe("chargement de la liste", () => {
       json: () => Promise.resolve({ error: "Non authentifié" }),
     })) as never;
     await expect(chargerChampions()).resolves.toEqual(CHAMPIONS);
+  });
+});
+
+describe("resoudreChampion", () => {
+  it("rend le nom canonique tel quel", () => {
+    expect(resoudreChampion(CHAMPIONS, "Ahri")).toBe("Ahri");
+    expect(resoudreChampion(CHAMPIONS, "  ahri  ")).toBe("Ahri");
+  });
+
+  it("ramène une saisie aplatie à sa forme canonique", () => {
+    // C'est le défaut corrigé : la liste PROPOSAIT « Cho'Gath » à qui tape
+    // « Chogath », et le bouton d'enregistrement le REFUSAIT.
+    expect(resoudreChampion(CHAMPIONS, "Chogath")).toBe("Cho'Gath");
+    expect(resoudreChampion(CHAMPIONS, "kaisa")).toBe("Kai'Sa");
+    expect(resoudreChampion(CHAMPIONS, "dr mundo")).toBe("Dr. Mundo");
+  });
+
+  it("ramène les accents des noms localisés qui n'en sont que la variante", () => {
+    // Mesuré contre Data Dragon : ces quatre-là se ramènent tout seuls, sans
+    // alias, parce que ce sont des variantes typographiques et non des
+    // traductions.
+    expect(resoudreChampion(CHAMPIONS, "Séraphine")).toBe("Seraphine");
+    expect(resoudreChampion(CHAMPIONS, "Zoé")).toBe("Zoe");
+    expect(resoudreChampion(CHAMPIONS, "K'Santé")).toBe("K'Sante");
+    expect(resoudreChampion(CHAMPIONS, "Jarvan IV.")).toBe("Jarvan IV");
+  });
+
+  it("ramène les noms réellement TRADUITS par la table d'alias", () => {
+    expect(resoudreChampion(CHAMPIONS, "Maître Yi")).toBe("Master Yi");
+    expect(resoudreChampion(CHAMPIONS, "Maestro Yi")).toBe("Master Yi");
+    expect(resoudreChampion(CHAMPIONS, "Bardo")).toBe("Bard");
+    expect(resoudreChampion(CHAMPIONS, "Nunu et Willump")).toBe("Nunu & Willump");
+    expect(resoudreChampion(CHAMPIONS, "Nunu y Willump")).toBe("Nunu & Willump");
+  });
+
+  it("ne devine pas quand la saisie ne désigne personne", () => {
+    expect(resoudreChampion(CHAMPIONS, "Sylas le Grand")).toBeNull();
+    expect(resoudreChampion(CHAMPIONS, "")).toBeNull();
+    expect(resoudreChampion(CHAMPIONS, "   ")).toBeNull();
+    expect(resoudreChampion(CHAMPIONS, "'''")).toBeNull();
+  });
+
+  it("n'invente pas un alias dont la cible a quitté la liste", () => {
+    // L'admin peut retirer un champion de la liste. L'alias ne doit pas le
+    // faire revenir par la bande : le formulaire enregistrerait un nom que la
+    // liste refuse.
+    const sansYi = CHAMPIONS.filter((c) => c !== "Master Yi");
+    expect(resoudreChampion(sansYi, "Maître Yi")).toBeNull();
+  });
+
+  it("aucun champion n'en désigne un autre une fois aplati", () => {
+    // La résolution refuse de choisir entre deux candidats — donc si deux
+    // champions s'aplatissaient pareil, les deux deviendraient insaisissables.
+    // C'est vrai aujourd'hui ; c'est le jour où Riot en ajoute un que ça
+    // changerait, et ce contrôle le dira.
+    const insaisissables = CHAMPIONS.filter((c) => resoudreChampion(CHAMPIONS, c) !== c);
+    expect(insaisissables).toEqual([]);
+  });
+
+  it("refuse de choisir entre deux champions qui s'aplatissent pareil", () => {
+    // Le cas se prouve sur une liste FABRIQUÉE : aucun couple de la vraie
+    // liste ne collisionne aujourd'hui, donc elle ne peut pas distinguer une
+    // résolution qui refuse d'une résolution qui prend le premier venu. Cette
+    // branche existe pour le jour où Riot ajoute un nom qui collisionne — et
+    // ce jour-là, deviner enregistrerait une partie qu'on n'a pas jouée.
+    const collision = ["Kai'Sa", "Kai-Sa"];
+    expect(resoudreChampion(collision, "kaisa")).toBeNull();
+    // La forme EXACTE, elle, continue de passer : c'est la première règle, et
+    // c'est ce qui distingue « je ne sais pas lequel » de « je refuse tout ».
+    expect(resoudreChampion(collision, "Kai'Sa")).toBe("Kai'Sa");
+    expect(resoudreChampion(collision, "kai-sa")).toBe("Kai-Sa");
+  });
+
+  it("chaque alias désigne un champion qui existe, et un seul", () => {
+    for (const [localise, canonique] of Object.entries(ALIAS_CHAMPIONS)) {
+      expect(CHAMPIONS).toContain(canonique);
+      // Un alias qui serait DÉJÀ un champion ne servirait à rien et cacherait
+      // le vrai : la résolution exacte passe avant lui.
+      expect(resoudreChampion(CHAMPIONS, localise)).toBe(canonique);
+    }
+    expect(Object.keys(ALIAS_CHAMPIONS).length).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("les suggestions connaissent les noms traduits", () => {
+  it("propose le nom canonique à qui tape le nom français", () => {
+    // Sans ça le champ reste MUET : « Maî » ne ressemble à aucun nom anglais.
+    expect(suggererChampions(CHAMPIONS, "Maître")).toContain("Master Yi");
+    expect(suggererChampions(CHAMPIONS, "Bardo")).toContain("Bard");
+    expect(suggererChampions(CHAMPIONS, "Nunu et")).toContain("Nunu & Willump");
+  });
+
+  it("ne propose jamais le nom traduit lui-même", () => {
+    // C'est le nom canonique qu'on enregistre : proposer « Maître Yi » puis
+    // stocker « Master Yi » ferait deux vérités à l'écran.
+    expect(suggererChampions(CHAMPIONS, "Maître")).not.toContain("Maître Yi");
+  });
+
+  it("ne propose pas deux fois le même champion", () => {
+    const s = suggererChampions(CHAMPIONS, "bard");
+    expect(s.length).toBe(new Set(s).size);
+  });
+
+  it("ne propose pas un alias dont la cible a quitté la liste", () => {
+    const sansBard = CHAMPIONS.filter((c) => c !== "Bard");
+    expect(suggererChampions(sansBard, "Bardo")).toEqual([]);
   });
 });
