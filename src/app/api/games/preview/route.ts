@@ -11,6 +11,7 @@ import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
 import { lireCorps, type CorpsLibre } from "@/lib/corpsRequete";
+import { championEnregistre } from "@/lib/champions";
 
 // Calcule sans sauvegarder — pour afficher le détail avant de logger
 export async function POST(req: Request) {
@@ -63,12 +64,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }
 
+  /**
+   * Le champion se ramène à son nom canonique, comme à l'enregistrement.
+   *
+   * Le commentaire ci-dessous promettait déjà « le même filtre que dans
+   * `/api/games` ». Il a cessé d'être vrai le jour où la porte s'est mise à
+   * normaliser et pas l'aperçu : on tapait « Chogath », l'aperçu comptait zéro
+   * partie de maîtrise, l'enregistrement en comptait cent — et le chiffre
+   * annoncé n'était pas celui qu'on allait payer.
+   *
+   * Les deux appellent donc la MÊME fonction, plutôt que d'écrire la même
+   * règle chacun de son côté.
+   */
+  const champion = capacites.champions && body.champion
+    ? championEnregistre(String(body.champion))
+    : null;
+
   let partiesAvant = 0;
-  if (capacites.champions && body.champion && roleWeights?.maitriseActive) {
+  if (champion && roleWeights?.maitriseActive) {
     partiesAvant = await prisma.game.count({
       // Même filtre que dans `/api/games` : l'aperçu doit annoncer le coût que
       // l'enregistrement calculera, sinon il ment.
-      where: { userId: user.id, sansEnjeu: false, champion: body.champion },
+      where: { userId: user.id, sansEnjeu: false, champion },
     });
   }
 

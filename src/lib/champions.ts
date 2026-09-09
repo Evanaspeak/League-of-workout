@@ -132,6 +132,37 @@ export function resoudreChampion(liste: string[], saisie: string): string | null
 }
 
 /**
+ * Le nom sous lequel une partie s'enregistre.
+ *
+ * `Game.champion` est la clé de trois choses — l'icône de Data Dragon, le
+ * REGROUPEMENT de maîtrise, et ce que l'historique affiche — donc deux
+ * orthographes du même champion en base font deux champions.
+ *
+ * Deux portes écrivent ce nom, et elles doivent l'écrire pareil :
+ * l'enregistrement le range, l'APERÇU compte la maîtrise dessus pour annoncer
+ * ce que la partie va coûter. Une seule des deux normalisée, et l'aperçu
+ * promet un chiffre que l'enregistrement ne calculera pas — sur un compte à
+ * cent parties de Cho'Gath, l'écart est la surcharge de maîtrise entière.
+ *
+ * D'où une fonction et non deux expressions : la règle écrite deux fois finit
+ * avec une version en retard, et c'est celle qu'on relit le moins.
+ *
+ * Ce qu'elle coûte quand tout va bien : rien. Un nom déjà canonique sort
+ * inchangé. Et une saisie qui ne désigne personne est GARDÉE telle quelle —
+ * perdre le champion d'une partie qu'on vient de jouer serait pire que de
+ * l'écrire de travers.
+ *
+ * La liste employée est celle du CODE et non celle de la base : un champion
+ * ajouté par l'administration ne se ramène à rien, donc il est gardé tel quel,
+ * c'est-à-dire exactement le comportement d'avant. Lire la configuration ici
+ * coûterait un aller-retour par partie enregistrée pour un cas qui se traite
+ * déjà bien.
+ */
+export function championEnregistre(saisie: string): string {
+  return resoudreChampion(CHAMPIONS, saisie) ?? saisie;
+}
+
+/**
  * Propositions classées par pertinence. Taper « r » doit d'abord donner Rakan
  * et Renekton, pas Aatrox : un champion qui contient la lettre quelque part au
  * milieu n'est presque jamais celui qu'on cherche. L'ordre est donc :
