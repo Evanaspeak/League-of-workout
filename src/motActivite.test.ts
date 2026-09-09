@@ -19,10 +19,50 @@ import { join } from "node:path";
  * C'est le motif que ce projet paie en boucle, et il ne prend jamais la forme
  * d'une copie qu'on remarque : il prend celle d'une correction qui n'en répare
  * qu'une part.
+ *
+ * CE QU'IL NE PEUT PAS VOIR, et c'est écrit parce que le cas s'est produit :
+ * le FRANÇAIS lui-même qui n'a pas été repris. Le discriminant ci-dessous
+ * demande que le français dise « partie » — donc « Cette activité n'a pas de
+ * résultat », rendu par `/api/games/[id]` et fidèlement traduit dans les cinq
+ * autres langues, lui est invisible. Sabotage fait : le défaut remis à
+ * l'identique laisse les deux contrôles au vert.
+ *
+ * Un garde de cette forme-là n'est pas écrivable. Le mot a deux sens dans ce
+ * produit — une partie, et l'activité PHYSIQUE du calcul de calories — et rien
+ * dans le français seul ne les sépare : « il ne dit rien de votre activité »,
+ * dans la politique de confidentialité, est parfaitement juste. Quinze
+ * occurrences françaises recensées, quatorze couvertes par « physique »,
+ * « niveau d' » ou « estimation d' », une qui ne l'est pas. Ce qui l'attrape
+ * est de LIRE, et c'est ainsi que celle-ci a été trouvée.
  */
 
-const DICOS = join(process.cwd(), "src", "lib", "i18n", "dictionaries");
+/**
+ * Le balayage porte sur `src/lib/i18n` ENTIER, pas sur `dictionaries/` seul.
+ *
+ * Huit modules portent du texte par langue un dossier au-dessus — les messages
+ * d'API, les deux courriels, les trois images, la source de diffusion, les
+ * métadonnées. Ils ont la MÊME forme que ceux du sous-dossier, langue au
+ * premier niveau : rien ne justifiait la frontière, et c'est par elle que
+ * « Cette activité n'a pas de résultat » a survécu à deux passes de renommage.
+ *
+ * Ce que ce recensement élargi a trouvé, écrit plutôt que laissé à refaire :
+ * RIEN pour la règle ci-dessous — aucune traduction ne dit « activité » là où
+ * le français dit « partie ». Le défaut trouvé était d'une autre nature, et il
+ * est nommé dans la limite plus bas.
+ */
+const RACINE = join(process.cwd(), "src", "lib", "i18n");
 const LANGUES = ["fr", "en", "es", "de", "zh", "ja"] as const;
+
+/** Les `.ts` de `src/lib/i18n`, sous-dossiers compris, tests exclus. */
+function fichiersLangue(dossier: string): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dossier, { withFileTypes: true })) {
+    const chemin = join(dossier, e.name);
+    if (e.isDirectory()) out.push(...fichiersLangue(chemin));
+    else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) out.push(chemin);
+  }
+  return out;
+}
 
 /**
  * Les mots de l'ACTIVITÉ dans chaque langue.
@@ -75,6 +115,26 @@ function entrees(bloc: string): Record<string, string> {
   return out;
 }
 
+/**
+ * La SECONDE forme, et c'est celle où le défaut vivait.
+ *
+ * `apiErrors.ts` n'a pas de bloc `fr: {` : la clé EST le message français,
+ * parce que c'est lui qui circule sur le réseau. Le découpage en blocs ne
+ * trouve donc rien et saute le fichier entier — élargir la RACINE ne suffisait
+ * pas, il fallait aussi que le garde connaisse la forme.
+ *
+ * La règle, elle, ne change pas : le français d'un côté, ses traductions de
+ * l'autre, la même paire.
+ */
+export function pairesParCle(source: string): [string, string, string][] {
+  const out: [string, string, string][] = [];
+  for (const m of source.matchAll(/^ {2}"((?:[^"\\]|\\.)*)":\s*\{([\s\S]*?)^ {2}\},/gm)) {
+    const fr = m[1];
+    for (const t of m[2].matchAll(/\b(\w+):\s*"((?:[^"\\]|\\.)*)"/g)) out.push([fr, t[1], t[2]]);
+  }
+  return out;
+}
+
 describe("le mot « activité »", () => {
   it("distingue les deux sens par ce que dit le français", () => {
     // Éprouvé sur des cas FABRIQUÉS : les fichiers réels ne contiennent, une
@@ -92,9 +152,21 @@ describe("le mot « activité »", () => {
   it("ne survit dans aucune langue là où le français dit « partie »", () => {
     const fautifs: string[] = [];
     let examinees = 0;
-    for (const f of readdirSync(DICOS).filter((x) => x.endsWith(".ts"))) {
-      const b = blocs(readFileSync(join(DICOS, f), "utf8"));
-      if (!b.fr) continue;
+    let parCle = 0;
+    for (const chemin of fichiersLangue(RACINE)) {
+      const f = chemin.slice(RACINE.length + 1);
+      const source = readFileSync(chemin, "utf8");
+      const b = blocs(source);
+      if (!b.fr) {
+        for (const [frTexte, l, valeur] of pairesParCle(source)) {
+          const motif = MOTS[l];
+          if (!motif) continue;
+          examinees += 1;
+          parCle += 1;
+          if (fautif(frTexte, valeur, motif)) fautifs.push(`${f} [${l}] ${frTexte.slice(0, 40)} → ${valeur.slice(0, 60)}`);
+        }
+        continue;
+      }
       const fr = entrees(b.fr);
       for (const [l, motif] of Object.entries(MOTS)) {
         if (!b[l]) continue;
@@ -108,6 +180,11 @@ describe("le mot « activité »", () => {
     // Témoin : sans lui, un découpage de blocs cassé rendrait le contrôle vert
     // en n'ayant comparé aucune entrée.
     expect(examinees).toBeGreaterThan(2000);
+    // Et un témoin SÉPARÉ pour la seconde forme : le premier est satisfait par
+    // les cinquante-neuf fichiers de `dictionaries/` à lui seul, donc il
+    // resterait vert le jour où `pairesParCle` cesserait de trouver quoi que
+    // ce soit — c'est-à-dire là où le défaut a vécu.
+    expect(parCle).toBeGreaterThan(200);
     expect(fautifs).toEqual([]);
   });
 });

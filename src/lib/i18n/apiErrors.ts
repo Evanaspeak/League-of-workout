@@ -236,10 +236,25 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Invalid result", es: "Resultado no válido", de: "Ungültiges Ergebnis",
     zh: "结果不正确", ja: "結果が正しくありません",
   },
-  "Cette activité n'a pas de résultat": {
-    en: "This activity has no result", es: "Esta actividad no tiene resultado",
-    de: "Diese Aktivität hat kein Ergebnis",
-    zh: "该活动没有胜负", ja: "このアクティビティに勝敗はありません",
+  /**
+   * Le mot du refus est celui de l'écran, pas un second vocabulaire.
+   *
+   * Il disait « Cette activité », six jours après que V400 a renommé
+   * « activité » en « partie » partout où le mot désigne une partie. Ce
+   * fichier vit HORS de `dictionaries/`, donc les deux passes de renommage ne
+   * l'ont jamais ouvert — et le garde ne pouvait pas le voir : son
+   * discriminant exige que le FRANÇAIS dise « partie », or ici c'est le
+   * français lui-même qui est fautif.
+   *
+   * « Séance » aurait refait deux sens pour un mot : ce produit appelle séance
+   * un effort d'exercice. Les six formulations viennent de `dashboard.ts`,
+   * clé `sessionModeDesc`, où chaque langue dit déjà comment elle nomme un jeu
+   * compté au temps.
+   */
+  "Un jeu au temps n'a pas de résultat": {
+    en: "A time-based game has no result", es: "Un juego por tiempo no tiene resultado",
+    de: "Ein Spiel nach Zeit hat kein Ergebnis",
+    zh: "按时长计的游戏没有胜负", ja: "時間で数えるゲームに勝敗はありません",
   },
   "Le résultat se déduit du classement": {
     en: "The result comes from your placement",
