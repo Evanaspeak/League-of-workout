@@ -53,7 +53,7 @@ export default async function OgImage(
           <span style={{ color: "#FF6A38" }}>{t.accrocheBas}</span>
         </div>
 
-        <div style={{ display: "flex", marginTop: 34, fontSize: 27, fontFamily: "sans-serif", color: "#9AA3B0", maxWidth: 900, lineHeight: 1.4 }}>
+        <div style={{ display: "flex", marginTop: 34, fontSize: 27, fontFamily: "sans-serif", color: "#98A2B0", maxWidth: 900, lineHeight: 1.4 }}>
           {t.sousTitre}
         </div>
 

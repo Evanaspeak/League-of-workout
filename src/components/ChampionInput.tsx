@@ -136,7 +136,7 @@ export function ChampionInput({ value, onChange, onReset, id }: Props) {
           role="listbox"
           style={{
             position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100,
-            background: "#0d1117", border: "1px solid color-mix(in srgb, var(--steel) 35%, transparent)",
+            background: "var(--ink)", border: "1px solid color-mix(in srgb, var(--steel) 35%, transparent)",
             borderRadius: 6, marginTop: 2, overflow: "hidden",
           }}
         >
