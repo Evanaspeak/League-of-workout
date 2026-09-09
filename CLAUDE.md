@@ -336,6 +336,28 @@ touche une ROUTE publique, elle en a un quand même. Mesuré sur V517 : un corps
 tronqué envoyé à `/api/beta-access` rendait 500, il rend 400 — et le
 changement était visible en ligne moins de neuf minutes après la fusion.
 
+**Et il peut être le CONTENU d'un fichier SERVI.** C'est le témoin des versions
+qui ne changent pas un pixel — un chantier de palette, un remaniement de
+feuille — et elles n'en avaient aucun jusque-là. La feuille de style est
+publique, son adresse porte une empreinte de son contenu, et ce qu'elle
+contient se compte. Mesuré sur V571, avant et après la fusion :
+
+```
+AVANT  /_next/static/immutable/chunks/389r-_t96qi69.css   #ff4d2e ×3 · var(--ember) ×20
+APRÈS  /_next/static/immutable/chunks/1lni26-prnj62.css   #ff4d2e ×1 · var(--ember) ×22
+```
+
+Les deux dégradés de marque ont cessé de recopier `--ember` : le rendu est
+identique au pixel — c'est la même valeur — et le témoin, lui, BASCULE. Il
+était en ligne **moins de trois minutes quarante** après la fusion, ce qui est
+la mesure la plus courte de ce journal après les deux minutes de V460.
+
+**Et le piège du `grep -c`, une seconde fois.** Le CSS servi est minifié sur UNE
+ligne : `grep -c` compte des LIGNES, donc il rend 1 quoi que contienne le
+fichier. Il annonçait « ×1 » sur trois occurrences — de quoi conclure que la
+version était déjà en ligne avant de l'être. On compte par
+`grep -o … | wc -l`, comme le journal l'écrit déjà pour le témoin de `/fr/login`.
+
 **Et on lit la CI de la version PRÉCÉDENTE.** Pas celle qu'on vient de
 pousser — elle met huit minutes, et attendre à chaque fusion coûte plus que ça
 ne rapporte. Celle d'avant, elle, a fini : un appel, et le rouge se voit à la
@@ -1310,6 +1332,57 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Campagne de clôture après V563 à V571, et un témoin d'un genre nouveau
+
+**Accessibilité : 0 constat**, vingt et une pages en français, **aucune page
+laissée de côté** — c'est le second chiffre qui compte. Sur un compte de mesure
+neuf, `.next/cache` vidé avant la construction, comme la procédure le demande.
+
+**Et les six frontières de commande rendent EXACTEMENT les mêmes ratios qu'à la
+campagne d'avant** : 1,35 pour le sélecteur de langue, 1,64 et 1,61 pour les
+champs en ligne de l'entonnoir, 1,20 pour `.lol-input` et `.lol-select`, 1,70
+pour le bouton de danger. C'est la réponse qu'on venait chercher — V571 déplace
+des jetons de couleur, et rien n'a bougé de ce que l'audit mesure. Elles
+remontent toujours en `::warning::`, la question 13 n'étant pas tranchée.
+
+**Ce qui n'a PAS été passé, avec sa raison.** Neuf versions, dont sept ne
+portent que des tests, des gardes et de la documentation. Les deux autres :
+V570 résout une saisie dans un champ, V571 remplace des littéraux par les
+jetons de MÊME valeur ou à moins de huit niveaux. Une comparaison de pixels y
+est un résultat écrit d'avance, et le poids au chargement ne peut pas bouger —
+cinq entrées de table d'alias. C'est la discipline déjà appliquée après V495,
+V510, V523 et V562.
+
+**La seule chose qui n'était PAS écrite d'avance a été vérifiée autrement** :
+`var(--ink)` posé dans un style EN LIGNE, sur le menu déroulant du champ de
+champion. S'il ne s'y résolvait pas, le fond disparaîtrait et les suggestions
+deviendraient illisibles. La preuve tient sans construction : le même objet de
+style porte déjà `border: 1px solid color-mix(in srgb, var(--steel) 35%, …)` —
+si `var()` ne s'y résolvait pas, cette bordure-là manquerait déjà.
+
+**Ce que l'audit ne regarde pas, écrit plutôt que laissé à croire** : il ne TAPE
+nulle part, donc le menu déroulant des suggestions ne s'ouvre jamais et son
+contraste n'est pas mesuré. Calculé à la main, `--bone` à 80 % composé sur
+`--ink` rend environ 11:1 — très au-dessus du seuil — mais c'est un calcul, pas
+une mesure, et la différence vaut d'être dite.
+
+**Et V571 a inauguré un témoin public d'un genre nouveau : le CONTENU d'un
+fichier servi.** C'était une version qui ne change pas un pixel — elle remplace
+`#FF4D2E` par `var(--ember)`, la même valeur — donc elle n'avait de témoin ni de
+page, ni de code de réponse. La feuille de style, elle, est publique, son
+adresse porte une empreinte de son contenu, et ce qu'elle contient se compte :
+`#ff4d2e` passe de trois occurrences à une, `var(--ember)` de vingt à
+vingt-deux, et le nom du fichier change avec. **Moins de trois minutes quarante
+entre la fusion et la mise en ligne.** Le geste est décrit dans la procédure de
+fusion, parce qu'il vaut pour toute la famille des chantiers de palette, qui
+n'avait aucun témoin jusque-là.
+
+**Le piège du `grep -c`, une seconde fois dans ce journal.** Le CSS servi est
+minifié sur UNE ligne : `grep -c` compte des lignes, donc il rend 1 quoi que
+contienne le fichier. Il annonçait « ×1 » là où il y en avait trois — de quoi
+conclure que la version était déjà en ligne avant de l'être, c'est-à-dire
+exactement l'erreur inverse de celle du témoin de `/fr/login`.
 
 ### Le garde de la palette n'ouvrait pas les feuilles de style
 
