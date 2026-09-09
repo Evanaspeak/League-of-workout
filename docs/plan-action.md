@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**117 construits · 41 restants**
+**118 construits · 40 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -362,7 +362,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [ ] | 261 | Rendre l'application utilisable en fauteuil | 2 nuits |
 
 ### Données, confiance, incidents
-*4 à faire · 6 faits.* 
+*3 à faire · 7 faits.* 
 
 | | réf | | effort |
 |---|---|---|---|
@@ -376,7 +376,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [ ] | 287 | Voir les erreurs qui se produisent chez les utilisateurs | 1 nuit |
 | [x] | 290 | Un message de prévention en cas d'excès manifeste | — |
 | [x] | 291 | Une alerte admin quand un compte dépasse un volume anormal | — |
-| [ ] | 292 | Que devient l'application si Riot coupe son API | à répondre |
+| [x] | 292 | Que devient l'application si Riot coupe son API — **répondu le 9 septembre** : le produit survit, la COMMODITÉ meurt. Toute la dépendance tient en trois routes ; la détection automatique de l'application Windows lit `127.0.0.1` et ne passe pas par l'API web. `docs/questions-ouvertes.md`, question 15 | — |
 
 ### L'overlay et le desktop
 *3 à faire · 3 faits.* 
