@@ -212,7 +212,9 @@ restent n'est dans ce cas**, et 047 était la dernière. Les quatre premières
 attendent quelque chose de toi : 049 (« à voir si on ne peut pas cotiser à des
 jetons d'annulation ») est une piste et pas une décision, 052 (« explique
 l'effet ») et 057 (« pas compris l'intérêt ») sont des questions qui te sont
-posées, 051 demande de vraies données donc l'accès à la production. La
+posées — **les deux sont MESURÉES depuis le 9 septembre**, questions 4 et 14 de
+`docs/questions-ouvertes.md`, chacune avec ses options chiffrées —, 051 demande
+de vraies données donc l'accès à la production. La
 cinquième, « le cardio se cumule, le reste se paie entre chaque partie »,
 CONTREDIT une correction déjà publiée — elle est dans les questions ouvertes.
 

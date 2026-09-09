@@ -18,8 +18,10 @@ décision prise redevient introuvable au bout de deux semaines, ce qui est
 exactement le défaut que ce fichier existe pour corriger.
 
 **Le 8 septembre, quinze des dix-neuf questions ont été tranchées d'un
-coup.** Il en reste quatre, plus cinq nées des décisions et des chantiers
-eux-mêmes.
+coup.** Ce qui reste vit dans les sections ci-dessous, et se compte en les
+lisant : aucun total n'est écrit ici, parce qu'un nombre posé une fois au-dessus
+de quelque chose qui bouge est le défaut que ce dépôt trouve le plus souvent —
+celui-ci annonçait « quatre, plus cinq » alors qu'il y en avait treize.
 
 ---
 
@@ -82,26 +84,146 @@ s'efface, ou elle s'ajoute quand même.
 coche avec sa raison. Une nuit et une migration si c'est la seconde, plus la
 perte de ce que V387 a réparé.
 
-### 4 · Deux questions du plan qui attendent une réponse de toi
-**Constatées en cochant la ligne 047**, en lisant les cinq lignes qui restent
-dans « Le calcul de la dette ». Deux d'entre elles ne sont pas des décisions
-prises : ce sont des questions qui te sont retournées, et le plan les portait
-avec un chiffrage d'effort comme si elles étaient prêtes à construire.
+### 4 · La durée de la partie, mesurée (réf. 052)
+Ta réponse est **« Explique l'effet »**. Ce qui suit est mesuré avec le moteur
+de barème lui-même — `calcScore` et `calcScoreTemps`, avec le barème livré —
+et non raisonné à côté.
 
-- **052, « tenir compte de la durée de la partie »** → ta réponse est
-  « Explique l'effet ». Perdre en quinze minutes ne coûte pas comme perdre en
-  quarante-cinq ; aujourd'hui le barème ne regarde que le KDA et le résultat.
-  Ce qu'un facteur de durée changerait : une défaite courte coûterait moins,
-  une longue davantage — donc rester dans une partie perdue d'avance coûterait
-  plus cher que de la finir vite, ce qui n'est pas forcément ce qu'on veut.
-- **057, « annoncer la dette AVANT la partie »** → ta réponse est « pas compris
-  l'intérêt ». Et c'est en partie déjà là : **la pastille en jeu affiche « si
-  gagné » et « si perdu » pendant la partie**. Ce que la ligne ajouterait est de
-  le dire avant de lancer, sur le site.
+**Ce que la durée change aujourd'hui : rien, sauf sous cinq minutes.** Une
+défaite mid 3/6/8 au niveau 1 coûte **onze points à cinq minutes comme à
+soixante**. Le seul seuil est celui du remake : sous cinq minutes, la partie
+n'a pas eu lieu et ne coûte rien.
 
-**Ce que ça coûterait** : rien tant qu'elles ne sont pas tranchées. Elles sont
-écrites ici pour ne pas être réexaminées à chaque passe — c'est ce qui est
-arrivé quatre fois aux lignes 051, 275, 280 et 287.
+**Et la durée n'arrive que par UN des trois chemins d'entrée.** C'est le fait
+qui décide de tout le reste :
+
+| chemin | la durée arrive-t-elle ? |
+|---|---|
+| l'application Windows, détection locale | **oui** (`PartieDetectee` l'envoie) |
+| la saisie à la main | **non** — le formulaire ne la demande pas pour une partie |
+| l'import depuis Riot | **non** — la route ne lit même pas `gameDuration`, que l'API donne |
+
+Une règle de durée s'appliquerait donc aujourd'hui aux seules parties détectées
+par l'application de bureau. La saisie à la main est, tant que la clé Riot de
+production n'est pas arrivée, le **seul** moyen d'employer le produit : la
+règle y serait inapplicable, ou il faudrait ajouter un champ de plus sur le
+seul écran qui marche.
+
+**La trouvaille, et je ne l'attendais pas : le barème facture DÉJÀ le temps, à
+peu près exactement.** Une heure de League — deux défaites de trente minutes,
+mid 3/6/8 — contre une heure d'un jeu compté au temps :
+
+| niveau | une heure de League | une heure comptée au temps |
+|---|---|---|
+| 1 | 22 pts | 20 pts |
+| 2 | 36 pts | 33 pts |
+| 3 | 52 pts | 47 pts |
+| 4 | 70 pts | 67 pts |
+| 5 | 96 pts | 93 pts |
+
+Trois à onze pour cent d'écart, aux cinq niveaux. Autrement dit : « League ne
+fait pas payer le temps » est vrai de la partie et **faux de la soirée**. Une
+partie moyenne dure une demi-heure et coûte à peu près une demi-heure de
+tarif.
+
+#### Les trois options, chiffrées
+
+**A · Un tarif horaire AJOUTÉ au coût de la partie** — vingt points par heure,
+multiplicateur de niveau compris, exactement comme un jeu compté au temps.
+
+| | niveau 1 (base 11) | niveau 3 (base 26) | niveau 5 (base 48) |
+|---|---|---|---|
+| 15 min | 16 pts (+45 %) | 38 pts (+46 %) | 71 pts (+48 %) |
+| 25 min | 19 pts (+73 %) | 45 pts (+73 %) | 87 pts (+81 %) |
+| 35 min | 23 pts (+109 %) | 53 pts (+104 %) | 102 pts (+113 %) |
+| 45 min | 26 pts (+136 %) | 61 pts (+135 %) | 118 pts (+146 %) |
+
+Ça **double la dette d'une soirée** — la partie moyenne fait trente minutes,
+donc +73 %. Et ça compte le temps DEUX fois, puisque le tableau ci-dessus
+montre que le KDA le facture déjà : une partie longue a mécaniquement plus de
+morts qu'une partie courte. *(Cette dernière phrase est un raisonnement, pas
+une mesure : il faudrait les vraies parties pour l'établir, et c'est la
+ligne 051.)*
+
+**B · Un prorata sur trente minutes** — le coût actuel multiplié par la durée
+rapportée à une partie moyenne.
+
+| | niveau 1 (base 11) | niveau 3 (base 26) |
+|---|---|---|
+| 15 min | 6 pts | 13 pts |
+| 25 min | 9 pts | 22 pts |
+| 35 min | 13 pts | 30 pts |
+| 45 min | 17 pts | 39 pts |
+
+La dette d'une soirée ne bouge pas — c'est une redistribution, pas une
+majoration. C'est la seule option qui réponde à « perdre en quinze minutes
+n'est pas perdre en quarante-cinq » sans changer l'échelle du produit.
+
+**C · Ne rien faire.** Le seul cas où la durée change la NATURE de la partie —
+le remake — est déjà traité.
+
+#### Ce qui vaut pour A comme pour B, et qui n'est pas un détail
+Dans les deux cas, **une défaite courte coûte moins cher**. Or on peut
+abandonner une partie de League à quinze minutes. Le produit se mettrait donc
+à récompenser le vote d'abandon, c'est-à-dire à peser sur la façon de jouer et
+non seulement sur ce qu'on doit après. C'est un choix qui t'appartient ; il ne
+se prend pas en passant.
+
+### 14 · Ce qu'on peut annoncer AVANT la partie (réf. 057)
+Ta réponse est **« pas compris l'intérêt »**, et la mesure te donne raison sur
+la question telle qu'elle était posée — puis elle désigne autre chose, qui
+n'est pas la même et qui, elle, tient debout.
+
+**Ce qui existe déjà.** La pastille en jeu affiche « si gagné », « si perdu »
+et ce qui est déjà dû. Ces deux projections sont calculées **à partir du KDA
+en cours**, relevé toutes les deux secondes : elles n'existent donc que PENDANT
+la partie. À l'écran de chargement, la pastille publie deux chaînes vides et ne
+montre que la dette en attente. Vérifié dans `DetteDirecte.tsx`.
+
+**Ce que la ligne demande, c'est le moment d'AVANT — et c'est le moment où le
+chiffre n'existe pas.** Ce qui décide du coût est le KDA, et il n'est pas
+encore écrit. L'éventail, mesuré au niveau 3 sur quatre défaites toutes
+plausibles :
+
+| la partie | Mid | Support |
+|---|---|---|
+| propre, 0/2/10 | 12 pts | 12 pts |
+| moyenne, 3/6/8 | 26 pts | 12 pts |
+| ratée, 2/11/4 | 74 pts | 51 pts |
+| soirée noire, 0/14/2 | 105 pts | 76 pts |
+
+**Un facteur neuf.** « Si tu perds celle-ci, tu devras 42 » serait donc une
+devinette habillée en chiffre — et tout le crédit du produit tient à ce que le
+chiffre soit vrai. C'est déjà écrit dans le simulateur, et la phrase vaut ici
+mot pour mot : *un simulateur qui ment est pire qu'aucun simulateur.*
+
+#### Ce qui EST connu avant la partie, et que personne ne voit
+Le KDA manque ; la **chaîne de multiplicateurs**, elle, est entièrement connue
+dès la sélection de champion — le niveau du compte, la file, et le champion.
+Mesuré sur une seule et même défaite, mid 3/6/8, niveau 3 :
+
+| | coût |
+|---|---|
+| normale, champion jamais joué | 26 pts |
+| normale, 100 parties sur ce champion | 39 pts |
+| **classée, 100 parties sur ce champion** | **49 pts** |
+| *(pour comparaison : la victoire, mêmes chiffres)* | *13 pts* |
+
+**La même partie, +88 %**, et rien ne le dit nulle part. Quelqu'un qui prend
+son main en classée ne sait pas qu'il vient de doubler le prix de la soirée.
+
+C'est la seule chose qu'on puisse annoncer avant la partie sans mentir : pas un
+montant, un **taux**. « Cette partie te coûtera 1,9 fois le tarif : classée, et
+c'est ton champion ». Exact, vérifiable, et disponible au moment où l'on peut
+encore changer d'avis.
+
+**Ce que ça coûterait** : une demi-nuit, sur la pastille seule. Le calcul
+existe déjà — `/api/games/preview` rend `surcharge` et le niveau — et le
+lanceur publie déjà la phase, la file et le champion (`lcu.js`). C'est un
+affichage, pas un barème.
+
+**Ce que ça ne fait PAS** : ça ne s'affiche que dans l'application Windows. Sur
+le site il n'y a pas de « avant la partie » — on y arrive après.
 
 ### 5 · La distance du consentement santé, dans une seule langue
 **Née de la décision du 8 septembre.** « Tutoie partout, c'était un oubli » a
