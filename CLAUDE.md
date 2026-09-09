@@ -1289,6 +1289,77 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Les trois autres outils de mesure, passés au même crible : rien
+
+Suite de V563. Un défaut trouvé dans un outil se cherche chez ses voisins —
+c'est la méthode qui a rendu le plus ici. Les deux défauts de l'audit étaient
+le clic sur des dépliants que la feuille de style CACHE, et six chargements de
+`/fr/settings` dans une page RÉEMPLOYÉE. Les trois autres outils y ont été
+confrontés.
+
+**Aucun des deux ne les touche, et les deux raisons sont structurelles.** Aucun
+des trois ne clique un dépliant — `grep` sur `aria-expanded` rend zéro. Et les
+trois ouvrent un **contexte neuf par adresse** : `coutures.mjs` et
+`comparer-rendu.mjs` créent le leur DANS la boucle, `performance.mjs` ne mesure
+qu'une adresse par appel. La file de préchargements du routeur, qui est ce qui
+faisait traîner un second chargement de huit à trente secondes, ne peut donc
+pas s'y former.
+
+**Le candidat le plus suspect était `coutures.mjs`, qui ouvre `/settings` cinq
+fois de suite** — une par fragment. Mesuré : **34, 38, 159, 51 et 21 textes**.
+Ce sont cinq rubriques réellement différentes, donc la duplication y est
+LÉGITIME, contrairement aux trois passes de fin de l'audit qui mesuraient des
+choses indépendantes du fragment. Dédupliquer ici aveuglerait l'outil sur
+quatre rubriques sur cinq.
+
+**Et l'attente fixe a été mesurée plutôt que défendue.** `coutures.mjs` attend
+4 500 ms là où l'audit attend `networkidle` : deux outils qui regardent la même
+surface avec deux signaux de disponibilité différents, et personne ne les avait
+comparés. Le risque est réel — une page lue avant ses données rend « rien à
+signaler » sur ce qu'elle n'a pas vu, et son garde ne voit que les réponses
+d'API en ÉCHEC, pas les lentes.
+
+Relevé sur les neuf écrans connectés, dernière réponse d'API après le `goto` :
+
+| écran | dernière API | textes à 4,5 s | textes à 9 s |
+|---|---|---|---|
+| `/dashboard` | 517 ms | 139 | 139 |
+| `/history` | 814 ms | 165 | 165 |
+| `/amis` | 639 ms | 51 | 51 |
+| `/bilan` | 718 ms | 34 | 34 |
+| `/settings#effort` | 659 ms | 159 | 159 |
+
+**Le pire cas est à 814 ms, et rien n'arrive entre 4,5 et 9 secondes** — les
+neuf comptes sont identiques au texte près. La marge est de 5,5×.
+
+**Elle ne se rabote donc PAS, et c'est écrit pour que la question ne se
+rouvre pas à l'aveugle.** Ramener l'attente à deux secondes gagnerait
+quarante-sept secondes sur un outil qui tourne quelques fois par campagne, et
+le ferait sur la foi d'une mesure prise sur une machine INOCCUPÉE — or ce
+journal porte une demi-douzaine de cas où une machine chargée a tout changé.
+L'échange se fait dans le mauvais sens.
+
+**Le chiffre qui rend le crible utile est la durée totale : 91 secondes pour
+dix-neuf pages, dont 85,5 d'attente fixe.** Le chargement coûte donc 5,5
+secondes au TOTAL, moins de trois cents millisecondes par page. Il n'y avait
+rien à optimiser, et le savoir vaut mieux que de le supposer dans un sens ou
+dans l'autre.
+
+**Un écart de couverture vérifié au passage, et déjà gardé.** L'audit visite
+vingt et une adresses, `coutures.mjs` dix-neuf. Les deux manquantes sont
+`/settings` nu et `/recuperation/valider`, et **les deux sont DÉCLARÉES avec
+leur raison** dans `src/couvertureOutils.test.ts` — le garde né de « Trois
+outils, trois listes de pages, et personne pour les comparer » a fait son
+travail. Ce qui a été corrigé est le COMMENTAIRE de `coutures.mjs`, qui annonce
+« la liste est celle de `accessibilite.mjs` » sans dire qu'il y a deux
+exceptions : un lecteur n'irait pas vérifier une égalité qu'on lui affirme.
+C'est le défaut que ce journal reproche partout, sous sa forme la plus douce.
+
+**Ce que ce chantier n'a PAS produit, et c'est le résultat** : aucune
+correction d'outil. Un recensement négatif coûte le même temps que celui qui
+trouve quelque chose, et sans lui la question se reposerait à la campagne
+suivante — c'est la raison pour laquelle il est écrit ici plutôt que tu.
+
 ### L'audit cliquait trois fois sur ce que la feuille de style cache
 
 Moitié restante d'un chantier laissé en plan, et elle commence par une
