@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useChampions, championConnu, suggererChampions } from "@/lib/useChampions";
+import {
+  championConnu,
+  resoudreChampion,
+  suggererChampions,
+  useChampions,
+} from "@/lib/useChampions";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { championInput as championInputDict } from "@/lib/i18n/dictionaries/championInput";
 
@@ -40,6 +45,29 @@ export function ChampionInput({ value, onChange, onReset, id }: Props) {
     setOpen(false);
   };
 
+  /**
+   * Ce qu'on a tapé se ramène à son nom canonique quand on quitte le champ.
+   *
+   * « Chogath », « Séraphine », « Maître Yi » désignent tous un champion sans
+   * l'écrire comme la base l'attend. Sans cette étape, la liste PROPOSAIT ce
+   * que le bouton d'enregistrement REFUSAIT : on tape, on voit la bonne
+   * suggestion, on ne clique pas, et rien ne s'enregistre sans qu'un mot
+   * l'explique.
+   *
+   * La correction se fait dans le CHAMP et pas au moment d'envoyer : ce qu'on
+   * lit doit être ce qu'on enregistre, sinon l'écran et la base disent deux
+   * choses. Une saisie qui ne désigne personne est laissée telle quelle —
+   * c'est elle que le message d'erreur explique.
+   */
+  const resoudre = () => {
+    if (!value) return;
+    const canonique = resoudreChampion(champList, value);
+    if (canonique && canonique !== value) {
+      onChange(canonique);
+      onReset?.();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open) return;
     if (e.key === "ArrowDown") {
@@ -51,6 +79,14 @@ export function ChampionInput({ value, onChange, onReset, id }: Props) {
     } else if (e.key === "Enter" && activeIndex >= 0) {
       e.preventDefault();
       select(suggestions[activeIndex]);
+    } else if (e.key === "Enter") {
+      // Entrée sans avoir choisi dans la liste : on prend ce qui est tapé au
+      // mot. C'est le geste le plus naturel, et sans lui il ne se passe rien —
+      // le bouton d'enregistrement étant éteint tant que le nom n'est pas
+      // reconnu, la touche ne soumet rien non plus.
+      e.preventDefault();
+      resoudre();
+      setOpen(false);
     } else if (e.key === "Escape") {
       setOpen(false);
     }
@@ -81,6 +117,7 @@ export function ChampionInput({ value, onChange, onReset, id }: Props) {
         aria-invalid={!!value && !isValid}
         onChange={(e) => handleChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        onBlur={resoudre}
         onFocus={() => {
           if (value) {
             const s = suggest(value, 8);

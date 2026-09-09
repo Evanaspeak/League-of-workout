@@ -21,3 +21,30 @@ export const CHAMPIONS: string[] = [
   "Warwick", "Wukong", "Xayah", "Xerath", "Xin Zhao", "Yasuo", "Yone", "Yorick",
   "Yunara", "Yuumi", "Zaahen", "Zac", "Zed", "Zeri", "Ziggs", "Zilean", "Zoe", "Zyra",
 ];
+
+/**
+ * Les noms LOCALISÉS qui ne se ramènent pas d'eux-mêmes à leur forme
+ * canonique, et ce qu'ils désignent.
+ *
+ * La liste ci-dessus est celle de Riot en anglais, et c'est ce qu'il faut :
+ * `Game.champion` la stocke, l'icône de Data Dragon s'en déduit, et le compte
+ * de maîtrise regroupe dessus. Un joueur français, lui, tape le nom qu'il
+ * lit dans son client.
+ *
+ * L'aplatissement des accents et de la ponctuation en rattrape la plupart tout
+ * seul — « Séraphine », « Zoé », « K'Santé », « Jarvan IV. » se ramènent à
+ * leur forme anglaise sans rien d'autre. **Cinq n'y arrivent pas** : ce sont
+ * de vraies traductions, pas des variantes typographiques.
+ *
+ * Mesuré contre Data Dragon 16.17.1 : deux en français, trois en espagnol,
+ * aucune en allemand. Le japonais et le chinois, eux, traduisent les
+ * cent soixante-treize — c'est une table entière, donc une décision, et elle
+ * est posée dans `docs/questions-ouvertes.md` plutôt que prise ici.
+ */
+export const ALIAS_CHAMPIONS: Record<string, string> = {
+  "Maître Yi": "Master Yi",
+  "Maestro Yi": "Master Yi",
+  Bardo: "Bard",
+  "Nunu et Willump": "Nunu & Willump",
+  "Nunu y Willump": "Nunu & Willump",
+};

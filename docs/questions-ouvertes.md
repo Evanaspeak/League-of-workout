@@ -661,6 +661,54 @@ probablement pas. Le contrôle ajouté à `scripts/accessibilite.mjs` les écart
 donc explicitement, faute de les avoir regardés.
 
 
+### 22 · Les noms de champions en japonais et en chinois
+
+**Née en corrigeant le champ de saisie du champion.** Il proposait ce que le
+bouton d'enregistrement refusait ; c'est réparé, et la réparation s'arrête à
+une frontière qui n'est pas technique.
+
+**Ce qui est mesuré**, à travers les fonctions RÉELLES du produit, contre Data
+Dragon 16.17.1 : notre liste EST exactement `en_US`, 173 noms sur 173. Ce qui
+change d'une langue à l'autre se compte :
+
+| langue | noms traduits | refusés avant | refusés après |
+|---|---|---|---|
+| allemand | 1 | 0 | 0 |
+| espagnol | 3 | 3 | **0** |
+| français | 5 | 2 | **0** |
+| **japonais** | **173** | 173 | **173** |
+| **chinois** | **173** | 173 | **173** |
+
+Les cinq entrées de `ALIAS_CHAMPIONS` ferment donc entièrement les trois
+langues latines. Le japonais et le chinois traduisent **tout**, et rien n'y
+passe : quelqu'un qui tape 「アーリ」 — le nom qu'il lit dans son propre client —
+ne reçoit **aucune proposition**, et le bouton reste éteint.
+
+**Ce n'est pas un oubli, c'est une décision de DONNÉES.** Une table à la main y
+ferait 346 entrées, et elle POURRIT : chaque champion ajouté par Riot demande
+alors trois noms au lieu d'un, dans un fichier que personne n'ouvre. Et ce ne
+sont pas des translittérations qu'on pourrait déduire — 「暗裔剑魔」 pour Aatrox
+est un nom de marque, pas une transcription.
+
+**Trois options, chiffrées :**
+
+- **A — ne rien faire.** Le lecteur japonais tape le nom anglais. Coût nul, et
+  un écart connu. C'est peut-être déjà ce qu'il fait — mais rien ne le dit, et
+  son client, lui, affiche le nom japonais.
+- **B — les deux tables à la main.** 346 entrées, et le pourrissement décrit
+  ci-dessus. Une demi-nuit, plus une dette permanente.
+- **C — les ENGENDRER depuis Data Dragon.** Un script qui lit les six langues du
+  CDN et écrit la table, rejoué quand Riot ajoute un champion. Ça ne pourrit
+  pas, ça couvre les six langues d'un coup, et ça **remplacerait** les cinq
+  alias écrits à la main. Le prix est une dépendance de construction sur un
+  service tiers et un fichier engendré à tenir. Une nuit.
+
+**Ce que je n'ai PAS mesuré, écrit plutôt que tu** : si quelqu'un emploie le
+produit en japonais ou en chinois. Quatre comptes. La question vaut le jour où
+il y a des gens dedans — et l'option C est la seule dont le coût ne grandit pas
+en attendant.
+
+
 ---
 
 ## Ce qui demande une machine qu'on n'a pas
