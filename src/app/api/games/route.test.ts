@@ -711,3 +711,52 @@ describe("une partie sans enjeu", () => {
     expect(game.create.mock.calls[0][0].data.pompesCalculees).toBe(0);
   });
 });
+
+/**
+ * La porte d'écriture reçoit trois sources — le formulaire, l'import Riot et
+ * la détection locale de l'application Windows — et une seule des trois
+ * normalisait le nom du champion. C'est l'asymétrie qui coûte : `Game.champion`
+ * est la clé de l'icône de Data Dragon, du regroupement de maîtrise et de ce
+ * que l'historique affiche, donc deux orthographes du même champion en base
+ * font DEUX champions.
+ *
+ * Ce qui est mesuré et qui rend le cas concret : Data Dragon porte deux formes
+ * de nom, et **vingt et un champions ont une clé différente de leur nom
+ * affiché** — « Chogath » contre « Cho'Gath », « MonkeyKing » contre
+ * « Wukong ». Aucune de ces vingt et une clés ne figure dans notre liste.
+ */
+describe("le nom du champion à l'entrée", () => {
+  it("se ramène à sa forme canonique", async () => {
+    await post(partie({ champion: "Chogath" }));
+    expect(game.create.mock.calls[0][0].data.champion).toBe("Cho'Gath");
+  });
+
+  it("laisse tel quel un nom déjà canonique", async () => {
+    await post(partie({ champion: "Ahri" }));
+    expect(game.create.mock.calls[0][0].data.champion).toBe("Ahri");
+  });
+
+  /**
+   * Le contrôle qui DISTINGUE, et il vaut plus que le premier : la maîtrise se
+   * compte sur le nom, et un comptage sur la forme brute regrouperait les
+   * parties d'un autre champion que celui qu'on enregistre. Le défaut ne se
+   * verrait pas sur la partie qui le crée — il se verrait sur le COÛT des
+   * suivantes.
+   */
+  it("est compté sous cette même forme pour la maîtrise", async () => {
+    await post(partie({ champion: "kaisa" }));
+    expect(game.count.mock.calls[0][0].where.champion).toBe("Kai'Sa");
+    expect(game.create.mock.calls[0][0].data.champion).toBe("Kai'Sa");
+  });
+
+  /**
+   * Perdre le champion d'une partie qu'on vient de jouer serait pire que de
+   * l'écrire de travers : ce qui ne désigne personne est GARDÉ. C'est aussi ce
+   * qui rend un champion ajouté par l'administration inoffensif — il ne se
+   * ramène à rien, donc il traverse.
+   */
+  it("garde ce qui ne désigne personne", async () => {
+    await post(partie({ champion: "Sylas le Grand" }));
+    expect(game.create.mock.calls[0][0].data.champion).toBe("Sylas le Grand");
+  });
+});

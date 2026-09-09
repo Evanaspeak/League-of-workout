@@ -18,6 +18,7 @@ import { textesNotification } from "@/lib/i18n/notifications";
 import { jourDansFuseau } from "@/lib/fuseau";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
+import { CHAMPIONS, resoudreChampion } from "@/lib/champions";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
@@ -210,14 +211,40 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Config manquante" }, { status: 500 });
   }
 
+  /**
+   * Le champion se ramène à son nom canonique AVANT tout le reste.
+   *
+   * Cette porte reçoit trois sources : le formulaire, l'import Riot et la
+   * détection locale de l'application Windows. **Le formulaire normalisait, la
+   * porte non** — et c'est l'asymétrie qui compte, parce que `Game.champion`
+   * est la clé de trois choses : l'icône de Data Dragon, le regroupement de
+   * maîtrise, et ce que l'historique affiche. Deux orthographes du même
+   * champion en base font deux champions.
+   *
+   * Ce que la normalisation coûte quand tout va bien : rien. Un nom déjà
+   * canonique sort inchangé — `resoudreChampion` compare d'abord la chaîne
+   * exacte. Et une saisie qui ne désigne personne est GARDÉE telle quelle :
+   * perdre le champion d'une partie qu'on vient de jouer serait pire que de
+   * l'écrire de travers.
+   *
+   * La liste employée est celle du CODE et non celle de la base : un champion
+   * ajouté par l'administration ne se ramène à rien, donc il est gardé tel
+   * quel — c'est-à-dire exactement le comportement d'avant. Lire la
+   * configuration ici coûterait un aller-retour par partie enregistrée pour
+   * un cas qui se traite déjà bien.
+   */
+  const champion = capacites.champions && body.champion
+    ? resoudreChampion(CHAMPIONS, String(body.champion)) ?? String(body.champion)
+    : null;
+
   // Compte les parties avant avec ce champion
   let partiesAvant = 0;
-  if (capacites.champions && body.champion && roleWeights?.maitriseActive) {
+  if (champion && roleWeights?.maitriseActive) {
     partiesAvant = await prisma.game.count({
       // La maîtrise se gagne sur les parties qui comptent. Sans ce filtre, une
       // soirée refusée ferait quand même monter la surcharge de maîtrise du
       // champion — c'est-à-dire changerait le coût des parties suivantes.
-      where: { userId: user.id, sansEnjeu: false, champion: body.champion },
+      where: { userId: user.id, sansEnjeu: false, champion },
     });
   }
 
@@ -378,7 +405,6 @@ export async function POST(req: Request) {
   const deaths = lu(body.deaths, capacites.kda);
   const assists = lu(body.assists, capacites.kda || capacites.rl);
   const arrets = capacites.rl ? entierBorne(body.arrets, KDA_MAX) ?? 0 : null;
-  const champion = capacites.champions && body.champion ? String(body.champion) : null;
 
   // Battle royale : la place finale remplace le compteur de morts, et la
   // victoire se déduit du classement plutôt que d'un bouton.

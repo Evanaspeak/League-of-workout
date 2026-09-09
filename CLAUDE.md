@@ -336,6 +336,28 @@ touche une ROUTE publique, elle en a un quand même. Mesuré sur V517 : un corps
 tronqué envoyé à `/api/beta-access` rendait 500, il rend 400 — et le
 changement était visible en ligne moins de neuf minutes après la fusion.
 
+**Et il peut être le CONTENU d'un fichier SERVI.** C'est le témoin des versions
+qui ne changent pas un pixel — un chantier de palette, un remaniement de
+feuille — et elles n'en avaient aucun jusque-là. La feuille de style est
+publique, son adresse porte une empreinte de son contenu, et ce qu'elle
+contient se compte. Mesuré sur V571, avant et après la fusion :
+
+```
+AVANT  /_next/static/immutable/chunks/389r-_t96qi69.css   #ff4d2e ×3 · var(--ember) ×20
+APRÈS  /_next/static/immutable/chunks/1lni26-prnj62.css   #ff4d2e ×1 · var(--ember) ×22
+```
+
+Les deux dégradés de marque ont cessé de recopier `--ember` : le rendu est
+identique au pixel — c'est la même valeur — et le témoin, lui, BASCULE. Il
+était en ligne **moins de trois minutes quarante** après la fusion, ce qui est
+la mesure la plus courte de ce journal après les deux minutes de V460.
+
+**Et le piège du `grep -c`, une seconde fois.** Le CSS servi est minifié sur UNE
+ligne : `grep -c` compte des LIGNES, donc il rend 1 quoi que contienne le
+fichier. Il annonçait « ×1 » sur trois occurrences — de quoi conclure que la
+version était déjà en ligne avant de l'être. On compte par
+`grep -o … | wc -l`, comme le journal l'écrit déjà pour le témoin de `/fr/login`.
+
 **Et on lit la CI de la version PRÉCÉDENTE.** Pas celle qu'on vient de
 pousser — elle met huit minutes, et attendre à chaque fusion coûte plus que ça
 ne rapporte. Celle d'avant, elle, a fini : un appel, et le rouge se voit à la
@@ -1310,6 +1332,141 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La porte d'écriture normalisait d'un seul côté
+
+Suite du champ de champion, en tirant le fil : le FORMULAIRE ramène la saisie à
+son nom canonique depuis V570, et la PORTE, non. `/api/games` écrivait
+`String(body.champion)` — sans liste, sans contrôle, sans rien.
+
+**Trois sources entrent par là**, et une seule normalisait : le formulaire,
+l'import Riot, et la détection locale de l'application Windows. C'est
+l'asymétrie qui coûte, et elle est certaine — elle se lit dans le code, elle ne
+dépend d'aucune hypothèse.
+
+**Ce que `Game.champion` décide**, et c'est ce qui rend le cas sérieux : l'icône
+de Data Dragon, le REGROUPEMENT de maîtrise, et ce que l'historique affiche.
+Deux orthographes du même champion en base font deux champions — et la maîtrise
+change le coût des parties SUIVANTES, donc le défaut ne se voit pas sur celle
+qui le crée.
+
+**La mesure qui rend le cas concret.** Data Dragon porte deux formes de nom, et
+elles diffèrent pour **vingt et un champions** : la clé `Chogath` contre le nom
+`Cho'Gath`, `MonkeyKing` contre `Wukong`, `Nunu` contre `Nunu & Willump`.
+**Aucune de ces vingt et une clés ne figure dans notre liste**, qui est
+exactement la liste des noms affichés. `resoudreChampion` en ramène dix-huit
+d'elle-même par l'aplatissement ; les trois qui restent ne s'aplatissent pas
+vers leur nom.
+
+**Ce qui n'est PAS mesuré, écrit plutôt qu'affirmé** : la forme que Riot envoie
+réellement dans `championName`. Il n'y a pas de clé de production, donc ce
+chemin est dormant et je ne peux pas l'ouvrir. Je ne dis donc pas que l'import
+Riot est cassé — je dis que la porte normalise d'un côté et pas de l'autre, et
+que la normalisation est JUSTE quelle que soit la forme qui arrive : sur un nom
+déjà canonique, `resoudreChampion` compare d'abord la chaîne exacte et rend le
+même nom. C'est une assurance qui ne coûte rien.
+
+**La cause structurelle était le mot `"use client"`.** Les fonctions pures —
+l'aplatissement, la résolution, le classement des propositions — vivaient dans
+`useChampions.ts`, qui porte cette directive : **une route ne pouvait donc pas
+les appeler**. Elles sont parties dans `src/lib/champions.ts`, qui n'est qu'un
+module. Le crochet et la mémoire de la liste restent où ils sont, et leurs tests
+se sont séparés avec eux.
+
+**La liste employée est celle du CODE, pas celle de la base**, et c'est écrit
+plutôt que subi : un champion ajouté par l'administration ne se ramène à rien,
+donc il est gardé tel quel — c'est-à-dire exactement le comportement d'avant.
+Lire la configuration à cet endroit coûterait un aller-retour par partie
+enregistrée pour un cas qui se traite déjà bien. Et **ce qui ne désigne personne
+est GARDÉ** : perdre le champion d'une partie qu'on vient de jouer serait pire
+que de l'écrire de travers.
+
+**Et le fil a rendu une TROISIÈME correspondance sur les noms**, cachée dans un
+composant : `CHAMPION_MAP`, vingt et une entrées écrites à la main dans
+`ChampionIcon.tsx`, qui traduit le nom affiché en clé d'adresse Data Dragon.
+Elle décide de l'ICÔNE, et une clé fausse ne casse rien : l'image rend 404, le
+repli en lettre s'affiche, et personne ne le remarque avant des semaines. Elle
+rejoint les deux autres tables dans `champions.ts`.
+
+Mesurée contre Data Dragon 16.17.1 : **les cent soixante-treize clés sont
+bonnes, aucune collision** — deux champions ne partagent jamais une icône — et
+**une entrée ne servait à rien**, `"Aatrox": "Aatrox"`, qui rend ce que le repli
+mécanique rendait déjà.
+
+**Une entrée MANQUAIT et marchait quand même, ce qui vaut d'être nommé.**
+`K'Sante` n'est pas dans la table ; le repli mécanique — retirer apostrophes,
+espaces, points et esperluettes — donne `KSante`, qui est la bonne clé. Il
+échoue en revanche partout où Riot met une minuscule au second morceau :
+`Cho'Gath` donne `ChoGath` là où la clé est `Chogath`. La table ne porte donc
+QUE ce que le repli manque, et les deux moitiés sont épinglées séparément —
+sans ça on ne saurait pas laquelle fait quoi.
+
+**Le garde ne demande aucun réseau, et c'est sa limite.** Il tient la cohérence
+INTERNE : pas d'entrée sans effet, pas d'entrée désignant un champion absent de
+la liste, pas de collision. La JUSTESSE des clés se mesure contre Data Dragon,
+donc à la main, et le relevé du 9 septembre est écrit dans le module.
+
+Cinq sabotages, cinq échecs : la porte qui cesse de normaliser, la maîtrise
+comptée sur la forme brute, un nom inconnu perdu au lieu d'être gardé, l'entrée
+sans effet remise, et une clé qui en double une autre.
+
+**Un piège d'outillage, et c'est le TÉMOIN qui l'a dit.** Mon enveloppe de
+sabotage décalait ses arguments d'un cran au lieu de deux : la commande lancée
+commençait donc par le chemin du fichier de test, et les cinq sabotages ont
+rendu « Permission denied » puis « SABOTAGE SANS EFFET ». Cinq d'affilée ne sont
+pas une coïncidence — c'est le harnais. Sans le contrôle d'empreinte posé la
+veille, les cinq auraient rendu du vert et j'aurais conclu que rien ne mordait.
+
+### Campagne de clôture après V563 à V571, et un témoin d'un genre nouveau
+
+**Accessibilité : 0 constat**, vingt et une pages en français, **aucune page
+laissée de côté** — c'est le second chiffre qui compte. Sur un compte de mesure
+neuf, `.next/cache` vidé avant la construction, comme la procédure le demande.
+
+**Et les six frontières de commande rendent EXACTEMENT les mêmes ratios qu'à la
+campagne d'avant** : 1,35 pour le sélecteur de langue, 1,64 et 1,61 pour les
+champs en ligne de l'entonnoir, 1,20 pour `.lol-input` et `.lol-select`, 1,70
+pour le bouton de danger. C'est la réponse qu'on venait chercher — V571 déplace
+des jetons de couleur, et rien n'a bougé de ce que l'audit mesure. Elles
+remontent toujours en `::warning::`, la question 13 n'étant pas tranchée.
+
+**Ce qui n'a PAS été passé, avec sa raison.** Neuf versions, dont sept ne
+portent que des tests, des gardes et de la documentation. Les deux autres :
+V570 résout une saisie dans un champ, V571 remplace des littéraux par les
+jetons de MÊME valeur ou à moins de huit niveaux. Une comparaison de pixels y
+est un résultat écrit d'avance, et le poids au chargement ne peut pas bouger —
+cinq entrées de table d'alias. C'est la discipline déjà appliquée après V495,
+V510, V523 et V562.
+
+**La seule chose qui n'était PAS écrite d'avance a été vérifiée autrement** :
+`var(--ink)` posé dans un style EN LIGNE, sur le menu déroulant du champ de
+champion. S'il ne s'y résolvait pas, le fond disparaîtrait et les suggestions
+deviendraient illisibles. La preuve tient sans construction : le même objet de
+style porte déjà `border: 1px solid color-mix(in srgb, var(--steel) 35%, …)` —
+si `var()` ne s'y résolvait pas, cette bordure-là manquerait déjà.
+
+**Ce que l'audit ne regarde pas, écrit plutôt que laissé à croire** : il ne TAPE
+nulle part, donc le menu déroulant des suggestions ne s'ouvre jamais et son
+contraste n'est pas mesuré. Calculé à la main, `--bone` à 80 % composé sur
+`--ink` rend environ 11:1 — très au-dessus du seuil — mais c'est un calcul, pas
+une mesure, et la différence vaut d'être dite.
+
+**Et V571 a inauguré un témoin public d'un genre nouveau : le CONTENU d'un
+fichier servi.** C'était une version qui ne change pas un pixel — elle remplace
+`#FF4D2E` par `var(--ember)`, la même valeur — donc elle n'avait de témoin ni de
+page, ni de code de réponse. La feuille de style, elle, est publique, son
+adresse porte une empreinte de son contenu, et ce qu'elle contient se compte :
+`#ff4d2e` passe de trois occurrences à une, `var(--ember)` de vingt à
+vingt-deux, et le nom du fichier change avec. **Moins de trois minutes quarante
+entre la fusion et la mise en ligne.** Le geste est décrit dans la procédure de
+fusion, parce qu'il vaut pour toute la famille des chantiers de palette, qui
+n'avait aucun témoin jusque-là.
+
+**Le piège du `grep -c`, une seconde fois dans ce journal.** Le CSS servi est
+minifié sur UNE ligne : `grep -c` compte des lignes, donc il rend 1 quoi que
+contienne le fichier. Il annonçait « ×1 » là où il y en avait trois — de quoi
+conclure que la version était déjà en ligne avant de l'être, c'est-à-dire
+exactement l'erreur inverse de celle du témoin de `/fr/login`.
 
 ### Le garde de la palette n'ouvrait pas les feuilles de style
 

@@ -1,11 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import {
-  championConnu,
-  resoudreChampion,
-  suggererChampions,
-  useChampions,
-} from "@/lib/useChampions";
+import { championConnu, resoudreChampion, suggererChampions } from "@/lib/champions";
+import { useChampions } from "@/lib/useChampions";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { championInput as championInputDict } from "@/lib/i18n/dictionaries/championInput";
 
