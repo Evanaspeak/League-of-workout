@@ -2,7 +2,7 @@ import { corps, utilisateur, admin } from "@/test/api";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
-    user: { findMany: jest.fn() }, game: { groupBy: jest.fn() },
+    user: { findMany: jest.fn(), groupBy: jest.fn() }, game: { groupBy: jest.fn() },
     demandeJeu: { findMany: jest.fn() },
   },
 }));
@@ -17,6 +17,8 @@ const findMany = (prisma as unknown as { user: { findMany: jest.Mock } }).user.f
 const groupBy = (prisma as unknown as { game: { groupBy: jest.Mock } }).game.groupBy;
 const demandes =
   (prisma as unknown as { demandeJeu: { findMany: jest.Mock } }).demandeJeu.findMany;
+const parMontre =
+  (prisma as unknown as { user: { groupBy: jest.Mock } }).user.groupBy;
 
 const jour = (n: number) => new Date(`2026-08-${String(n).padStart(2, "0")}T12:00:00Z`);
 
@@ -26,6 +28,7 @@ beforeEach(() => {
   findMany.mockResolvedValue([]);
   groupBy.mockResolvedValue([]);
   demandes.mockResolvedValue([]);
+  parMontre.mockResolvedValue([]);
 });
 
 /** La route fait deux lectures : les comptes, puis la veille de volume. */
@@ -41,6 +44,34 @@ describe("accès", () => {
     session.mockResolvedValue(utilisateur());
     expect((await GET()).status).toBe(403);
     expect(findMany).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Le compte des montres (réponse 035).
+ *
+ * TROIS états, et c'est le troisième qui distingue : « pas répondu » n'est ni
+ * un oui ni un non, et le ranger avec l'un des deux fausserait la proportion
+ * dans le sens qu'on aurait choisi — sur le chiffre qui décide si brancher un
+ * service tiers vaut deux nuits.
+ */
+describe("les montres", () => {
+  it("rend les trois états séparément", async () => {
+    parMontre.mockResolvedValue([
+      { montre: true, _count: { _all: 7 } },
+      { montre: null, _count: { _all: 12 } },
+      { montre: false, _count: { _all: 3 } },
+    ]);
+    const d = await (await GET()).json();
+    expect(d.montres).toEqual({ oui: 7, non: 3, sansReponse: 12 });
+  });
+
+  it("rend zéro plutôt que rien quand un état n'a personne", async () => {
+    // Prisma n'émet pas de groupe vide : sans le repli, l'écran afficherait
+    // « undefined » là où la bonne réponse est « aucun ».
+    parMontre.mockResolvedValue([{ montre: true, _count: { _all: 2 } }]);
+    const d = await (await GET()).json();
+    expect(d.montres).toEqual({ oui: 2, non: 0, sansReponse: 0 });
   });
 });
 

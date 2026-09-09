@@ -57,6 +57,128 @@ const HORS_EXPORT: Record<string, string> = {
 };
 
 /**
+ * Les COLONNES du compte que l'export ne rend pas, et pourquoi.
+ *
+ * C'est l'autre moitié du même angle mort, et elle a coûté seize réglages.
+ * Le contrôle des relations attrape une TABLE que l'export n'a jamais lue ;
+ * il ne dit rien d'une colonne scalaire, et c'est là que dormaient toute la
+ * rubrique « Ton corps », les quatre réglages de confidentialité et la
+ * conduite de session — tous TAPÉS par la personne, donc « fournis par elle »
+ * au sens le plus littéral de l'article 20.
+ *
+ * Le sens de l'erreur décide de la forme : une colonne AJOUTÉE au schéma sans
+ * être classée fait tomber ce test, plutôt que de sortir en silence ou de
+ * rester en silence. La même règle que pour `compte.test.ts`, sur la troisième
+ * question qu'on peut poser à une colonne — non plus « sort-elle du compte »,
+ * mais « la personne peut-elle la reprendre ».
+ */
+const COLONNES_HORS_EXPORT: Record<string, string> = {
+  // ── Ce qui EST un laissez-passer ────────────────────────────────────────
+  passwordHash:
+    "L'empreinte du mot de passe. Un fichier de portabilité circule par "
+    + "courriel : y mettre de quoi rejouer une authentification serait une clé "
+    + "laissée sur la table.",
+  jetonObs:
+    "Le jeton de la source de diffusion : une adresse publique qui montre la "
+    + "dette en direct. C'est un laissez-passer, et la seule façon de le "
+    + "révoquer est de le refaire.",
+  jetonProfil:
+    "Le jeton du profil public, même nature et même raison que celui de la "
+    + "diffusion : il ouvre une page sans session.",
+  codeParrain:
+    "Le code d'invitation : quiconque l'a peut créer un compte rattaché à "
+    + "celui-ci. Il se lit sur l'écran des amis, où il est fait pour être "
+    + "partagé volontairement.",
+  sessionEpoch:
+    "Le compteur qui invalide les sessions ouvertes. Mécanique interne "
+    + "d'authentification : aucun écran ne la lit, et elle ne dit rien de la "
+    + "personne.",
+
+  // ── Ce qui NOMME quelqu'un d'autre ──────────────────────────────────────
+  parrainId:
+    "L'identifiant de qui l'a fait venir. C'est un renseignement sur une "
+    + "DEUXIÈME personne, qui n'a pas demandé à figurer dans un fichier qu'on "
+    + "s'envoie — la même frontière que celle des amitiés.",
+
+  // ── Mécanique d'envoi, sans lecteur ─────────────────────────────────────
+  bilanLe: "Marque du dernier bilan hebdomadaire envoyé : mécanique d'envoi.",
+  rappelLe: "Marque du dernier rappel du matin envoyé : mécanique d'envoi.",
+  relanceLe: "Marque de la dernière relance d'absence : mécanique d'envoi.",
+  rappelPeseeLe: "Marque du dernier rappel de pesée : mécanique d'envoi.",
+  emailVerified:
+    "Marque de vérification d'adresse posée par Auth.js. Mécanique "
+    + "d'authentification, pas une donnée que la personne a fournie.",
+  introGeneration:
+    "Compteur qui fait rejouer la visite guidée. État d'interface, remis à "
+    + "zéro depuis l'administration ; il ne dit rien de la personne.",
+
+  // ── Dérivé de ce qui est DÉJÀ exporté ───────────────────────────────────
+  riotPuuid:
+    "L'identifiant opaque que Riot attribue au compte. Il se déduit du Riot "
+    + "ID, qui est exporté juste à côté, et il n'a de sens que pour l'API de "
+    + "Riot — il n'apprend rien de plus à qui lit son fichier.",
+
+  // ── Colonnes MORTES, déclarées telles au schéma ─────────────────────────
+  exercice:
+    "L'ancienne colonne au singulier, remplacée par `exercices` et annotée "
+    + "« ne plus l'utiliser » au schéma. L'exporter donnerait un réglage qui "
+    + "ne gouverne plus rien.",
+  rappelSeuilPoints:
+    "L'ancien seuil de rappel en POINTS, remplacé par `rappelSeuilSec` et "
+    + "conservé le temps de la transition. Même raison : un chiffre qui ne "
+    + "décide plus de rien.",
+};
+
+/**
+ * Les colonnes SCALAIRES de `User` — tout ce qui n'est pas une relation.
+ *
+ * Le tri se fait sur le type : un nom de modèle connu, avec ou sans `[]`,
+ * désigne une relation, dont le contrôle des blocs s'occupe déjà.
+ */
+function colonnesDuCompte(): string[] {
+  const bloc = schema.match(/model User \{([\s\S]*?)\n\}/);
+  if (!bloc) throw new Error("le modèle User est introuvable dans le schéma");
+  const modeles = new Set(
+    [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]),
+  );
+  return [...bloc[1].matchAll(/^ {2}(\w+)\s+(\w+)(\[\])?/gm)]
+    .filter((m) => !modeles.has(m[2]))
+    .map((m) => m[1]);
+}
+
+describe("l'export rend chaque colonne du compte, ou dit pourquoi il ne la rend pas", () => {
+  const colonnes = colonnesDuCompte();
+
+  it("lit bien le schéma", () => {
+    // Sans ce témoin, un modèle renommé rendrait le contrôle vert sur zéro
+    // colonne lue, c'est-à-dire sur rien.
+    expect(colonnes.length).toBeGreaterThan(40);
+    expect(colonnes).toContain("passwordHash");
+    expect(colonnes).toContain("dettePointsDus");
+  });
+
+  it("n'oublie aucune colonne", () => {
+    const oubliees = colonnes.filter(
+      (c) => !new RegExp(`user\\.${c}\\b`).test(route) && !(c in COLONNES_HORS_EXPORT),
+    );
+    expect(oubliees).toEqual([]);
+  });
+
+  it("refuse une dispense qui ne désigne plus rien", () => {
+    const connues = new Set(colonnes);
+    const mortes = Object.keys(COLONNES_HORS_EXPORT).filter((c) => !connues.has(c));
+    expect(mortes).toEqual([]);
+  });
+
+  it("chaque dispense porte sa raison", () => {
+    for (const [colonne, raison] of Object.entries(COLONNES_HORS_EXPORT)) {
+      expect(raison.length).toBeGreaterThan(40);
+      expect(colonne).not.toBe("");
+    }
+  });
+});
+
+/**
  * Les relations `Modele[]` déclarées sur `User`.
  *
  * Sa LIMITE est écrite plutôt que laissée à découvrir : le rapprochement se

@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**116 construits · 42 restants**
+**117 construits · 41 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -247,7 +247,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [x] | 073 | Un rappel d'échauffement avant une grosse dette | — |
 
 ### Les objets connectés
-*4 à faire · 5 faits.* Le reste attend des chiffres.
+*3 à faire · 6 faits.* Le reste attend des chiffres.
 
 | | réf | | effort |
 |---|---|---|---|
@@ -256,7 +256,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [x] | 041 | Elle nourrit l'objectif calorique — **la mesure du jour REMPLACE l'estimation d'activité ; le refus sous le métabolisme de base dit lequel des deux chiffres de la montre on attend** | — |
 | [ ] | 042 | Brancher Strava | 2 nuits |
 | [ ] | 044 | Publier automatiquement, sans bouton | ½ nuit |
-| [ ] | 035 | Demander à l'inscription si la personne porte une montre | ½ nuit |
+| [x] | 035 | Demander à l'inscription si la personne porte une montre — **posée dans le bloc facultatif, en TROIS états ; elle ne cache jamais rien, et le panneau d'administration la compte parce que c'est ce qui décide si brancher un service tiers vaut deux nuits** | — |
 | [x] | 037 | Wahoo : API réservée aux partenaires, sans musculation | — |
 | [x] | 038 | Garmin : attendre des chiffres | — |
 | [x] | 039 | Terra à 399 $/mois : pas avant des revenus | — |

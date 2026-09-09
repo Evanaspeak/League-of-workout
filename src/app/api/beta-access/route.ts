@@ -16,6 +16,20 @@ function generateCode(length = 8): string {
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
+/**
+ * La réponse à « portes-tu une montre ? », en TROIS états (réponse 035).
+ *
+ * Tout ce qui n'est pas exactement « oui » ou « non » rend `null`, c'est-à-dire
+ * « pas répondu » — et surtout PAS `false`. `Boolean(v)` rendrait vrai sur la
+ * chaîne « non », et une conversion silencieuse ferait dire à quelqu'un
+ * l'inverse de ce qu'il a choisi sur une question qu'il ne revérifiera jamais.
+ */
+function toMontreOrNull(v: unknown): boolean | null {
+  if (v === "oui") return true;
+  if (v === "non") return false;
+  return null;
+}
+
 function toIntOrNull(v: unknown): number | null {
   if (v === undefined || v === null || v === "") return null;
   const n = Number(v);
@@ -100,6 +114,7 @@ export async function POST(request: Request) {
         poids: toIntOrNull(body.poids),
         taille: toIntOrNull(body.taille),
         sportsHoursPerWeek: toIntOrNull(body.sportsHoursPerWeek),
+        montre: toMontreOrNull(body.montre),
         parrainId: lien.quoi === "lie" ? lien.parrainId : null,
       },
     });

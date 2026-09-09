@@ -126,6 +126,7 @@ export async function PUT(req: Request) {
       tourCou?: number | null;
       tourHanches?: number | null;
       rappelPeseeActif?: boolean;
+      montre?: boolean | null;
     } = {};
 
     /**
@@ -372,6 +373,19 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
       }
       data.rappelPeseeActif = body.userPrefs.rappelPeseeActif;
+    }
+
+    /**
+     * Porte-t-elle une montre ? TROIS états, donc `null` est une VALEUR ici et
+     * pas une absence — c'est « je ne réponds pas », qui n'est pas « non ».
+     * D'où la comparaison à `undefined` pour savoir si la clé a été envoyée.
+     */
+    if (body.userPrefs.montre !== undefined) {
+      const m = body.userPrefs.montre;
+      if (m !== null && typeof m !== "boolean") {
+        return NextResponse.json({ error: "Valeur invalide" }, { status: 400 });
+      }
+      data.montre = m;
     }
 
     if (body.userPrefs.fantome !== undefined) {

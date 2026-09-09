@@ -140,6 +140,21 @@ export async function GET() {
       poids: user.poids,
       taille: user.taille,
       heuresDeSportParSemaine: user.sportsHoursPerWeek,
+      /**
+       * Le nom et la photo viennent d'OAuth, donc d'un tiers plutôt que du
+       * clavier de la personne. Ils la désignent quand même, et ils sont
+       * affichés dans l'interface : l'article 20 ne s'arrête pas à ce qu'elle
+       * a tapé elle-même.
+       */
+      nomFournisseur: user.name,
+      photoFournisseur: user.image,
+      /**
+       * Porte-t-elle une montre connectée (réponse 035) ? Trois états, et le
+       * troisième — « pas répondu » — sort tel quel : le remplacer par « non »
+       * dans un fichier de portabilité lui ferait dire quelque chose qu'elle
+       * n'a jamais dit.
+       */
+      montreConnectee: user.montre,
       langue: user.langue,
       fuseau: user.fuseau,
       /**
@@ -182,6 +197,43 @@ export async function GET() {
        */
       partageEntreExercices: user.partsExercices,
       baremePersonnel: user.ratiosExercices,
+      gainageMaxSecondes: user.gainageMaxSec,
+      /**
+       * Toute la rubrique « Ton corps », et c'est la seconde moitié du défaut
+       * de V548.
+       *
+       * Ces neuf réglages étaient ÉCRITS et jamais relus ; ils le sont depuis,
+       * et ils ne sortaient toujours pas à l'export. Chacun est tapé par la
+       * personne, sur des données de santé pour la plupart — c'est-à-dire la
+       * famille exacte que l'oubli des pesées avait déjà coûtée.
+       */
+      objectifCalorique: {
+        varianteFormule: user.formuleCalorique,
+        niveauActivite: user.niveauActivite,
+        mode: user.modeCalorique,
+        poidsCible: user.poidsCible,
+      },
+      metreRuban: {
+        tourTaille: user.tourTaille,
+        tourCou: user.tourCou,
+        tourHanches: user.tourHanches,
+      },
+      rappelPeseeHebdomadaire: user.rappelPeseeActif,
+      /**
+       * Les quatre réglages de confidentialité.
+       *
+       * Ce sont des refus, et un refus est ce qu'on a le plus de raisons de
+       * vouloir retrouver : le mode fantôme retire une ligne des classements,
+       * le partage décide de ce qu'un ami voit, le nom affiché de ce que le
+       * produit publie, et le mur ouvert de qui peut lire un record.
+       */
+      confidentialite: {
+        modeFantome: user.fantome,
+        partageAuxAmis: user.partageAmis,
+        nomAffiche: user.nomAffiche,
+        recordsPublics: user.recordsPublics,
+      },
+      sessionAutomatique: user.sessionAuto,
     },
     detteEnAttentePoints: user.dettePointsDus,
     detteDepuis: user.detteDepuis,

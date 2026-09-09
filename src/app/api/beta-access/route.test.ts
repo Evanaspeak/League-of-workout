@@ -212,6 +212,32 @@ describe("POST /api/beta-access", () => {
     expect(d.genre).toBe("femme");
   }, 20_000);
 
+  /**
+   * Réponse 035 : « portes-tu une montre ? », en TROIS états.
+   *
+   * Ce qui distingue vraiment, c'est la chaîne « non » : `Boolean("non")` vaut
+   * VRAI, et une conversion à la légère ferait dire à quelqu'un l'inverse de
+   * ce qu'il a choisi — sur une question qu'il ne revérifiera jamais. Le cas
+   * « pas répondu » ne se confond avec aucun des deux.
+   */
+  it("retient la montre en trois états, et jamais par conversion", async () => {
+    await acceder({ pseudo: "Joueur", montre: "oui" });
+    expect(user.create.mock.calls[0][0].data.montre).toBe(true);
+
+    user.create.mockClear();
+    await acceder({ pseudo: "Joueuse", montre: "non" });
+    expect(user.create.mock.calls[0][0].data.montre).toBe(false);
+
+    user.create.mockClear();
+    await acceder({ pseudo: "Personne", montre: "" });
+    expect(user.create.mock.calls[0][0].data.montre).toBeNull();
+
+    // Ce que le formulaire n'envoie pas, et qui ne doit pas devenir « oui ».
+    user.create.mockClear();
+    await acceder({ pseudo: "Autre", montre: "peut-être" });
+    expect(user.create.mock.calls[0][0].data.montre).toBeNull();
+  }, 20_000);
+
   it("attribue le rang suivant", async () => {
     await acceder({ pseudo: "Joueur" });
     expect(user.create.mock.calls[0][0].data.betaRank).toBe(4);

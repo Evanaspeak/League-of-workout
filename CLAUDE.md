@@ -1286,6 +1286,135 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La question de la montre, et l'export qui perdait seize réglages tapés
+Ligne 035 du plan, réponse « Oui, ajoute-la » : une question à l'inscription,
+« portes-tu une montre ou un bracelet connecté ? ». Une demi-nuit annoncée.
+Elle a fait ouvrir l'export, et l'export perdait la moitié de ce que la
+personne a tapé.
+
+**TROIS états, et c'est la seule décision de la ligne elle-même.**
+`User.montre` est un `Boolean?` : « pas répondu » et « n'en porte pas » ne se
+confondent pas. Un booléen à défaut faux ferait passer tous les comptes
+d'avant cette colonne pour des gens qui ont dit non, alors qu'on ne leur a
+jamais posé la question — et un défaut à VRAI serait pire encore.
+
+**La réponse ne CACHE jamais rien**, et c'est la règle qui gouverne tout le
+reste. « Je porte une montre » n'est pas « je veux saisir ma dépense » : une
+balance connectée, une application, un calcul à la main donnent le même
+chiffre. Retirer le champ sur la foi d'une case cochée à l'inscription six
+mois plus tôt serait plus RESTRICTIF que ce qu'on a demandé — c'est la règle
+du repli, dans l'autre sens.
+
+**Ce qu'elle fait, elle le fait en AVANT.** Quand la personne porte une montre
+et qu'aucune dépense n'est notée du jour, la rubrique le dit et pointe le
+champ : c'est le seul moment où cette phrase apprend quelque chose, et elle
+part dès qu'on a noté. Sans ça, la question serait posée pour rien — le pire
+résultat possible.
+
+**Elle est posée dans le bloc FACULTATIF déjà replié de `/beta`**, à côté du
+genre, de l'âge et des heures de sport. Le formulaire minimal reste « un pseudo
+suffit » : ajouter une friction sur le seul écran qui décide si quelqu'un entre
+aurait coûté plus que la réponse ne rapporte.
+
+**Un `<select>` à trois valeurs et pas une case à cocher** : une case a deux
+états et confondrait « non » avec « pas répondu ». C'est la convention déjà
+employée par le genre, deux lignes plus haut, avec son « — ».
+
+**Et `Boolean("non")` vaut VRAI.** `toMontreOrNull` ne reconnaît que « oui » et
+« non » ; tout le reste rend `null`. Une conversion à la légère ferait dire à
+quelqu'un l'inverse de ce qu'il a choisi, sur une question qu'il ne
+revérifiera jamais — c'est le motif du mode fantôme, et c'est le cas de test
+qui distingue vraiment.
+
+**Le compte au panneau d'administration n'est pas une décoration.** Savoir
+combien de comptes portent une montre est la SEULE chose que la question sert
+à savoir, et elle décide de quelque chose : brancher Strava ou Wahoo coûte
+deux nuits (réponses 037 et 042), et ça ne se décide pas sur une intuition.
+Les trois états y sont rendus séparément, par un `groupBy` — ranger « pas
+répondu » avec l'un des deux fausserait la proportion dans le sens qu'on
+aurait choisi.
+
+**Et le piège de la doublure, retombé dedans.** `jest.mock` remplace le MODULE
+ENTIER : `user.groupBy` n'y figurait pas, et **dix tests sans rapport sont
+tombés d'un coup**. C'est écrit dans ce journal depuis les envois programmés,
+et ça se retombe dedans à chaque `groupBy` ajouté sur un modèle déjà doublé.
+
+## L'export perdait seize réglages TAPÉS par la personne
+
+C'est la vraie trouvaille, et elle est plus grosse que la ligne. Le garde
+existant a exigé qu'on range `montre` ; en cherchant où, il a fallu ouvrir
+l'export, et **mesurer plutôt que lire** : sur les soixante-deux colonnes
+scalaires de `User`, **trente-deux ne sortaient pas**.
+
+Seize sont des réglages que la personne a TAPÉS, donc « fournis par elle » au
+sens le plus littéral de l'article 20 :
+
+| famille | ce qui manquait |
+|---|---|
+| l'objectif calorique | variante de formule, niveau d'activité, mode, poids cible |
+| le mètre-ruban | tour de taille, de cou, de hanches |
+| la santé | rappel de pesée hebdomadaire, port d'une montre |
+| la confidentialité | mode fantôme, partage aux amis, nom affiché, mur ouvert |
+| le reste | conduite de session, gainage max, nom et photo du fournisseur |
+
+**C'est la SECONDE moitié du défaut de V548.** Les neuf colonnes de « Ton
+corps » étaient écrites et jamais relues ; elles le sont depuis, et elles ne
+sortaient toujours pas à l'export. Le journal porte déjà l'entrée où deux
+réglages tapés — le partage entre exercices et le barème personnel — avaient
+été ajoutés un par un ; personne n'avait fait le recensement.
+
+**Les quatre réglages de CONFIDENTIALITÉ sont les plus mal placés du lot.**
+Ce sont des refus, et un refus est ce qu'on a le plus de raisons de vouloir
+retrouver : le mode fantôme retire une ligne des classements, le partage
+décide de ce qu'un ami voit, le mur ouvert de qui peut lire un record. Ils
+n'apparaissaient nulle part dans le fichier qui existe pour dire ce qu'on
+garde.
+
+**Le garde existant ne pouvait pas les voir, et il écrivait pourquoi.**
+`exportComplet.test.ts` part du SCHÉMA plutôt que du fichier — sa raison
+d'être — mais il ne lisait que les RELATIONS. Une table que l'export n'a
+jamais lue tombe ; une colonne scalaire, non. C'est l'angle mort exact qui
+avait laissé les pesées dehors, sur l'autre moitié de la même question.
+
+Il porte donc la seconde moitié : chaque colonne de `User` doit être lue par
+l'export, ou figurer avec sa raison. **Quinze dispenses, en cinq familles**, et
+aucune n'est « ça n'intéresse personne » — c'est précisément le raisonnement
+qui a coûté les pesées :
+
+- **un laissez-passer** : l'empreinte du mot de passe, le jeton de diffusion,
+  celui du profil public, le code de parrainage, le compteur de sessions. Un
+  fichier de portabilité circule par courriel ;
+- **ce qui NOMME quelqu'un d'autre** : l'identifiant du parrain, même
+  frontière que les amitiés ;
+- **la mécanique d'envoi**, sans lecteur : les quatre marques de dernier
+  envoi, la vérification d'adresse d'Auth.js, le compteur de visite guidée ;
+- **ce qui se DÉDUIT de ce qui sort déjà** : le PUUID Riot, dérivé du Riot ID
+  qui est exporté juste à côté ;
+- **les colonnes MORTES**, déclarées telles au schéma : `exercice` au
+  singulier et `rappelSeuilPoints`, tous deux annotés « ne plus l'utiliser ».
+  Les exporter donnerait un réglage qui ne gouverne plus rien.
+
+Quatre sabotages, quatre échecs — dont la colonne ajoutée au schéma sans
+classement, qui est le cas exact qui vient de se produire, et le tri des
+relations rendu aveugle, qui fait tomber DEUX contrôles au lieu d'un.
+
+**Ce que ça apprend au-delà du cas** : un garde qui part de la bonne source
+peut n'en lire que la moitié, et son commentaire décrira très bien la moitié
+qu'il lit. Celui-ci expliquait sur vingt lignes pourquoi il fallait partir du
+schéma — et il ne regardait que les relations depuis le jour de son écriture.
+
+Sept sabotages sur les routes et l'écran, sept échecs : le « non » qui n'est
+plus reconnu, la conversion à la légère, le contrôle de type retiré, `null`
+traité comme une absence, le réglage qui n'est plus relu au rechargement, la
+phrase qui ne part jamais, et le sans-réponse rangé avec le non. Plus un
+huitième, statique : `comptePublic` remis dans le GET des réglages fait tomber
+`reglagesRelus`, ce qui est le garde né de V548.
+
+**Un parcours est tombé une fois et repasse**, noté comme tel : le premier
+test de `depense-jour.spec.ts` dans une exécution à trois fichiers, puis 2/2
+seul et 14/14 sur la même combinaison rejouée. Le geste qui distingue un aléa
+d'une régression est de relancer avant de conclure.
+
 ### Campagne de clôture après V545 à V549, et l'outil qui comparait des empreintes
 Passée sur un compte semé à soixante parties, créé APRÈS la suite navigateur —
 `.next/cache` vidé avant de mesurer, comme la procédure le demande depuis

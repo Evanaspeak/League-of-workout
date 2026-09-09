@@ -1,6 +1,11 @@
 /** Le panneau des mesures d'usage, côté administration. */
 export const adminMesures = {
   fr: {
+    montresTitre: "Montres connectées",
+    montresAide: "Ce qui décide si brancher un service tiers vaut la peine. « Pas répondu » n'est ni un oui ni un non.",
+    montresOui: "En portent une",
+    montresNon: "N'en portent pas",
+    montresSans: "N'ont pas répondu",
     demandesTitre: "Jeux demandés",
     demandesAide: "Comptés par personne, pas par clic. C'est ce qui décide du prochain jeu ajouté.",
     demandesAucun: "Personne n'a encore demandé de jeu.",
@@ -28,6 +33,11 @@ export const adminMesures = {
     vide: "Aucun compte à mesurer pour l'instant.",
   },
   en: {
+    montresTitre: "Smartwatches",
+    montresAide: "What decides whether connecting a third-party service is worth it. « No answer » is neither a yes nor a no.",
+    montresOui: "Wear one",
+    montresNon: "Do not wear one",
+    montresSans: "Did not answer",
     demandesTitre: "Games requested",
     demandesAide: "Counted per person, not per click. This decides which game comes next.",
     demandesAucun: "Nobody has requested a game yet.",
@@ -55,6 +65,11 @@ export const adminMesures = {
     vide: "No account to measure yet.",
   },
   es: {
+    montresTitre: "Relojes inteligentes",
+    montresAide: "Lo que decide si vale la pena conectar un servicio externo. « Sin respuesta » no es ni un sí ni un no.",
+    montresOui: "Llevan uno",
+    montresNon: "No llevan",
+    montresSans: "No respondieron",
     demandesTitre: "Juegos solicitados",
     demandesAide: "Contados por persona, no por clic. Esto decide cuál será el próximo juego.",
     demandesAucun: "Todavía nadie ha solicitado un juego.",
@@ -82,6 +97,11 @@ export const adminMesures = {
     vide: "Todavía no hay cuentas que medir.",
   },
   de: {
+    montresTitre: "Smartwatches",
+    montresAide: "Was entscheidet, ob sich ein Drittanbieter-Dienst lohnt. « Keine Antwort » ist weder ein Ja noch ein Nein.",
+    montresOui: "Tragen eine",
+    montresNon: "Tragen keine",
+    montresSans: "Haben nicht geantwortet",
     demandesTitre: "Angefragte Spiele",
     demandesAide: "Pro Person gezählt, nicht pro Klick. Das entscheidet, welches Spiel als Nächstes dazukommt.",
     demandesAucun: "Noch hat niemand ein Spiel angefragt.",
@@ -109,6 +129,11 @@ export const adminMesures = {
     vide: "Noch keine Konten zu messen.",
   },
   zh: {
+    montresTitre: "智能手表",
+    montresAide: "决定接入第三方服务是否值得的依据。「未回答」既不是是也不是否。",
+    montresOui: "有佩戴",
+    montresNon: "不佩戴",
+    montresSans: "未回答",
     demandesTitre: "被申请的游戏",
     demandesAide: "按人计，不按点击计。下一款加入的游戏由此决定。",
     demandesAucun: "还没有人申请过游戏。",
@@ -136,6 +161,11 @@ export const adminMesures = {
     vide: "暂时没有可统计的账号。",
   },
   ja: {
+    montresTitre: "スマートウォッチ",
+    montresAide: "外部サービスの連携に見合うかを決める数字です。「未回答」は「はい」でも「いいえ」でもありません。",
+    montresOui: "着けている",
+    montresNon: "着けていない",
+    montresSans: "未回答",
     demandesTitre: "リクエストされたゲーム",
     demandesAide: "クリック数ではなく人数で数えます。次に追加するゲームはこれで決めます。",
     demandesAucun: "まだ誰もゲームをリクエストしていません。",

@@ -10,6 +10,7 @@ type Reponse = Mesures & {
   seuilSemaine?: number;
   equilibre?: EquilibreJeux;
   demandesJeux?: { nom: string; personnes: number }[];
+  montres?: { oui: number; non: number; sansReponse: number };
 };
 
 /**
@@ -68,6 +69,20 @@ export default function AdminMesures() {
           {ligne(t.dansLaJournee, String(m.dansLaJournee))}
           {ligne(t.dansLaSemaine, String(m.dansLaSemaine))}
           {ligne(t.revenus, String(m.revenus))}
+        </div>
+      )}
+
+      {/* Combien portent une montre (réponse 035). C'est ce qui décide si
+          brancher un service tiers vaut deux nuits — et les TROIS états sont
+          montrés, parce que ranger « pas répondu » avec l'un des deux
+          fausserait la proportion dans le sens qu'on aurait choisi. */}
+      {m?.montres && (
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 14 }}>
+          <h3 className="titre-section" style={{ fontSize: "0.9rem" }}>{t.montresTitre}</h3>
+          <p className="text-xs mt-1 mb-2" style={{ color: "var(--steel)" }}>{t.montresAide}</p>
+          {ligne(t.montresOui, nombre(m.montres.oui))}
+          {ligne(t.montresNon, nombre(m.montres.non))}
+          {ligne(t.montresSans, nombre(m.montres.sansReponse))}
         </div>
       )}
 

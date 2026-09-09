@@ -331,3 +331,54 @@ test("un réglage annulé ne se rallume pas quand la lecture arrive", async ({ b
 
   await ctx.close();
 });
+
+/**
+ * La question de la montre (réponse 035), et ce que le rechargement prouve.
+ *
+ * Le réglage est rangé HORS DIFFUSION : il ne sort du compte que par
+ * `compteReglages`, c'est-à-dire par la seule route que cet écran demande.
+ * C'est exactement la famille du défaut de V548 — neuf colonnes écrites et
+ * jamais relues — donc le contrôle qui compte n'est pas le clic, c'est le
+ * RECHARGEMENT : sans lui, on n'éprouve qu'un état de React.
+ *
+ * Et la phrase de rappel n'a de sens qu'à un seul moment : on porte une
+ * montre, et l'objectif tourne encore sur l'estimation. Notée, elle part.
+ */
+test("la montre se retient, et sa phrase part quand la dépense est notée", async ({ browser }) => {
+  const { etat } = await ouvrirCompte(browser, "Montre", { consentement: true });
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  await page.goto("/settings#corps");
+  await viderLesFenetres(page);
+  await page.goto("/settings#corps");
+
+  const oui = page.getByRole("button", { name: /^oui$|^yes$/i }).first();
+  const non = page.getByRole("button", { name: /^non$|^no$/i }).first();
+  await oui.waitFor({ state: "visible", timeout: 15_000 });
+
+  // Au départ, aucune des deux réponses n'est celle du compte : c'est le
+  // troisième état, et il ne se confond avec « non » ni à l'écran ni en base.
+  await expect(oui).toHaveAttribute("aria-pressed", "false");
+  await expect(non).toHaveAttribute("aria-pressed", "false");
+
+  const rappel = page.getByText(/relève sa dépense du jour|copy today's expenditure/i);
+  await expect(rappel).toHaveCount(0);
+
+  await oui.click();
+  await expect(rappel).toBeVisible({ timeout: 10_000 });
+
+  // Le seul contrôle qui distingue « écrit » de « relu ».
+  await page.reload();
+  await expect(oui).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+  await expect(non).toHaveAttribute("aria-pressed", "false");
+  await expect(rappel).toBeVisible();
+
+  // Une dépense notée retire la phrase : elle disait ce qui restait à faire.
+  const champ = page.getByLabel(/dépense de la journée|daily expenditure/i);
+  await champ.fill("2400");
+  await champ.locator("..").getByRole("button").click();
+  await expect(rappel).toHaveCount(0, { timeout: 10_000 });
+
+  await ctx.close();
+});
