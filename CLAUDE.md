@@ -1289,6 +1289,50 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La CSP confrontée à ce que le navigateur charge vraiment : zéro
+Une famille jamais auditée, et elle échoue en SILENCE : une ressource refusée
+par la politique de sécurité ne produit aucune erreur visible, elle ne se
+charge simplement pas. Le journal en porte déjà un cas — le script de mesure
+d'audience partait en 307 vers la connexion, le navigateur refusait de
+l'exécuter, et rien ne le disait.
+
+**La confrontation ne se fait pas sur la SOURCE.** Les origines écrites dans
+`src/` ne disent rien : la plupart vivent dans le client Prisma engendré, et
+celles qui restent sont lues au SERVEUR — l'API GitHub des releases, le service
+de notification — où la CSP ne s'applique pas. Ce qui compte est ce que le
+NAVIGATEUR tente, et il le dit lui-même par l'événement
+`securitypolicyviolation`.
+
+**Dix-neuf surfaces, zéro violation** : les onze pages publiques et les neuf
+écrans connectés, rubriques repliées comprises — c'est l'angle mort déjà payé
+deux fois, `/settings` nu ne rendant que la LISTE des rubriques.
+
+**Et la sonde sait échouer, ce qui est la moitié qui compte.** Une image et une
+requête vers une origine que la CSP n'autorise pas remontent toutes les deux,
+nommément :
+
+```
+connect-src ← https://exemple-interdit.test/x
+img-src     ← https://exemple-interdit.test/pixel.png
+```
+
+Sans ce contrôle, « zéro violation » et « zéro regardé » se ressemblent
+exactement — c'est la leçon du décompte des pages non mesurées de l'audit
+d'accessibilité, appliquée à un outil neuf.
+
+**Aucun garde n'est écrit, et la raison est mesurée.** Un contrôle statique
+« toute origine référencée figure dans la CSP » rendrait des faux positifs sur
+tout ce qui est lu au serveur, et il ne verrait pas ce qui compte : une
+ressource chargée par une dépendance, à l'exécution. Ce qui l'attraperait est
+la sonde elle-même, et elle demande un navigateur et une session — c'est-à-dire
+une campagne, pas un test unitaire. Elle est décrite ici pour se refaire.
+
+**Un piège d'outillage, déjà écrit ici** : le jeton de session se DÉCOUPE
+au-delà de trois mille cinq cents caractères. Posé d'un bloc, on reçoit 307 vers
+la connexion et on mesure la mauvaise page. Et en local il n'y a pas de préfixe
+`__Secure-`, la page n'étant pas servie en HTTPS — Chromium refuse le cookie
+autrement, ce qui est le bon bruit.
+
 ### Une adresse qui résout au MAUVAIS endroit, et les trois dettes rendues
 Le plan porte trois choses « promises et jamais rendues ». **Les trois le
 sont** : la liste des défis absurdes (réf. 136, « Montre-m'en d'autres »),
