@@ -47,7 +47,7 @@ ne figure PAS dans le plan : ça vit dans le journal, plus bas.
 
 ## Ce qu'on lance avant de publier (IMPORTANT)
 
-**Pas les 203 parcours.** La CI les joue déjà à chaque poussée sur `main`
+**Pas la suite navigateur.** La CI la joue déjà à chaque poussée sur `main`
 (`.github/workflows/tests.yml`, travail « parcours », six tronçons), en
 parallèle du déploiement Vercel. Les rejouer en local avant chaque fusion,
 c'est payer neuf minutes deux fois — ce qui a été fait toute la journée du
@@ -113,7 +113,8 @@ partagent le compte ouvert par le premier test, et cette dépendance-là est
 voulue.
 
 **Mais un fichier peut lever la règle pour lui-même, et l'un devait.**
-`langues.spec.ts` porte 87 tests sur 229 — 38 % de la suite — et ses six blocs
+`langues.spec.ts` est de loin le plus gros fichier de la suite — à lui seul
+plus du tiers, six langues fois trois largeurs fois quinze surfaces — et ses six blocs
 de pages PUBLIQUES ne partagent rien : chacun ouvre son onglet, navigue,
 mesure, et s'en va. `test.describe.configure({ mode: "parallel" })` les
 libère, et le fichier seul passe de 234 à 123 s. Le bloc « écrans connectés »,
@@ -904,7 +905,18 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2766 tests unitaires, 271 suites (au 9 septembre au soir — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+**Le compte se lit, il ne s'écrit pas ici.** `npx jest` le donne en quinze
+secondes, et un nombre écrit une fois au-dessus de quelque chose qui grossit
+toutes les nuits est le défaut que ce fichier reproche partout — il l'a porté
+lui-même, et le commentaire qui l'accompagnait avouait qu'il n'avait aucun
+garde. C'est la correction déjà appliquée à `docs/lancement.md` et au fichier
+des questions : on retire le total plutôt que de le rafraîchir, parce qu'il
+rerouille à la version suivante. `src/comptesDeTests.test.ts` refuse son
+retour au-dessus du journal ; les mesures DATÉES du journal, elles, restent —
+un relevé de suite daté du journal est une mesure, pas une affirmation au
+présent.
+
+Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -929,7 +941,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 266 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`) : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1288,6 +1300,105 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Ce fichier annonçait trois comptes de tests, les trois faux
+
+Trouvé en cherchant autre chose, et c'est ce qui le rend gênant : la section
+« Tests » écrivait **« 2766 tests unitaires, 271 suites »** et **« 266 tests »**
+au navigateur, avec en prime **« 87 tests sur 229 — 38 % de la suite »** pour
+`langues.spec.ts`. Comptés le soir même : **2 775 / 273**, **272**, et
+**93 sur 272, soit 34 %**. Cinq nombres, cinq faux.
+
+**Le premier portait son propre aveu** : « ce nombre vieillit d'une nuit sur
+l'autre, et il n'a aucun garde : le relire avant de s'en servir ». Un aveu
+n'est pas un garde — il demande au lecteur de se méfier, ce qui est exactement
+ce qu'un lecteur pressé ne fait pas. Et ce fichier reproche ce défaut partout
+ailleurs : « un nombre écrit une fois au-dessus de quelque chose qui bouge ».
+
+**La correction est celle déjà appliquée DEUX fois à d'autres fichiers, et
+jamais à celui-ci** : on RETIRE le total au lieu de le rafraîchir.
+`docs/lancement.md` l'a reçue le 9 septembre — « l'en-tête n'écrit plus aucun
+nombre, il dit de compter les titres » — et le fichier des questions aussi —
+« le total est retiré plutôt que corrigé : il rerouillerait à la question
+suivante ». Le compte se lit maintenant avec `npx jest`, en quinze secondes.
+
+**La frontière du garde est le JOURNAL, et c'est la seule qui tienne.**
+Au-dessus, le fichier DÉCRIT ce que le projet est aujourd'hui : un compte y est
+une affirmation au présent, donc elle périme. En dessous, il RACONTE ce qui a
+été mesuré tel jour, et figer le relevé est tout son intérêt — « 272 passés en
+16 min 12 » ne vieillira jamais, puisque c'est ce qu'on a mesuré ce soir-là.
+Un garde appliqué au fichier ENTIER ferait donc effacer les mesures du journal,
+c'est-à-dire précisément ce qu'on y lit ; le sabotage le montre, et il fait
+tomber DEUX contrôles au lieu d'un.
+
+**Une seule tolérance, et elle porte la distinction qui compte.** Le tableau
+des workers écrit « 203 passés » deux fois, au-dessus du journal. C'est un
+relevé COMPARATIF daté — un worker contre deux contre quatre, même machine,
+même construction — et le total y est le témoin que les trois passes ont joué
+la même suite. Le retirer effacerait ce qui rend les trois lignes comparables.
+
+Trois sabotages, trois échecs : un compte remis dans la description, la
+frontière renommée — qui doit faire tomber le témoin de découpage plutôt que
+de rendre vert sur une moitié vide — et le garde étendu au fichier entier.
+
+### Deux questions sous le même numéro, dans le fichier des adresses
+
+Suite du crible des parcours, et la trouvaille est ailleurs que là où je
+cherchais. `docs/questions-ouvertes.md` portait **deux entrées numérotées 20** :
+« Un refus au lancement couvre-t-il la soirée, ou la partie ? » et « Le tableau
+de bord aux couleurs du jeu qu'on joue ».
+
+**Un numéro de question est une ADRESSE.** Le plan y renvoie — « Voir
+`docs/questions-ouvertes.md`, question 13 » — le journal aussi, et
+`docs/lancement.md` par-dessus. Deux entrées sous la même adresse rendent le
+renvoi ambigu : on tombe sur une question qui parle d'autre chose, et on la lit
+comme si c'était la bonne.
+
+C'est la forme AGGRAVÉE de l'adresse morte, celle que ce journal a déjà
+nommée : « une adresse qui ne mène nulle part se remarque : on cherche, on ne
+trouve pas, on cherche ailleurs. Celle-ci RÉSOUT. » Et c'est le troisième
+défaut de cette famille commis dans le fichier même qui existe pour
+l'empêcher — après la destination « plan, section Technique » qui ne désignait
+aucune ligne, et le total écrit en tête qui rouillait à chaque question.
+
+**Aucun renvoi ne pointait encore vers le 20**, ce qui rend la correction
+sûre : la seconde devient la 21, et les vingt et un numéros sont désormais
+uniques. `src/decisionsRangees.test.ts` le tient, avec son témoin — un motif
+devenu aveugle rendrait le contrôle vert sur zéro numéro examiné, ce qui est
+exactement la forme d'erreur qu'il surveille. Deux sabotages, deux échecs, dont
+le motif rendu aveugle qui fait tomber le témoin.
+
+**Et le sabotage du motif n'avait d'abord rien saboté** — `sed` n'avait pas
+trouvé sa cible, échappée de travers, et les six contrôles passaient. C'est le
+piège écrit ici depuis la lecture d'issue de Riot, et la parade coûte une
+seconde : comparer `git hash-object` avant et après avant de lancer quoi que
+ce soit.
+
+**Deux recensements NÉGATIFS avec, écrits pour qu'on ne les refasse pas.**
+
+Le premier est la famille la plus productive du journal : **un test qui ÉCRIT
+et ne relit que l'ÉCRAN**. Sept candidats, **sept faux positifs**, et les
+raisons valent d'être notées parce qu'elles disent comment lire ce recensement
+la prochaine fois :
+
+- deux portent « Enregistrer » dans le NOM d'un bouton (« Enregistrer ta
+  première partie ») sans rien écrire du tout ;
+- un relit par un HELPER — `du()` va chercher `/api/dette` — donc la relecture
+  est hors du corps du test ;
+- quatre sont des tests d'ÉCHEC qui détournent la route en 500 : la requête
+  n'atteint jamais le serveur, donc rien ne peut être écrit, et leur seconde
+  moitié existe sous une autre forme — « la saisie est toujours là », « le
+  message reste ».
+
+Le second est le pendant UNITAIRE du crible des parcours, et il ne se fait
+pas : **le motif ne se transpose pas de Playwright à jest.** Mesuré — 387 tests
+sur 1 936 n'ont que des assertions « négatives », et l'immense majorité est
+parfaitement juste, parce qu'une valeur nulle attendue y est un RÉSULTAT et non
+une absence : une partie sans enjeu coûte zéro, un compte fantôme rend `null`.
+Un garde y crierait sur des centaines de tests le jour de son écriture, donc il
+serait dispensé avant d'être lu. Ce qui distingue vraiment est le TÉMOIN, et il
+est déjà gardé là où il compte — `src/gardesNonVides.test.ts`, pour les gardes
+qui parcourent le disque.
 
 ### Un contrôle d'absence qui ne tenait que par l'ordre des lignes
 

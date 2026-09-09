@@ -65,6 +65,27 @@ function reponsesConnues(): Set<string> {
 describe("les décisions rangées", () => {
   const toutes = destinations();
 
+  it("deux questions ne portent jamais le même numéro", () => {
+    /**
+     * Le numéro d'une question est une ADRESSE : le plan y renvoie
+     * (« Voir `docs/questions-ouvertes.md`, question 13 »), le journal aussi,
+     * et `docs/lancement.md` par-dessus. Deux entrées sous le même numéro
+     * rendent le renvoi ambigu — on tombe sur une question qui parle d'autre
+     * chose, et on la lit comme si c'était la bonne.
+     *
+     * C'est le défaut que ce fichier existe pour empêcher, commis dans le
+     * fichier lui-même : « un refus au lancement » et « le tableau de bord
+     * aux couleurs du jeu » portaient tous deux le 20. C'est la forme
+     * aggravée de l'adresse morte, déjà écrite au journal — une adresse qui
+     * ne mène nulle part se remarque, une adresse qui mène AILLEURS non.
+     */
+    const numeros = [...questions.matchAll(/^### (\d+) ·/gm)].map((m) => m[1]);
+    expect(numeros.length).toBeGreaterThanOrEqual(10);
+    const vus = new Set<string>();
+    const doublons = numeros.filter((n) => (vus.has(n) ? true : (vus.add(n), false)));
+    expect(doublons).toEqual([]);
+  });
+
   it("le tableau est lu", () => {
     // Sans témoin, un tableau renommé rendrait tout ce qui suit vert en
     // n'examinant aucune destination — l'angle mort exact qu'on ferme.
