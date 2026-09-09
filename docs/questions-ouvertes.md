@@ -531,7 +531,7 @@ elle ne surprend personne. **Ce qui penche pour B** : sur ces jeux-là, personne
 ne se dit « je refuse cette partie-ci » — on refuse la soirée, et c'est le seul
 moment où on peut le dire.
 
-### 20 · Le tableau de bord aux couleurs du jeu qu'on joue (ligne 151)
+### 21 · Le tableau de bord aux couleurs du jeu qu'on joue (ligne 151)
 Tu as répondu **« Oui, joli »** à « le tableau de bord prend les couleurs de
 League ou de Valorant selon ce qu'on joue ». La ligne est chiffrée à une nuit
 et figure dans l'étape 08, celle que je peux prendre seul. Je ne l'ai pas

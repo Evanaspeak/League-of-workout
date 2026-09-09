@@ -1289,6 +1289,65 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux questions sous le même numéro, dans le fichier des adresses
+
+Suite du crible des parcours, et la trouvaille est ailleurs que là où je
+cherchais. `docs/questions-ouvertes.md` portait **deux entrées numérotées 20** :
+« Un refus au lancement couvre-t-il la soirée, ou la partie ? » et « Le tableau
+de bord aux couleurs du jeu qu'on joue ».
+
+**Un numéro de question est une ADRESSE.** Le plan y renvoie — « Voir
+`docs/questions-ouvertes.md`, question 13 » — le journal aussi, et
+`docs/lancement.md` par-dessus. Deux entrées sous la même adresse rendent le
+renvoi ambigu : on tombe sur une question qui parle d'autre chose, et on la lit
+comme si c'était la bonne.
+
+C'est la forme AGGRAVÉE de l'adresse morte, celle que ce journal a déjà
+nommée : « une adresse qui ne mène nulle part se remarque : on cherche, on ne
+trouve pas, on cherche ailleurs. Celle-ci RÉSOUT. » Et c'est le troisième
+défaut de cette famille commis dans le fichier même qui existe pour
+l'empêcher — après la destination « plan, section Technique » qui ne désignait
+aucune ligne, et le total écrit en tête qui rouillait à chaque question.
+
+**Aucun renvoi ne pointait encore vers le 20**, ce qui rend la correction
+sûre : la seconde devient la 21, et les vingt et un numéros sont désormais
+uniques. `src/decisionsRangees.test.ts` le tient, avec son témoin — un motif
+devenu aveugle rendrait le contrôle vert sur zéro numéro examiné, ce qui est
+exactement la forme d'erreur qu'il surveille. Deux sabotages, deux échecs, dont
+le motif rendu aveugle qui fait tomber le témoin.
+
+**Et le sabotage du motif n'avait d'abord rien saboté** — `sed` n'avait pas
+trouvé sa cible, échappée de travers, et les six contrôles passaient. C'est le
+piège écrit ici depuis la lecture d'issue de Riot, et la parade coûte une
+seconde : comparer `git hash-object` avant et après avant de lancer quoi que
+ce soit.
+
+**Deux recensements NÉGATIFS avec, écrits pour qu'on ne les refasse pas.**
+
+Le premier est la famille la plus productive du journal : **un test qui ÉCRIT
+et ne relit que l'ÉCRAN**. Sept candidats, **sept faux positifs**, et les
+raisons valent d'être notées parce qu'elles disent comment lire ce recensement
+la prochaine fois :
+
+- deux portent « Enregistrer » dans le NOM d'un bouton (« Enregistrer ta
+  première partie ») sans rien écrire du tout ;
+- un relit par un HELPER — `du()` va chercher `/api/dette` — donc la relecture
+  est hors du corps du test ;
+- quatre sont des tests d'ÉCHEC qui détournent la route en 500 : la requête
+  n'atteint jamais le serveur, donc rien ne peut être écrit, et leur seconde
+  moitié existe sous une autre forme — « la saisie est toujours là », « le
+  message reste ».
+
+Le second est le pendant UNITAIRE du crible des parcours, et il ne se fait
+pas : **le motif ne se transpose pas de Playwright à jest.** Mesuré — 387 tests
+sur 1 936 n'ont que des assertions « négatives », et l'immense majorité est
+parfaitement juste, parce qu'une valeur nulle attendue y est un RÉSULTAT et non
+une absence : une partie sans enjeu coûte zéro, un compte fantôme rend `null`.
+Un garde y crierait sur des centaines de tests le jour de son écriture, donc il
+serait dispensé avant d'être lu. Ce qui distingue vraiment est le TÉMOIN, et il
+est déjà gardé là où il compte — `src/gardesNonVides.test.ts`, pour les gardes
+qui parcourent le disque.
+
 ### Un contrôle d'absence qui ne tenait que par l'ordre des lignes
 
 Les 272 parcours navigateur n'avaient jamais été passés au crible en tant que
