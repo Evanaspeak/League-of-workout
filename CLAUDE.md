@@ -1289,6 +1289,97 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture après V550 à V557, et quatre kilo-octets qui se nomment
+Passée sur un compte semé à soixante parties, créé après la vidange de
+`.next/cache` — le geste est dans la procédure depuis qu'une 404 gardée a fait
+conclure à une régression. Huit écrans, dont les trois de l'entonnoir
+d'acquisition.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 164 ms | 984 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 260 ms | **2128 ms** | 0,000 | l'image de saison |
+| `/amis` | 292 ms | 1132 ms | 0,031 | le paragraphe du classement |
+| `/dashboard` | 304 ms | 1140 ms | 0,000 | le bandeau d'attente Riot |
+| `/beta` | 524 ms | 1128 ms | 0,000 | « Un pseudo suffit » |
+| `/login` | 504 ms | 1132 ms | 0,000 | la mention des CGU |
+| `/history` | 552 ms | 1136 ms | 0,000 | le titre |
+| `/` | 1044 ms | 1340 ms | 0,000 | l'image de l'application |
+
+Les huit sont dans les seuils. `/bilan` reste le plancher pour la raison écrite
+une douzaine de fois — son plus grand élément est l'image de saison — et
+2 128 ms se compare aux 2 116, 2 120 et 2 132 des campagnes comparables : il ne
+bouge pas.
+
+**Le poids au chargement bouge de trois à quatre kilo-octets sur QUATRE écrans
+sur cinq**, et le cinquième ne bouge pas : tableau de bord 235 → 239, amis
+212 → 216, historique 206 → 210, bilan 192 → 195, réglages 270 → 270. **Mesuré
+trois fois**, stable au kilo-octet.
+
+C'est la signature d'un dictionnaire qui grossit, pas d'un module qui arrive —
+et cette fois elle se NOMME : V551 ajoute soixante-douze lignes de dictionnaire
+dans six langues (`settings`, `confidentialite`, `betaAccess`, `adminMesures`)
+pour la question de la montre. Les réglages ne bougent pas parce que leur
+chiffre était déjà arrondi à 270 à la campagne d'avant.
+
+**Ce que la campagne n'exerce PAS**, écrit plutôt que laissé à croire : le
+`<select>` de la montre vit dans le bloc FACULTATIF replié de `/beta`, que le
+balayage n'ouvre pas. Ce qui le tient est le parcours navigateur, pas cette
+mesure — c'est l'angle mort déjà payé deux fois sur les rubriques repliées des
+réglages.
+
+### La liste d'avant le lancement a rouillé une SECONDE fois, au même endroit
+`docs/lancement.md` est le document qu'on relit juste avant d'inviter cent
+personnes — donc au moment où l'on a le moins envie de vérifier ce qu'il
+raconte. Le journal porte déjà l'entrée du 1er septembre, « la liste d'avant
+lancement réclamait deux choses déjà faites ». Elle recommence :
+
+- son en-tête annonçait **« il reste deux choses à régler »** alors que la
+  seconde, le déclencheur des envois, est marquée « Réglé le 8 septembre »
+  **dans son propre corps**, vingt lignes plus bas ;
+- sa liste ordonnée s'ouvrait sur **« 1. Le mot de passe de la base, à faire
+  tourner »**, que le corps déclare tournée depuis une semaine. C'est le
+  PREMIER geste de la marche à suivre, donc celui qu'on ferait en premier.
+
+**Les deux fois, le défaut est le même** : un compte écrit une fois au-dessus
+de quelque chose qui bouge, et un item de liste que personne ne retire quand la
+chose est faite.
+
+La structure change plutôt que le texte : les blocages portent un titre
+`### Blocage · …`, les choses réglées un titre `### Réglé …`, et **l'en-tête
+n'écrit plus aucun nombre** — il dit de compter les titres. C'est la même
+correction qu'au fichier des questions une heure plus tôt, et pour la même
+raison.
+
+**Deux faits remis à jour au passage.** La sauvegarde : « huit exécutions
+vertes d'affilée » datait du 1er septembre ; relevé le 9, **vingt exécutions,
+une par jour, la dernière le 8 septembre à 08 h 04, toutes vertes** — et elle
+part vers huit heures au lieu des 03 h 17 que le cron demande, ce qui est la
+dérive ordinaire du planificateur et ne coûte rien à un travail quotidien. Et
+le document reçoit le fait des soixante jours trouvé cette nuit, parce qu'il
+décide de ce qui reste debout après le lancement.
+
+**Le garde, et le sabotage qui l'a corrigé.** `src/lancementAJour.test.ts`
+refuse les deux formes : un compte de blocages dans l'en-tête, et un item de la
+marche à suivre qui redemande ce que le corps déclare fait. **Le second
+sabotage est passé au vert**, et c'est ce qui a appris quelque chose : le
+contrôle cherchait le même mot des deux côtés, or l'item dit « le mot de passe
+de la base » quand le corps dit « la chaîne de connexion Neon ». Deux façons de
+nommer la même chose, et le garde ne mordait pas. Les sujets portent donc leurs
+SYNONYMES — c'est le défaut du recensement par vocabulaire, déjà payé ici, qui
+hérite du vocabulaire de celui qui l'écrit.
+
+Quatre sabotages, quatre échecs après correction : le compte remis dans
+l'en-tête, l'item mort remis dans la marche à suivre, un blocage déclaré réglé
+dans son propre corps, et le préfixe des titres renommé — ce dernier devant
+faire tomber le TÉMOIN plutôt que de rendre les trois autres verts sur zéro
+titre examiné.
+
+**Ce que le garde ne fait PAS, écrit dans son commentaire** : il ne juge pas si
+un blocage est VRAI. Savoir si la clé Riot de production est arrivée demande de
+la demander à Riot. Il tient la cohérence INTERNE du document, ce qui est
+exactement ce qui a lâché deux fois.
+
 ### Le référencement est construit, et rien ne peut dire s'il marche
 Réponse 241, « **Explique** », et trois réponses « **Aucune idée** » (034, 079,
 271). Même méthode que pour les quatre d'avant : ce sont des questions de fait.

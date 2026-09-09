@@ -1,12 +1,16 @@
 # Messages de lancement
 
-Brouillons. **Rien n'est envoyé** — c'est à vous de le faire, et il reste deux
-choses à régler avant.
+Brouillons. **Rien n'est envoyé** — c'est à vous de le faire, et il reste ce
+qui est marqué « Blocage » ci-dessous. **Aucun nombre n'est écrit ici, et c'est
+délibéré** : ce document a annoncé deux fois un compte qui avait cessé d'être
+vrai, la seconde fois en réclamant la rotation d'un mot de passe déjà tournée.
+Un total posé au-dessus de quelque chose qui bouge est le défaut que ce dépôt
+trouve le plus souvent. Les blocages se comptent en lisant les titres.
 
 ## Avant d'envoyer quoi que ce soit
 
-**1. La clé Riot ne tient pas la charge.** Mesuré cette nuit, chiffre à
-l'appui : une clé de développement autorise cent requêtes par deux minutes. Le
+### Blocage · La clé Riot ne tient pas la charge
+Mesuré le 24 août, chiffre à l'appui : une clé de développement autorise cent requêtes par deux minutes. Le
 mode session en consomme deux par joueur toutes les deux minutes, et une
 ouverture de l'historique en coûte vingt et une. **Cinquante joueurs
 simultanés vident la clé**, sans que personne n'ait rien fait d'anormal. Un
@@ -15,7 +19,11 @@ proprement plutôt que de partir chercher des 429 en cascade — mais refuser
 poliment reste refuser. La clé de production que vous avez demandée est ce
 qui débloque, pas du code.
 
-**2. Le déclencheur des envois programmés n'est pas ponctuel.** Le rappel du
+### Réglé le 8 septembre · Le déclencheur des envois programmés
+Ce n'est plus un blocage, et la section est gardée parce qu'elle porte une
+mesure qu'on ne veut pas refaire.
+
+Le rappel du
 matin, la relance des absents et le bilan hebdomadaire sont déclenchés par un
 travail GitHub Actions censé passer toutes les heures. Il ne le fait pas.
 
@@ -34,7 +42,7 @@ perdu.
 n'est pas la même promesse : c'est un arbitrage de produit, pas une tolérance
 d'implémentation.
 
-**Réglé le 8 septembre.** `vercel.json` porte deux tâches planifiées, à 8 h et
+**Ce qui l'a réglé.** `vercel.json` porte deux tâches planifiées, à 8 h et
 9 h UTC, qui appellent `/api/cron/matin` avec le même secret. Ça fait 10 h et
 11 h en France l'été, 9 h et 10 h l'hiver : quatre heures qui tombent toutes
 dans la fenêtre, aux deux saisons, et un test le vérifie plutôt que de
@@ -63,15 +71,37 @@ geste de cette liste qui réparait quelque chose de cassé plutôt que d'ajouter
 ce qui manquait.
 
 Les deux secrets de sauvegarde figuraient aussi à cette place. Ils sont posés :
-la sauvegarde
-tourne tous les matins, exporte, restaure dans un PostgreSQL neuf, compare
-table par table, chiffre, et dépose l'archive. Huit exécutions vertes
-d'affilée, la dernière ce matin. Une liste d'avant le lancement qui réclame ce
-qui est déjà fait finit par ne plus se lire du tout — c'est pour ça que la
-ligne est corrigée plutôt que supprimée.
+la sauvegarde tourne tous les matins, exporte, restaure dans un PostgreSQL
+neuf, compare table par table, chiffre, et dépose l'archive. **Relevé le
+9 septembre : vingt exécutions, une par jour, la dernière le 8 septembre à
+08 h 04, toutes vertes.** Elle part vers huit heures et non à 03 h 17 comme le
+cron le demande — c'est la dérive ordinaire du planificateur de GitHub, et
+elle ne coûte rien à un travail quotidien.
+
+Une liste d'avant le lancement qui réclame ce qui est déjà fait finit par ne
+plus se lire du tout — c'est pour ça que ces lignes sont corrigées plutôt que
+supprimées.
 
 Un lancement réussi qui tombe en panne fait plus de mal que pas de lancement :
 les gens n'y reviennent pas deux fois.
+
+### À savoir · ce qui s'arrête tout seul au bout de soixante jours
+**Ce n'est pas un blocage pour envoyer**, c'est ce qui arrive ensuite si vous
+n'y touchez plus. GitHub désactive un workflow programmé après soixante jours
+sans activité dans le dépôt — il prévient par courriel avant de couper. Les
+trois travaux programmés tombent sous cette règle, et ils ne se valent pas :
+
+- **la supervision meurt**, et c'est la seule chose qui crie quand le site
+  tombe. Une panne de deux semaines ne se verrait plus ;
+- **la sauvegarde meurt**, et sa dernière archive expire quatre-vingt-dix jours
+  plus tard (`retention-days: 90`). **Au cent cinquantième jour, il n'existe
+  plus aucune sauvegarde restaurable nulle part** ;
+- **les envois SURVIVENT**, par les deux tâches planifiées de `vercel.json`,
+  que Vercel ne désactive pas pour inactivité. La relance des absents continue
+  donc de partir — sans elles, le mécanisme qui rattrape une absence serait
+  mort de l'absence qu'il rattrape.
+
+Les options sont chiffrées dans `docs/questions-ouvertes.md`, question 16.
 
 ## Ce qu'il faut dire, et ce qu'il ne faut pas
 
@@ -196,13 +226,12 @@ quelque part. Ce message peut donc partir.
 
 ## L'ordre
 
-1. Le mot de passe de la base, à faire tourner.
-2. La clé Riot de production.
-3. r/summonerschool. Attendre les retours, corriger ce qui remonte.
-4. r/fitness30plus, quelques jours plus tard.
-5. Discord, en demandant d'abord.
-6. r/leagueoflegends, en dernier.
-7. Les streamers.
+1. La clé Riot de production.
+2. r/summonerschool. Attendre les retours, corriger ce qui remonte.
+3. r/fitness30plus, quelques jours plus tard.
+4. Discord, en demandant d'abord.
+5. r/leagueoflegends, en dernier.
+6. Les streamers.
 
 Rien de tout cela ne se rattrape : un message supprimé, un serveur qui vous
 bannit ou un streamer déçu ne se rejouent pas. C'est la seule raison pour
