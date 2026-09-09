@@ -1373,6 +1373,27 @@ n'avait l'air de rien peser. La règle du journal ne souffre pas d'exception :
 **rien de lourd ne tourne pendant une suite navigateur**, y compris ce qu'on
 écrit pour la mesurer.
 
+**Et l'intermittent de `historique.spec.ts` a nommé sa moitié manquante.**
+« Une correction refusée ne change rien à l'écran » est tombé sur
+`detourne = 0`, ce que ce journal a déjà attribué en V525 à un clic qui
+n'aurait rien déclenché. **Le contexte d'échec dit autre chose** : la ligne de
+Maître Yi y est passée en **VICTOIRE**, alors qu'elle est semée en défaite et
+que le test d'avant agit sur un autre champion. Une correction a donc bien eu
+lieu — donc la requête est partie — et l'interception ne l'a pas vue.
+
+Le compteur de détournement séparait deux causes ; il n'en séparait pas assez.
+`page.on("request")` voit tout ce que la page émet, routé ou non, et c'est
+l'ÉCART entre les deux qui tranche. Sabotage — le compteur de détournement
+débranché — l'échec rend maintenant « détournées 0, émises 1 : la requête est
+PARTIE sans passer par l'interception, c'est l'outil et pas le produit ».
+
+**Ce qui n'est PAS établi, et qu'il vaut mieux écrire que de conclure** :
+pourquoi `page.route` manque une requête sous charge. Le fichier passe **17
+sur 17 trois fois de suite** seul, et il n'est tombé qu'en suite complète. Ce
+qui est acquis n'est donc pas le diagnostic, c'est que la prochaine occurrence
+dira d'elle-même de quel côté chercher — au lieu d'envoyer relire un composant
+qui n'a rien.
+
 **Et la pièce à conviction du premier échec a été effacée par ma propre
 relance**, ce que ce journal écrit déjà. Ce qui est établi de ce tour-là : le
 test tombé était celui qui OUVRE le compte, et les trois « did not run » sont

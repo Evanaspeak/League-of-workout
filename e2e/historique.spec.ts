@@ -479,6 +479,24 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
    * zéro, l'échec nomme le détournement au lieu d'accuser le produit.
    */
   let detourne = 0;
+  /**
+   * Ce que la page a réellement ENVOYÉ, à côté de ce qui a été détourné.
+   *
+   * Le compteur de détournement sépare déjà deux causes — la vraie route a
+   * répondu, ou le clic n'a rien déclenché. Il ne les sépare pas assez : le
+   * 9 septembre, en suite complète, il a rendu `detourne = 0` sur une ligne
+   * qui était PASSÉE en victoire. Une correction a donc bien eu lieu, sans
+   * être comptée, ce qui ne laisse qu'une lecture : la requête est partie et
+   * l'interception ne l'a pas vue.
+   *
+   * `page.on("request")` voit tout ce que la page émet, routé ou non. La
+   * DIFFÉRENCE entre les deux compteurs est le diagnostic, et sans elle
+   * l'échec accuse encore le clic de n'avoir rien fait.
+   */
+  let emis = 0;
+  page.on("request", (r) => {
+    if (r.method() === "PATCH" && /\/api\/games\//.test(r.url())) emis += 1;
+  });
   await page.route("**/api/games/*", async (route) => {
     if (route.request().method() === "PATCH") {
       detourne += 1;
@@ -506,7 +524,19 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
   await expect(versVictoire).toHaveAttribute("aria-pressed", "false");
   await versVictoire.click();
 
-  await expect.poll(() => detourne, { timeout: 10_000 }).toBeGreaterThan(0);
+  try {
+    await expect.poll(() => detourne, { timeout: 10_000 }).toBeGreaterThan(0);
+  } catch {
+    // Les deux compteurs, et ce que leur écart veut dire. Sans cette phrase,
+    // l'échec accuse le clic de n'avoir rien fait — c'est ce qu'on a lu le
+    // 9 septembre sur une ligne qui était pourtant passée en victoire.
+    throw new Error(
+      `la correction n'a pas été détournée — détournées ${detourne}, émises ${emis}. `
+      + (emis > 0
+        ? "La requête est PARTIE sans passer par l'interception : c'est l'outil, pas le produit."
+        : "Aucune requête n'est partie : le clic n'a rien déclenché."),
+    );
+  }
   await expect(page.getByRole("alert").filter({ hasText: /n.a pas abouti|did not go through/i }))
     .toBeVisible({ timeout: 10_000 });
   // La ligne reste une défaite : c'est la base qui tranche, pas l'écran.
