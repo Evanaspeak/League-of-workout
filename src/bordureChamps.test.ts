@@ -1,12 +1,20 @@
 /**
- * La bordure d'un champ ne se laisse pas AFFAIBLIR.
+ * La frontière d'une commande ne se laisse pas AFFAIBLIR.
  *
  * Le critère 1.4.11 des WCAG demande 3:1 entre ce qui identifie une commande et
- * ce qui l'entoure. Mesuré au navigateur le 9 septembre, aucune bordure de champ
- * de ce produit ne l'atteint : `.lol-input` rend 1,22:1, les trois écrans qui
- * écrivent leur champ à la main 1,67:1. Et le fond ne rattrape rien — il rend
- * exactement 1:1, parce que le fond d'un champ est `var(--ink)` à 60 % posé sur
- * un fond de page qui EST `--ink`. De l'encre sur de l'encre donne de l'encre.
+ * ce qui l'entoure. Mesuré au navigateur le 9 septembre, SIX traitements portent
+ * une frontière et **un seul l'atteint** :
+ *
+ *   .lol-input / .lol-select          1,20:1     64 emplois
+ *   sélecteur de langue (en ligne)    1,35:1     19 pages — la barre, partout
+ *   champ en ligne (3 écrans)         1,64:1     connexion, inscription, récupération
+ *   .lol-btn-blue                     1,64:1      3 emplois
+ *   .lol-btn-danger                   1,70:1      2 emplois
+ *   .lol-btn                          dégradé    93 emplois — le seul qui PASSE
+ *
+ * Et le fond ne rattrape rien : 1 à 1,08:1 partout. Le fond d'un champ est
+ * `var(--ink)` à 60 % posé sur un fond de page qui EST `--ink` — de l'encre sur
+ * de l'encre donne de l'encre.
  *
  * Corriger demande de monter l'opacité à 0,36, ce qui redessine le chrome de
  * tout le produit : `--line` est lu 91 fois et `--line-strong` 46, et
@@ -17,8 +25,14 @@
  * arbitrer : la DIRECTION. La ligne 300 du plan demande d'uniformiser les styles
  * en ligne et les classes utilitaires ; le geste évident — passer les trois
  * écrans d'acquisition sur `.lol-input` — ferait tomber leur bordure de 0,18 à
- * 0,08, c'est-à-dire de 1,67:1 à 1,22:1, sur les trois écrans par lesquels tout
+ * 0,08, c'est-à-dire de 1,64:1 à 1,20:1, sur les trois écrans par lesquels tout
  * le monde entre. On peut monter, on ne peut pas descendre.
+ *
+ * LES BOUTONS y sont entrés le 9 septembre. Ce qui les fait entrer n'est pas une
+ * décision de goût mais la règle du critère, mesurée : sur quatre-vingt-douze
+ * boutons, AUCUN n'est sans texte visible — donc un bouton sans frontière est
+ * identifié par son texte et sort du champ, et un bouton QUI EN A une doit
+ * atteindre 3:1. Le bouton plein passe par son dégradé ; les deux fantômes non.
  *
  * L'outil de mesure, lui, vit dans `scripts/accessibilite.mjs` et ne tourne pas
  * en intégration continue. Ce fichier-ci est ce qui reste quand personne ne
@@ -99,6 +113,37 @@ const TRAITEMENTS: { nom: string; fichier: string; motif: RegExp; plancher: numb
     motif: /\.lol-select\s*\{[^}]*border:\s*1px solid var\(--([a-z-]+)\)/,
     plancher: 0.08,
   },
+  {
+    // Le bouton fantôme : sans fond, sa bordure est la SEULE chose qui dise
+    // que c'en est un. Mesuré 1,64:1 sur le panneau Riot et l'administration.
+    nom: ".lol-btn-blue",
+    fichier: "src/app/styles/composants.css",
+    motif: /\.lol-btn-blue\s*\{[^}]*border:\s*1px solid var\(--([a-z-]+)\)/,
+    plancher: 0.18,
+  },
+];
+
+/**
+ * Les frontières écrites en `color-mix`, qui ne nomment pas un jeton de la
+ * palette mais un POURCENTAGE de l'un d'eux. Le plancher porte donc sur ce
+ * pourcentage, et la règle est la même : on peut monter, pas descendre.
+ */
+const MELANGES: { nom: string; fichier: string; motif: RegExp; plancher: number }[] = [
+  {
+    // Le sélecteur de langue vit dans la barre, donc sur les dix-neuf pages du
+    // produit. C'est la frontière la plus VUE, et elle rend 1,35:1.
+    nom: "sélecteur de langue",
+    fichier: "src/components/LanguageSwitcher.tsx",
+    motif: /border:\s*"1px solid color-mix\(in srgb, var\(--[a-z-]+\) (\d+)%/,
+    plancher: 18,
+  },
+  {
+    // La déconnexion et l'arrêt de session : le rouge de la palette à 35 %.
+    nom: ".lol-btn-danger",
+    fichier: "src/app/styles/composants.css",
+    motif: /\.lol-btn-danger\s*\{[^}]*border:\s*1px solid color-mix\(in srgb, var\(--[a-z-]+\) (\d+)%/,
+    plancher: 35,
+  },
 ];
 
 describe("la bordure des champs de saisie", () => {
@@ -123,6 +168,34 @@ describe("la bordure des champs de saisie", () => {
     const rendu = Math.round(contraste(sur(hexDe("bone"), alpha, encre), encre) * 100) / 100;
     expect({ jeton: `--${m![1]}`, alpha, contraste: rendu, tientLePlancher: alpha >= t.plancher })
       .toEqual({ jeton: `--${m![1]}`, alpha, contraste: rendu, tientLePlancher: true });
+  });
+
+  it("chaque frontière en color-mix nomme encore son pourcentage", () => {
+    // Le témoin, comme au-dessus : un fichier renommé rendrait les contrôles
+    // suivants verts en n'examinant aucune frontière.
+    const trouves = MELANGES.map((t) => lire(t.fichier).match(t.motif));
+    expect(trouves.filter(Boolean)).toHaveLength(MELANGES.length);
+  });
+
+  it.each(MELANGES)("$nom ne descend pas sous son plancher", (t) => {
+    const m = lire(t.fichier).match(t.motif);
+    expect(m).not.toBeNull();
+    const pourcent = parseInt(m![1], 10);
+    expect({ nom: t.nom, pourcent, tientLePlancher: pourcent >= t.plancher })
+      .toEqual({ nom: t.nom, pourcent, tientLePlancher: true });
+  });
+
+  it("le bouton PLEIN garde le fond qui le fait passer", () => {
+    /**
+     * `.lol-btn` est le seul des six traitements à atteindre 3:1, et il le doit
+     * à son dégradé opaque — 93 emplois sur 98. Le passer en fond transparent
+     * le ferait rejoindre les fantômes, et rien ne le dirait : le bouton reste
+     * lisible, c'est sa FRONTIÈRE qui disparaît.
+     */
+    const composants = lire("src/app/styles/composants.css");
+    const bloc = composants.match(/\.lol-btn\s*\{([^}]*)\}/);
+    expect(bloc).not.toBeNull();
+    expect(bloc![1]).toMatch(/background:\s*linear-gradient\(/);
   });
 
   it("les opacités du code sont celles que les questions ouvertes annoncent", () => {

@@ -1518,6 +1518,129 @@ chercher un `chrome-headless-shell` qui n'est pas installé. Le message envoie
 lancer `npx playwright install`, ce qui n'a rien à voir. La sonde passe
 l'`executablePath`, comme la configuration.
 
+### Une seule frontière du produit atteint 3:1, et l'audit lisait la moitié des couleurs
+Suite de la ligne 300. L'outil écrit la veille ÉCARTAIT les boutons « faute de
+les avoir mesurés » — c'est-à-dire une dispense qui ne repose sur rien, le
+défaut que ce journal reproche partout. Mesurés.
+
+**Quatre-vingt-douze boutons, et AUCUN sans texte visible.** C'est ce chiffre
+qui décide, et il renverse la dispense : le critère 1.4.11 porte sur « ce qui
+identifie une commande », donc un bouton sans frontière visuelle est identifié
+par son TEXTE et sort du champ — 1.4.3 s'y applique déjà, et ce même outil le
+mesure. Ce qui reste sont ceux qui DESSINENT une frontière, et la règle qui les
+fait entrer se déduit de la mesure au lieu d'être arbitrée.
+
+| traitement | emplois | bordure | fond | verdict |
+|---|---|---|---|---|
+| `.lol-input`, `.lol-select` | 64 | 1,20:1 | 1,05:1 | échoue |
+| **sélecteur de langue** | **19 pages** | **1,35:1** | 1,08:1 | échoue |
+| champ en ligne | 3 écrans | 1,64:1 | 1,05:1 | échoue |
+| `.lol-btn-blue` | 3 | 1,64:1 | 1:1 | échoue |
+| `.lol-btn-danger` | 2 | 1,70:1 | 1:1 | échoue |
+| `.lol-btn` | **93** | — | dégradé | **passe** |
+
+**Ce n'est donc pas deux traitements, c'est SIX**, et le seul qui passe est
+celui qui peint son fond en plein. La frontière la plus VUE du produit est le
+sélecteur de langue : il vit dans la barre, donc partout, et il rend 1,35:1 —
+il n'était dans aucun recensement de la veille.
+
+**Et l'outil lisait la moitié des couleurs**, ce qui est la vraie trouvaille.
+Son analyseur ne connaissait que `rgba()`. Or `color-mix` — que ce produit
+emploie partout depuis qu'on a nommé les transparences — se calcule en
+`color(srgb r g b / a)`, avec des composantes de 0 à 1. Un `null` en sortie, et
+l'appelant SAUTE l'élément.
+
+Ce qui a mis la puce à l'oreille est un chiffre qui ne pouvait pas être vrai :
+`.lol-btn-danger` rendait « bordure aucune » sur un bouton dont la CSS déclare
+`1px solid color-mix(…)`. Instrumenté plutôt que supposé, le style calculé
+disait `1px solid color(srgb 1 0.352941 0.278431 / 0.35)`.
+
+**Mesuré des deux côtés, et il faut lire les DEUX moitiés** : sur dix-huit
+écrans, **zéro texte sauté** — donc tous les « 0 constat » de ce journal sont
+honnêtes, et c'était la question qui comptait — mais **114 FONDS illisibles**,
+dont trente et un en teinte claire. Le contrôle remontait alors au parent et
+mesurait le texte contre un fond qu'il n'a jamais.
+
+**Le fond se COMPOSE maintenant au lieu de se sauter.** L'ancienne version
+ignorait tout ce qui n'était pas opaque à 95 % ; elle empile les fonds
+translucides jusqu'au premier opaque et les compose de bas en haut. Les chiffres
+de la veille bougent d'un centième pour cette raison — 1,67 devient 1,64, 1,22
+devient 1,20 — et le fond passe de 1:1 à 1,05:1 : un champ vit dans un panneau,
+pas directement sur l'encre. La correction rend les mesures plus justes, pas
+plus flatteuses.
+
+**Un audit peut rendre quatre-vingt-neuf constats entièrement faux, et rien ne
+le disait.** Une exécution a rendu des couleurs par DÉFAUT du navigateur —
+texte noir, liens `rgb(0, 0, 238)`, tailles de titre de l'agent utilisateur :
+la page se rendait SANS feuille de style. Quatre-vingt-neuf constats de
+contraste sur des pages parfaitement conformes.
+
+**La cause n'est PAS nommée, et je ne vais pas l'inventer.** Le serveur avait
+été relancé proprement à 05 h 01, sans EADDRINUSE, un seul processus ; la
+feuille répondait 200 pour 78 ko ; le contexte de l'audit reproduit à
+l'identique rend `--bone` sur le titre et 410 règles ; et la même page rejouée
+par le même script quelques minutes plus tard rend « rien à signaler ». Ce qui
+est établi est que ce n'est pas reproductible, et c'est tout.
+
+**Ce qui EST acquis, c'est le garde.** C'est la famille que cet outil attrape
+déjà deux fois — la page injoignable, la modale qui recouvre — sous une
+troisième forme : ici la page est là, elle est simplement rendue nue. Le témoin
+est le fond du `body`, que la palette peint toujours ; son absence ne peut
+vouloir dire qu'une chose. Sabotage — la feuille désactivée à l'ouverture — et
+la page sort « NON MESURÉ » avec sa raison au lieu de rendre des constats.
+Posé sur les deux blocs, celui du texte et celui des frontières.
+
+**Le garde statique s'étend aux boutons, et il tient la DIRECTION.**
+`src/bordureChamps.test.ts` porte six traitements, dont deux écrits en
+`color-mix` — le plancher y porte sur le POURCENTAGE. Et un contrôle de plus
+sur le seul qui passe : `.lol-btn` doit garder son dégradé, sans quoi il
+rejoindrait les fantômes sans que rien ne le dise — le bouton reste lisible,
+c'est sa FRONTIÈRE qui disparaît.
+
+Quatre sabotages, quatre échecs, chacun sur son propre contrôle. **Et un
+TÉMOIN qui doit passer** : `.lol-input` RENFORCÉ de `--line` à `--line-strong`
+laisse les treize contrôles au vert. C'est ce qui prouve que le garde interdit
+de reculer sans interdire la correction — un test qui épinglerait « la bordure
+est encore sous 3:1 » ferait échouer le jour où on la corrige, comme l'en-tête
+de cache des ratios en août.
+
+**Après correction : 5 constats, 21 pages « rien à signaler », zéro non
+mesurée.** Les cinq sont les cinq traitements du tableau, et ils partent dans
+les questions avec leurs trois options chiffrées — monter l'opacité à 0,36
+redessine le chrome du produit entier, et la réponse 251 dit que la marque
+visuelle est validée.
+
+**Ce que l'audit n'atteint PAS, écrit plutôt que laissé à croire** :
+`.lol-btn-blue` ne paraît pas dans son rapport, parce qu'il vit derrière une
+fenêtre d'ajout de partie et une rubrique de réglages que le balayage n'ouvre
+pas. Il a été mesuré à la main, et c'est le garde statique qui le tient.
+
+**Et V554 est partie ROUGE, par ma faute et pour la bonne raison.** Lu en
+appliquant la règle de la fusion — la CI de la version PRÉCÉDENTE : un seul
+travail sur neuf, `accessibilite`, les six tronçons de parcours verts. La cause
+est que l'outil BLOQUE sur son total (`process.exit(total > 0 ? 1 : 0)`), et
+que V554 lui a ajouté une famille de constats qui attend une DÉCISION.
+
+**Un constat qui attend un arbitrage ne doit pas bloquer une poussée**, et ce
+fichier l'écrit déjà trois fois : « un travail resté rouge vingt-cinq versions
+d'affilée » fait qu'on finit par filtrer l'alerte et qu'on ne la lit plus le
+jour où elle compte ; « un garde qui crie sur ce qui va bien finit par ne plus
+se lire » ; et les envois programmés notent en avertissement et passent. Les
+frontières remontent donc en `::warning::` — GitHub les montre — et sortent du
+code de sortie, avec la raison écrite et la date de péremption : le jour où la
+question 13 est tranchée, la dispense tombe.
+
+**Le partage est net, et c'est lui qui compte.** Le témoin de non-vacuité,
+lui, BLOQUE toujours : un instrument qui n'a rien examiné est une panne, pas
+une décision en attente. Et ce qui mord vraiment est ailleurs — le garde
+statique tient la DIRECTION, ce qui ne dépend d'aucun arbitrage.
+
+**Un piège d'outillage, cinquième occurrence, et sous une forme nouvelle** : un
+script posé dans le scratchpad ne résout pas `playwright`, parce qu'ESM cherche
+`node_modules` depuis le dossier du SCRIPT. Une copie temporaire dans `scripts/`
+règle le cas ; l'important est de l'effacer après, ce que
+`src/scriptsRacine.test.ts` exige déjà un étage plus haut.
+
 ### Aucune bordure de champ n'atteint 3:1, et l'audit disait vrai en ne regardant pas
 Seconde moitié de la ligne 300, que j'avais mise de côté comme une affaire de
 GOÛT : passer les trois écrans qui écrivent leur champ à la main sur

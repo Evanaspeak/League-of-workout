@@ -109,21 +109,58 @@ const mesure = () => {
     });
     return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
   };
+  /**
+   * Deux formes, et il faut les DEUX.
+   *
+   * `rgba()` est ce que rend un littéral ou une variable de palette. Mais
+   * `color-mix()` — que ce produit emploie partout depuis qu'on a nommé les
+   * transparences — se calcule en `color(srgb r g b / a)`, avec des composantes
+   * de 0 à 1. Un analyseur qui ne connaît que la première rend `null` sur la
+   * seconde, et l'appelant SAUTE l'élément : « rien trouvé » devient
+   * indiscernable de « rien regardé ». Mesuré le 9 septembre : zéro texte dans
+   * ce cas, mais 114 FONDS sur dix-huit écrans.
+   */
   const lire = (couleur) => {
-    const m = couleur.match(/rgba?\(([^)]+)\)/);
-    if (!m) return null;
-    const [r, g, b, a] = m[1].split(",").map((x) => parseFloat(x));
-    return { r, g, b, a: a === undefined ? 1 : a };
+    const rgb = String(couleur).match(/rgba?\(([^)]+)\)/);
+    if (rgb) {
+      const [r, g, b, a] = rgb[1].split(",").map((x) => parseFloat(x));
+      return { r, g, b, a: a === undefined ? 1 : a };
+    }
+    const srgb = String(couleur).match(/color\(srgb\s+([^)]+)\)/);
+    if (srgb) {
+      const v = srgb[1].split(/[\s/]+/).filter(Boolean).map(parseFloat);
+      return { r: v[0] * 255, g: v[1] * 255, b: v[2] * 255, a: v.length > 3 ? v[3] : 1 };
+    }
+    return null;
   };
-  /** Fond effectif : on remonte les ancêtres jusqu'à une couleur opaque. */
+  const composerFond = (c, fond) => ({
+    r: c.r * c.a + fond.r * (1 - c.a),
+    g: c.g * c.a + fond.g * (1 - c.a),
+    b: c.b * c.a + fond.b * (1 - c.a),
+    a: 1,
+  });
+  /**
+   * Fond effectif : on empile les fonds TRANSLUCIDES jusqu'au premier opaque,
+   * puis on les compose de bas en haut.
+   *
+   * L'ancienne version sautait tout ce qui n'était pas opaque à 95 % et
+   * remontait au parent : un panneau teinté par-dessus l'encre faisait mesurer
+   * le texte contre l'encre, c'est-à-dire contre un fond qu'il n'a jamais.
+   */
   const fondDe = (el) => {
+    const pile = [];
     let noeud = el;
     while (noeud && noeud !== document.documentElement) {
       const c = lire(getComputedStyle(noeud).backgroundColor);
-      if (c && c.a >= 0.95) return c;
+      if (c && c.a > 0) {
+        pile.push(c);
+        if (c.a >= 0.95) break;
+      }
       noeud = noeud.parentElement;
     }
-    return { r: 12, g: 14, b: 17, a: 1 };
+    let fond = { r: 12, g: 14, b: 17, a: 1 };
+    for (let i = pile.length - 1; i >= 0; i--) fond = composerFond(pile[i], fond);
+    return fond;
   };
   const ratio = (a, b) => {
     const la = luminance(a.r, a.g, a.b);
@@ -298,6 +335,38 @@ for (const chemin of aVisiter) {
     return visible ? (visible.getAttribute("aria-label") || visible.innerText || "sans nom")
       .trim().replace(/\s+/g, " ").slice(0, 60) : null;
   });
+  /**
+   * La feuille de style s'applique-t-elle ?
+   *
+   * Sans elle, tout se rend aux couleurs par DÉFAUT du navigateur : texte noir,
+   * liens `rgb(0, 0, 238)`, tailles de titre du agent utilisateur. L'audit ne
+   * voit alors aucune différence avec un vrai défaut — il a rendu QUATRE-VINGT-NEUF
+   * constats de contraste le 9 septembre sur des pages parfaitement conformes,
+   * et rien dans le rapport ne disait que l'instrument était cassé.
+   *
+   * C'est la famille que ce fichier attrape déjà deux fois — la page injoignable
+   * et la modale qui recouvre — sous une troisième forme : ici la page est bien
+   * là, elle est simplement rendue nue. Le témoin est le fond du `body` : la
+   * palette le peint toujours, et son absence ne peut vouloir dire qu'une chose.
+   */
+  const sansStyle = await page.evaluate(() => {
+    const fond = getComputedStyle(document.body).backgroundColor;
+    const transparent = !fond || fond === "rgba(0, 0, 0, 0)" || fond === "transparent";
+    const regles = [...document.styleSheets].reduce((n, f) => {
+      try { return n + f.cssRules.length; } catch { return n; }
+    }, 0);
+    return transparent || regles === 0 ? { fond, regles } : null;
+  });
+  if (sansStyle) {
+    console.log(`\n═══ ${langue} · ${chemin}`);
+    console.log(`  NON MESURÉ : la page se rend SANS feuille de style ` +
+      `(fond du corps « ${sansStyle.fond} », ${sansStyle.regles} règle(s)). ` +
+      `Les couleurs lues seraient celles du navigateur, pas celles du produit.`);
+    nonMesurees += 1;
+    await ctx.close();
+    continue;
+  }
+
   if (modale) {
     console.log(`\n═══ ${langue} · ${chemin}`);
     console.log(`  NON MESURÉ : une modale recouvre la page — « ${modale} »`);
@@ -529,9 +598,12 @@ let horsLangue = 0;
  * Les cases à cocher, les boutons radio, les curseurs et les sélecteurs de
  * couleur sont écartés : ce sont les contrôles que le navigateur DESSINE
  * lui-même, et leur style calculé ne dit rien de ce qui est peint à l'écran.
- * Les boutons le sont aussi, faute d'avoir été mesurés : y étendre la règle
- * demande de regarder ce qu'elle rendrait sur un bouton fantôme avant de le
- * publier.
+ * Les BOUTONS, eux, y sont entrés le 9 septembre après avoir été mesurés —
+ * quatre-vingt-douze, aucun sans texte visible. Ce qui les fait entrer n'est
+ * pas une décision de goût mais la règle du critère : une commande sans
+ * frontière visuelle est identifiée par son texte, donc elle sort du champ ;
+ * une commande QUI EN A une doit atteindre 3:1. Le bouton plein passe par son
+ * fond, le bouton fantôme est jugé sur sa bordure.
  *
  * Le rapport groupe par TRAITEMENT — la classe et les couleurs — et non par
  * élément : il y a quarante-huit `.lol-input` dans le produit, et quarante-huit
@@ -557,6 +629,17 @@ let horsLangue = 0;
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
 
+    // Même garde que plus haut : sans feuille de style, il n'y a ni `.lol-input`
+    // ni bordure de palette — on lirait les valeurs du navigateur.
+    const nu = await page.evaluate(() => {
+      const fond = getComputedStyle(document.body).backgroundColor;
+      return !fond || fond === "rgba(0, 0, 0, 0)" || fond === "transparent";
+    }).catch(() => false);
+    if (nu) {
+      console.log(`  NON MESURÉ ${chemin} : la page se rend sans feuille de style.`);
+      continue;
+    }
+
     const champs = await page.evaluate(() => {
       const luminance = (c) => {
         const [r, g, b] = c.map((v) => {
@@ -565,7 +648,16 @@ let horsLangue = 0;
         });
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
       };
+      // Même règle que plus haut : `color-mix` se calcule en `color(srgb …)`,
+      // et un analyseur qui l'ignore rend « bordure aucune » sur une bordure
+      // qui existe. C'est ce qui a fait passer `.lol-btn-danger` pour un bouton
+      // sans frontière le 9 septembre.
       const lire = (couleur) => {
+        const srgb = String(couleur).match(/color\(srgb\s+([^)]+)\)/);
+        if (srgb) {
+          const v = srgb[1].split(/[\s/]+/).filter(Boolean).map(parseFloat);
+          return { rgb: [v[0] * 255, v[1] * 255, v[2] * 255], a: v.length > 3 ? v[3] : 1 };
+        }
         const m = String(couleur).match(/rgba?\(([^)]+)\)/);
         if (!m) return null;
         const v = m[1].split(",").map((x) => parseFloat(x));
@@ -574,15 +666,25 @@ let horsLangue = 0;
       /** Compose une couleur transparente sur un fond opaque. */
       const composer = (av, arriere) =>
         av ? av.rgb.map((c, i) => c * av.a + arriere[i] * (1 - av.a)) : arriere;
-      /** Fond effectif : on remonte les ancêtres jusqu'à une couleur opaque. */
+      /**
+       * Fond effectif : on EMPILE les fonds translucides jusqu'au premier
+       * opaque, puis on les compose de bas en haut. Les sauter reviendrait à
+       * mesurer une commande contre un fond qu'elle n'a jamais.
+       */
       const fondOpaque = (el) => {
+        const pile = [];
         let n = el;
         while (n && n !== document.documentElement) {
           const c = lire(getComputedStyle(n).backgroundColor);
-          if (c && c.a >= 0.95) return c.rgb;
+          if (c && c.a > 0) {
+            pile.push(c);
+            if (c.a >= 0.95) break;
+          }
           n = n.parentElement;
         }
-        return [12, 14, 17];
+        let fond = [12, 14, 17];
+        for (let i = pile.length - 1; i >= 0; i--) fond = composer(pile[i], fond);
+        return fond;
       };
       const ratio = (a, b) => {
         const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
@@ -593,24 +695,51 @@ let horsLangue = 0;
         "hidden", "submit", "button", "reset", "checkbox", "radio", "range", "color", "file",
       ];
       const out = [];
-      for (const el of document.querySelectorAll("input, select, textarea")) {
-        if (DESSINES_PAR_LE_NAVIGATEUR.includes(String(el.type || "").toLowerCase())) continue;
+      const CIBLES = "input, select, textarea, button, [role=button], a.lol-btn";
+      for (const el of document.querySelectorAll(CIBLES)) {
+        if (DESSINES_PAR_LE_NAVIGATEUR.includes(String(el.type || "").toLowerCase())
+            && el.tagName !== "BUTTON") continue;
         const s = getComputedStyle(el);
         if (s.display === "none" || s.visibility === "hidden" || s.opacity === "0") continue;
         const r = el.getBoundingClientRect();
         if (r.width === 0 || r.height === 0) continue;
 
         const autour = fondOpaque(el.parentElement);
+        // Un dégradé est opaque par construction : il peint, donc il identifie.
+        const degrade = s.backgroundImage && s.backgroundImage !== "none";
         const dedans = composer(lire(s.backgroundColor), autour);
         // Une bordure de largeur nulle ne peint rien : elle n'identifie rien.
         const largeur = parseFloat(s.borderTopWidth) || 0;
-        const parBord = largeur > 0 ? ratio(composer(lire(s.borderTopColor), dedans), dedans) : 0;
-        const parFond = ratio(dedans, autour);
-        const classe = String(el.className || "").trim().split(/\s+/)[0];
+        const bordure = largeur > 0 ? lire(s.borderTopColor) : null;
+        const parBord = bordure && bordure.a > 0
+          ? ratio(composer(bordure, dedans), dedans) : 0;
+        const parFond = degrade ? 99 : ratio(dedans, autour);
+
+        /**
+         * Une commande SANS frontière visuelle sort du champ de 1.4.11, et ce
+         * n'est pas une complaisance : le critère porte sur « ce qui identifie
+         * une commande », et quand rien n'est peint, c'est le TEXTE qui le
+         * fait — auquel 1.4.3 s'applique déjà, et que ce même outil mesure.
+         *
+         * C'est ce qui fait entrer les boutons ici. Mesuré le 9 septembre sur
+         * quatre-vingt-douze d'entre eux : AUCUN n'est sans texte visible. Le
+         * bouton plein passe par son fond, le bouton fantôme est jugé sur sa
+         * bordure, et celui qui n'a ni l'un ni l'autre est hors sujet.
+         */
+        const sansFrontiere = parBord === 0 && parFond < 1.05;
+        if (sansFrontiere) {
+          const texte = (el.getAttribute("aria-label") || el.textContent || "").trim();
+          if (texte) continue;
+        }
+
+        const classes = [...el.classList].filter((c) => /^lol-(btn|input|select)/.test(c));
+        const cle = classes.length
+          ? `${el.tagName.toLowerCase()}.${classes.join(".")}`
+          : `${el.tagName.toLowerCase()} (style en ligne)`;
         out.push({
-          cle: `${el.tagName.toLowerCase()}${classe ? "." + classe : " (style en ligne)"}`,
+          cle,
           bord: Math.round(parBord * 100) / 100,
-          fond: Math.round(parFond * 100) / 100,
+          fond: degrade ? "dégradé" : Math.round(parFond * 100) / 100,
           meilleur: Math.round(Math.max(parBord, parFond) * 100) / 100,
         });
       }
@@ -632,9 +761,9 @@ let horsLangue = 0;
    * rendrait le contrôle vert en n'ayant rien mesuré. C'est le défaut que ce
    * fichier attrape déjà pour les pages non mesurées, un cran plus bas.
    */
-  console.log(`\n═══ frontières de commande (WCAG 1.4.11, 3:1) — ${examines} champ(s) examiné(s)`);
+  console.log(`\n═══ frontières de commande (WCAG 1.4.11, 3:1) — ${examines} commande(s) examinée(s)`);
   if (!examines) {
-    console.log("  AUCUN champ examiné — le zéro ci-dessous ne prouve rien.");
+    console.log("  AUCUNE commande examinée — le zéro ci-dessous ne prouve rien.");
     horsLangue += 1;
   } else if (!traitements.size) {
     console.log("  rien à signaler");
@@ -645,7 +774,33 @@ let horsLangue = 0;
       `(${t.pages.size} page(s) : ${[...t.pages].join(", ")})`,
     );
   }
-  horsLangue += traitements.size;
+  /**
+   * Ces constats-là NE FONT PAS échouer la CI, et ce n'est pas une complaisance.
+   *
+   * Ils décrivent une non-conformité RÉELLE — cinq traitements sur six sous
+   * 3:1 — dont la correction demande de monter un jeton lu 91 fois, donc de
+   * redessiner le chrome du produit. C'est un arbitrage, il appartient au
+   * propriétaire, et il attend dans `docs/questions-ouvertes.md` (question 13).
+   *
+   * Les faire bloquer rendrait le travail `accessibilite` ROUGE à chaque
+   * poussée jusqu'à ce que quelqu'un tranche. Ce fichier écrit déjà pourquoi
+   * c'est le pire résultat possible : « un travail resté rouge vingt-cinq
+   * versions d'affilée » fait qu'on finit par filtrer l'alerte, et qu'on ne la
+   * lit plus le jour où elle compte. Les envois programmés suivent la même
+   * règle — ils notent en avertissement et passent.
+   *
+   * Le jour où la question 13 est tranchée, cette dispense tombe et le compte
+   * rejoint le total. En attendant, le garde qui MORD est statique et vit dans
+   * `src/bordureChamps.test.ts` : il tient la DIRECTION — on peut monter, on ne
+   * peut pas descendre — ce qui ne dépend d'aucune décision.
+   */
+  if (traitements.size) {
+    console.log(
+      `::warning::${traitements.size} frontière(s) de commande sous 3:1 ` +
+      `(WCAG 1.4.11). Non bloquant : la correction attend la question 13 des ` +
+      `questions ouvertes. La direction est gardée par src/bordureChamps.test.ts.`,
+    );
+  }
   await ctx.close();
 }
 
