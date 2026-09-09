@@ -1359,9 +1359,26 @@ d'ailleurs en commentaire le jour où c'est arrivé pour une autre raison : « u
 espace de plus, et le site en parfaite santé déclenchait l'alerte toutes les
 quinze minutes ».
 
-`src/contratSupervision.test.ts` compare les deux côtés. **Ce qui ne peut pas
+`src/contratsWorkflows.test.ts` compare les deux côtés. **Ce qui ne peut pas
 s'importer se COMPARE** — la règle est déjà celle du pont Electron, des six
 langues de la coquille et de la table des processus surveillés.
+
+**Et le même contrat vaut pour les envois programmés**, ce que le recensement
+des workflows a rendu tout de suite. `envois-programmes.yml` lit `.envoyes`,
+`.push` et `.courriel` — les deux derniers pour noter en avertissement qu'une
+clé manque —, et **il les lit avec un repli `// "?"`** : un champ renommé ne
+casse rien, il fait simplement disparaître l'avertissement. Or c'est exactement
+la panne que ce journal raconte sous « Un canal muet brûlait la relance des
+absents » : sans clé VAPID, la route posait les marques et rendait un zéro
+parfaitement normal. Le garde couvre donc les trois contrats, pas la seule
+sonde.
+
+**Le découpage par appel n'est pas une élégance, et le sabotage l'a exigé.** La
+première version comparait les champs à l'UNION des routes d'un workflow :
+`envoyes` renommé dans `push/programme` passait au vert, parce que `mail/hebdo`
+le rend aussi. Un travail programmé lit ce qu'il vient de demander — les `jq`
+d'un tronçon appartiennent à la route qui l'ouvre — et le sabotage mord une
+fois le découpage posé.
 
 Il tient aussi les deux moitiés du VERDICT, parce qu'aucune ne suffit seule :
 le workflow doit continuer d'exiger le code 200 EN PLUS du corps, et la route
@@ -1375,11 +1392,23 @@ supervision noterait « la base dormait, elle a mis 6000 ms » sur une panne
 franche — c'est-à-dire le message qui dit « rien de grave » à l'instant où tout
 est grave.
 
-Neuf sabotages, neuf échecs : le champ `.ok` renommé, le message de PostgreSQL
-laissé fuir dans la réponse — l'adresse est publique, et un message de base
-nomme volontiers son hôte et son utilisateur —, le statut figé, le cache qui
-oublie le statut, `reveil` sur base morte, le cache débranché, la supervision
-qui cesse d'exiger le code, et les deux extracteurs rendus aveugles.
+Quatorze sabotages, douze échecs : le champ `.ok` renommé, le message de
+PostgreSQL laissé fuir dans la réponse — l'adresse est publique, et un message
+de base nomme volontiers son hôte et son utilisateur —, le statut figé, le
+cache qui oublie le statut, `reveil` sur base morte, le cache débranché, la
+supervision qui cesse d'exiger le code, `.push` et `.courriel` renommés,
+`.envoyes` renommé dans une seule des deux routes, le découpage rendu au
+workflow entier, et les deux extracteurs rendus aveugles.
+
+**Les deux qui PASSENT sont écrits dans le garde plutôt que tus.** Le suivi de
+la constante nommée et celui de l'étalement rattrapent chacun, à lui seul, les
+champs de la sonde — qui écrit les deux formes dans le même fichier. Retirer
+les DEUX fait tomber deux contrôles ; retirer l'un ne fait rien. Aucun n'est
+donc mort, aucun n'est éprouvé seul, et le commentaire dit exactement ça au
+lieu d'affirmer que chacun est nécessaire. C'est la règle du `muet = false` de
+la pastille, appliquée à une redondance qui, elle, se justifie : deux formes
+réelles, et une route qui n'emploierait que l'une perdrait sa couverture si
+l'autre partait.
 
 **Un dixième était mal posé, et c'est noté comme tel** plutôt que compté comme
 un garde qui ne mord pas : j'avais rangé l'erreur dans une variable que
