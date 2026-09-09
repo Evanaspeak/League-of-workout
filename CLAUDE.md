@@ -1289,6 +1289,58 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La liste d'avant le lancement a rouillé une SECONDE fois, au même endroit
+`docs/lancement.md` est le document qu'on relit juste avant d'inviter cent
+personnes — donc au moment où l'on a le moins envie de vérifier ce qu'il
+raconte. Le journal porte déjà l'entrée du 1er septembre, « la liste d'avant
+lancement réclamait deux choses déjà faites ». Elle recommence :
+
+- son en-tête annonçait **« il reste deux choses à régler »** alors que la
+  seconde, le déclencheur des envois, est marquée « Réglé le 8 septembre »
+  **dans son propre corps**, vingt lignes plus bas ;
+- sa liste ordonnée s'ouvrait sur **« 1. Le mot de passe de la base, à faire
+  tourner »**, que le corps déclare tournée depuis une semaine. C'est le
+  PREMIER geste de la marche à suivre, donc celui qu'on ferait en premier.
+
+**Les deux fois, le défaut est le même** : un compte écrit une fois au-dessus
+de quelque chose qui bouge, et un item de liste que personne ne retire quand la
+chose est faite.
+
+La structure change plutôt que le texte : les blocages portent un titre
+`### Blocage · …`, les choses réglées un titre `### Réglé …`, et **l'en-tête
+n'écrit plus aucun nombre** — il dit de compter les titres. C'est la même
+correction qu'au fichier des questions une heure plus tôt, et pour la même
+raison.
+
+**Deux faits remis à jour au passage.** La sauvegarde : « huit exécutions
+vertes d'affilée » datait du 1er septembre ; relevé le 9, **vingt exécutions,
+une par jour, la dernière le 8 septembre à 08 h 04, toutes vertes** — et elle
+part vers huit heures au lieu des 03 h 17 que le cron demande, ce qui est la
+dérive ordinaire du planificateur et ne coûte rien à un travail quotidien. Et
+le document reçoit le fait des soixante jours trouvé cette nuit, parce qu'il
+décide de ce qui reste debout après le lancement.
+
+**Le garde, et le sabotage qui l'a corrigé.** `src/lancementAJour.test.ts`
+refuse les deux formes : un compte de blocages dans l'en-tête, et un item de la
+marche à suivre qui redemande ce que le corps déclare fait. **Le second
+sabotage est passé au vert**, et c'est ce qui a appris quelque chose : le
+contrôle cherchait le même mot des deux côtés, or l'item dit « le mot de passe
+de la base » quand le corps dit « la chaîne de connexion Neon ». Deux façons de
+nommer la même chose, et le garde ne mordait pas. Les sujets portent donc leurs
+SYNONYMES — c'est le défaut du recensement par vocabulaire, déjà payé ici, qui
+hérite du vocabulaire de celui qui l'écrit.
+
+Quatre sabotages, quatre échecs après correction : le compte remis dans
+l'en-tête, l'item mort remis dans la marche à suivre, un blocage déclaré réglé
+dans son propre corps, et le préfixe des titres renommé — ce dernier devant
+faire tomber le TÉMOIN plutôt que de rendre les trois autres verts sur zéro
+titre examiné.
+
+**Ce que le garde ne fait PAS, écrit dans son commentaire** : il ne juge pas si
+un blocage est VRAI. Savoir si la clé Riot de production est arrivée demande de
+la demander à Riot. Il tient la cohérence INTERNE du document, ce qui est
+exactement ce qui a lâché deux fois.
+
 ### Le référencement est construit, et rien ne peut dire s'il marche
 Réponse 241, « **Explique** », et trois réponses « **Aucune idée** » (034, 079,
 271). Même méthode que pour les quatre d'avant : ce sont des questions de fait.
