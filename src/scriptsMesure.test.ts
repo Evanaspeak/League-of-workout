@@ -190,6 +190,51 @@ describe("les outils de mesure lisent leurs arguments de la même façon", () =>
     expect(texte).toMatch(/Préchargé/);
   });
 
+  /**
+   * Un clic sur ce que la feuille de style CACHE ne déplie rien, et il coûte.
+   *
+   * `[aria-expanded="false"]` trouve aussi `.nav-burger` (montrée sous 720 px)
+   * et `.rail-bascule` (montrée sous 1180 px). L'audit tourne à 1280 px : les
+   * deux y sont `display: none` sur tous les écrans connectés, donc chaque
+   * clic expire à son demi-tour d'horloge, trois fois par page.
+   *
+   * Ce n'est pas qu'une lenteur, et c'est pourquoi ça se garde : le journal
+   * porte déjà la fois où le dépliage a fait DÉBORDER l'audit de son quart
+   * d'heure — vingt et une pages mesurées, et les dernières passes coupées en
+   * route. Un outil qui s'arrête avant la fin ne dit pas qu'il s'est arrêté.
+   *
+   * Mesuré sur huit pages d'un compte semé à soixante parties : 105 558 ms
+   * tous dépliants confondus, 9 176 ms sur les seuls visibles.
+   */
+  it("accessibilite.mjs ne clique que les dépliants VISIBLES", () => {
+    // Privée de ses commentaires : celui qui précède le sélecteur cite le
+    // motif fautif pour dire pourquoi il a disparu.
+    const texte = sansCommentaires(readFileSync(join(SCRIPTS, "accessibilite.mjs"), "utf8"));
+    const selecteurs = [...texte.matchAll(/\[aria-expanded="false"\][^'"`\n]*/g)].map((m) => m[0]);
+    // Sans ce témoin, un sélecteur renommé rendrait le contrôle vert en
+    // n'examinant rien.
+    expect(selecteurs.length).toBeGreaterThanOrEqual(1);
+    expect(selecteurs.filter((s) => !s.includes(":visible"))).toEqual([]);
+  });
+
+  /**
+   * Le fragment se retire UNE fois, dans la liste, pas à chaque passe.
+   *
+   * Les trois passes de fin mesurent des choses qui ne dépendent pas du
+   * fragment, donc elles visitent l'adresse nue. Écrit chez elles, ce retrait
+   * faisait charger `/fr/settings` SIX fois de suite à l'identique — la
+   * rubrique nue plus ses cinq fragments — dans une page RÉEMPLOYÉE, où le
+   * second chargement met huit à trente secondes au lieu d'une seconde deux.
+   */
+  it("les passes qui visitent l'adresse nue ne la visitent qu'une fois", () => {
+    const texte = sansCommentaires(readFileSync(join(SCRIPTS, "accessibilite.mjs"), "utf8"));
+    expect(texte).toMatch(/aVisiterNu\s*=\s*\[\s*\.\.\.new Set\(/);
+    const passes = (texte.match(/for \(const chemin of aVisiterNu\)/g) ?? []).length;
+    expect(passes).toBeGreaterThanOrEqual(3);
+    // Et le retrait ne se refait pas au vol : ce serait le remettre.
+    expect(texte).not.toMatch(/enLangue\([^)]*\)\.split\("#"\)/);
+  });
+
   it("la dispense désigne encore un fichier vivant", () => {
     // Une dispense qui ne désigne plus rien est du code mort qu'on a admis.
     const presents = new Set(fichiers());
