@@ -1139,9 +1139,12 @@ l'état, faute d'un gain qui justifie la retouche.
 
 ## Scripts de mesure
 
-Huit scripts, dont cinq pilotent un Chromium sur l'application lancée en local.
-(`scripts/langue.mjs` est un module partagé, pas un neuvième outil.)
+Neuf scripts, dont cinq pilotent un Chromium sur l'application lancée en local.
+(`scripts/langue.mjs` est un module partagé, pas un dixième outil.)
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
+Le dernier, `champions-ddragon.mjs`, ne demande ni navigateur ni serveur local —
+il compare ce que le produit connaît à ce que Riot publie, et il a donc besoin
+du réseau et de rien d'autre.
 
 **Avant toute campagne — ET avant une suite navigateur qu'on veut croire :
 `rm -rf .next/cache`.** Ce dossier SURVIT à `next build` comme au serveur, et
@@ -1163,6 +1166,7 @@ node scripts/routes.mjs          # poids et temps de chaque route d'API
 node scripts/semer-parties.mjs   # de quoi mesurer autre chose qu'un compte vide
 node scripts/compte-mesure.mjs   # ouvre un compte neuf et dépose son jeton
 node scripts/coutures.mjs        # coutures CJK, nombres bruts, et --invariants=fr
+node scripts/champions-ddragon.mjs --toutes  # nos 173 champions contre ceux de Riot
 ```
 
 Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
@@ -1332,6 +1336,71 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Nos cent soixante-treize champions contre ceux de Riot : rien, et ça se dit
+
+Suite du fil du champion. Trois correspondances vivent maintenant dans
+`src/lib/champions.ts` — la liste des noms affichés, les alias traduits, et la
+clé que Data Dragon emploie dans ses adresses — et **aucune ne peut être gardée
+par un test** : elles décrivent un service EXTÉRIEUR. `champions.test.ts` tient
+leur cohérence interne ; il ne peut pas savoir si Riot a ajouté un champion ce
+matin.
+
+**Les deux façons de rouiller sont silencieuses**, et le journal porte déjà
+chacune sous une autre forme :
+
+- un champion ajouté par Riot manque à notre liste. Le champ le REFUSE, le
+  bouton d'enregistrement reste éteint, et le message accuse la frappe de la
+  personne alors que la faute est chez nous ;
+- une clé fausse rend une image qui 404, donc le repli en lettre, et personne
+  ne le remarque avant des semaines.
+
+**Le recensement est ENTIÈREMENT NÉGATIF**, et c'est écrit ici pour qu'on ne le
+refasse pas : sur la version que le produit demande (16.16.1) **et** sur la
+dernière publiée (16.18.1), **173 champions des deux côtés, aucune clé sans
+icône, aucun champion ajouté par Riot qui nous manque, aucun nom que Riot ne
+connaisse pas, aucun alias vers un nom absent.**
+
+**Et une affirmation qui avait dérivé.** Le commentaire de `CLE_DATA_DRAGON`
+annonçait « Vérifié contre Data Dragon 16.17.1 » quand le composant demande
+**16.16.1**. La vérification était sans doute vraie le jour où elle a été
+faite ; elle ne portait plus sur la version que le produit sert. C'est le
+défaut que ce fichier reproche partout — un nombre écrit une fois au-dessus de
+quelque chose qui bouge — dans le commentaire qui décrit la vérification.
+
+D'où la règle de l'outil : **la version se LIT dans `ChampionIcon.tsx`**, elle
+ne se réécrit pas dans le script. Sinon les deux dérivent, et c'est le script
+qui aurait raison sur le papier pendant que le produit demande autre chose.
+
+**Le premier contrôle n'est pas une comparaison, c'est une SONDE.** Riot garde
+ses anciennes versions longtemps, pas éternellement : le jour où 16.16.1
+disparaît, **toutes** les icônes tombent sur leur lettre de repli d'un coup, et
+rien dans le dépôt ne le dit. L'outil demande donc une icône avant de comparer
+quoi que ce soit, et sort en erreur si elle ne vient pas.
+
+**Cinq sabotages, cinq échecs**, chacun sur son propre constat — parce qu'un
+outil de mesure qui ne sait pas échouer ne mesure rien :
+
+| ce qu'on casse | ce que l'outil dit |
+|---|---|
+| un champion retiré de notre liste | « ajoutés par Riot, absents : Ahri » |
+| une clé Data Dragon fausse | « clé sans icône chez Riot : Cho'Gath » |
+| un champion inventé chez nous | deux constats, la clé ET le nom |
+| un alias vers un nom absent | « Bardo → Bard le Grand » |
+| la version figée ramenée à 9.9.9 | « ne sert plus les icônes (403) » |
+
+**Trois de mes cinq sabotages n'ont d'abord rien sabordé**, et c'est le témoin
+d'empreinte qui l'a dit : mes motifs supposaient un champion par ligne, alors
+que la liste en met huit ou neuf. Sans `git hash-object` avant et après,
+j'aurais conclu que l'outil ne mordait pas sur trois constats sur cinq — c'est
+le piège « un sabotage qui ne sabote pas », et il vaut exactement autant que le
+sabotage lui-même.
+
+**Ce que l'outil ne fait PAS, écrit plutôt que laissé à croire** : il ne
+tourne pas en intégration continue. Un garde qui dépend d'un tiers rougit le
+jour où le tiers tousse, et un travail rouge qu'on ne peut pas réparer soi-même
+finit par se filtrer — c'est la leçon des cinquante courriels d'échec, appliquée
+avant d'avoir à la payer.
 
 ### V572 est partie ROUGE, et les deux causes ne se ressemblaient pas
 

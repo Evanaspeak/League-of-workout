@@ -219,11 +219,18 @@ export function suggererChampions(liste: string[], requete: string, limite = 8):
  * « Chogath »). La table ne porte donc QUE ce que le repli manque, et une
  * entrée qui ne change rien y serait du bruit — `Aatrox` en était une.
  *
- * Vérifié contre Data Dragon 16.17.1 : `cleDataDragon` rend la bonne clé pour
- * les cent soixante-treize, et deux champions ne partagent jamais une clé. Ce
- * contrôle-là demande le réseau ; ce que `champions.test.ts` garde sans lui,
- * c'est la cohérence interne — pas d'entrée sans effet, pas d'entrée qui
- * désigne un champion absent de la liste, pas de collision.
+ * Ce contrôle-là demande le RÉSEAU, donc il ne peut pas être un test : un
+ * garde qui dépend d'un tiers rougit le jour où le tiers tousse.
+ * `scripts/champions-ddragon.mjs` le fait, pendant une campagne, et il lit la
+ * version dans `ChampionIcon.tsx` plutôt que de la réécrire — sinon les deux
+ * dérivent. Relevé le 9 septembre 2026, sur la version que le produit demande
+ * (16.16.1) ET sur la dernière publiée (16.18.1) : **173 champions des deux
+ * côtés, aucune clé sans icône, aucun champion ajouté par Riot qui nous
+ * manque, aucun alias vers un nom absent.**
+ *
+ * Ce que `champions.test.ts` garde sans réseau, c'est la cohérence INTERNE —
+ * pas d'entrée sans effet, pas d'entrée qui désigne un champion absent de la
+ * liste, pas de collision.
  */
 export const CLE_DATA_DRAGON: Record<string, string> = {
   "Bel'Veth":          "Belveth",
