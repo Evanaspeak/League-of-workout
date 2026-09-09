@@ -1286,6 +1286,117 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture après V545 à V549, et l'outil qui comparait des empreintes
+Passée sur un compte semé à soixante parties, créé APRÈS la suite navigateur —
+`.next/cache` vidé avant de mesurer, comme la procédure le demande depuis
+qu'une 404 gardée a fait conclure à une régression.
+
+**Accessibilité : 0 constat**, vingt et une pages en français, en allemand et
+en japonais, et **soixante-trois « rien à signaler »** — aucune page laissée de
+côté dans aucune des trois. Le panneau « Ta dépense du jour » y entre pour la
+première fois, et le refus de connexion vient de gagner son `role="alert"` :
+c'est la campagne qui le vérifie, puisqu'un message annoncé à personne ne se
+voit pas autrement.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 152 ms | 936 ms | 0,000 | la mention Riot, en pied |
+| `/dashboard` | 316 ms | 1136 ms | 0,000 | le bandeau d'attente Riot |
+| `/amis` | 288 ms | 1136 ms | 0,031 | le paragraphe du classement |
+| `/history` | 532 ms | 1148 ms | 0,000 | le titre |
+| `/bilan` | 268 ms | **2116 ms** | 0,000 | l'image de saison |
+
+Les cinq sont dans les seuils, et `/bilan` reste le plancher pour la raison
+écrite dix fois — son plus grand élément est l'image de saison. Le poids au
+chargement bouge de **deux kilo-octets sur un seul écran** : les réglages
+passent de 268 à 270 ko, les quatre autres ne bougent pas. C'est la signature
+d'un dictionnaire qui grossit, pas d'un module qui arrive — un panneau neuf
+avec ses libellés dans les six langues.
+
+**La comparaison de rendu isole exactement la rubrique qui devait bouger.**
+Trente-neuf captures, **quatre différentes**, et les trois qui comptent sont la
+même :
+
+| capture | avant | après |
+|---|---|---|
+| `360_fr_settings-corps` | 1 322 px | 1 510 px |
+| `768_fr_settings-corps` | 1 087 px | 1 226 px |
+| `1280_fr_settings-corps` | 1 090 px | 1 230 px |
+
+La rubrique **GRANDIT**, elle ne se déplace pas — signature d'un panneau
+ajouté. Aucune autre page ne bouge : ni le tableau de bord, ni l'historique,
+ni l'écran des amis, ni les cinq pages publiques. La quatrième est
+`360_fr_cgu`, dont les dimensions sont **identiques des deux côtés** :
+c'est l'anticrénelage déjà relevé au journal, au même endroit.
+
+**Et c'est en cherchant à compter ces pixels que l'outil a montré une
+description périmée.** Le journal écrit, à l'entrée des dix-huit pixels du
+7 septembre : « c'est la raison pour laquelle on compte les pixels au lieu de
+comparer deux empreintes et de conclure ». `comparer-rendu.mjs`, lui, compare
+des **empreintes SHA-256** — la phrase décrivait le geste fait à la main ce
+soir-là, pas l'outil, et elle se relit comme une propriété de l'outil. C'est
+le motif que ce journal reproche partout, dans le paragraphe qui le reproche.
+
+**Compter les pixels demande un décodeur, et `pngjs` n'est pas installé.**
+L'installer pour une mesure ne se fait pas de nuit. Ce qui se lit sans
+décodeur, en revanche, ce sont les DIMENSIONS : quatre octets de largeur et
+quatre de hauteur à l'offset 16 du fichier. L'outil les rend maintenant à côté
+de chaque capture différente — `1322x360 → 1510x360`, ou « dimensions
+identiques ».
+
+**Ce n'est pas un comptage de pixels, et le commentaire le dit** : deux
+captures de mêmes dimensions peuvent différer par n'importe quoi. Ce que ça
+donne est la seule chose que l'empreinte ne dit pas et qui tranche le plus
+souvent — « quatre captures différentes » se lit comme une alerte tant qu'on
+ne sait pas si la page a grandi ou si elle s'est déplacée, et c'est ce qui
+sépare un panneau ajouté d'une régression. La lecture est éprouvée sur les
+captures RÉELLES de cette campagne, pas sur un cas fabriqué : 1 322 puis
+1 510, ce qui est bien ce que les deux fichiers portent.
+
+**Aucun garde n'est écrit pour ça, et la raison est écrite plutôt que tue.**
+L'outil ne bloque aucune poussée, et une inversion des deux offsets se verrait
+à la première campagne — « 1510x360 » sur une capture de 360 px de large ne
+ressemble à rien. Un test qui épinglerait les deux constantes n'éprouverait
+que les constantes.
+
+**Dépendances du 9 septembre, et une haute réellement corrigée des deux
+côtés.** `js-yaml` 4.3.1 → 4.3.2 : une consommation de processeur non bornée
+sur des clés de fusion vides. Elle arrive **deux fois**, et les deux moitiés
+ne se valent pas :
+
+- côté SITE, par `eslint` et `ts-jest`, c'est-à-dire par l'outillage —
+  inatteignable, rien de ce qui est livré ne le charge ;
+- côté APPLICATION DE BUREAU, par `electron-updater`, qui est une dépendance
+  d'EXÉCUTION : c'est lui qui analyse le `latest.yml` téléchargé depuis
+  GitHub à chaque mise à jour. Le YAML analysé est le nôtre, donc rien
+  d'exploitable ; mais c'est du code qui tourne sur la machine de quelqu'un,
+  pas un script de construction.
+
+Le correctif est un saut de CORRECTIF dans les deux cas, donc il se prend.
+**L'application de bureau passe à zéro vulnérabilité**, contre une haute
+avant.
+
+**Ce qui reste est `mysql2`**, inatteignable et gardé par
+`src/dependanceMysql.test.ts` — ce projet parle à PostgreSQL, et le seul
+« correctif » proposé reste un retour de version majeure sur le client d'accès
+aux données. Rien d'autre à prendre : tout ce qui est en retard l'est d'une
+MAJEURE (`typescript` 7, `eslint` 10, `@types/node` 26, `electron` 44), d'un
+`0.x` dont la mineure est le créneau des ruptures (`@libsql/client` 0.18), ou
+d'une version candidate (`prisma` 8).
+
+**Et le correctif a montré que le fichier de verrous de l'application de
+bureau était en retard de six versions.** Il annonçait `0.9.12` quand
+`package.json` disait `0.9.18` : les incréments se font en éditant le premier
+fichier, et personne ne relance l'installation derrière. C'est sans
+conséquence — `npm ci` ne compare que les DÉPENDANCES, pas la version
+racine — et ça vaut d'être écrit : le numéro qu'on lit dans le verrou n'est
+pas celui qui s'installe.
+
+Application de bureau en **0.9.19**. Rien de ce qui s'installe ne change de
+comportement — un analyseur de YAML qui gagne une borne — et la règle du
+propriétaire ne souffre pas d'exception : dès qu'une modification touche
+`desktop/`, on publie.
+
 ### V546 en ligne, et trois témoins qui disent la même chose
 La correction de la page de secours hors ligne est servie. Fusionnée à
 **00 h 19 min 37 UTC**, elle rendait encore l'ancien état à 01 h 28 et le

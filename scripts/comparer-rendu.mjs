@@ -230,12 +230,33 @@ for (const largeur of LARGEURS) {
     const nom = `${largeur}${nomCapture(chemin)}`;
     const image = await page.screenshot({ fullPage: true });
     writeFileSync(join(dossier, nom), image);
-    empreintes[nom] = createHash("sha256").update(image).digest("hex").slice(0, 16);
+    empreintes[nom] = {
+      empreinte: createHash("sha256").update(image).digest("hex").slice(0, 16),
+      ...dimensions(image),
+    };
     await ctx.close();
   }
 }
 writeFileSync(join(dossier, "empreintes.json"), JSON.stringify(empreintes, null, 2));
 await navigateur.close();
+
+/**
+ * Les dimensions d'un PNG, lues dans son en-tête.
+ *
+ * Elles se lisent sans décodeur — quatre octets de largeur et quatre de
+ * hauteur, en gros-boutiste, à l'offset 16 du fichier — donc sans installer
+ * de bibliothèque pour ça.
+ *
+ * Elles ne remplacent pas un comptage de pixels, et c'est écrit plutôt que
+ * laissé à croire : deux captures de mêmes dimensions peuvent différer par
+ * n'importe quoi. Ce qu'elles donnent est la seule chose que l'empreinte ne
+ * dit pas et qui tranche le plus souvent — une page qui GRANDIT est la
+ * signature d'un panneau ajouté, une page qui garde sa hauteur au pixel est
+ * celle d'un changement local.
+ */
+function dimensions(png) {
+  return { l: png.readUInt32BE(16), h: png.readUInt32BE(20) };
+}
 
 if (detournees.length) {
   console.error(`\n${detournees.length} page(s) détournée(s) : la série ne vaut rien tant que ce n'est pas réglé.`);
@@ -244,7 +265,13 @@ if (detournees.length) {
 
 if (MODE === "apres") {
   const avant = JSON.parse(readFileSync(join(RACINE, "avant", "empreintes.json"), "utf8"));
-  const differentes = Object.keys(empreintes).filter((n) => avant[n] !== empreintes[n]);
+  // Une campagne produit toujours ses deux moitiés avec la même version de
+  // l'outil ; la lecture reste tolérante à l'ancienne forme pour qu'un
+  // manifeste d'avant l'ajout des dimensions ne fasse pas tomber la
+  // comparaison sur une erreur de lecture.
+  const sig = (v) => (typeof v === "string" ? v : v?.empreinte);
+  const taille = (v) => (typeof v === "object" && v ? `${v.l}x${v.h}` : "?");
+  const differentes = Object.keys(empreintes).filter((n) => sig(avant[n]) !== sig(empreintes[n]));
   // Une page dont le contenu dépend d'un service extérieur se signale à part :
   // sa différence est une question, pas un constat.
   const instables = differentes.filter((n) => [...PAGES_INSTABLES].some((p) => n.includes(p)));
@@ -257,7 +284,14 @@ if (MODE === "apres") {
     console.log(`${Object.keys(empreintes).length} captures, aucune différence.`);
   } else {
     console.log(`${differentes.length} capture(s) différente(s) :`);
-    for (const n of differentes) console.log(`  ${n}`);
+    for (const n of differentes) {
+      const a = taille(avant[n]);
+      const b = taille(empreintes[n]);
+      // Le verdict le plus utile tient dans la hauteur : elle GRANDIT quand
+      // on a ajouté un panneau, elle ne bouge pas quand le changement est
+      // local. « Quatre captures différentes » ne dit ni l'un ni l'autre.
+      console.log(`  ${n}  ${a === b ? `${a}, dimensions identiques` : `${a} → ${b}`}`);
+    }
     for (const n of manquantes) console.log(`  ${n} (absente après)`);
     process.exit(1);
   }
