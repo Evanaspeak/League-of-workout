@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { chargerBareme, oublierBareme } from "@/lib/baremeConfig";
 import { getCurrentUser } from "@/lib/auth-helpers";
-import { comptePublic } from "@/lib/compte";
+import { compteReglages } from "@/lib/compte";
 import { chargerRatios } from "@/lib/exercicesConfig";
 import {
   EXERCICES_REGLABLES, isExerciceId, PART_MAX, PART_MIN, RATIO_BORNES, toExerciceIds,
@@ -43,7 +43,17 @@ export async function GET() {
   ]);
   return NextResponse.json({
     roleWeights, levelConfigs, masteryConfig, goal, ratiosCommuns,
-    user: comptePublic(user),
+    /**
+     * `compteReglages` et non `comptePublic`.
+     *
+     * Cette route sert à quelqu'un son PROPRE compte, derrière la porte, sur
+     * le seul écran qui affiche et change ses réglages. Le filtre de
+     * DIFFUSION y retirait les neuf colonnes de « Ton corps » et le jeton du
+     * profil public : elles étaient donc écrites et jamais relues, et tout
+     * revenait à zéro au premier rechargement. Les secrets, eux, tombent
+     * toujours.
+     */
+    user: compteReglages(user),
   });
 }
 

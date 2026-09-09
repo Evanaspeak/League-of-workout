@@ -33,11 +33,6 @@ const NE_SORTENT_PAS = [
   // s'afficher en direct, ce n'est pas une hypothèse d'école. Il se demande
   // par `/api/obs`, qui existe pour ça.
   "jetonObs",
-  // Le jeton du profil public : même nature, même raison. C'est une adresse
-  // qui montre quelque chose de vous SANS session, donc un laissez-passer, et
-  // il n'a rien à voyager à chaque chargement de page. Il se demande par
-  // `/api/settings`, avec le reste des réglages.
-  "jetonProfil",
   // Le compteur de révocation des sessions. Ce n'est pas un secret : c'est de
   // la mécanique interne, que le navigateur ne lit nulle part et n'a aucune
   // raison de connaître. Un compte public qui publie les rouages invite à
@@ -61,20 +56,35 @@ const NE_SORTENT_PAS = [
   // l'onglet réseau, par quel compte celui-ci est arrivé. Aucun écran ne le
   // demande.
   "parrainId",
-  /**
-   * Le corps, et ce qu'on en fait (étape 05).
-   *
-   * Neuf colonnes qui sont des données de SANTÉ au sens de l'article 9 : la
-   * variante de formule, le niveau d'activité, le mode poursuivi, le poids
-   * visé, les trois mesures du mètre-ruban et le rappel de pesée. Aucune n'a
-   * de raison de traverser la réponse que la navigation lit à chaque page, et
-   * `comptePublic` sert précisément les routes de DIFFUSION — la source OBS
-   * s'affiche par-dessus un stream, devant le public de quelqu'un d'autre.
-   *
-   * Elles se demandent par `/api/settings`, derrière la porte, avec le reste
-   * des réglages. Et elles figurent à l'export de l'article 20, qui couvre
-   * tout ce qu'on garde et pas seulement ce qu'on affiche.
-   */
+  // Marque du dernier rappel de pesée envoyé, comme `rappelLe` et `bilanLe`.
+  // Mécanique interne d'envoi : aucun écran ne la lit.
+  "rappelPeseeLe",
+] as const;
+
+/**
+ * Ce qui ne part pas en DIFFUSION, et qui part quand même aux réglages.
+ *
+ * La distinction manquait, et son absence a coûté la rubrique entière.
+ *
+ * Ces colonnes sont des données de SANTÉ au sens de l'article 9 — la variante
+ * de formule, le niveau d'activité, le mode poursuivi, le poids visé, les
+ * trois mesures du mètre-ruban, le rappel de pesée — plus le jeton du profil
+ * public, qui est un laissez-passer. Aucune n'a de raison de traverser
+ * `/api/user` ni `/api/contexte`, que la navigation lit à CHAQUE page : la
+ * source OBS s'affiche par-dessus un stream, devant le public de quelqu'un
+ * d'autre.
+ *
+ * Mais `/api/settings` sert la personne son PROPRE compte, derrière la porte,
+ * et c'est le seul écran qui les affiche et les change. Les retirer là aussi
+ * les rendait **écrites et jamais relues** : on choisissait « Perdre », on
+ * rechargeait, et tout était revenu à « Rien pour l'instant ». Le
+ * commentaire d'à côté écrivait pourtant la règle depuis le premier jour —
+ * « elles se demandent par `/api/settings` » — et personne ne l'avait
+ * appliquée. Une garantie décrite qui n'existe pas se relit comme une
+ * garantie.
+ */
+const HORS_DIFFUSION = [
+  "jetonProfil",
   "formuleCalorique",
   "niveauActivite",
   "modeCalorique",
@@ -83,13 +93,37 @@ const NE_SORTENT_PAS = [
   "tourCou",
   "tourHanches",
   "rappelPeseeActif",
-  "rappelPeseeLe",
 ] as const;
 
 type Secret = (typeof NE_SORTENT_PAS)[number];
+type HorsDiffusion = (typeof HORS_DIFFUSION)[number];
 
-export function comptePublic<T extends object>(user: T): Omit<T, Secret> {
-  const copie = { ...(user as T & Partial<Record<Secret, unknown>>) };
-  for (const cle of NE_SORTENT_PAS) delete copie[cle];
-  return copie as Omit<T, Secret>;
+function sans<T extends object, C extends readonly string[]>(
+  user: T, cles: C,
+): T {
+  const copie = { ...(user as T & Record<string, unknown>) };
+  for (const cle of cles) delete copie[cle];
+  return copie as T;
+}
+
+/**
+ * Le compte tel qu'il peut partir en DIFFUSION : `/api/user`, `/api/contexte`.
+ *
+ * C'est le filtre le plus serré des deux, et c'est le défaut : une colonne
+ * nouvelle qui n'a pas été rangée part par ici, donc `compte.test.ts` exige
+ * qu'on la range.
+ */
+export function comptePublic<T extends object>(user: T): Omit<T, Secret | HorsDiffusion> {
+  return sans(sans(user, NE_SORTENT_PAS), HORS_DIFFUSION) as Omit<T, Secret | HorsDiffusion>;
+}
+
+/**
+ * Le compte tel qu'il part aux RÉGLAGES : son propriétaire, derrière la porte.
+ *
+ * Les secrets tombent toujours — l'empreinte du mot de passe, le jeton de
+ * diffusion, le code de parrainage. Ce qui reste est ce que la personne a
+ * elle-même réglé, et qu'elle doit pouvoir relire pour le changer.
+ */
+export function compteReglages<T extends object>(user: T): Omit<T, Secret> {
+  return sans(user, NE_SORTENT_PAS) as Omit<T, Secret>;
 }

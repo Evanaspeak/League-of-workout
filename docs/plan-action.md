@@ -11,7 +11,7 @@
 
 Établi le 2 septembre 2026. Dernière mise à jour : 2026-09-08.
 
-**114 construits · 44 restants**
+**116 construits · 42 restants**
 
 > Le compte d'en-tête a menti six jours : il annonçait « 55 construits · 102
 > restants » pendant que les tableaux, eux, étaient tenus à jour ligne par
@@ -247,13 +247,13 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [x] | 073 | Un rappel d'échauffement avant une grosse dette | — |
 
 ### Les objets connectés
-*6 à faire · 3 faits.* Une seule chose à faire tout de suite, le reste attend des chiffres.
+*4 à faire · 5 faits.* Le reste attend des chiffres.
 
 | | réf | | effort |
 |---|---|---|---|
-| [ ] | 040 | La saisie manuelle des calories | 1 nuit |
+| [x] | 040 | La saisie manuelle des calories | — |
 | [ ] | 040 | Un système de capture pour éviter la triche | 2 nuits |
-| [ ] | 041 | Elle nourrit l'objectif calorique | dépend du calculateur |
+| [x] | 041 | Elle nourrit l'objectif calorique — **la mesure du jour REMPLACE l'estimation d'activité ; le refus sous le métabolisme de base dit lequel des deux chiffres de la montre on attend** | — |
 | [ ] | 042 | Brancher Strava | 2 nuits |
 | [ ] | 044 | Publier automatiquement, sans bouton | ½ nuit |
 | [ ] | 035 | Demander à l'inscription si la personne porte une montre | ½ nuit |

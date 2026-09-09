@@ -9,6 +9,7 @@ jest.mock("@/lib/prisma", () => ({
     signalement: { findMany: jest.fn() },
     demandeJeu: { findMany: jest.fn() },
     pesee: { findMany: jest.fn() },
+    depenseJour: { findMany: jest.fn() },
     testForce: { findMany: jest.fn() },
     defiAccompli: { findMany: jest.fn() },
     envoiPush: { findMany: jest.fn() },
@@ -62,6 +63,9 @@ beforeEach(() => {
   ]);
   (prisma.pesee.findMany as jest.Mock).mockResolvedValue([
     { jour: "2026-08-01", grammes: 78400, createdAt: new Date("2026-08-01T07:00:00Z") },
+  ]);
+  (prisma.depenseJour.findMany as jest.Mock).mockResolvedValue([
+    { jour: "2026-08-01", kcalBrulees: 2640, createdAt: new Date("2026-08-01T22:00:00Z") },
   ]);
   (prisma.testForce.findMany as jest.Mock).mockResolvedValue([
     { jour: "2026-07-01", pompes: 30, createdAt: new Date("2026-07-01T18:00:00Z") },
@@ -203,6 +207,7 @@ describe("l'export porte tout ce qui appartient à la personne", () => {
     signalements: "ce qu'on nous a écrit, qu'on avait déjà sous les yeux",
     jeuxDemandes: "un nom de jeu tapé une fois, à côté de ce qui compte",
     pesees: "ce qu'on a saisi soi-même, à l'endroit où on l'a saisi",
+    depensesQuotidiennes: "un relevé de montre recopié à la main, à l'endroit où on l'a recopié",
     testsDeForce: "le test, qu'on refait soi-même une fois par mois",
     defisAccomplis: "des défis relevés, pas une donnée qu'on vient reprendre",
     notificationsEnvoyees: "quand on nous a dérangé, à côté de ce qui compte",

@@ -19,7 +19,7 @@ export async function GET() {
 
   const [
     games, goal, abonnements, paiements, signalements, demandesJeux,
-    pesees, testsForce, defis, relais, envois,
+    pesees, depensesJour, testsForce, defis, relais, envois,
   ] = await Promise.all([
     prisma.game.findMany({
       /*
@@ -72,6 +72,17 @@ export async function GET() {
       where: { userId: user.id },
       orderBy: { jour: "asc" },
       select: { jour: true, grammes: true, createdAt: true },
+    }),
+    /**
+     * Ce qu'une montre a mesuré, jour par jour (réponse 040).
+     *
+     * De la donnée de santé au même titre qu'une pesée, et saisie à la main :
+     * « fournie par la personne » au sens le plus littéral de l'article 20.
+     */
+    prisma.depenseJour.findMany({
+      where: { userId: user.id },
+      orderBy: { jour: "asc" },
+      select: { jour: true, kcalBrulees: true, createdAt: true },
     }),
     /** L'histoire des tests de force, celle qui fait la courbe. */
     prisma.testForce.findMany({
@@ -230,6 +241,11 @@ export async function GET() {
     jeuxDemandes: demandesJeux.map((d) => ({ nom: d.nom, demandeLe: d.quand })),
     /** Chaque pesée, telle qu'elle a été saisie. Le poids voyage en GRAMMES. */
     pesees: pesees.map((p) => ({ jour: p.jour, grammes: p.grammes, enregistreLe: p.createdAt })),
+    /** Chaque dépense relevée sur une montre. Le champ dit ce qu'il porte :
+     *  la dépense TOTALE de la journée, métabolisme de base compris. */
+    depensesQuotidiennes: depensesJour.map((d) => ({
+      jour: d.jour, kcalBrulees: d.kcalBrulees, enregistreLe: d.createdAt,
+    })),
     /** Chaque test de force, celui qui fixe le niveau comme les précédents. */
     testsDeForce: testsForce.map((t) => ({ jour: t.jour, pompes: t.pompes, enregistreLe: t.createdAt })),
     defisAccomplis: defis.map((d) => ({

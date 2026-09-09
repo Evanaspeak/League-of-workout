@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useT, useNombre } from "@/lib/i18n/LocaleContext";
+import { useT, useNombre, useLocale } from "@/lib/i18n/LocaleContext";
 import { settings as settingsDict } from "@/lib/i18n/dictionaries/settings";
+import { translateApiError } from "@/lib/i18n/apiErrors";
 import {
   MULTIPLICATEURS, imc, masseGrasse, mesuresCompletes, objectifCalorique,
   type FormuleCalorique, type ModeCalorique, type NiveauActivite,
 } from "@/lib/objectifCalorique";
+import { KCAL_MAX, objectifMesure } from "@/lib/depenseJour";
 
 /**
  * La rubrique « Ton corps » : l'objectif calorique et le mètre-ruban.
@@ -36,6 +38,20 @@ const CourbePoids = dynamic(
   () => import("@/components/CourbePoids").then((m) => m.CourbePoids),
   { ssr: false, loading: () => <div style={{ height: 180 }} /> },
 );
+
+/**
+ * Le jour LOCAL, celui du navigateur.
+ *
+ * `toISOString` rendrait le jour UTC : une saisie faite à six heures du matin
+ * à Tokyo se rangerait sur la veille, et la dépense du jour ne nourrirait
+ * l'objectif de personne. La règle est la même que pour une pesée, et elle
+ * vit maintenant une seule fois plutôt que deux.
+ */
+function jourLocalNavigateur(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 
 const ACTIVITES = Object.keys(MULTIPLICATEURS) as NiveauActivite[];
 const MODES: ModeCalorique[] = ["perte", "maintien", "prise"];
@@ -84,6 +100,7 @@ export function ReglagesCorps({
    * sept. Ce n'est pas de la typographie, c'est un chiffre faux.
    */
   const decimal = useNombre({ maximumFractionDigits: 1 });
+  const { locale } = useLocale();
   const [peseeKg, setPeseeKg] = useState("");
   const [peseeEtat, setPeseeEtat] = useState<"" | "envoi" | "ok" | "echec">("");
   const [pesees, setPesees] = useState<{ jour: string; grammes: number }[] | null>(null);
@@ -97,11 +114,34 @@ export function ReglagesCorps({
    */
   const [lectureRatee, setLectureRatee] = useState(false);
 
+  /**
+   * La dépense relevée sur une montre (ligne 040 du plan).
+   *
+   * `depenseErreur` porte le message de la ROUTE, traduit, et non un
+   * « erreur d'enregistrement » générique. C'est tout le sujet : le refus qui
+   * compte ici dit LEQUEL des deux chiffres de la montre on attend, et le
+   * remplacer par un message uniforme enverrait retaper le même nombre.
+   */
+  const [depenseKcal, setDepenseKcal] = useState("");
+  const [depenseEtat, setDepenseEtat] = useState<"" | "envoi" | "ok" | "echec">("");
+  const [depenseErreur, setDepenseErreur] = useState("");
+  const [depenses, setDepenses] = useState<{ jour: string; kcalBrulees: number }[]>([]);
+
   useEffect(() => {
     fetch("/api/pesees")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("lecture"))))
       .then((d) => setPesees(Array.isArray(d?.pesees) ? d.pesees : []))
       .catch(() => setLectureRatee(true));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/depense")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("lecture"))))
+      .then((d) => setDepenses(Array.isArray(d?.depenses) ? d.depenses : []))
+      // Une lecture ratée laisse la liste vide : l'objectif retombe alors sur
+      // l'ESTIMATION, c'est-à-dire sur le comportement d'avant cette ligne.
+      // Un repli ne doit jamais promettre plus que ce qu'on a mesuré.
+      .catch(() => {});
   }, []);
 
   /** Enregistre un réglage en revenant en arrière si le serveur refuse. */
@@ -118,8 +158,30 @@ export function ReglagesCorps({
     age: age ?? undefined,
     activite: prefs.niveauActivite ?? undefined,
   };
+  /**
+   * La dépense relevée AUJOURD'HUI, si elle existe.
+   *
+   * Le jour vient du navigateur, comme celui qu'on envoie : chercher avec un
+   * jour UTC ferait manquer sa propre saisie du matin selon le fuseau, et
+   * l'objectif retomberait sur l'estimation sans que rien ne le dise.
+   */
+  const jour = jourLocalNavigateur();
+  const depenseDuJour = depenses.find((d) => d.jour === jour)?.kcalBrulees ?? null;
+
+  /**
+   * Réponse 041, « elle nourrit l'objectif » : la mesure REMPLACE l'estimation
+   * pour le jour où elle existe.
+   *
+   * `objectifCalorique` part du métabolisme de base multiplié par un facteur
+   * d'activité choisi dans une liste, c'est-à-dire d'une devinette. Quand une
+   * montre a mesuré la journée, la garder serait un journal et pas un
+   * objectif. Les deux avertissements suivent la valeur AFFICHÉE et non
+   * l'estimation : c'est ce chiffre-là qu'on va manger.
+   */
   const objectif = prefs.modeCalorique && mesuresCompletes(mesures)
-    ? objectifCalorique(mesures, prefs.modeCalorique)
+    ? (depenseDuJour !== null
+      ? objectifMesure(mesures, prefs.modeCalorique, depenseDuJour)
+      : objectifCalorique(mesures, prefs.modeCalorique))
     : null;
 
   const graisse = prefs.formuleCalorique && taille && prefs.tourTaille && prefs.tourCou
@@ -143,14 +205,12 @@ export function ReglagesCorps({
     if (!Number.isFinite(kg) || kg <= 0) { setPeseeEtat("echec"); return; }
     setPeseeEtat("envoi");
     try {
-      const d = new Date();
-      const p = (n: number) => String(n).padStart(2, "0");
       const res = await fetch("/api/pesees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           grammes: Math.round(kg * 1000),
-          jour: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`,
+          jour: jourLocalNavigateur(),
         }),
       });
       // Un 500 ou une session expirée traversent `if (res.ok)` sans rien dire :
@@ -165,6 +225,46 @@ export function ReglagesCorps({
       }
     } catch {
       setPeseeEtat("echec");
+    }
+  };
+
+  /**
+   * Enregistre la dépense du jour.
+   *
+   * Le message de refus vient de la ROUTE, traduit, et jamais d'un texte
+   * générique. La route distingue deux refus qui ne se corrigent pas de la
+   * même façon : un chiffre absurde se retape, une valeur sous le métabolisme
+   * de base est presque toujours les calories ACTIVES à la place du total. Un
+   * « erreur d'enregistrement » uniforme ferait retaper le même nombre.
+   */
+  const noterDepense = async () => {
+    const kcal = Number(depenseKcal.replace(",", "."));
+    if (!Number.isFinite(kcal) || kcal <= 0) {
+      setDepenseEtat("echec");
+      setDepenseErreur(t.erreurSauvegarde);
+      return;
+    }
+    setDepenseEtat("envoi");
+    setDepenseErreur("");
+    try {
+      const res = await fetch("/api/depense", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kcalBrulees: Math.round(kcal), jour: jourLocalNavigateur() }),
+      });
+      setDepenseEtat(res.ok ? "ok" : "echec");
+      const d = await res.json().catch(() => null);
+      if (res.ok) {
+        setDepenseKcal("");
+        // La route rend la liste entière : la relire serait un aller-retour
+        // pour une réponse qu'on tient déjà.
+        if (Array.isArray(d?.depenses)) setDepenses(d.depenses);
+      } else {
+        setDepenseErreur(d?.error ? translateApiError(d.error, locale) : t.erreurSauvegarde);
+      }
+    } catch {
+      setDepenseEtat("echec");
+      setDepenseErreur(t.erreurSauvegarde);
     }
   };
 
@@ -284,6 +384,14 @@ export function ReglagesCorps({
                   {t.corpsMaintienValeur(nombre(objectif.maintien))}
                   {objectif.imc !== null && ` · ${t.corpsImc(decimal(objectif.imc))}`}
                 </div>
+                {/*
+                  D'où vient le chiffre. Sans cette ligne, l'objectif change
+                  d'un jour à l'autre sans que rien ne l'explique, et on
+                  cherche l'erreur dans ses mesures.
+                */}
+                {depenseDuJour !== null && (
+                  <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsDepenseMesuree}</p>
+                )}
                 {objectif.sousPlancher && (
                   <p role="note" className="text-xs" style={{ color: "var(--loss)" }}>
                     {t.corpsAvertPlancher}
@@ -307,6 +415,42 @@ export function ReglagesCorps({
               <p className="text-xs" style={{ color: "var(--faint)" }}>{t.corpsIncomplet}</p>
             )}
           </>
+        )}
+      </div>
+
+      {/* ── La dépense relevée sur une montre (ligne 040) ───────────────── */}
+      <div className="lol-panel space-y-3">
+        <div>
+          <h2 className="titre-section">{t.corpsDepenseTitre}</h2>
+          <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.corpsDepenseAide}</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <input
+            type="number" inputMode="numeric" step="10" min={1} max={KCAL_MAX}
+            className="lol-input flex-1"
+            aria-label={t.corpsDepenseLabel}
+            value={depenseKcal}
+            onChange={(e) => { setDepenseKcal(e.target.value); setDepenseEtat(""); setDepenseErreur(""); }}
+          />
+          <button className="lol-btn" disabled={depenseEtat === "envoi"} onClick={noterDepense}>
+            {depenseEtat === "envoi" ? t.enregistrementEnCours : t.corpsDepenseEnregistrer}
+          </button>
+        </div>
+        {depenseEtat === "ok" && (
+          <p role="status" className="text-xs" style={{ color: "var(--victory)" }}>{t.enregistre}</p>
+        )}
+        {/*
+          `role="alert"` et non `status` : ce refus DIT lequel des deux chiffres
+          de la montre on attend, et il n'a aucun intérêt s'il attend le
+          prochain moment calme d'un lecteur d'écran.
+        */}
+        {depenseEtat === "echec" && depenseErreur && (
+          <p role="alert" className="text-xs" style={{ color: "var(--loss)" }}>{depenseErreur}</p>
+        )}
+        {depenseDuJour !== null && (
+          <p className="text-xs" style={{ color: "var(--faint)" }}>
+            {t.corpsDepenseAujourdhui(nombre(depenseDuJour))}
+          </p>
         )}
       </div>
 

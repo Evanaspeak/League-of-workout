@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { comptePublic } from "./compte";
+import { comptePublic, compteReglages } from "./compte";
 
 /**
  * Le recensement qui accompagne la liste de refus.
@@ -194,6 +194,51 @@ describe("comptePublic", () => {
     for (const champ of PART_AU_NAVIGATEUR) {
       expect(rendu[champ]).toBe(champ);
     }
+  });
+
+  /**
+   * Les deux filtres ne sont pas le même, et c'est tout le sujet.
+   *
+   * Il n'y en avait qu'un : `/api/settings` employait le filtre de DIFFUSION,
+   * donc les neuf colonnes de « Ton corps » et le jeton du profil public
+   * étaient écrites et jamais relues. On choisissait « Perdre », on
+   * rechargeait la page, et tout était revenu à « Rien pour l'instant ».
+   *
+   * Ce contrôle éprouve la SÉPARATION, ce qu'aucun des précédents ne faisait :
+   * ils vérifiaient que chaque colonne est classée, jamais qui la lit.
+   */
+  const RENDUES_AUX_REGLAGES = [
+    "jetonProfil", "formuleCalorique", "niveauActivite", "modeCalorique",
+    "poidsCible", "tourTaille", "tourCou", "tourHanches", "rappelPeseeActif",
+  ];
+
+  it("les réglages relisent ce que la diffusion ne montre pas", () => {
+    const compte = Object.fromEntries(champs.map((c) => [c, c])) as Record<string, unknown>;
+    const diffusion = comptePublic(compte) as Record<string, unknown>;
+    const reglages = compteReglages(compte) as Record<string, unknown>;
+
+    for (const champ of RENDUES_AUX_REGLAGES) {
+      expect(diffusion).not.toHaveProperty(champ);
+      expect(reglages[champ]).toBe(champ);
+    }
+  });
+
+  it("les réglages ne relâchent AUCUN secret", () => {
+    // Le témoin de la séparation : sans lui, `compteReglages` pourrait rendre
+    // la ligne telle quelle et le contrôle d'au-dessus passerait quand même.
+    const compte = Object.fromEntries(champs.map((c) => [c, c])) as Record<string, unknown>;
+    const reglages = compteReglages(compte) as Record<string, unknown>;
+    for (const champ of Object.keys(NE_SORT_PAS)) {
+      if (RENDUES_AUX_REGLAGES.includes(champ)) continue;
+      expect(reglages).not.toHaveProperty(champ);
+    }
+    expect(reglages).not.toHaveProperty("passwordHash");
+    expect(reglages).not.toHaveProperty("jetonObs");
+  });
+
+  it("n'annonce comme relue aux réglages que des colonnes qui existent", () => {
+    const connues = new Set(champs);
+    expect(RENDUES_AUX_REGLAGES.filter((c) => !connues.has(c))).toEqual([]);
   });
 
   it("ne modifie pas l'objet qu'on lui donne", () => {
