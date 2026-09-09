@@ -71,6 +71,30 @@ describe("réveil d'une base suspendue", () => {
     const c = await (await (await sonde())()).json();
     expect(c.reveil).toBe(false);
   });
+
+  it("ne crie jamais au réveil sur une base MORTE", async () => {
+    /**
+     * Une base qui dort finit par répondre ; une base morte met le même temps
+     * à échouer. Sans la condition sur l'état, la supervision noterait « la
+     * base dormait, elle a mis 6000 ms » sur une panne franche — c'est-à-dire
+     * le message qui dit « rien de grave » à l'instant où tout est grave.
+     *
+     * L'horloge est fabriquée plutôt qu'attendue : le seuil se franchit sans
+     * faire dormir la suite, et le cas est déterministe.
+     */
+    const vrai = Date.now;
+    let t = 1_000_000;
+    Date.now = () => t;
+    try {
+      requete.mockImplementation(async () => { t += 6000; throw new Error("morte"); });
+      const c = await (await (await sonde())()).json();
+      expect(c.base).toBe("injoignable");
+      expect(c.ms).toBeGreaterThanOrEqual(2000);
+      expect(c.reveil).toBe(false);
+    } finally {
+      Date.now = vrai;
+    }
+  });
 });
 
 describe("cache", () => {

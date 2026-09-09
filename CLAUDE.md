@@ -1337,13 +1337,110 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La supervision lit quatre champs, et rien ne les tenait
+
+`/api/sante` est la seule chose du système qui CRIE — le journal l'écrit
+ailleurs : « La supervision est la seule à crier. » Son unique lecteur est
+`.github/workflows/supervision.yml`, et entre les deux il n'y a que du JSON :
+ni type, ni import, ni compilateur.
+
+Il en lit exactement quatre, plus le code HTTP :
+
+```sh
+[ "$code" = "200" ] && [ "$(lire "$corps" '.ok')" = "true" ]
+lire "$corps" '.reveil'    lire "$corps" '.ms'    lire "$corps" '.base'
+```
+
+**Un champ renommé dans la route ne fait échouer ni la construction, ni un
+test : `jq` rend simplement une chaîne vide.** Et le mode de panne qui en
+découle est le plus cher des deux — `.ok` qui ne vaut plus « true » fait partir
+l'alerte À CHAQUE PASSAGE, sur un site en parfaite santé. Le workflow porte
+d'ailleurs en commentaire le jour où c'est arrivé pour une autre raison : « un
+espace de plus, et le site en parfaite santé déclenchait l'alerte toutes les
+quinze minutes ».
+
+`src/contratSupervision.test.ts` compare les deux côtés. **Ce qui ne peut pas
+s'importer se COMPARE** — la règle est déjà celle du pont Electron, des six
+langues de la coquille et de la table des processus surveillés.
+
+Il tient aussi les deux moitiés du VERDICT, parce qu'aucune ne suffit seule :
+le workflow doit continuer d'exiger le code 200 EN PLUS du corps, et la route
+doit continuer de faire varier son code — un statut figé à 200 laisserait la
+supervision muette sur une base morte.
+
+**Un cas manquait au test de la route, et c'est celui qui ment le mieux** :
+`reveil` vrai sur une base MORTE. Une base qui dort finit par répondre ; une
+base morte met le même temps à échouer. Sans la condition sur l'état, la
+supervision noterait « la base dormait, elle a mis 6000 ms » sur une panne
+franche — c'est-à-dire le message qui dit « rien de grave » à l'instant où tout
+est grave.
+
+Neuf sabotages, neuf échecs : le champ `.ok` renommé, le message de PostgreSQL
+laissé fuir dans la réponse — l'adresse est publique, et un message de base
+nomme volontiers son hôte et son utilisateur —, le statut figé, le cache qui
+oublie le statut, `reveil` sur base morte, le cache débranché, la supervision
+qui cesse d'exiger le code, et les deux extracteurs rendus aveugles.
+
+**Un dixième était mal posé, et c'est noté comme tel** plutôt que compté comme
+un garde qui ne mord pas : j'avais rangé l'erreur dans une variable que
+personne ne rend. Un sabotage qui n'expose rien n'éprouve rien.
+
+**Et l'extracteur du corps a accusé un champ parfaitement rendu à sa première
+exécution.** Écrit `[{,]\s*(nom)\s*[:,]`, il avale la virgule finale : deux
+raccourcis d'objet qui se suivent — `base,` puis `ms,` — se chevauchent, et
+`matchAll` ne rend que le premier. C'est le piège déjà payé sur le recensement
+du filtrage par compte, où `where: { id, userId }` échappait pour la même
+raison. Il regarde AUTOUR de la clé sans la consommer.
+
+## Mon détecteur était plus faible que le garde qui existait déjà
+
+C'est la vraie leçon de la passe, et elle s'est jouée deux fois en une heure.
+
+**J'ai écrit un recensement des routes sans test.** Il en a rendu deux :
+`auth/[...nextauth]`, déclarée exemptée, et `sante`. J'ai alors écrit un
+fichier de test pour `sante`… **par-dessus celui qui existait**, et que
+`git status` a fini par dénoncer en le marquant modifié plutôt que nouveau.
+
+La cause est un motif : mon détecteur cherchait `from "…"`. Le test de `sante`
+recharge le module à chaque cas — la route garde un cache de trente secondes —
+donc il écrit `await import("./route")`. Le garde du dépôt, lui, connaît les
+deux formes : `(?:from|import)\s*\(?\s*["']…`.
+
+**Le garde `routesTestees.test.ts` était VERT tout du long, et il avait
+raison.** Vérifié en le rejouant sur l'arbre de la version publiée : quatre
+tests passés, aucune route orpheline. C'est mon recensement d'une heure qui
+était faux, en face d'un garde écrit pour cette question précise et éprouvé sur
+des cas fabriqués.
+
+Le journal porte déjà les deux moitiés de cette leçon, à deux entrées
+différentes : « la description était juste et je ne l'ai pas crue ; le
+détecteur était faux et je l'ai crue », et « un fichier qu'on remplace au lieu
+de le lire emporte ce qu'on ne savait pas qu'il gardait, et le vert d'après ne
+dit rien ». Les deux, le même soir.
+
+**Le fichier d'origine est restauré**, et il ne reçoit que le cas qui lui
+manquait. Ce qui reste de la passe est ce qu'aucun des deux fichiers ne
+couvrait : le CONTRAT avec le workflow.
+
+**Ce que ça apprend sur la méthode** : avant d'écrire un recensement, chercher
+si le dépôt en porte déjà un. Il est éprouvé, il a des exemptions déclarées, et
+il a survécu à des sabotages — trois choses qu'un script d'une heure n'a pas.
+
 ### Le panneau vidait la liste des champions, et rien ne se passait
 
 Trouvé en cherchant ce qui, autour du chantier du champion, n'avait aucun test.
-`PUT /api/admin/config/champions` n'en avait **aucun** — pas un fichier, pas une
-ligne — alors qu'elle décide de ce que le produit accepte comme nom de champion.
 
-**Et elle acceptait la liste VIDE.** Elle la nettoyait, la rangeait en base, et
+**Et mon constat de départ était FAUX, ce qui est la moitié instructive.**
+J'avais lu `ls src/app/api/admin/config/champions/` — un seul fichier, `route.ts` —
+et conclu « aucun test ». La route en a cinq, dans `src/app/api/admin/admin.test.ts`,
+qui porte la règle transversale de la porte d'administration. **Un recensement
+par emplacement de fichier hérite de la convention de celui qui l'écrit**, et ce
+journal le dit déjà, mot pour mot, à l'entrée de `routesTestees.test.ts` — le
+garde écrit pour ce défaut exact. J'y suis retombé le jour même.
+
+Ce qu'elle n'avait pas, c'est un test de ce qui suit.
+
+**Elle acceptait la liste VIDE.** Elle la nettoyait, la rangeait en base, et
 répondait `{ ok: true, count: 0 }`.
 
 **Le résultat n'était pas une liste vide, c'était RIEN.** Les deux lecteurs
@@ -1391,6 +1488,11 @@ qui est dans la même table.
 **Aucun parcours navigateur ne couvre ce panneau**, et c'est la limite déjà
 écrite ici : il résiste à l'emprunt d'adresse administrateur, deux méthodes
 essayées et documentées. Ce qui le tient est ce test et le compilateur.
+
+**Le fichier dédié ne remplace pas `admin.test.ts`, il se range à côté**, et
+c'est déjà la convention de la route voisine : le fichier transversal porte la
+règle que TOUTES les routes d'administration partagent — l'adresse qui décide
+de l'accès — et le fichier par route porte ce qui n'appartient qu'à elle.
 
 **Et le garde des messages d'API a mordu**, ce qui est son travail : le refus
 neuf n'était traduit dans aucune des cinq autres langues.
