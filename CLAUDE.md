@@ -1289,6 +1289,61 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une adresse qui résout au MAUVAIS endroit, et les deux dettes rendues
+Le plan porte trois choses « promises et jamais rendues ». Deux sont rendues :
+la liste des défis absurdes (réf. 136, « Montre-m'en d'autres ») et celle des
+statistiques avancées du payant (réf. 214, « Propose-moi »). Les deux vivent
+dans `docs/questions-ouvertes.md`, parce que ce sont des propositions qui
+attendent un choix et que c'est là que part ce qu'on ne tranche pas seul.
+
+**Et la seconde a mis au jour une adresse fausse.** La section des choses dues
+annonçait la liste des statistiques sous « réf. 007 ». Or la 007 parle d'un
+bug de date sur une partie ajoutée à la main, et **sa réponse est « Non »**.
+La vraie référence est la 214.
+
+**C'est pire qu'une adresse morte, et c'est ce qui rend le cas instructif.**
+Une adresse qui ne mène nulle part se remarque : on cherche, on ne trouve pas,
+on cherche ailleurs. Celle-ci RÉSOUT — on tombe sur une réponse parfaitement
+lisible, et on y lit un refus qui n'a jamais été donné. Le journal porte déjà
+l'entrée « une décision rangée à une adresse qui n'existait pas » ; celle-ci
+en est la forme aggravée.
+
+**Le recensement est allé jusqu'au bout plutôt que de s'arrêter au cas.** Sur
+les **158 réfs des tableaux du plan, aucune n'est inconnue** ; il n'y a que
+deux réfs en prose, et l'une des deux était celle-là. Le dire évite de
+rechercher une famille qui n'existe pas.
+
+**Le garde va maintenant dans les DEUX sens.** `decisionsRangees.test.ts`
+vérifiait que le tableau des questions désigne des lignes du plan qui
+existent ; il vérifie en plus que les réfs du plan désignent des réponses qui
+existent. C'est de là que le plan tire son autorité — « quand une ligne du plan
+est ambiguë, la réponse fait foi » — donc une réf qui ne désigne rien renvoie à
+une décision introuvable.
+
+**Ce que ce garde ne peut PAS attraper est écrit dedans, parce que c'est le
+défaut qui l'a motivé** : la 007 EXISTE. L'existence se vérifie ; ce dont une
+réponse PARLE, non. Un garde qui prétendrait le contraire serait un garde qui
+ne voit pas le défaut qu'il raconte.
+
+Trois sabotages, trois échecs : une réf en prose inconnue, une réf de tableau
+inconnue, et le recensement des réponses rendu aveugle.
+
+**Ce que les deux listes ont en commun, et qui vaut plus que leur contenu** :
+chaque proposition est COTÉE sur ce que la base contient déjà. Cinq
+statistiques sur huit et quatre défis sur dix ne demandent aucune colonne
+nouvelle — `/api/progression` charge déjà les parties du mois, donc lire une
+colonne de plus coûte un champ et pas une requête. Et les deux listes portent
+la moitié qu'on préfère taire : ce qui NE se mesure pas honnêtement. « Joue
+avant telle heure » ne dit pas quand on a joué, un défi de rôle est vide pour
+les cinq jeux comptés au temps, et rien ne peut comparer aux autres joueurs
+sans la clé Riot.
+
+**Une trouvaille au passage** : `fileClassee` est remplie à chaque partie, elle
+fait payer les classées plus cher — c'est la réponse 196, cochée au plan — et
+**elle n'est affichée nulle part**. Le produit facture une différence qu'il ne
+montre pas. C'est la statistique A de la liste, et c'est la seule qui se
+construit avec une colonne qu'on remplit déjà depuis des mois.
+
 ### L'aléa de la connexion est nommé : le navigateur refusait l'envoi lui-même
 La suite entière rend **266 passés, un échec**, et c'est l'aléa que ce journal
 recense depuis août sans avoir su le nommer. La différence, cette fois, est que

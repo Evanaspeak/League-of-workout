@@ -21,6 +21,7 @@ import { join } from "node:path";
 const RACINE = join(__dirname, "..");
 const questions = readFileSync(join(RACINE, "docs/questions-ouvertes.md"), "utf8");
 const plan = readFileSync(join(RACINE, "docs/plan-action.md"), "utf8");
+const interrogatoire = readFileSync(join(RACINE, "docs/interrogatoire-2.txt"), "utf8");
 
 /** Les destinations du tableau, c'est-à-dire la troisième colonne. */
 function destinations(): string[] {
@@ -52,6 +53,13 @@ function etapesDuPlan(): Set<string> {
   const etapes = new Set<string>();
   for (const m of plan.matchAll(/^### \[.\] (\d+) —/gm)) etapes.add(m[1]);
   return etapes;
+}
+
+/** Les numéros de réponse, tels que l'interrogatoire les porte. */
+function reponsesConnues(): Set<string> {
+  const n = new Set<string>();
+  for (const m of interrogatoire.matchAll(/^\[(\d{3})\]/gm)) n.add(m[1]);
+  return n;
 }
 
 describe("les décisions rangées", () => {
@@ -94,6 +102,35 @@ describe("les décisions rangées", () => {
       if (m && !refs.has(m[1])) perdues.push(d);
     }
     expect(perdues).toEqual([]);
+  });
+
+  /**
+   * L'adresse va dans les DEUX sens.
+   *
+   * Le tableau des questions désigne le plan ; le plan, lui, désigne
+   * l'interrogatoire — et c'est de là qu'il tire son autorité : « quand une
+   * ligne du plan est ambiguë, la réponse fait foi ». Une réf qui ne désigne
+   * rien renvoie donc à une décision introuvable.
+   *
+   * **Ce que ce contrôle ne peut PAS attraper, et il faut le dire, parce que
+   * c'est le défaut qui l'a motivé.** La section des choses dues annonçait la
+   * liste des statistiques avancées sous « réf. 007 ». La 007 EXISTE : elle
+   * parle d'un tout autre sujet, et sa réponse est « Non ». Quelqu'un qui
+   * vérifiait y lisait un refus qui n'a jamais été donné. L'existence se
+   * vérifie ; ce dont une réponse PARLE, non. La vraie référence est la 214,
+   * « Propose-moi ».
+   */
+  it("chaque réf citée par le plan désigne une réponse qui existe", () => {
+    const connues = reponsesConnues();
+    expect(connues.size).toBeGreaterThan(300);
+    const inconnues: string[] = [];
+    for (const m of plan.matchAll(/^\| \[.\] \| (\d{3}) \|/gm)) {
+      if (!connues.has(m[1])) inconnues.push(`tableau ${m[1]}`);
+    }
+    for (const m of plan.matchAll(/réf\.\s*\*{0,2}(\d{3})/g)) {
+      if (!connues.has(m[1])) inconnues.push(`prose ${m[1]}`);
+    }
+    expect(inconnues).toEqual([]);
   });
 
   it("chaque étape nommée existe au plan", () => {

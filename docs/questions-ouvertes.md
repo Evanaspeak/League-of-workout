@@ -266,6 +266,63 @@ dit rien du poids. Un défi le rendrait public dans son principe. À toi.
 
 ---
 
+### 11 · Les statistiques avancées du payant, comme tu me l'as demandé (réf. 214)
+Ta réponse était « Propose-moi ». Voici la liste, avec pour chacune ce qu'elle
+coûte vraiment. **Rien n'est construit**, et il y a deux choses à trancher
+avant de construire quoi que ce soit.
+
+#### Deux règles avant la liste
+**Le payant AJOUTE, il ne retire pas.** Le gratuit montre déjà beaucoup :
+winrate, champions, graphiques par heure, jour, mois et calendrier,
+progression, paliers, niveau, titre, mur des records, classement entre amis,
+bilan de saison. Reprendre l'un d'eux pour le vendre est le moyen le plus
+rapide de perdre les comptes qui existent. Tout ce qui suit est donc en plus.
+
+**L'export de données ne se vend JAMAIS.** Il existe pour l'article 20 du
+règlement, il est gratuit, et il doit le rester. C'est la seule ligne de cette
+page qui n'est pas négociable.
+
+#### Ce que la base contient DÉJÀ, et que personne ne voit
+Aucune de ces cinq-là ne demande une colonne nouvelle. Le coût est un écran,
+pas de la plomberie.
+
+| | la statistique | ce qu'elle lit | pourquoi elle vaut d'être vue |
+|---|---|---|---|
+| A | **Ce que la classée te coûte en plus** | `fileClassee`, `pompesCalculees` | Le barème fait déjà payer les classées plus cher (réponse 196) et **rien ne le montre nulle part**. On remplit la colonne, on facture dessus, et on ne le dit pas. |
+| B | **L'heure à laquelle tu perds** | `date`, `result` | Le gratuit a un onglet « Heure », mais il compte des POINTS, pas un winrate. C'est la mesure qui dit « ne joue pas après minuit », et c'est la réponse 054 rendue chiffrée au lieu d'être devinée. |
+| C | **Ton taux de dette payée** | `pompesCalculees` contre `Paiement.points` | Les deux nombres sont déjà dans la réponse de `/api/progression`, côte à côte, et **leur rapport n'est affiché nulle part**. C'est pourtant le seul chiffre qui dise si le produit fonctionne pour toi. |
+| D | **Le coût par champion, en entier** | `champion`, `pompesCalculees`, `result` | Le gratuit montre deux champions : le plus joué et le plus difficile. Le tableau complet, trié, avec winrate et coût moyen, est une autre chose. |
+| E | **Ton délai de paiement** | `Game.createdAt`, `Paiement.createdAt` | Combien de temps entre la dette et l'effort. L'exploit du paiement éclair prouve que le rapprochement se fait ; il n'en montre que le cas extrême. |
+
+#### Ce qui coûte un peu plus
+| | la statistique | ce qu'il faut en plus |
+|---|---|---|
+| F | La plus longue série de défaites, et ce qu'elle a coûté | un tri par date dans la journée, rien de neuf en base |
+| G | Le coût réel d'une heure de jeu | `dureeSec` n'est rempli que pour les jeux comptés au temps : la mesure ne vaut que pour cinq jeux sur seize, et il faut le DIRE plutôt que d'afficher un chiffre partiel |
+| H | « À ce rythme, tu paieras X ce mois-ci » | une projection, donc une décision : une prévision fausse se retient mieux qu'une prévision juste |
+
+#### Ce qui n'est pas possible aujourd'hui, et pourquoi
+- **tout ce qui compare aux autres joueurs** (rang, percentile, moyenne des
+  gens de ton niveau) demande la clé Riot de production, qui n'est pas
+  arrivée, et un volume de comptes qu'on n'a pas ;
+- **tout ce qui parle de patchs** demande de retenir la version du jeu au
+  moment de la partie, colonne qui n'existe pas ;
+- **tout ce qui parle d'adversaires** n'est jamais entré en base : on
+  n'enregistre que ta partie.
+
+#### Les deux choses à trancher
+1. **Le moment.** Ton critère était un nombre d'utilisateurs, et l'étape 07 du
+   plan le redit : on n'y est pas. Construire un mur payant devant quatre
+   comptes coûterait plus que ça ne rapporte.
+2. **Où passe la ligne.** A, B et C sont les trois qui feraient payer — ce sont
+   celles qui apprennent quelque chose qu'on ne peut pas deviner. D et E sont
+   agréables et se devinent. Mon avis, puisque tu me le demandes : **A, B, C au
+   payant, D et E gratuites**, parce qu'un payant fait de trois choses qu'on ne
+   trouve nulle part ailleurs se défend mieux qu'un payant fait de dix choses
+   dont sept sont du confort.
+
+---
+
 ## Ce qui a été tranché, et où c'est parti
 
 Quatorze questions, répondues le 8 septembre. Le tableau existe pour qu'une
