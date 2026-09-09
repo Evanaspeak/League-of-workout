@@ -95,16 +95,16 @@ export function CompteRiot() {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.riotIdLabel}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="riot-id">{t.riotIdLabel}</label>
           <input
-            className="lol-input" placeholder="Faker#KR1"
+            id="riot-id" className="lol-input" placeholder="Faker#KR1"
             value={riotId}
             onChange={(e) => setRiotId(e.target.value)}
           />
         </div>
         <div>
-          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.region}</label>
-          <select className="lol-select w-full" value={region} onChange={(e) => setRegion(e.target.value)}>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="riot-region">{t.region}</label>
+          <select id="riot-region" className="lol-select w-full" value={region} onChange={(e) => setRegion(e.target.value)}>
             {REGIONS_RIOT.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>

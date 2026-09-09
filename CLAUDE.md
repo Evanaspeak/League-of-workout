@@ -1289,6 +1289,155 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Quarante champs, et l'audit ne regardait que les boutons
+Trouvé en ouvrant `/beta` — la SEULE porte d'entrée du produit — et en lui
+demandant le nom accessible de ses champs. **Huit champs, zéro nom**, dont deux
+`<select>` qui n'ont même pas de `placeholder` sur quoi se rabattre : un lecteur
+d'écran y annonce « zone de liste » et s'arrête là.
+
+**Le libellé était pourtant à l'écran**, et c'est ce qui rend le défaut
+invisible à la relecture : `<label>Ton pseudo</label>` posé DEVANT un `<input>`
+ne l'étiquette pas. Il faut un `htmlFor` qui nomme son `id`, ou un `<label>` qui
+l'ENTOURE. Tout le reste est du texte à côté.
+
+**C'est la deuxième fois, et la première est écrite ici** : le panneau « Ton
+corps » des réglages, trouvé par un parcours navigateur et non par une
+relecture. La correction d'alors a porté sur SON écran ; personne n'a demandé
+combien d'autres étaient dans le même cas.
+
+**Dix-huit, dans huit fichiers**, et le recensement les sépare en trois familles
+qui ne se corrigent pas de la même façon :
+
+| famille | ce que c'est | ce qu'on fait |
+|---|---|---|
+| un vrai champ | `<label>` puis `<input>`/`<select>` | `htmlFor` + `id` — dix cas |
+| une rangée de BOUTONS | résultat, mode, exercices | `role="group"` + `aria-labelledby` — le `<label>` était faux |
+| du texte en LECTURE | le niveau calculé | un `<span>` : il n'y a aucune commande à nommer |
+
+**Un `<label>` qui n'étiquette rien n'est pas neutre, il MENT.** Un lecteur
+d'écran le lit comme un texte quelconque, donc la rangée de cases d'à côté n'a
+toujours pas de nom — et celui qui écrit le code croit l'avoir donné. C'est
+exactement la raison écrite dans `ExerciceSelector` le jour où ses sections ont
+reçu leur `role="group"`, et elle n'avait pas été appliquée à ses APPELANTS.
+
+**Et deux libellés se sont retrouvés empilés**, ce que la correction elle-même a
+créé : `JeuSelector` porte désormais son propre intitulé, et le tableau de bord
+en écrivait un second au-dessus — « À quoi tu joues ? » puis « Jeu » puis le
+select. Le composant prend donc un `libelle` optionnel : l'appelant fournit sa
+formulation, elle est rendue LÀ où le champ vit, et il n'y en a qu'une.
+
+**Le garde est statique et il tient la FORME**, pas la qualité du nom.
+`src/champsNommes.test.ts` refuse un `<label>` sans `htmlFor` qui n'entoure
+aucune commande. Un `htmlFor` qui pointerait vers un `id` inexistant lui
+échappe — c'est l'audit navigateur qui l'attrape, en calculant le nom réellement
+rendu. Trois sabotages, trois échecs, dont le témoin : le balayage réduit à zéro
+fichier fait tomber le contrôle de non-vacuité plutôt que de rendre tout vert.
+
+**La SECONDE famille lui est invisible, et c'est écrit plutôt que tu** : un champ
+qui n'a AUCUN `<label>` ne se voit pas dans une recherche de `<label>`. Elle se
+mesure au navigateur, et elle a rendu deux endroits :
+
+- **`/login`, deux champs sur un `placeholder`.** C'est l'écran où celui qui
+  n'entre plus n'a aucun autre recours, et un `placeholder` n'est pas un nom :
+  il disparaît dès qu'on tape, et les lecteurs d'écran ne s'accordent pas sur ce
+  qu'ils en font. Les sept champs des trois onglets portent leur `aria-label`,
+  sans qu'un pixel bouge ;
+- **`/history`, deux `<select>` sans rien du tout.** Un select n'a même pas de
+  repli : « Rôle » et « Tri » étaient des `<span>` posés à côté. Ils deviennent
+  des `<label htmlFor>`, ce qu'ils auraient dû être.
+
+**Poser des intitulés VISIBLES sur `/login` redessine la carte de connexion**,
+qui est sur le chemin d'acquisition. C'est un arbitrage, il part dans les
+questions ; le NOM, lui, ne se discute pas et il est posé.
+
+## L'audit d'accessibilité ne regardait ni les champs, ni ce qui est replié
+
+C'est la vraie trouvaille, et elle explique six semaines de « 0 constat »
+parfaitement honnêtes.
+
+**`scripts/accessibilite.mjs` ne recensait les commandes sans nom que sur
+`button, a[href], [role=button]`.** Les `input`, `select` et `textarea` n'y
+figuraient pas : la famille lui était invisible par construction, exactement
+comme 1.4.11 l'était avant le 9 septembre. Le zéro était vrai ; il ne couvrait
+simplement pas cette question.
+
+**Et il ne DÉPLIAIT rien.** Le bloc facultatif de `/beta` porte six des huit
+champs, et il est replié : ils n'étaient donc même pas rendus au moment de la
+mesure. C'est l'angle mort déjà payé sur les cinq rubriques des réglages —
+« `/settings` nu ne rend que la LISTE des rubriques » — et la leçon avait été
+appliquée à un outil et pas à l'autre. Il déplie maintenant tout
+`[aria-expanded="false"]`, en plusieurs passes, parce qu'un bloc ouvert peut en
+révéler un autre.
+
+**Mesuré des deux côtés, sur seize surfaces** : `/beta` passe de 8 champs sans
+nom à 0, `/login` de 2 à 0, `/history` de 2 à 0. **Quarante champs, zéro sans
+nom.** Et la sonde sait échouer, ce qui est la moitié qui compte : c'est
+précisément elle qui a rendu les douze premiers.
+
+**Et le dépliage est éprouvé par la PAIRE qui le distingue**, sur un `htmlFor`
+retiré d'un champ DU bloc replié :
+
+| | verdict |
+|---|---|
+| dépliage en place | **1 constat**, qui nomme `#beta-genre` |
+| dépliage débranché | **0 constat** |
+
+Sans les deux exécutions, « le dépliage sert » resterait une conviction : c'est
+la seconde qui montre que sans lui l'audit ne voit rien, et donc que le zéro
+d'avant ne prouvait rien de ce bloc.
+
+**Il vit une seule fois et les QUATRE passes l'appellent** — texte, clavier,
+frontières de commande, animation. Une règle écrite quatre fois finit avec
+trois versions en retard, et c'est le motif que ce journal trouve le plus.
+
+**Et la passe des FRONTIÈRES y gagne onze commandes** : de 87 examinées à 98,
+et un sixième traitement remonte — les deux `<select>` du bloc replié de
+`/beta`, dont la bordure n'avait jamais été mesurée. **Ce n'est PAS une
+régression**, et il faut le dire tout de suite : c'est le MÊME `FIELD_STYLE`
+que les `<input>` de la même page, déjà tenu par `src/bordureChamps.test.ts`
+sous « inscription (style en ligne) ». L'audit groupe par balise et par classe,
+donc la même déclaration paraît sous deux lignes dès que le second type de
+commande devient visible.
+
+**Le dépliage se paie, et le prix est mesuré** : l'audit d'une langue passe de
+onze à **douze minutes quarante**. Le premier jet en coûtait davantage — six
+tours et un clic borné à une seconde et demie ont fait déborder le quart
+d'heure de `timeout`, et vingt et une pages étaient mesurées pendant que les
+dernières passes se faisaient couper. Trois tours et un demi-tour d'horloge par
+clic suffisent : les rubriques de ce produit ne s'emboîtent jamais à plus de
+deux niveaux.
+
+**Un défaut de ma correction, attrapé par l'exécution et non par la
+relecture** : un clic de dépliage peut faire NAVIGUER — tous les
+`aria-expanded` ne sont pas des rubriques — et `locator.all()` lève alors sur
+une page fermée. L'audit ENTIER s'arrêtait à sa dernière passe, avec vingt et
+une pages mesurées et un code de sortie qui disait l'inverse. Le recensement se
+rattrape maintenant, sans rien masquer : si la page est réellement perdue,
+c'est la mesure qui suit qui le dira, et c'est elle qui doit le dire.
+
+**Verdict, sur un compte de mesure neuf** : vingt et une pages, **0 constat**,
+et **aucune page laissée de côté**. C'est le second chiffre qui compte.
+
+**Le garde qui ne s'écrit PAS, avec sa raison.** Un contrôle statique
+« tout champ a un nom » demanderait de résoudre les `id` à travers les
+composants — `ChampionInput` reçoit le sien de son appelant — donc il rendrait
+des faux positifs sur du code juste. Ce qui l'attrape est l'audit, qui calcule
+le nom RÉELLEMENT rendu, et c'est là qu'il a été posé.
+
+**Une correction a demandé un choix, écrit plutôt que subi** : le champ de durée
+d'une partie comptée au temps est un COUPLE — heures et minutes — sous un seul
+intitulé. Un `<label>` n'en nomme qu'un ; c'est donc le groupe qui porte le
+titre, et chaque champ son unité, prise au dictionnaire qui l'écrit déjà à
+côté. Aucune clé nouvelle, aucune phrase assemblée dans un composant.
+
+**Et le parcours qui va avec éprouve ce qu'aucun test unitaire ne peut voir :
+le BRANCHEMENT.** `e2e/montre.spec.ts` traverse le bloc replié, choisit
+« oui », et relit la colonne en base. Ses trois états sont ce qui distingue : un
+compte qui n'a pas répondu doit rendre `null` et jamais `false` — un test écrit
+sur « oui » et « non » seulement passerait avec un défaut `false` au schéma,
+c'est-à-dire en faisant dire à tous les comptes d'avant cette colonne qu'ils ne
+portent pas de montre.
+
 ### Campagne de clôture après V550 à V557, et quatre kilo-octets qui se nomment
 Passée sur un compte semé à soixante parties, créé après la vidange de
 `.next/cache` — le geste est dans la procédure depuis qu'une 404 gardée a fait

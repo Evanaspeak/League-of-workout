@@ -465,6 +465,39 @@ parce qu'aujourd'hui il n'en a pas et que rien n'empêche une cinquième version
 d'apparaître. Le coût est d'une demi-nuit dans les deux sens, et le garde de la
 palette est déjà là pour tenir la décision une fois prise.
 
+### 19 · Les champs de connexion n'ont d'intitulé que leur `placeholder`
+
+**Ce qui est fait, et qui ne se discute pas** : les sept champs des trois
+onglets de `/login` portent leur nom accessible. Un lecteur d'écran les annonce
+correctement, et aucun pixel n'a bougé. Mesuré : de deux champs anonymes à zéro.
+
+**Ce qui reste, et qui t'appartient** : ils n'ont toujours pas d'intitulé
+VISIBLE. Le texte est dans le `placeholder`, donc il disparaît à la première
+frappe — on tape son pseudo, et plus rien ne dit ce que le champ attend. Le
+critère 3.3.2 des WCAG demande un intitulé qui reste.
+
+**Pourquoi ça ne se corrige pas seul.** `/login` et `/beta` sont deux cartes
+compactes, et elles sont sur le chemin d'ACQUISITION — c'est-à-dire l'endroit
+du produit où l'apparence pèse le plus. Ajouter huit intitulés au-dessus de huit
+champs allonge les deux cartes et change ce que voit quelqu'un qui arrive.
+`/beta` a d'ailleurs déjà des intitulés visibles ; c'est `/login` qui n'en a pas.
+
+**Trois façons de faire, chiffrées :**
+
+| | ce que ça donne | ce que ça coûte |
+|---|---|---|
+| **A · laisser** | l'écran d'aujourd'hui, avec le nom accessible posé | le texte disparaît à la frappe pour tout le monde |
+| **B · un intitulé au-dessus** | conforme, et lisible en cours de saisie | la carte de connexion grandit d'environ 60 px |
+| **C · l'intitulé flottant** | il monte au-dessus du champ quand on tape | une trentaine de lignes de CSS, et un motif que le reste du produit n'emploie nulle part |
+
+**Ce qui penche pour B** : les cinq autres écrans du produit qui portent des
+champs ont tous des intitulés visibles. C est joli et il introduit une seconde
+façon de faire un formulaire, ce qui est exactement ce que ce projet paie en
+boucle ailleurs.
+
+**Aucune traduction à écrire dans les trois cas** : les six langues portent déjà
+le texte, c'est le `placeholder` qui le rend aujourd'hui.
+
 ### 13 · Une seule frontière du produit atteint le contraste exigé (ligne 300)
 **Née en mesurant la seconde moitié de la ligne 300**, qui demande d'uniformiser
 les styles en ligne et les classes utilitaires. Trois écrans écrivent leur champ
@@ -772,3 +805,4 @@ d'adresse.
 | La progression physique (152 et 153) | « fais la courbe de force maintenant » — débloque les deux | plan, ligne 152 · fait en V531 |
 | Un mode séance plein écran (205) | « fais-le » — renverse le « plus tard » de la réponse 205 | plan, ligne 205 · fait en V532 |
 | Des ratios personnels par utilisateur (047) | « Oui, par utilisateur » | plan, ligne 047 · fait en V536 |
+| Des intitulés visibles sur `/login` | — | **question 19 ci-dessus** |

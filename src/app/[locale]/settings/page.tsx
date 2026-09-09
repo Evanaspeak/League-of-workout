@@ -743,8 +743,9 @@ export default function SettingsPage() {
       {rubrique === "profil" && (
       <div className="lol-panel p-5 space-y-4">
         <div>
-          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.pseudoAffiche}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="profil-pseudo">{t.pseudoAffiche}</label>
           <input
+            id="profil-pseudo"
             className="lol-input"
             value={profileForm.pseudo}
             onChange={(e) => setProfileForm((f) => ({ ...f, pseudo: e.target.value }))}
@@ -752,8 +753,9 @@ export default function SettingsPage() {
         </div>
 
         <div>
-          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.objectifTotalPompes}</label>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="profil-objectif">{t.objectifTotalPompes}</label>
           <input
+            id="profil-objectif"
             type="number" min="0" className="lol-input"
             value={profileForm.objectifTotalPompes}
             onChange={(e) => setProfileForm((f) => ({ ...f, objectifTotalPompes: Number(e.target.value) }))}

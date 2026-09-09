@@ -593,8 +593,8 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                       session au temps. */}
                   {afficherRole && (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs" style={{ color: "var(--steel)" }}>{t.roleLabel}</span>
-                      <select className="lol-select text-sm" value={filterRole} onChange={(e) => enFiltrant(() => setFilterRole(e.target.value))}>
+                      <label className="text-xs" style={{ color: "var(--steel)" }} htmlFor="filtre-role">{t.roleLabel}</label>
+                      <select id="filtre-role" className="lol-select text-sm" value={filterRole} onChange={(e) => enFiltrant(() => setFilterRole(e.target.value))}>
                         {ROLES_FILTER.map((r) => <option key={r} value={r}>{t.roleOptionLabel(r)}</option>)}
                       </select>
                     </div>
@@ -602,8 +602,8 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                   {modeColonnes !== "temps" && (
                     <>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs" style={{ color: "var(--steel)" }}>{t.resultLabel}</span>
-                        <select className="lol-select text-sm" value={filterResult} onChange={(e) => enFiltrant(() => setFilterResult(e.target.value))}>
+                        <label className="text-xs" style={{ color: "var(--steel)" }} htmlFor="filtre-resultat">{t.resultLabel}</label>
+                        <select id="filtre-resultat" className="lol-select text-sm" value={filterResult} onChange={(e) => enFiltrant(() => setFilterResult(e.target.value))}>
                           <option value="Tous">{t.all}</option>
                           <option value="V">{t.victory}</option>
                           <option value="D">{t.defeat}</option>
@@ -612,8 +612,8 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                     </>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "var(--steel)" }}>{t.sortLabel}</span>
-                    <select className="lol-select text-sm" value={sortBy} onChange={(e) => enFiltrant(() => setSortBy(e.target.value as "date" | "pompes"))}>
+                    <label className="text-xs" style={{ color: "var(--steel)" }} htmlFor="filtre-tri">{t.sortLabel}</label>
+                    <select id="filtre-tri" className="lol-select text-sm" value={sortBy} onChange={(e) => enFiltrant(() => setSortBy(e.target.value as "date" | "pompes"))}>
                       <option value="date">{t.date}</option>
                       <option value="pompes">{t.pompes}</option>
                     </select>

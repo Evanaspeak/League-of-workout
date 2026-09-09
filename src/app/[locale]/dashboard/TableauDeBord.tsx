@@ -981,13 +981,11 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             {/* Le jeu détermine la nature de la session : suivi de parties via
                 l'API Riot, ou simple chronomètre. */}
             <div className="space-y-2">
-              <label className="block text-xs" style={{ color: "var(--steel)" }}>
-                {tJeux.sessionQuelJeu}
-              </label>
               <JeuSelector
                 jeu={jeuChoisi}
                 typeJeu={typeJeuChoisi}
                 onChange={(j, ty) => { setJeuChoisi(j); setTypeJeuChoisi(ty); }}
+                libelle={tJeux.sessionQuelJeu}
               />
             </div>
 
@@ -1001,9 +999,13 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
             />
 
             <div className="space-y-2">
-              <label className="block text-xs" style={{ color: "var(--steel)" }}>
+              {/* Un <span> et non un <label> : ce qui suit est une rangée de cases,
+                  pas un champ. `ExerciceSelector` nomme lui-même chacune de ses
+                  sections par `role="group"` + `aria-labelledby` ; un label posé
+                  au-dessus n'étiquetterait rien et se lirait comme un faux nom. */}
+              <span className="block text-xs" style={{ color: "var(--steel)" }}>
                 {tExo.choisirTitre}
-              </label>
+              </span>
               <ExerciceSelector selection={exercicesSel} onChange={setExercicesSel} compact />
               {exercicesSel.length > 1 && (
                 <p className="text-xs" style={{ color: "var(--amber)" }}>{tExo.partageActif(exercicesSel.length)}</p>

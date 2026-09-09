@@ -13,10 +13,18 @@ export function JeuSelector({
   jeu,
   typeJeu,
   onChange,
+  libelle,
 }: {
   jeu: string;
   typeJeu: TypeJeu;
   onChange: (jeu: string, typeJeu: TypeJeu) => void;
+  /**
+   * L'intitulé du champ, quand l'appelant en a un plus parlant que « Jeu » —
+   * « À quoi tu joues ? » au lancement d'une session. Il est rendu ICI et pas
+   * chez lui : deux intitulés empilés au-dessus d'un seul select, c'est ce
+   * qu'on avait, et le second n'étiquetait rien.
+   */
+  libelle?: string;
 }) {
   const t = useT(jeuxDict);
   const connu = trouverJeu(jeu);
@@ -35,9 +43,10 @@ export function JeuSelector({
 
   return (
     <div className="space-y-2">
-      <label className="block text-xs" style={{ color: "var(--steel)" }}>{t.label}</label>
+      <label className="block text-xs" style={{ color: "var(--steel)" }} htmlFor="jeu-selecteur">{libelle ?? t.label}</label>
 
       <select
+        id="jeu-selecteur"
         className="lol-select w-full"
         value={libre ? "__autre__" : jeu}
         onChange={(e) => choisirDansListe(e.target.value)}

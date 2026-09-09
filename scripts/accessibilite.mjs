@@ -27,6 +27,60 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
  * `/calculateur/<jeu>` figure par un exemplaire : les seize pages sortent du
  * même gabarit, et les auditer toutes ne dirait rien de plus.
  */
+/**
+ * Déplie ce qui est replié, avant de mesurer.
+ *
+ * Un bloc fermé ne rend rien : il n'a ni contraste, ni nom, ni bordure à
+ * examiner, et l'audit annonce « rien à signaler » sur ce qu'il n'a jamais
+ * ouvert. C'est l'angle mort déjà payé DEUX fois — les cinq rubriques des
+ * réglages, puis le bloc facultatif de `/beta`, où six champs sur huit se
+ * cachaient sans nom accessible pendant six semaines de rapports à zéro.
+ *
+ * **Mesuré des deux côtés**, le 9 septembre, sur un `htmlFor` retiré d'un
+ * champ DU bloc replié : avec le dépliage, l'audit rend un constat qui nomme
+ * le champ ; sans lui, zéro. Ce n'est donc pas une précaution, c'est ce qui
+ * voit.
+ *
+ * Elle vit ici et pas dans une seule passe : les quatre l'appellent, et une
+ * règle écrite quatre fois finit avec trois versions en retard.
+ *
+ * Plusieurs tours — déplier un bloc peut en révéler un autre. Le clic est
+ * borné et son échec ignoré : un bouton qui refuse de s'ouvrir ne doit pas
+ * arrêter la mesure de la page.
+ */
+async function deplierTout(page) {
+  /**
+   * Trois tours, pas six, et un clic borné à un demi-tour d'horloge.
+   *
+   * Le dépliage se paie sur QUATRE passes et vingt et une pages : à une
+   * seconde et demie par clic manqué, il a fait déborder l'audit de son quart
+   * d'heure — vingt et une pages mesurées, et les dernières passes coupées en
+   * route. Un bouton qui ne s'ouvre pas en un demi-tour ne s'ouvrira pas, et
+   * les rubriques de ce produit ne s'emboîtent jamais à plus de deux niveaux.
+   */
+  for (let passe = 0; passe < 3; passe++) {
+    /**
+     * Le recensement lui-même se rattrape.
+     *
+     * Un clic de dépliage peut faire NAVIGUER — tous les `aria-expanded` ne
+     * sont pas des rubriques — et la page suivante n'a plus rien à voir avec
+     * celle qu'on préparait. `locator.all()` lève alors « Target page […] has
+     * been closed », et l'audit ENTIER s'arrête à sa dernière passe : vingt et
+     * une pages mesurées, et un code de sortie qui dit l'inverse.
+     *
+     * On s'arrête donc de déplier, sans rien masquer : si la page est
+     * réellement perdue, la mesure qui suit le dira à sa place, et c'est elle
+     * qui doit le dire.
+     */
+    const plies = await page.locator('[aria-expanded="false"]').all().catch(() => []);
+    if (!plies.length) break;
+    for (const bouton of plies) {
+      await bouton.click({ timeout: 500 }).catch(() => {});
+    }
+    await page.waitForTimeout(250).catch(() => {});
+  }
+}
+
 const PAGES = [
   "/", "/cgu", "/confidentialite", "/login", "/beta", "/telechargement",
   "/recuperation", "/recuperation/valider", "/calculateur",
@@ -181,6 +235,34 @@ const mesure = () => {
     // Commandes sans nom accessible : un lecteur d'écran annonce « bouton ».
     if (el.matches("button, a[href], [role=button]")) {
       const nom = (el.getAttribute("aria-label") || el.textContent || "").trim();
+      if (!nom) sansNom.push(el.outerHTML.slice(0, 110));
+    }
+
+    /**
+     * Les CHAMPS, qui n'y étaient pas — et c'est par là que le défaut est
+     * passé. Un `input` ne se nomme pas par son contenu : il lui faut un
+     * `aria-label`, un `aria-labelledby`, un `<label htmlFor>` ou un `<label>`
+     * qui l'entoure. Un intitulé posé DEVANT lui n'étiquette rien.
+     *
+     * L'audit ne regardait que les boutons et les liens : les huit champs de
+     * `/beta` — la seule porte d'entrée du produit — sont restés anonymes six
+     * semaines sous des rapports annonçant « 0 constat ». Le zéro était
+     * honnête ; il ne couvrait simplement pas cette famille.
+     *
+     * Le `placeholder` n'en est PAS un : il disparaît dès qu'on tape, et les
+     * lecteurs d'écran ne s'accordent pas sur ce qu'ils en font.
+     */
+    if (el.matches("input:not([type=hidden]), select, textarea")) {
+      const parId = el.id
+        ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`)?.textContent?.trim()
+        : "";
+      const parLie = (el.getAttribute("aria-labelledby") || "")
+        .split(/\s+/).filter(Boolean)
+        .map((i) => document.getElementById(i)?.textContent?.trim() || "")
+        .join(" ").trim();
+      const nom = (el.getAttribute("aria-label") || "").trim()
+        || parLie || parId || el.closest("label")?.textContent?.trim()
+        || (el.getAttribute("title") || "").trim();
       if (!nom) sansNom.push(el.outerHTML.slice(0, 110));
     }
     if (el.tagName === "IMG" && !el.hasAttribute("alt")) {
@@ -375,6 +457,8 @@ for (const chemin of aVisiter) {
     continue;
   }
 
+  await deplierTout(page);
+
   const { contrastes, sansNom, sansAlt } = await page.evaluate(mesure);
 
   // Parcours au clavier : chaque arrêt doit se voir. Sans marque visible, on
@@ -481,6 +565,7 @@ let horsLangue = 0;
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
+    await deplierTout(page);
 
     const bougent = await page.evaluate(() => {
       const out = [];
@@ -534,6 +619,7 @@ let horsLangue = 0;
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
+    await deplierTout(page);
 
     const muettes = await page.evaluate(() => {
       const CIBLES = ["rgb(47, 217, 138)", "rgb(255, 90, 71)"];
@@ -628,6 +714,7 @@ let horsLangue = 0;
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
+    await deplierTout(page);
 
     // Même garde que plus haut : sans feuille de style, il n'y a ni `.lol-input`
     // ni bordure de palette — on lirait les valeurs du navigateur.
