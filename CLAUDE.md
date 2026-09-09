@@ -1337,6 +1337,100 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Quinze jeux » sur ce que Google affiche, six jours après Overwatch
+
+Trouvé en poursuivant le recensement des modules sans test : deux dictionnaires
+vivent dans `src/lib/i18n` sans être dans `dictionaries/`. Le garde de parité
+ne balaie que le sous-dossier ; celui du compte de jeux non plus.
+
+**Douze occurrences, deux surfaces, et ce sont les deux que des inconnus voient
+en premier :**
+
+- **les descriptions de `metadonnees.ts`**, dans les six langues — c'est-à-dire
+  ce que Google affiche sous le titre. « Quinze jeux », « Fifteen games »,
+  « Quince juegos », « Fünfzehn Spiele », 「支持十五款游戏」, 「15タイトル対応」 ;
+- **la carte partagée** (`imageSociale.ts`), quatre langues — ce que Discord et
+  Reddit montrent quand un lien du site y est collé.
+
+V450 avait corrigé onze occurrences de ce défaut et posé un garde exprès. **Le
+garde ne couvrait ni l'une ni l'autre**, et son entrée de journal écrivait
+pourtant « les deux surfaces les plus lues, toutes les deux fausses ». Il y en
+avait deux autres, plus exposées encore.
+
+**Trois trous, pas un, et il a fallu les mesurer un par un.**
+
+1. **Le dossier.** `fichiers()` lisait `dictionaries/` seul. Démontré par un
+   sabotage COMBINÉ, qui est le seul qui prouve quelque chose ici : le dossier
+   ramené à son ancienne portée ET « Quinze jeux » remis dans les métadonnées,
+   les **21 tests passent au vert**. Sans l'élargissement, le défaut est
+   invisible.
+2. **Le tri.** Pour des chiffres suivis du mot jeu, il exigeait que la ligne
+   parle de « catalogue ». « 15 JEUX PRIS EN CHARGE » n'en parle pas. Or on ne
+   dit pas « 20 parties prises en charge » : la prise en charge se prédique
+   d'une entrée de catalogue et de rien d'autre. Le cas inverse est au jeu de
+   cas fabriqués, sans quoi on ne saurait pas si le mot TRIE ou s'il accepte
+   tout ce qui porte un nombre.
+3. **La CASSE**, et c'est le plus bête. `MOTS_JEU` est écrit en minuscules ; la
+   carte partagée écrit en capitales. Même le dossier élargi et le tri corrigé,
+   les quatre lignes restaient invisibles — mesuré, elles ressortaient « raté »
+   toutes les quatre. **Un garde qui ne reconnaît son sujet que dans une casse
+   ne le reconnaît pas.**
+
+Le nombre vient du CATALOGUE maintenant, et la carte partagée rejoint les
+surfaces dont le garde éprouve le BRANCHEMENT — un gabarit juste ne sert à rien
+si personne ne lui passe le vrai nombre. Vérifié en rendant les valeurs :
+**16 partout**, dans les six langues, sur les deux surfaces.
+
+Cinq sabotages, cinq échecs, plus le sabotage combiné qui devait rester vert.
+
+**Et un piège d'écriture, déjà au journal, retombé dedans** : `fichiers()` rend
+désormais des chemins ABSOLUS, et son consommateur les rejoignait encore à un
+dossier — ce qui les double et fait tomber le contrôle sur un ENOENT. C'est le
+défaut écrit pour le garde des liens localisés, mot pour mot.
+
+### Trois images, une dépendance à Google Fonts que personne n'avait mesurée
+
+Trouvé dans la même passe, et c'est une CAUSE écrite qui était fausse.
+`imageSociale.ts` fait retomber le chinois et le japonais sur l'anglais, avec sa
+raison : « sans police à idéogrammes embarquée, les caractères sortent en carrés
+vides ». Or l'image du bilan et celle d'une séance, dessinées par le MÊME
+moteur, écrivent leurs idéogrammes. Les deux ne peuvent pas être vraies.
+
+**Rendu par le moteur réel**, hors de tout doublage : le japonais et le chinois
+se dessinent **parfaitement**. Le mécanisme est ailleurs, et il compte
+davantage — relevé en traçant `fetch` pendant le rendu :
+
+| texte | requêtes sortantes |
+|---|---|
+| « Seance payee » | **0** |
+| 「こなしたセッション」 | **3** vers `fonts.googleapis.com` et `fonts.gstatic.com` |
+
+La seule police embarquée est `Geist-Regular.ttf` ; devant un glyphe qu'elle ne
+couvre pas, le moteur va le CHERCHER. **Les carrés n'arrivent que si ces
+requêtes échouent** — vérifié en les coupant : le japonais sort alors en neuf
+tofus, et l'image part quand même, illisible, en 200.
+
+**Ma première mesure était fausse dans l'autre sens, et il faut le dire.** Elle
+donnait le même rendu sans réseau, ce qui semblait innocenter Google. La cause
+est que cette machine porte `wqy-zenhei.ttc` — une police CJK système — et que
+mon « sans réseau » ne coupait rien, Node ne respectant pas la variable de
+mandataire pour `fetch`. Ce qui a tranché est de tracer `fetch` lui-même plutôt
+que de raisonner sur des tailles de fichier.
+
+Le repli anglais de la carte sociale RESTE, pour une raison qui n'est plus celle
+qui était écrite : elle est demandée par un robot de prévisualisation avec un
+délai serré, et trois allers-retours vers un tiers s'y paient à chaque lien
+collé. Les deux autres images sont demandées par la personne elle-même.
+
+**Une décision juste appuyée sur une cause fausse fait cesser de vérifier**, et
+c'est le motif que ce journal reproche partout. Les trois commentaires disent
+maintenant ce qui a été mesuré, y compris ce qu'aucun repli ne couvre : le
+PSEUDO, qui sortirait en carrés le jour de la panne quelle que soit la langue du
+compte.
+
+Ce qui reste — embarquer une police, ou aligner les trois — est un arbitrage :
+il part dans les questions, avec ses trois options chiffrées.
+
 ### Le module que dix-neuf routes appellent n'avait aucun test à lui
 
 Trouvé en refaisant le recensement des modules sans test, qui datait du

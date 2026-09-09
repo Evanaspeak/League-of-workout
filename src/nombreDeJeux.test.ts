@@ -22,7 +22,6 @@ import { JEUX } from "@/lib/jeux";
  * hypothèse — il a déjà eu lieu deux fois.
  */
 
-const DICOS = path.join(__dirname, "lib", "i18n", "dictionaries");
 
 /**
  * Ce qui compte comme « un nombre de jeux du CATALOGUE écrit à la main ».
@@ -51,18 +50,53 @@ const LETTRES = [
 const MOTS_JEU = ["jeux", "games", "juegos", "Spiele", "ゲーム", "游戏"].join("|");
 /** Ces deux-là ne désignent jamais une partie jouée. */
 const MOTS_CATALOGUE_SEUL = ["タイトル", "款游戏"].join("|");
-const MOT_CATALOGUE = /catalogue|catalog|catálogo|Katalog|目录|カタログ/;
+/**
+ * Ce qui, à côté d'un compte de jeux, ne peut désigner qu'un CATALOGUE.
+ *
+ * Le mot « catalogue » ne suffisait pas, et c'est la carte partagée qui l'a
+ * montré : elle écrivait « 15 JEUX PRIS EN CHARGE » — donc quatre lignes que
+ * ce tri ratait, sur la surface que Discord et Reddit affichent quand un lien
+ * du site y est collé. On ne dit pas « 20 parties prises en charge » : la
+ * prise en charge se prédique d'une entrée de catalogue et de rien d'autre.
+ */
+const MOT_CATALOGUE =
+  /catalogue|catalog|catálogo|Katalog|目录|カタログ|pris en charge|supported|compatibles|unterstützt|対応|支持/i;
 
+/**
+ * Les motifs sont INSENSIBLES À LA CASSE, et il a fallu la carte partagée pour
+ * le voir : elle écrit « 15 JEUX PRIS EN CHARGE » en capitales, donc
+ * `MOTS_JEU` — écrit en minuscules — ne la trouvait pas. Un garde qui ne
+ * reconnaît son sujet que dans une casse ne le reconnaît pas.
+ */
 export function ecritALaMain(ligne: string): boolean {
   const nu = sansInterpolations(ligne);
-  if (new RegExp("(?:" + LETTRES + ")\\s*(?:" + MOTS_JEU + "|" + MOTS_CATALOGUE_SEUL + ")").test(nu)) return true;
-  if (new RegExp("\\d+\\s*(?:" + MOTS_CATALOGUE_SEUL + ")").test(nu)) return true;
-  if (new RegExp("\\d+\\s*(?:" + MOTS_JEU + ")").test(nu) && MOT_CATALOGUE.test(nu)) return true;
+  if (new RegExp("(?:" + LETTRES + ")\\s*(?:" + MOTS_JEU + "|" + MOTS_CATALOGUE_SEUL + ")", "i").test(nu)) return true;
+  if (new RegExp("\\d+\\s*(?:" + MOTS_CATALOGUE_SEUL + ")", "i").test(nu)) return true;
+  if (new RegExp("\\d+\\s*(?:" + MOTS_JEU + ")", "i").test(nu) && MOT_CATALOGUE.test(nu)) return true;
   return false;
 }
 
+/**
+ * Tout `src/lib/i18n`, et pas seulement `dictionaries/`.
+ *
+ * Le garde ne balayait que le sous-dossier. `imageSociale.ts` — les mots de la
+ * carte partagée — vit un étage au-dessus, et il a gardé « 15 » dans quatre
+ * langues six jours après l'entrée d'Overwatch au catalogue. C'est le motif
+ * que ce projet paie en boucle sous sa forme la plus discrète : un garde qui
+ * regarde un DOSSIER, et un porteur de texte posé à côté.
+ */
 function fichiers(): string[] {
-  return fs.readdirSync(DICOS).filter((f) => f.endsWith(".ts") && !f.includes(".test."));
+  const racine = path.join(__dirname, "lib", "i18n");
+  const out: string[] = [];
+  const parcourir = (d: string) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const c = path.join(d, e.name);
+      if (e.isDirectory()) parcourir(c);
+      else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) out.push(c);
+    }
+  };
+  parcourir(racine);
+  return out;
 }
 
 /**
@@ -77,7 +111,10 @@ export function sansInterpolations(texte: string): string {
 }
 
 describe("le nombre de jeux vient du catalogue", () => {
-  const lus = fichiers().map((f) => [f, fs.readFileSync(path.join(DICOS, f), "utf8")] as const);
+  // `fichiers()` rend des chemins ABSOLUS : les rejoindre à un dossier les
+  // doublerait, et le contrôle tomberait sur un ENOENT — le piège déjà écrit
+  // au journal pour le garde des liens localisés.
+  const lus = fichiers().map((f) => [path.relative(__dirname, f), fs.readFileSync(f, "utf8")] as const);
 
   it("le recensement lit les dictionnaires, et il y en a", () => {
     // Sans ce témoin, un dossier renommé rendrait le contrôle vert en
@@ -95,12 +132,15 @@ describe("le nombre de jeux vient du catalogue", () => {
     expect(fautifs).toEqual([]);
   });
 
-  it("les deux écrans qui l'annoncent le prennent du catalogue", () => {
+  it("les trois surfaces qui l'annoncent le prennent du catalogue", () => {
     // Le gabarit juste ne sert à rien si personne ne lui passe le vrai
     // nombre : c'est le BRANCHEMENT qu'on éprouve, pas l'intention.
     const ecrans = [
       path.join(__dirname, "app", "[locale]", "LandingClient.tsx"),
       path.join(__dirname, "components", "OnboardingModal.tsx"),
+      // La carte partagée : c'est elle qui a gardé « 15 » le plus longtemps,
+      // et c'est la surface que des inconnus voient en premier.
+      path.join(__dirname, "app", "[locale]", "opengraph-image.tsx"),
     ];
     const fautifs = ecrans.filter((e) => !/JEUX\.length/.test(fs.readFileSync(e, "utf8")));
     expect(fautifs).toEqual([]);
@@ -126,6 +166,17 @@ describe("le tri, sur des cas fabriqués", () => {
     ["目录里有十五款游戏", true],
     ["カタログには 15 タイトル", true],
     ["16 games in the catalogue", true],
+    // La PRISE EN CHARGE désigne un catalogue aussi sûrement que le mot
+    // « catalogue », et c'est la carte partagée qui l'a montré : ces quatre
+    // lignes-là échappaient au tri.
+    ["15 JEUX PRIS EN CHARGE", true],
+    ["15 GAMES SUPPORTED", true],
+    ["15 JUEGOS COMPATIBLES", true],
+    ["15 SPIELE UNTERSTÜTZT", true],
+    // Et ce qui ne doit pas y entrer : une PARTIE ne se « prend pas en
+    // charge ». Sans ce cas, on ne saurait pas si le mot trie ou s'il accepte
+    // tout ce qui porte un nombre.
+    ["Riot supported 20 matches this week", false],
   ];
   for (const [ligne, attendu] of cas) {
     it((attendu ? "refuse" : "accepte") + " " + JSON.stringify(ligne.slice(0, 40)), () => {
