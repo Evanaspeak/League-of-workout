@@ -77,11 +77,44 @@ test("régler le barème change la dette, et la remise le rend", async ({ browse
 
   await page.goto("/settings#effort", { waitUntil: "domcontentloaded" });
 
+  /**
+   * Les TROIS écritures sont attendues, et c'est ce qui manquait.
+   *
+   * Trois tapes envoient trois requêtes — la file les met en série, elle ne les
+   * fusionne pas. Le contrôle d'après n'attendait que la colonne NON NULLE,
+   * c'est-à-dire la PREMIÈRE : la durée était lue après un ou deux clics,
+   * pendant que le troisième continuait d'arriver, et le tableau de bord chargé
+   * ensuite montrait la valeur des trois. C'est le « attendu 2, reçu 3 min »
+   * que ce fichier a rendu en intégration continue et en suite locale, jamais
+   * seul — il faut une machine assez chargée pour que la file traîne.
+   *
+   * On compte les écritures qui portent RÉELLEMENT le barème, pas les requêtes
+   * vers `/api/settings` : `ContexteNavigateur` en envoie une par ouverture
+   * pour la langue et le fuseau, et elle croise légitimement la première. Ce
+   * piège est déjà écrit au journal pour ce fichier ; compter les requêtes
+   * plutôt que les clés est ce qui l'y avait fait tomber.
+   *
+   * Et on compte plutôt que de recalculer la valeur attendue : une seconde
+   * arithmétique aurait l'air juste et divergerait au premier arrondi.
+   */
+  let baremesEcrits = 0;
+  page.on("response", (r) => {
+    const req = r.request();
+    if (req.method() !== "PUT") return;
+    if (new URL(r.url()).pathname !== "/api/settings") return;
+    if (!(req.postData() ?? "").includes("ratiosExercices")) return;
+    baremesEcrits += 1;
+  });
+
   // Trois tapes sur « plus » : le pas vaut un quart du barème commun, donc la
   // boxe devient à peu près deux fois plus longue pour la même dette.
   const plus = page.getByRole("button", { name: /plus de .*boxe|more .*box/i }).first();
   await plus.waitFor({ timeout: 15_000 });
   for (let i = 0; i < 3; i += 1) await plus.click();
+
+  await expect
+    .poll(() => baremesEcrits, { timeout: 20_000 })
+    .toBeGreaterThanOrEqual(3);
 
   // La base, et pas seulement l'écran : un panneau qui se contenterait
   // d'afficher ce qu'on vient de taper passerait le contrôle suivant.

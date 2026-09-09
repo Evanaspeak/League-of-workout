@@ -42,6 +42,13 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
 
   // Le nom de champion le plus long du jeu, et des KDA à deux chiffres : c'est
   // là que la mise en page casse, pas sur un cas idéal.
+  //
+  // « Maître Yi » est SEMÉ tel quel et RELU sous son nom canonique : la porte
+  // d'écriture ramène le nom traduit à celui qu'on affiche, et l'historique
+  // montre ce qui est en base. Ce n'est pas un détail de graine — c'est le
+  // seul endroit de la suite qui éprouve la normalisation d'un ALIAS jusqu'à
+  // l'écran, et c'est ce qui a fait tomber ce fichier le jour où la porte s'est
+  // mise à normaliser.
   const parties = [
     { champion: "Aurelion Sol", role: "ARAM", kills: 20, deaths: 14, assists: 8, result: "V" },
     { champion: "Kog'Maw", role: "ARAM", kills: 12, deaths: 16, assists: 9, result: "D" },
@@ -505,7 +512,9 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
     await route.continue();
   });
 
-  const ligne = page.locator("tbody tr").filter({ hasText: "Maître Yi" }).first();
+  // Semé « Maître Yi », rangé « Master Yi » : c'est la porte qui a normalisé,
+  // et l'historique affiche ce qui est en base.
+  const ligne = page.locator("tbody tr").filter({ hasText: "Master Yi" }).first();
   await ligne.getByRole("button", { name: /corriger le résultat|correct the result/i }).click();
 
   /**
@@ -541,7 +550,7 @@ test("une correction refusée ne change rien à l'écran", async ({ browser }) =
     .toBeVisible({ timeout: 10_000 });
   // La ligne reste une défaite : c'est la base qui tranche, pas l'écran.
   const apres = (await (await page.request.get("/api/games")).json()).parties;
-  expect(apres.find((g: { champion: string }) => g.champion === "Maître Yi").result).toBe("D");
+  expect(apres.find((g: { champion: string }) => g.champion === "Master Yi").result).toBe("D");
   await ctx.close();
 });
 
