@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
-import { ouvrirCompte } from "./compte";
+import { ouvrirCompte, seConnecter } from "./compte";
 import { sansLangue } from "./chemin";
 
 /**
@@ -40,13 +40,7 @@ test("ouvrir un compte avec une partie", async ({ browser }) => {
   await bloc.waitFor({ timeout: 20_000 });
   const code = (await bloc.innerText()).trim();
 
-  await page.goto("/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
-  await page.getByPlaceholder(/ton code|your code/i).fill(code);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, COMPTE.pseudo, code);
   uid = (await (await page.request.get("/api/user")).json()).id as string;
   // La demande de consentement santé est modale et recouvre le rail : sans
   // réponse, aucun clic ne passe. C'est le cinquième fichier de parcours qui
@@ -59,6 +53,39 @@ test("ouvrir un compte avec une partie", async ({ browser }) => {
   });
   expect(r.status(), await r.text()).toBe(200);
   etat = await ctx.storageState();
+  await ctx.close();
+});
+
+/**
+ * Le refus de connexion, ANNONCÉ.
+ *
+ * Il s'affichait dans un `<div>` nu : à l'écran on le lit, pour un lecteur
+ * d'écran il n'existe pas. Le bouton redevient cliquable et rien n'est dit,
+ * sur le seul écran où celui qui n'entre pas n'a aucun autre recours.
+ *
+ * Trouvé par la sonde de `seConnecter`, qui relève les messages annoncés
+ * quand une connexion n'aboutit pas et n'en trouvait AUCUN sur un code faux.
+ * C'est l'instrument qui a trouvé le défaut, pas la relecture.
+ */
+test("un code faux se dit, et s'annonce", async ({ browser }) => {
+  const { compte } = await ouvrirCompte(browser, "Refus", { consentement: true });
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+
+  await page.goto("/fr/login");
+  await page.getByPlaceholder(/ton pseudo|your username/i).fill(compte.pseudo);
+  await page.getByPlaceholder(/ton code|your code/i).fill("CODEFAUX");
+  await page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click();
+
+  // Le message, DANS un élément qui l'annonce. Chercher le texte seul
+  // passerait sur le `<div>` nu, c'est-à-dire sur le défaut lui-même.
+  await expect(page.getByRole("alert").filter({ hasText: /pseudo|code/i }))
+    .toBeVisible({ timeout: 15_000 });
+
+  // Et on n'est pas entré. Sans ce contrôle, un écran qui annonce l'échec
+  // tout en laissant passer passerait le test.
+  expect(sansLangue(new URL(page.url()).pathname)).toBe("/login");
+
   await ctx.close();
 });
 

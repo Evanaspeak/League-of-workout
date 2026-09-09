@@ -929,7 +929,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 265 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 266 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1285,6 +1285,80 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### V546 en ligne, et trois témoins qui disent la même chose
+La correction de la page de secours hors ligne est servie. Fusionnée à
+**00 h 19 min 37 UTC**, elle rendait encore l'ancien état à 01 h 28 et le
+nouveau à 01 h 36 : **entre 69 et 77 minutes**. C'est le haut de la bande déjà
+mesurée sur ce projet — de moins de deux minutes à deux heures quarante.
+
+Trois témoins indépendants, et c'est ce qui rend le constat sûr :
+
+| témoin | avant | après |
+|---|---|---|
+| `/hors-ligne.html` | 307 vers `/en/login` | **200** |
+| `/images/produit/stats.png` (supprimée) | 200 | **404** |
+| `/images/jeux/LISEZ-MOI.md` (déménagée) | 200 | **404** |
+
+Un seul témoin aurait laissé le doute entre « pas encore déployé » et « la
+correction ne marche pas ». Trois qui basculent ensemble ne laissent que la
+première lecture, et c'est la raison d'en pousser plusieurs quand une version
+en offre plusieurs.
+
+**Ce que ça répare pour de bon** : le service worker met en cache la page de
+secours à son installation, et `cache.add` suit les redirections. Tant que
+l'adresse partait en 307, il mettait en cache l'écran de connexion ou rien du
+tout. Hors ligne, on tombait donc sur le repli en texte brut du service
+worker, jamais sur la page écrite pour ça.
+
+### La connexion écrite treize fois, et le refus que personne n'entendait
+Suite de l'aléa que ce journal recense depuis août sans jamais avoir su le
+nommer : `waitForURL` qui expire sur la CONNEXION, trente secondes, en
+annonçant « waiting for navigation until load ». Il est retombé sur V547, dans
+le travail `bareme`, sur un exécuteur d'UN SEUL worker où rien d'autre ne
+tournait — ce qui écarte la contention déjà écartée une fois.
+
+**Le message ne dit rien, et c'est le vrai défaut.** Trois causes produisent
+exactement le même symptôme, et elles ne se corrigent pas de la même façon :
+le serveur a REFUSÉ (un message est à l'écran, les champs portent ce qu'on a
+tapé), la page n'était pas HYDRATÉE quand on a rempli (champs VIDES, bouton
+désactivé — le défaut nommé en V537), ou la requête n'est jamais REVENUE. Rien
+dans l'échec ne les sépare.
+
+**Et ces treize lignes étaient recopiées dans TREIZE fichiers**, à l'identique
+au compte et au chemin près. C'était la seule vraie duplication de la suite
+navigateur, et la plus chère : instrumenter l'aléa demandait de toucher treize
+endroits, donc personne ne l'a fait. `seConnecter` vit maintenant dans
+`e2e/compte.ts`, et le relevé ne coûte rien tant que tout va bien — il n'est
+fait qu'à l'échec.
+
+**Le relevé a trouvé un défaut du produit à sa première exécution**, ce qui
+est la meilleure démonstration possible : sur un code faux, il annonce
+**« aucun message à l'écran »**. Le refus de connexion s'affichait dans un
+`<div>` NU. On le lit à l'œil ; pour un lecteur d'écran il n'existe pas — le
+bouton redevient cliquable, et rien n'est dit. Sur le seul écran où celui qui
+n'entre pas n'a aucun autre recours.
+
+C'est le refus silencieux que ce projet corrige en boucle — le signalement, la
+mise de côté d'un exercice, le consentement santé — trouvé cette fois à
+l'endroit qui compte le plus, et par un instrument plutôt que par une
+relecture.
+
+Le parcours cherche le message DANS un élément qui l'annonce : chercher le
+texte seul passerait sur le `<div>` nu, c'est-à-dire sur le défaut lui-même.
+Et il vérifie qu'on n'est pas entré — sans quoi un écran qui annonce l'échec
+en laissant passer passerait le test. Sabotage : `role="alert"` retiré, le
+parcours tombe.
+
+La suite navigateur ENTIÈRE a été jouée, parce que `e2e/compte.ts` est une
+fondation de la suite — les trente-trois fichiers en dépendent :
+**266 passés en 15 min 36**.
+
+**Ce que ça ne règle PAS, et il vaut mieux l'écrire.** L'aléa n'est toujours
+pas diagnostiqué. Ce qui change est qu'il se nommera lui-même la prochaine
+fois, au lieu d'accuser la navigation. C'est ce que ce fichier demande depuis
+le 3 septembre — quand un test échoue pour une raison qu'on ne sait pas
+NOMMER, on instrumente avant la deuxième tentative — appliqué enfin à celui-ci.
 
 ### Neuf colonnes de réglages écrites et jamais relues
 Trouvé par une assertion que j'ai failli ne pas écrire : un `page.reload()` à

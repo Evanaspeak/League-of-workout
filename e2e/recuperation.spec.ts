@@ -1,8 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { randomBytes } from "node:crypto";
-import { ouvrirCompte } from "./compte";
+import { ouvrirCompte, seConnecter } from "./compte";
 import { requeteSql } from "./base";
-import { sansLangue } from "./chemin";
 import { PREFIXE_RESET, VALIDITE_MS, empreinte } from "../src/lib/recuperation";
 
 /**
@@ -71,13 +70,7 @@ test("le lien rend un code neuf, et l'ancien ne vaut plus", async ({ browser }) 
 
   // Et il OUVRE : un code affiché qui ne connecte pas serait pire que pas de
   // page du tout.
-  await page.goto("/fr/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(compte.pseudo);
-  await page.getByPlaceholder(/ton code|your code/i).fill(neuf);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, compte.pseudo, neuf, { chemin: "/fr/login" });
 
   await ctx.close();
 });
