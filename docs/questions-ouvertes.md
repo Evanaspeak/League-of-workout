@@ -323,6 +323,44 @@ pas de la plomberie.
 
 ---
 
+### 12 · Les deux formulaires d'inscription, côte à côte (réf. 085)
+Ta réponse était « Montre-moi les deux ». Une description ne montre rien, donc
+c'est une PAGE, dans la peau du produit — mêmes couleurs, mêmes polices, mêmes
+libellés que ceux du dictionnaire :
+
+**https://claude.ai/code/artifact/b4983778-9dbb-43f1-997d-e0c6ca3fa287**
+
+**Ce ne sont pas deux versions d'un même formulaire**, et c'est la trouvaille de
+l'exercice. Celui d'aujourd'hui demande QUI TU ES — un pseudo, une adresse, un
+corps replié en six champs. Celui de la 085 demande CE QUE TU VAS FAIRE — un
+jeu, un exercice, un niveau. Ils ne collectent pas les mêmes choses et ne
+servent pas la même idée de ce qu'est une inscription.
+
+**Et les trois questions ne sont pas des données nouvelles** : ce sont trois
+réglages qui EXISTENT déjà — « Tes jeux », « Ton effort », le test de force. La
+proposition ne collecte pas plus, elle les déplace plus tôt. Ce qu'elle achète
+est un premier tableau de bord déjà juste, au lieu d'un tableau de bord réglé
+par défaut sur League of Legends, pompes, niveau 1.
+
+**Ce que ça coûte** : chaque champ obligatoire coûte des inscrits, et il faut de
+toute façon un défaut pour qui ne répond pas — donc l'écran d'aujourd'hui
+revient par la fenêtre. Deux nuits, plus la reprise de la modale d'accueil, qui
+explique déjà ces trois choses.
+
+**La troisième question est DÉDUITE, et il faut le dire.** La ligne 085 est
+tronquée dans l'interrogatoire lui-même : « Quel jeu, quel exercice, co… ».
+« Combien d'affilée » est la lecture la plus probable, parce que le jeu,
+l'exercice et le niveau sont exactement les trois choses dont le barème a besoin
+pour chiffrer une partie. Si ce n'était pas ça, c'est la colonne de droite qu'il
+faut corriger, pas la comparaison.
+
+**Ce que la mesure dit avant que tu choisisses** : quatre comptes, aucune
+activité depuis une semaine. Le goulot n'est pas la longueur du formulaire,
+c'est que personne n'arrive jusqu'à lui. La question vaudra le jour où des gens
+arriveront ; elle passe après l'étape 01, qui est d'aller en chercher dix.
+
+---
+
 ## Ce qui a été tranché, et où c'est parti
 
 Quatorze questions, répondues le 8 septembre. Le tableau existe pour qu'une

@@ -1289,12 +1289,29 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
-### Une adresse qui résout au MAUVAIS endroit, et les deux dettes rendues
-Le plan porte trois choses « promises et jamais rendues ». Deux sont rendues :
-la liste des défis absurdes (réf. 136, « Montre-m'en d'autres ») et celle des
-statistiques avancées du payant (réf. 214, « Propose-moi »). Les deux vivent
-dans `docs/questions-ouvertes.md`, parce que ce sont des propositions qui
-attendent un choix et que c'est là que part ce qu'on ne tranche pas seul.
+### Une adresse qui résout au MAUVAIS endroit, et les trois dettes rendues
+Le plan porte trois choses « promises et jamais rendues ». **Les trois le
+sont** : la liste des défis absurdes (réf. 136, « Montre-m'en d'autres »),
+celle des statistiques avancées du payant (réf. 214, « Propose-moi »), et les
+deux maquettes de formulaire d'inscription (réf. 085, « Montre-moi les deux »).
+Elles vivent dans `docs/questions-ouvertes.md`, parce que ce sont des
+propositions qui attendent un choix et que c'est là que part ce qu'on ne
+tranche pas seul.
+
+**La troisième n'est pas de la prose, et c'est la réponse qui l'impose.**
+« Montre-moi les deux » ne se répond pas par une description : c'est une PAGE,
+dans la peau du produit — mêmes couleurs, mêmes polices, mêmes libellés que
+ceux du dictionnaire — pour que les deux formulaires se jugent là où ils
+vivront. Son adresse est rangée dans le tableau, comme toute décision qui part.
+
+**Et l'exercice a rendu autre chose que deux maquettes.** Les deux formulaires
+ne sont pas deux versions du même : celui d'aujourd'hui demande QUI TU ES,
+celui de la 085 demande CE QUE TU VAS FAIRE. Surtout, ses trois questions ne
+sont pas des données nouvelles — ce sont trois réglages qui EXISTENT déjà
+(« Tes jeux », « Ton effort », le test de force). La proposition ne collecte
+pas plus, elle les déplace plus tôt, et ce qu'elle achète est un premier
+tableau de bord déjà juste au lieu d'un tableau réglé par défaut. Ça ne se voit
+pas en lisant la ligne du plan.
 
 **Et la seconde a mis au jour une adresse fausse.** La section des choses dues
 annonçait la liste des statistiques sous « réf. 007 ». Or la 007 parle d'un
