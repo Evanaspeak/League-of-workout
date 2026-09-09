@@ -4,6 +4,7 @@ import { Lien } from "@/components/Lien";
 import { useT, useNombre } from "@/lib/i18n/LocaleContext";
 import { premiersPas as dict } from "@/lib/i18n/dictionaries/premiersPas";
 import { calculerPublic } from "@/lib/calculateurPublic";
+import { versRubrique } from "@/components/ListeReglages";
 
 /**
  * Ce qu'un compte neuf voit à la place des graphiques vides.
@@ -121,8 +122,23 @@ export function PremiersPas({ pompesMax, onAjouter }: {
         }}>
           {t.etapesTitre}
         </span>
-        {etape(1, t.etape1, t.etape1Aide, "/settings?rubrique=effort", t.versReglages)}
-        {etape(2, t.etape2, t.etape2Aide, "/settings?rubrique=jeux", t.versReglages)}
+        {/*
+          Un FRAGMENT, pas un paramètre de requête.
+
+          Les deux liens visaient `?rubrique=effort` et `?rubrique=jeux`, que
+          personne ne lit : la rubrique ouverte vit dans le fragment
+          (`ListeReglages.useRubrique`, qui lit `window.location.hash`). Les
+          deux premières étapes de ce qu'un compte NEUF lit en premier
+          arrivaient donc sur la LISTE des rubriques, et il fallait trouver
+          soi-même « Ton effort ».
+
+          C'est le défaut déjà corrigé à l'étape 3 — « une étape qui décrit un
+          geste doit l'ouvrir ; indiquer une adresse où il n'existe pas est
+          pire que de se taire » — sous une forme plus discrète : la page était
+          la bonne, et rien ne s'y ouvrait.
+        */}
+        {etape(1, t.etape1, t.etape1Aide, versRubrique("effort"), t.versReglages)}
+        {etape(2, t.etape2, t.etape2Aide, versRubrique("jeux"), t.versReglages)}
         {etape(3, t.etape3, t.etape3Aide, onAjouter, t.versAjout)}
       </div>
     </div>

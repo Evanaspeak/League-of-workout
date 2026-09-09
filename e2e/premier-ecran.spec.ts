@@ -105,6 +105,52 @@ test("un compte vide peut enregistrer sa première partie depuis le tableau de b
 });
 
 /**
+ * Les deux premières étapes ouvrent la rubrique qu'elles nomment.
+ *
+ * Elles visaient `/settings?rubrique=effort` — un paramètre que personne ne
+ * lit : la rubrique ouverte vit dans le FRAGMENT. Elles arrivaient donc sur la
+ * LISTE des rubriques, et il fallait trouver « Ton effort » soi-même, sur le
+ * premier écran d'un compte neuf.
+ *
+ * Ce que ce parcours prouve et qu'aucun test unitaire ne peut voir : que le
+ * fragment OUVRE réellement la rubrique. La forme de l'adresse est épinglée
+ * ailleurs ; ici on vérifie le branchement, jusqu'à un champ qui n'existe que
+ * dans la rubrique ouverte.
+ */
+test("les deux premières étapes ouvrent la rubrique qu'elles nomment", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+
+  await page.goto("/dashboard");
+  await passerIntro(page);
+
+  /*
+    Le lien porte le TITRE de l'étape, pas le libellé « Réglages » — celui-ci
+    est du texte posé à côté, et il désigne aussi l'entrée de la barre de
+    navigation. Le viser rendrait deux éléments.
+  */
+  // Étape 1 : « Ton effort ».
+  const lien1 = page.getByRole("link", { name: /test de force/i });
+  await expect(lien1).toHaveAttribute("href", /#effort$/);
+  await lien1.click();
+  await page.waitForURL(/\/settings#effort$/);
+  // Le titre de la rubrique OUVERTE, pas la ligne de la liste : c'est ce qui
+  // distingue « la page est la bonne » de « la rubrique s'est ouverte ».
+  await expect(page.getByRole("heading", { name: /ton effort|your effort/i })).toBeVisible();
+
+  // Étape 2 : « Tes jeux ».
+  await page.goto("/dashboard");
+  await passerIntro(page);
+  const lien2 = page.getByRole("link", { name: /compte riot/i });
+  await expect(lien2).toHaveAttribute("href", /#jeux$/);
+  await lien2.click();
+  await page.waitForURL(/\/settings#jeux$/);
+  await expect(page.getByRole("heading", { name: /tes jeux|your games/i })).toBeVisible();
+
+  await ctx.close();
+});
+
+/**
  * La partie de démonstration (réponse 082).
  *
  * « Montrer le calcul sans avoir à jouer. » Ce que le parcours prouve et

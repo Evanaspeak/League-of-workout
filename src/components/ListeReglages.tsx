@@ -16,6 +16,34 @@ import { useValeurClient } from "@/lib/valeurClient";
  * rubrique.
  */
 
+/**
+ * Rubriques des réglages, dans l'ordre de la liste.
+ *
+ * **L'identifiant EST le fragment d'adresse** : `/settings#jeux` ouvre les
+ * jeux. La règle était écrite au-dessus de cette liste et le voisin ne la
+ * suivait pas — les deux premières étapes des « Premiers pas » visaient
+ * `?rubrique=effort`, un paramètre que personne ne lit, donc elles arrivaient
+ * sur la LISTE des rubriques.
+ *
+ * Elle vit ici plutôt que dans l'écran des réglages pour que le compilateur
+ * tienne le lien : c'est le même choix que `PARAM_AJOUT`, écrit une fois et lu
+ * du manifeste comme du tableau de bord.
+ */
+export const RUBRIQUES = ["profil", "corps", "effort", "jeux", "application", "donnees", "avance"] as const;
+export type Rubrique = (typeof RUBRIQUES)[number];
+
+/**
+ * L'adresse qui OUVRE une rubrique.
+ *
+ * Un FRAGMENT, jamais un paramètre de requête : c'est `useRubrique` qui décide,
+ * et elle lit `window.location.hash`. Le type refuse un identifiant inventé, et
+ * un identifiant renommé fait tomber la construction chez les appelants —
+ * mais aucun des deux n'attrape le retour à `?rubrique=`, qui compile
+ * parfaitement et n'ouvre rien. C'est la forme, et elle seule, que le test
+ * épingle.
+ */
+export const versRubrique = (id: Rubrique) => `/settings#${id}`;
+
 /** Suit le fragment d'adresse, sans effet ni rendu en cascade. */
 function abonnerAuFragment(onChange: () => void) {
   window.addEventListener("hashchange", onChange);
