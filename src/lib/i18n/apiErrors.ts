@@ -244,6 +244,24 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "Invalid duration", es: "Duración no válida", de: "Ungültige Dauer",
     zh: "时长不正确", ja: "時間が正しくありません",
   },
+  "Dépense invalide": {
+    en: "Invalid expenditure", es: "Gasto no válido", de: "Ungültiger Verbrauch",
+    zh: "消耗数值不正确", ja: "消費量が正しくありません",
+  },
+  /**
+   * Le refus DIT laquelle des deux valeurs on attend.
+   *
+   * Une montre affiche les calories ACTIVES et la dépense TOTALE de la
+   * journée, et elles diffèrent d'un facteur trois. « Valeur invalide »
+   * enverrait retaper le même chiffre.
+   */
+  "Dépense de la journée entière attendue": {
+    en: "Enter the whole day's expenditure, not just active calories",
+    es: "Introduce el gasto de todo el día, no solo las calorías activas",
+    de: "Gib den Verbrauch des ganzen Tages an, nicht nur die Aktivkalorien",
+    zh: "请填写全天消耗，而不只是活动消耗",
+    ja: "アクティブ消費だけでなく、1 日全体の消費量を入力してください",
+  },
   "Poids invalide": {
     en: "Invalid weight", es: "Peso no válido", de: "Ungültiges Gewicht",
     zh: "体重不正确", ja: "体重が正しくありません",

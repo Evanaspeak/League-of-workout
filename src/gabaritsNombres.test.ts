@@ -135,6 +135,13 @@ describe("les gabarits qui reçoivent un grand nombre", () => {
        * un an. Trouvés en lisant l'écran des amis à deux comptes en japonais.
        */
       ecartAuPremier: 0, profilParties: 0,
+      /**
+       * La dépense relevée sur une montre est TOUJOURS à quatre chiffres :
+       * deux mille quatre cents kilocalories est la journée ordinaire, pas le
+       * cas de bord. Elle rejoint donc la liste le jour où elle naît, plutôt
+       * qu'après avoir été lue « 2400 » sur un écran allemand.
+       */
+      corpsDepenseAujourdhui: 0,
     };
     const fautifs: string[] = [];
     let appels = 0;

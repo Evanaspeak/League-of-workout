@@ -107,6 +107,24 @@ test("le corps est éteint au départ, et s'allume avec un objectif chiffré", a
   // Réponse 016 : aucune date n'est promise, et l'écran dit pourquoi.
   await expect(page.getByText(/7 700|7,700/)).toBeVisible();
 
+  /**
+   * Et il faut RECHARGER, sans quoi on n'éprouve qu'un état de React.
+   *
+   * `/api/settings` filtrait sa réponse par `comptePublic`, le filtre de
+   * DIFFUSION, qui retire les neuf colonnes de « Ton corps » : elles étaient
+   * écrites en base et jamais relues. On choisissait « Perdre », on réglait
+   * sa variante et son activité, on rechargeait, et tout était revenu à
+   * « Rien pour l'instant ». Ça a vécu depuis l'étape 05, et ce parcours ne
+   * pouvait pas le voir — il ne rechargeait pas.
+   */
+  await page.reload();
+  await expect(page.getByRole("button", { name: /^perdre$|^lose$/i }))
+    .toHaveAttribute("aria-pressed", "true", { timeout: 10_000 });
+  await expect.poll(async () => {
+    const l = page.getByText(/kcal par jour|kcal per day/).first();
+    return ((await l.textContent().catch(() => "")) ?? "").replace(/\D/g, "");
+  }, { timeout: 10_000 }).toBe("2207");
+
   await ctx.close();
 });
 
@@ -120,8 +138,17 @@ test("une pesée saisie arrive en base", async ({ browser }) => {
 
   expect(await compter(PESEES, [compte.pseudo])).toBe(0);
 
-  await page.getByLabel(/poids en kilos|weight in kilos/i).fill("78.4");
-  await page.getByRole("button", { name: /^enregistrer$|^save$/i }).first().click();
+  const champ = page.getByLabel(/poids en kilos|weight in kilos/i);
+  await champ.fill("78.4");
+  /**
+   * Le bouton se cherche DANS la rangée du champ, pas par `.first()`.
+   *
+   * Il y a deux « Enregistrer » dans cette rubrique depuis que la dépense du
+   * jour s'y saisit, et le premier n'est plus celui-ci. Un parcours qui compte
+   * sur l'ORDRE des panneaux tombe au premier panneau ajouté au-dessus, et
+   * l'échec accuse la pesée d'un défaut qu'elle n'a pas.
+   */
+  await champ.locator("..").getByRole("button").click();
 
   /**
    * Le contrôle qui compte : la ligne existe. Sans lui, un écran qui se

@@ -110,6 +110,7 @@ model User {
   rappelPeseeLe    DateTime?
 
   pesees Pesee[]
+  depensesJour DepenseJour[]
 
   testsForce        TestForce[]
 
@@ -619,6 +620,35 @@ model Pesee {
 
   createdAt DateTime @default(now())
 
+  @@unique([userId, jour])
+  @@index([userId, jour])
+}
+
+/// Ce qu'une montre a mesuré comme dépense sur une journée (réponse 040).
+///
+/// Des LIGNES et jamais un total, comme `Pesee` : la suite des jours EST
+/// l'histoire, et rien ici ne peut diverger de ce qui la produit.
+///
+/// Le champ dit ce qu'il porte. Une montre affiche DEUX chiffres — les
+/// calories actives et la dépense totale de la journée — et ils diffèrent d'un
+/// facteur trois. C'est la dépense TOTALE qu'on attend, métabolisme de base
+/// compris : c'est elle qui remplace l'estimation dans l'objectif calorique
+/// (réponse 041, « elle nourrit l'objectif »).
+model DepenseJour {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Jour LOCAL, « AAAA-MM-JJ », comme `Pesee.jour` et `Paiement.jour`.
+  jour String
+  /// Dépense TOTALE de la journée, en kilocalories.
+  kcalBrulees Int
+
+  createdAt DateTime @default(now())
+
+  /// Une saisie par jour : on relève sa montre le soir, et si on la relève
+  /// deux fois c'est la seconde qui compte. L'unicité est posée EN BASE —
+  /// deux envois partis ensemble liraient tous deux « rien pour ce jour ».
   @@unique([userId, jour])
   @@index([userId, jour])
 }

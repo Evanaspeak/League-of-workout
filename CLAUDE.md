@@ -904,7 +904,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2687 tests unitaires, 261 suites (au 9 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2719 tests unitaires, 265 suites (au 9 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -929,7 +929,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 263 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 265 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -970,6 +970,22 @@ rien ne se cliquait derrière. Une modale ajoutée se traverse dans
 - `e2e/langues.spec.ts` — aucun « undefined » à l'écran, aucun débordement
   horizontal (c'est ainsi qu'un mot allemand trop long se signale), `lang`
   posé sur la page, et six textes réellement différents.
+### Ce que les réglages relisent
+`src/reglagesRelus.test.ts` refuse qu'un écran lise un champ que sa route
+retire de la réponse. C'est le garde du défaut le plus coûteux de la série :
+`/api/settings` filtrait par `comptePublic`, le filtre de DIFFUSION, donc les
+neuf colonnes de « Ton corps » et le jeton du profil public étaient écrites en
+base et jamais relues.
+
+Il porte sur le BRANCHEMENT et non sur un nom : il lit dans la ROUTE quel
+filtre son GET applique, dans `compte.ts` ce que ce filtre retire, et dans les
+ÉCRANS ce qu'ils lisent de la réponse. Les écrans se trouvent par leur FORME —
+ceux qui demandent la route — plutôt que par leur chemin.
+
+`comptePublic` et `compteReglages` sont deux filtres et non un, et le plus
+SERRÉ est le défaut : une colonne nouvelle qu'on n'a pas rangée part par la
+diffusion, donc `compte.test.ts` continue d'exiger qu'on la range.
+
 ### La porte des routes d'API
 `src/porteRoutes.test.ts` regarde le dossier `src/app/api` plutôt que les
 fichiers connus. Chaque route doit exiger une session, ou figurer dans
@@ -1269,6 +1285,157 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Neuf colonnes de réglages écrites et jamais relues
+Trouvé par une assertion que j'ai failli ne pas écrire : un `page.reload()` à
+la fin d'un parcours, pour vérifier que la valeur vient de la BASE et non d'un
+état de React. Elle est tombée, et pas sur ce que j'éprouvais.
+
+**`/api/settings` filtrait sa réponse par `comptePublic`**, c'est-à-dire par le
+filtre de DIFFUSION. Il retire les neuf colonnes de « Ton corps » — variante de
+formule, niveau d'activité, mode poursuivi, poids visé, les trois mesures du
+mètre-ruban, le rappel de pesée — et le jeton du profil public. Elles étaient
+donc **écrites en base et jamais relues** : on choisit « Perdre », on règle son
+niveau d'activité, on tape son tour de taille, on recharge, et tout est revenu
+à « Rien pour l'instant ». Toute l'étape 05 disparaissait au premier
+rechargement, donc au plus tard le lendemain.
+
+**Mesuré avant de corriger**, plutôt que raisonné : une sonde qui écrit par
+`PUT /api/settings` puis relit par `GET`. Le PUT rend **200**, le GET rend
+`modeCalorique = undefined` et `poidsCible = undefined` — pendant que `poids`,
+`taille` et `age`, eux, reviennent. Le profil survit ; les réglages de la
+rubrique, non.
+
+**Le jeton du profil public est pire encore.** L'écran le lit au même endroit,
+donc après un rechargement il montrait le partage **ÉTEINT** pendant que
+l'adresse continuait de fonctionner. Un réglage de confidentialité qui ment sur
+son propre état est le seul défaut de la famille qu'on ne peut pas rattraper :
+on ne revérifie jamais un refus qu'on croit avoir donné.
+
+**Le commentaire écrivait la règle depuis le premier jour**, et c'est ce qui l'a
+rendue invisible : « Elles se demandent par `/api/settings`, derrière la porte,
+avec le reste des réglages. » Personne ne l'avait appliquée. C'est le motif que
+ce journal reproche partout — une garantie décrite qui n'existe pas se relit
+comme une garantie, et on cesse de vérifier.
+
+**Rien ne pouvait le signaler**, et les trois angles morts valent d'être
+nommés : les tests de la route vérifient ce qui est ÉCRIT ; `compte.test.ts`
+exige que chaque colonne soit CLASSÉE d'un côté ou de l'autre, jamais qui la
+LIT ; et `e2e/corps.spec.ts` ne rechargeait pas la page. Trois contrôles
+sérieux, et le défaut passe entre les trois.
+
+**La correction est une SÉPARATION, pas un assouplissement.** `comptePublic`
+sert la diffusion — `/api/user` et `/api/contexte`, que la navigation lit à
+CHAQUE page, et la source OBS qui s'affiche devant le public de quelqu'un
+d'autre. `compteReglages` sert quelqu'un son PROPRE compte, derrière la porte,
+sur le seul écran qui l'affiche et le change. Les secrets tombent des deux
+côtés : empreinte du mot de passe, jeton de diffusion, code de parrainage,
+compteur de révocation. Ce qui les distingue est une seconde liste,
+`HORS_DIFFUSION`, et le filtre le plus SERRÉ reste le défaut — une colonne
+nouvelle qu'on n'a pas rangée part par la diffusion, donc le recensement
+existant continue d'exiger qu'on la range.
+
+**Le garde porte sur le BRANCHEMENT**, comme tous ceux de cette famille.
+`src/reglagesRelus.test.ts` lit dans la ROUTE quel filtre son GET applique,
+dans `compte.ts` ce que ce filtre retire, et dans les ÉCRANS ce qu'ils lisent
+de la réponse — puis refuse qu'un champ lu soit un champ retiré. Il trouve les
+écrans par leur FORME (ceux qui demandent la route) et non par leur chemin :
+un garde épinglé sur un chemin devient muet le jour où le fichier bouge,
+c'est-à-dire le jour où l'on en a besoin.
+
+Trois sabotages, trois échecs : `comptePublic` remis dans le GET, une colonne
+lue basculée hors diffusion, et l'extracteur de lectures rendu aveugle — ce
+dernier devant faire tomber le TÉMOIN plutôt que de rendre vert un contrôle
+qui ne compare plus rien.
+
+**Et le parcours recharge maintenant.** Deux fichiers, deux raisons : `corps`
+parce que c'est là que le défaut vivait, `depense-jour` parce que c'est
+l'assertion qui l'a trouvé. Un parcours qui ne recharge pas n'éprouve qu'un
+état de React.
+
+### La dépense relevée sur une montre, et le chiffre qu'il ne faut pas confondre
+Ligne 040 du plan, réponse « Oui, commence par ça », et ligne 041, « elle
+nourrit l'objectif ». C'est la seconde réponse qui décide de tout : sans elle
+on écrivait un journal, avec elle la mesure REMPLACE l'estimation.
+
+**`objectifCalorique` part d'une devinette.** Le métabolisme de base multiplié
+par un facteur d'activité choisi dans une liste de cinq. Une montre, elle,
+MESURE. Le jour où la mesure existe, garder l'estimation reviendrait à ranger
+un chiffre que personne ne regarde.
+
+**Le piège est qu'une montre affiche DEUX chiffres, et qu'ils vont du simple au
+triple** : les calories ACTIVES d'une séance (six cents un bon jour) et la
+dépense TOTALE de la journée (deux mille quatre cents, métabolisme compris).
+Prendre les premières pour la seconde divise l'objectif par trois, et ce serait
+un conseil dangereux rendu par un nombre qui a l'air d'un résultat. C'est le
+piège de `totalPoints` contre `pointsPayes`, sur une grandeur qui touche à la
+santé.
+
+**Deux choses le ferment, et il faut les deux.** Le NOM — `kcalBrulees` désigne
+la journée entière, et le libellé de l'écran le répète en toutes lettres. Et le
+plancher est PHYSIOLOGIQUE : un corps dépense son métabolisme de base rien
+qu'en restant couché, donc une dépense totale en dessous est impossible, et
+c'est exactement la forme que prend la confusion. **Le refus DIT laquelle des
+deux valeurs on attend**, au lieu de dire « valeur invalide » — qui enverrait
+retaper le même chiffre.
+
+**L'ORDRE des trois refus est la décision.** Six cents kilocalories est à la
+fois « en dessous de mille » et « en dessous du métabolisme de base » : les
+deux règles s'appliquent, et c'est la plus PRÉCISE qui doit parler. Le contrôle
+du métabolisme passe donc avant le plancher générique, et mes propres tests
+l'ont dit avant moi — 600 rendait « trop bas », et `Infinity` aussi, alors que
+c'est une valeur trop HAUTE.
+
+**Le plancher générique ne sert qu'à qui n'a pas rempli son profil** : mille
+kilocalories est en dessous du métabolisme de tout adulte, donc il ne refuse
+rien de légitime et attrape quand même un zéro de trop. Le plafond de douze
+mille couvre une étape du Tour de France, qui est la dépense quotidienne la
+plus haute jamais mesurée sur un humain.
+
+**Le jour vient du NAVIGATEUR**, comme pour une pesée : un jour UTC ferait
+basculer une saisie de six heures du matin sur la veille selon le fuseau. Et
+`estJourValide` plutôt que le seul motif de forme — « 2026-02-30 » a la bonne
+forme, n'existe pas, et resterait en base pour toujours. La règle est celle
+déjà écrite trois fois ici.
+
+**`upsert` et non `create`** : on relève sa montre le soir, et si on la relève
+deux fois c'est la seconde qui compte.
+
+**Le parcours navigateur éprouve ce qu'aucun test unitaire ne peut voir : le
+BRANCHEMENT.** La route est juste dans les deux cas — elle range un chiffre.
+C'est le COMPOSANT qui choisit entre l'estimation et la mesure, et il pourrait
+choisir toujours la même. C'est le défaut « le profil d'un ami restait sur la
+semaine sous l'onglet du cumul », mot pour mot. Les deux nombres sont éloignés
+exprès : 80 kg, 180 cm, 30 ans, activité modérée, mode perte donnent **2207**
+estimés, et une mesure de 3000 donne **2400**. Un écran qui ignorerait la
+mesure afficherait encore 2207, et l'écart ne se confond avec aucun arrondi.
+
+Deux sabotages au navigateur, deux échecs, chacun sur son propre test : la
+mesure jamais choisie, et les deux refus repliés en un seul. **Un troisième n'a
+pas compilé** plutôt que de faire tomber un test — `false && depenseDuJour !==
+null` fait perdre à TypeScript la restriction de type. C'est noté comme tel,
+pas compté comme un garde qui mord.
+
+**Trois gardes ont mordu sur le modèle ajouté**, ce qui est leur travail : le
+recensement des messages d'API a exigé les deux refus dans les six langues,
+`politiqueComplete` une ligne de politique dans les six langues, et
+`exportComplet` que le nouveau bloc soit annoncé par la phrase de l'écran. Un
+quatrième s'est ajouté à la main : `gabaritsNombres` tient maintenant le
+gabarit de la dépense affichée, parce qu'une journée est TOUJOURS à quatre
+chiffres — deux mille quatre cents est le cas ordinaire, pas le cas de bord.
+
+**Un piège d'écriture, attrapé avant la construction** : j'avais laissé un
+`export { KCAL_MAX, KCAL_MIN_SANS_PROFIL }` en pied de fichier de ROUTE. Un
+fichier `route.ts` n'exporte que ses gestionnaires et quelques clés de
+configuration connues ; tout le reste y est refusé au moment du contrôle de
+types. Personne ne les importait de là.
+
+**Et le parcours de la pesée est tombé sur l'ordre des panneaux.** Il cherchait
+son bouton par `.first()`, ce qui désigne le premier « Enregistrer » de la
+rubrique — et un panneau venait de se glisser au-dessus. Le bouton se cherche
+désormais DANS la rangée de son champ. Un parcours qui compte sur l'ORDRE tombe
+au premier panneau ajouté, et l'échec accuse alors la pesée d'un défaut qu'elle
+n'a pas.
 
 ### `.env.example` annonçait neuf variables, l'application en lit dix-huit
 Même méthode que les deux chantiers précédents : confronter deux sources plutôt

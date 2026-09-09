@@ -97,6 +97,7 @@ const ATTENDU: Record<string, RegExp> = {
   tourCou: /mètre-ruban/i,
   tourHanches: /mètre-ruban/i,
   pesees: /pesées/i,
+  depensesJour: /dépense quotidienne relevée sur une montre/i,
   rappelPeseeActif: /rappel de pesée/i,
   rappelPeseeLe: /rappel de pesée/i,
   pompesMax: /nombre maximum de pompes/i,
