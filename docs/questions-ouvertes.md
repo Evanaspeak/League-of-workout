@@ -759,6 +759,13 @@ décision de palette — et la réponse 251 dit que la marque visuelle est valid
   les valeurs, tout devient nommé, et le garde reprend la main. Une demi-heure,
   plus une ligne de palette à valider.
 
+**Une sixième, isolée, pour être complet** : `/beta` peint sa mise en garde
+« garde ce code » en `#F5B84B`, à dix niveaux de `--amber`. Un seul emploi, sur
+la page par laquelle tout le monde entre, et aucun autre ambre dans le fichier à
+quoi le comparer — donc rien ne dit si c'est un choix ou une frappe. Le garde ne
+le voit pas non plus : dix niveaux, ça se VOIT, donc c'est un arbitrage et pas
+un accident.
+
 **Et une cinquième, sous transparence, qui traverse le pont.** Le voile des
 fenêtres vaut `rgba(6,8,10,0.82)` sur le site — trois emplois — et
 `rgba(6,8,11,0.72)` dans la coquille Electron. Un niveau d'écart, aucun jeton
