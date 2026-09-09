@@ -116,6 +116,24 @@ function citationsMortes() {
   return morts;
 }
 
+/**
+ * La moitié DESCRIPTIVE de `CLAUDE.md`, c'est-à-dire tout ce qui précède le
+ * journal.
+ *
+ * La frontière n'est pas de commodité : au-dessus, le document dit où regarder
+ * MAINTENANT, et un chemin mort y envoie chercher un fichier qui n'existe
+ * plus ; en dessous, il raconte ce qui était vrai ALORS, et les chemins
+ * d'alors sont ce qu'il faut écrire — les deux fichiers du tableau de bord et
+ * des réglages avancés vivaient bien là avant que la langue entre dans
+ * l'adresse. `comptesDeTests.test.ts` emploie déjà la même frontière, pour la
+ * même raison.
+ */
+function moitieDescriptive(): string {
+  const doc = readFileSync(join(RACINE, "CLAUDE.md"), "utf8");
+  const [haut] = doc.split("## Journal des corrections");
+  return haut;
+}
+
 describe("les fichiers cités dans les commentaires existent", () => {
   it("le recensement lit quelque chose", () => {
     // Sans ce contrôle, un dossier renommé rendrait le test vert sur zéro
@@ -147,5 +165,18 @@ describe("les fichiers cités dans les commentaires existent", () => {
 
   it("aucun commentaire ne renvoie vers un fichier qui n'existe pas", () => {
     expect(citationsMortes()).toEqual([]);
+  });
+
+  it("la moitié descriptive de CLAUDE.md cite des fichiers qui existent", () => {
+    const haut = moitieDescriptive();
+    // Le découpage a son propre témoin : sans lui, une frontière renommée
+    // rendrait le document entier — donc le journal, dont les chemins d'alors
+    // sont morts aujourd'hui — et le contrôle échouerait pour la mauvaise
+    // raison.
+    expect(haut.length).toBeGreaterThan(10_000);
+    expect(haut).not.toContain("### Journal");
+    const cites = [...haut.matchAll(CHEMIN)].map((m) => m[1]);
+    expect(cites.length).toBeGreaterThanOrEqual(20);
+    expect(cites.filter((c) => !existsSync(join(RACINE, c)))).toEqual([]);
   });
 });

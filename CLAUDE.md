@@ -1391,6 +1391,28 @@ du mauvais côté. C'est exactement la différence entre les deux familles : un
 chemin se vérifie par `existsSync`, qui ne se trompe pas ; un identifiant se
 vérifie par un motif, qui se trompe.
 
+**Le même détecteur, passé sur ce fichier-ci et sur les trois documents de
+`docs/`.** `CLAUDE.md` cite **171 chemins** ; trois ne mènent nulle part, et
+**les trois sont dans le JOURNAL** — les deux fichiers du tableau de bord et
+des réglages avancés vivaient bien à `src/app/dashboard/` et
+`src/app/settings/` avant que la langue entre dans l'adresse. Ce sont les
+chemins d'ALORS, et c'est ce qu'il faut écrire.
+
+La moitié DESCRIPTIVE, elle, en cite quarante-cinq et **aucun n'est mort**.
+D'où la frontière du garde, qui n'est pas de commodité : au-dessus, le document
+dit où regarder MAINTENANT ; en dessous, il raconte ce qui était vrai alors.
+`comptesDeTests.test.ts` emploie déjà la même ligne de partage, pour la même
+raison — et c'est ce qui permet de garder l'un sans faire taire l'autre.
+
+Trois sabotages de plus, trois échecs : un chemin mort posé dans la moitié
+descriptive, le motif rendu aveugle, et la frontière renommée — ce dernier
+devant faire tomber le TÉMOIN plutôt que de rendre le document entier et
+d'échouer pour la mauvaise raison.
+
+**Les trois documents de `docs/` sont propres**, et ça vaut d'être écrit : le
+plan, les questions et la liste d'avant lancement citent sept chemins à eux
+trois, tous vivants.
+
 ### « Toutes les routes ont un test » était faux de trois, et mon détecteur de douze
 
 Suite de l'audit des affirmations vérifiables de ce fichier. Celle-ci portait
