@@ -153,7 +153,7 @@ parce qu'aujourd'hui il n'en a pas et que rien n'empêche une cinquième version
 d'apparaître. Le coût est d'une demi-nuit dans les deux sens, et le garde de la
 palette est déjà là pour tenir la décision une fois prise.
 
-### 13 · Aucune bordure de champ n'atteint le contraste exigé (ligne 300)
+### 13 · Une seule frontière du produit atteint le contraste exigé (ligne 300)
 **Née en mesurant la seconde moitié de la ligne 300**, qui demande d'uniformiser
 les styles en ligne et les classes utilitaires. Trois écrans écrivent leur champ
 à la main — inscription, connexion, récupération — et le reste du produit emploie
@@ -165,18 +165,31 @@ les styles en ligne et les classes utilitaires. Trois écrans écrivent leur cha
 **3:1** entre ce qui identifie une commande et ce qui l'entoure. Mesuré au
 navigateur, sur les pixels réellement composés :
 
-| traitement | emplois | bordure / champ | fond / autour | verdict |
+| traitement | emplois | bordure | fond | verdict |
 |---|---|---|---|---|
-| `.lol-input`, `.lol-select` | 64 | **1,22:1** | **1:1** | échoue |
-| style en ligne (inscription, connexion, récupération) | 3 écrans | **1,67:1** | **1:1** | échoue |
+| `.lol-input`, `.lol-select` | 64 | **1,20:1** | 1,05:1 | échoue |
+| **sélecteur de langue**, dans la barre | **19 pages** | **1,35:1** | 1,08:1 | échoue |
+| champ en ligne (inscription, connexion, récupération) | 3 écrans | **1,64:1** | 1,05:1 | échoue |
+| `.lol-btn-blue` (bouton fantôme) | 3 | **1,64:1** | 1:1 | échoue |
+| `.lol-btn-danger` (déconnexion, arrêt de session) | 2 | **1,70:1** | 1:1 | échoue |
+| `.lol-btn` (bouton plein) | **93** | — | dégradé opaque | **passe** |
 
-**Les deux échouent, et le fond ne rattrape RIEN.** Il rend `1:1`, et ce n'est
-pas une erreur de mesure : le fond d'un champ est `var(--ink)` à 60 % et le fond
-de la page est `--ink`. De l'encre sur de l'encre donne de l'encre. La bordure
-est donc le seul repère qui existe, et elle est à 1,22.
+**Cinq sur six échouent, et le fond ne rattrape RIEN.** Il rend 1 à 1,08:1, et
+ce n'est pas une erreur de mesure : le fond d'un champ est `var(--ink)` à 60 %
+et le fond de la page est `--ink`. De l'encre sur de l'encre donne de l'encre.
+La bordure est donc le seul repère qui existe.
 
-Uniformiser sur `.lol-input` irait par conséquent dans le MAUVAIS sens — de 1,67
-à 1,22 — sur les trois écrans par lesquels tout le monde entre. Et `.lol-input`
+**Ce que les boutons ont ajouté au constat**, mesuré le 9 septembre sur
+quatre-vingt-douze d'entre eux : **aucun n'est sans texte visible**. Un bouton
+sans frontière visuelle sort donc du champ de 1.4.11 — c'est son texte qui
+l'identifie, et 1.4.3 s'y applique déjà. Ce qui reste, ce sont les trois qui
+DESSINENT une frontière, et le seul qui passe est celui qui la peint en plein.
+
+**La frontière la plus VUE est le sélecteur de langue** : il vit dans la barre,
+donc sur les dix-neuf pages du produit, et il rend 1,35:1.
+
+Uniformiser sur `.lol-input` irait par conséquent dans le MAUVAIS sens — de 1,64
+à 1,20 — sur les trois écrans par lesquels tout le monde entre. Et `.lol-input`
 n'est pas réservé aux écrans connectés : l'outil le trouve aussi sur
 `/calculateur/league-of-legends`, une page publique.
 
@@ -194,10 +207,11 @@ marque visuelle est validée.
 
 - **A — ne rien changer.** Le produit reste tel qu'il est, et l'écart est écrit
   ici. Coût nul, et une non-conformité connue.
-- **B — un jeton propre aux CHAMPS.** `--line-champ` à 0,36, lu par
-  `.lol-input`, `.lol-select` et les trois styles en ligne ; les panneaux ne
-  bougent pas. Soixante-quatre éléments changent d'aspect, les 104 panneaux non.
-  Une demi-nuit, et c'est l'option qui corrige sans redessiner le produit.
+- **B — un jeton propre aux COMMANDES.** `--line-commande` à 0,36, lu par
+  `.lol-input`, `.lol-select`, les trois styles en ligne, le sélecteur de langue
+  et les deux boutons fantômes ; les panneaux ne bougent pas. Quatre-vingt-huit
+  éléments changent d'aspect, les 104 panneaux non. Une demi-nuit, et c'est
+  l'option qui corrige sans redessiner le produit.
 - **C — monter `--line` pour tout le monde.** Cohérent, et ça change chaque
   écran. Une nuit, plus une campagne de comparaison de rendu.
 
