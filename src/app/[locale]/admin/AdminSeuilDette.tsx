@@ -99,11 +99,12 @@ export default function AdminSeuilDette() {
 
       <div className="flex items-end gap-3 flex-wrap">
         <div>
-          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
+          <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="seuil-minutes">
             {t.label}
           </label>
           <div className="flex items-center gap-2">
             <input
+              id="seuil-minutes"
               type="number" min="0" max={MAX_MIN}
               className="lol-input text-center" style={{ width: 84 }}
               value={minutes}

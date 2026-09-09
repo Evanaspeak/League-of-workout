@@ -8,9 +8,11 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   onReset?: () => void;
+  /** Pour qu'un <label htmlFor> de l'appelant désigne le champ lui-même. */
+  id?: string;
 }
 
-export function ChampionInput({ value, onChange, onReset }: Props) {
+export function ChampionInput({ value, onChange, onReset, id }: Props) {
   const t = useT(championInputDict);
   const champList = useChampions();
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -67,6 +69,7 @@ export function ChampionInput({ value, onChange, onReset }: Props) {
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       <input
+        id={id}
         className="lol-input"
         placeholder={t.placeholder}
         value={value}

@@ -214,10 +214,16 @@ export function LoginButtons() {
               {error}
             </div>
           )}
+          {/* Un `placeholder` n'est PAS un nom accessible : il disparaît dès
+              qu'on tape, et les lecteurs d'écran ne s'accordent pas sur ce
+              qu'ils en font. Les champs portent donc leur nom, sans changer un
+              pixel de l'écran. Poser des intitulés VISIBLES ici redessine la
+              carte de connexion, qui est sur le chemin d'acquisition : c'est un
+              arbitrage, il part dans les questions. */}
           <form onSubmit={handleCodeLogin} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-            <input type="text" placeholder={t.codePseudoPlaceholder} value={codePseudo} onChange={(e) => setCodePseudo(e.target.value)}
+            <input type="text" aria-label={t.codePseudoPlaceholder} placeholder={t.codePseudoPlaceholder} value={codePseudo} onChange={(e) => setCodePseudo(e.target.value)}
               required autoComplete="username" style={INPUT_STYLE} />
-            <input type="text" placeholder={t.codePlaceholder} value={codeValue} onChange={(e) => setCodeValue(e.target.value)}
+            <input type="text" aria-label={t.codePlaceholder} placeholder={t.codePlaceholder} value={codeValue} onChange={(e) => setCodeValue(e.target.value)}
               required autoComplete="one-time-code" style={{ ...INPUT_STYLE, letterSpacing: "0.15em" }} />
             <button type="submit" disabled={loading} className="lol-btn w-full" style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
               {loading ? t.connexionEnCours : t.seConnecter}
@@ -345,9 +351,9 @@ export function LoginButtons() {
 
           {mode === "login" ? (
             <form onSubmit={handleCredentialsLogin} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <input type="email" placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
+              <input type="email" aria-label={t.emailPlaceholder} placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
                 required autoComplete="email" style={INPUT_STYLE} />
-              <input type="password" placeholder={t.motDePassePlaceholder} value={password} onChange={(e) => setPassword(e.target.value)}
+              <input type="password" aria-label={t.motDePassePlaceholder} placeholder={t.motDePassePlaceholder} value={password} onChange={(e) => setPassword(e.target.value)}
                 required autoComplete="current-password" style={INPUT_STYLE} />
               <button type="submit" disabled={loading} className="lol-btn w-full"
                 style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>
@@ -356,13 +362,13 @@ export function LoginButtons() {
             </form>
           ) : (
             <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
-              <input type="text" placeholder={t.pseudoPlaceholder} value={pseudo}
+              <input type="text" aria-label={t.pseudoPlaceholder} placeholder={t.pseudoPlaceholder} value={pseudo}
                 onChange={(e) => setPseudo(e.target.value)} required autoComplete="username" style={INPUT_STYLE} />
-              <input type="email" placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
+              <input type="email" aria-label={t.emailPlaceholder} placeholder={t.emailPlaceholder} value={email} onChange={(e) => setEmail(e.target.value)}
                 required autoComplete="email" style={INPUT_STYLE} />
-              <input type="password" placeholder={t.motDePasseMinPlaceholder} value={password}
+              <input type="password" aria-label={t.motDePasseMinPlaceholder} placeholder={t.motDePasseMinPlaceholder} value={password}
                 onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" style={INPUT_STYLE} />
-              <input type="password" placeholder={t.confirmerMotDePassePlaceholder} value={confirmPassword}
+              <input type="password" aria-label={t.confirmerMotDePassePlaceholder} placeholder={t.confirmerMotDePassePlaceholder} value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)} required autoComplete="new-password" style={INPUT_STYLE} />
               <button type="submit" disabled={loading} className="lol-btn w-full"
                 style={{ marginTop: "0.25rem", opacity: loading ? 0.6 : 1 }}>

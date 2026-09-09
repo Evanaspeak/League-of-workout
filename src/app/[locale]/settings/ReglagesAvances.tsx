@@ -195,10 +195,11 @@ export function ReglagesAvances({
             <h2 className="titre-section">{t.parametresMaitrise}</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
+                <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="maitrise-surcharge">
                   {t.surchargeMax(Math.round(masteryConfig.surchargeMax * 100))}
                 </label>
                 <input
+                  id="maitrise-surcharge"
                   type="number" step="0.01" min="0" max="2"
                   className="lol-input"
                   value={masteryConfig.surchargeMax}
@@ -207,8 +208,9 @@ export function ReglagesAvances({
                 <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.surchargeMaxDetail}</p>
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.partiesPourMax}</label>
+                <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="maitrise-parties">{t.partiesPourMax}</label>
                 <input
+                  id="maitrise-parties"
                   type="number" min="1"
                   className="lol-input"
                   value={masteryConfig.partiesPourMax}

@@ -227,61 +227,75 @@ export default function BetaPage() {
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div>
-                <label style={LABEL_STYLE}>{t.pseudoLabel}</label>
-                <input style={FIELD_STYLE} placeholder={t.pseudoPlaceholder} value={pseudo}
+                <label style={LABEL_STYLE} htmlFor="beta-pseudo">{t.pseudoLabel}</label>
+                <input id="beta-pseudo" style={FIELD_STYLE} placeholder={t.pseudoPlaceholder} value={pseudo}
                   onChange={e => setPseudo(e.target.value)} required minLength={2} maxLength={24} autoFocus />
                 <p style={{ fontSize: "0.75rem", color: "var(--faint)", marginTop: 6 }}>{t.pseudoHint}</p>
               </div>
 
               <div>
-                <label style={LABEL_STYLE}>
+                <label style={LABEL_STYLE} htmlFor="beta-email">
                   {t.emailLabel} <span style={{ opacity: 0.6, textTransform: "none", letterSpacing: 0 }}>· {t.emailOptional}</span>
                 </label>
-                <input style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
+                <input id="beta-email" style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
                   onChange={e => setEmail(e.target.value)} autoComplete="email" />
                 <p style={{ fontSize: "0.75rem", color: "var(--muted)", marginTop: 6 }}>{t.emailHint}</p>
               </div>
 
               {/* Section optionnelle repliable */}
               <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden" }}>
-                <button type="button" onClick={() => setShowOptional(o => !o)} style={{
+                {/*
+                  * Le bouton DIT s'il est ouvert.
+                  *
+                  * Sans `aria-expanded`, le seul témoin d'état était le signe
+                  * « + » / « − », qu'un lecteur d'écran lit « plus » et
+                  * « moins » — c'est-à-dire rien. Sept autres dépliants du
+                  * produit le déclarent déjà ; celui-ci et la ligne de compte
+                  * de l'administration étaient les deux seuls à ne pas le
+                  * faire, sur le seul formulaire par lequel on entre.
+                  *
+                  * Le signe est décoratif et se cache : le bouton porte
+                  * maintenant son état, et le lire deux fois n'apprend rien.
+                  */}
+                <button type="button" onClick={() => setShowOptional(o => !o)}
+                  aria-expanded={showOptional} aria-controls="beta-facultatif" style={{
                   width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "12px 16px", background: "var(--carbon)", border: "none", cursor: "pointer",
                   color: "var(--muted)", fontSize: "0.85rem",
                 }}>
                   <span>{t.optionalTitle}</span>
-                  <span style={{ color: "var(--steel)" }}>{showOptional ? "−" : "+"}</span>
+                  <span aria-hidden="true" style={{ color: "var(--steel)" }}>{showOptional ? "−" : "+"}</span>
                 </button>
                 {showOptional && (
-                  <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid var(--line)" }}>
+                  <div id="beta-facultatif" style={{ padding: "16px", display: "flex", flexDirection: "column", gap: 16, borderTop: "1px solid var(--line)" }}>
                     <p style={{ fontSize: "0.78rem", color: "var(--faint)", lineHeight: 1.5, margin: 0 }}>{t.optionalHint}</p>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                       <div>
-                        <label style={LABEL_STYLE}>{t.genreLabel}</label>
-                        <select style={FIELD_STYLE} value={genre} onChange={e => setGenre(e.target.value)}>
+                        <label style={LABEL_STYLE} htmlFor="beta-genre">{t.genreLabel}</label>
+                        <select id="beta-genre" style={FIELD_STYLE} value={genre} onChange={e => setGenre(e.target.value)}>
                           <option value="" style={OPTION_STYLE}>—</option>
                           {t.genreOptions.map(g => <option key={g} value={g} style={OPTION_STYLE}>{g}</option>)}
                         </select>
                       </div>
                       <div>
-                        <label style={LABEL_STYLE}>{t.ageLabel}</label>
-                        <input style={FIELD_STYLE} type="number" min={13} max={99} placeholder="25" value={age} onChange={e => setAge(e.target.value)} />
+                        <label style={LABEL_STYLE} htmlFor="beta-age">{t.ageLabel}</label>
+                        <input id="beta-age" style={FIELD_STYLE} type="number" min={13} max={99} placeholder="25" value={age} onChange={e => setAge(e.target.value)} />
                       </div>
                       <div>
-                        <label style={LABEL_STYLE}>{t.weightLabel}</label>
-                        <input style={FIELD_STYLE} type="number" min={30} max={300} placeholder="75" value={poids} onChange={e => setPoids(e.target.value)} />
+                        <label style={LABEL_STYLE} htmlFor="beta-poids">{t.weightLabel}</label>
+                        <input id="beta-poids" style={FIELD_STYLE} type="number" min={30} max={300} placeholder="75" value={poids} onChange={e => setPoids(e.target.value)} />
                       </div>
                       <div>
-                        <label style={LABEL_STYLE}>{t.heightLabel}</label>
-                        <input style={FIELD_STYLE} type="number" min={100} max={250} placeholder="178" value={taille} onChange={e => setTaille(e.target.value)} />
+                        <label style={LABEL_STYLE} htmlFor="beta-taille">{t.heightLabel}</label>
+                        <input id="beta-taille" style={FIELD_STYLE} type="number" min={100} max={250} placeholder="178" value={taille} onChange={e => setTaille(e.target.value)} />
                       </div>
                       <div style={{ gridColumn: "1 / -1" }}>
-                        <label style={LABEL_STYLE}>{t.sportLabel}</label>
-                        <input style={FIELD_STYLE} type="number" min={0} max={40} placeholder="3" value={sportsHoursPerWeek} onChange={e => setSports(e.target.value)} />
+                        <label style={LABEL_STYLE} htmlFor="beta-sport">{t.sportLabel}</label>
+                        <input id="beta-sport" style={FIELD_STYLE} type="number" min={0} max={40} placeholder="3" value={sportsHoursPerWeek} onChange={e => setSports(e.target.value)} />
                       </div>
                       <div style={{ gridColumn: "1 / -1" }}>
-                        <label style={LABEL_STYLE}>{t.montreLabel}</label>
-                        <select style={FIELD_STYLE} value={montre} onChange={e => setMontre(e.target.value)}>
+                        <label style={LABEL_STYLE} htmlFor="beta-montre">{t.montreLabel}</label>
+                        <select id="beta-montre" style={FIELD_STYLE} value={montre} onChange={e => setMontre(e.target.value)}>
                           <option value="" style={OPTION_STYLE}>—</option>
                           <option value="oui" style={OPTION_STYLE}>{t.montreOptions.oui}</option>
                           <option value="non" style={OPTION_STYLE}>{t.montreOptions.non}</option>

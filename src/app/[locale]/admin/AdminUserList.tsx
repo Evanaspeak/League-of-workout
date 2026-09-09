@@ -202,12 +202,28 @@ export default function AdminUserList() {
         {filtered.map(u => (
           <div key={u.id} style={{ border: "1px solid color-mix(in srgb, var(--steel) 12%, transparent)", borderRadius: 8, overflow: "hidden" }}>
 
-            {/* Ligne compacte */}
-            <div
+            {/*
+              * Ligne compacte — un BOUTON, pas un `div` qui écoute le clic.
+              *
+              * Elle ouvre et ferme le profil, donc c'est une commande. En
+              * `div`, elle n'était atteignable ni au clavier ni par un lecteur
+              * d'écran, et rien ne disait si le profil était ouvert : c'était,
+              * avec le bloc facultatif de `/beta`, le seul dépliant du produit
+              * à ne pas déclarer son état — sept autres le font.
+              *
+              * Les trois remises à zéro (`border`, `font`, `textAlign`) sont là
+              * pour que le bouton rende exactement ce que le `div` rendait :
+              * l'écran ne bouge pas, seul ce qu'il ANNONCE change.
+              */}
+            <button
+              type="button"
               onClick={() => setExpanded(expanded === u.id ? null : u.id)}
+              aria-expanded={expanded === u.id}
+              aria-controls={`profil-${u.id}`}
               style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
                 cursor: "pointer", background: expanded === u.id ? "color-mix(in srgb, var(--steel) 4%, transparent)" : "transparent",
+                width: "100%", border: "none", font: "inherit", color: "inherit", textAlign: "left",
               }}
             >
               <ActivityDot value={u.gamesThisWeek} max={maxWeekly} />
@@ -233,11 +249,11 @@ export default function AdminUserList() {
                   {u.gamesThisWeek > 0 ? t.perWeek(u.gamesThisWeek) : t.inactive}
                 </span>
               </div>
-            </div>
+            </button>
 
             {/* Profil déroulant */}
             {expanded === u.id && (
-              <div style={{ padding: "14px 18px 18px", borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)", background: "color-mix(in srgb, var(--ink) 40%, transparent)" }}>
+              <div id={`profil-${u.id}`} style={{ padding: "14px 18px 18px", borderTop: "1px solid color-mix(in srgb, var(--steel) 10%, transparent)", background: "color-mix(in srgb, var(--ink) 40%, transparent)" }}>
 
                 {/* Stats */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 14 }}>

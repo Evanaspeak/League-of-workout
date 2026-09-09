@@ -354,7 +354,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 |---|---|---|---|
 | [x] | 262 | Les contrastes vérifiés et corrigés | — |
 | [x] | 263 | L'utilisation entière au clavier, vérifiée | — |
-| [x] | 264 | Le lecteur d'écran, vérifié | — |
+| [x] | 264 | Le lecteur d'écran, vérifié — **et repris le 9 septembre** : les quarante champs du produit portent leur nom, ce que la vérification d'alors ne couvrait pas | — |
 | [x] | 265 | L'animation réduite, respectée partout | — |
 | [x] | 266 | Victoire et défaite distinguables par un daltonien | — |
 | [x] | 268 | Le genre « non précisé », avec la moyenne des deux | — |

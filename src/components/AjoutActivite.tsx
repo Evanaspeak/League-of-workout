@@ -529,15 +529,21 @@ export function AjoutActivite({
               />
 
               {typeJeu === "temps" ? (
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{tJeux.dureeLabel}</label>
+                <div role="group" aria-labelledby="ajout-duree-titre">
+                  {/* Deux champs sous un seul intitulé : un <label> n'en nomme
+                      qu'un, donc c'est le GROUPE qui porte le titre et chaque
+                      champ son unité. Sans ça, un lecteur d'écran annonce deux
+                      champs numériques anonymes. */}
+                  <span id="ajout-duree-titre" className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{tJeux.dureeLabel}</span>
                   <div className="flex items-center gap-2">
                     <input type="number" min="0" max="24" className="lol-input text-center" placeholder="2"
+                      aria-label={tJeux.heures}
                       value={dureeH} onChange={(e) => { setDureeH(e.target.value); }} />
-                    <span className="text-sm" style={{ color: "var(--faint)" }}>{tJeux.heures}</span>
+                    <span className="text-sm" aria-hidden style={{ color: "var(--faint)" }}>{tJeux.heures}</span>
                     <input type="number" min="0" max="59" className="lol-input text-center" placeholder="30"
+                      aria-label={tJeux.minutes}
                       value={dureeM} onChange={(e) => { setDureeM(e.target.value); }} />
-                    <span className="text-sm" style={{ color: "var(--faint)" }}>{tJeux.minutes}</span>
+                    <span className="text-sm" aria-hidden style={{ color: "var(--faint)" }}>{tJeux.minutes}</span>
                   </div>
                   <p className="text-xs mt-2" style={{ color: "var(--faint)" }}>{tJeux.sessionSousTitre}</p>
                 </div>
@@ -547,8 +553,8 @@ export function AjoutActivite({
               <div className={`grid gap-3 ${capacites.roles && capacites.champions ? "grid-cols-2" : "grid-cols-1"}`}>
                 {capacites.roles && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.role}</label>
-                  <select className="lol-select w-full" value={roleActif}
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="ajout-role">{t.role}</label>
+                  <select id="ajout-role" className="lol-select w-full" value={roleActif}
                     onChange={(e) => {
                       setAddForm((f) => ({ ...f, role: e.target.value }));
                       ecrire("lastRole", e.target.value);
@@ -560,8 +566,9 @@ export function AjoutActivite({
                 )}
                 {capacites.champions && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.champion}</label>
+                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }} htmlFor="ajout-champion">{t.champion}</label>
                   <ChampionInput
+                    id="ajout-champion"
                     value={addForm.champion}
                     onChange={(val) => setAddForm((f) => ({ ...f, champion: val }))}
                   />
@@ -571,10 +578,12 @@ export function AjoutActivite({
               )}
 
               {capacites.br && (
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
+                <div role="group" aria-labelledby="ajout-mode-titre">
+                  {/* Une rangée de boutons, pas un champ : c'est le groupe qui
+                      se nomme. Un <label> posé devant n'étiquette rien. */}
+                  <span id="ajout-mode-titre" className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                     {t.modeLabel}
-                  </label>
+                  </span>
                   <div className="flex gap-2">
                     {modesDisponibles.map((taille) => {
                       const actif = tailleRetenue === taille;
@@ -680,8 +689,8 @@ export function AjoutActivite({
 
               <div className={`grid gap-3 items-end ${capacites.br ? "grid-cols-1" : "grid-cols-2"}`}>
                 {!capacites.br && (
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.result}</label>
+                <div role="group" aria-labelledby="ajout-resultat-titre">
+                  <span id="ajout-resultat-titre" className="block text-xs mb-1" style={{ color: "var(--steel)" }}>{t.result}</span>
                   <div className="flex gap-2">
                     {(["V", "D"] as const).map((r) => (
                       <button key={r} className="flex-1 py-2 rounded text-sm font-bold"
@@ -702,9 +711,9 @@ export function AjoutActivite({
                     multiplicateur appliqué reste lisible. */}
                 {preview && (
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
+                    <span className="block text-xs mb-1" style={{ color: "var(--steel)" }}>
                       {t.niveauTitre}
-                    </label>
+                    </span>
                     <div className="text-sm gold-text">
                       {t.niveauDepuisTest(preview.scoring.niveau, preview.scoring.multiplicateur)}
                     </div>
@@ -716,9 +725,9 @@ export function AjoutActivite({
 
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
-                  <label className="block text-xs" style={{ color: "var(--steel)" }}>
+                  <span className="block text-xs" style={{ color: "var(--steel)" }}>
                     {tExo.choisirTitre}
-                  </label>
+                  </span>
                   <span
                     className="text-xs"
                     style={{ color: coutVivant !== undefined ? "var(--amber)" : "color-mix(in srgb, var(--steel) 45%, transparent)" }}

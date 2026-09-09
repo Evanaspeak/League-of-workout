@@ -126,8 +126,8 @@ export default function RecuperationPage() {
 
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
               <div>
-                <label style={LABEL_STYLE}>{t.emailLabel}</label>
-                <input style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
+                <label style={LABEL_STYLE} htmlFor="recup-email">{t.emailLabel}</label>
+                <input id="recup-email" style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
                   onChange={e => setEmail(e.target.value)} required autoComplete="email" autoFocus />
               </div>
 
