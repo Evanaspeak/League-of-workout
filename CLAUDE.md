@@ -1286,6 +1286,76 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'aléa de la connexion est nommé : le navigateur refusait l'envoi lui-même
+La suite entière rend **266 passés, un échec**, et c'est l'aléa que ce journal
+recense depuis août sans avoir su le nommer. La différence, cette fois, est que
+la sonde posée en V547 a parlé :
+
+```
+la connexion de Pasmttiwr5f n'a pas abouti — adresse /login,
+champs remplis false/true, bouton actif, aucun message à l'écran
+```
+
+**Ce n'est aucune des trois causes que le commentaire énumérait.** Le pseudo est
+VIDE, le code est REMPLI, le bouton est ACTIF, et il n'y a rien à l'écran. Trois
+lectures suffisent alors à fermer la question, en ouvrant le composant :
+
+- les deux champs sont **contrôlés** (`value={codePseudo}`) ;
+- les deux sont **`required`** ;
+- le bouton est **`disabled={loading}` et rien d'autre** — il n'est jamais
+  désactivé par un champ vide.
+
+D'où l'enchaînement, qui explique le relevé trait pour trait : la saisie du
+pseudo arrive avant que React n'écoute, donc l'état ne la reçoit pas ; le
+premier rendu qui suit remet le champ contrôlé à la valeur de l'état,
+c'est-à-dire **à vide** ; la saisie du code, elle, arrive après et tient ; et au
+clic **c'est le NAVIGATEUR qui refuse l'envoi**, parce qu'un champ `required`
+est vide. Aucune requête ne part, aucun message ne paraît, rien ne bouge — et
+`waitForURL` expire trente secondes plus tard en annonçant « waiting for
+navigation until load », c'est-à-dire rien.
+
+**La description de V537 était fausse pour moitié, et c'est cette moitié qui a
+rendu la cause méconnaissable.** Elle disait que la page non hydratée se
+reconnaît à « des champs VIDES et un bouton DÉSACTIVÉ ». Le bouton n'est jamais
+désactivé par un champ vide : en cherchant les deux ensemble, on ne trouvait
+jamais rien. C'est le défaut que ce journal reproche partout — une description
+qui a vieilli se relit comme une garantie — dans le commentaire écrit pour
+attraper ce défaut-là.
+
+**L'ÉTAT est reproduit ; la CAUSE ne l'est pas, et il vaut mieux l'écrire.**
+Deux tentatives pour rejouer la fenêtre d'hydratation ont échoué, chacune pour
+une raison d'outillage : `page.goto` attend `load`, donc les fragments sont là
+et l'hydratation suit dans la foulée ; et en `waitUntil: "commit"` avec les
+fragments bloqués, l'analyseur n'atteint jamais le formulaire. Ce qui EST
+reproduit, en revanche, c'est l'état relevé — le champ vidé après la saisie —
+et il rend le symptôme mot pour mot :
+
+| | verdict |
+|---|---|
+| sans contrôle | **EXPIRÉ — champs false/true, bouton actif, aucun message** |
+| avec contrôle | la requête PART, et le serveur répond « Pseudo ou code incorrect » |
+
+La première ligne est celle de l'intégration continue, au caractère près.
+
+**La correction ne dépend donc pas du diagnostic**, et c'est ce qui la rend
+sûre : `remplirVraiment` refuse de cliquer sur un formulaire dont un champ
+requis est vide, ce qui est la bonne conduite quelle que soit la raison du
+vide. Elle relit les deux champs, remplit à nouveau celui qui ne porte pas ce
+qu'on a tapé, et ne rend la main que lorsque les deux tiennent. Le coût, quand
+tout va bien, est de deux lectures qui passent du premier coup.
+
+**Ce qu'elle ne prouve pas** est écrit dans son commentaire : elle ne dit pas
+que la cause est l'hydratation. Elle dit qu'un envoi ne partira plus jamais
+avec un champ requis vide, et que si le champ refuse obstinément de tenir, le
+test le dira au lieu d'attendre trente secondes.
+
+**Un piège d'outillage, deux fois de suite.** Une sonde écrite à côté de la
+suite ne trouve pas le navigateur : `playwright.config.ts` lit
+`/opt/pw-browsers/chromium` quand il existe, et un `chromium.launch()` nu va
+chercher un `chrome-headless-shell` qui n'est pas installé. Le message envoie
+lancer `npx playwright install`, ce qui n'a rien à voir. La sonde passe
+l'`executablePath`, comme la configuration.
+
 ### La question de la montre, et l'export qui perdait seize réglages tapés
 Ligne 035 du plan, réponse « Oui, ajoute-la » : une question à l'inscription,
 « portes-tu une montre ou un bracelet connecté ? ». Une demi-nuit annoncée.
