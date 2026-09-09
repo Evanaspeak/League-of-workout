@@ -234,6 +234,15 @@ describe("la palette", () => {
    * `--amber` — et ces deux-là ne sont pas des accidents : le premier est une
    * couleur nationale, le second un écart qui SE VOIT, donc un arbitrage.
    *
+   * **Ce qu'il ne compare PAS : deux transparences différentes.** C'est
+   * délibéré — `--line` et `--line-strong` ne diffèrent QUE par l'alpha, donc
+   * comparer les composantes seules ferait crier sur deux jetons parfaitement
+   * légitimes. Le prix est écrit : le voile des fenêtres vaut
+   * `rgba(6,8,10,0.82)` sur le site et `rgba(6,8,11,0.72)` dans la coquille —
+   * deux voiles à un niveau l'un de l'autre, qu'aucun jeton ne nomme, et que ce
+   * contrôle ne verra jamais. Ça part dans les questions avec les couleurs
+   * inventées.
+   *
    * **Il lit les fichiers DISPENSÉS, contrairement au contrôle d'au-dessus**,
    * et la distinction est le cœur de la règle : une image de `next/og` ou un
    * courriel HTML ne peut pas résoudre `var()`, donc elle a le droit d'écrire
@@ -246,16 +255,28 @@ describe("la palette", () => {
 
     const fautifs: string[] = [];
     let examines = 0;
-    for (const f of fichiers(SRC, [".tsx", ".ts", ".css"])) {
-      const rel = relatif(f);
-      if (rel.endsWith(".test.ts")) continue;
-      examines += 1;
-      const src = sansCommentaires(readFileSync(f, "utf8"));
-      for (const m of src.matchAll(COULEUR)) {
-        const debut = src.lastIndexOf("\n", m.index) + 1;
-        if (/^\s*--[a-z0-9-]+:/.test(src.slice(debut, m.index))) continue;
-        const proche = laPlusProche(m[0], nommees);
-        if (proche) fautifs.push(`${rel} : ${m[0]} est à ${proche.d} de --${proche.nom}`);
+    /**
+     * La COQUILLE aussi, et c'est là que la dérive serait le plus muette.
+     *
+     * Elle se construit sans le paquet du site, donc elle écrit la palette en
+     * clair — sept couleurs exactes aujourd'hui : `--ink`, `--bone`, `--amber`,
+     * `--flame`, `--victory`, `--loss`, `--signal`. Une seule était comparée,
+     * `--flame`, par le contrôle du pont juste en dessous. Les six autres
+     * pouvaient glisser d'un niveau sans que rien ne le dise — et la seule
+     * machine capable de le voir est celle de quelqu'un d'autre, en jeu.
+     */
+    for (const racine of [SRC, join(process.cwd(), "desktop/src")]) {
+      for (const f of fichiers(racine, [".tsx", ".ts", ".css", ".js", ".html"])) {
+        const rel = relatif(f);
+        if (rel.endsWith(".test.ts") || rel.endsWith(".test.js")) continue;
+        examines += 1;
+        const src = sansCommentaires(readFileSync(f, "utf8"));
+        for (const m of src.matchAll(COULEUR)) {
+          const debut = src.lastIndexOf("\n", m.index) + 1;
+          if (/^\s*--[a-z0-9-]+:/.test(src.slice(debut, m.index))) continue;
+          const proche = laPlusProche(m[0], nommees);
+          if (proche) fautifs.push(`${rel} : ${m[0]} est à ${proche.d} de --${proche.nom}`);
+        }
       }
     }
     expect(fautifs).toEqual([]);

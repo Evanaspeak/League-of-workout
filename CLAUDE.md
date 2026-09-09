@@ -1359,17 +1359,38 @@ La distinction est le cœur de la règle et elle vaut d'être écrite : une imag
 donc ils ont le droit d'écrire la couleur EN CLAIR — ils n'ont pas le droit d'en
 inventer une autre. Trois des cinq presque-noirs vivaient précisément là.
 
+**Il lit aussi la COQUILLE, et c'est là que la dérive serait le plus muette.**
+`desktop/src` se construit sans le paquet du site, donc il écrit la palette en
+clair — et il l'écrit BIEN : sur ses neuf littéraux opaques, **sept sont
+exactement une couleur nommée** (`--ink`, `--bone`, `--amber`, `--flame`,
+`--victory`, `--loss`, `--signal`), et sous transparence la base est toujours un
+jeton. C'est un recensement NÉGATIF, et c'est justement l'état qu'un garde doit
+figer : **une seule de ces sept était comparée**, `--flame`, par le contrôle du
+pont. Les six autres pouvaient glisser d'un niveau sans que rien ne le dise, et
+la seule machine capable de le voir est celle de quelqu'un d'autre, en jeu.
+
+**Ce que la règle ne compare PAS, écrit plutôt que découvert : deux
+transparences différentes.** C'est délibéré — `--line` et `--line-strong` ne
+diffèrent QUE par l'alpha, donc comparer les composantes seules ferait crier sur
+deux jetons parfaitement légitimes. Le prix se mesure : le voile des fenêtres
+vaut `rgba(6,8,10,0.82)` sur le site et `rgba(6,8,11,0.72)` dans la coquille —
+**deux voiles à un niveau l'un de l'autre, qu'aucun jeton ne nomme**, et que ce
+contrôle ne verra jamais.
+
 **Le tri s'éprouve sur des cas FABRIQUÉS**, parce que l'état sain du dépôt est
 zéro trouvaille : les fichiers réels ne distinguent pas un seuil qui trie d'un
 seuil qui ne voit rien. Quatre cas — la couleur elle-même, le presque qui a
 motivé la règle, une couleur franchement différente, et la même sous une autre
 transparence.
 
-Cinq sabotages, cinq échecs : le presque-noir remis dans un fichier ordinaire,
+Sept sabotages, sept échecs : le presque-noir remis dans un fichier ordinaire,
 `--ember` remis en clair dans une feuille, un presque-noir posé dans un fichier
-DISPENSÉ, le seuil rendu aveugle, et la lecture des composantes débranchée — les
-deux derniers devant faire tomber les cas fabriqués plutôt que de rendre le
-contrôle vert sur zéro trouvaille.
+DISPENSÉ, le seuil rendu aveugle, la lecture des composantes débranchée, et deux
+dérives d'un niveau dans la COQUILLE — `--flame` sur la pastille, `--ink` dans
+le menu. Les deux du milieu doivent faire tomber les cas fabriqués plutôt que de
+rendre le contrôle vert sur zéro trouvaille ; la dérive de `--flame` fait tomber
+DEUX contrôles, celui du pont et celui-ci, ce qui est le signe qu'ils ne se
+recouvrent pas.
 
 **Ce que le recensement a trouvé et qui ne se corrige PAS seul**, écrit plutôt
 que fait en silence : le produit a **deux rouges d'erreur et deux verts de

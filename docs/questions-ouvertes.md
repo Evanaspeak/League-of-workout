@@ -759,6 +759,14 @@ décision de palette — et la réponse 251 dit que la marque visuelle est valid
   les valeurs, tout devient nommé, et le garde reprend la main. Une demi-heure,
   plus une ligne de palette à valider.
 
+**Et une cinquième, sous transparence, qui traverse le pont.** Le voile des
+fenêtres vaut `rgba(6,8,10,0.82)` sur le site — trois emplois — et
+`rgba(6,8,11,0.72)` dans la coquille Electron. Un niveau d'écart, aucun jeton
+pour le nommer, et le garde ne peut pas le voir : il ne compare que des
+couleurs de MÊME transparence, faute de quoi il crierait sur `--line` et
+`--line-strong`, qui ne diffèrent que par l'alpha. Un jeton `--voile` réglerait
+les quatre d'un coup ; c'est la même décision de palette que ci-dessus.
+
 **Ce que ce chantier a fait en attendant, et qui ne demandait rien** : le
 dégradé de marque recopiait `--ember` en clair dans deux feuilles, et cinq
 littéraux passaient à un cheveu d'une couleur nommée — dont **trois noirs
