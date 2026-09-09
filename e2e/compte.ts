@@ -16,10 +16,13 @@ import { sansLangue } from "./chemin";
  *
  *  - le serveur a REFUSÉ — un message d'erreur est à l'écran, et les champs
  *    portent encore ce qu'on a tapé ;
- *  - la page n'était pas HYDRATÉE quand on a rempli — les champs sont VIDES
- *    et le bouton désactivé, parce que l'état React n'a jamais reçu la
- *    saisie. C'est le défaut nommé en V537, et son symptôme ne ressemble pas
- *    à sa cause ;
+ *  - la page n'était pas HYDRATÉE quand on a rempli — le champ se vide TOUT
+ *    SEUL, parce que l'état React n'a jamais reçu la saisie et que le premier
+ *    rendu qui suit remet le champ contrôlé à la valeur de l'état. Le bouton,
+ *    lui, reste ACTIF : il est `disabled={loading}` et rien d'autre. La
+ *    description de V537 disait « champs vides ET bouton désactivé » ; cette
+ *    seconde moitié est fausse, et c'est elle qui a rendu la cause
+ *    méconnaissable le jour où elle s'est présentée ;
  *  - la requête n'est jamais REVENUE — tout est en place et rien ne bouge.
  *
  * Le relevé ne coûte rien quand tout va bien : il n'est fait qu'à l'échec.
@@ -36,8 +39,7 @@ export async function seConnecter(
   const champPseudo = page.getByPlaceholder(/ton pseudo|your username/i);
   const champCode = page.getByPlaceholder(/ton code|your code/i);
   const bouton = page.getByRole("button", { name: /^se connecter$|^sign in$/i });
-  await champPseudo.fill(pseudo);
-  await champCode.fill(code);
+  await remplirVraiment(champPseudo, pseudo, champCode, code);
   try {
     await Promise.all([
       page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
@@ -47,6 +49,41 @@ export async function seConnecter(
     const etat = await releverLEcran(page, champPseudo, champCode, bouton);
     throw new Error(`la connexion de ${pseudo} n'a pas abouti — ${etat}`, { cause: echec });
   }
+}
+
+/**
+ * Remplit les deux champs, et n'en sort que lorsqu'ils PORTENT vraiment ce
+ * qu'on a tapé.
+ *
+ * Les deux champs sont CONTRÔLÉS par React (`value={codePseudo}`) : une
+ * saisie qui arrive avant que React n'écoute n'atteint aucun état, et le
+ * premier rendu qui suit remet le champ à la valeur de l'état — c'est-à-dire
+ * à vide. Le champ se vide alors tout seul, sans erreur et sans rien à
+ * l'écran.
+ *
+ * Ce que ça coûte au clic est le pire des symptômes : le champ étant
+ * `required`, c'est le NAVIGATEUR qui refuse l'envoi. Aucune requête ne part,
+ * aucun message ne paraît, le bouton reste actif, et `waitForURL` expire
+ * trente secondes plus tard en annonçant « waiting for navigation until
+ * load », c'est-à-dire rien.
+ *
+ * Ce contrôle ne prouve PAS que la cause est celle-là : il refuse de cliquer
+ * sur un formulaire dont un champ requis est vide, ce qui est la bonne
+ * conduite quelle que soit la raison du vide. Et il ne coûte rien quand tout
+ * va bien — deux lectures qui passent du premier coup.
+ */
+async function remplirVraiment(
+  champPseudo: ReturnType<Page["getByPlaceholder"]>,
+  pseudo: string,
+  champCode: ReturnType<Page["getByPlaceholder"]>,
+  code: string,
+) {
+  await expect(async () => {
+    if ((await champPseudo.inputValue()) !== pseudo) await champPseudo.fill(pseudo);
+    if ((await champCode.inputValue()) !== code) await champCode.fill(code);
+    expect(await champPseudo.inputValue()).toBe(pseudo);
+    expect(await champCode.inputValue()).toBe(code);
+  }).toPass({ timeout: 15_000 });
 }
 
 /** Ce que l'écran de connexion montre à l'instant où l'on renonce. */

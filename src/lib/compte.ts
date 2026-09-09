@@ -93,6 +93,7 @@ const HORS_DIFFUSION = [
   "tourCou",
   "tourHanches",
   "rappelPeseeActif",
+  "montre",
 ] as const;
 
 type Secret = (typeof NE_SORTENT_PAS)[number];

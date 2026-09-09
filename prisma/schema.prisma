@@ -54,6 +54,25 @@ model User {
   taille             Int?
   sportsHoursPerWeek Int?
 
+  /**
+   * Porte-t-elle une montre ou un bracelet connecté ? (réponse 035)
+   *
+   * TROIS états, d'où le nullable : « pas répondu » et « n'en porte pas » ne
+   * se confondent pas. Un booléen à défaut faux ferait passer tous les comptes
+   * d'avant cette colonne pour des gens qui ont dit non, alors qu'on ne leur a
+   * jamais posé la question.
+   *
+   * Ce n'est PAS une donnée de santé au sens de l'article 9, contrairement à
+   * ses voisines : c'est un fait d'équipement, il ne dit rien de l'état du
+   * corps et il ne se croise avec rien. Elle est ici parce qu'elle se demande
+   * au même endroit, pas parce qu'elle est de la même nature.
+   *
+   * Et elle ne CACHE jamais rien : « je porte une montre » n'est pas « je veux
+   * saisir ma dépense ». Retirer un champ sur la foi d'une case cochée à
+   * l'inscription serait plus restrictif que ce qu'on a demandé.
+   */
+  montre Boolean?
+
   // ── Le corps et les calories (étape 05 du plan) ────────────────────────────
   //
   // Tout est ÉTEINT par défaut : la réponse 013 dit « une option qu'on active »,

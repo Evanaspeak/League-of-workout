@@ -298,6 +298,28 @@ describe("PUT /api/settings — préférences personnelles", () => {
     expect(p.user.update).not.toHaveBeenCalled();
   });
 
+  /**
+   * La montre (réponse 035) : `null` est une VALEUR ici, pas une absence.
+   *
+   * C'est ce qui la distingue de tous les autres booléens du fichier. Refuser
+   * `null` empêcherait de revenir sur sa réponse ; le confondre avec « clé
+   * absente » ferait ignorer le geste en silence.
+   */
+  it("accepte les trois états de la montre, null compris", async () => {
+    expect((await put({ userPrefs: { montre: true } })).status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data.montre).toBe(true);
+
+    p.user.update.mockClear();
+    expect((await put({ userPrefs: { montre: null } })).status).toBe(200);
+    expect(p.user.update.mock.calls[0][0].data).toHaveProperty("montre", null);
+  });
+
+  it("refuse une montre qui n'est ni un booléen ni null", async () => {
+    const r = await put({ userPrefs: { montre: "oui" } });
+    expect(r.status).toBe(400);
+    expect(p.user.update).not.toHaveBeenCalled();
+  });
+
   it("enregistre le mur des records ouvert à tous", async () => {
     const r = await put({ userPrefs: { recordsPublics: true } });
     expect(r.status).toBe(200);

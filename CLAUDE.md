@@ -1099,13 +1099,16 @@ l'état, faute d'un gain qui justifie la retouche.
 Huit scripts, dont quatre pilotent un Chromium sur l'application lancée en local.
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
-**Avant toute campagne : `rm -rf .next/cache`.** Ce dossier SURVIT à
-`next build`, et une réponse gardée pendant un état de construction
-intermédiaire — un sabotage, une branche à moitié écrite — continue d'être
-servie avec `x-nextjs-cache: HIT`. Deux campagnes ont mesuré une 404 sur une
-page qui rend 200 en production. Le témoin qui distingue ça d'une régression
-est l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on
-regarde le passé.
+**Avant toute campagne — ET avant une suite navigateur qu'on veut croire :
+`rm -rf .next/cache`.** Ce dossier SURVIT à `next build` comme au serveur, et
+une réponse gardée pendant un état de construction intermédiaire — un sabotage,
+une branche à moitié écrite — continue d'être servie avec
+`x-nextjs-cache: HIT`. Deux campagnes ont mesuré une 404 sur une page qui rend
+200 en production, et une suite entière a rendu **neuf parcours rouges** —
+`lang="en"` sur les cinq langues du calculateur — en désignant le dernier
+changement comme coupable. Le témoin qui distingue ça d'une régression est
+l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on regarde
+le passé.
 
 ```bash
 node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
@@ -1285,6 +1288,228 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### L'aléa de la connexion est nommé : le navigateur refusait l'envoi lui-même
+La suite entière rend **266 passés, un échec**, et c'est l'aléa que ce journal
+recense depuis août sans avoir su le nommer. La différence, cette fois, est que
+la sonde posée en V547 a parlé :
+
+```
+la connexion de Pasmttiwr5f n'a pas abouti — adresse /login,
+champs remplis false/true, bouton actif, aucun message à l'écran
+```
+
+**Ce n'est aucune des trois causes que le commentaire énumérait.** Le pseudo est
+VIDE, le code est REMPLI, le bouton est ACTIF, et il n'y a rien à l'écran. Trois
+lectures suffisent alors à fermer la question, en ouvrant le composant :
+
+- les deux champs sont **contrôlés** (`value={codePseudo}`) ;
+- les deux sont **`required`** ;
+- le bouton est **`disabled={loading}` et rien d'autre** — il n'est jamais
+  désactivé par un champ vide.
+
+D'où l'enchaînement, qui explique le relevé trait pour trait : la saisie du
+pseudo arrive avant que React n'écoute, donc l'état ne la reçoit pas ; le
+premier rendu qui suit remet le champ contrôlé à la valeur de l'état,
+c'est-à-dire **à vide** ; la saisie du code, elle, arrive après et tient ; et au
+clic **c'est le NAVIGATEUR qui refuse l'envoi**, parce qu'un champ `required`
+est vide. Aucune requête ne part, aucun message ne paraît, rien ne bouge — et
+`waitForURL` expire trente secondes plus tard en annonçant « waiting for
+navigation until load », c'est-à-dire rien.
+
+**La description de V537 était fausse pour moitié, et c'est cette moitié qui a
+rendu la cause méconnaissable.** Elle disait que la page non hydratée se
+reconnaît à « des champs VIDES et un bouton DÉSACTIVÉ ». Le bouton n'est jamais
+désactivé par un champ vide : en cherchant les deux ensemble, on ne trouvait
+jamais rien. C'est le défaut que ce journal reproche partout — une description
+qui a vieilli se relit comme une garantie — dans le commentaire écrit pour
+attraper ce défaut-là.
+
+**L'ÉTAT est reproduit ; la CAUSE ne l'est pas, et il vaut mieux l'écrire.**
+Deux tentatives pour rejouer la fenêtre d'hydratation ont échoué, chacune pour
+une raison d'outillage : `page.goto` attend `load`, donc les fragments sont là
+et l'hydratation suit dans la foulée ; et en `waitUntil: "commit"` avec les
+fragments bloqués, l'analyseur n'atteint jamais le formulaire. Ce qui EST
+reproduit, en revanche, c'est l'état relevé — le champ vidé après la saisie —
+et il rend le symptôme mot pour mot :
+
+| | verdict |
+|---|---|
+| sans contrôle | **EXPIRÉ — champs false/true, bouton actif, aucun message** |
+| avec contrôle | la requête PART, et le serveur répond « Pseudo ou code incorrect » |
+
+La première ligne est celle de l'intégration continue, au caractère près.
+
+**La correction ne dépend donc pas du diagnostic**, et c'est ce qui la rend
+sûre : `remplirVraiment` refuse de cliquer sur un formulaire dont un champ
+requis est vide, ce qui est la bonne conduite quelle que soit la raison du
+vide. Elle relit les deux champs, remplit à nouveau celui qui ne porte pas ce
+qu'on a tapé, et ne rend la main que lorsque les deux tiennent. Le coût, quand
+tout va bien, est de deux lectures qui passent du premier coup.
+
+**Ce qu'elle ne prouve pas** est écrit dans son commentaire : elle ne dit pas
+que la cause est l'hydratation. Elle dit qu'un envoi ne partira plus jamais
+avec un champ requis vide, et que si le champ refuse obstinément de tenir, le
+test le dira au lieu d'attendre trente secondes.
+
+**Et la suite rejouée a rendu NEUF échecs qui ressemblaient à une régression
+de cette correction.** Cinq pages de calculateur rendant `lang="en"` dans les
+six langues, plus trois contrôles de référencement et un d'accueil. Aucun n'a
+de rapport avec la connexion, et le témoin qui tranche est l'EN-TÊTE :
+
+```
+x-nextjs-cache: HIT      <html lang="en"   pour /fr, /de, /ja comme pour /en
+```
+
+C'est `.next/cache`, qui SURVIT au serveur comme à la construction et servait
+des réponses d'un état intermédiaire — le piège que ce journal écrit depuis la
+campagne du 8 septembre. Ce qu'il faut y ajouter est que **la règle ne vaut pas
+que pour les campagnes de MESURE** : elle vaut pour la suite navigateur, où le
+même cache fait tomber neuf parcours d'un coup et désigne le dernier changement
+comme coupable. Cache vidé, serveur relancé, les cent quatorze parcours des
+trois fichiers passent.
+
+**Et le projet `bareme` n'avait pas tourné du tout** — ses `dependencies` le
+sautent dès qu'un fichier amont échoue, ce qui est écrit ici depuis V532. Les
+« 2 did not run » du rapport étaient ses deux tests, c'est-à-dire précisément
+ceux qu'on venait corriger. Un rapport qui annonce « 256 passés » sans dire
+lesquels n'ont pas tourné se lit comme un succès.
+
+**Un piège d'outillage, deux fois de suite.** Une sonde écrite à côté de la
+suite ne trouve pas le navigateur : `playwright.config.ts` lit
+`/opt/pw-browsers/chromium` quand il existe, et un `chromium.launch()` nu va
+chercher un `chrome-headless-shell` qui n'est pas installé. Le message envoie
+lancer `npx playwright install`, ce qui n'a rien à voir. La sonde passe
+l'`executablePath`, comme la configuration.
+
+### La question de la montre, et l'export qui perdait seize réglages tapés
+Ligne 035 du plan, réponse « Oui, ajoute-la » : une question à l'inscription,
+« portes-tu une montre ou un bracelet connecté ? ». Une demi-nuit annoncée.
+Elle a fait ouvrir l'export, et l'export perdait la moitié de ce que la
+personne a tapé.
+
+**TROIS états, et c'est la seule décision de la ligne elle-même.**
+`User.montre` est un `Boolean?` : « pas répondu » et « n'en porte pas » ne se
+confondent pas. Un booléen à défaut faux ferait passer tous les comptes
+d'avant cette colonne pour des gens qui ont dit non, alors qu'on ne leur a
+jamais posé la question — et un défaut à VRAI serait pire encore.
+
+**La réponse ne CACHE jamais rien**, et c'est la règle qui gouverne tout le
+reste. « Je porte une montre » n'est pas « je veux saisir ma dépense » : une
+balance connectée, une application, un calcul à la main donnent le même
+chiffre. Retirer le champ sur la foi d'une case cochée à l'inscription six
+mois plus tôt serait plus RESTRICTIF que ce qu'on a demandé — c'est la règle
+du repli, dans l'autre sens.
+
+**Ce qu'elle fait, elle le fait en AVANT.** Quand la personne porte une montre
+et qu'aucune dépense n'est notée du jour, la rubrique le dit et pointe le
+champ : c'est le seul moment où cette phrase apprend quelque chose, et elle
+part dès qu'on a noté. Sans ça, la question serait posée pour rien — le pire
+résultat possible.
+
+**Elle est posée dans le bloc FACULTATIF déjà replié de `/beta`**, à côté du
+genre, de l'âge et des heures de sport. Le formulaire minimal reste « un pseudo
+suffit » : ajouter une friction sur le seul écran qui décide si quelqu'un entre
+aurait coûté plus que la réponse ne rapporte.
+
+**Un `<select>` à trois valeurs et pas une case à cocher** : une case a deux
+états et confondrait « non » avec « pas répondu ». C'est la convention déjà
+employée par le genre, deux lignes plus haut, avec son « — ».
+
+**Et `Boolean("non")` vaut VRAI.** `toMontreOrNull` ne reconnaît que « oui » et
+« non » ; tout le reste rend `null`. Une conversion à la légère ferait dire à
+quelqu'un l'inverse de ce qu'il a choisi, sur une question qu'il ne
+revérifiera jamais — c'est le motif du mode fantôme, et c'est le cas de test
+qui distingue vraiment.
+
+**Le compte au panneau d'administration n'est pas une décoration.** Savoir
+combien de comptes portent une montre est la SEULE chose que la question sert
+à savoir, et elle décide de quelque chose : brancher Strava ou Wahoo coûte
+deux nuits (réponses 037 et 042), et ça ne se décide pas sur une intuition.
+Les trois états y sont rendus séparément, par un `groupBy` — ranger « pas
+répondu » avec l'un des deux fausserait la proportion dans le sens qu'on
+aurait choisi.
+
+**Et le piège de la doublure, retombé dedans.** `jest.mock` remplace le MODULE
+ENTIER : `user.groupBy` n'y figurait pas, et **dix tests sans rapport sont
+tombés d'un coup**. C'est écrit dans ce journal depuis les envois programmés,
+et ça se retombe dedans à chaque `groupBy` ajouté sur un modèle déjà doublé.
+
+## L'export perdait seize réglages TAPÉS par la personne
+
+C'est la vraie trouvaille, et elle est plus grosse que la ligne. Le garde
+existant a exigé qu'on range `montre` ; en cherchant où, il a fallu ouvrir
+l'export, et **mesurer plutôt que lire** : sur les soixante-deux colonnes
+scalaires de `User`, **trente-deux ne sortaient pas**.
+
+Seize sont des réglages que la personne a TAPÉS, donc « fournis par elle » au
+sens le plus littéral de l'article 20 :
+
+| famille | ce qui manquait |
+|---|---|
+| l'objectif calorique | variante de formule, niveau d'activité, mode, poids cible |
+| le mètre-ruban | tour de taille, de cou, de hanches |
+| la santé | rappel de pesée hebdomadaire, port d'une montre |
+| la confidentialité | mode fantôme, partage aux amis, nom affiché, mur ouvert |
+| le reste | conduite de session, gainage max, nom et photo du fournisseur |
+
+**C'est la SECONDE moitié du défaut de V548.** Les neuf colonnes de « Ton
+corps » étaient écrites et jamais relues ; elles le sont depuis, et elles ne
+sortaient toujours pas à l'export. Le journal porte déjà l'entrée où deux
+réglages tapés — le partage entre exercices et le barème personnel — avaient
+été ajoutés un par un ; personne n'avait fait le recensement.
+
+**Les quatre réglages de CONFIDENTIALITÉ sont les plus mal placés du lot.**
+Ce sont des refus, et un refus est ce qu'on a le plus de raisons de vouloir
+retrouver : le mode fantôme retire une ligne des classements, le partage
+décide de ce qu'un ami voit, le mur ouvert de qui peut lire un record. Ils
+n'apparaissaient nulle part dans le fichier qui existe pour dire ce qu'on
+garde.
+
+**Le garde existant ne pouvait pas les voir, et il écrivait pourquoi.**
+`exportComplet.test.ts` part du SCHÉMA plutôt que du fichier — sa raison
+d'être — mais il ne lisait que les RELATIONS. Une table que l'export n'a
+jamais lue tombe ; une colonne scalaire, non. C'est l'angle mort exact qui
+avait laissé les pesées dehors, sur l'autre moitié de la même question.
+
+Il porte donc la seconde moitié : chaque colonne de `User` doit être lue par
+l'export, ou figurer avec sa raison. **Quinze dispenses, en cinq familles**, et
+aucune n'est « ça n'intéresse personne » — c'est précisément le raisonnement
+qui a coûté les pesées :
+
+- **un laissez-passer** : l'empreinte du mot de passe, le jeton de diffusion,
+  celui du profil public, le code de parrainage, le compteur de sessions. Un
+  fichier de portabilité circule par courriel ;
+- **ce qui NOMME quelqu'un d'autre** : l'identifiant du parrain, même
+  frontière que les amitiés ;
+- **la mécanique d'envoi**, sans lecteur : les quatre marques de dernier
+  envoi, la vérification d'adresse d'Auth.js, le compteur de visite guidée ;
+- **ce qui se DÉDUIT de ce qui sort déjà** : le PUUID Riot, dérivé du Riot ID
+  qui est exporté juste à côté ;
+- **les colonnes MORTES**, déclarées telles au schéma : `exercice` au
+  singulier et `rappelSeuilPoints`, tous deux annotés « ne plus l'utiliser ».
+  Les exporter donnerait un réglage qui ne gouverne plus rien.
+
+Quatre sabotages, quatre échecs — dont la colonne ajoutée au schéma sans
+classement, qui est le cas exact qui vient de se produire, et le tri des
+relations rendu aveugle, qui fait tomber DEUX contrôles au lieu d'un.
+
+**Ce que ça apprend au-delà du cas** : un garde qui part de la bonne source
+peut n'en lire que la moitié, et son commentaire décrira très bien la moitié
+qu'il lit. Celui-ci expliquait sur vingt lignes pourquoi il fallait partir du
+schéma — et il ne regardait que les relations depuis le jour de son écriture.
+
+Sept sabotages sur les routes et l'écran, sept échecs : le « non » qui n'est
+plus reconnu, la conversion à la légère, le contrôle de type retiré, `null`
+traité comme une absence, le réglage qui n'est plus relu au rechargement, la
+phrase qui ne part jamais, et le sans-réponse rangé avec le non. Plus un
+huitième, statique : `comptePublic` remis dans le GET des réglages fait tomber
+`reglagesRelus`, ce qui est le garde né de V548.
+
+**Un parcours est tombé une fois et repasse**, noté comme tel : le premier
+test de `depense-jour.spec.ts` dans une exécution à trois fichiers, puis 2/2
+seul et 14/14 sur la même combinaison rejouée. Le geste qui distingue un aléa
+d'une régression est de relancer avant de conclure.
 
 ### Campagne de clôture après V545 à V549, et l'outil qui comparait des empreintes
 Passée sur un compte semé à soixante parties, créé APRÈS la suite navigateur —

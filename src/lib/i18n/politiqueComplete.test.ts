@@ -80,6 +80,7 @@ const ATTENDU: Record<string, RegExp> = {
   poids: /poids/i,
   taille: /taille/i,
   sportsHoursPerWeek: /heures de sport/i,
+  montre: /bracelet connecté/i,
   /**
    * Le corps et les calories (étape 05).
    *

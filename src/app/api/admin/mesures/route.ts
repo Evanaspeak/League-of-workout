@@ -108,8 +108,30 @@ export async function GET() {
     await prisma.demandeJeu.findMany({ select: { nom: true, cle: true } }),
   );
 
+  /**
+   * Combien de comptes portent une montre (réponse 035).
+   *
+   * C'est la seule chose que la question sert à savoir, et elle décide de
+   * quelque chose : brancher un service tiers coûte deux nuits (réponses 037
+   * et 042), et ça ne se décide pas sur une intuition. Les TROIS états sont
+   * rendus — « pas répondu » n'est ni un oui ni un non, et le confondre avec
+   * l'un des deux fausserait la proportion dans le sens qu'on aurait choisi.
+   *
+   * Un `groupBy` plutôt que trois comptages : une seule lecture, et la
+   * troisième valeur ne peut pas diverger des deux autres.
+   */
+  const parMontre = await prisma.user.groupBy({
+    by: ["montre"],
+    _count: { _all: true },
+  });
+  const montres = {
+    oui: parMontre.find((g) => g.montre === true)?._count._all ?? 0,
+    non: parMontre.find((g) => g.montre === false)?._count._all ?? 0,
+    sansReponse: parMontre.find((g) => g.montre === null)?._count._all ?? 0,
+  };
+
   return NextResponse.json({
     ...calculerMesures(mesures), veille, seuilSemaine: SEUIL_SEMAINE, equilibre,
-    demandesJeux: demandes,
+    demandesJeux: demandes, montres,
   });
 }

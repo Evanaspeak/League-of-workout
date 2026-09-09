@@ -65,6 +65,11 @@ export type CorpsPrefs = {
   tourCou: number | null;
   tourHanches: number | null;
   rappelPeseeActif: boolean;
+  /**
+   * Porte-t-elle une montre (réponse 035) ? TROIS états : `null` est « pas
+   * répondu », qui n'est pas « non ».
+   */
+  montre: boolean | null;
 };
 
 export function ReglagesCorps({
@@ -424,6 +429,46 @@ export function ReglagesCorps({
           <h2 className="titre-section">{t.corpsDepenseTitre}</h2>
           <p className="text-xs mt-1" style={{ color: "var(--faint)" }}>{t.corpsDepenseAide}</p>
         </div>
+        {/*
+          La question de la ligne 035, posée là où elle sert : juste au-dessus
+          du champ qu'elle gouverne.
+
+          Deux boutons et pas trois : « je ne réponds pas » n'est pas un geste
+          qu'on fait, c'est l'état de départ — il se voit à ce qu'aucun des
+          deux n'est pressé.
+
+          Et la réponse ne CACHE rien. Le champ reste là quelle qu'elle soit :
+          « je ne porte pas de montre » n'est pas « je ne veux pas saisir ma
+          dépense », et une balance connectée ou un calcul à la main donnent le
+          même chiffre. Retirer le champ sur la foi de cette case serait plus
+          restrictif que ce qu'on a demandé.
+        */}
+        <div
+          className="flex items-center justify-between gap-3 flex-wrap"
+          role="group"
+          aria-labelledby="montre-label"
+        >
+          <div id="montre-label" className="text-sm">{t.corpsMontreLabel}</div>
+          <div className="flex gap-2">
+            <button
+              className="py-2 px-3 rounded text-sm"
+              aria-pressed={prefs.montre === true}
+              style={boutonStyle(prefs.montre === true)}
+              onClick={() => poser("montre", true)}
+            >
+              {t.corpsMontreOui}
+            </button>
+            <button
+              className="py-2 px-3 rounded text-sm"
+              aria-pressed={prefs.montre === false}
+              style={boutonStyle(prefs.montre === false)}
+              onClick={() => poser("montre", false)}
+            >
+              {t.corpsMontreNon}
+            </button>
+          </div>
+        </div>
+
         <div className="flex gap-2 items-center">
           <input
             type="number" inputMode="numeric" step="10" min={1} max={KCAL_MAX}
@@ -450,6 +495,17 @@ export function ReglagesCorps({
         {depenseDuJour !== null && (
           <p className="text-xs" style={{ color: "var(--faint)" }}>
             {t.corpsDepenseAujourdhui(nombre(depenseDuJour))}
+          </p>
+        )}
+        {/*
+          Ce qu'on n'a pas encore fait, dit là où on peut le faire.
+          Elle porte une montre, et l'objectif tourne encore sur l'ESTIMATION :
+          c'est le seul moment où cette phrase apprend quelque chose. Notée,
+          elle disparaît.
+        */}
+        {prefs.montre === true && depenseDuJour === null && (
+          <p className="text-xs" style={{ color: "var(--steel)" }}>
+            {t.corpsMontreRappel}
           </p>
         )}
       </div>

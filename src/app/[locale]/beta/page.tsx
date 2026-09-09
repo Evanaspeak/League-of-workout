@@ -54,6 +54,9 @@ export default function BetaPage() {
   const [poids, setPoids] = useState("");
   const [taille, setTaille] = useState("");
   const [sportsHoursPerWeek, setSports] = useState("");
+  // TROIS états, comme le genre juste au-dessus : "" veut dire « pas
+  // répondu », et ce n'est pas la même chose que « non ».
+  const [montre, setMontre] = useState("");
   const [showOptional, setShowOptional] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -88,7 +91,7 @@ export default function BetaPage() {
       const res = await fetch("/api/beta-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek, parrain }),
+        body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek, montre, parrain }),
       });
       const data = await res.json();
       if (!res.ok) { setError(translateApiError(data.error, locale) || t.genericError); return; }
@@ -275,6 +278,14 @@ export default function BetaPage() {
                       <div style={{ gridColumn: "1 / -1" }}>
                         <label style={LABEL_STYLE}>{t.sportLabel}</label>
                         <input style={FIELD_STYLE} type="number" min={0} max={40} placeholder="3" value={sportsHoursPerWeek} onChange={e => setSports(e.target.value)} />
+                      </div>
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <label style={LABEL_STYLE}>{t.montreLabel}</label>
+                        <select style={FIELD_STYLE} value={montre} onChange={e => setMontre(e.target.value)}>
+                          <option value="" style={OPTION_STYLE}>—</option>
+                          <option value="oui" style={OPTION_STYLE}>{t.montreOptions.oui}</option>
+                          <option value="non" style={OPTION_STYLE}>{t.montreOptions.non}</option>
+                        </select>
                       </div>
                     </div>
                   </div>

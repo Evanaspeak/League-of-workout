@@ -50,7 +50,7 @@ import { ReglageVibration } from "./ReglageVibration";
 const CORPS_DEFAUT: CorpsPrefs = {
   formuleCalorique: null, niveauActivite: null, modeCalorique: null,
   poidsCible: null, tourTaille: null, tourCou: null, tourHanches: null,
-  rappelPeseeActif: false,
+  rappelPeseeActif: false, montre: null,
 };
 
 type Mensurations = { poids: number | null; taille: number | null; age: number | null };
@@ -340,6 +340,9 @@ export default function SettingsPage() {
         tourCou: s.user?.tourCou ?? null,
         tourHanches: s.user?.tourHanches ?? null,
         rappelPeseeActif: Boolean(s.user?.rappelPeseeActif),
+        // `?? null` et non `Boolean(...)` : le troisième état — « pas
+        // répondu » — s'écraserait en « non » à chaque chargement.
+        montre: s.user?.montre ?? null,
       }));
       setMensurations((avant) => fusionner(avant, MENSURATIONS_DEFAUT, {
         poids: s.user?.poids ?? null,

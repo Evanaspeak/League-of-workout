@@ -111,6 +111,11 @@ const NE_SORT_PAS: Record<string, string> = {
     "Mesure au mètre-ruban, acceptée en réponse 024 parce que la variante "
     + "féminine de la formule ne peut pas s'en passer. Donnée de santé, "
     + "traitée exactement comme les deux autres.",
+  montre:
+    "Porte-t-elle une montre ou un bracelet connecté (réponse 035) ? Ce n'est "
+    + "pas une donnée de santé — c'est un fait d'équipement — mais rien de ce "
+    + "que la diffusion sert n'en a besoin : elle ne se lit que dans « Ton "
+    + "corps », derrière la porte, là où elle décide ce qu'on propose.",
   rappelPeseeActif:
     "Le rappel de pesée hebdomadaire est-il allumé (réponse 022, optionnel). "
     + "Un réglage de notification qui dit qu'on suit son poids : c'est un "
@@ -210,6 +215,7 @@ describe("comptePublic", () => {
   const RENDUES_AUX_REGLAGES = [
     "jetonProfil", "formuleCalorique", "niveauActivite", "modeCalorique",
     "poidsCible", "tourTaille", "tourCou", "tourHanches", "rappelPeseeActif",
+    "montre",
   ];
 
   it("les réglages relisent ce que la diffusion ne montre pas", () => {
