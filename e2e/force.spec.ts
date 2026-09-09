@@ -38,7 +38,20 @@ test("un test saisi entre dans l'histoire, et la courbe le montre", async ({ bro
   await viderLesFenetres(page);
   await page.goto("/settings#effort");
 
-  // Un compte neuf n'a rien fait : ni point, ni courbe, ni phrase de courbe.
+  /**
+   * Un compte neuf n'a rien fait : ni point, ni courbe, ni phrase de courbe.
+   *
+   * Le bouton d'abord, et ce n'est pas une politesse : `toHaveCount(0)` est
+   * vrai TOUT DE SUITE, donc il passe avant que le panneau soit rendu et ne
+   * prouve alors rien. Mesuré — avec la courbe rendue dès zéro point, ce
+   * contrôle tombe quand la lecture en base le précède (elle laisse à l'API
+   * le temps de répondre) et PASSE quand elle le suit. Il ne tenait que par
+   * l'ordonnancement. Le bouton vient du même composant et de la même
+   * réponse que la courbe : une fois qu'il est là, son absence dit quelque
+   * chose.
+   */
+  await page.getByRole("button", { name: /^faire le test$|^take the test$/i })
+    .waitFor({ state: "visible", timeout: 20_000 });
   expect(await compter(TESTS, [pseudo])).toBe(0);
   await expect(page.getByRole("heading", { name: /ta progression|your progress/i }))
     .toHaveCount(0);
