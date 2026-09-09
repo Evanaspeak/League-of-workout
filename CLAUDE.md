@@ -1333,6 +1333,90 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La porte d'écriture normalisait d'un seul côté
+
+Suite du champ de champion, en tirant le fil : le FORMULAIRE ramène la saisie à
+son nom canonique depuis V570, et la PORTE, non. `/api/games` écrivait
+`String(body.champion)` — sans liste, sans contrôle, sans rien.
+
+**Trois sources entrent par là**, et une seule normalisait : le formulaire,
+l'import Riot, et la détection locale de l'application Windows. C'est
+l'asymétrie qui coûte, et elle est certaine — elle se lit dans le code, elle ne
+dépend d'aucune hypothèse.
+
+**Ce que `Game.champion` décide**, et c'est ce qui rend le cas sérieux : l'icône
+de Data Dragon, le REGROUPEMENT de maîtrise, et ce que l'historique affiche.
+Deux orthographes du même champion en base font deux champions — et la maîtrise
+change le coût des parties SUIVANTES, donc le défaut ne se voit pas sur celle
+qui le crée.
+
+**La mesure qui rend le cas concret.** Data Dragon porte deux formes de nom, et
+elles diffèrent pour **vingt et un champions** : la clé `Chogath` contre le nom
+`Cho'Gath`, `MonkeyKing` contre `Wukong`, `Nunu` contre `Nunu & Willump`.
+**Aucune de ces vingt et une clés ne figure dans notre liste**, qui est
+exactement la liste des noms affichés. `resoudreChampion` en ramène dix-huit
+d'elle-même par l'aplatissement ; les trois qui restent ne s'aplatissent pas
+vers leur nom.
+
+**Ce qui n'est PAS mesuré, écrit plutôt qu'affirmé** : la forme que Riot envoie
+réellement dans `championName`. Il n'y a pas de clé de production, donc ce
+chemin est dormant et je ne peux pas l'ouvrir. Je ne dis donc pas que l'import
+Riot est cassé — je dis que la porte normalise d'un côté et pas de l'autre, et
+que la normalisation est JUSTE quelle que soit la forme qui arrive : sur un nom
+déjà canonique, `resoudreChampion` compare d'abord la chaîne exacte et rend le
+même nom. C'est une assurance qui ne coûte rien.
+
+**La cause structurelle était le mot `"use client"`.** Les fonctions pures —
+l'aplatissement, la résolution, le classement des propositions — vivaient dans
+`useChampions.ts`, qui porte cette directive : **une route ne pouvait donc pas
+les appeler**. Elles sont parties dans `src/lib/champions.ts`, qui n'est qu'un
+module. Le crochet et la mémoire de la liste restent où ils sont, et leurs tests
+se sont séparés avec eux.
+
+**La liste employée est celle du CODE, pas celle de la base**, et c'est écrit
+plutôt que subi : un champion ajouté par l'administration ne se ramène à rien,
+donc il est gardé tel quel — c'est-à-dire exactement le comportement d'avant.
+Lire la configuration à cet endroit coûterait un aller-retour par partie
+enregistrée pour un cas qui se traite déjà bien. Et **ce qui ne désigne personne
+est GARDÉ** : perdre le champion d'une partie qu'on vient de jouer serait pire
+que de l'écrire de travers.
+
+**Et le fil a rendu une TROISIÈME correspondance sur les noms**, cachée dans un
+composant : `CHAMPION_MAP`, vingt et une entrées écrites à la main dans
+`ChampionIcon.tsx`, qui traduit le nom affiché en clé d'adresse Data Dragon.
+Elle décide de l'ICÔNE, et une clé fausse ne casse rien : l'image rend 404, le
+repli en lettre s'affiche, et personne ne le remarque avant des semaines. Elle
+rejoint les deux autres tables dans `champions.ts`.
+
+Mesurée contre Data Dragon 16.17.1 : **les cent soixante-treize clés sont
+bonnes, aucune collision** — deux champions ne partagent jamais une icône — et
+**une entrée ne servait à rien**, `"Aatrox": "Aatrox"`, qui rend ce que le repli
+mécanique rendait déjà.
+
+**Une entrée MANQUAIT et marchait quand même, ce qui vaut d'être nommé.**
+`K'Sante` n'est pas dans la table ; le repli mécanique — retirer apostrophes,
+espaces, points et esperluettes — donne `KSante`, qui est la bonne clé. Il
+échoue en revanche partout où Riot met une minuscule au second morceau :
+`Cho'Gath` donne `ChoGath` là où la clé est `Chogath`. La table ne porte donc
+QUE ce que le repli manque, et les deux moitiés sont épinglées séparément —
+sans ça on ne saurait pas laquelle fait quoi.
+
+**Le garde ne demande aucun réseau, et c'est sa limite.** Il tient la cohérence
+INTERNE : pas d'entrée sans effet, pas d'entrée désignant un champion absent de
+la liste, pas de collision. La JUSTESSE des clés se mesure contre Data Dragon,
+donc à la main, et le relevé du 9 septembre est écrit dans le module.
+
+Cinq sabotages, cinq échecs : la porte qui cesse de normaliser, la maîtrise
+comptée sur la forme brute, un nom inconnu perdu au lieu d'être gardé, l'entrée
+sans effet remise, et une clé qui en double une autre.
+
+**Un piège d'outillage, et c'est le TÉMOIN qui l'a dit.** Mon enveloppe de
+sabotage décalait ses arguments d'un cran au lieu de deux : la commande lancée
+commençait donc par le chemin du fichier de test, et les cinq sabotages ont
+rendu « Permission denied » puis « SABOTAGE SANS EFFET ». Cinq d'affilée ne sont
+pas une coïncidence — c'est le harnais. Sans le contrôle d'empreinte posé la
+veille, les cinq auraient rendu du vert et j'aurais conclu que rien ne mordait.
+
 ### Campagne de clôture après V563 à V571, et un témoin d'un genre nouveau
 
 **Accessibilité : 0 constat**, vingt et une pages en français, **aucune page

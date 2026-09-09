@@ -1,34 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-
-// Certains champions ont un ID Data Dragon différent de leur nom affiché.
-const CHAMPION_MAP: Record<string, string> = {
-  "Bel'Veth":        "Belveth",
-  "Cho'Gath":        "Chogath",
-  "Dr. Mundo":       "DrMundo",
-  "Jarvan IV":       "JarvanIV",
-  "Kai'Sa":          "Kaisa",
-  "Kha'Zix":         "Khazix",
-  "Kog'Maw":         "KogMaw",
-  "LeBlanc":         "Leblanc",
-  "Lee Sin":         "LeeSin",
-  "Master Yi":       "MasterYi",
-  "Miss Fortune":    "MissFortune",
-  "Nunu & Willump":  "Nunu",
-  "Rek'Sai":         "RekSai",
-  "Renata Glasc":    "Renata",
-  "Tahm Kench":      "TahmKench",
-  "Twisted Fate":    "TwistedFate",
-  "Vel'Koz":         "Velkoz",
-  "Wukong":          "MonkeyKing",
-  "Xin Zhao":        "XinZhao",
-  "Aurelion Sol":    "AurelionSol",
-  "Aatrox":          "Aatrox",
-};
-
-function toKey(name: string): string {
-  return CHAMPION_MAP[name] ?? name.replace(/['\s.&]/g, "");
-}
+import { cleDataDragon } from "@/lib/champions";
 
 /**
  * Version de Data Dragon, figée au build.
@@ -78,7 +50,7 @@ export function ChampionIcon({ name, size = 38 }: Props) {
   // La source ne dépend plus que du nom : elle se calcule au rendu, sans
   // effet ni second rendu pour rien.
   const src = name
-    ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${toKey(name)}.png`
+    ? `https://ddragon.leagueoflegends.com/cdn/${DDRAGON_VERSION}/img/champion/${cleDataDragon(name)}.png`
     : null;
 
   const r = Math.round(size * 0.13);
