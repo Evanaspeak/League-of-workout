@@ -1289,6 +1289,47 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le référencement est construit, et rien ne peut dire s'il marche
+Réponse 241, « **Explique** », et trois réponses « **Aucune idée** » (034, 079,
+271). Même méthode que pour les quatre d'avant : ce sont des questions de fait.
+Réponses dans `docs/questions-ouvertes.md`, questions 17 et 18.
+
+**L'offre est là, mesurée en production** : quatre-vingt-seize pages de
+calculateur, cent trente-deux adresses au plan du site avec **924 alternatives
+de langue** et 132 `x-default`, chaque page en 200 avec `x-vercel-cache: HIT` —
+donc prérendue et servie par le bord. Et le titre EST la requête, dans les six
+langues : « Combien de pompes pour une défaite sur League of Legends ? »,
+« Wie viele Liegestütze für eine Niederlage in Rocket League? »,
+「Minecraft で1敗すると腕立て何回？」.
+
+**Ce qui manque n'est pas l'offre, c'est le RÉSULTAT.** Il n'y a **aucune
+balise de vérification Google** sur le site — vérifié sur la page servie, sur
+`public/` et sur les métadonnées racines — donc aucun compte Search Console.
+Le seul endroit qui dirait si ces quatre-vingt-seize pages sont indexées, à
+quelle position et avec combien de clics, est celui qui n'existe pas. Dix
+minutes, et une décision qui appartient au propriétaire puisqu'il faut son
+compte Google.
+
+**Un faux positif écarté en vérifiant plutôt qu'en concluant.** `grep -c
+hreflang` rend **zéro** sur la page servie, et j'allais écrire que les
+alternatives manquaient dans le HTML. Elles y sont : Next les rend en
+`hrefLang`, en camelCase, sur une seule ligne. Les deux canaux — la page et le
+plan du site — portent bien les sept alternatives. Une lettre de casse, et on
+part corriger ce qui marche.
+
+**Et le trio des « aucune idée » se répartit proprement.** La proportion de
+comptes qui portent une montre (034) et le délai avant la première partie (079)
+ont **tous deux leur instrument dans `/api/admin/mesures`**, l'un depuis V551,
+l'autre depuis longtemps — personne n'était allé les lire. Le troisième, « est-ce
+que quelqu'un a déjà employé l'export RGPD » (271), **n'a aucun instrument et
+ne peut pas en avoir** : la route ne laisse aucune trace, le champ `exportLe`
+qu'elle écrit vivant DANS le fichier remis et pas en base. La question est sans
+réponse par construction.
+
+C'est le motif que ce journal trouve le plus, sous une forme de plus : un
+instrument construit en passant, pendant un chantier voisin, et jamais rebranché
+sur la question qui l'avait motivé.
+
 ### La relance des absents aurait été tuée par l'absence, sans les deux crons Vercel
 Réponses 292 et 293, toutes deux **« Je ne sais pas »**. Ce ne sont pas des
 arbitrages : ce sont des questions de FAIT, donc elles se recensent. Les deux

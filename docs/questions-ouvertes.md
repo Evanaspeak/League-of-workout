@@ -344,6 +344,77 @@ de besoin.
 **Rien n'est fait** : les trois options changent le comportement du système
 hors de l'application, et c'est ta décision.
 
+### 17 · Le référencement naturel : ce qui est construit, et ce que personne ne regarde (réf. 241)
+Ta réponse est **« Explique »**. La réponse courte est : c'est déjà construit,
+mesuré en production ce matin — et **personne ne peut dire si ça marche**,
+faute d'un compte Search Console.
+
+**Ce qui est en ligne**, relevé sur `winorworkout.com` :
+
+| | mesuré |
+|---|---|
+| pages de calculateur | **96** — seize jeux × six langues |
+| adresses au plan du site | 132, avec **924 alternatives de langue** et 132 `x-default` |
+| une page servie | 200, **`x-vercel-cache: HIT`** — prérendue, servie par le bord |
+| son titre | « Combien de pompes pour une défaite sur League of Legends ? » |
+| en allemand | « Wie viele Liegestütze für eine Niederlage in Rocket League? » |
+| en japonais | 「Minecraft で1敗すると腕立て何回？」 |
+| canonique, `hreflang`, description | présents sur chaque page ET au plan du site |
+
+**Le titre EST la question**, dans les six langues. C'est exactement la requête
+que tu cites, et il y en a quatre-vingt-seize variantes — une par jeu et par
+langue. Chaque page reçoit huit liens entrants depuis les autres (l'anneau posé
+en V503), donc aucune n'est orpheline.
+
+**Ce que ça ne dit PAS, et c'est la moitié qui manque.** Tout ce qui précède est
+l'OFFRE : des pages qui répondent à la question. Rien ne mesure la DEMANDE —
+combien de gens tapent cette requête — ni le RÉSULTAT — si Google a indexé ces
+pages, à quelle position, avec combien de clics.
+
+**Et ça ne se mesure pas depuis ici.** Il n'y a **aucune balise de vérification
+Google** sur le site, donc aucun compte Search Console rattaché : le seul
+endroit qui répondrait à ta question est celui qui n'existe pas.
+
+**Ce que ça coûterait** : dix minutes. Créer la propriété dans Search Console,
+poser la balise que Google donne dans les métadonnées racines, déclarer
+`sitemap.xml`. À partir de là, la question 241 cesse d'être une question et
+devient un tableau qu'on relit. C'est le seul canal d'acquisition qui travaille
+sans qu'on s'en occupe, et le seul dont on ne sait rien.
+
+**Ce qui reste à toi** : le compte Google, et la décision de le rattacher.
+
+### 18 · Trois « aucune idée » : deux ont leur instrument, la troisième n'en a pas (réfs 034, 079, 271)
+Trois questions de l'interrogatoire portent la même réponse — **« Aucune
+idée »** — et les trois demandent un chiffre sur les gens qui se servent du
+produit. La question n'est donc pas ce que tu en penses, c'est de savoir si le
+produit sait répondre.
+
+- **034, la proportion qui porte une montre** → **l'instrument existe depuis
+  V551.** `/api/admin/mesures` rend le décompte par `groupBy`, en TROIS états
+  séparés : oui, non, pas répondu. Ranger « pas répondu » avec l'un des deux
+  fausserait la proportion, et c'est exactement pour ça que la colonne est un
+  `Boolean?`. Le panneau `/admin` l'affiche.
+- **079, le délai entre l'arrivée et la première partie** → **l'instrument
+  existe aussi.** La même route rend la médiane et les quartiles du délai entre
+  la création du compte et sa première partie, correction du délai négatif
+  comprise — une partie rattrapée se date la veille.
+- **271, l'export RGPD a-t-il déjà servi** → **il n'y a aucun instrument, et il
+  ne peut pas y en avoir aujourd'hui.** La route ne laisse aucune trace : le
+  champ `exportLe` qu'elle écrit est DANS le fichier remis, pas en base. La
+  question est donc sans réponse par construction, et elle le restera.
+
+**Ce que ça coûterait** de la rendre answerable : une colonne
+`User.dernierExportLe`, posée par la route, et une ligne au panneau — une
+demi-heure. Mais c'est une donnée de plus sur quelqu'un, à décrire dans la
+politique de confidentialité, pour répondre à une question de curiosité. **Rien
+n'est fait** : ça se décide.
+
+**Ce que le trio apprend au-delà des trois lignes** : deux questions sur trois
+avaient déjà leur réponse dans le produit, et personne n'était allé la lire.
+C'est le motif que ce journal trouve le plus — un instrument construit en
+passant, pendant un chantier voisin, et jamais rebranché sur la question qui
+l'avait motivé.
+
 ### 5 · La distance du consentement santé, dans une seule langue
 **Née de la décision du 8 septembre.** « Tutoie partout, c'était un oubli » a
 fait tomber six dispenses de vouvoiement. La septième porte une raison d'une
