@@ -1333,6 +1333,96 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'aperçu promettait un coût que l'enregistrement n'allait pas calculer
+
+Suite immédiate, et c'est ma propre correction qui a créé le défaut — une
+heure plus tôt, dans le commit d'avant.
+
+`/api/games` s'est mise à résoudre le nom du champion ; **`/api/games/preview`
+non**. Or les deux comptent la MAÎTRISE, et elles la comptaient donc sur deux
+champions différents : on tape « chogath », l'aperçu cherche `champion:
+"chogath"` et trouve zéro partie, l'enregistrement cherche `"Cho'Gath"` et en
+trouve cent. La surcharge de maîtrise plafonne à cinquante pour cent — c'est
+donc jusqu'à la moitié du coût annoncé qui ne serait pas celui payé.
+
+**Le commentaire de l'aperçu promettait exactement ce que ma correction venait
+de casser :**
+
+```ts
+// Même filtre que dans `/api/games` : l'aperçu doit annoncer le coût que
+// l'enregistrement calculera, sinon il ment.
+where: { userId: user.id, sansEnjeu: false, champion: body.champion },
+```
+
+Il était vrai le jour où il a été écrit, et faux dès la correction d'à côté.
+C'est le motif que ce journal reproche partout — une garantie décrite qui a
+cessé d'exister se relit comme une garantie — commis dans l'heure qui suivait
+l'entrée qui le décrit.
+
+**Ce qui a rendu le défaut trouvable est un recensement, pas une relecture** :
+« qui d'autre écrit ou filtre `Game.champion` ? », posé mécaniquement sur
+`src/app/api` juste après la correction. C'est la méthode que ce fichier
+préfère partout ailleurs — un défaut trouvé dans une porte se cherche chez ses
+voisines — et elle a rendu en une commande ce qu'aucune relecture du fichier
+corrigé n'aurait donné : le fichier corrigé est juste.
+
+**Une FONCTION et non deux expressions.** `championEnregistre` vit dans
+`src/lib/champions.ts` et les deux portes l'appellent. La même règle écrite
+deux fois finit avec une version en retard, et c'est celle qu'on relit le
+moins — la démonstration vient d'être faite en une heure.
+
+**Le garde regarde le DOSSIER**, parce que ce qui compte n'est pas les deux
+routes d'aujourd'hui mais la troisième qu'on ajoutera.
+`src/championEnBase.test.ts` extrait les objets `where:` et `data:` en suivant
+la PROFONDEUR des accolades — un découpage sur les virgules ou sur la fin de
+ligne raterait tout objet écrit sur plusieurs lignes, c'est-à-dire tous ceux
+d'ici — et il porte **deux contrôles complémentaires**, ce que le sabotage a
+prouvé plutôt que supposé :
+
+- toute route qui filtre ou écrit sur la colonne doit APPELER `championEnregistre` ;
+- `body.champion` employé comme VALEUR ne peut vivre que dans cet appel. Le
+  test de PRÉSENCE — `capacites.champions && body.champion` — est légitime et
+  se reconnaît à sa forme.
+
+**Quatre sites, deux fichiers, zéro dispense.** C'est l'état sain, et il vaut
+d'être écrit : un garde qui naît avec une liste d'exemptions naît déjà usé.
+
+**Le retrait des commentaires ne change AUCUN verdict aujourd'hui**, et c'est
+mesuré plutôt qu'affirmé — débranché, les quatre contrôles restent verts. Ma
+première version du commentaire disait le contraire, ce qui est précisément le
+défaut de l'entrée. Ce qu'il tient est le sens FAUX POSITIF : l'un des `data:`
+de `/api/games` porte le mot « champion » dans une phrase qui explique qu'une
+séance au temps n'en a pas, et une route de LECTURE dont un commentaire
+dessinerait un `where` se ferait accuser de ne pas résoudre ce qu'elle
+n'écrit pas. Un garde qui crie sur ce qui va bien finit par ne plus se lire.
+
+**Cinq sabotages, cinq échecs — et le cinquième apprend quelque chose.**
+
+| ce qu'on remet | ce qui tombe |
+|---|---|
+| l'aperçu compte sur la forme brute | le garde ET le test de route |
+| la porte compte sur la forme brute | le garde ET les deux tests de route |
+| l'extracteur rendu aveugle | le TÉMOIN |
+| l'extracteur déborde (pas de profondeur) | le contrôle du découpage |
+| le test de présence accepte tout, défaut remis | le premier contrôle |
+
+Le dernier est celui qui prouve la complémentarité : la dispense du test de
+présence élargie à tout, le second contrôle devient muet — et le premier
+attrape quand même, parce que le fichier a perdu son APPEL. Un sabotage qui
+rend un garde aveugle sans remettre le défaut ne prouve rien : il ne fait
+tomber personne, et il ne faut pas le compter comme un échec.
+
+**Et une assertion vraie avant d'avoir rien mesuré, corrigée au passage.** Le
+test voisin écrivait `if (appels.length > 0) expect(...)` : il restait vert le
+jour où la maîtrise cesserait d'être comptée du tout, c'est-à-dire précisément
+le jour où il servirait. Le compte d'appels est exigé maintenant.
+
+**Ce que ça apprend au-delà du cas** : une correction juste peut CRÉER une
+divergence chez le voisin, et le voisin n'a rien changé. Ce n'est pas une
+régression au sens ordinaire — les deux fichiers sont justes séparément — donc
+aucun test existant ne pouvait le dire. Ce qui l'attrape est le recensement, et
+ce qui l'empêche de revenir est la fonction partagée.
+
 ### La porte d'écriture normalisait d'un seul côté
 
 Suite du champ de champion, en tirant le fil : le FORMULAIRE ramène la saisie à

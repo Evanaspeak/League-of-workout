@@ -18,7 +18,7 @@ import { textesNotification } from "@/lib/i18n/notifications";
 import { jourDansFuseau } from "@/lib/fuseau";
 import { capacitesDuJeu, normaliserNomJeu, typeDuJeu } from "@/lib/jeux";
 import { analyserDatePartie } from "@/lib/dates";
-import { CHAMPIONS, resoudreChampion } from "@/lib/champions";
+import { championEnregistre } from "@/lib/champions";
 import { isRateLimited, recordAttempt } from "@/lib/rate-limit";
 import { seedDefaults } from "@/lib/seed-defaults";
 import { DUREE_MAX_SEC, JOUEURS_MAX, KDA_MAX, entierBorne } from "@/lib/bornesSaisie";
@@ -221,20 +221,13 @@ export async function POST(req: Request) {
    * maîtrise, et ce que l'historique affiche. Deux orthographes du même
    * champion en base font deux champions.
    *
-   * Ce que la normalisation coûte quand tout va bien : rien. Un nom déjà
-   * canonique sort inchangé — `resoudreChampion` compare d'abord la chaîne
-   * exacte. Et une saisie qui ne désigne personne est GARDÉE telle quelle :
-   * perdre le champion d'une partie qu'on vient de jouer serait pire que de
-   * l'écrire de travers.
-   *
-   * La liste employée est celle du CODE et non celle de la base : un champion
-   * ajouté par l'administration ne se ramène à rien, donc il est gardé tel
-   * quel — c'est-à-dire exactement le comportement d'avant. Lire la
-   * configuration ici coûterait un aller-retour par partie enregistrée pour
-   * un cas qui se traite déjà bien.
+   * La règle vit dans `championEnregistre` et non ici, parce que l'APERÇU
+   * compte la maîtrise sur le même nom : écrite deux fois, elle finirait avec
+   * une version en retard, et l'aperçu annoncerait un coût que cette route ne
+   * calcule pas.
    */
   const champion = capacites.champions && body.champion
-    ? resoudreChampion(CHAMPIONS, String(body.champion)) ?? String(body.champion)
+    ? championEnregistre(String(body.champion))
     : null;
 
   // Compte les parties avant avec ce champion

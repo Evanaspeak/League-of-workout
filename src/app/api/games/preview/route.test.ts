@@ -79,7 +79,37 @@ describe("POST /api/games/preview", () => {
     session.mockResolvedValue(utilisateur({ id: "u42", pompesMax: 20 }));
     await post({ jeu: "League of Legends", role: "MID", champion: "Ahri", result: "D" });
     const appels = (prisma.game.count as jest.Mock).mock.calls;
-    if (appels.length > 0) expect(appels[0][0].where.userId).toBe("u42");
+    // Le compte d'appels est vérifié plutôt que toléré : `if (appels.length)`
+    // rendait ce contrôle vrai le jour où la maîtrise cesserait d'être
+    // comptée du tout, c'est-à-dire précisément le jour où il servirait.
+    expect(appels).toHaveLength(1);
+    expect(appels[0][0].where.userId).toBe("u42");
+  });
+
+  /**
+   * L'aperçu compte la maîtrise sur le nom CANONIQUE, comme l'enregistrement.
+   *
+   * C'est la moitié qui manquait : la porte s'est mise à normaliser, l'aperçu
+   * non, et les deux comptaient alors sur deux champions différents. Sur un
+   * compte à cent parties de Cho'Gath, l'écart annoncé est la surcharge de
+   * maîtrise entière — l'aperçu promettait un coût que l'enregistrement
+   * n'allait pas calculer.
+   */
+  it("compte la maîtrise sur le nom canonique du champion", async () => {
+    await post({ jeu: "League of Legends", role: "MID", champion: "chogath", result: "D" });
+    const appels = (prisma.game.count as jest.Mock).mock.calls;
+    expect(appels).toHaveLength(1);
+    expect(appels[0][0].where.champion).toBe("Cho'Gath");
+  });
+
+  it("laisse un nom inconnu tel quel", async () => {
+    // Perdre le champion d'une partie qu'on vient de jouer serait pire que de
+    // l'écrire de travers — et l'aperçu doit compter sur ce que la porte va
+    // ranger, faux compris.
+    await post({ jeu: "League of Legends", role: "MID", champion: "Sylas le Grand", result: "D" });
+    const appels = (prisma.game.count as jest.Mock).mock.calls;
+    expect(appels).toHaveLength(1);
+    expect(appels[0][0].where.champion).toBe("Sylas le Grand");
   });
 
   it("signale une configuration de scoring absente", async () => {
