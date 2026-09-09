@@ -904,7 +904,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2495 tests unitaires, 238 suites (au 8 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2687 tests unitaires, 261 suites (au 9 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -929,7 +929,7 @@ Cette fonction vit à part d'`auth-helpers` : les tests de routes doublent ce
 module entier, et le filtre y serait remplacé par une doublure — les tests de
 fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
-Au navigateur (`npm run e2e`), 231 tests : `e2e/parcours.spec.ts` suit le chemin
+Au navigateur (`npm run e2e`), 263 tests : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
 tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
@@ -1017,6 +1017,36 @@ plusieurs lignes — dont `OnboardingModal`, c'est-à-dire précisément la fen�
 qui a motivé le test. Deux exemptions, chacune avec sa raison : la source de
 diffusion OBS (page entière, pas une fenêtre) et l'écran d'ouverture (il ne
 pose aucune question et disparaît seul).
+
+### Ce que `public/` sert
+`src/fichiersPublics.test.ts` est le pendant de `codeMort.test.ts` un étage
+plus bas, et il en couvre l'angle mort : celui-ci ne lit que `src`, et un
+fichier de `public/` n'est importé par personne — c'est le serveur de fichiers
+qui le trouve, par son chemin. Next.js sert TOUT ce qu'il y trouve, à l'adresse
+que donne son chemin ; personne ne décide fichier par fichier.
+
+Il tient les deux sens, parce que les deux se paient en silence :
+
+- **un fichier que rien ne demande reste servi.** Trois captures d'écran ont
+  survécu six jours à la galerie retirée de la page d'accueil, pour 664 ko, et
+  deux notes écrites pour le propriétaire du site répondaient 200 ;
+- **un chemin dont le fichier n'existe pas** donne une image cassée, et ça ne
+  se voit qu'à l'écran de quelqu'un.
+
+Trois familles d'exemption, chacune avec sa raison : ce que Riot exige à une
+adresse fixe, les logos que `logosJeux.ts` compose, et la vidéo de
+démonstration, que `videoBoucle.ts` nomme sans qu'elle existe — c'est tout son
+objet. Plus les deux fichiers ENGENDRÉS par une route, `robots.txt` et
+`manifest.webmanifest`, qui existent sans être sur le disque.
+
+**Et l'ATTEIGNABILITÉ d'un fichier public se prouve à part.**
+`pageHorsLigne.test.ts` éprouvait le contenu de la page de secours — autonome,
+bilingue, un moyen de repartir — et jamais le fait qu'on puisse l'atteindre.
+Elle répondait 307 vers la connexion à qui n'a pas de session, c'est-à-dire au
+visiteur pour qui elle existe. Le contrôle reconstruit maintenant le motif du
+`matcher` depuis la source, et le parcours la demande depuis un contexte NEUF :
+un test écrit avec une session ne prouve rien de l'état sans session.
+
 
 ### Code mort
 `src/codeMort.test.ts` refuse un fichier de `src/` que rien n'importe. Trois
@@ -1239,6 +1269,145 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### La modale d'accueil recouvrait le bouton de l'archive, et la suite locale gagnait la course
+V544 est partie ROUGE — lu en appliquant la règle de la fusion, la CI de la
+version PRÉCÉDENTE. Un seul tronçon, un seul test, et le message le nomme sans
+ambiguïté :
+
+```
+<div role="dialog" aria-modal="true" aria-label="Bienvenue dans
+Win or Workout"> intercepts pointer events
+```
+
+Cent dix reprises, une minute, sur le clic de « Tout l'historique ».
+
+**C'est la huitième occurrence de ce piège recensée ici**, et la cause est
+précise : `ouvrirCompte` traverse le consentement santé — par l'API, et lui
+seul. La modale d'accueil, elle, arrive quelques instants APRÈS le chargement.
+Le premier compte de `historique.spec.ts` pose lui-même `low_onboarded:<id>`
+et `low_visite:<id>` trente lignes plus haut ; le second, ouvert pour semer
+cinquante-cinq parties, ne l'avait pas.
+
+**Le test lit trois choses avant de cliquer**, et c'est ce qui ouvre la
+fenêtre : le compte des lignes, la phrase « 50 dernières parties, sur 55 »,
+l'absence de la colonne de cumul. La modale a le temps d'arriver entre la
+dernière lecture et le clic.
+
+**La suite locale gagne la course, et le dire vaut mieux que de conclure.**
+Sabotage posé — la neutralisation retirée — le fichier passe **deux fois sur
+deux** en local. Ce n'est donc pas le sabotage qui prouve quoi que ce soit,
+c'est le fait de rendre la course DÉTERMINISTE : trois secondes d'attente
+avant le clic, et l'échec revient mot pour mot, avec le même
+`aria-label="Bienvenue dans↵Win or Workout"`. La même attente, la correction
+en place : dix-sept passés.
+
+C'est la méthode déjà employée pour la lecture des réglages qui effaçait la
+saisie — « une sonde qui échoue une fois sur huit ne prouve rien dans un sens
+ni dans l'autre ». Un aléa ne se corrige pas en relançant : il se rend
+reproductible, puis il se corrige.
+
+**Et le piège du `-g`, quatrième occurrence.** Le premier sabotage lancé avec
+`-g "l'historique montre une fenêtre"` a échoué — mais il écarte le test qui
+SÈME, donc `etatBorne` n'existait pas et l'échec ne disait rien de ce qu'on
+sabotait. Le fichier se rejoue en entier.
+
+
+### La page de secours hors ligne partait vers l'écran de connexion
+Trouvée en poussant les fichiers de `public/` un par un, ce qui n'avait jamais
+été fait. `/hors-ligne.html` rend **307 vers `/en/login`** — en local ET en
+production.
+
+C'est la page que le service worker met en cache à son installation, et sa
+raison d'être n'a rien d'esthétique : son propre commentaire l'écrit, « sans
+elle, Chrome ne considère pas l'application comme installable et n'émet jamais
+`beforeinstallprompt` ». `cache.add` suivait donc la redirection et n'avait
+plus que l'écran de connexion à mettre en cache ; hors ligne, on tombait sur le
+repli en texte brut du service worker — jamais sur la page écrite pour ça.
+
+**Mesuré des deux côtés, et c'est l'écart qui fait tout** : **200 avec un
+cookie de session, 307 sans**. Or l'état qui compte est le second. Le service
+worker s'enregistre au chargement de N'IMPORTE QUELLE page, la page d'accueil
+comprise — c'est même tout le sujet, puisque l'invitation à installer s'adresse
+au visiteur qui n'a pas encore de compte. Le défaut tombait donc exactement sur
+la personne pour qui la page existe.
+
+**Le parcours navigateur ne pouvait pas le voir, et la démonstration est
+faite.** `installation.spec.ts` ouvre son contexte avec `storageState` : il a
+une session, donc il est dans le seul état où le défaut n'existe pas. Sabotage
+posé, exclusion retirée, parcours rejoué avec le nouveau contrôle placé en
+DERNIER pour que l'ancien tourne quand même : **8 passés, 1 échec** — l'ancien
+test passe avec le défaut en place. Un test écrit dans le mauvais état ne
+prouve rien de l'état qui compte.
+
+**Et `pageHorsLigne.test.ts` ne pouvait pas le voir non plus**, pour la raison
+symétrique : il éprouve le CONTENU de la page — autonome, bilingue, avec un
+moyen de repartir — et jamais son ATTEIGNABILITÉ. Le fichier était parfait et
+personne ne pouvait l'atteindre. C'est le motif de la nuit, un étage plus bas :
+une page sans lien ne se voit pas, un lien mort ne se voit qu'au clic.
+
+**La cause tient à une exclusion manquante dans le `matcher`.**
+`echappeAuPrefixe` rend vrai — le dernier segment porte un point — donc
+l'adresse saute le préfixe de langue ET la réécriture 404, puis tombe sur
+`estCheminPublic`, qui ne la connaît pas. Le commentaire d'à côté écrivait déjà
+la règle, à propos de `sw.js` : « un service worker redirigé vers /login ne
+s'enregistre jamais ». Elle n'avait pas été appliquée à ce qu'il MET EN CACHE.
+
+Le garde est double, et il fallait les deux. Le statique reconstruit le motif
+du `matcher` depuis la source et exige que la page y échappe — avec son témoin,
+sans lequel une extraction cassée ferait tout échapper et passerait au vert. Le
+navigateur, lui, demande la page depuis un contexte NEUF, sans session : c'est
+la seule façon d'éprouver l'état du visiteur.
+
+Quatre sabotages, quatre échecs : l'exclusion retirée (statique et navigateur),
+l'extraction du motif cassée, et le contrôle des pages gardées retiré.
+
+### Ce que `public/` sert et que personne ne demande
+Recensement mécanique : les dix-huit fichiers de `public/` contre ce qui les
+NOMME. Next.js sert tout ce qu'il trouve là, à l'adresse que donne son chemin —
+personne ne décide fichier par fichier, ce qui est posé est en ligne.
+
+**Trois captures d'écran survivaient à la galerie retirée de la page
+d'accueil**, six jours plus tôt (V343, « 1132 mots à 286 »). 664 ko dans le
+dépôt, servis à qui les demandait, référencés par rien. La suppression d'une
+section se recense dans le composant qu'on supprime ; les FICHIERS qu'elle
+montrait vivent ailleurs, et c'est ce qu'on oublie — le même motif que le
+plafond de la bêta, dont deux textes annonçaient encore la levée six jours
+après.
+
+**Et deux notes écrites pour le propriétaire du site répondaient 200.**
+`/images/jeux/LISEZ-MOI.md` explique comment déposer un logo et ce que les
+chartes graphiques autorisent ; `/videos/LISEZ-MOI.md` porte le cahier des
+charges de la vidéo de démonstration. Rien de secret, et rien qui ait à être
+en ligne. Elles vivent dans `docs/` maintenant, et chacune dit en tête où vont
+les fichiers — c'est ce que leur emplacement disait à leur place.
+
+**`codeMort.test.ts` ne pouvait voir ni l'un ni l'autre** : il ne lit que
+`src`, et un fichier de `public/` n'est importé par personne — c'est le serveur
+de fichiers qui le trouve, par son chemin. C'est le même angle mort que celui
+des scripts restés à la racine, sur une autre famille.
+
+**Le garde tient les DEUX sens**, comme celui des pages orphelines une heure
+plus tôt : un fichier que rien ne demande, et un chemin dont le fichier
+n'existe pas. Le second est le plus discret — une image cassée ne se voit qu'à
+l'écran de quelqu'un.
+
+**Trois familles d'exemption, chacune avec sa raison et chacune vérifiée.**
+`riot.txt`, que Riot exige à une adresse fixe et qu'aucune ligne du dépôt n'a
+de raison de nommer. Les logos, composés par `logosJeux.ts` et déjà tenus par
+son test. Et `videoBoucle.ts`, qui nomme quatre fichiers absents — c'est tout
+son objet : il constate leur présence et ne rend AUCUNE balise tant qu'ils
+manquent. Plus les deux fichiers ENGENDRÉS par une route, `robots.txt` et
+`manifest.webmanifest`, qui existent sans être sur le disque.
+
+**Les tests sont écartés des sources**, et le sabotage l'a demandé :
+`videoBoucle.test.ts` nomme les quatre vidéos absentes, et un test qui fabrique
+un cas ne DEMANDE rien.
+
+Cinq sabotages, cinq échecs : un fichier posé que rien ne demande, le fichier
+demandé retiré du disque, l'exemption vidée de son objet, le motif rendu
+aveugle, et le recensement des fichiers vidé.
+
 
 ### Le garde des pages orphelines ne regardait que dans un sens
 Suite directe des sept pages du calculateur. `pagesOrphelines.test.ts` vérifie

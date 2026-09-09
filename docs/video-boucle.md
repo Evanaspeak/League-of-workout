@@ -1,8 +1,14 @@
 # La vidéo de démonstration
 
-Dépose ici la vidéo qui montre la boucle : tu joues, tu perds, l'application
+Les fichiers vont dans **`public/videos/`**.
+
+Dépose là-bas la vidéo qui montre la boucle : tu joues, tu perds, l'application
 réclame ta dette, tu fais tes pompes à côté de la chaise, tu relances une
 partie.
+
+Ce texte vivait dans `public/videos/` — donc servi en 200 à qui demandait
+`/videos/LISEZ-MOI.md`. Tout ce que Next.js trouve dans `public/` part sur le
+réseau ; une note qu'on écrit pour soi n'a rien à y faire.
 
 ## Fichiers attendus
 

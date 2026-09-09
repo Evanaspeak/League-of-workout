@@ -192,6 +192,31 @@ test("ne propose rien sur un ordinateur", async ({ browser }) => {
  * installable et n'émet jamais l'invitation d'installation. C'est donc elle
  * qui ouvre le chemin Android, et rien dans le code applicatif ne le montre.
  */
+/**
+ * La page de secours doit se servir SANS session, et c'est l'état qui compte.
+ *
+ * Le service worker s'enregistre au chargement de n'importe quelle page, la
+ * page d'accueil comprise — c'est même toute la raison d'être de la page de
+ * secours, puisque Chrome n'émet l'invitation à installer que si un service
+ * worker sait répondre hors ligne. Le visiteur qui l'installe n'a donc pas de
+ * compte, et `cache.add` part avec ses cookies, c'est-à-dire aucun.
+ *
+ * Le middleware la traitait comme une page protégée : **307 vers `/en/login`**.
+ * `cache.add` suivait la redirection et n'avait plus que l'écran de connexion
+ * à mettre en cache. Le parcours d'en dessous ne pouvait pas le voir : il
+ * ouvre son contexte AVEC une session, donc dans le seul état où le défaut
+ * n'existe pas.
+ */
+test("se sert sans session, comme le service worker la demande", async ({ playwright, baseURL }) => {
+  // Un contexte NEUF, sans `storageState` : c'est là toute la différence avec
+  // le parcours d'en dessous.
+  const nu = await playwright.request.newContext({ baseURL });
+  const reponse = await nu.get("/hors-ligne.html", { maxRedirects: 0 });
+  expect(reponse.status()).toBe(200);
+  expect(await reponse.text()).toContain("Pas de réseau");
+  await nu.dispose();
+});
+
 test("sert la page de secours quand le réseau tombe", async ({ browser }) => {
   const ctx = await browser.newContext({ storageState: etat });
   const page = await ctx.newPage();

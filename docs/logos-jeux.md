@@ -1,12 +1,19 @@
 # Logos des jeux
 
+Les fichiers vont dans **`public/images/jeux/`**.
+
 La bande de la page d'accueil affiche le logo officiel du jeu quand un fichier
-est présent ici, et un glyphe dessiné pour ce site quand il n'y en a pas.
+est présent là-bas, et un glyphe dessiné pour ce site quand il n'y en a pas.
+
+Ce texte vivait dans `public/images/jeux/` — donc servi en 200 à qui demandait
+`/images/jeux/LISEZ-MOI.md`. Tout ce que Next.js trouve dans `public/` part sur
+le réseau ; une note qu'on écrit pour soi n'a rien à y faire.
 
 ## Déposer un logo
 
-Nomme le fichier d'après le code du jeu, et pose-le ici. C'est tout : la
-présence est constatée sur le disque au rendu serveur, rien d'autre à changer.
+Nomme le fichier d'après le code du jeu, et pose-le dans
+`public/images/jeux/`. C'est tout : la présence est constatée sur le disque au
+rendu serveur, rien d'autre à changer.
 
 Trois formats acceptés, dans cet ordre de préférence : `.svg`, `.webp`, `.png`.
 Le vectoriel est préférable, il reste net à toutes les tailles.
