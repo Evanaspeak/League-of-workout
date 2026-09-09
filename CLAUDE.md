@@ -1139,9 +1139,12 @@ l'état, faute d'un gain qui justifie la retouche.
 
 ## Scripts de mesure
 
-Huit scripts, dont cinq pilotent un Chromium sur l'application lancée en local.
-(`scripts/langue.mjs` est un module partagé, pas un neuvième outil.)
+Neuf scripts, dont cinq pilotent un Chromium sur l'application lancée en local.
+(`scripts/langue.mjs` est un module partagé, pas un dixième outil.)
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
+Le dernier, `champions-ddragon.mjs`, ne demande ni navigateur ni serveur local —
+il compare ce que le produit connaît à ce que Riot publie, et il a donc besoin
+du réseau et de rien d'autre.
 
 **Avant toute campagne — ET avant une suite navigateur qu'on veut croire :
 `rm -rf .next/cache`.** Ce dossier SURVIT à `next build` comme au serveur, et
@@ -1163,6 +1166,7 @@ node scripts/routes.mjs          # poids et temps de chaque route d'API
 node scripts/semer-parties.mjs   # de quoi mesurer autre chose qu'un compte vide
 node scripts/compte-mesure.mjs   # ouvre un compte neuf et dépose son jeton
 node scripts/coutures.mjs        # coutures CJK, nombres bruts, et --invariants=fr
+node scripts/champions-ddragon.mjs --toutes  # nos 173 champions contre ceux de Riot
 ```
 
 Depuis que la langue vit dans l'adresse, les quatre prennent `--langue=xx`
@@ -1332,6 +1336,129 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### Le panneau vidait la liste des champions, et rien ne se passait
+
+Trouvé en cherchant ce qui, autour du chantier du champion, n'avait aucun test.
+`PUT /api/admin/config/champions` n'en avait **aucun** — pas un fichier, pas une
+ligne — alors qu'elle décide de ce que le produit accepte comme nom de champion.
+
+**Et elle acceptait la liste VIDE.** Elle la nettoyait, la rangeait en base, et
+répondait `{ ok: true, count: 0 }`.
+
+**Le résultat n'était pas une liste vide, c'était RIEN.** Les deux lecteurs
+retombent sur la liste du code dès qu'elle est vide, et c'est délibéré des deux
+côtés :
+
+```ts
+/api/champions        if (Array.isArray(list) && list.length > 0) …
+chargerChampions()    if (Array.isArray(list) && list.length > 0) cache = list
+```
+
+Le panneau annonçait donc un enregistrement réussi, montrait un champ vide au
+rechargement — `GET` rend bien `{ champions: [], isDefault: false }` — et le
+produit continuait de proposer les cent soixante-treize. **Deux vérités sur le
+même écran**, et celle qui a l'air d'avoir marché est la fausse.
+
+**Ce n'est pas un cas de bord : c'est le geste qu'on fait pour tout effacer.**
+On sélectionne le contenu du champ, on le supprime, on enregistre. Et la vraie
+façon de revenir à la liste livrée existe déjà — c'est le bouton d'à côté, qui
+appelle `DELETE`. Deux façons d'exprimer la même chose finissent par diverger,
+et ici l'une des deux ne faisait déjà rien.
+
+Le refus le DIT, et il dit quoi faire à la place : « pour revenir à la liste
+livrée, employer la remise par défaut ». Un refus qui ne nomme pas le geste
+qu'on cherchait envoie chercher une panne.
+
+**Les DEUX moitiés du contrôle comptent**, et c'est ce que le sabotage a
+montré : un refus qui écrirait quand même laisserait exactement l'état d'avant,
+avec un message en plus. Le test vérifie donc le code de réponse ET qu'aucune
+écriture ne part.
+
+**Ce que le recensement des lecteurs a écarté**, écrit plutôt que tu : accepter
+la liste vide côté LECTURE aurait été la correction inverse, et elle est bien
+pire — un panneau mal enregistré priverait alors tout le monde de champions, et
+le bouton d'enregistrement d'une partie resterait éteint sans qu'un mot
+l'explique. Le repli des deux lecteurs est bon ; c'est la porte d'écriture qui
+laissait entrer ce qu'il rattrape.
+
+Quinze tests, six sabotages, six échecs : le refus retiré, le refus qui écrit
+quand même, la porte d'administration ouverte à tout compte connecté, le
+nettoyage des lignes vides retiré, `isDefault` qui ment sur la liste rendue, et
+la remise à zéro qui supprime la clé du voisin — celle des ratios d'exercices,
+qui est dans la même table.
+
+**Aucun parcours navigateur ne couvre ce panneau**, et c'est la limite déjà
+écrite ici : il résiste à l'emprunt d'adresse administrateur, deux méthodes
+essayées et documentées. Ce qui le tient est ce test et le compilateur.
+
+**Et le garde des messages d'API a mordu**, ce qui est son travail : le refus
+neuf n'était traduit dans aucune des cinq autres langues.
+
+### Nos cent soixante-treize champions contre ceux de Riot : rien, et ça se dit
+
+Suite du fil du champion. Trois correspondances vivent maintenant dans
+`src/lib/champions.ts` — la liste des noms affichés, les alias traduits, et la
+clé que Data Dragon emploie dans ses adresses — et **aucune ne peut être gardée
+par un test** : elles décrivent un service EXTÉRIEUR. `champions.test.ts` tient
+leur cohérence interne ; il ne peut pas savoir si Riot a ajouté un champion ce
+matin.
+
+**Les deux façons de rouiller sont silencieuses**, et le journal porte déjà
+chacune sous une autre forme :
+
+- un champion ajouté par Riot manque à notre liste. Le champ le REFUSE, le
+  bouton d'enregistrement reste éteint, et le message accuse la frappe de la
+  personne alors que la faute est chez nous ;
+- une clé fausse rend une image qui 404, donc le repli en lettre, et personne
+  ne le remarque avant des semaines.
+
+**Le recensement est ENTIÈREMENT NÉGATIF**, et c'est écrit ici pour qu'on ne le
+refasse pas : sur la version que le produit demande (16.16.1) **et** sur la
+dernière publiée (16.18.1), **173 champions des deux côtés, aucune clé sans
+icône, aucun champion ajouté par Riot qui nous manque, aucun nom que Riot ne
+connaisse pas, aucun alias vers un nom absent.**
+
+**Et une affirmation qui avait dérivé.** Le commentaire de `CLE_DATA_DRAGON`
+annonçait « Vérifié contre Data Dragon 16.17.1 » quand le composant demande
+**16.16.1**. La vérification était sans doute vraie le jour où elle a été
+faite ; elle ne portait plus sur la version que le produit sert. C'est le
+défaut que ce fichier reproche partout — un nombre écrit une fois au-dessus de
+quelque chose qui bouge — dans le commentaire qui décrit la vérification.
+
+D'où la règle de l'outil : **la version se LIT dans `ChampionIcon.tsx`**, elle
+ne se réécrit pas dans le script. Sinon les deux dérivent, et c'est le script
+qui aurait raison sur le papier pendant que le produit demande autre chose.
+
+**Le premier contrôle n'est pas une comparaison, c'est une SONDE.** Riot garde
+ses anciennes versions longtemps, pas éternellement : le jour où 16.16.1
+disparaît, **toutes** les icônes tombent sur leur lettre de repli d'un coup, et
+rien dans le dépôt ne le dit. L'outil demande donc une icône avant de comparer
+quoi que ce soit, et sort en erreur si elle ne vient pas.
+
+**Cinq sabotages, cinq échecs**, chacun sur son propre constat — parce qu'un
+outil de mesure qui ne sait pas échouer ne mesure rien :
+
+| ce qu'on casse | ce que l'outil dit |
+|---|---|
+| un champion retiré de notre liste | « ajoutés par Riot, absents : Ahri » |
+| une clé Data Dragon fausse | « clé sans icône chez Riot : Cho'Gath » |
+| un champion inventé chez nous | deux constats, la clé ET le nom |
+| un alias vers un nom absent | « Bardo → Bard le Grand » |
+| la version figée ramenée à 9.9.9 | « ne sert plus les icônes (403) » |
+
+**Trois de mes cinq sabotages n'ont d'abord rien sabordé**, et c'est le témoin
+d'empreinte qui l'a dit : mes motifs supposaient un champion par ligne, alors
+que la liste en met huit ou neuf. Sans `git hash-object` avant et après,
+j'aurais conclu que l'outil ne mordait pas sur trois constats sur cinq — c'est
+le piège « un sabotage qui ne sabote pas », et il vaut exactement autant que le
+sabotage lui-même.
+
+**Ce que l'outil ne fait PAS, écrit plutôt que laissé à croire** : il ne
+tourne pas en intégration continue. Un garde qui dépend d'un tiers rougit le
+jour où le tiers tousse, et un travail rouge qu'on ne peut pas réparer soi-même
+finit par se filtrer — c'est la leçon des cinquante courriels d'échec, appliquée
+avant d'avoir à la payer.
 
 ### V572 est partie ROUGE, et les deux causes ne se ressemblaient pas
 

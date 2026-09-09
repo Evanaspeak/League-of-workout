@@ -133,6 +133,13 @@ const ERROR_MAP: Record<string, Traductions> = {
     en: "That username is taken. Pick another one.", es: "Ese nombre ya está cogido. Elige otro.", de: "Dieser Name ist vergeben. Nimm einen anderen.",
     zh: "这个昵称已经有人用了，换一个吧。", ja: "そのユーザー名は使われています。別の名前にしてください。",
   },
+  "Liste vide : pour revenir à la liste livrée, employer la remise par défaut.": {
+    en: "Empty list: to go back to the shipped list, use the reset button.",
+    es: "Lista vacía: para volver a la lista original, usa el botón de restablecer.",
+    de: "Leere Liste: Nutze die Zurücksetzen-Schaltfläche, um zur mitgelieferten Liste zurückzukehren.",
+    zh: "列表为空：要恢复内置列表，请用「恢复默认」。",
+    ja: "リストが空です。付属のリストに戻すには「デフォルトに戻す」を使ってください。",
+  },
   "Format invalide": {
     en: "Invalid format", es: "Formato no válido", de: "Ungültiges Format",
     zh: "格式不正确", ja: "形式が正しくありません",

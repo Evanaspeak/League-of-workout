@@ -33,6 +33,29 @@ export async function PUT(req: Request) {
   const { champions } = corps;
   if (!Array.isArray(champions)) return NextResponse.json({ error: "Format invalide" }, { status: 400 });
   const cleaned = champions.map((c: string) => String(c).trim()).filter(Boolean);
+
+  /**
+   * Une liste VIDE se refuse, et le panneau doit le dire.
+   *
+   * Elle était acceptée, rangée, et **entièrement sans effet** : les deux
+   * lecteurs — `/api/champions` et le crochet du champ — retombent sur la liste
+   * du code dès qu'elle est vide, précisément pour qu'une valeur illisible ne
+   * prive personne de champions. Le panneau annonçait donc un enregistrement
+   * réussi, montrait un champ vide au rechargement, et le produit continuait de
+   * proposer les cent soixante-treize. Deux vérités, dont une qu'on ne pouvait
+   * pas corriger sans savoir que la remise à zéro existe.
+   *
+   * Vider la liste se dit déjà par « remettre par défaut », qui est le bouton
+   * d'à côté. Deux façons d'exprimer la même chose finissent par diverger, et
+   * c'est celle qui a l'air d'avoir marché qui ment.
+   */
+  if (cleaned.length === 0) {
+    return NextResponse.json(
+      { error: "Liste vide : pour revenir à la liste livrée, employer la remise par défaut." },
+      { status: 400 },
+    );
+  }
+
   try {
     await prisma.systemConfig.upsert({
       where: { key: "champions" },
