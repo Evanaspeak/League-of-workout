@@ -1,4 +1,5 @@
 "use client";
+import { creerFile } from "@/lib/fileEcritures";
 import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
@@ -235,6 +236,26 @@ export default function SettingsPage() {
   const ecrits = useRef(new Set<string>());
 
   /**
+   * Les écritures de réglages partent EN FILE, jamais en parallèle.
+   *
+   * Chaque geste pose l'état à l'écran puis envoie un `PUT`. Deux gestes
+   * rapides — et le panneau du barème est fait de boutons « + », donc c'est
+   * son usage NORMAL — envoyaient deux requêtes concurrentes, dont rien ne
+   * garantit l'ordre d'arrivée. Relevé au navigateur : quatre en vol à la
+   * fois. La base pouvait donc garder la valeur du deuxième clic pendant que
+   * l'écran montrait celle du troisième, et ça ne se voyait qu'au
+   * rechargement suivant, où le réglage revenait en arrière tout seul.
+   *
+   * C'est la troisième forme du même défaut sur cet écran, après le serveur
+   * qui refuse et la lecture qui écrase une saisie : l'écran montre un
+   * réglage que le serveur n'a pas.
+   *
+   * Une file par ÉCRAN et non par module : deux onglets ouverts n'ont aucune
+   * raison de s'attendre l'un l'autre.
+   */
+  const enfiler = useRef(creerFile()).current;
+
+  /**
    * La même règle pour une valeur qui n'est pas un objet.
    *
    * Le seuil de rappel est un nombre, la sélection d'exercices un tableau :
@@ -418,31 +439,33 @@ export default function SettingsPage() {
     revenir: () => void,
   ): Promise<{ jetonProfil?: string | null } | null> => {
     for (const cle of Object.keys(userPrefs)) ecrits.current.add(cle);
-    setSavingExo(true);
-    setSavedExo(false);
-    setErreurExo(false);
-    let ok = false;
-    let corps: { jetonProfil?: string | null } = {};
-    try {
-      const res = await fetchBorne("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userPrefs }),
-      });
-      ok = res.ok;
-      if (ok) corps = await res.json().catch(() => ({}));
-    } catch {
-      ok = false;
-    }
-    setSavingExo(false);
-    if (ok) {
-      setSavedExo(true);
-      setTimeout(() => setSavedExo(false), 2000);
-    } else {
-      revenir();
-      setErreurExo(true);
-    }
-    return ok ? corps : null;
+    return enfiler(async () => {
+      setSavingExo(true);
+      setSavedExo(false);
+      setErreurExo(false);
+      let ok = false;
+      let corps: { jetonProfil?: string | null } = {};
+      try {
+        const res = await fetchBorne("/api/settings", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userPrefs }),
+        });
+        ok = res.ok;
+        if (ok) corps = await res.json().catch(() => ({}));
+      } catch {
+        ok = false;
+      }
+      setSavingExo(false);
+      if (ok) {
+        setSavedExo(true);
+        setTimeout(() => setSavedExo(false), 2000);
+      } else {
+        revenir();
+        setErreurExo(true);
+      }
+      return ok ? corps : null;
+    });
   };
 
   /**

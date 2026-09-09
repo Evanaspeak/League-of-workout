@@ -1289,6 +1289,96 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois tapes sur « + » envoyaient trois écritures concurrentes
+
+Trouvé en cherchant pourquoi `bareme-personnel.spec.ts` tombait en suite
+complète et passait seul. Le message, une fois la suite rejouée sans rien
+d'autre sur la machine, nomme la divergence que ce fichier existe pour
+attraper : **la base rend deux minutes pendant que la pastille en montre
+trois.**
+
+**Ce n'est pas une affaire d'affichage, c'est une course d'écritures.**
+`handleSaveBareme` pose l'état à l'écran puis envoie un `PUT`. Trois tapes sur
+un bouton « + » envoyaient donc trois requêtes CONCURRENTES, dont rien ne
+garantit l'ordre d'arrivée : la base pouvait garder la valeur du deuxième clic
+pendant que l'écran montrait celle du troisième.
+
+**Mesuré au navigateur avant de corriger quoi que ce soit : quatre écritures
+en vol à la fois.** C'est la troisième forme du même défaut sur cet écran,
+après le serveur qui refuse et la lecture qui écrase une saisie — l'écran
+montre un réglage que le serveur n'a pas — et c'est la seule des trois qui ne
+se voit qu'au rechargement SUIVANT, où le réglage revient en arrière tout seul
+sans que rien ne l'explique.
+
+**Le panneau du barème est fait de boutons « + ».** Taper plusieurs fois de
+suite y est l'usage normal, pas un cas de bord.
+
+**La file vit dans `src/lib/fileEcritures.ts` et pas dans le composant**, pour
+la raison déjà écrite pour `chronoSession` et `saisiePartie` : une décision au
+milieu de neuf cents lignes n'est atteignable par aucun test, et celle-ci se
+trompe dans un sens qui ne se voit jamais tout de suite. Une file par ÉCRAN et
+non par module — deux onglets n'ont aucune raison de s'attendre.
+
+**Trois sabotages unitaires, trois échecs. Le quatrième a fait RETIRER une
+ligne.** J'avais écrit `queue.then(() => travail(), () => travail())`, avec un
+commentaire expliquant que le second gestionnaire empêche un échec d'emporter
+les suivants. Il ne sert à rien : `queue` retient déjà `suivant.catch(() =>
+{})`, donc elle ne rejette jamais. Le sabotage qui le retire ne fait tomber
+aucun test — et une ligne qui ne tient rien se relit comme une garantie. C'est
+le motif du `muet = false` de la pastille et de la forme fermée du niveau,
+sous une troisième forme : **la protection en double, dont une moitié est
+morte.**
+
+**Et deux de mes jeux de données ne distinguaient rien**, ce que seul le
+sabotage a dit. Deux tâches instantanées s'exécutent dans l'ordre même sans
+file : il faut que la PREMIÈRE soit la plus lente pour que « en vol » se voie,
+et que les durées aillent à REBOURS de l'ordre d'appel pour que « en file » se
+distingue de « au plus rapide ».
+
+**Le garde navigateur compte par CLÉ, et il a fallu le mesurer pour le
+savoir.** Ma première version comptait les requêtes : elle est tombée sur un
+état parfaitement sain, parce que `ContexteNavigateur` écrit la langue et le
+fuseau une fois par ouverture, sur d'autres clés, et que sa requête croise
+légitimement la première écriture de réglage. Un garde qui crie sur ce qui va
+bien finit par ne plus se lire. Ce qui ne doit jamais arriver, c'est que deux
+écritures de la MÊME clé soient en vol ensemble.
+
+**Le témoin a mordu avant l'assertion, et c'est pour ça qu'il existe.** Mon
+premier geste tapait trois fois la MÊME case d'exercice : décocher le dernier
+exercice est refusé, donc les deux dernières tapes ne partaient pas, et la
+crête ne prouvait rien. Le contrôle de non-vacuité l'a dit — « Expected >= 2,
+Received 1 » — au lieu de laisser passer un vert creux. Trois cases
+DIFFÉRENTES produisent trois écritures.
+
+**Ce que la file ne fait PAS**, écrit plutôt que supposé : elle ne fusionne
+rien. Trois tapes envoient trois requêtes, la dernière portant la valeur
+finale. Fusionner demanderait de savoir ce que deux écritures ont en commun,
+ce qui est une décision de l'appelant.
+
+**Et une sonde qui mesure un limiteur partagé y PARTICIPE.** Pour savoir à
+quelle distance de l'échéance de quinze secondes se trouve la route d'entrée
+sous la contention de la suite, j'ai lancé un relevé toutes les quatre
+secondes sur `/api/beta-access` PENDANT une exécution complète. La mesure est
+bonne — **0,847 s au pire sur 121 relevés servis, soit dix-huit fois moins que
+l'échéance** — et le tour de suite qu'elle accompagnait est à jeter : cette
+route est limitée par ADRESSE IP sous la même clé que les ouvertures de compte
+de la suite, et `ouvrirCompte` purge `LoginAttempt` à chaque ouverture. Les
+deux se disputaient la même table pendant dix minutes. Les trente-six relevés
+à six millisecondes n'étaient pas des réponses rapides, c'étaient des 429 —
+vérifié en lisant le CORPS plutôt que le chrono.
+
+C'est le piège de la boucle d'attente qui lançait deux Playwright sur une
+base, sous une forme que je n'avais pas reconnue parce que l'instrument
+n'avait l'air de rien peser. La règle du journal ne souffre pas d'exception :
+**rien de lourd ne tourne pendant une suite navigateur**, y compris ce qu'on
+écrit pour la mesurer.
+
+**Et la pièce à conviction du premier échec a été effacée par ma propre
+relance**, ce que ce journal écrit déjà. Ce qui est établi de ce tour-là : le
+test tombé était celui qui OUVRE le compte, et les trois « did not run » sont
+son suivant en mode série plus les deux du projet `bareme`, dont les
+`dependencies` le sautent dès qu'un fichier amont échoue.
+
 ### La requête que le serveur accepte et n'honore jamais
 Ce journal a corrigé DEUX fois ce qu'un écran doit faire d'un échec réseau : le
 REFUS du serveur — « un serveur qui répond mal effaçait la séance qu'on venait
