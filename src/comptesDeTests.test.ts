@@ -26,7 +26,17 @@ const CLAUDE = readFileSync(join(__dirname, "..", "CLAUDE.md"), "utf8");
 const FRONTIERE = "## Journal des corrections";
 
 /** Un nombre suivi de ce qu'on compte ici, hors des versions et des durées. */
-const COMPTE = /\b\d{2,5}\s+(tests?|suites?|parcours|passés|assertions?)\b/gi;
+const COMPTE =
+  /\b\d{2,5}\s+(tests?|suites?|parcours|passés|assertions?|emplois|routes?)\b/gi;
+
+/**
+ * Sa limite, écrite plutôt que laissée à découvrir : il ne voit que les
+ * CHIFFRES. Ce fichier écrit volontiers ses nombres en toutes lettres — « il
+ * y en a soixante-quatre aujourd'hui » était faux de quatre — et les
+ * reconnaître demanderait une table des numéraux français, c'est-à-dire une
+ * liste qui vieillit à son tour. Ce qu'il attrape est la forme la plus
+ * courante ; le reste se relit.
+ */
 
 /**
  * Les tolérances, chacune avec sa raison — et une seule aujourd'hui.

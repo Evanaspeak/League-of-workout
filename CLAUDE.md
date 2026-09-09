@@ -869,9 +869,14 @@ refuse le retour des deux façons de s'en écarter.
   `var()` se résout dans un attribut de présentation SVG. Ce qui y reste
   littéral — la bordure de l'infobulle à 15 %, le quadrillage à 10 % — n'a pas
   de nom dans la palette.
-- Classes utilitaires : `lol-panel` (102 emplois), `lol-btn` (92), `lol-input`
-  (43), `mono-num` (73), `lol-select` (14), `lecture-ecran` (8), `stat-card`
-  (2, en voie de disparition).
+- Classes utilitaires, de la plus employée à la moins : `lol-btn` et
+  `lol-panel` (partout, plus de cent emplois chacune), `mono-num` et
+  `lol-input` (largement), `lol-select` et `lecture-ecran` (ponctuellement),
+  `stat-card` (en voie de disparition). **L'ordre est ce qui compte, pas les
+  comptes** : ils étaient écrits à l'unité et les sept étaient faux le jour où
+  on les a relus — 102 pour 105, 92 pour 120, 43 pour 53. `grep -c` les donne
+  en une seconde ; une liste de sept nombres dans un fichier qu'on relit une
+  fois par mois ne peut que mentir.
 - Polices : `var(--font-heading)` = **Chakra Petch**, `var(--font-body)` =
   Barlow, `var(--font-mono)` = IBM Plex Mono. Elles sont posées par
   `next/font` dans `src/app/[locale]/layout.tsx`, donc la coquille de
@@ -1018,7 +1023,7 @@ dur, la région Riot passe par une liste fermée avant d'entrer dans une URL, et
 le CSP écrit `base-uri` et `form-action`, qui ne retombent pas sur
 `default-src` (il vit dans `next.config.ts`, pas dans le middleware).
 
-**Il y en a soixante-quatre aujourd'hui, et ce ne sont pas les mêmes.** Ce qui
+**Il y en a bien davantage aujourd'hui, et ce ne sont pas les mêmes.** Ce qui
 couvre les dix-sept ajoutées depuis n'est pas cette revue — elle ne les a jamais
 vues — ce sont les gardes qui regardent le DOSSIER : `porteRoutes` pour la
 session, `filtreParCompte` pour le filtrage. Une revue est datée par
@@ -1302,6 +1307,38 @@ aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
 ### Ce fichier annonçait trois comptes de tests, les trois faux
+
+**Et sept de plus dans la foulée, tous dans la même section.** « Conventions
+CSS » listait ses classes utilitaires à l'unité — `lol-panel` (102 emplois),
+`lol-btn` (92), `lol-input` (43), `mono-num` (73), `lol-select` (14),
+`lecture-ecran` (8), `stat-card` (2). Comptés : **105, 120, 53, 74, 19, 11,
+4**. Sept sur sept. Plus « il y en a soixante-quatre aujourd'hui » pour les
+routes d'API, qui en compte **soixante-huit**.
+
+**Ce que ces nombres disaient est un ORDRE, et l'ordre, lui, tient** :
+`lol-btn` et `lol-panel` partout, `mono-num` et `lol-input` largement,
+`lol-select` et `lecture-ecran` ponctuellement, `stat-card` en voie de
+disparition. C'est cette phrase-là qui est utile à qui ouvre le fichier, et
+elle ne périme pas. `grep -c` donne les comptes en une seconde le jour où on
+en a besoin.
+
+**Le garde ne voit que les CHIFFRES, et sa limite est écrite dedans.**
+« Soixante-quatre » est en toutes lettres, comme la moitié des nombres de ce
+fichier ; les reconnaître demanderait une table des numéraux français,
+c'est-à-dire une liste qui vieillirait à son tour. Il attrape la forme la plus
+courante, et le reste se relit.
+
+**Un vérifié et laissé, avec sa raison** : « Liste LoL hardcodée
+(~170 champions) ». Comptés, il y en a **173** — le tilde fait exactement son
+travail, et c'est la bonne façon d'écrire un ordre de grandeur qu'on ne veut
+pas tenir à jour.
+
+**Et le piège du `git checkout --`, cinquième occurrence.** Il restaure depuis
+l'INDEX : mes deux corrections n'y étaient pas, et la remise en état après le
+sabotage les a effacées — il a fallu les réécrire. La parade est écrite ici
+depuis la dette d'équipe et coûte une seconde : **indexer AVANT de saboter.**
+
+
 
 Trouvé en cherchant autre chose, et c'est ce qui le rend gênant : la section
 « Tests » écrivait **« 2766 tests unitaires, 271 suites »** et **« 266 tests »**
