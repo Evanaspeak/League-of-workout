@@ -206,6 +206,17 @@ export const config = {
     // type text/html is not executable ». La mesure ne remontait donc rien, et
     // rien ne le signalait : une page de connexion rendue en 200 ressemble à un
     // script qui s'est chargé. Trouvé en regardant la console pendant un test.
-    "/((?!_next/static|_next/image|_vercel/|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|api/pwa-icon|opengraph-image|icon$|apple-icon$|icons/|images/|videos/).*)",
+    //
+    // `hors-ligne.html` : la page que le service worker met en cache à son
+    // installation. Sans cette exclusion elle partait en 307 vers `/en/login`
+    // pour qui n'a PAS de session — c'est-à-dire pour le visiteur qui arrive
+    // sur la page d'accueil, celui-là même à qui l'invitation à installer
+    // s'adresse. `cache.add` suivait la redirection et n'avait plus que
+    // l'écran de connexion à mettre en cache ; hors ligne, on tombait donc sur
+    // le repli en texte brut du service worker, jamais sur la page écrite pour
+    // ça. Le commentaire d'à côté disait déjà la règle — « un service worker
+    // redirigé vers /login ne s'enregistre jamais » — et elle n'avait pas été
+    // appliquée à ce qu'il met en cache.
+    "/((?!_next/static|_next/image|_vercel/|favicon\\.ico|riot\\.txt|robots\\.txt|sitemap\\.xml|manifest\\.webmanifest|sw\\.js|hors-ligne\\.html|api/pwa-icon|opengraph-image|icon$|apple-icon$|icons/|images/|videos/).*)",
   ],
 };
