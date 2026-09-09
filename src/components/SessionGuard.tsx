@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect } from "react";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { signOut } from "next-auth/react";
@@ -61,7 +62,7 @@ export function SessionGuard() {
       // quittée. On le fait ici, au premier atterrissage, sinon la case
       // décochée ne changerait rien pour Google et Discord.
       if (lire("low_rm") === "false") {
-        fetch("/api/auth/session-volatile", { method: "POST" }).catch(() => {});
+        fetchBorne("/api/auth/session-volatile", { method: "POST" }).catch(() => {});
       }
 
       params.delete("li");

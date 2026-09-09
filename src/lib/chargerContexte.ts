@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "./reseau";
 
 /**
  * Un seul appel de contexte par chargement de page, partagé par tous.
@@ -32,7 +33,7 @@ let enCours: Promise<ContexteCompte | null> | null = null;
 export const SESSION_MORTE = "wow-session-morte";
 
 function demander(): Promise<ContexteCompte | null> {
-  return fetch("/api/contexte")
+  return fetchBorne("/api/contexte")
     .then((r) => {
       if (r.status === 401) {
         // Le garde de rendu serveur : ce module est client, mais rien

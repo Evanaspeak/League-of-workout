@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "./reseau";
 
 /**
  * Les paliers et la série, demandés une fois pour les deux composants.
@@ -26,7 +27,7 @@ let enCours: Promise<Progression | null> | null = null;
 let jourEnCours: string | null = null;
 
 function demander(jour: string): Promise<Progression | null> {
-  return fetch(`/api/progression?jour=${jour}`)
+  return fetchBorne(`/api/progression?jour=${jour}`)
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
 }

@@ -268,3 +268,91 @@ test("un réglage de jeu que l'application refuse revient en arrière, et le dit
     .toHaveAttribute("aria-pressed", "true");
   await ctx.close();
 });
+
+/**
+ * Deux gestes rapides ne partent pas en même temps.
+ *
+ * Chaque geste pose l'état à l'écran puis envoie un `PUT`. Envoyées en
+ * parallèle, deux écritures n'ont aucun ordre d'arrivée garanti : la base
+ * pouvait garder la valeur de l'avant-dernier geste pendant que l'écran
+ * montrait celle du dernier, et ça ne se voyait qu'au rechargement suivant.
+ *
+ * Le panneau du barème est fait de boutons « + » : taper plusieurs fois de
+ * suite y est l'usage NORMAL, pas un cas de bord. C'est `bareme-personnel`
+ * qui l'a fait tomber, sur une suite chargée — la base rendait deux minutes
+ * quand la pastille en montrait trois.
+ *
+ * Ce qu'on mesure ici est la CONCURRENCE, pas l'ordre d'arrivée : celui-ci
+ * dépend du réseau et ne se force pas depuis un test. Jamais plus d'une
+ * écriture en vol, et la question de l'ordre ne se pose plus.
+ */
+test("deux réglages tapés coup sur coup partent l'un après l'autre", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  /**
+   * La crête se compte par CLÉ, pas par requête.
+   *
+   * `ContexteNavigateur` écrit la langue et le fuseau une fois par ouverture
+   * de l'application, sur d'autres clés : sa requête peut légitimement croiser
+   * la première écriture de réglage, et compter les requêtes ferait crier le
+   * garde sur ce qui va bien. Ce qui ne doit jamais arriver, c'est que deux
+   * écritures de la MÊME clé soient en vol ensemble — c'est là que l'ordre
+   * d'arrivée décide de ce que la base garde.
+   */
+  const enVol = new Map<string, number>();
+  let crete = 0;
+  let envois = 0;
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() !== "PUT") {
+      await route.continue();
+      return;
+    }
+    let cles: string[] = [];
+    try {
+      cles = Object.keys(JSON.parse(route.request().postData() ?? "{}").userPrefs ?? {});
+    } catch { /* un corps illisible ne se compte pas */ }
+    if (cles.includes("exercices")) envois += 1;
+    for (const c of cles) {
+      const n = (enVol.get(c) ?? 0) + 1;
+      enVol.set(c, n);
+      crete = Math.max(crete, n);
+    }
+    // Une écriture qui traîne : sans file, la suivante part par-dessus, et
+    // c'est exactement ce que la crête compte.
+    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      await route.continue();
+    } finally {
+      for (const c of cles) enVol.set(c, (enVol.get(c) ?? 1) - 1);
+    }
+  });
+
+  await page.goto("/settings#effort", { waitUntil: "domcontentloaded" });
+  const effort = page.getByRole("button", { name: /ton effort|your effort/i }).first();
+  await effort.waitFor({ state: "visible", timeout: 20_000 });
+  expect(sansLangue(new URL(page.url()).pathname)).toBe("/settings");
+
+  // Trois cases DIFFÉRENTES, cochées coup sur coup, sans laisser à la
+  // première écriture le temps de revenir. Taper trois fois la MÊME case ne
+  // marche pas : décocher le dernier exercice est refusé, donc les deux
+  // dernières tapes ne partaient pas — et le témoin l'a dit avant moi.
+  const cases = page.getByRole("checkbox");
+  await cases.first().waitFor({ state: "visible", timeout: 20_000 });
+  for (const rang of [1, 2, 3]) await cases.nth(rang).click({ force: true });
+
+  // Le témoin : sans lui, une page qui n'aurait rien envoyé du tout
+  // satisferait le contrôle de crête en ne prouvant rien. Il compte les
+  // écritures de la clé qu'on tape, pas celles du contexte.
+  await expect.poll(() => envois, { timeout: 25_000 }).toBeGreaterThanOrEqual(2);
+  expect(crete, "les écritures de réglages doivent partir en file, jamais en parallèle").toBe(1);
+  await ctx.close();
+});

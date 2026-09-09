@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { ROLES } from "@/lib/scoringDefaut";
 import { useEffect, useState } from "react";
 import { dureeEnSecondes as dureeSaisie, saisieComplete } from "@/lib/saisiePartie";
@@ -168,7 +169,7 @@ export function AjoutActivite({
     const loadMatches = async () => {
       setLoadingMatches(true);
       try {
-        const data = await fetch("/api/riot/match-history").then((r) => r.json());
+        const data = await fetchBorne("/api/riot/match-history").then((r) => r.json());
         if (Array.isArray(data)) setMatches(data);
         else setMatchError(data.error ? translateApiError(data.error, locale) : t.unexpectedApiResponse);
       } catch {
@@ -190,7 +191,7 @@ export function AjoutActivite({
     // ligne redevenait normale, on recliquait, sans savoir ce qui s'était
     // passé.
     try {
-      const res = await fetch("/api/games", {
+      const res = await fetchBorne("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -303,7 +304,7 @@ export function AjoutActivite({
     // atteinte, et « Enregistrement… » reste à l'écran pour toujours. C'est
     // l'action la plus utilisée de l'application.
     try {
-      const res = await fetch("/api/games", {
+      const res = await fetchBorne("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -340,7 +341,7 @@ export function AjoutActivite({
     // s'efface jamais. Et la réponse d'erreur se lit avec un repli — une page
     // d'erreur en HTML ferait tomber `json()` au lieu d'afficher le message.
     try {
-      const res = await fetch("/api/riot/last-game");
+      const res = await fetchBorne("/api/riot/last-game");
       if (res.ok) {
         const data = await res.json();
         setAddForm((f) => ({
@@ -447,7 +448,7 @@ export function AjoutActivite({
     const attente = setTimeout(async () => {
       setPreviewLoading(true);
       try {
-        const res = await fetch("/api/games/preview", {
+        const res = await fetchBorne("/api/games/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: corpsApercu,

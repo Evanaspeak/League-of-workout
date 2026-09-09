@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { Modale } from "@/components/Modale";
@@ -54,7 +55,7 @@ export function SignalerProbleme({ surFermeture }: { surFermeture?: () => void }
         : "autre";
       let connecte = false;
       try {
-        const s = await fetch("/api/auth/session").then((r) => r.json());
+        const s = await fetchBorne("/api/auth/session").then((r) => r.json());
         connecte = Boolean(s?.user);
       } catch { /* on suppose déconnecté */ }
       if (!vivant) return;
@@ -82,7 +83,7 @@ export function SignalerProbleme({ surFermeture }: { surFermeture?: () => void }
     if (message.trim().length < 5) { setErreur(t.court); return; }
     setEnvoi(true); setErreur(null);
     try {
-      const r = await fetch("/api/signalement", {
+      const r = await fetchBorne("/api/signalement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, page: chemin, contexte }),

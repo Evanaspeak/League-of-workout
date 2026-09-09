@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { consentementSante as dict } from "@/lib/i18n/dictionaries/consentementSante";
@@ -32,8 +33,8 @@ export function MesuresPhysiques() {
   const [erreur, setErreur] = useState<string | null>(null);
 
   const relire = () => Promise.all([
-    fetch("/api/consentement").then((r) => (r.ok ? r.json() : null)),
-    fetch("/api/settings").then((r) => (r.ok ? r.json() : null)),
+    fetchBorne("/api/consentement").then((r) => (r.ok ? r.json() : null)),
+    fetchBorne("/api/settings").then((r) => (r.ok ? r.json() : null)),
   ]).then(([c, s]) => {
     if (c) { setEtat(c.etat as Etat); setDepuis(c.depuis ?? null); }
     const u = s?.user;
@@ -60,7 +61,7 @@ export function MesuresPhysiques() {
     if (!accepte && !window.confirm(t.retirerConfirme)) return;
     setErreur(null);
     try {
-      const r = await fetch("/api/consentement", {
+      const r = await fetchBorne("/api/consentement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accepte }),
@@ -89,7 +90,7 @@ export function MesuresPhysiques() {
         taille: form.taille === "" ? null : Number(form.taille),
         sportsHoursPerWeek: form.sportsHoursPerWeek === "" ? null : Number(form.sportsHoursPerWeek),
       };
-      const r = await fetch("/api/settings", {
+      const r = await fetchBorne("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userPrefs }),

@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useState } from "react";
 import { useT, useLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { amis as dictAmis } from "@/lib/i18n/dictionaries/amis";
@@ -50,7 +51,7 @@ export default function DetteEquipe(
   const charger = async () => {
     setErreur("");
     try {
-      const res = await fetch(`/api/groupes/${groupeId}/dette`);
+      const res = await fetchBorne(`/api/groupes/${groupeId}/dette`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setErreur(data?.error ? translateApiError(String(data.error), locale) : t.erreur);
@@ -79,7 +80,7 @@ export default function DetteEquipe(
     setOccupe(membre);
     setErreur("");
     try {
-      const res = await fetch(`/api/groupes/${groupeId}/dette`, {
+      const res = await fetchBorne(`/api/groupes/${groupeId}/dette`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ membre, points, jour: jourLocal(), jeton: crypto.randomUUID() }),

@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { Lien } from "@/components/Lien";
@@ -53,7 +54,7 @@ export function ConsentementSante() {
     setEnvoi(true);
     setErreur(false);
     try {
-      const r = await fetch("/api/consentement", {
+      const r = await fetchBorne("/api/consentement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accepte }),

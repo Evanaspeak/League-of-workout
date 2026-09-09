@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "./reseau";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   chronoARestaurer, pointsDuChrono, resteAPayer, type ChronoSauvegarde,
@@ -218,7 +219,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const selection = exercicesRef.current.length > 0 ? exercicesRef.current : [exerciceRef.current];
 
     try {
-      const res = await fetch("/api/games", {
+      const res = await fetchBorne("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -243,7 +244,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setPolling(true);
     setCountdown(POLL_MS / 1000);
     try {
-      const res = await fetch("/api/riot/last-game");
+      const res = await fetchBorne("/api/riot/last-game");
       if (res.status === 409) { setPolling(false); return; }
       if (res.status === 400) {
         noter({ resultat: "erreur", code: 400, motif: lireCode(400).motif });
@@ -274,7 +275,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const logRes = await fetch("/api/games", {
+      const logRes = await fetchBorne("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -362,7 +363,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
     // Récupère les préférences de rappel de l'utilisateur.
     try {
-      const u = await fetch("/api/user").then((r) => r.json());
+      const u = await fetchBorne("/api/user").then((r) => r.json());
       const selection = toExerciceIds(u?.exercices);
       const ex = selection[0] ?? toExerciceId(u?.exercice);
       const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
@@ -385,7 +386,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       // que l'enregistrement final : l'estimation affichée ne peut pas diverger.
       pointsParHeureRef.current = 0;
       try {
-        const res = await fetch("/api/games/preview", {
+        const res = await fetchBorne("/api/games/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ jeu, typeJeu: "temps", dureeSec: 3600 }),
@@ -409,7 +410,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     // Capture la dernière game existante comme point de départ.
     baselineRef.current = null;
     try {
-      const peekRes = await fetch("/api/riot/last-game?peek=1");
+      const peekRes = await fetchBorne("/api/riot/last-game?peek=1");
       if (peekRes.ok) {
         const { matchId } = await peekRes.json();
         baselineRef.current = matchId;
@@ -481,7 +482,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setSessionActive(true);
 
       try {
-        const u = await fetch("/api/user").then((r) => r.json());
+        const u = await fetchBorne("/api/user").then((r) => r.json());
         const selection = toExerciceIds(u?.exercices);
         const ex = selection[0] ?? toExerciceId(u?.exercice);
         const seuil = typeof u?.rappelSeuilPoints === "number" ? u.rappelSeuilPoints : RAPPEL_SEUIL_DEFAUT;
@@ -493,7 +494,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       } catch { /* valeurs par défaut conservées */ }
 
       try {
-        const res = await fetch("/api/games/preview", {
+        const res = await fetchBorne("/api/games/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ jeu: sauvegarde.jeu, typeJeu: "temps", dureeSec: 3600 }),

@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { adminRatios } from "@/lib/i18n/dictionaries/adminRatios";
@@ -45,7 +46,7 @@ export default function AdminRatiosExercices() {
   const [lectureKO, setLectureKO] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/config/exercices")
+    fetchBorne("/api/admin/config/exercices")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d?.ratios) { setLectureKO(true); return; }
@@ -72,7 +73,7 @@ export default function AdminRatiosExercices() {
     setSaving(true);
     setMsg("");
     try {
-      const res = await fetch("/api/admin/config/exercices", {
+      const res = await fetchBorne("/api/admin/config/exercices", {
         method: methode,
         headers: methode === "PUT" ? { "Content-Type": "application/json" } : undefined,
         body: methode === "PUT"

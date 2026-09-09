@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { CHAMPIONS } from "@/lib/champions";
 import { invaliderChampions } from "@/lib/useChampions";
@@ -31,7 +32,7 @@ export default function AdminChampionEditor() {
   const [lectureKO, setLectureKO] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/config/champions")
+    fetchBorne("/api/admin/config/champions")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!Array.isArray(data?.champions)) { setLectureKO(true); return; }
@@ -50,7 +51,7 @@ export default function AdminChampionEditor() {
     // l'écran pour toujours : la promesse partait en erreur et la ligne qui
     // l'efface n'était jamais atteinte.
     try {
-      const res = await fetch("/api/admin/config/champions", {
+      const res = await fetchBorne("/api/admin/config/champions", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ champions }),
@@ -76,7 +77,7 @@ export default function AdminChampionEditor() {
     // La réponse était ignorée : « remis par défaut » s'affichait même quand
     // rien n'avait été remis.
     try {
-      const res = await fetch("/api/admin/config/champions", { method: "DELETE" });
+      const res = await fetchBorne("/api/admin/config/champions", { method: "DELETE" });
       if (!res.ok) { setMsg({ type: "err", text: t.error }); return; }
       invaliderChampions();
       setText(CHAMPIONS.join("\n"));

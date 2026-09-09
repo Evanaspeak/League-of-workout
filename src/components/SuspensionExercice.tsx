@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { exercices as dict } from "@/lib/i18n/dictionaries/exercices";
@@ -26,7 +27,7 @@ export function SuspensionExercice({ surChangement }: { surChangement?: () => vo
 
   const relire = useCallback(async () => {
     try {
-      const r = await fetch("/api/suspension");
+      const r = await fetchBorne("/api/suspension");
       if (r.ok) setEtat(await r.json());
     } catch { /* la page reste utilisable sans ce bloc */ }
   }, []);
@@ -39,7 +40,7 @@ export function SuspensionExercice({ surChangement }: { surChangement?: () => vo
     // ni message. On reclique en croyant avoir mal visé.
     let r: Response;
     try {
-      r = await fetch("/api/suspension", {
+      r = await fetchBorne("/api/suspension", {
         method: methode,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ exercice }),

@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect } from "react";
 import { effacer, lire } from "@/lib/stockage";
 
@@ -55,7 +56,7 @@ export function DesktopAuthHandler() {
     };
 
     (async () => {
-      const reponse = await fetch("/api/auth/desktop-token", { method: "POST" });
+      const reponse = await fetchBorne("/api/auth/desktop-token", { method: "POST" });
 
       // 409 : le serveur a jugé que cette session n'est pas celle que
       // l'application a demandée. La comparaison des instants se fait chez lui,

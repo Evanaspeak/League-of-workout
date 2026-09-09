@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { adminSignalements } from "@/lib/i18n/dictionaries/adminSignalements";
@@ -27,7 +28,7 @@ export default function AdminSignalements() {
 
   const relire = useCallback(async () => {
     try {
-      const r = await fetch("/api/admin/signalements");
+      const r = await fetchBorne("/api/admin/signalements");
       if (!r.ok) { setErreur(true); return; }
       setLignes(await r.json());
       setErreur(false);
@@ -43,7 +44,7 @@ export default function AdminSignalements() {
     // `relire()` seul suffit à masquer l'échec : la liste revient telle
     // qu'elle était, et on croit avoir mal cliqué.
     try {
-      await fetch("/api/admin/signalements", {
+      await fetchBorne("/api/admin/signalements", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: l.id, statut }),

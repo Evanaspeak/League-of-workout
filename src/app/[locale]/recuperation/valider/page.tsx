@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Lien } from "@/components/Lien";
 import { useSearchParams } from "next/navigation";
@@ -33,7 +34,7 @@ function Valider() {
     if (lance.current || !jeton) return;
     lance.current = true;
 
-    fetch("/api/auth/reset-code", {
+    fetchBorne("/api/auth/reset-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token: jeton }),

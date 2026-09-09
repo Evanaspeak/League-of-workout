@@ -34,7 +34,12 @@ describe("chargerProgression", () => {
     const appels = repond(P);
     globalThis.fetch = appels as never;
     await chargerProgression("2026-09-02");
-    expect(appels).toHaveBeenCalledWith(expect.stringContaining("jour=2026-09-02"));
+    // L'adresse, et elle seule : la requête porte désormais une échéance en
+    // second argument, qui n'est pas ce que ce contrôle éprouve.
+    expect(appels).toHaveBeenCalledWith(
+      expect.stringContaining("jour=2026-09-02"),
+      expect.anything(),
+    );
   });
 
   /**

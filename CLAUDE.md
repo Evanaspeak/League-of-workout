@@ -1289,6 +1289,235 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois tapes sur « + » envoyaient trois écritures concurrentes
+
+Trouvé en cherchant pourquoi `bareme-personnel.spec.ts` tombait en suite
+complète et passait seul. Le message, une fois la suite rejouée sans rien
+d'autre sur la machine, nomme la divergence que ce fichier existe pour
+attraper : **la base rend deux minutes pendant que la pastille en montre
+trois.**
+
+**Ce n'est pas une affaire d'affichage, c'est une course d'écritures.**
+`handleSaveBareme` pose l'état à l'écran puis envoie un `PUT`. Trois tapes sur
+un bouton « + » envoyaient donc trois requêtes CONCURRENTES, dont rien ne
+garantit l'ordre d'arrivée : la base pouvait garder la valeur du deuxième clic
+pendant que l'écran montrait celle du troisième.
+
+**Mesuré au navigateur avant de corriger quoi que ce soit : quatre écritures
+en vol à la fois.** C'est la troisième forme du même défaut sur cet écran,
+après le serveur qui refuse et la lecture qui écrase une saisie — l'écran
+montre un réglage que le serveur n'a pas — et c'est la seule des trois qui ne
+se voit qu'au rechargement SUIVANT, où le réglage revient en arrière tout seul
+sans que rien ne l'explique.
+
+**Le panneau du barème est fait de boutons « + ».** Taper plusieurs fois de
+suite y est l'usage normal, pas un cas de bord.
+
+**La file vit dans `src/lib/fileEcritures.ts` et pas dans le composant**, pour
+la raison déjà écrite pour `chronoSession` et `saisiePartie` : une décision au
+milieu de neuf cents lignes n'est atteignable par aucun test, et celle-ci se
+trompe dans un sens qui ne se voit jamais tout de suite. Une file par ÉCRAN et
+non par module — deux onglets n'ont aucune raison de s'attendre.
+
+**Trois sabotages unitaires, trois échecs. Le quatrième a fait RETIRER une
+ligne.** J'avais écrit `queue.then(() => travail(), () => travail())`, avec un
+commentaire expliquant que le second gestionnaire empêche un échec d'emporter
+les suivants. Il ne sert à rien : `queue` retient déjà `suivant.catch(() =>
+{})`, donc elle ne rejette jamais. Le sabotage qui le retire ne fait tomber
+aucun test — et une ligne qui ne tient rien se relit comme une garantie. C'est
+le motif du `muet = false` de la pastille et de la forme fermée du niveau,
+sous une troisième forme : **la protection en double, dont une moitié est
+morte.**
+
+**Et deux de mes jeux de données ne distinguaient rien**, ce que seul le
+sabotage a dit. Deux tâches instantanées s'exécutent dans l'ordre même sans
+file : il faut que la PREMIÈRE soit la plus lente pour que « en vol » se voie,
+et que les durées aillent à REBOURS de l'ordre d'appel pour que « en file » se
+distingue de « au plus rapide ».
+
+**Le garde navigateur compte par CLÉ, et il a fallu le mesurer pour le
+savoir.** Ma première version comptait les requêtes : elle est tombée sur un
+état parfaitement sain, parce que `ContexteNavigateur` écrit la langue et le
+fuseau une fois par ouverture, sur d'autres clés, et que sa requête croise
+légitimement la première écriture de réglage. Un garde qui crie sur ce qui va
+bien finit par ne plus se lire. Ce qui ne doit jamais arriver, c'est que deux
+écritures de la MÊME clé soient en vol ensemble.
+
+**Le témoin a mordu avant l'assertion, et c'est pour ça qu'il existe.** Mon
+premier geste tapait trois fois la MÊME case d'exercice : décocher le dernier
+exercice est refusé, donc les deux dernières tapes ne partaient pas, et la
+crête ne prouvait rien. Le contrôle de non-vacuité l'a dit — « Expected >= 2,
+Received 1 » — au lieu de laisser passer un vert creux. Trois cases
+DIFFÉRENTES produisent trois écritures.
+
+**Ce que la file ne fait PAS**, écrit plutôt que supposé : elle ne fusionne
+rien. Trois tapes envoient trois requêtes, la dernière portant la valeur
+finale. Fusionner demanderait de savoir ce que deux écritures ont en commun,
+ce qui est une décision de l'appelant.
+
+**Et une sonde qui mesure un limiteur partagé y PARTICIPE.** Pour savoir à
+quelle distance de l'échéance de quinze secondes se trouve la route d'entrée
+sous la contention de la suite, j'ai lancé un relevé toutes les quatre
+secondes sur `/api/beta-access` PENDANT une exécution complète. La mesure est
+bonne — **0,847 s au pire sur 121 relevés servis, soit dix-huit fois moins que
+l'échéance** — et le tour de suite qu'elle accompagnait est à jeter : cette
+route est limitée par ADRESSE IP sous la même clé que les ouvertures de compte
+de la suite, et `ouvrirCompte` purge `LoginAttempt` à chaque ouverture. Les
+deux se disputaient la même table pendant dix minutes. Les trente-six relevés
+à six millisecondes n'étaient pas des réponses rapides, c'étaient des 429 —
+vérifié en lisant le CORPS plutôt que le chrono.
+
+C'est le piège de la boucle d'attente qui lançait deux Playwright sur une
+base, sous une forme que je n'avais pas reconnue parce que l'instrument
+n'avait l'air de rien peser. La règle du journal ne souffre pas d'exception :
+**rien de lourd ne tourne pendant une suite navigateur**, y compris ce qu'on
+écrit pour la mesurer.
+
+**Et l'intermittent de `historique.spec.ts` a nommé sa moitié manquante.**
+« Une correction refusée ne change rien à l'écran » est tombé sur
+`detourne = 0`, ce que ce journal a déjà attribué en V525 à un clic qui
+n'aurait rien déclenché. **Le contexte d'échec dit autre chose** : la ligne de
+Maître Yi y est passée en **VICTOIRE**, alors qu'elle est semée en défaite et
+que le test d'avant agit sur un autre champion. Une correction a donc bien eu
+lieu — donc la requête est partie — et l'interception ne l'a pas vue.
+
+Le compteur de détournement séparait deux causes ; il n'en séparait pas assez.
+`page.on("request")` voit tout ce que la page émet, routé ou non, et c'est
+l'ÉCART entre les deux qui tranche. Sabotage — le compteur de détournement
+débranché — l'échec rend maintenant « détournées 0, émises 1 : la requête est
+PARTIE sans passer par l'interception, c'est l'outil et pas le produit ».
+
+**Ce qui n'est PAS établi, et qu'il vaut mieux écrire que de conclure** :
+pourquoi `page.route` manque une requête sous charge. Le fichier passe **17
+sur 17 trois fois de suite** seul, et il n'est tombé qu'en suite complète. Ce
+qui est acquis n'est donc pas le diagnostic, c'est que la prochaine occurrence
+dira d'elle-même de quel côté chercher — au lieu d'envoyer relire un composant
+qui n'a rien.
+
+**Et la pièce à conviction du premier échec a été effacée par ma propre
+relance**, ce que ce journal écrit déjà. Ce qui est établi de ce tour-là : le
+test tombé était celui qui OUVRE le compte, et les trois « did not run » sont
+son suivant en mode série plus les deux du projet `bareme`, dont les
+`dependencies` le sautent dès qu'un fichier amont échoue.
+
+### La requête que le serveur accepte et n'honore jamais
+Ce journal a corrigé DEUX fois ce qu'un écran doit faire d'un échec réseau : le
+REFUS du serveur — « un serveur qui répond mal effaçait la séance qu'on venait
+de faire » — et l'ABSENCE de réseau, « sans réseau, la promesse partait en
+erreur et *Enregistrement…* restait à l'écran pour toujours ». Les deux
+finissent dans un `catch` ou dans une branche `res.ok`, donc les deux rendent
+la main.
+
+**Il restait le troisième cas, et il n'a rien d'exotique.** Le serveur ACCEPTE
+la connexion et n'honore jamais la requête : un réseau mobile qui bascule, un
+mandataire, un portail captif, une fonction partie en boucle. La socket reste
+ouverte, la réponse ne vient pas, et `fetch` n'abandonne qu'au délai TCP du
+système — qui se compte en minutes.
+
+La promesse ne se règle alors NI dans un sens NI dans l'autre. **Ni le `catch`,
+ni le `finally`, ni le retour en arrière ne passent** : ce sont exactement les
+trois choses que les deux corrections précédentes ont posées, et aucune n'est
+atteignable.
+
+**Démontré avant d'écrire quoi que ce soit**, au navigateur, en interceptant
+`PUT /api/settings` et en ne l'honorant jamais. L'état de la page, relevé par
+le contexte d'échec de Playwright :
+
+```
+- spinbutton "Pompes réussies": "30"
+- button "…" [disabled]
+```
+
+Le bouton du test de force, désactivé sur son ellipse, la valeur toujours à
+l'écran, et **plus rien ne bougera jamais**. C'est le test qui fixe le niveau,
+donc toute la dette. Et le pire n'est pas l'attente : c'est que `revenir()` ne
+passe pas non plus, donc l'écran montre un réglage que le serveur n'a jamais
+reçu — le défaut que la correction du refus existe pour empêcher, par le seul
+chemin qu'elle ne couvrait pas.
+
+**Le témoin compte les requêtes réellement RETENUES.** Sans lui, ce test
+passerait aussi bien sur un serveur qui répond, et on ne saurait pas si
+l'interception a pris — c'est le piège déjà payé sur `detection-partie`.
+
+**Ce que la correction est, et ce qu'elle n'est pas.** Elle ne traite PAS
+l'échec : le traitement existe déjà partout, et il est bon. Elle rend
+seulement l'échec ATTEIGNABLE. Une requête abandonnée lève, donc elle tombe
+dans le `catch` que l'appelant a déjà, et l'écran dit ce qu'il sait déjà dire.
+
+**Une enveloppe, pas un `signal` à passer à la main.** Le défaut doit être le
+plus PRUDENT : un appelant qui oublierait l'argument retomberait sur la requête
+sans fin. C'est la règle du plafond de notifications, où l'exemption se demande
+au lieu de s'obtenir par omission. **104 appels, 48 fichiers**, tout ce que le
+NAVIGATEUR demande.
+
+**Et la première version gardait un trou, que la relecture du diff a montré.**
+J'avais écrit « un appelant qui a déjà son `signal` le garde », avec sa raison —
+l'aperçu de partie l'a posé pour annuler une saisie qu'on vient de remplacer, et
+l'écraser casserait cette annulation-là. C'était juste, et ça laissait cet
+appel-là sans borne, donc ça demandait une exemption. `AbortSignal.any` les
+COMBINE au lieu de choisir : l'annulation de l'appelant passe toujours,
+l'échéance aussi, **et la règle n'a plus aucune exemption d'appelant.** Une
+règle sans exception n'a pas de trou à surveiller.
+
+**Quinze secondes, justifiées par les deux bouts.** En dessous, on
+abandonnerait des requêtes qui allaient aboutir : le pire relevé de ce projet
+est le réveil de Neon, six cents millisecondes au premier appel, et les corps
+échangés ici tiennent en quelques kilo-octets compressés. Au-dessus, on ne
+protège plus personne — quelqu'un qui attend devant un bouton désactivé a cessé
+d'y croire bien avant. Un délai qu'on allonge « pour être sûr » reconstruit le
+défaut qu'on corrige, et un test l'épingle pour qu'il ne bouge pas en silence.
+
+**Deux dispenses, et la seconde est celle qui compte.** `reseau.ts` doit
+appeler le `fetch` nu, sinon elle s'appellerait elle-même. Et `release.ts` est
+rendue au SERVEUR avec un `next: { revalidate: 300 }` : y poser un signal
+changerait la mise en cache de Next, c'est-à-dire précisément la régénération
+dont dépend le bouton de téléchargement. **Le remède y casserait ce qu'il vient
+garder**, et c'est écrit dans le garde plutôt que découvert plus tard.
+
+**Un nom qui collisionne quatre fois sur quarante-huit collisionnera encore.**
+Ma première version s'appelait `demander` — un nom parfaitement français, et
+déjà pris par l'écran des amis (demander une amitié), la détection de session
+et les deux chargeurs de contexte. C'est le COMPILATEUR qui l'a dit, quatre
+fichiers d'un coup, ce qu'un changement de nom fait de mieux. La conversion a
+été remise à zéro et refaite sous `fetchBorne`, qui dit la règle au lieu de la
+décrire.
+
+**Deux gardes ont mordu, et le second apprend quelque chose.**
+`chargerProgression` comparait l'appel à UN argument : il en reçoit deux. Mais
+`reglagesRelus` cherchait ses écrans par la FORME de leur appel —
+`fetch("/api/settings")` — et cette forme venait de changer sous lui. Il n'a
+alors trouvé **aucun écran**, et c'est son témoin de non-vacuité, pas lui, qui
+l'a dit.
+
+C'est la limite de la méthode que ce journal préfère partout ailleurs :
+« les écrans se trouvent par leur FORME plutôt que par leur chemin » est juste,
+et un garde qui épingle le NOM de ce qui appelle devient muet au premier
+remaniement — c'est-à-dire le jour où il sert. Il cherche l'ADRESSE demandée
+maintenant, ce qui survivra à la prochaine enveloppe.
+
+**Ce que l'échéance ne garantit PAS, écrit plutôt que tu.** Une écriture
+abandonnée à quinze secondes peut très bien avoir ABOUTI côté serveur : on
+renonce à la réponse, pas à l'effet. Ce n'est pas une classe nouvelle — une
+coupure de réseau et un 500 arrivé après l'écriture ont exactement la même
+ambiguïté, et c'est précisément pour elle que `Paiement.jeton` existe. Ce qui
+change est qu'on l'atteint maintenant en quinze secondes au lieu de jamais.
+La seule écriture qui n'a pas de jeton et qui compte est l'inscription, où un
+renvoi tombe sur l'unicité du pseudo — donc un refus lisible plutôt qu'un
+doublon.
+
+Trois sabotages sur le module, trois échecs : l'échéance retirée, le signal de
+l'appelant écrasé, le délai allongé en silence. Quatre sur le garde, quatre
+échecs : un `fetch` nu remis dans un écran, une dispense vidée de son objet, le
+motif rendu aveugle, le balayage vidé.
+
+**Deux recensements NÉGATIFS au passage, écrits pour qu'on ne les refasse
+pas.** Les clés React indexées : l'historique tient ses lignes par `g.id` et
+range l'état de ses éditeurs par identifiant, donc un tri ne peut pas rendre un
+éditeur à la mauvaise ligne ; les seules listes à clé d'index sont des
+squelettes, des paragraphes juridiques et une liste qui ne fait que grandir.
+Et les chemins internes écrits dans les DICTIONNAIRES — l'angle mort du garde
+des pages orphelines, qui ne lit que les `.tsx` : il n'y en a aucun.
+
 ### Trois remises à zéro sur cinq ne remettaient rien à zéro
 Suite de V559, et c'est la comparaison de rendu qui a demandé la question.
 

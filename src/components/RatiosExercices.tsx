@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { appliquerRatios, type RatiosExercices } from "@/lib/exercices";
 
@@ -43,7 +44,7 @@ export function RatiosExercicesProvider({
 
   useEffect(() => {
     let vivant = true;
-    fetch("/api/exercices/ratios")
+    fetchBorne("/api/exercices/ratios")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!vivant || !d?.ratios) return;

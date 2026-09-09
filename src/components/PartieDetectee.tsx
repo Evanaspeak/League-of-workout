@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect } from "react";
 import { ventiler, formaterDuree } from "@/lib/exercices";
 import { notifierSysteme } from "@/lib/notifier";
@@ -104,7 +105,7 @@ export function PartieDetectee() {
       const sansEnjeu = estSansEnjeu();
       oublierSansEnjeu();
       try {
-        const res = await fetch("/api/games", {
+        const res = await fetchBorne("/api/games", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

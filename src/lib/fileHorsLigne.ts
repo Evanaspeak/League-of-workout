@@ -18,6 +18,7 @@
  * réponse, et une réponse perdue en chemin est indiscernable d'une requête
  * jamais arrivée.
  */
+import { fetchBorne } from "./reseau";
 import { ecrire, lire } from "./stockage";
 
 const CLE = "low_file_paiements";
@@ -131,7 +132,7 @@ export async function viderFile(): Promise<number> {
   for (const entree of lireFile()) {
     let res: Response;
     try {
-      res = await fetch("/api/dette", {
+      res = await fetchBorne("/api/dette", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

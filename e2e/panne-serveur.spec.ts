@@ -546,3 +546,59 @@ test("une session morte renvoie à la connexion au lieu d'enfermer", async ({ br
 
   await ctx.close();
 });
+
+/**
+ * Une requête que le serveur ACCEPTE et n'honore jamais.
+ *
+ * Ce fichier couvre le refus (500, 4xx) et l'absence de réseau. Il restait le
+ * troisième cas, qui n'a rien d'exotique : un réseau mobile qui bascule, un
+ * mandataire, un portail captif, une fonction qui part en boucle. La socket
+ * reste ouverte, la réponse ne vient pas.
+ *
+ * La promesse ne se règle alors NI dans un sens NI dans l'autre : le `catch`
+ * ne passe pas, le `finally` non plus. « Enregistrement… » reste à l'écran,
+ * et surtout le retour en arrière n'a jamais lieu — l'écran montre donc un
+ * réglage que le serveur n'a jamais reçu. C'est exactement le défaut que la
+ * correction du refus existe pour empêcher, par le seul chemin qu'elle ne
+ * couvrait pas.
+ */
+test("une requête qui ne revient jamais rend quand même la main", async ({ browser }) => {
+  const ctx = await browser.newContext({ storageState: etat });
+  const page = await ctx.newPage();
+  await page.addInitScript((u) => {
+    try {
+      sessionStorage.setItem("splash", "1");
+      for (const c of ["low_onboarded", "low_visite", `low_onboarded:${u}`, `low_visite:${u}`]) {
+        localStorage.setItem(c, "1");
+      }
+    } catch { /* stockage refusé */ }
+  }, uid);
+
+  // La lecture répond ; seul l'ENREGISTREMENT est accepté et laissé en
+  // suspens. On ne rend jamais la main sur cette route — c'est tout l'objet.
+  let retenues = 0;
+  await page.route("**/api/settings", async (route) => {
+    if (route.request().method() === "PUT") {
+      retenues += 1;
+      return; // ni fulfill, ni continue, ni abort
+    }
+    await route.continue();
+  });
+
+  await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: /faire le test|refaire le test|take the test|retake/i })
+    .first().click({ timeout: 20_000 });
+
+  const champ = page.getByRole("spinbutton").first();
+  await champ.fill("30");
+  await page.getByRole("button", { name: /^enregistrer$|^save$/i }).first().click();
+
+  // Le témoin : sans requête réellement retenue, ce test ne prouve rien — il
+  // passerait aussi bien sur un serveur qui répond.
+  await expect.poll(() => retenues, { timeout: 10_000 }).toBeGreaterThan(0);
+
+  await expect(page.getByRole("alert").filter({ hasText: /n.a pas été enregistré|was not saved/i }))
+    .toBeVisible({ timeout: 30_000 });
+  await expect(champ).toHaveValue("30");
+  await ctx.close();
+});

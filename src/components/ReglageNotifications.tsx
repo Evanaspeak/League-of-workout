@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { notifications as dict } from "@/lib/i18n/dictionaries/notifications";
@@ -46,7 +47,7 @@ export function ReglageNotifications() {
     // L'appel réseau vient en premier : rien ne doit s'exécuter de façon
     // synchrone ici, sinon l'appel depuis l'effet déclenche un rendu en
     // cascade — et le serveur seul sait si les notifications sont configurées.
-    const res = await fetch("/api/push").catch(() => null);
+    const res = await fetchBorne("/api/push").catch(() => null);
     const data = await res?.json().catch(() => null);
 
     const supporte =
@@ -98,7 +99,7 @@ export function ReglageNotifications() {
         userVisibleOnly: true,
         applicationServerKey: versTampon(cle),
       });
-      const res = await fetch("/api/push", {
+      const res = await fetchBorne("/api/push", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(abo.toJSON()),
@@ -119,7 +120,7 @@ export function ReglageNotifications() {
       const reg = await navigator.serviceWorker.getRegistration();
       const abo = await reg?.pushManager.getSubscription();
       if (abo) {
-        await fetch("/api/push", {
+        await fetchBorne("/api/push", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ endpoint: abo.endpoint }),
@@ -137,7 +138,7 @@ export function ReglageNotifications() {
   const tester = async () => {
     setOccupe(true);
     setMessage("");
-    const res = await fetch("/api/push", { method: "PUT" }).catch(() => null);
+    const res = await fetchBorne("/api/push", { method: "PUT" }).catch(() => null);
     const data = await res?.json().catch(() => null);
     setMessage(data?.envoyees > 0 ? t.testEnvoye : t.testEchoue);
     setOccupe(false);

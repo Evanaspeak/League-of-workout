@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { textesDiffusion } from "@/lib/i18n/diffusion";
 
@@ -31,7 +32,7 @@ export function VueDiffusion({ jeton }: { jeton: string }) {
     let vivant = true;
     const relire = async () => {
       try {
-        const r = await fetch(`/api/obs/${encodeURIComponent(jeton)}`, { cache: "no-store" });
+        const r = await fetchBorne(`/api/obs/${encodeURIComponent(jeton)}`, { cache: "no-store" });
         if (!vivant) return;
         if (r.status === 404) { setPerdu(true); return; }
         if (!r.ok) return;

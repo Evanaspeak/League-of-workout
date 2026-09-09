@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { ROLES } from "@/lib/scoringDefaut";
 import { Icone } from "@/components/Icone";
 import { Squelette } from "./Squelette";
@@ -292,7 +293,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
   };
 
   const charger = (demandeTout: boolean) =>
-    fetch(demandeTout ? "/api/games?tout=1" : "/api/games")
+    fetchBorne(demandeTout ? "/api/games?tout=1" : "/api/games")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((d) => poser(d, demandeTout));
 
@@ -343,7 +344,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
     if (!editDateVal) return;
     setErreurAction(false);
     try {
-      const res = await fetch(`/api/games/${id}`, {
+      const res = await fetchBorne(`/api/games/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: editDateVal }),
@@ -372,7 +373,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
     setCorrectionEnCours(id);
     setErreurAction(false);
     try {
-      const res = await fetch(`/api/games/${id}`, {
+      const res = await fetchBorne(`/api/games/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ result }),
@@ -397,7 +398,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
     setDeletingId(id);
     setErreurAction(false);
     try {
-      const res = await fetch(`/api/games/${id}`, { method: "DELETE" });
+      const res = await fetchBorne(`/api/games/${id}`, { method: "DELETE" });
       // La ligne ne quitte l'écran que si elle a quitté la base. Sinon on
       // annonce une suppression qui n'a pas eu lieu, et la partie revient au
       // rechargement suivant sans que rien ne l'explique.

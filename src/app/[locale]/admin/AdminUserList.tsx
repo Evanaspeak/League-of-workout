@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT, useDateLocale, useNombre, usePourcentage } from "@/lib/i18n/LocaleContext";
 import { uniteLocalisee } from "@/lib/i18n/unite";
@@ -92,8 +93,8 @@ export default function AdminUserList() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/users").then(r => r.json()),
-      fetch("/api/admin/config/scoring").then(r => r.json()),
+      fetchBorne("/api/admin/users").then(r => r.json()),
+      fetchBorne("/api/admin/config/scoring").then(r => r.json()),
     ]).then(([ud, sd]) => {
       if (ud.users) setUsers(ud.users);
       setScoring({ roles: sd.roles ?? [], levels: sd.levels ?? [], mastery: sd.mastery ?? null });
@@ -126,7 +127,7 @@ export default function AdminUserList() {
 
   async function resetPassword(id: string) {
     await commande(setResettingPwd, id, async () => {
-      const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: "POST" });
+      const res = await fetchBorne(`/api/admin/users/${id}/reset-password`, { method: "POST" });
       if (!res.ok) return false;
       const data = await res.json();
       setNewPasswords(prev => ({ ...prev, [id]: data.password }));
@@ -143,7 +144,7 @@ export default function AdminUserList() {
    */
   async function rejouerIntro(id: string) {
     await commande(setRearmeEnCours, id, async () => {
-      const res = await fetch(`/api/admin/users/${id}/intro`, { method: "POST" });
+      const res = await fetchBorne(`/api/admin/users/${id}/intro`, { method: "POST" });
       if (!res.ok) return false;
       setRearme((p) => ({ ...p, [id]: true }));
       return true;
@@ -152,7 +153,7 @@ export default function AdminUserList() {
 
   async function deleteUser(id: string) {
     await commande(setDeleting, id, async () => {
-      const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+      const res = await fetchBorne(`/api/admin/users/${id}`, { method: "DELETE" });
       if (!res.ok) return false;
       setUsers(prev => prev.filter(u => u.id !== id));
       setExpanded(null);
