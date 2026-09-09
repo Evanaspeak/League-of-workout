@@ -25,7 +25,8 @@ plan a été établi avec le propriétaire, à partir de ses 308 réponses au Se
 Interrogatoire, et proposer autre chose sans le dire revient à défaire une
 décision qu'il a prise.
 
-Il porte huit étapes ordonnées et cent cinquante-sept lignes cochables. La raison de
+Il porte huit étapes ordonnées et plus de cent cinquante lignes cochables — le
+compte exact se lit dans le fichier, pas ici. La raison de
 l'ordre est écrite dans le document ; s'en écarter se discute, mais ça se
 discute — ça ne se fait pas en silence.
 
@@ -951,7 +952,7 @@ fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
 Au navigateur (`npm run e2e`) : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
-tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
+tactile**, `e2e/langues.spec.ts` ouvre les pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
 langues et à trois largeurs, sur un compte qu'il ouvre lui-même, en demandant
 chaque langue par son ADRESSE, et
@@ -1132,7 +1133,7 @@ l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on regarde
 le passé.
 
 ```bash
-node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
+node scripts/accessibilite.mjs   # les pages du produit, six langues, WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
@@ -1373,6 +1374,45 @@ pilotent un Chromium ». Ils sont **cinq** — `compte-mesure.mjs` en ouvre un
 aussi, ce que personne n'avait recompté depuis qu'il existe. Le neuvième
 fichier de `scripts/`, `langue.mjs`, est un module partagé et non un outil ; le
 dire évite qu'on « corrige » le huit à la prochaine relecture.
+
+**Le balayage complet des comptes écrits en LETTRES, et le garde qu'on
+n'écrit PAS.** Le garde posé la veille ne voit que les chiffres — c'est écrit
+dans sa limite — donc « Huit scripts » et « cent cinquante-sept lignes » lui
+échappent par construction. Mesuré avant de décider : **88 occurrences dans la
+moitié descriptive**, et plus de quatre-vingts sont parfaitement justes — « un
+test », « une route », « six langues », qui est une constante du produit. Un
+garde de cette forme crierait sur quatre-vingts phrases correctes le jour de
+son écriture, donc il serait dispensé avant d'être lu. C'est la mesure qui
+avait déjà fait renoncer au garde des clés de stockage et à celui de la
+colonne d'effort du plan.
+
+**Ce qui se fait à la place est de LIRE les vingt-cinq qui sont des comptes.**
+Trois avaient rouillé, toutes d'une unité, et l'unité vient à chaque fois d'un
+ajout que le journal raconte :
+
+| annoncé | mesuré | ce qui a bougé |
+|---|---|---|
+| « cent cinquante-sept lignes cochables » | **158** | une ligne ajoutée au plan |
+| « `langues.spec.ts` ouvre les neuf pages publiques » | **dix** | `/connexion-app`, entrée par le recensement des pages visitées par personne |
+| « `accessibilite.mjs` — quinze pages » | **vingt et une** | les cinq rubriques de réglages et `/amis`, entrées avec la correction du balayage |
+
+Les trois perdent leur nombre plutôt que de le gagner à jour : « plus de cent
+cinquante », « les pages publiques », « les pages du produit ». Le compte exact
+vit dans le fichier qu'on peut compter, et le journal garde ses relevés datés —
+c'est la même répartition que pour les comptes de tests.
+
+**Et deux comptes vérifiés qui tiennent**, écrits ici pour qu'on ne les
+recompte pas : les **onze** fichiers qui ne peuvent pas lire la palette
+(`SANS_FEUILLE` en porte exactement onze), et les **cinq** écrans connectés du
+balayage des langues.
+
+**Un commentaire mort trouvé dans la foulée**, et c'est le motif que ce fichier
+reproche partout : `langues.spec.ts` finissait sa liste de pages sur trois
+lignes annonçant que « la liste d'attente y entre en même temps qu'elle devient
+atteignable ». `/waitlist` a été supprimée en V300, avec sa page, son
+dictionnaire et son entrée de navigation. Le commentaire décrivait donc une
+entrée qui n'existe pas, sous une liste qu'on relit en cherchant ce qu'elle
+couvre.
 
 ### Ce fichier annonçait trois comptes de tests, les trois faux
 
