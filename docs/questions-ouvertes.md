@@ -989,6 +989,49 @@ arriveront ; elle passe après l'étape 01, qui est d'aller en chercher dix.
 
 ---
 
+### 24 · Les trois images du produit dépendent de Google Fonts pour les idéogrammes
+
+**Ce qui est mesuré.** Le moteur de `next/og` n'embarque qu'une police,
+`Geist-Regular.ttf`, qui ne couvre pas les idéogrammes. Devant un glyphe
+manquant, il va le chercher — relevé en traçant `fetch` pendant le rendu :
+
+| texte rendu | requêtes sortantes |
+|---|---|
+| « Seance payee » | **0** |
+| 「こなしたセッション」 | **3** vers `fonts.googleapis.com` et `fonts.gstatic.com` |
+
+Le rendu est correct — le japonais et le chinois se dessinent parfaitement.
+**Mais si ces requêtes échouent, les idéogrammes sortent en carrés vides**, et
+l'image part quand même : vérifié en coupant les appels, le japonais rend neuf
+tofus. Rien ne le signale, et c'est une image qu'on partage.
+
+**Ce que ça touche.** L'image du bilan de saison et celle d'une séance écrivent
+leurs idéogrammes. La carte sociale, elle, retombe sur l'anglais — décision
+défendable, puisqu'un robot de prévisualisation la réclame avec un délai serré
+et qu'on lui épargne trois allers-retours. Le PSEUDO, lui, n'a aucun repli :
+un pseudo japonais sortirait en carrés le jour de la panne, quelle que soit la
+langue du compte.
+
+**Les trois options, et ce qu'elles coûtent.**
+
+1. **Ne rien faire.** Zéro travail. Le jour d'une panne Google Fonts, deux
+   images sur trois deviennent illisibles pour les comptes chinois et japonais,
+   et pour tout pseudo à idéogrammes. Aucune alerte : l'image sort en 200.
+2. **Embarquer une police à idéogrammes.** Une sous-police Noto Sans JP/SC
+   réduite au jeu de caractères réellement employé pèse quelques centaines de
+   kilo-octets ; complète, plusieurs méga-octets, chargés à chaque invocation
+   froide de la fonction. Supprime la dépendance et le risque, coûte du temps
+   de démarrage sur trois routes.
+3. **Aligner les trois sur le repli anglais**, comme la carte sociale. Aucune
+   dépendance, aucun risque — et une image de bilan en anglais pour quelqu'un
+   qui lit l'application en japonais, ce qui défait la correction qui l'avait
+   fait traduire.
+
+**Ce qui n'est pas mesuré, et qui déciderait** : la fréquence réelle d'un échec
+Google Fonts depuis une fonction Vercel. Elle ne se mesure pas d'ici.
+
+---
+
 ## Ce qui a été tranché, et où c'est parti
 
 Quatorze questions, répondues le 8 septembre. Le tableau existe pour qu'une

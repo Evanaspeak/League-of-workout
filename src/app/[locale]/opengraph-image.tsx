@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { textesImageSociale } from "@/lib/i18n/imageSociale";
+import { JEUX } from "@/lib/jeux";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -61,7 +62,7 @@ export default async function OgImage(
           <span style={{ display: "flex", color: "#ECEFF4", background: "#FF4D2E", padding: "10px 20px", borderRadius: 8, letterSpacing: 3, fontWeight: 700 }}>
             {t.badge}
           </span>
-          <span style={{ display: "flex" }}>{t.jeux}</span>
+          <span style={{ display: "flex" }}>{t.jeux(JEUX.length)}</span>
         </div>
       </div>
     ),

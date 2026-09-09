@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { type Locale } from "./langues";
+import { JEUX } from "../jeux";
 import { avecLocale, languesAlternatives } from "./cheminLocalise";
 
 /**
@@ -9,7 +10,7 @@ import { avecLocale, languesAlternatives } from "./cheminLocalise";
  * serveur, sans composant et sans stockage de navigateur. Tant que la langue
  * vivait dans le navigateur, une seule version pouvait donc partir — et c'était
  * le français, pour tout le monde. C'est la raison d'être du préfixe de langue
- * dans l'adresse : sans lui, les dix pages publiques et les quinze pages par
+ * dans l'adresse : sans lui, les dix pages publiques et les pages par
  * jeu n'existaient qu'en français aux yeux d'un moteur de recherche, alors
  * qu'elles sont le seul canal d'acquisition qui travaille sans qu'on s'en
  * occupe.
@@ -24,27 +25,27 @@ const PAGES = {
   accueil: {
     fr: {
       titre: "Win or Workout · Tu perds une game, tu fais des pompes",
-      description: "L'app calcule combien de pompes tu dois après chaque partie, d'après ton KDA et ton niveau de forme. Quinze jeux, application Windows gratuite.",
+      description: `L'app calcule combien de pompes tu dois après chaque partie, d'après ton KDA et ton niveau de forme. ${JEUX.length} jeux, application Windows gratuite.`,
     },
     en: {
       titre: "Win or Workout · You lose a game, you do push-ups",
-      description: "The app works out how many push-ups you owe after each match, from your KDA and your fitness level. Fifteen games, free Windows app.",
+      description: `The app works out how many push-ups you owe after each match, from your KDA and your fitness level. ${JEUX.length} games, free Windows app.`,
     },
     es: {
       titre: "Win or Workout · Pierdes una partida, haces flexiones",
-      description: "La app calcula cuántas flexiones debes tras cada partida, según tu KDA y tu nivel de forma. Quince juegos, app de Windows gratuita.",
+      description: `La app calcula cuántas flexiones debes tras cada partida, según tu KDA y tu nivel de forma. ${JEUX.length} juegos, app de Windows gratuita.`,
     },
     de: {
       titre: "Win or Workout · Du verlierst, du machst Liegestütze",
-      description: "Die App berechnet, wie viele Liegestütze du nach jeder Partie schuldest, aus deinem KDA und deinem Fitnesslevel. Fünfzehn Spiele, kostenlose Windows-App.",
+      description: `Die App berechnet, wie viele Liegestütze du nach jeder Partie schuldest, aus deinem KDA und deinem Fitnesslevel. ${JEUX.length} Spiele, kostenlose Windows-App.`,
     },
     zh: {
       titre: "Win or Workout · 输了一把，就做几个俯卧撑",
-      description: "每局结束后，应用根据你的 KDA 和体能等级算出该做多少个俯卧撑。支持十五款游戏，Windows 应用免费。",
+      description: `每局结束后，应用根据你的 KDA 和体能等级算出该做多少个俯卧撑。支持 ${JEUX.length} 款游戏，Windows 应用免费。`,
     },
     ja: {
       titre: "Win or Workout · 負けたら、腕立て伏せ",
-      description: "試合ごとに、KDA と体力レベルから腕立ての回数を計算します。15タイトル対応、Windows アプリは無料。",
+      description: `試合ごとに、KDA と体力レベルから腕立ての回数を計算します。${JEUX.length} タイトル対応、Windows アプリは無料。`,
     },
   },
   beta: {

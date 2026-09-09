@@ -11,6 +11,22 @@ import { estLocale, type Locale } from "./langues";
  * Sans ça, l'image partirait en français à tout le monde, et rien ne le
  * signalerait : celui qui écrit l'application la lit en français.
  */
+/**
+ * **Ce que les idéogrammes coûtent ici, mesuré plutôt que supposé.**
+ *
+ * Le moteur de `next/og` n'embarque que `Geist-Regular.ttf`. Devant un glyphe
+ * qu'elle ne couvre pas, il va chercher la police chez Google — trois requêtes
+ * par rendu, contre zéro pour un texte latin. C'est acceptable ici : cette
+ * image est demandée par la personne elle-même, une fois, quand elle veut
+ * partager ; ce n'est pas le cas de la carte sociale, qu'un robot réclame avec
+ * un délai serré, et qui retombe donc sur l'anglais.
+ *
+ * Le prix à connaître : **si Google Fonts est injoignable, les idéogrammes
+ * sortent en carrés vides** — vérifié en coupant ces requêtes. L'image part
+ * quand même, illisible, et rien ne le signale. Le pseudo est dans le même cas
+ * et aucun repli ne le couvre : un pseudo japonais sortirait en carrés le jour
+ * de la panne, quelle que soit la langue du compte.
+ */
 export type MotsImage = {
   periode: (jours: number) => string;
   parties: string;
