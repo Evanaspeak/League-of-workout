@@ -211,9 +211,21 @@ export default function AdminUserList() {
               * avec le bloc facultatif de `/beta`, le seul dépliant du produit
               * à ne pas déclarer son état — sept autres le font.
               *
-              * Les trois remises à zéro (`border`, `font`, `textAlign`) sont là
-              * pour que le bouton rende exactement ce que le `div` rendait :
-              * l'écran ne bouge pas, seul ce qu'il ANNONCE change.
+              * **Deux remises à zéro, et deux seulement.** Mesurées en retirant
+              * chacune à son tour, sur la feuille de style du produit :
+              *
+              *   sans `width: 100%`   → la ligne passe de 600 à 112,91 px
+              *   sans `textAlign`     → le pseudo et le courriel se centrent
+              *   sans `border`        → rien
+              *   sans `font`          → rien
+              *   sans `color`         → rien
+              *
+              * Les trois dernières sont déjà faites par la remise à zéro de
+              * Tailwind, qui pose `border: 0 solid` et `font: inherit` sur les
+              * commandes. Les écrire quand même ne coûte rien et se relit comme
+              * une garantie — c'est le défaut que ce projet paie en boucle, donc
+              * elles sont parties. Un premier jet les nommait toutes les trois
+              * comme nécessaires, et taisait `width`, qui est celle qui tient.
               */}
             <button
               type="button"
@@ -223,7 +235,7 @@ export default function AdminUserList() {
               style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
                 cursor: "pointer", background: expanded === u.id ? "color-mix(in srgb, var(--steel) 4%, transparent)" : "transparent",
-                width: "100%", border: "none", font: "inherit", color: "inherit", textAlign: "left",
+                width: "100%", textAlign: "left",
               }}
             >
               <ActivityDot value={u.gamesThisWeek} max={maxWeekly} />
