@@ -1289,6 +1289,55 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Trois remises à zéro sur cinq ne remettaient rien à zéro
+Suite de V559, et c'est la comparaison de rendu qui a demandé la question.
+
+La ligne compacte du panneau d'administration est passée d'un `<div onClick>` à
+un `<button>` — elle ouvre et ferme un profil, donc c'est une commande, et en
+`div` elle n'était atteignable ni au clavier ni par un lecteur d'écran. Un
+bouton porte des styles par défaut de l'agent utilisateur ; j'en avais donc
+neutralisé cinq, avec un commentaire qui en nommait trois comme nécessaires.
+
+**La comparaison de rendu ne pouvait pas trancher**, et il faut le dire tout de
+suite : trente-neuf captures, **aucune différence**, sur treize pages et trois
+largeurs — mais le panneau d'administration n'en fait pas partie. Il résiste à
+l'emprunt d'adresse, limite déjà écrite ici. Ce que la campagne prouve est que
+les seize autres corrections ne coûtent aucun pixel — `/login`, `/beta`,
+`/history`, le tableau de bord et les cinq rubriques de réglages — et elle ne
+dit **rien** de la seule conversion risquée du lot.
+
+**Mesuré à part, en retirant chaque remise à zéro à son tour**, sur la feuille
+de style du produit :
+
+| retirée | effet |
+|---|---|
+| `width: 100%` | **600 → 112,91 px** — la ligne se rétrécit sur son contenu |
+| `textAlign: "left"` | **start → center** — le pseudo et le courriel se centrent |
+| `border: "none"` | aucun |
+| `font: "inherit"` | aucun |
+| `color: "inherit"` | aucun |
+
+**Deux sur cinq tiennent, et mon commentaire nommait les mauvaises.** Il
+annonçait « les trois remises à zéro (`border`, `font`, `textAlign`) » : deux
+de ces trois ne font rien, et `width`, qui est celle qui tient de loin le plus,
+n'y figurait pas. La remise à zéro de Tailwind pose déjà `border: 0 solid` et
+`font: inherit` sur les commandes, et `box-sizing: border-box` partout — c'est
+elle qui fait le travail, pas moi.
+
+Les trois lignes mortes sont parties. C'est la règle écrite ici depuis le
+`muet = false` de la pastille et la forme fermée du niveau : **une ligne qu'on
+peut retirer sans qu'un test tombe ne tient rien, et elle se relit comme une
+garantie.** Sous un commentaire qui la déclare nécessaire, c'est pire — on la
+croit, et on ne mesure plus.
+
+**Ce que ça apprend sur l'outil.** Une comparaison de rendu qui rend « aucune
+différence » ne dit rien des pages qu'elle ne capture pas, et celle-ci en
+manque une par construction. Le geste qui a tranché coûte deux minutes : rendre
+les deux éléments côte à côte dans le contexte réel de la feuille de style, et
+lire leurs boîtes. C'est la méthode déjà employée pour la résolution de `var()`
+dans un attribut SVG — quand l'outil ne peut pas atteindre le cas, on fabrique
+le cas.
+
 ### Quarante champs, et l'audit ne regardait que les boutons
 Trouvé en ouvrant `/beta` — la SEULE porte d'entrée du produit — et en lui
 demandant le nom accessible de ses champs. **Huit champs, zéro nom**, dont deux
