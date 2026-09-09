@@ -1099,13 +1099,16 @@ l'état, faute d'un gain qui justifie la retouche.
 Huit scripts, dont quatre pilotent un Chromium sur l'application lancée en local.
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
-**Avant toute campagne : `rm -rf .next/cache`.** Ce dossier SURVIT à
-`next build`, et une réponse gardée pendant un état de construction
-intermédiaire — un sabotage, une branche à moitié écrite — continue d'être
-servie avec `x-nextjs-cache: HIT`. Deux campagnes ont mesuré une 404 sur une
-page qui rend 200 en production. Le témoin qui distingue ça d'une régression
-est l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on
-regarde le passé.
+**Avant toute campagne — ET avant une suite navigateur qu'on veut croire :
+`rm -rf .next/cache`.** Ce dossier SURVIT à `next build` comme au serveur, et
+une réponse gardée pendant un état de construction intermédiaire — un sabotage,
+une branche à moitié écrite — continue d'être servie avec
+`x-nextjs-cache: HIT`. Deux campagnes ont mesuré une 404 sur une page qui rend
+200 en production, et une suite entière a rendu **neuf parcours rouges** —
+`lang="en"` sur les cinq langues du calculateur — en désignant le dernier
+changement comme coupable. Le témoin qui distingue ça d'une régression est
+l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on regarde
+le passé.
 
 ```bash
 node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
@@ -1348,6 +1351,29 @@ tout va bien, est de deux lectures qui passent du premier coup.
 que la cause est l'hydratation. Elle dit qu'un envoi ne partira plus jamais
 avec un champ requis vide, et que si le champ refuse obstinément de tenir, le
 test le dira au lieu d'attendre trente secondes.
+
+**Et la suite rejouée a rendu NEUF échecs qui ressemblaient à une régression
+de cette correction.** Cinq pages de calculateur rendant `lang="en"` dans les
+six langues, plus trois contrôles de référencement et un d'accueil. Aucun n'a
+de rapport avec la connexion, et le témoin qui tranche est l'EN-TÊTE :
+
+```
+x-nextjs-cache: HIT      <html lang="en"   pour /fr, /de, /ja comme pour /en
+```
+
+C'est `.next/cache`, qui SURVIT au serveur comme à la construction et servait
+des réponses d'un état intermédiaire — le piège que ce journal écrit depuis la
+campagne du 8 septembre. Ce qu'il faut y ajouter est que **la règle ne vaut pas
+que pour les campagnes de MESURE** : elle vaut pour la suite navigateur, où le
+même cache fait tomber neuf parcours d'un coup et désigne le dernier changement
+comme coupable. Cache vidé, serveur relancé, les cent quatorze parcours des
+trois fichiers passent.
+
+**Et le projet `bareme` n'avait pas tourné du tout** — ses `dependencies` le
+sautent dès qu'un fichier amont échoue, ce qui est écrit ici depuis V532. Les
+« 2 did not run » du rapport étaient ses deux tests, c'est-à-dire précisément
+ceux qu'on venait corriger. Un rapport qui annonce « 256 passés » sans dire
+lesquels n'ont pas tourné se lit comme un succès.
 
 **Un piège d'outillage, deux fois de suite.** Une sonde écrite à côté de la
 suite ne trouve pas le navigateur : `playwright.config.ts` lit
