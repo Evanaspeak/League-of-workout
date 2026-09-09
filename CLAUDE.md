@@ -1289,6 +1289,110 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Un contrôle d'absence qui ne tenait que par l'ordre des lignes
+
+Les 272 parcours navigateur n'avaient jamais été passés au crible en tant que
+tels. Le journal porte pourtant six cas où un test passait POUR LA MAUVAISE
+RAISON — un contrôle d'absence vrai avant que la requête parte,
+`getByRole("alert")` qui trouve l'annonceur de route de Next, un nombre lu par
+sous-chaîne, un témoin qui compte au lieu de regarder. Chacun avait été corrigé
+seul ; personne n'avait demandé s'il en restait.
+
+**Le recensement est presque entièrement négatif, et c'est écrit pour qu'on ne
+le refasse pas :**
+
+| famille | trouvé |
+|---|---|
+| assertion asynchrone sans `await` | **0** |
+| `test()` sans aucune assertion | **0** |
+| `getByRole("alert")` sans filtre de texte | **0** |
+| `toBeTruthy()` sur ce qui est toujours vrai | 0 — dix emplois, tous des présences de métadonnées ou des `ok()` |
+| `not.toContain` sur une valeur non lue | 0 — les quatorze portent sur une valeur relue |
+| **contrôle d'absence sans marqueur de présence** | **1 sur 16** |
+
+**Le premier chiffre est celui qui compte le plus, parce que ce piège-là est
+totalement muet.** `expect(locator).toBeVisible()` sans `await` ne fait rien :
+la promesse part, personne ne l'attend, le test passe quoi qu'il arrive. Zéro
+sur trente-quatre fichiers.
+
+**La trouvaille est un `toHaveCount(0)` qui tenait par accident.**
+`e2e/force.spec.ts` vérifie qu'un compte neuf n'a pas de courbe de progression :
+
+```ts
+expect(await compter(TESTS, [pseudo])).toBe(0);
+await expect(page.getByRole("heading", { name: /ta progression/i })).toHaveCount(0);
+```
+
+`toHaveCount(0)` est **satisfait par l'absence** : il rend la main dès que le
+compte vaut zéro, donc avant que le panneau soit rendu. C'est la seule
+assertion de Playwright dans ce cas, et le journal l'écrit déjà — « un test qui
+attend quelque chose de déjà vrai n'attend rien ».
+
+**Mesuré des deux côtés plutôt que raisonné**, avec la courbe rendue dès zéro
+point :
+
+| ordre des deux lignes | verdict |
+|---|---|
+| la lecture en base D'ABORD (l'ordre écrit) | **le test TOMBE** |
+| le contrôle d'absence d'abord | **le test PASSE** |
+
+Autrement dit : ce qui faisait mordre le contrôle n'était pas le contrôle,
+c'était la requête SQL posée juste avant, dont les quelques centaines de
+millisecondes laissaient à `/api/settings` le temps de répondre. Sur une
+machine plus rapide, ou le jour où `compter` deviendrait plus rapide, il
+cesserait de mordre **sans que rien ne le dise**.
+
+**J'ai failli écrire le contraire.** Le premier sabotage a fait tomber le test,
+et j'allais conclure que le contrôle était bon. C'est l'inversion des deux
+lignes — trois minutes — qui a tranché. C'est la leçon déjà écrite pour la
+comparaison de rendu : « j'ai cru mesurer une chose et j'en mesurais une
+autre », et seul le fait de rendre le geste explicite l'a montré.
+
+**La correction est un marqueur de la même zone**, pas une attente : le bouton
+« Faire le test » vient du MÊME composant et de la MÊME réponse d'API que la
+courbe. Une fois qu'il est là, l'absence de la courbe dit quelque chose.
+Éprouvé dans le pire ordre — sabotage en place ET les deux lignes inversées,
+c'est-à-dire le seul état où l'ancienne version passait : le test tombe.
+
+**Le garde ne s'écrit que parce qu'il ne crie sur rien.** Quinze contrôles
+d'absence sur seize satisfaisaient déjà la règle le jour de son écriture ;
+c'est le critère que ce journal emploie pour décider — « un garde qui crie sur
+ce qui va bien finit par ne plus se lire ».
+`src/absenceApresPresence.test.ts` exige qu'un `toHaveCount(0)` soit précédé,
+dans les douze lignes qui le précèdent, d'une attente ou d'une assertion
+POSITIVE.
+
+**Ce qu'il ne peut PAS faire est écrit dedans** : il ne juge pas si le marqueur
+porte sur la bonne ZONE. Un `toBeVisible` sur le pied de page le satisferait
+sans rien prouver du panneau qu'on regarde. Ce qui attrape ça est le sabotage,
+et il se fait à la main.
+
+**Et il a fallu masquer les commentaires SANS perdre la numérotation.**
+`sansCommentaires`, que trois gardes partagent, supprime le contenu des blocs
+`/* … */` **sauts de ligne compris** : tout numéro rapporté après un tel bloc
+est faux, et ces fichiers en sont pleins. Le premier jet désignait
+`recuperation.spec.ts:21` pour un contrôle qui vit ligne 49 — un garde qui
+nomme la mauvaise ligne envoie corriger ailleurs. Il masque donc par des
+espaces en gardant les `\n`.
+
+Le masquage sert aussi dans l'autre sens, et c'est le piège que ce journal
+recense dans les deux directions : le commentaire de `recuperation.spec.ts`
+écrit noir sur blanc « `toHaveCount(0)` est vrai tout de suite », donc un garde
+qui lit le texte brut compte une absence de plus — et un commentaire qui nomme
+`toBeVisible` le CALMERAIT sur un contrôle qui n'a aucun marqueur.
+
+Quatre sabotages, quatre échecs, chacun sur son propre contrôle : le marqueur
+retiré de `force.spec.ts` — qui nomme le fichier et la ligne —, la liste des
+marqueurs vidée, le masquage débranché, et le motif rendu aveugle, ce dernier
+devant faire tomber le TÉMOIN plutôt que de rendre vert sur zéro absence
+examinée.
+
+**Une forme d'assertion que le recensement ne voit pas, et qu'il vaut mieux
+nommer** : `waitForURL` avec son délai. `panne-serveur.spec.ts` porte un test
+sans un seul `expect` — il attend que l'adresse devienne `/login`, et il tombe
+si elle ne le devient pas. C'est une assertion parfaitement valable sous une
+forme qu'un recensement mécanique déclare vide.
+
 ### Campagne de clôture après V563 et V564, et la suite entière enfin verte
 
 **272 passés sur 272, en 16 min 12**, sur une construction neuve — `.next/cache`
