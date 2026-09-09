@@ -273,7 +273,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [x] | 082 | Une partie de démonstration préremplie, sans avoir à jouer | — |
 | [ ] | 090 | Demander l'objectif à l'inscription et adapter l'application | 2 nuits |
 | [x] | 080 | Mesurer le temps jusqu'à la première partie enregistrée — **fait : `/api/admin/mesures` rend la médiane et les quartiles du délai, et le panneau d'administration les affiche** | — |
-| [ ] | 085 | Te montrer les deux formulaires d'inscription pour choisir | je te dois la maquette |
+| [ ] | 085 | Te montrer les deux formulaires d'inscription pour choisir — **les maquettes sont rendues** : `questions-ouvertes.md` item 12, une page côte à côte dans la peau du produit. Il reste à choisir | à toi |
 
 ### Revenir
 *1 à faire · 10 faits.* Presque tout construit. C'est le bloc le plus avancé.
@@ -423,7 +423,10 @@ Trois choses promises et jamais rendues :
   `questions-ouvertes.md` item 10 : dix propositions, leur coût mesuré sur ce
   que `/api/progression` charge déjà, et les trois idées naturelles qui ne se
   mesurent pas honnêtement ;
-- les deux maquettes de formulaire d'inscription.
+- ~~les deux maquettes de formulaire d'inscription~~ — **rendues le
+  9 septembre**, `questions-ouvertes.md` item 12 : une page qui les montre
+  côte à côte dans la peau du produit, parce que « montre-moi » ne se répond
+  pas en prose.
 
 ## Ce qui n'appartient pas à ce plan
 
