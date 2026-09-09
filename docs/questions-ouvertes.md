@@ -709,6 +709,63 @@ il y a des gens dedans — et l'option C est la seule dont le coût ne grandit p
 en attendant.
 
 
+### 23 · Deux rouges d'erreur et deux verts de succès, tous inventés
+
+**Née en élargissant le garde de la palette aux feuilles de style.** Il refuse
+un littéral qui ÉGALE une couleur nommée, et depuis ce soir un littéral qui
+passe à un cheveu de l'une. Il ne peut, par construction, rien dire d'une
+couleur qu'on INVENTE — et le produit en a inventé quatre, pour deux rôles
+qu'il a déjà nommés.
+
+**Ce qui est mesuré**, sur tout `src` :
+
+| écrit | vaut | emplois | fichiers | ce que la palette a déjà |
+|---|---|---|---|---|
+| `#e05555` | rgb(224, 85, 85) | 7 | 4 | `--loss` `#FF5A47` |
+| `rgba(220,80,80,α)` | rgb(220, 80, 80) | 6 | 3 | idem |
+| `rgba(200,70,70,0.15)` | rgb(200, 70, 70) | 1 | 1 | idem |
+| `#4eb86e` | rgb(78, 184, 110) | 1 | 1 | `--victory` `#2FD98A` |
+| `rgba(70,180,100,0.15)` | rgb(70, 180, 100) | 1 | 1 | `--victory-soft` |
+
+**Les deux premiers rouges sont à QUATRE niveaux l'un de l'autre**, donc
+indiscernables — deux couleurs pour un seul rôle, dont personne ne peut dire
+laquelle est la bonne. Les deux verts sont à dix.
+
+**Et le témoin le plus net tient sur une seule ligne.**
+`AdminChampionEditor.tsx` écrit son fond de message ainsi :
+
+```tsx
+background: msg.type === "ok" ? "var(--victory-soft)" : "rgba(220,80,80,0.1)",
+```
+
+Le même ternaire LIT la palette d'un côté et en INVENTE une de l'autre.
+
+**Pourquoi ça ne se décide pas seul.** La palette n'a pas de jeton d'ERREUR :
+`--loss` veut dire « la game est perdue », ce qui n'est pas « ce champ est mal
+rempli ». Choisir de peindre les deux pareil, ou d'ajouter un jeton, est une
+décision de palette — et la réponse 251 dit que la marque visuelle est validée.
+
+**Trois options, chiffrées :**
+
+- **A — ne rien changer.** Coût nul, et quatre couleurs que rien ne surveille :
+  le garde ne les voit pas, donc elles se multiplieront exactement comme
+  elles l'ont fait. C'est l'option qui coûte le plus tard.
+- **B — les ramener sur `--loss` et `--victory`.** Quinze emplois, dix minutes,
+  et **la couleur change à l'écran** — l'écart va jusqu'à 31 niveaux, c'est
+  visible. Ça revient à dire qu'une erreur de formulaire se peint comme une
+  défaite.
+- **C — deux jetons de plus, `--erreur` et `--succes`**, posés sur les valeurs
+  actuelles ou sur celles que tu choisiras. Rien ne bouge à l'écran si on garde
+  les valeurs, tout devient nommé, et le garde reprend la main. Une demi-heure,
+  plus une ligne de palette à valider.
+
+**Ce que ce chantier a fait en attendant, et qui ne demandait rien** : le
+dégradé de marque recopiait `--ember` en clair dans deux feuilles, et cinq
+littéraux passaient à un cheveu d'une couleur nommée — dont **trois noirs
+différents** qui voulaient tous dire `--ink`. Les sept sont convertis, et le
+garde refuse leur retour.
+
+
 ---
 
 ## Ce qui demande une machine qu'on n'a pas

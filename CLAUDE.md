@@ -1311,6 +1311,75 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le garde de la palette n'ouvrait pas les feuilles de style
+
+Trouvé en lisant `ChampionInput.tsx` pour tout autre chose : son menu déroulant
+peint son fond en `#0d1117`, et `--ink` vaut `#0C0E11`. Six niveaux d'écart,
+c'est-à-dire rien à l'œil — et un troisième gris-noir que personne n'a choisi.
+
+**Le recensement a rendu deux familles, et le garde était aveugle aux deux pour
+deux raisons différentes.**
+
+**La première est un TROU de portée**, et il se voit en lisant le fichier du
+garde : le contrôle des littéraux lit `fichiers(SRC, [".tsx", ".ts"])` quand
+celui des transparences, quarante lignes plus bas, lit `[".tsx", ".ts", ".css"]`.
+Deux contrôles du même fichier, l'un qui ouvre les feuilles et l'autre non. Ce
+qui vivait dedans : **le dégradé de marque, dans DEUX feuilles, qui recopiait
+`--ember` en clair**. C'est mot pour mot la correction de « Une couleur écrite
+dix fois, dans deux paquets, sans nom » — appliquée à un de ses deux endroits,
+ce que ce journal reproche partout.
+
+**La seconde est structurelle, et c'est la vraie trouvaille : le garde compare
+des CHAÎNES.** Il attrape « tu as réécrit une couleur qu'on a nommée » et jamais
+« tu en as inventé une à un cheveu ». Or **le presque est PIRE que l'exact** :
+un doublon exact rend la bonne couleur, le défaut n'est que d'entretien ; un
+presque rend une couleur de plus, et il ne se voit pas — c'est sa définition.
+
+Cinq littéraux vivaient là, **dont trois noirs différents qui voulaient tous
+dire `--ink`** :
+
+| écrit | proche de | écart | où |
+|---|---|---|---|
+| `#0b0d12` | `--ink` | 1 | réglages du corps |
+| `#0B0E12` | `--ink` | 1 | frontière 404 de la racine |
+| `#9AA3B0` | `--steel` | 2 | carte partagée |
+| `#0d1117` | `--ink` | 6 | saisie de champion |
+| `#E8EAED` | `--bone` | 7 | images de séance et de bilan |
+
+**Le seuil porte sa raison plutôt qu'un ajustement aux données du jour** : huit
+niveaux sur 255 font trois pour cent, sous le seuil de perception sur un aplat.
+Ce qu'il ne voit pas est écrit dans le garde — le blanc de drapeau de
+`Drapeau.tsx` est à 9 de `--bone`, l'ambre de `/beta` à 10 de `--amber` — et
+aucun des deux n'est un accident : le premier est une couleur nationale, le
+second un écart qui SE VOIT, donc un arbitrage.
+
+**Et le nouveau contrôle lit les fichiers DISPENSÉS, contrairement à l'autre.**
+La distinction est le cœur de la règle et elle vaut d'être écrite : une image de
+`next/og`, un courriel HTML ou le manifeste ne peuvent pas résoudre `var()`,
+donc ils ont le droit d'écrire la couleur EN CLAIR — ils n'ont pas le droit d'en
+inventer une autre. Trois des cinq presque-noirs vivaient précisément là.
+
+**Le tri s'éprouve sur des cas FABRIQUÉS**, parce que l'état sain du dépôt est
+zéro trouvaille : les fichiers réels ne distinguent pas un seuil qui trie d'un
+seuil qui ne voit rien. Quatre cas — la couleur elle-même, le presque qui a
+motivé la règle, une couleur franchement différente, et la même sous une autre
+transparence.
+
+Cinq sabotages, cinq échecs : le presque-noir remis dans un fichier ordinaire,
+`--ember` remis en clair dans une feuille, un presque-noir posé dans un fichier
+DISPENSÉ, le seuil rendu aveugle, et la lecture des composantes débranchée — les
+deux derniers devant faire tomber les cas fabriqués plutôt que de rendre le
+contrôle vert sur zéro trouvaille.
+
+**Ce que le recensement a trouvé et qui ne se corrige PAS seul**, écrit plutôt
+que fait en silence : le produit a **deux rouges d'erreur et deux verts de
+succès**, tous inventés, les rouges à quatre niveaux l'un de l'autre. Le garde
+ne peut rien en dire — ils ne ressemblent à aucune couleur nommée — et la
+palette n'a pas de jeton d'ERREUR, `--loss` voulant dire « la game est perdue ».
+Le témoin le plus net tient sur une ligne d'`AdminChampionEditor` : le même
+ternaire LIT `var(--victory-soft)` d'un côté et écrit `rgba(220,80,80,0.1)` de
+l'autre. Ça part dans les questions, avec ses trois options chiffrées.
+
 ### Le champ PROPOSAIT « Cho'Gath » pendant que le bouton refusait « Chogath »
 
 Trouvé en ouvrant le formulaire d'ajout et en tapant, plutôt qu'en le relisant.

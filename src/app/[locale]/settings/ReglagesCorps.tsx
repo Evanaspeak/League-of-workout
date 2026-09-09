@@ -644,6 +644,6 @@ export function ReglagesCorps({
 
 function boutonStyle(actif: boolean): React.CSSProperties {
   return actif
-    ? { background: "var(--gold)", color: "#0b0d12", border: "1px solid var(--gold)" }
+    ? { background: "var(--gold)", color: "var(--ink)", border: "1px solid var(--gold)" }
     : { background: "color-mix(in srgb, var(--steel) 10%, transparent)", color: "var(--muted)", border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)" };
 }

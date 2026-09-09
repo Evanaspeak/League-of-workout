@@ -28,7 +28,7 @@ export default function Introuvable() {
     <html lang="en">
       <body style={{
         margin: 0, minHeight: "100vh", display: "flex", alignItems: "center",
-        justifyContent: "center", background: "#0B0E12", color: "#ECEFF4",
+        justifyContent: "center", background: "#0C0E11", color: "#ECEFF4",
         fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif",
       }}>
         <CorpsIntrouvable locale="en" />

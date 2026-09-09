@@ -66,7 +66,7 @@ function carte(
         justifyContent: "space-between", padding: "64px 72px", background: FOND,
         backgroundImage:
           "radial-gradient(ellipse 70% 55% at 85% 0%, rgba(200,170,110,0.16) 0%, rgba(12,14,17,0) 62%)",
-        color: "#E8EAED", fontFamily: "sans-serif",
+        color: "#ECEFF4", fontFamily: "sans-serif",
       }}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
