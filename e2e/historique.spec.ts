@@ -631,7 +631,29 @@ test("semer cinquante-cinq parties", async ({ browser }) => {
     });
     expect(r.status(), await r.text()).toBe(200);
   }
-  etatBorne = etat;
+  /**
+   * Les fenêtres d'accueil sont désamorcées AVANT de garder l'état.
+   *
+   * `ouvrirCompte` traverse le consentement santé et lui seul ; la modale
+   * d'accueil, elle, arrive quelques instants après le chargement, et elle
+   * recouvre la page. Les deux tests qui suivent lisent d'abord trois choses
+   * puis CLIQUENT : la modale a le temps d'arriver entre les deux, et le clic
+   * tombe dessus. Vu en intégration continue — « <div role="dialog"
+   * aria-label="Bienvenue dans Win or Workout"> intercepts pointer events »,
+   * cent dix reprises, une minute — pendant que la suite locale passait.
+   *
+   * Le premier compte de ce fichier fait déjà exactement ça, trente lignes
+   * plus haut ; celui-ci ne l'avait pas.
+   */
+  const idBorne = (await (await page.request.get("/api/user")).json()).id as string;
+  await page.goto("/fr/history", { waitUntil: "domcontentloaded" });
+  await page.evaluate((u) => {
+    try {
+      for (const c of [`low_onboarded:${u}`, `low_visite:${u}`]) localStorage.setItem(c, "1");
+    } catch { /* stockage refusé */ }
+  }, idBorne);
+
+  etatBorne = await ctx.storageState();
   await ctx.close();
 });
 

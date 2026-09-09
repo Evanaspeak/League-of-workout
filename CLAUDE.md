@@ -1270,6 +1270,49 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La modale d'accueil recouvrait le bouton de l'archive, et la suite locale gagnait la course
+V544 est partie ROUGE — lu en appliquant la règle de la fusion, la CI de la
+version PRÉCÉDENTE. Un seul tronçon, un seul test, et le message le nomme sans
+ambiguïté :
+
+```
+<div role="dialog" aria-modal="true" aria-label="Bienvenue dans
+Win or Workout"> intercepts pointer events
+```
+
+Cent dix reprises, une minute, sur le clic de « Tout l'historique ».
+
+**C'est la huitième occurrence de ce piège recensée ici**, et la cause est
+précise : `ouvrirCompte` traverse le consentement santé — par l'API, et lui
+seul. La modale d'accueil, elle, arrive quelques instants APRÈS le chargement.
+Le premier compte de `historique.spec.ts` pose lui-même `low_onboarded:<id>`
+et `low_visite:<id>` trente lignes plus haut ; le second, ouvert pour semer
+cinquante-cinq parties, ne l'avait pas.
+
+**Le test lit trois choses avant de cliquer**, et c'est ce qui ouvre la
+fenêtre : le compte des lignes, la phrase « 50 dernières parties, sur 55 »,
+l'absence de la colonne de cumul. La modale a le temps d'arriver entre la
+dernière lecture et le clic.
+
+**La suite locale gagne la course, et le dire vaut mieux que de conclure.**
+Sabotage posé — la neutralisation retirée — le fichier passe **deux fois sur
+deux** en local. Ce n'est donc pas le sabotage qui prouve quoi que ce soit,
+c'est le fait de rendre la course DÉTERMINISTE : trois secondes d'attente
+avant le clic, et l'échec revient mot pour mot, avec le même
+`aria-label="Bienvenue dans↵Win or Workout"`. La même attente, la correction
+en place : dix-sept passés.
+
+C'est la méthode déjà employée pour la lecture des réglages qui effaçait la
+saisie — « une sonde qui échoue une fois sur huit ne prouve rien dans un sens
+ni dans l'autre ». Un aléa ne se corrige pas en relançant : il se rend
+reproductible, puis il se corrige.
+
+**Et le piège du `-g`, quatrième occurrence.** Le premier sabotage lancé avec
+`-g "l'historique montre une fenêtre"` a échoué — mais il écarte le test qui
+SÈME, donc `etatBorne` n'existait pas et l'échec ne disait rien de ce qu'on
+sabotait. Le fichier se rejoue en entier.
+
+
 ### La page de secours hors ligne partait vers l'écran de connexion
 Trouvée en poussant les fichiers de `public/` un par un, ce qui n'avait jamais
 été fait. `/hors-ligne.html` rend **307 vers `/en/login`** — en local ET en
