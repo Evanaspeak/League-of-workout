@@ -869,9 +869,14 @@ refuse le retour des deux façons de s'en écarter.
   `var()` se résout dans un attribut de présentation SVG. Ce qui y reste
   littéral — la bordure de l'infobulle à 15 %, le quadrillage à 10 % — n'a pas
   de nom dans la palette.
-- Classes utilitaires : `lol-panel` (102 emplois), `lol-btn` (92), `lol-input`
-  (43), `mono-num` (73), `lol-select` (14), `lecture-ecran` (8), `stat-card`
-  (2, en voie de disparition).
+- Classes utilitaires, de la plus employée à la moins : `lol-btn` et
+  `lol-panel` (partout, plus de cent emplois chacune), `mono-num` et
+  `lol-input` (largement), `lol-select` et `lecture-ecran` (ponctuellement),
+  `stat-card` (en voie de disparition). **L'ordre est ce qui compte, pas les
+  comptes** : ils étaient écrits à l'unité et les sept étaient faux le jour où
+  on les a relus — 102 pour 105, 92 pour 120, 43 pour 53. `grep -c` les donne
+  en une seconde ; une liste de sept nombres dans un fichier qu'on relit une
+  fois par mois ne peut que mentir.
 - Polices : `var(--font-heading)` = **Chakra Petch**, `var(--font-body)` =
   Barlow, `var(--font-mono)` = IBM Plex Mono. Elles sont posées par
   `next/font` dans `src/app/[locale]/layout.tsx`, donc la coquille de
@@ -926,12 +931,15 @@ Les tests de routes API appellent les handlers directement, avec les outils de
 refus pour un compte non administrateur là où c'est requis, et filtrage par
 compte sur chaque requête en base.
 
-Toutes les routes ont un test, sauf `auth/[...nextauth]`, qui appartient à
-Auth.js. Les six dernières couvertes — configuration du scoring, rejeu de
-l'intro, expiration de session, fin de connexion desktop, session volatile,
-dernière partie Riot — l'ont été après un recensement qui résout les imports des
-tests jusqu'aux fichiers de route : chercher le nom du dossier dans le texte des
-tests donnait des faux positifs.
+**Toute route est importée par un test, ou déclarée avec sa raison**, et c'est
+`src/routesTestees.test.ts` qui le tient plutôt qu'une phrase — celle qui était
+écrite ici était fausse de trois routes, et rien ne pouvait le dire. Une seule
+exemption, `auth/[...nextauth]`, dont les gestionnaires appartiennent à Auth.js.
+
+Le recensement RÉSOUT les imports des tests jusqu'aux fichiers de route :
+chercher le nom du dossier dans le texte des tests donne des faux positifs, et
+chercher un test COLOCALISÉ des faux négatifs — huit routes parfaitement
+couvertes par un test qui vit ailleurs.
 
 L'empreinte du mot de passe ne sort pas de la base : `getCurrentUser` la retire
 par `omit`, et un test le vérifie sur la requête elle-même. Les deux routes qui
@@ -1018,7 +1026,7 @@ dur, la région Riot passe par une liste fermée avant d'entrer dans une URL, et
 le CSP écrit `base-uri` et `form-action`, qui ne retombent pas sur
 `default-src` (il vit dans `next.config.ts`, pas dans le middleware).
 
-**Il y en a soixante-quatre aujourd'hui, et ce ne sont pas les mêmes.** Ce qui
+**Il y en a bien davantage aujourd'hui, et ce ne sont pas les mêmes.** Ce qui
 couvre les dix-sept ajoutées depuis n'est pas cette revue — elle ne les a jamais
 vues — ce sont les gardes qui regardent le DOSSIER : `porteRoutes` pour la
 session, `filtreParCompte` pour le filtrage. Une revue est datée par
@@ -1108,7 +1116,8 @@ l'état, faute d'un gain qui justifie la retouche.
 
 ## Scripts de mesure
 
-Huit scripts, dont quatre pilotent un Chromium sur l'application lancée en local.
+Huit scripts, dont cinq pilotent un Chromium sur l'application lancée en local.
+(`scripts/langue.mjs` est un module partagé, pas un neuvième outil.)
 Ils ne tournent pas en CI : ils servent à constater, pas à bloquer une poussée.
 
 **Avant toute campagne — ET avant une suite navigateur qu'on veut croire :
@@ -1301,7 +1310,103 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### « Toutes les routes ont un test » était faux de trois, et mon détecteur de douze
+
+Suite de l'audit des affirmations vérifiables de ce fichier. Celle-ci portait
+sur la couverture : « Toutes les routes ont un test, sauf `auth/[...nextauth]` ».
+
+**Elle était fausse de trois routes** : les deux images — le bilan de saison et
+la dernière séance — et l'icône de l'application installée. Aucune des trois
+n'était importée par un test, et rien ne pouvait le dire : une route sans test
+ne casse pas, elle ne prouve rien.
+
+**Mais mon premier recensement en annonçait DOUZE, et c'est la partie
+instructive.** Il cherchait un test COLOCALISÉ — un `route.test.ts` à côté du
+`route.ts` — parce que c'est la convention de ce dépôt. Huit routes sur douze
+sont parfaitement couvertes par un test qui vit ailleurs. **Un recensement par
+emplacement de fichier hérite de la convention de celui qui l'écrit**, et
+j'allais publier un chiffre trois fois trop gros sur la foi d'une habitude.
+
+Ce qui tranche est la RÉSOLUTION des imports, exactement comme
+`codeMort.test.ts` : on lit ce que chaque test importe et on suit le
+spécificateur jusqu'à un fichier réel. La phrase de ce fichier le disait
+d'ailleurs — « un recensement qui résout les imports des tests jusqu'aux
+fichiers de route » — et je ne l'avais pas appliqué. **La description était
+juste et je ne l'ai pas crue ; le détecteur était faux et je l'ai crue.**
+
+**Les trois routes ont leurs tests, et deux d'entre elles avaient déjà de quoi
+mordre.** Le dessin vient de `next/og`, qui se double : ce qui reste est ce que
+la route REFUSE et ce qu'elle met dans l'image.
+
+- **`pwa-icon`** lit sa taille dans l'ADRESSE, et c'est le seul paramètre du
+  produit qui gouverne une allocation. `taille=99999` dessinerait une image de
+  dix milliards de pixels, sur une adresse que le manifeste rend publique. La
+  liste blanche existait ; rien ne la tenait, et elle ne se refuse pas — un
+  manifeste ne sait pas lire un message d'erreur — donc elle retombe sur la
+  plus petite ;
+- **`seance/image`** doit prendre la DERNIÈRE séance et non la plus grosse. Le
+  jeu de données les sépare exprès — 137 aujourd'hui, 900 il y a trois jours —
+  parce qu'une image qui montrerait le record au lieu de la séance du jour
+  serait fausse sans qu'on puisse le voir ;
+- **`bilan/image`** doit écarter les parties SANS ENJEU. C'est la correction
+  déjà écrite au journal — la même requête écrite deux fois, une seule des deux
+  filtrait, donc deux chiffres pour la même saison et c'est l'image qu'on
+  partage — et **rien ne la tenait depuis**.
+
+**Le garde regarde le DOSSIER**, comme celui de la porte des routes : toute
+route est importée par un test, ou déclarée avec sa raison. Il ne juge pas la
+QUALITÉ d'un test — un fichier qui importerait une route sans rien en éprouver
+le satisferait — il attrape la route qu'on ajoutera demain et que personne
+n'ouvrira.
+
+**Et sa résolution s'éprouve sur des cas FABRIQUÉS**, parce que l'état sain du
+dépôt ne peut pas la distinguer d'une résolution cassée : tout y est couvert,
+donc une résolution qui rendrait TOUT couvert passerait au vert. Le sabotage le
+montre — rendue aveugle, elle fait tomber deux contrôles sur quatre, dont celui
+des cas fabriqués.
+
+Sept sabotages sur les routes, sept échecs, chacun sur son propre contrôle.
+Quatre sur le garde, quatre échecs.
+
+**Une troisième affirmation corrigée au passage** : « Huit scripts, dont quatre
+pilotent un Chromium ». Ils sont **cinq** — `compte-mesure.mjs` en ouvre un
+aussi, ce que personne n'avait recompté depuis qu'il existe. Le neuvième
+fichier de `scripts/`, `langue.mjs`, est un module partagé et non un outil ; le
+dire évite qu'on « corrige » le huit à la prochaine relecture.
+
 ### Ce fichier annonçait trois comptes de tests, les trois faux
+
+**Et sept de plus dans la foulée, tous dans la même section.** « Conventions
+CSS » listait ses classes utilitaires à l'unité — `lol-panel` (102 emplois),
+`lol-btn` (92), `lol-input` (43), `mono-num` (73), `lol-select` (14),
+`lecture-ecran` (8), `stat-card` (2). Comptés : **105, 120, 53, 74, 19, 11,
+4**. Sept sur sept. Plus « il y en a soixante-quatre aujourd'hui » pour les
+routes d'API, qui en compte **soixante-huit**.
+
+**Ce que ces nombres disaient est un ORDRE, et l'ordre, lui, tient** :
+`lol-btn` et `lol-panel` partout, `mono-num` et `lol-input` largement,
+`lol-select` et `lecture-ecran` ponctuellement, `stat-card` en voie de
+disparition. C'est cette phrase-là qui est utile à qui ouvre le fichier, et
+elle ne périme pas. `grep -c` donne les comptes en une seconde le jour où on
+en a besoin.
+
+**Le garde ne voit que les CHIFFRES, et sa limite est écrite dedans.**
+« Soixante-quatre » est en toutes lettres, comme la moitié des nombres de ce
+fichier ; les reconnaître demanderait une table des numéraux français,
+c'est-à-dire une liste qui vieillirait à son tour. Il attrape la forme la plus
+courante, et le reste se relit.
+
+**Un vérifié et laissé, avec sa raison** : « Liste LoL hardcodée
+(~170 champions) ». Comptés, il y en a **173** — le tilde fait exactement son
+travail, et c'est la bonne façon d'écrire un ordre de grandeur qu'on ne veut
+pas tenir à jour.
+
+**Et le piège du `git checkout --`, cinquième occurrence.** Il restaure depuis
+l'INDEX : mes deux corrections n'y étaient pas, et la remise en état après le
+sabotage les a effacées — il a fallu les réécrire. La parade est écrite ici
+depuis la dette d'équipe et coûte une seconde : **indexer AVANT de saboter.**
+
+
 
 Trouvé en cherchant autre chose, et c'est ce qui le rend gênant : la section
 « Tests » écrivait **« 2766 tests unitaires, 271 suites »** et **« 266 tests »**
