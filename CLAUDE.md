@@ -1270,6 +1270,52 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### `.env.example` annonçait neuf variables, l'application en lit dix-huit
+Même méthode que les deux chantiers précédents : confronter deux sources plutôt
+que lire l'une d'elles. Ici, ce que le code va chercher dans son environnement
+contre ce que le fichier qui existe pour le dire annonce.
+
+**Neuf manquaient**, et le fichier parlait encore de **Supabase**, deux bases
+de données plus tôt — adresses `pooler.supabase.com` comprises. Quelqu'un qui
+monte un environnement le copie et obtient une application qui démarre, qui
+répond, et à qui il manque la moitié de ce qui la fait fonctionner.
+
+**Chaque absence est silencieuse, et deux ont déjà coûté une entrée de journal
+chacune :**
+
+- sans `RESEND_API_KEY`, le lien de récupération ne part pas. C'est la SEULE
+  porte de secours du produit, et la route répond « c'est envoyé » de toute
+  façon — la réponse doit rester générique, sinon elle permet d'énumérer les
+  comptes ;
+- sans les trois clés VAPID, `notifier()` rend zéro SANS RIEN TENTER : les
+  marques d'envoi se posaient quand même, et la relance des absents — une fois
+  par trimestre — se brûlait pour rien.
+
+Les sept autres : `RAPPEL_SECRET`, qui garde les trois déclencheurs programmés
+et dont l'absence les ferme à tout le monde ; `ADMIN_EMAILS`, qui décide qui
+est administrateur ; `INIT_SECRET` ; `AUTH_CANONICAL_HOST` ;
+`NEXT_PUBLIC_DDRAGON_VERSION` ; et `LOW_BACKEND_URL`, que la coquille Electron
+emploie comme FRONTIÈRE autant que comme adresse.
+
+**Chaque entrée porte ce qui casse sans elle**, et pas seulement son nom. Un
+fichier d'exemple qui liste des clés apprend où les coller ; il n'apprend pas
+ce qu'on perd à ne pas les coller, et c'est la seule chose qu'on ait envie de
+savoir à trois heures du matin.
+
+**`scripts/` est hors du champ, écrit plutôt que tu.** `BASE` et `BASE_RENDU`
+disent contre quel serveur on MESURE, pas comment le produit se déploie : les
+annoncer enverrait chercher un réglage qui n'existe pas. Et les tests sont
+écartés du recensement pour la même raison qu'ailleurs — ils POSENT leurs
+variables, ils ne les réclament pas.
+
+Deux exemptions seulement, chacune avec sa raison et vérifiée : `NODE_ENV`, que
+l'outillage pose, et `LOCALAPPDATA`, que Windows pose.
+
+Quatre sabotages, quatre échecs : une variable lue retirée du fichier, une
+exemption vidée de son objet, Supabase remis, et le recensement des lectures
+rendu aveugle.
+
+
 ### La modale d'accueil recouvrait le bouton de l'archive, et la suite locale gagnait la course
 V544 est partie ROUGE — lu en appliquant la règle de la fusion, la CI de la
 version PRÉCÉDENTE. Un seul tronçon, un seul test, et le message le nomme sans
