@@ -1289,6 +1289,306 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le barème facture DÉJÀ le temps, et la durée n'arrive que par un chemin sur trois
+Réponse 052, « **Explique l'effet** », et réponse 057, « **pas compris
+l'intérêt** ». Ce sont deux questions RETOURNÉES par le propriétaire, donc deux
+choses à mesurer et non à construire. Les deux réponses vivent dans
+`docs/questions-ouvertes.md`, questions 4 et 14.
+
+**Ce que la durée change aujourd'hui : rien.** Mesuré avec le moteur lui-même —
+une défaite mid 3/6/8 au niveau 1 coûte **onze points à cinq minutes comme à
+soixante**. Le seul seuil est le remake, sous cinq minutes.
+
+**Et la durée n'arrive que par UN des trois chemins d'entrée.** L'application
+Windows l'envoie ; la saisie à la main ne la demande pas pour une partie ; et
+`/api/riot/match-history` **ne lit même pas `gameDuration`**, que l'API de Riot
+donne. Une règle de durée s'appliquerait donc aux seules parties détectées par
+l'application de bureau — c'est-à-dire pas à la saisie manuelle, qui est le
+SEUL moyen d'employer le produit tant que la clé Riot de production n'est pas
+arrivée.
+
+**La trouvaille est ailleurs, et je ne l'attendais pas.** Une heure de League —
+deux défaites de trente minutes, mid 3/6/8 — contre une heure d'un jeu compté
+au temps :
+
+| niveau | League | compté au temps |
+|---|---|---|
+| 1 | 22 pts | 20 pts |
+| 3 | 52 pts | 47 pts |
+| 5 | 96 pts | 93 pts |
+
+**Trois à onze pour cent d'écart, aux cinq niveaux.** Autrement dit « League ne
+fait pas payer le temps » est vrai de la PARTIE et faux de la SOIRÉE : une
+partie moyenne dure une demi-heure et coûte à peu près une demi-heure de tarif.
+Le barème est donc déjà calibré sur le temps, par accident de la durée moyenne
+d'une partie — et un tarif horaire ajouté le compterait DEUX fois, ce qui
+double la dette d'une soirée (+73 % sur une partie de trente minutes).
+
+**Le piège commun aux deux options chiffrées est un effet sur le JEU, pas sur
+la dette** : dans les deux cas une défaite courte coûte moins, et on peut
+abandonner une partie de League à quinze minutes. Le produit se mettrait à
+récompenser le vote d'abandon.
+
+**Pour la 057, la mesure donne raison au propriétaire, puis désigne autre
+chose.** Ce qui décide du coût est le KDA, et il n'existe pas avant la partie :
+au niveau 3, la MÊME défaite vaut **12, 26, 74 ou 105 points** selon qu'elle
+est propre, moyenne, ratée ou noire. Un facteur neuf. « Si tu perds celle-ci,
+tu devras 42 » serait une devinette habillée en chiffre, et le simulateur écrit
+déjà la règle : *un simulateur qui ment est pire qu'aucun simulateur.*
+
+**Ce qui EST connu avant la partie, en revanche, c'est la chaîne de
+multiplicateurs**, et personne ne la voit. Même défaite, niveau 3 : 26 points
+en normale sur un champion jamais joué, 39 avec cent parties dessus, **49 en
+classée avec cent parties**. La même partie à +88 %, et rien ne le dit.
+La proposition qui remplace la ligne n'est donc pas un montant mais un TAUX —
+« cette partie te coûtera 1,9 fois le tarif » — exact, vérifiable, et disponible
+au moment où l'on peut encore changer d'avis.
+
+**Et le fichier des questions portait le défaut qu'il existe pour empêcher.**
+Son en-tête annonçait « il en reste quatre, plus cinq » quand il en portait
+treize : un nombre écrit une fois au-dessus de quelque chose qui bouge, dans le
+document dont la première ligne exige que chaque question porte ce qui est
+MESURÉ. Le total est retiré plutôt que corrigé — il rerouillerait à la question
+suivante.
+
+**Ce que ce chantier n'a PAS produit, et c'est voulu : aucune ligne de code.**
+Les deux lignes attendent un arbitrage, et les mesurer est tout ce qu'on peut
+faire sans lui.
+
+### Six langues, composition de fond corrigée : zéro constat, et c'est la bonne nouvelle
+Première passe d'accessibilité depuis que l'analyseur de couleur lit
+`color(srgb …)` et que les fonds translucides se COMPOSENT au lieu d'être
+sautés. Elle valait d'être faite pour une raison précise : les « 0 constat » de
+toutes les campagnes précédentes calculaient le contraste du texte contre un
+fond parfois faux — 114 fonds illisibles sur dix-huit écrans, mesuré la veille.
+
+**126 pages « rien à signaler » — vingt et une par langue, dans les six —
+zéro page NON MESURÉE, zéro constat.** Le résultat ne change pas, donc les
+campagnes précédentes disaient vrai ; ce qui change, c'est qu'on le sait au
+lieu de l'espérer.
+
+C'est un résultat NÉGATIF, et il est écrit ici pour la même raison que les
+autres : il coûte le même temps que celui qui trouve quelque chose, et sans
+lui la question se reposerait à la prochaine campagne.
+
+Les cinq frontières de commande remontent en `::warning::`, comme prévu, et le
+travail `accessibilite` de V555 est **vert en 10 min 32**.
+
+**Et deux entrées de ce journal étaient rangées au mauvais endroit.** Celles de
+V554 et V555 avaient été insérées SOUS des entrées plus anciennes, alors que la
+règle est écrite dix lignes plus haut — « les plus récentes en haut ». Le coût
+n'est pas cosmétique : en cherchant la tête du journal ce matin, j'ai failli
+réécrire une trouvaille qui y était déjà. Elles sont remontées.
+
+### Une seule frontière du produit atteint 3:1, et l'audit lisait la moitié des couleurs
+Suite de la ligne 300. L'outil écrit la veille ÉCARTAIT les boutons « faute de
+les avoir mesurés » — c'est-à-dire une dispense qui ne repose sur rien, le
+défaut que ce journal reproche partout. Mesurés.
+
+**Quatre-vingt-douze boutons, et AUCUN sans texte visible.** C'est ce chiffre
+qui décide, et il renverse la dispense : le critère 1.4.11 porte sur « ce qui
+identifie une commande », donc un bouton sans frontière visuelle est identifié
+par son TEXTE et sort du champ — 1.4.3 s'y applique déjà, et ce même outil le
+mesure. Ce qui reste sont ceux qui DESSINENT une frontière, et la règle qui les
+fait entrer se déduit de la mesure au lieu d'être arbitrée.
+
+| traitement | emplois | bordure | fond | verdict |
+|---|---|---|---|---|
+| `.lol-input`, `.lol-select` | 64 | 1,20:1 | 1,05:1 | échoue |
+| **sélecteur de langue** | **19 pages** | **1,35:1** | 1,08:1 | échoue |
+| champ en ligne | 3 écrans | 1,64:1 | 1,05:1 | échoue |
+| `.lol-btn-blue` | 3 | 1,64:1 | 1:1 | échoue |
+| `.lol-btn-danger` | 2 | 1,70:1 | 1:1 | échoue |
+| `.lol-btn` | **93** | — | dégradé | **passe** |
+
+**Ce n'est donc pas deux traitements, c'est SIX**, et le seul qui passe est
+celui qui peint son fond en plein. La frontière la plus VUE du produit est le
+sélecteur de langue : il vit dans la barre, donc partout, et il rend 1,35:1 —
+il n'était dans aucun recensement de la veille.
+
+**Et l'outil lisait la moitié des couleurs**, ce qui est la vraie trouvaille.
+Son analyseur ne connaissait que `rgba()`. Or `color-mix` — que ce produit
+emploie partout depuis qu'on a nommé les transparences — se calcule en
+`color(srgb r g b / a)`, avec des composantes de 0 à 1. Un `null` en sortie, et
+l'appelant SAUTE l'élément.
+
+Ce qui a mis la puce à l'oreille est un chiffre qui ne pouvait pas être vrai :
+`.lol-btn-danger` rendait « bordure aucune » sur un bouton dont la CSS déclare
+`1px solid color-mix(…)`. Instrumenté plutôt que supposé, le style calculé
+disait `1px solid color(srgb 1 0.352941 0.278431 / 0.35)`.
+
+**Mesuré des deux côtés, et il faut lire les DEUX moitiés** : sur dix-huit
+écrans, **zéro texte sauté** — donc tous les « 0 constat » de ce journal sont
+honnêtes, et c'était la question qui comptait — mais **114 FONDS illisibles**,
+dont trente et un en teinte claire. Le contrôle remontait alors au parent et
+mesurait le texte contre un fond qu'il n'a jamais.
+
+**Le fond se COMPOSE maintenant au lieu de se sauter.** L'ancienne version
+ignorait tout ce qui n'était pas opaque à 95 % ; elle empile les fonds
+translucides jusqu'au premier opaque et les compose de bas en haut. Les chiffres
+de la veille bougent d'un centième pour cette raison — 1,67 devient 1,64, 1,22
+devient 1,20 — et le fond passe de 1:1 à 1,05:1 : un champ vit dans un panneau,
+pas directement sur l'encre. La correction rend les mesures plus justes, pas
+plus flatteuses.
+
+**Un audit peut rendre quatre-vingt-neuf constats entièrement faux, et rien ne
+le disait.** Une exécution a rendu des couleurs par DÉFAUT du navigateur —
+texte noir, liens `rgb(0, 0, 238)`, tailles de titre de l'agent utilisateur :
+la page se rendait SANS feuille de style. Quatre-vingt-neuf constats de
+contraste sur des pages parfaitement conformes.
+
+**La cause n'est PAS nommée, et je ne vais pas l'inventer.** Le serveur avait
+été relancé proprement à 05 h 01, sans EADDRINUSE, un seul processus ; la
+feuille répondait 200 pour 78 ko ; le contexte de l'audit reproduit à
+l'identique rend `--bone` sur le titre et 410 règles ; et la même page rejouée
+par le même script quelques minutes plus tard rend « rien à signaler ». Ce qui
+est établi est que ce n'est pas reproductible, et c'est tout.
+
+**Ce qui EST acquis, c'est le garde.** C'est la famille que cet outil attrape
+déjà deux fois — la page injoignable, la modale qui recouvre — sous une
+troisième forme : ici la page est là, elle est simplement rendue nue. Le témoin
+est le fond du `body`, que la palette peint toujours ; son absence ne peut
+vouloir dire qu'une chose. Sabotage — la feuille désactivée à l'ouverture — et
+la page sort « NON MESURÉ » avec sa raison au lieu de rendre des constats.
+Posé sur les deux blocs, celui du texte et celui des frontières.
+
+**Le garde statique s'étend aux boutons, et il tient la DIRECTION.**
+`src/bordureChamps.test.ts` porte six traitements, dont deux écrits en
+`color-mix` — le plancher y porte sur le POURCENTAGE. Et un contrôle de plus
+sur le seul qui passe : `.lol-btn` doit garder son dégradé, sans quoi il
+rejoindrait les fantômes sans que rien ne le dise — le bouton reste lisible,
+c'est sa FRONTIÈRE qui disparaît.
+
+Quatre sabotages, quatre échecs, chacun sur son propre contrôle. **Et un
+TÉMOIN qui doit passer** : `.lol-input` RENFORCÉ de `--line` à `--line-strong`
+laisse les treize contrôles au vert. C'est ce qui prouve que le garde interdit
+de reculer sans interdire la correction — un test qui épinglerait « la bordure
+est encore sous 3:1 » ferait échouer le jour où on la corrige, comme l'en-tête
+de cache des ratios en août.
+
+**Après correction : 5 constats, 21 pages « rien à signaler », zéro non
+mesurée.** Les cinq sont les cinq traitements du tableau, et ils partent dans
+les questions avec leurs trois options chiffrées — monter l'opacité à 0,36
+redessine le chrome du produit entier, et la réponse 251 dit que la marque
+visuelle est validée.
+
+**Ce que l'audit n'atteint PAS, écrit plutôt que laissé à croire** :
+`.lol-btn-blue` ne paraît pas dans son rapport, parce qu'il vit derrière une
+fenêtre d'ajout de partie et une rubrique de réglages que le balayage n'ouvre
+pas. Il a été mesuré à la main, et c'est le garde statique qui le tient.
+
+**Et V554 est partie ROUGE, par ma faute et pour la bonne raison.** Lu en
+appliquant la règle de la fusion — la CI de la version PRÉCÉDENTE : un seul
+travail sur neuf, `accessibilite`, les six tronçons de parcours verts. La cause
+est que l'outil BLOQUE sur son total (`process.exit(total > 0 ? 1 : 0)`), et
+que V554 lui a ajouté une famille de constats qui attend une DÉCISION.
+
+**Un constat qui attend un arbitrage ne doit pas bloquer une poussée**, et ce
+fichier l'écrit déjà trois fois : « un travail resté rouge vingt-cinq versions
+d'affilée » fait qu'on finit par filtrer l'alerte et qu'on ne la lit plus le
+jour où elle compte ; « un garde qui crie sur ce qui va bien finit par ne plus
+se lire » ; et les envois programmés notent en avertissement et passent. Les
+frontières remontent donc en `::warning::` — GitHub les montre — et sortent du
+code de sortie, avec la raison écrite et la date de péremption : le jour où la
+question 13 est tranchée, la dispense tombe.
+
+**Le partage est net, et c'est lui qui compte.** Le témoin de non-vacuité,
+lui, BLOQUE toujours : un instrument qui n'a rien examiné est une panne, pas
+une décision en attente. Et ce qui mord vraiment est ailleurs — le garde
+statique tient la DIRECTION, ce qui ne dépend d'aucun arbitrage.
+
+**Un piège d'outillage, cinquième occurrence, et sous une forme nouvelle** : un
+script posé dans le scratchpad ne résout pas `playwright`, parce qu'ESM cherche
+`node_modules` depuis le dossier du SCRIPT. Une copie temporaire dans `scripts/`
+règle le cas ; l'important est de l'effacer après, ce que
+`src/scriptsRacine.test.ts` exige déjà un étage plus haut.
+
+### Aucune bordure de champ n'atteint 3:1, et l'audit disait vrai en ne regardant pas
+Seconde moitié de la ligne 300, que j'avais mise de côté comme une affaire de
+GOÛT : passer les trois écrans qui écrivent leur champ à la main sur
+`.lol-input` fait tomber la bordure de `--line-strong` (alpha 0,18) à `--line`
+(alpha 0,08), donc pâlit les champs de l'entonnoir d'acquisition. Un arbitrage,
+pas une correction.
+
+**La mesure renverse la conclusion.** Le critère 1.4.11 des WCAG demande 3:1
+entre ce qui IDENTIFIE une commande et ce qui l'entoure. Mesuré au navigateur,
+sur les pixels réellement composés :
+
+| traitement | emplois | bordure / champ | fond / autour |
+|---|---|---|---|
+| `.lol-input`, `.lol-select` | 64 | **1,22:1** | **1:1** |
+| style en ligne (inscription, connexion, récupération) | 3 écrans | **1,67:1** | **1:1** |
+
+**Les deux échouent, et le fond ne rattrape RIEN — au sens strict.** Il rend
+`1:1`, et ce n'est pas un défaut de l'instrument : le fond d'un champ est
+`color-mix(in srgb, var(--ink) 60%, transparent)` et le fond de la page est
+`--ink`. De l'encre à 60 % sur de l'encre donne de l'encre. Le fond du champ ne
+peint donc **exactement rien** ; la bordure est le seul repère, et elle est à
+1,22.
+
+Uniformiser irait par conséquent dans le MAUVAIS sens — de 1,67 à 1,22 — sur les
+trois écrans par lesquels tout le monde entre. Ce n'est pas un arbitrage entre
+deux valeurs acceptables : c'est le choix entre deux valeurs qui ne le sont ni
+l'une ni l'autre.
+
+**Et `.lol-input` n'est pas qu'un écran connecté** : l'outil le trouve sur
+`/calculateur/league-of-legends`, c'est-à-dire sur une page publique.
+
+**Aucun des quatre contrôles de `accessibilite.mjs` ne regardait là**, et c'est
+la vraie trouvaille : les trois qu'il porte sont tous du TEXTE (1.4.3), donc
+1.4.11 lui était invisible par construction. Un audit qui rend « 0 constat sur
+vingt et une pages » disait donc la vérité en n'ayant jamais ouvert la question.
+
+**Et axe-core non plus — vérifié plutôt que supposé.** Sur ses **cent cinq**
+règles, les deux seules de contraste sont `color-contrast` (1.4.3) et
+`color-contrast-enhanced` (1.4.6), toutes deux sur le texte. 1.4.11 n'y figure
+pas : il est rangé du côté de ce qui se vérifie à la main. Le zéro de tous les
+audits de ce journal reste vrai ; il ne couvrait simplement pas cette famille.
+
+**Ce que l'outil fait maintenant, et ce qu'il ÉCARTE avec sa raison.** Il retient
+le MEILLEUR des deux — un champ dont le fond se détache assez n'a pas besoin de
+bordure, et l'inverse — parce qu'exiger les deux ferait crier sur des champs
+parfaitement lisibles. Il écarte les cases à cocher, les boutons radio, les
+curseurs et les sélecteurs de couleur : ce sont les contrôles que le NAVIGATEUR
+dessine, et leur style calculé ne dit rien de ce qui est peint. Et il écarte les
+boutons, faute de les avoir mesurés — un bouton plein passerait sur son fond, un
+bouton fantôme probablement pas, et publier la règle sans avoir regardé serait
+exactement le défaut que ce journal reproche partout.
+
+**Le rapport groupe par TRAITEMENT, pas par élément.** Il y a quarante-huit
+`.lol-input` dans le produit ; quarante-huit lignes identiques ne se lisent pas,
+et un garde qu'on ne lit plus ne garde rien.
+
+**La correction, elle, ne se fait PAS seule**, et le chiffre dit pourquoi :
+l'opacité devrait monter à **0,36**, contre 0,08 et 0,18. `--line` est lu
+**91 fois** et `--line-strong` **46** ; `.lol-panel` seul en compte 104. Monter
+le jeton commun redessine le chrome du produit entier, et la réponse 251 dit que
+la marque visuelle est validée. Trois options chiffrées partent dans les
+questions — dont celle qui corrige sans redessiner : un jeton propre aux CHAMPS,
+qui touche soixante-quatre éléments et laisse les cent quatre panneaux.
+
+**Et l'outil sait ÉCHOUER, ce qui est la moitié qui compte.** Le jeton
+`--line-strong` porté à 0,36, reconstruit, l'audit rejoué : la ligne des styles
+en ligne **disparaît** — elle passe le seuil — pendant que `.lol-input` et
+`.lol-select` restent à 1,22. Et **seize champs examinés des deux côtés**, donc
+le témoin de non-vacuité tient : ce n'est pas une liste vide qui a fait taire le
+constat, c'est le constat qui a été réparé. Sans cette exécution, « deux
+constats » et « je n'ai pas regardé » se ressembleraient exactement.
+
+**Le garde, lui, tient la DIRECTION et non la valeur.**
+`src/bordureChamps.test.ts` refuse qu'un traitement DESCENDE sous ce qu'il vaut
+aujourd'hui — parce que le geste évident de la ligne 300, passer les trois
+écrans d'acquisition sur `.lol-input`, ferait tomber leur bordure de 1,67 à
+1,22. Épingler « la bordure est encore sous 3:1 » aurait été pire : ça ferait
+échouer la CORRECTION, comme l'en-tête de cache des ratios en août. Un second
+contrôle refuse en revanche qu'elle se fasse en SILENCE — les opacités du code
+doivent rester celles que la question 13 annonce.
+
+**Un piège d'outillage, cinquième occurrence.** `pgrep -f "scripts/accessibilite"`
+ne rend jamais la main : le motif figure dans la ligne de commande du shell qui
+attend. Et dans le script de sabotage, le motif du `kill` se lit dans un
+FICHIER, jamais écrit dans la commande qui tue.
+
 ### La CSP confrontée à ce que le navigateur charge vraiment : zéro
 Une famille jamais auditée, et elle échoue en SILENCE : une ressource refusée
 par la politique de sécurité ne produit aucune erreur visible, elle ne se
@@ -1517,215 +1817,6 @@ suite ne trouve pas le navigateur : `playwright.config.ts` lit
 chercher un `chrome-headless-shell` qui n'est pas installé. Le message envoie
 lancer `npx playwright install`, ce qui n'a rien à voir. La sonde passe
 l'`executablePath`, comme la configuration.
-
-### Une seule frontière du produit atteint 3:1, et l'audit lisait la moitié des couleurs
-Suite de la ligne 300. L'outil écrit la veille ÉCARTAIT les boutons « faute de
-les avoir mesurés » — c'est-à-dire une dispense qui ne repose sur rien, le
-défaut que ce journal reproche partout. Mesurés.
-
-**Quatre-vingt-douze boutons, et AUCUN sans texte visible.** C'est ce chiffre
-qui décide, et il renverse la dispense : le critère 1.4.11 porte sur « ce qui
-identifie une commande », donc un bouton sans frontière visuelle est identifié
-par son TEXTE et sort du champ — 1.4.3 s'y applique déjà, et ce même outil le
-mesure. Ce qui reste sont ceux qui DESSINENT une frontière, et la règle qui les
-fait entrer se déduit de la mesure au lieu d'être arbitrée.
-
-| traitement | emplois | bordure | fond | verdict |
-|---|---|---|---|---|
-| `.lol-input`, `.lol-select` | 64 | 1,20:1 | 1,05:1 | échoue |
-| **sélecteur de langue** | **19 pages** | **1,35:1** | 1,08:1 | échoue |
-| champ en ligne | 3 écrans | 1,64:1 | 1,05:1 | échoue |
-| `.lol-btn-blue` | 3 | 1,64:1 | 1:1 | échoue |
-| `.lol-btn-danger` | 2 | 1,70:1 | 1:1 | échoue |
-| `.lol-btn` | **93** | — | dégradé | **passe** |
-
-**Ce n'est donc pas deux traitements, c'est SIX**, et le seul qui passe est
-celui qui peint son fond en plein. La frontière la plus VUE du produit est le
-sélecteur de langue : il vit dans la barre, donc partout, et il rend 1,35:1 —
-il n'était dans aucun recensement de la veille.
-
-**Et l'outil lisait la moitié des couleurs**, ce qui est la vraie trouvaille.
-Son analyseur ne connaissait que `rgba()`. Or `color-mix` — que ce produit
-emploie partout depuis qu'on a nommé les transparences — se calcule en
-`color(srgb r g b / a)`, avec des composantes de 0 à 1. Un `null` en sortie, et
-l'appelant SAUTE l'élément.
-
-Ce qui a mis la puce à l'oreille est un chiffre qui ne pouvait pas être vrai :
-`.lol-btn-danger` rendait « bordure aucune » sur un bouton dont la CSS déclare
-`1px solid color-mix(…)`. Instrumenté plutôt que supposé, le style calculé
-disait `1px solid color(srgb 1 0.352941 0.278431 / 0.35)`.
-
-**Mesuré des deux côtés, et il faut lire les DEUX moitiés** : sur dix-huit
-écrans, **zéro texte sauté** — donc tous les « 0 constat » de ce journal sont
-honnêtes, et c'était la question qui comptait — mais **114 FONDS illisibles**,
-dont trente et un en teinte claire. Le contrôle remontait alors au parent et
-mesurait le texte contre un fond qu'il n'a jamais.
-
-**Le fond se COMPOSE maintenant au lieu de se sauter.** L'ancienne version
-ignorait tout ce qui n'était pas opaque à 95 % ; elle empile les fonds
-translucides jusqu'au premier opaque et les compose de bas en haut. Les chiffres
-de la veille bougent d'un centième pour cette raison — 1,67 devient 1,64, 1,22
-devient 1,20 — et le fond passe de 1:1 à 1,05:1 : un champ vit dans un panneau,
-pas directement sur l'encre. La correction rend les mesures plus justes, pas
-plus flatteuses.
-
-**Un audit peut rendre quatre-vingt-neuf constats entièrement faux, et rien ne
-le disait.** Une exécution a rendu des couleurs par DÉFAUT du navigateur —
-texte noir, liens `rgb(0, 0, 238)`, tailles de titre de l'agent utilisateur :
-la page se rendait SANS feuille de style. Quatre-vingt-neuf constats de
-contraste sur des pages parfaitement conformes.
-
-**La cause n'est PAS nommée, et je ne vais pas l'inventer.** Le serveur avait
-été relancé proprement à 05 h 01, sans EADDRINUSE, un seul processus ; la
-feuille répondait 200 pour 78 ko ; le contexte de l'audit reproduit à
-l'identique rend `--bone` sur le titre et 410 règles ; et la même page rejouée
-par le même script quelques minutes plus tard rend « rien à signaler ». Ce qui
-est établi est que ce n'est pas reproductible, et c'est tout.
-
-**Ce qui EST acquis, c'est le garde.** C'est la famille que cet outil attrape
-déjà deux fois — la page injoignable, la modale qui recouvre — sous une
-troisième forme : ici la page est là, elle est simplement rendue nue. Le témoin
-est le fond du `body`, que la palette peint toujours ; son absence ne peut
-vouloir dire qu'une chose. Sabotage — la feuille désactivée à l'ouverture — et
-la page sort « NON MESURÉ » avec sa raison au lieu de rendre des constats.
-Posé sur les deux blocs, celui du texte et celui des frontières.
-
-**Le garde statique s'étend aux boutons, et il tient la DIRECTION.**
-`src/bordureChamps.test.ts` porte six traitements, dont deux écrits en
-`color-mix` — le plancher y porte sur le POURCENTAGE. Et un contrôle de plus
-sur le seul qui passe : `.lol-btn` doit garder son dégradé, sans quoi il
-rejoindrait les fantômes sans que rien ne le dise — le bouton reste lisible,
-c'est sa FRONTIÈRE qui disparaît.
-
-Quatre sabotages, quatre échecs, chacun sur son propre contrôle. **Et un
-TÉMOIN qui doit passer** : `.lol-input` RENFORCÉ de `--line` à `--line-strong`
-laisse les treize contrôles au vert. C'est ce qui prouve que le garde interdit
-de reculer sans interdire la correction — un test qui épinglerait « la bordure
-est encore sous 3:1 » ferait échouer le jour où on la corrige, comme l'en-tête
-de cache des ratios en août.
-
-**Après correction : 5 constats, 21 pages « rien à signaler », zéro non
-mesurée.** Les cinq sont les cinq traitements du tableau, et ils partent dans
-les questions avec leurs trois options chiffrées — monter l'opacité à 0,36
-redessine le chrome du produit entier, et la réponse 251 dit que la marque
-visuelle est validée.
-
-**Ce que l'audit n'atteint PAS, écrit plutôt que laissé à croire** :
-`.lol-btn-blue` ne paraît pas dans son rapport, parce qu'il vit derrière une
-fenêtre d'ajout de partie et une rubrique de réglages que le balayage n'ouvre
-pas. Il a été mesuré à la main, et c'est le garde statique qui le tient.
-
-**Et V554 est partie ROUGE, par ma faute et pour la bonne raison.** Lu en
-appliquant la règle de la fusion — la CI de la version PRÉCÉDENTE : un seul
-travail sur neuf, `accessibilite`, les six tronçons de parcours verts. La cause
-est que l'outil BLOQUE sur son total (`process.exit(total > 0 ? 1 : 0)`), et
-que V554 lui a ajouté une famille de constats qui attend une DÉCISION.
-
-**Un constat qui attend un arbitrage ne doit pas bloquer une poussée**, et ce
-fichier l'écrit déjà trois fois : « un travail resté rouge vingt-cinq versions
-d'affilée » fait qu'on finit par filtrer l'alerte et qu'on ne la lit plus le
-jour où elle compte ; « un garde qui crie sur ce qui va bien finit par ne plus
-se lire » ; et les envois programmés notent en avertissement et passent. Les
-frontières remontent donc en `::warning::` — GitHub les montre — et sortent du
-code de sortie, avec la raison écrite et la date de péremption : le jour où la
-question 13 est tranchée, la dispense tombe.
-
-**Le partage est net, et c'est lui qui compte.** Le témoin de non-vacuité,
-lui, BLOQUE toujours : un instrument qui n'a rien examiné est une panne, pas
-une décision en attente. Et ce qui mord vraiment est ailleurs — le garde
-statique tient la DIRECTION, ce qui ne dépend d'aucun arbitrage.
-
-**Un piège d'outillage, cinquième occurrence, et sous une forme nouvelle** : un
-script posé dans le scratchpad ne résout pas `playwright`, parce qu'ESM cherche
-`node_modules` depuis le dossier du SCRIPT. Une copie temporaire dans `scripts/`
-règle le cas ; l'important est de l'effacer après, ce que
-`src/scriptsRacine.test.ts` exige déjà un étage plus haut.
-
-### Aucune bordure de champ n'atteint 3:1, et l'audit disait vrai en ne regardant pas
-Seconde moitié de la ligne 300, que j'avais mise de côté comme une affaire de
-GOÛT : passer les trois écrans qui écrivent leur champ à la main sur
-`.lol-input` fait tomber la bordure de `--line-strong` (alpha 0,18) à `--line`
-(alpha 0,08), donc pâlit les champs de l'entonnoir d'acquisition. Un arbitrage,
-pas une correction.
-
-**La mesure renverse la conclusion.** Le critère 1.4.11 des WCAG demande 3:1
-entre ce qui IDENTIFIE une commande et ce qui l'entoure. Mesuré au navigateur,
-sur les pixels réellement composés :
-
-| traitement | emplois | bordure / champ | fond / autour |
-|---|---|---|---|
-| `.lol-input`, `.lol-select` | 64 | **1,22:1** | **1:1** |
-| style en ligne (inscription, connexion, récupération) | 3 écrans | **1,67:1** | **1:1** |
-
-**Les deux échouent, et le fond ne rattrape RIEN — au sens strict.** Il rend
-`1:1`, et ce n'est pas un défaut de l'instrument : le fond d'un champ est
-`color-mix(in srgb, var(--ink) 60%, transparent)` et le fond de la page est
-`--ink`. De l'encre à 60 % sur de l'encre donne de l'encre. Le fond du champ ne
-peint donc **exactement rien** ; la bordure est le seul repère, et elle est à
-1,22.
-
-Uniformiser irait par conséquent dans le MAUVAIS sens — de 1,67 à 1,22 — sur les
-trois écrans par lesquels tout le monde entre. Ce n'est pas un arbitrage entre
-deux valeurs acceptables : c'est le choix entre deux valeurs qui ne le sont ni
-l'une ni l'autre.
-
-**Et `.lol-input` n'est pas qu'un écran connecté** : l'outil le trouve sur
-`/calculateur/league-of-legends`, c'est-à-dire sur une page publique.
-
-**Aucun des quatre contrôles de `accessibilite.mjs` ne regardait là**, et c'est
-la vraie trouvaille : les trois qu'il porte sont tous du TEXTE (1.4.3), donc
-1.4.11 lui était invisible par construction. Un audit qui rend « 0 constat sur
-vingt et une pages » disait donc la vérité en n'ayant jamais ouvert la question.
-
-**Et axe-core non plus — vérifié plutôt que supposé.** Sur ses **cent cinq**
-règles, les deux seules de contraste sont `color-contrast` (1.4.3) et
-`color-contrast-enhanced` (1.4.6), toutes deux sur le texte. 1.4.11 n'y figure
-pas : il est rangé du côté de ce qui se vérifie à la main. Le zéro de tous les
-audits de ce journal reste vrai ; il ne couvrait simplement pas cette famille.
-
-**Ce que l'outil fait maintenant, et ce qu'il ÉCARTE avec sa raison.** Il retient
-le MEILLEUR des deux — un champ dont le fond se détache assez n'a pas besoin de
-bordure, et l'inverse — parce qu'exiger les deux ferait crier sur des champs
-parfaitement lisibles. Il écarte les cases à cocher, les boutons radio, les
-curseurs et les sélecteurs de couleur : ce sont les contrôles que le NAVIGATEUR
-dessine, et leur style calculé ne dit rien de ce qui est peint. Et il écarte les
-boutons, faute de les avoir mesurés — un bouton plein passerait sur son fond, un
-bouton fantôme probablement pas, et publier la règle sans avoir regardé serait
-exactement le défaut que ce journal reproche partout.
-
-**Le rapport groupe par TRAITEMENT, pas par élément.** Il y a quarante-huit
-`.lol-input` dans le produit ; quarante-huit lignes identiques ne se lisent pas,
-et un garde qu'on ne lit plus ne garde rien.
-
-**La correction, elle, ne se fait PAS seule**, et le chiffre dit pourquoi :
-l'opacité devrait monter à **0,36**, contre 0,08 et 0,18. `--line` est lu
-**91 fois** et `--line-strong` **46** ; `.lol-panel` seul en compte 104. Monter
-le jeton commun redessine le chrome du produit entier, et la réponse 251 dit que
-la marque visuelle est validée. Trois options chiffrées partent dans les
-questions — dont celle qui corrige sans redessiner : un jeton propre aux CHAMPS,
-qui touche soixante-quatre éléments et laisse les cent quatre panneaux.
-
-**Et l'outil sait ÉCHOUER, ce qui est la moitié qui compte.** Le jeton
-`--line-strong` porté à 0,36, reconstruit, l'audit rejoué : la ligne des styles
-en ligne **disparaît** — elle passe le seuil — pendant que `.lol-input` et
-`.lol-select` restent à 1,22. Et **seize champs examinés des deux côtés**, donc
-le témoin de non-vacuité tient : ce n'est pas une liste vide qui a fait taire le
-constat, c'est le constat qui a été réparé. Sans cette exécution, « deux
-constats » et « je n'ai pas regardé » se ressembleraient exactement.
-
-**Le garde, lui, tient la DIRECTION et non la valeur.**
-`src/bordureChamps.test.ts` refuse qu'un traitement DESCENDE sous ce qu'il vaut
-aujourd'hui — parce que le geste évident de la ligne 300, passer les trois
-écrans d'acquisition sur `.lol-input`, ferait tomber leur bordure de 1,67 à
-1,22. Épingler « la bordure est encore sous 3:1 » aurait été pire : ça ferait
-échouer la CORRECTION, comme l'en-tête de cache des ratios en août. Un second
-contrôle refuse en revanche qu'elle se fasse en SILENCE — les opacités du code
-doivent rester celles que la question 13 annonce.
-
-**Un piège d'outillage, cinquième occurrence.** `pgrep -f "scripts/accessibilite"`
-ne rend jamais la main : le motif figure dans la ligne de commande du shell qui
-attend. Et dans le script de sabotage, le motif du `kill` se lit dans un
-FICHIER, jamais écrit dans la commande qui tue.
 
 ### La question de la montre, et l'export qui perdait seize réglages tapés
 Ligne 035 du plan, réponse « Oui, ajoute-la » : une question à l'inscription,
