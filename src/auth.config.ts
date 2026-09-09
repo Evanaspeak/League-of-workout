@@ -38,5 +38,6 @@ export const authConfig = {
   // exécute alors celle-ci et JETTE le booléen que `authorized` aurait rendu.
   // La liste de routes publiques qui vivait ici n'avait donc aucun effet — un
   // piège de maintenance, où corriger une copie laissait l'autre diverger en
-  // silence. La politique tient en un seul endroit : `PUBLIC_PREFIXES`.
+  // silence. La politique tient en un seul endroit : `PREFIXES_PUBLICS`,
+  // dans `src/lib/routesPubliques.ts`.
 } satisfies NextAuthConfig;

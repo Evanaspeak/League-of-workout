@@ -1358,6 +1358,39 @@ est zéro trouvaille : les fichiers réels ne peuvent pas distinguer un motif
 juste d'un motif aveugle. Six sabotages, six échecs — dont les deux motifs
 aveuglés séparément, et le recensement vidé.
 
+**Et la famille voisine a été mesurée puis LAISSÉE sans garde**, avec sa
+raison. Après les fichiers cités, les IDENTIFIANTS cités : un commentaire qui
+nomme une fonction ou une constante disparue se relit de la même façon.
+
+Le recensement brut rend **746 identifiants introuvables sur 736 fichiers**, et
+ils sont presque tous légitimes — `null`, `Intl`, `undefined`, `window`, les
+mots-clés du langage, les méthodes de Prisma (`upsert`, `skipDuplicates`), les
+colonnes du schéma (`totalPoints`, `jetonObs`), les attributs HTML (`htmlFor`),
+les noms de bibliothèques. Il n'y a pas de discriminant : un garde de cette
+forme demanderait une liste d'exemptions qui vieillirait plus vite que ce
+qu'elle garde.
+
+**Resserré aux constantes en CAPITALES, il rend neuf candidats et UNE
+trouvaille.** `PUBLIC_PREFIXES` est cité trois fois — dans `auth.config.ts` et
+deux fois dans `porteRoutes.test.ts` — et la constante s'appelle
+`PREFIXES_PUBLICS` depuis qu'elle a quitté `middleware.ts` pour
+`src/lib/routesPubliques.ts`. **Deux choses avaient bougé, le nom ET
+l'adresse**, et le commentaire qui envoie chercher « la politique en un seul
+endroit » désignait les deux de travers.
+
+Les huit autres sont des noms EXTÉRIEURS — une constante de l'API Windows, un
+code d'erreur de Chromium, une variable d'environnement de Vercel — ou des
+récits qui nomment exprès l'ancien nom pour raconter la duplication qu'on a
+retirée. Aucun mécanisme ne les distingue d'un nom mort ; c'est ce qui ferme la
+question.
+
+**Un faux positif de mon propre détecteur, noté pour la méthode** :
+`BASE_RENDU` remonte comme absente alors qu'elle est lue par
+`comparer-rendu.mjs`. Mon découpage naïf des commentaires avait rangé la ligne
+du mauvais côté. C'est exactement la différence entre les deux familles : un
+chemin se vérifie par `existsSync`, qui ne se trompe pas ; un identifiant se
+vérifie par un motif, qui se trompe.
+
 ### « Toutes les routes ont un test » était faux de trois, et mon détecteur de douze
 
 Suite de l'audit des affirmations vérifiables de ce fichier. Celle-ci portait
