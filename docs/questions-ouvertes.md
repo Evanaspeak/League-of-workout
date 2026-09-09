@@ -192,6 +192,137 @@ Monter jsdom est un **changement de stratégie de test**, pas un rattrapage.
 
 ---
 
+### 10 · D'autres défis absurdes, comme tu me l'as demandé (réf. 136)
+Ta réponse était « Montre-m'en d'autres », et le plan la porte depuis comme
+une dette : « je te dois la liste ». La voici. **Rien n'est construit** — tu
+choisis, et ce qui est retenu devient une ligne du plan.
+
+Trois contraintes gouvernent la liste, et elles viennent du code existant :
+
+- **un défi doit demander un GESTE.** « Solde ta dette » quand on ne doit rien
+  se lit comme une flatterie, et une flatterie quotidienne finit par ne plus
+  rien vouloir dire ;
+- **il ne rapporte pas de points d'effort**, seulement de l'XP. Un point donné
+  est une pompe que personne n'a faite, et la dette, le classement, les paliers
+  et le bilan deviendraient faux ensemble ;
+- **il est le même pour tout le monde**, décidé par le seul jour. Un défi
+  commun se raconte ; un défi personnel ne se raconte à personne.
+
+Le coût annoncé est réel : `/api/progression` charge déjà les parties du mois
+avec `{ result, jeu, date }`, donc un défi qui lit une colonne de plus de cette
+table coûte un champ, pas une requête.
+
+#### Ce qui se mesure aujourd'hui, sans rien ajouter
+| | le défi | ce qu'il mesure | coût |
+|---|---|---|---|
+| A | Paie avant minuit tout ce que tu as généré aujourd'hui | points payés du jour ≥ points générés du jour | les deux sont déjà calculés |
+| B | Solde plus de 300 points en une seule séance | un paiement de 300 ou plus | rien |
+| C | Fais-les en trois fois plutôt qu'en une | trois paiements dans la journée | rien |
+| D | Quatre jeux différents dans la journée | jeux distincts | la mesure existe déjà à deux |
+
+#### Ce qui coûte une colonne au chargement déjà fait
+| | le défi | ce qu'il mesure | coût |
+|---|---|---|---|
+| E | Une partie sans mourir | `deaths = 0` | un champ au `select` |
+| F | Gagne juste après deux défaites | l'ordre des parties dans la journée | deux champs |
+| G | Trois rôles différents | `role` | un champ |
+| H | Une partie classée, et une seule | `fileClassee` | un champ |
+
+#### La famille que ton exemple ouvre, et son prix
+Ton exemple était « paie ta dette avant la fin de l'écran de défaite ». C'est
+une mesure de DÉLAI entre la partie et le paiement, et elle est déjà prouvée :
+l'exploit du paiement éclair fait exactement ça, à une heure. Descendre à
+quelques minutes coûte le même mécanisme, plus finement.
+
+| | le défi | le délai |
+|---|---|---|
+| I | Paie dans les dix minutes qui suivent la partie | 10 min |
+| J | Paie avant la fin de l'écran de défaite | environ 60 s |
+
+**Une réserve sur le J, et elle est de fond.** Presque personne ne le
+remplira, et un défi que personne ne remplit cesse d'être lu au bout de trois
+jours. Il vaut peut-être mieux comme exploit permanent, à côté du paiement
+éclair, que comme défi du jour.
+
+#### Ce qui ne se mesure PAS honnêtement, et pourquoi
+C'est la moitié utile de cette liste. Trois idées naturelles sont fausses :
+
+- **« joue avant telle heure »** ne dit pas quand tu as joué. `Game.date` se
+  corrige à la main, et `Game.createdAt` dit quand tu as ENREGISTRÉ. Une partie
+  ajoutée le lendemain matin passerait le défi sans l'avoir mérité ;
+- **tout défi de RÔLE ou de KDA est vide pour cinq jeux du catalogue.**
+  Minecraft, World of Warcraft, GTA V, Elden Ring et Les Sims se comptent au
+  temps : ni rôle, ni mort, ni victoire. Le défi du jour étant le même pour
+  tout le monde, il serait impossible pour qui joue à ceux-là ;
+- **« ne perds aucune partie, ou paie double »** est un MALUS, c'est-à-dire de
+  la dette ajoutée qu'aucune partie n'a produite. C'est la réponse 137, et tu
+  l'as remise à plus tard : elle n'est pas proposée ici.
+
+#### Un que je n'ose pas proposer sans te le dire
+**« Pèse-toi. »** Techniquement gratuit — une ligne dans `Pesee` suffit. Mais
+c'est une donnée de santé, et en faire un défi commun affiché à tout le monde
+change sa nature : le rappel de pesée existe déjà, il est facultatif et il ne
+dit rien du poids. Un défi le rendrait public dans son principe. À toi.
+
+---
+
+### 11 · Les statistiques avancées du payant, comme tu me l'as demandé (réf. 214)
+Ta réponse était « Propose-moi ». Voici la liste, avec pour chacune ce qu'elle
+coûte vraiment. **Rien n'est construit**, et il y a deux choses à trancher
+avant de construire quoi que ce soit.
+
+#### Deux règles avant la liste
+**Le payant AJOUTE, il ne retire pas.** Le gratuit montre déjà beaucoup :
+winrate, champions, graphiques par heure, jour, mois et calendrier,
+progression, paliers, niveau, titre, mur des records, classement entre amis,
+bilan de saison. Reprendre l'un d'eux pour le vendre est le moyen le plus
+rapide de perdre les comptes qui existent. Tout ce qui suit est donc en plus.
+
+**L'export de données ne se vend JAMAIS.** Il existe pour l'article 20 du
+règlement, il est gratuit, et il doit le rester. C'est la seule ligne de cette
+page qui n'est pas négociable.
+
+#### Ce que la base contient DÉJÀ, et que personne ne voit
+Aucune de ces cinq-là ne demande une colonne nouvelle. Le coût est un écran,
+pas de la plomberie.
+
+| | la statistique | ce qu'elle lit | pourquoi elle vaut d'être vue |
+|---|---|---|---|
+| A | **Ce que la classée te coûte en plus** | `fileClassee`, `pompesCalculees` | Le barème fait déjà payer les classées plus cher (réponse 196) et **rien ne le montre nulle part**. On remplit la colonne, on facture dessus, et on ne le dit pas. |
+| B | **L'heure à laquelle tu perds** | `date`, `result` | Le gratuit a un onglet « Heure », mais il compte des POINTS, pas un winrate. C'est la mesure qui dit « ne joue pas après minuit », et c'est la réponse 054 rendue chiffrée au lieu d'être devinée. |
+| C | **Ton taux de dette payée** | `pompesCalculees` contre `Paiement.points` | Les deux nombres sont déjà dans la réponse de `/api/progression`, côte à côte, et **leur rapport n'est affiché nulle part**. C'est pourtant le seul chiffre qui dise si le produit fonctionne pour toi. |
+| D | **Le coût par champion, en entier** | `champion`, `pompesCalculees`, `result` | Le gratuit montre deux champions : le plus joué et le plus difficile. Le tableau complet, trié, avec winrate et coût moyen, est une autre chose. |
+| E | **Ton délai de paiement** | `Game.createdAt`, `Paiement.createdAt` | Combien de temps entre la dette et l'effort. L'exploit du paiement éclair prouve que le rapprochement se fait ; il n'en montre que le cas extrême. |
+
+#### Ce qui coûte un peu plus
+| | la statistique | ce qu'il faut en plus |
+|---|---|---|
+| F | La plus longue série de défaites, et ce qu'elle a coûté | un tri par date dans la journée, rien de neuf en base |
+| G | Le coût réel d'une heure de jeu | `dureeSec` n'est rempli que pour les jeux comptés au temps : la mesure ne vaut que pour cinq jeux sur seize, et il faut le DIRE plutôt que d'afficher un chiffre partiel |
+| H | « À ce rythme, tu paieras X ce mois-ci » | une projection, donc une décision : une prévision fausse se retient mieux qu'une prévision juste |
+
+#### Ce qui n'est pas possible aujourd'hui, et pourquoi
+- **tout ce qui compare aux autres joueurs** (rang, percentile, moyenne des
+  gens de ton niveau) demande la clé Riot de production, qui n'est pas
+  arrivée, et un volume de comptes qu'on n'a pas ;
+- **tout ce qui parle de patchs** demande de retenir la version du jeu au
+  moment de la partie, colonne qui n'existe pas ;
+- **tout ce qui parle d'adversaires** n'est jamais entré en base : on
+  n'enregistre que ta partie.
+
+#### Les deux choses à trancher
+1. **Le moment.** Ton critère était un nombre d'utilisateurs, et l'étape 07 du
+   plan le redit : on n'y est pas. Construire un mur payant devant quatre
+   comptes coûterait plus que ça ne rapporte.
+2. **Où passe la ligne.** A, B et C sont les trois qui feraient payer — ce sont
+   celles qui apprennent quelque chose qu'on ne peut pas deviner. D et E sont
+   agréables et se devinent. Mon avis, puisque tu me le demandes : **A, B, C au
+   payant, D et E gratuites**, parce qu'un payant fait de trois choses qu'on ne
+   trouve nulle part ailleurs se défend mieux qu'un payant fait de dix choses
+   dont sept sont du confort.
+
+---
+
 ## Ce qui a été tranché, et où c'est parti
 
 Quatorze questions, répondues le 8 septembre. Le tableau existe pour qu'une

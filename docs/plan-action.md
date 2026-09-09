@@ -187,7 +187,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 140 | Un mur des records par exercice et par période — **par période seulement**, l'exercice n'est pas retenu sur un paiement | 1 nuit |
 | [x] | 141 | Records publics ou entre amis, au choix | ½ nuit |
 | [x] | 144 | Classement hebdomadaire et cumul, deux onglets | ½ nuit |
-| [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
+| [ ] | 136 | D'autres défis absurdes à te proposer — **la liste est rendue** : dix propositions dans `questions-ouvertes.md`, item 10, avec leur coût réel et les trois idées qui ne se mesurent PAS honnêtement. Il reste à choisir | à toi |
 
 ### Progression et récompenses
 *2 à faire · 8 faits.* Les paliers, le niveau de compte, le titre, l'exploit de la dette payée dans l'heure et la courbe de force.
@@ -327,7 +327,7 @@ CONTREDIT une correction déjà publiée — elle est dans les questions ouverte
 | [ ] | 225 | Déclarer une entreprise pour pouvoir encaisser | à toi |
 | [ ] | 216 | Un abonnement à 3 € par mois | 2 nuits |
 | [ ] | 218 | Un tarif fondateur à vie pour les premiers inscrits | ½ nuit |
-| [ ] | 214 | Te proposer les statistiques avancées du payant | je te dois la liste |
+| [ ] | 214 | Te proposer les statistiques avancées du payant — **la liste est rendue** : `questions-ouvertes.md` item 11, huit statistiques costées, dont cinq sans colonne nouvelle. Il reste à trancher le moment et où passe la ligne | à toi |
 | [ ] | 219 | La publicité n'est pas exclue | — |
 | [ ] | 227 | Un sponsor : matériel ou équipe esport | à toi |
 | [ ] | 220 | Trancher entre affiliation et vente en propre | décision |
@@ -411,8 +411,18 @@ rend dynamique toute route de l'application. 0 avant, 150 après.
 
 Trois choses promises et jamais rendues :
 
-- la liste des statistiques avancées de la version payante (réf. 007) ;
-- d'autres idées de défis absurdes (réf. 136) ;
+- ~~la liste des statistiques avancées de la version payante (réf. **214**)~~ —
+  **rendue le 9 septembre**, `questions-ouvertes.md` item 11 : huit
+  statistiques dont cinq ne demandent aucune colonne nouvelle, ce qui n'est
+  pas possible et pourquoi, et les deux choses à trancher. La section citait
+  « réf. 007 », qui EXISTE et parle d'autre chose — sa réponse est « Non ».
+  Une adresse qui résout au mauvais endroit est pire qu'une adresse morte ;
+  `src/decisionsRangees.test.ts` vérifie désormais que les réfs du plan
+  désignent une réponse qui existe ;
+- ~~d'autres idées de défis absurdes (réf. 136)~~ — **rendue le 9 septembre**,
+  `questions-ouvertes.md` item 10 : dix propositions, leur coût mesuré sur ce
+  que `/api/progression` charge déjà, et les trois idées naturelles qui ne se
+  mesurent pas honnêtement ;
 - les deux maquettes de formulaire d'inscription.
 
 ## Ce qui n'appartient pas à ce plan
