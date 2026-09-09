@@ -50,6 +50,20 @@ const CHROMIUM = "/opt/pw-browsers/chromium";
  * dessein : deux outils qui regardent la même surface évitent d'avoir à se
  * rappeler lequel voit quoi.
  *
+ * À DEUX adresses près, et ce n'est pas un oubli : `/settings` nu et
+ * `/recuperation/valider` sont dispensées ici, avec leur raison, dans
+ * `src/couvertureOutils.test.ts` — qui est l'autorité sur les écarts entre les
+ * trois outils. Écrire « la même surface » sans le dire ferait croire à une
+ * égalité qu'un lecteur ne penserait pas à vérifier.
+ *
+ * L'ATTENTE, elle, est fixe là où l'audit attend `networkidle`, et c'est
+ * mesuré plutôt que supposé : sur les neuf écrans connectés, la dernière
+ * réponse d'API arrive entre 517 et 814 ms, et les comptes de textes relevés
+ * à neuf secondes sont IDENTIQUES à ceux relevés à quatre secondes et demie —
+ * rien n'arrive après. La marge est de 5,5×, et elle ne se rabote pas : une
+ * page lue trop tôt rend « rien à signaler » sur ce qu'elle n'a pas vu, et
+ * c'est la famille de défaut que ces outils existent pour ne pas commettre.
+ *
  * `/obs/<jeton>` reste dehors pour la raison écrite là-bas — c'est une source
  * de diffusion, pas une page qu'on ouvre — et `/p/<jeton>` aussi : son adresse
  * demande un jeton qu'un balayage n'a pas.
