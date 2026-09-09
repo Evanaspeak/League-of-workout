@@ -146,9 +146,19 @@ export function PartieDetectee() {
         // apprend ce qu'on doit, on le fait dans la file d'attente suivante.
         // Encore fallait-il le dire — jusqu'ici il fallait rouvrir la fenêtre
         // pour le savoir.
+        /**
+         * Une partie refusée ne réclame rien, et le DIT quand même.
+         *
+         * La route ne rend plus aucune quantité pour elle — la ventilation est
+         * vide, donc `quantite` aussi, donc rien ne partait. Un enregistrement
+         * entièrement muet est le défaut que ce projet corrige en boucle : on
+         * a joué, on ne sait pas si la partie est entrée. Une ligne le dit,
+         * sans demander quoi que ce soit.
+         */
         const { repartition } = await res.json();
         const quantite = ventiler(repartition ?? {}, null, etiquette).map((v) => `${v.valeur} ${t.noms[v.id]}`).join(" · ");
-        if (quantite) notifierSysteme(t.partieTerminee, t.aFaire(quantite), "wow-partie");
+        if (sansEnjeu) notifierSysteme(t.partieTerminee, t.sansEnjeu, "wow-partie");
+        else if (quantite) notifierSysteme(t.partieTerminee, t.aFaire(quantite), "wow-partie");
       } catch {
         // Sans clé Riot de production, le suivi de session n'a rien à
         // rattraper : ce chemin-ci est le seul. Une coupure réseau doit donc se

@@ -285,6 +285,23 @@ export async function POST(req: Request) {
     }
     const scoringTemps = calcScoreTemps({ dureeSec, gainageSec: gainageEquivalent, levelConfigs });
 
+    /**
+     * Ce que la partie porte RÉELLEMENT, calculé une fois.
+     *
+     * Une partie refusée à l'écran de chargement coûte zéro. C'était écrit à
+     * trois de ses quatre endroits — `pompesCalculees`, la ventilation figée
+     * sur la ligne, la dette — et pas dans la RÉPONSE, qui rendait le coût que
+     * la partie AURAIT eu. Or c'est elle que la notification en jeu lit pour
+     * dire « X pompes à faire » : on voyait donc « sans enjeu » dans
+     * l'historique et une demande de pompes sur le bureau, à la même seconde.
+     * Signalé par le propriétaire du produit le 9 septembre.
+     *
+     * Les quatre dérivent maintenant d'une seule valeur, ce qui rend la
+     * divergence impossible plutôt que détectable.
+     */
+    const pointsPortes = sansEnjeu ? 0 : scoringTemps.pointsFinaux;
+    const aPayer = repartirPoints(pointsPortes, selection, parts);
+
     const game = await prisma.game.create({
       data: {
         userId: user.id,
@@ -306,10 +323,10 @@ export async function POST(req: Request) {
         // coûté, et elle n'a rien coûté. Garder le vrai chiffre ferait
         // afficher une dette qu'on ne doit pas, sur l'écran qui existe pour
         // dire ce qu'on doit.
-        pompesCalculees: sansEnjeu ? 0 : scoringTemps.pointsFinaux,
+        pompesCalculees: pointsPortes,
         sansEnjeu,
         exercice,
-        repartition: ventilation(sansEnjeu ? 0 : scoringTemps.pointsFinaux),
+        repartition: ventilation(pointsPortes),
         ratios: ratiosDuJour,
         variante,
         jeu,
@@ -321,13 +338,11 @@ export async function POST(req: Request) {
       },
     });
 
-    const dus = sansEnjeu
-      ? null
-      : await accumulerDette(user.id, repartirPoints(scoringTemps.pointsFinaux, selection, parts));
+    const dus = sansEnjeu ? null : await accumulerDette(user.id, aPayer);
     return NextResponse.json({
       game,
       scoring: { ...scoringTemps, pompesFinales: scoringTemps.pointsFinaux },
-      repartition: repartirPoints(scoringTemps.pointsFinaux, selection, parts),
+      repartition: aPayer,
       dettePointsDus: dus,
     });
   }
@@ -429,6 +444,13 @@ export async function POST(req: Request) {
         masteryConfig,
       });
 
+  /**
+   * Même règle, même valeur : voir la branche des séances au temps ci-dessus.
+   * Elle était appliquée ici aussi à trois de ses quatre endroits.
+   */
+  const pointsPortes = sansEnjeu ? 0 : scoring.pompesFinales;
+  const aPayer = repartirPoints(pointsPortes, selection, parts);
+
   const game = await prisma.game.create({
     data: {
       userId: user.id,
@@ -444,12 +466,12 @@ export async function POST(req: Request) {
       surchargeCalculee: scoring.surcharge,
       scoreCalcule: scoring.scoreBase,
       malusCalcule: scoring.malus,
-      pompesCalculees: sansEnjeu ? 0 : scoring.pompesFinales,
+      pompesCalculees: pointsPortes,
       sansEnjeu,
       // Fige les exercices retenus : l'historique reste fidèle même si la
       // sélection change plus tard.
       exercice,
-      repartition: ventilation(sansEnjeu ? 0 : scoring.pompesFinales),
+      repartition: ventilation(pointsPortes),
       ratios: ratiosDuJour,
       variante,
       jeu,
@@ -472,13 +494,11 @@ export async function POST(req: Request) {
     },
   });
 
-  const dus = sansEnjeu
-    ? null
-    : await accumulerDette(user.id, repartirPoints(scoring.pompesFinales, selection, parts));
+  const dus = sansEnjeu ? null : await accumulerDette(user.id, aPayer);
   return NextResponse.json({
     game,
     scoring,
-    repartition: repartirPoints(scoring.pompesFinales, selection, parts),
+    repartition: aPayer,
     dettePointsDus: dus,
   });
 }
