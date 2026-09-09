@@ -34,9 +34,6 @@ const PAGES = [
   // son texte est parti en français à tout le monde jusqu'à ce qu'on le
   // corrige : c'est exactement ce que ce fichier existe pour attraper.
   "/connexion-app",
-  // La liste d'attente y entre en même temps qu'elle devient atteignable.
-  // C'est une page qu'on ne voit qu'une fois, au pire moment, et son texte est
-  // le plus long des six langues confondues.
 ];
 
 /**

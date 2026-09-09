@@ -25,7 +25,8 @@ plan a été établi avec le propriétaire, à partir de ses 308 réponses au Se
 Interrogatoire, et proposer autre chose sans le dire revient à défaire une
 décision qu'il a prise.
 
-Il porte huit étapes ordonnées et cent cinquante-sept lignes cochables. La raison de
+Il porte huit étapes ordonnées et plus de cent cinquante lignes cochables — le
+compte exact se lit dans le fichier, pas ici. La raison de
 l'ordre est écrite dans le document ; s'en écarter se discute, mais ça se
 discute — ça ne se fait pas en silence.
 
@@ -951,7 +952,7 @@ fuite éprouveraient alors un filtre qui n'est pas celui qui tourne.
 
 Au navigateur (`npm run e2e`) : `e2e/parcours.spec.ts` suit le chemin
 complet d'un compte neuf, **deux fois, sur un écran de poste et en 390 px
-tactile**, `e2e/langues.spec.ts` ouvre les neuf pages publiques puis les cinq
+tactile**, `e2e/langues.spec.ts` ouvre les pages publiques puis les cinq
 écrans connectés — tableau de bord, historique, amis, réglages, saison — dans les six
 langues et à trois largeurs, sur un compte qu'il ouvre lui-même, en demandant
 chaque langue par son ADRESSE, et
@@ -1132,7 +1133,7 @@ l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on regarde
 le passé.
 
 ```bash
-node scripts/accessibilite.mjs   # quinze pages, six langues, règles WCAG
+node scripts/accessibilite.mjs   # les pages du produit, six langues, WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
 node scripts/comparer-rendu.mjs  # captures avant/après, par largeur d'écran
 node scripts/charge.mjs          # montée en charge par paliers, jusqu'au point de rupture
@@ -1310,6 +1311,108 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une adresse de garde qui n'existait pas, dans le fichier qu'elle explique
+
+Suite du même audit, descendu d'un étage : après les affirmations de
+`CLAUDE.md`, celles des COMMENTAIRES.
+
+`useChemin.ts` porte la règle la plus structurante du passage de la langue dans
+l'adresse — un seul endroit retire le préfixe, personne d'autre n'appelle
+`usePathname`. Son commentaire envoyait lire
+**`src/cheminSansLangue.test.ts`**, qui n'existe pas : le garde s'appelle
+`liensLocalises.test.ts`.
+
+**Une adresse qui ne mène nulle part fait cesser de chercher**, et la
+conclusion la plus naturelle est la pire : « la règle n'est gardée par
+personne, donc je peux écrire mon `usePathname` ». C'est le motif de la
+décision rangée à une adresse inexistante, et de la réf. qui RÉSOLVAIT vers la
+mauvaise réponse — le troisième de la même famille, dans le commentaire cette
+fois.
+
+**Le recensement est presque entièrement NÉGATIF, et c'est ce qui rend le garde
+possible.** Sur **735 fichiers** de `src`, `e2e`, `desktop/src`, `scripts` et
+`prisma`, une seule citation morte. Un garde qui crie sur une chose le jour de
+son écriture se lit ; celui des comptes en lettres, mesuré une heure plus tôt,
+en aurait crié quatre-vingts et n'aurait jamais été lu.
+
+`src/cheminsCites.test.ts` refuse donc un commentaire qui nomme un fichier
+absent, sous deux formes : le chemin complet (`src/lib/dette.ts`) et le nom seul
+d'un test ou d'un parcours (`historique.spec.ts`), qui est la façon dont ce
+dépôt les cite le plus souvent.
+
+**Il ne lit QUE les commentaires**, et le découpage a son propre contrôle : un
+chemin écrit dans une CHAÎNE est du code, jugé par le compilateur ou par le
+serveur de fichiers. Sabotage — le découpage rendu au fichier entier — et le
+contrôle tombe.
+
+**Et il se dispense de LUI-MÊME, ce qui est écrit plutôt que tu.** Il raconte
+l'adresse morte qu'il attrape, et ses cas fabriqués en citent d'autres : un
+garde qui lit les commentaires tombe sur sa propre explication. C'est le piège
+déjà payé trois fois ici — le commentaire qui CITE le motif fautif, celui qui
+le CALME, celui qui repousse la légende hors de la fenêtre de lecture — sous sa
+quatrième forme. Le prix est qu'une adresse morte ajoutée dans ce fichier-là ne
+serait pas attrapée ; c'est le seul, et il est nommé.
+
+**Les motifs s'éprouvent sur des cas FABRIQUÉS**, parce que l'état sain du dépôt
+est zéro trouvaille : les fichiers réels ne peuvent pas distinguer un motif
+juste d'un motif aveugle. Six sabotages, six échecs — dont les deux motifs
+aveuglés séparément, et le recensement vidé.
+
+**Et la famille voisine a été mesurée puis LAISSÉE sans garde**, avec sa
+raison. Après les fichiers cités, les IDENTIFIANTS cités : un commentaire qui
+nomme une fonction ou une constante disparue se relit de la même façon.
+
+Le recensement brut rend **746 identifiants introuvables sur 736 fichiers**, et
+ils sont presque tous légitimes — `null`, `Intl`, `undefined`, `window`, les
+mots-clés du langage, les méthodes de Prisma (`upsert`, `skipDuplicates`), les
+colonnes du schéma (`totalPoints`, `jetonObs`), les attributs HTML (`htmlFor`),
+les noms de bibliothèques. Il n'y a pas de discriminant : un garde de cette
+forme demanderait une liste d'exemptions qui vieillirait plus vite que ce
+qu'elle garde.
+
+**Resserré aux constantes en CAPITALES, il rend neuf candidats et UNE
+trouvaille.** `PUBLIC_PREFIXES` est cité trois fois — dans `auth.config.ts` et
+deux fois dans `porteRoutes.test.ts` — et la constante s'appelle
+`PREFIXES_PUBLICS` depuis qu'elle a quitté `middleware.ts` pour
+`src/lib/routesPubliques.ts`. **Deux choses avaient bougé, le nom ET
+l'adresse**, et le commentaire qui envoie chercher « la politique en un seul
+endroit » désignait les deux de travers.
+
+Les huit autres sont des noms EXTÉRIEURS — une constante de l'API Windows, un
+code d'erreur de Chromium, une variable d'environnement de Vercel — ou des
+récits qui nomment exprès l'ancien nom pour raconter la duplication qu'on a
+retirée. Aucun mécanisme ne les distingue d'un nom mort ; c'est ce qui ferme la
+question.
+
+**Un faux positif de mon propre détecteur, noté pour la méthode** :
+`BASE_RENDU` remonte comme absente alors qu'elle est lue par
+`comparer-rendu.mjs`. Mon découpage naïf des commentaires avait rangé la ligne
+du mauvais côté. C'est exactement la différence entre les deux familles : un
+chemin se vérifie par `existsSync`, qui ne se trompe pas ; un identifiant se
+vérifie par un motif, qui se trompe.
+
+**Le même détecteur, passé sur ce fichier-ci et sur les trois documents de
+`docs/`.** `CLAUDE.md` cite **171 chemins** ; trois ne mènent nulle part, et
+**les trois sont dans le JOURNAL** — les deux fichiers du tableau de bord et
+des réglages avancés vivaient bien à `src/app/dashboard/` et
+`src/app/settings/` avant que la langue entre dans l'adresse. Ce sont les
+chemins d'ALORS, et c'est ce qu'il faut écrire.
+
+La moitié DESCRIPTIVE, elle, en cite quarante-cinq et **aucun n'est mort**.
+D'où la frontière du garde, qui n'est pas de commodité : au-dessus, le document
+dit où regarder MAINTENANT ; en dessous, il raconte ce qui était vrai alors.
+`comptesDeTests.test.ts` emploie déjà la même ligne de partage, pour la même
+raison — et c'est ce qui permet de garder l'un sans faire taire l'autre.
+
+Trois sabotages de plus, trois échecs : un chemin mort posé dans la moitié
+descriptive, le motif rendu aveugle, et la frontière renommée — ce dernier
+devant faire tomber le TÉMOIN plutôt que de rendre le document entier et
+d'échouer pour la mauvaise raison.
+
+**Les trois documents de `docs/` sont propres**, et ça vaut d'être écrit : le
+plan, les questions et la liste d'avant lancement citent sept chemins à eux
+trois, tous vivants.
+
 ### « Toutes les routes ont un test » était faux de trois, et mon détecteur de douze
 
 Suite de l'audit des affirmations vérifiables de ce fichier. Celle-ci portait
@@ -1373,6 +1476,45 @@ pilotent un Chromium ». Ils sont **cinq** — `compte-mesure.mjs` en ouvre un
 aussi, ce que personne n'avait recompté depuis qu'il existe. Le neuvième
 fichier de `scripts/`, `langue.mjs`, est un module partagé et non un outil ; le
 dire évite qu'on « corrige » le huit à la prochaine relecture.
+
+**Le balayage complet des comptes écrits en LETTRES, et le garde qu'on
+n'écrit PAS.** Le garde posé la veille ne voit que les chiffres — c'est écrit
+dans sa limite — donc « Huit scripts » et « cent cinquante-sept lignes » lui
+échappent par construction. Mesuré avant de décider : **88 occurrences dans la
+moitié descriptive**, et plus de quatre-vingts sont parfaitement justes — « un
+test », « une route », « six langues », qui est une constante du produit. Un
+garde de cette forme crierait sur quatre-vingts phrases correctes le jour de
+son écriture, donc il serait dispensé avant d'être lu. C'est la mesure qui
+avait déjà fait renoncer au garde des clés de stockage et à celui de la
+colonne d'effort du plan.
+
+**Ce qui se fait à la place est de LIRE les vingt-cinq qui sont des comptes.**
+Trois avaient rouillé, toutes d'une unité, et l'unité vient à chaque fois d'un
+ajout que le journal raconte :
+
+| annoncé | mesuré | ce qui a bougé |
+|---|---|---|
+| « cent cinquante-sept lignes cochables » | **158** | une ligne ajoutée au plan |
+| « `langues.spec.ts` ouvre les neuf pages publiques » | **dix** | `/connexion-app`, entrée par le recensement des pages visitées par personne |
+| « `accessibilite.mjs` — quinze pages » | **vingt et une** | les cinq rubriques de réglages et `/amis`, entrées avec la correction du balayage |
+
+Les trois perdent leur nombre plutôt que de le gagner à jour : « plus de cent
+cinquante », « les pages publiques », « les pages du produit ». Le compte exact
+vit dans le fichier qu'on peut compter, et le journal garde ses relevés datés —
+c'est la même répartition que pour les comptes de tests.
+
+**Et deux comptes vérifiés qui tiennent**, écrits ici pour qu'on ne les
+recompte pas : les **onze** fichiers qui ne peuvent pas lire la palette
+(`SANS_FEUILLE` en porte exactement onze), et les **cinq** écrans connectés du
+balayage des langues.
+
+**Un commentaire mort trouvé dans la foulée**, et c'est le motif que ce fichier
+reproche partout : `langues.spec.ts` finissait sa liste de pages sur trois
+lignes annonçant que « la liste d'attente y entre en même temps qu'elle devient
+atteignable ». `/waitlist` a été supprimée en V300, avec sa page, son
+dictionnaire et son entrée de navigation. Le commentaire décrivait donc une
+entrée qui n'existe pas, sous une liste qu'on relit en cherchant ce qu'elle
+couvre.
 
 ### Ce fichier annonçait trois comptes de tests, les trois faux
 

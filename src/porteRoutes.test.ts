@@ -142,8 +142,10 @@ describe("porte des routes d'API", () => {
    * Une route dispensée de session doit être JOIGNABLE.
    *
    * Deux listes indépendantes gouvernent l'accès : `SANS_SESSION` ci-dessus,
-   * qui dit quelles routes n'exigent pas de session, et `PUBLIC_PREFIXES`
-   * dans `middleware.ts`, qui dit lesquelles traversent le middleware. Rien
+   * qui dit quelles routes n'exigent pas de session, et les préfixes publics —
+   * `PUBLIC_PREFIXES` à l'époque, `PREFIXES_PUBLICS` dans
+   * `src/lib/routesPubliques.ts` depuis — qui disent lesquelles traversent le
+   * middleware. Rien
    * ne les reliait, et elles ont divergé : quatre routes explicitement
    * dispensées ici étaient redirigées vers `/login` en 307 avant d'atteindre
    * leur propre contrôle.
@@ -167,7 +169,7 @@ describe("porte des routes d'API", () => {
      * Il y a DEUX façons de traverser le middleware, et le garde n'en
      * connaissait qu'une.
      *
-     * `PUBLIC_PREFIXES` en est une. L'autre est le `matcher` de
+     * `PREFIXES_PUBLICS` en est une. L'autre est le `matcher` de
      * `middleware.ts`, qui écarte certaines adresses du contrôle avant même
      * qu'il s'exécute — l'icône de l'application y figure, avec le manifeste et
      * le service worker. Vérifié sur le serveur : `/api/pwa-icon?taille=192`
