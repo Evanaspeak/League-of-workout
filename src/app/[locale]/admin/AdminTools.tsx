@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { Icone } from "@/components/Icone";
 import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { useEffect, useState } from "react";
@@ -20,7 +21,7 @@ export default function AdminTools() {
   const [msg, setMsg] = useState<{ texte: string; ok: boolean } | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/whitelist")
+    fetchBorne("/api/admin/whitelist")
       .then(r => r.json())
       .then(d => { if (d.emails) setEmails(d.emails); });
   }, []);
@@ -30,7 +31,7 @@ export default function AdminTools() {
     setSaving(true);
     setMsg(null);
     try {
-      const res = await fetch("/api/admin/whitelist", {
+      const res = await fetchBorne("/api/admin/whitelist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: input.trim() }),
@@ -50,7 +51,7 @@ export default function AdminTools() {
     // L'adresse ne quitte la liste que si elle a quitté la base : sinon on
     // croit avoir retiré un accès qui tient toujours.
     try {
-      const res = await fetch("/api/admin/whitelist", {
+      const res = await fetchBorne("/api/admin/whitelist", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

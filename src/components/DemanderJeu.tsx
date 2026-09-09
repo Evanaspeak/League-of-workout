@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useState } from "react";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
 import { demandeJeu as dict } from "@/lib/i18n/dictionaries/demandeJeu";
@@ -30,7 +31,7 @@ export function DemanderJeu() {
     setErreur(null);
     setMerci(null);
     try {
-      const res = await fetch("/api/jeux/demande", {
+      const res = await fetchBorne("/api/jeux/demande", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nom: propre }),

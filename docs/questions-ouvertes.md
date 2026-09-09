@@ -531,6 +531,68 @@ elle ne surprend personne. **Ce qui penche pour B** : sur ces jeux-là, personne
 ne se dit « je refuse cette partie-ci » — on refuse la soirée, et c'est le seul
 moment où on peut le dire.
 
+### 20 · Le tableau de bord aux couleurs du jeu qu'on joue (ligne 151)
+Tu as répondu **« Oui, joli »** à « le tableau de bord prend les couleurs de
+League ou de Valorant selon ce qu'on joue ». La ligne est chiffrée à une nuit
+et figure dans l'étape 08, celle que je peux prendre seul. Je ne l'ai pas
+prise, et voilà pourquoi — avec la mesure, plutôt qu'une impression.
+
+**La teinte existe déjà, et elle n'est pas où il faudrait.** Les seize jeux ont
+chacun la leur, dans `BandeJeux.tsx` — c'est-à-dire dans un composant de la
+page d'ACCUEIL, pour dessiner les glyphes de la bande. La déplacer là où
+plusieurs écrans peuvent la lire est du rangement ordinaire, et son garde suit.
+
+**Les seize teintes, mesurées sur le fond du produit** (`--ink`, `#0C0E11`) :
+
+| | teinte | contraste | verdict |
+|---|---|---|---|
+| **Apex Legends** | `#DA292A` | **3,99:1** | **grand texte seulement** |
+| Fortnite | `#8E6BFF` | 5,24:1 | texte OK |
+| Valorant | `#FF4655` | 5,76:1 | texte OK |
+| Minecraft | `#5FA83C` | 6,58:1 | texte OK |
+| Teamfight Tactics | `#B389FF` | 7,31:1 | texte OK |
+| Rocket League | `#3AA7F0` | 7,33:1 | texte OK |
+| League of Legends | `#C89B3C` | 7,56:1 | texte OK |
+| les neuf autres | — | 7,97 à 11,88:1 | texte OK |
+
+Pour comparaison, l'ambre de la marque (`--amber`) rend **10,96:1**.
+
+**Quinze sur seize passent le seuil du texte normal.** C'est une bonne
+nouvelle, et je ne l'attendais pas : un rouge Apex ou un bleu Rocket League sur
+un fond presque noir avaient toutes les raisons d'échouer. Un seul cas est
+sous la barre, et il reste au-dessus de 3:1 — donc utilisable pour un titre,
+une bordure ou un glyphe, jamais pour du texte courant.
+
+**Ce qui bloque n'est donc pas le contraste, c'est la SÉQUENCE.** La
+question 13 ci-dessous attend une décision sur les frontières de commande, qui
+sont sous 3:1. Introduire un accent à seize valeurs pendant qu'un arbitrage de
+contraste est ouvert reviendrait à multiplier par seize la surface qu'il
+faudra remesurer quand tu auras tranché.
+
+**Et une seconde tension, qui t'appartient.** La réponse 251 dit que la marque
+visuelle est validée. Repeindre l'ambre du produit en rouge Valorant n'est pas
+la même chose que teinter ce qui PARLE du jeu, et les deux lectures de ta
+réponse sont défendables :
+
+- **A — la marque tient, le jeu teinte ce qui le concerne.** Les cartes de
+  jeu, le comparatif, les glyphes et les graphiques prennent la teinte ; les
+  boutons, les valeurs et l'or restent l'ambre. Une demi-nuit, aucun
+  remesurage, aucune contradiction avec la 251. C'est la lecture prudente, et
+  c'est nettement moins spectaculaire que ce que « joli » laisse entendre.
+- **B — l'accent du tableau de bord suit le jeu.** C'est ce que ta phrase dit
+  littéralement, et c'est visible tout de suite. Une nuit, plus une campagne de
+  comparaison de rendu et un remesurage d'accessibilité par jeu — et il faut
+  décider ce qu'on fait d'Apex, dont le rouge ne peut pas porter du texte
+  courant.
+- **C — après la question 13.** Rien ce soir ; la teinte déménage quand même
+  hors de la page d'accueil, ce qui ne coûte rien et prépare A comme B.
+
+**Une troisième chose à trancher, quelle que soit l'option** : « selon ce qu'on
+joue » n'a pas de définition évidente. Le jeu le plus joué du compte (stable,
+déductible, mais qui ne bouge jamais), celui du filtre en cours (immédiat, mais
+le tableau change de couleur quand on regarde autre chose), ou celui de la
+session en cours (juste, mais invisible hors session).
+
 ### 13 · Une seule frontière du produit atteint le contraste exigé (ligne 300)
 **Née en mesurant la seconde moitié de la ligne 300**, qui demande d'uniformiser
 les styles en ligne et les classes utilitaires. Trois écrans écrivent leur champ

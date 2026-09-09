@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useState } from "react";
 import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { useValeurClient } from "@/lib/valeurClient";
@@ -108,7 +109,7 @@ export function LoginButtons() {
   const appliquerMemorisation = async () => {
     if (rememberMe) return;
     try {
-      await fetch("/api/auth/session-volatile", { method: "POST" });
+      await fetchBorne("/api/auth/session-volatile", { method: "POST" });
     } catch {
       /* la session reste persistante : mieux vaut ça qu'un échec de connexion */
     }
@@ -142,7 +143,7 @@ export function LoginButtons() {
     if (password.length < 8) { setError(t.erreurMotDePasseTropCourt); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetchBorne("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, pseudo }),

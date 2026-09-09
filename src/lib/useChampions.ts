@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "./reseau";
 import { useEffect, useState } from "react";
 import { CHAMPIONS } from "@/lib/champions";
 
@@ -17,7 +18,7 @@ let enCours: Promise<string[]> | null = null;
 export function chargerChampions(): Promise<string[]> {
   if (cache) return Promise.resolve(cache);
   if (!enCours) {
-    enCours = fetch("/api/champions", { cache: "no-store" })
+    enCours = fetchBorne("/api/champions", { cache: "no-store" })
       .then((r) => r.json())
       .then((list: unknown) => {
         if (Array.isArray(list) && list.length > 0) cache = list as string[];

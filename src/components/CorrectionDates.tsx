@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useMemo, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { correctionDates as dict } from "@/lib/i18n/dictionaries/correctionDates";
@@ -59,7 +60,7 @@ export function CorrectionDates({
       const corps = geste === "poser"
         ? { ids: concernees.map((p) => p.id), date: new Date(nouvelleDate).toISOString() }
         : { ids: concernees.map((p) => p.id), decalageMinutes };
-      const r = await fetch("/api/games/dates", {
+      const r = await fetchBorne("/api/games/dates", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(corps),

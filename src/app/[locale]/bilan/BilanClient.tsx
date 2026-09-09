@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useRef, useState } from "react";
 import { useT, useLocale, etiquetteLocale } from "@/lib/i18n/LocaleContext";
 import { bilanSaison as dictBilan } from "@/lib/i18n/dictionaries/bilanSaison";
@@ -99,7 +100,7 @@ export function BilanClient({ aDesParties }: { aDesParties: boolean }) {
 
   useEffect(() => {
     let vivant = true;
-    fetch("/api/bilan")
+    fetchBorne("/api/bilan")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((b) => { if (vivant) setBilan(b); })
       .catch(() => { if (vivant) setErreur(true); });

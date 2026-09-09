@@ -41,7 +41,13 @@ function consommateurs(dossier: string, trouves: string[] = []): string[] {
       consommateurs(complet, trouves);
     } else if (entree.endsWith(".tsx") && !entree.includes(".test.")) {
       const texte = readFileSync(complet, "utf8");
-      if (texte.includes('fetch("/api/settings")')) trouves.push(complet);
+      // On cherche l'ADRESSE demandée, pas le nom de ce qui la demande.
+      // Ce recensement cherchait `fetch("/api/settings")` : le jour où les
+      // requêtes du navigateur sont passées par une enveloppe qui porte une
+      // échéance, il n'a plus trouvé aucun écran — et seul son témoin de
+      // non-vacuité l'a dit. Un garde épinglé sur le nom de l'appelant devient
+      // muet au premier remaniement, c'est-à-dire le jour où il sert.
+      if (/\b(fetch|fetchBorne)\("\/api\/settings"\)/.test(texte)) trouves.push(complet);
     }
   }
   return trouves;

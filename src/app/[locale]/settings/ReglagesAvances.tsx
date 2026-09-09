@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
@@ -46,7 +47,7 @@ export function ReglagesAvances({
 
   useEffect(() => {
     let vivant = true;
-    fetch("/api/settings")
+    fetchBorne("/api/settings")
       .then((r) => r.json())
       .then((s) => {
         if (!vivant) return;
@@ -61,7 +62,7 @@ export function ReglagesAvances({
 
   const handleSaveSettings = async () => {
     setSavingSettings(true);
-    await fetch("/api/settings", {
+    await fetchBorne("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roleWeights, levelConfigs: niveaux, masteryConfig }),

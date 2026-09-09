@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT, useMinuscule } from "@/lib/i18n/LocaleContext";
 import { detection } from "@/lib/i18n/dictionaries/detection";
@@ -25,7 +26,7 @@ export function ReglageSessionAuto() {
 
   useEffect(() => {
     let vivant = true;
-    fetch("/api/settings")
+    fetchBorne("/api/settings")
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
         if (!vivant || !s) return;
@@ -41,7 +42,7 @@ export function ReglageSessionAuto() {
     setErreur(false);
     setEnregistre(null);
     try {
-      const r = await fetch("/api/settings", {
+      const r = await fetchBorne("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userPrefs: { sessionAuto: valeur } }),

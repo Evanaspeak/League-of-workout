@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT, useLocale, useNombre } from "@/lib/i18n/LocaleContext";
 import { etiquetteLocale } from "@/lib/i18n/langues";
@@ -161,7 +162,7 @@ export function AmisClient() {
   const charger = useCallback(async () => {
     setEchecChargement(false);
     try {
-      const res = await fetch("/api/amis");
+      const res = await fetchBorne("/api/amis");
       if (!res.ok) throw new Error(String(res.status));
       setDonnees(await res.json());
     } catch {
@@ -178,7 +179,7 @@ export function AmisClient() {
 
   const chargerClassement = useCallback(async (quelle: Periode = periodeRef.current) => {
     try {
-      const res = await fetch(`/api/classement?jour=${jourLocal()}&periode=${quelle}`);
+      const res = await fetchBorne(`/api/classement?jour=${jourLocal()}&periode=${quelle}`);
       if (!res.ok) throw new Error(String(res.status));
       setClassement(await res.json());
     } catch {
@@ -200,7 +201,7 @@ export function AmisClient() {
     setProfilOuvert(id);
     setProfil(null);
     try {
-      const res = await fetch(`/api/amis/${id}/profil`);
+      const res = await fetchBorne(`/api/amis/${id}/profil`);
       if (!res.ok) throw new Error(String(res.status));
       setProfil(await res.json());
     } catch {
@@ -210,7 +211,7 @@ export function AmisClient() {
 
   const chargerParrainage = useCallback(async () => {
     try {
-      const res = await fetch("/api/parrainage");
+      const res = await fetchBorne("/api/parrainage");
       if (!res.ok) throw new Error(String(res.status));
       setParrainage(await res.json());
     } catch {
@@ -252,7 +253,7 @@ export function AmisClient() {
     setErreur("");
     setMessage("");
     try {
-      const res = await fetch(url, {
+      const res = await fetchBorne(url, {
         method: options.method,
         ...(options.body === undefined
           ? {}

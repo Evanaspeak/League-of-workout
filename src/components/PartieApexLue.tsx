@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useRef } from "react";
 import { ventiler } from "@/lib/exercices";
 import { estSansEnjeu, oublierSansEnjeu } from "@/lib/sansEnjeu";
@@ -61,7 +62,7 @@ export function PartieApexLue() {
       const sansEnjeu = estSansEnjeu();
       oublierSansEnjeu();
       try {
-        const res = await fetch("/api/games", {
+        const res = await fetchBorne("/api/games", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

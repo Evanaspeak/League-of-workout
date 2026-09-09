@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { ROLES } from "@/lib/scoringDefaut";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
@@ -45,7 +46,7 @@ export function SimulateurDette() {
   const calculer = useCallback(async () => {
     setEnCours(true); setErreur(false);
     try {
-      const r = await fetch("/api/games/preview", {
+      const r = await fetchBorne("/api/games/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

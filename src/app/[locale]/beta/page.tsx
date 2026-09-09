@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { Lien } from "@/components/Lien";
 import { useLocale, useT } from "@/lib/i18n/LocaleContext";
@@ -88,7 +89,7 @@ export default function BetaPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/beta-access", {
+      const res = await fetchBorne("/api/beta-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pseudo, email, genre, age, poids, taille, sportsHoursPerWeek, montre, parrain }),

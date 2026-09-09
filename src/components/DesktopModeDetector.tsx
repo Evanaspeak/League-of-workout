@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect } from "react";
 import { ecrire, effacer } from "@/lib/stockage";
 
@@ -35,7 +36,7 @@ export function DesktopModeDetector() {
     // l'alimente. C'est la même raison que les anciens noms sans compte
     // qu'efface `oublierPremiereVisite`.
     effacer("low_desktop_arme");
-    fetch("/api/auth/desktop-round", { method: "POST" }).catch(() => {});
+    fetchBorne("/api/auth/desktop-round", { method: "POST" }).catch(() => {});
   }, []);
   return null;
 }

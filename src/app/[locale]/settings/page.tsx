@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useState, useRef } from "react";
 import { usePiegeFocus } from "@/lib/usePiegeFocus";
 import { chargerContexte } from "@/lib/chargerContexte";
@@ -283,7 +284,7 @@ export default function SettingsPage() {
   const [testsForce, setTestsForce] = useState<{ jour: string; pompes: number }[] | null>(null);
 
   const lireTestsForce = useCallback(() => {
-    fetch("/api/tests-force")
+    fetchBorne("/api/tests-force")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (Array.isArray(d?.tests)) setTestsForce(d.tests); })
       .catch(() => {});
@@ -302,7 +303,7 @@ export default function SettingsPage() {
      */
     Promise.all([
       chargerContexte().then((c) => (c?.user ?? {}) as Record<string, never>),
-      fetch("/api/settings").then((r) => r.json()),
+      fetchBorne("/api/settings").then((r) => r.json()),
     ]).then(([u, s]) => {
       setProfileForm((avant) => fusionner(avant, PROFIL_DEFAUT, {
         pseudo: u.pseudo ?? "",
@@ -423,7 +424,7 @@ export default function SettingsPage() {
     let ok = false;
     let corps: { jetonProfil?: string | null } = {};
     try {
-      const res = await fetch("/api/settings", {
+      const res = await fetchBorne("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userPrefs }),
@@ -633,7 +634,7 @@ export default function SettingsPage() {
     // l'efface n'était jamais atteinte.
     let res: Response;
     try {
-      res = await fetch("/api/user", {
+      res = await fetchBorne("/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profileForm),
@@ -1417,7 +1418,7 @@ export default function SettingsPage() {
                   setDeleting(true);
                   setErreurSuppression(false);
                   try {
-                    const res = await fetch("/api/user", { method: "DELETE" });
+                    const res = await fetchBorne("/api/user", { method: "DELETE" });
                     if (!res.ok) {
                       setErreurSuppression(true);
                       setDeleting(false);

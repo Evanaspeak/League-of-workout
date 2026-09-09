@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useT, useNombre, useLocale } from "@/lib/i18n/LocaleContext";
@@ -133,14 +134,14 @@ export function ReglagesCorps({
   const [depenses, setDepenses] = useState<{ jour: string; kcalBrulees: number }[]>([]);
 
   useEffect(() => {
-    fetch("/api/pesees")
+    fetchBorne("/api/pesees")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("lecture"))))
       .then((d) => setPesees(Array.isArray(d?.pesees) ? d.pesees : []))
       .catch(() => setLectureRatee(true));
   }, []);
 
   useEffect(() => {
-    fetch("/api/depense")
+    fetchBorne("/api/depense")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("lecture"))))
       .then((d) => setDepenses(Array.isArray(d?.depenses) ? d.depenses : []))
       // Une lecture ratée laisse la liste vide : l'objectif retombe alors sur
@@ -210,7 +211,7 @@ export function ReglagesCorps({
     if (!Number.isFinite(kg) || kg <= 0) { setPeseeEtat("echec"); return; }
     setPeseeEtat("envoi");
     try {
-      const res = await fetch("/api/pesees", {
+      const res = await fetchBorne("/api/pesees", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -252,7 +253,7 @@ export function ReglagesCorps({
     setDepenseEtat("envoi");
     setDepenseErreur("");
     try {
-      const res = await fetch("/api/depense", {
+      const res = await fetchBorne("/api/depense", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ kcalBrulees: Math.round(kcal), jour: jourLocalNavigateur() }),

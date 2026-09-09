@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT } from "@/lib/i18n/LocaleContext";
 import { sourceObs as dict } from "@/lib/i18n/dictionaries/sourceObs";
@@ -17,7 +18,7 @@ export function SourceObs() {
   const [copie, setCopie] = useState(false);
 
   useEffect(() => {
-    fetch("/api/obs")
+    fetchBorne("/api/obs")
       .then((r) => (r.ok ? r.json() : { jeton: null }))
       .then((d) => setJeton(d.jeton))
       .catch(() => setJeton(null));
@@ -32,7 +33,7 @@ export function SourceObs() {
     // Sans message, un refus ne produit rien : le bouton a l'air de ne pas
     // marcher, et on reclique.
     try {
-      const r = await fetch("/api/obs", { method: methode });
+      const r = await fetchBorne("/api/obs", { method: methode });
       if (!r.ok) { setEchec(true); return; }
       setJeton((await r.json()).jeton);
     } catch {

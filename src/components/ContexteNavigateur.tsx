@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useRef } from "react";
 import { useChemin } from "@/lib/i18n/useChemin";
 import { useLocale } from "@/lib/i18n/LocaleContext";
@@ -58,7 +59,7 @@ export function ContexteNavigateur() {
     // Après le chargement : rien ici n'est urgent, et le faire pendant que la
     // page se monte revient à retarder ce que l'utilisateur attend.
     const poser = () => {
-      fetch("/api/settings", {
+      fetchBorne("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT, usePourcentage, useNombre } from "@/lib/i18n/LocaleContext";
 import { adminMesures } from "@/lib/i18n/dictionaries/adminMesures";
@@ -28,7 +29,7 @@ export default function AdminMesures() {
   const [erreur, setErreur] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/mesures")
+    fetchBorne("/api/admin/mesures")
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("refus"))))
       .then(setM)
       .catch(() => setErreur(true));

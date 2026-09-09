@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useRef, useState } from "react";
 import { PartageSeance } from "@/components/PartageSeance";
 import { aChronometrer, horloge, secondesAnnoncees, seuilFranchi } from "@/lib/compteurDette";
@@ -311,7 +312,7 @@ export function CompteurDette() {
    */
   const payer = async (charge: Record<string, unknown>) => {
     try {
-      const res = await fetch("/api/dette", {
+      const res = await fetchBorne("/api/dette", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         // Le jour part d'ici : le serveur ne connaît que l'heure UTC, et la
@@ -334,7 +335,7 @@ export function CompteurDette() {
          * proposer une image n'a jamais fait de mal à personne.
          */
         try {
-          const s = await fetch("/api/seance");
+          const s = await fetchBorne("/api/seance");
           if (s.ok) {
             const d = await s.json();
             if (d?.partageable) setPartage(Number(d.points) || 0);

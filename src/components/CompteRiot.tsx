@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useContexteConnecte } from "@/lib/ContexteConnecte";
 import { useT, useLocale } from "@/lib/i18n/LocaleContext";
@@ -53,7 +54,7 @@ export function CompteRiot() {
     setMessage(null);
     setEnregistre(false);
     try {
-      const res = await fetch("/api/riot/resolve-puuid", {
+      const res = await fetchBorne("/api/riot/resolve-puuid", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ riotId, region }),
@@ -66,7 +67,7 @@ export function CompteRiot() {
       setMessage({ texte: t.compteVerifie(data.gameName, data.tagLine), ok: true });
       setPuuid(data.puuid ?? "");
 
-      const sauve = await fetch("/api/user", {
+      const sauve = await fetchBorne("/api/user", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ riotId, riotRegion: region, riotPuuid: data.puuid }),

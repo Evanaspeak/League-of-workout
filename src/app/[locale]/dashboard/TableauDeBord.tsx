@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useMemo, useState } from "react";
 import { avecLocale } from "@/lib/i18n/cheminLocalise";
 import { nomsExercices } from "@/lib/nomsExercices";
@@ -312,7 +313,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     if (filtre) qs.set("exercice", filtre);
     if (jeu) qs.set("jeu", jeu);
     const url = qs.toString() ? `/api/dashboard?${qs}` : "/api/dashboard";
-    return fetch(url).then(async (res) => {
+    return fetchBorne(url).then(async (res) => {
       if (!res.ok) {
         // Session invalide (ex. cookie d'une ancienne base) → retour au login.
         if (res.status === 401 && typeof window !== "undefined") {
@@ -350,7 +351,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     // En changeant de date rapidement, une réponse tardive écrasait la plus
     // récente : on ignore celles dont on n'attend plus rien.
     let obsolete = false;
-    fetch(`/api/dashboard/daily?date=${calendarDate}`)
+    fetchBorne(`/api/dashboard/daily?date=${calendarDate}`)
       .then((r) => r.json())
       .then((d) => {
         if (obsolete) return;
@@ -375,7 +376,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     // rien n'était enregistré. C'est ce test qui fixe le niveau, donc toute la
     // dette. Le résultat remonte maintenant à l'écran, qui garde la saisie.
     try {
-      const res = await fetch("/api/settings", {
+      const res = await fetchBorne("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userPrefs: { pompesMax: valeur } }),
@@ -409,7 +410,7 @@ export default function TableauDeBord({ depart }: { depart: DepartServeur }) {
     // de démarrer, ce qui confirme le lancement sans clic supplémentaire.
     // Le choix fait ici devient la préférence, pour l'ARAM du chaos comme pour
     // les prochaines sessions.
-    await fetch("/api/settings", {
+    await fetchBorne("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userPrefs: { exercices: exercicesSel } }),

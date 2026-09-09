@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useRef } from "react";
 import {
   formaterCompact, parseParts, repartirPoints, toExerciceIds, ventiler,
@@ -99,12 +100,12 @@ export function DetteDirecte() {
    */
   const chargerAttente = useCallback(async () => {
     try {
-      const u = await fetch("/api/user").then((r) => (r.ok ? r.json() : null));
+      const u = await fetchBorne("/api/user").then((r) => (r.ok ? r.json() : null));
       if (u?.exercices) exercicesRef.current = toExerciceIds(u.exercices);
       partsRef.current = parseParts(u?.partsExercices);
     } catch { /* on garde la sélection connue */ }
     try {
-      const res = await fetch("/api/dette");
+      const res = await fetchBorne("/api/dette");
       if (!res.ok) return;
       const dette = await res.json();
       const points = Number(dette?.points) || 0;
@@ -165,7 +166,7 @@ export function DetteDirecte() {
       // malus et la surcharge de maîtrise, dont la victoire se déduit avec la
       // même formule que le moteur — une victoire coûte la moitié du score de
       // base, sans malus.
-      const res = await fetch("/api/games/preview", {
+      const res = await fetchBorne("/api/games/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

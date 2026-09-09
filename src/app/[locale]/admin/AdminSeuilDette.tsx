@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useState } from "react";
 import { useT, useDateLocale } from "@/lib/i18n/LocaleContext";
 import { formaterDuree } from "@/lib/exercices";
@@ -28,7 +29,7 @@ export default function AdminSeuilDette() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    fetch("/api/dette")
+    fetchBorne("/api/dette")
       .then((r) => r.json())
       .then((d) => {
         const sec = Number(d?.dureeSec);
@@ -60,7 +61,7 @@ export default function AdminSeuilDette() {
     setSaving(true);
     setMsg("");
     try {
-      const res = await fetch("/api/dette", {
+      const res = await fetchBorne("/api/dette", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ secondes: total }),

@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useCallback, useEffect, useRef } from "react";
 import { useSession } from "@/lib/SessionContext";
 import { getLevelParPompes } from "@/lib/scoring";
@@ -54,7 +55,7 @@ export function DetectionSession() {
     if (!pont) return;
     if (actifRef.current) return;
     try {
-      const res = await fetch("/api/settings");
+      const res = await fetchBorne("/api/settings");
       if (!res.ok) return;
       const s = await res.json();
       const conduite = toConduiteSession(s.user?.sessionAuto);

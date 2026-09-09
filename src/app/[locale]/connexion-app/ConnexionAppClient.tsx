@@ -1,4 +1,5 @@
 "use client";
+import { fetchBorne } from "@/lib/reseau";
 import { useEffect, useRef, useState } from "react";
 import { signInWithGoogle, signInWithDiscord } from "@/lib/auth-actions";
 import { Wordmark } from "@/components/Wordmark";
@@ -50,7 +51,7 @@ export function ConnexionAppClient({
     // Une seconde et demie au maximum : le tour est une précaution, pas une
     // condition. Un réseau qui traîne ne doit pas laisser l'écran figé.
     const limite = new Promise((r) => setTimeout(r, 1500));
-    Promise.race([fetch("/api/auth/desktop-round", { method: "POST" }).catch(() => {}), limite])
+    Promise.race([fetchBorne("/api/auth/desktop-round", { method: "POST" }).catch(() => {}), limite])
       .then(() => { if (vivant) formulaire.current?.requestSubmit(); });
 
     const secours = setTimeout(() => setManuel(true), 3000);
