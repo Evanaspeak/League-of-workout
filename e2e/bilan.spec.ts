@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
 import { sansLangue } from "./chemin";
 
@@ -31,13 +32,7 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
   await bloc.waitFor({ timeout: 20_000 });
   const code = (await bloc.innerText()).trim();
 
-  await page.goto("/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
-  await page.getByPlaceholder(/ton code|your code/i).fill(code);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, COMPTE.pseudo, code);
 
   for (const [k, d, a, r] of [[2, 9, 4, "D"], [7, 3, 8, "V"], [0, 11, 2, "D"]] as const) {
     const rep = await page.request.post("/api/games", {
@@ -123,13 +118,7 @@ test("un compte sans partie ne précharge pas d'image", async ({ browser }) => {
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });
   const code = (await bloc.innerText()).trim();
-  await page.goto("/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(neuf);
-  await page.getByPlaceholder(/ton code|your code/i).fill(code);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, neuf, code);
 
   const html = await (await ctx.request.get("/bilan")).text();
   expect(html).not.toMatch(/<link[^>]+rel="preload"[^>]+\/api\/bilan\/image/);

@@ -1,7 +1,8 @@
 import { test, expect, type Page } from "@playwright/test";
+import { seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
 import { LANGUES } from "../src/lib/i18n/LocaleContext";
-import { enLangue, sansLangue } from "./chemin";
+import { enLangue } from "./chemin";
 
 /**
  * Les six langues, sur les écrans qu'un visiteur voit avant d'avoir un compte.
@@ -194,13 +195,7 @@ test.describe("écrans connectés", () => {
     await bloc.waitFor({ timeout: 20_000 });
     const code = (await bloc.innerText()).trim();
 
-    await page.goto("/login");
-    await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
-    await page.getByPlaceholder(/ton code|your code/i).fill(code);
-    await Promise.all([
-      page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-      page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-    ]);
+    await seConnecter(page, COMPTE.pseudo, code);
     // L'identifiant sert à désamorcer la modale d'accueil, dont la mémoire est
     // propre au compte : sans lui elle recouvre chaque écran mesuré.
     const moi = await page.request.get("/api/user");

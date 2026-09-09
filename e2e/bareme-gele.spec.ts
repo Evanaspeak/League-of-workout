@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
+import { seConnecter } from "./compte";
 import { Client } from "pg";
 import { purgerTentatives } from "./limiteur";
-import { sansLangue } from "./chemin";
 import { viderLesFenetres } from "./intro";
 
 /**
@@ -55,13 +55,7 @@ test("changer un ratio ne réécrit pas ce que les parties passées ont coûté"
   await bloc.waitFor({ timeout: 20_000 });
   const code = (await bloc.innerText()).trim();
 
-  await page.goto("/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
-  await page.getByPlaceholder(/ton code|your code/i).fill(code);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, COMPTE.pseudo, code);
   const uid = (await (await page.request.get("/api/user")).json()).id as string;
   await page.request.post("/api/consentement", { data: { accepte: true } });
 
@@ -143,13 +137,7 @@ test("la pastille de dette et son décompte annoncent le même nombre", async ({
   await bloc.waitFor({ timeout: 20_000 });
   const code = (await bloc.innerText()).trim();
 
-  await page.goto("/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(compte.pseudo);
-  await page.getByPlaceholder(/ton code|your code/i).fill(code);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, compte.pseudo, code);
   const uid = (await (await page.request.get("/api/user")).json()).id as string;
   await page.request.post("/api/consentement", { data: { accepte: true } });
   // La boxe au sac seule : il faut que pastille et chrono parlent du même

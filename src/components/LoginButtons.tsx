@@ -198,7 +198,15 @@ export function LoginButtons() {
       {tab === "code" && (
         <div className="space-y-3">
           {error && (
-            <div style={{
+            /*
+              `role="alert"` et non un `div` nu.
+              Un refus de connexion annoncé à personne est le pire des refus
+              silencieux : c'est l'écran où celui qui n'entre pas n'a aucun
+              autre recours, et un lecteur d'écran n'y entendait rien du tout.
+              Trouvé par la sonde de `seConnecter`, qui relève les messages
+              annoncés à l'échec et n'en trouvait aucun sur un code faux.
+            */
+            <div role="alert" style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.25rem",
               background: "color-mix(in srgb, var(--loss) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
               borderRadius: 4, fontSize: "0.82rem", color: "var(--loss)",
@@ -309,7 +317,15 @@ export function LoginButtons() {
           </div>
 
           {error && (
-            <div style={{
+            /*
+              `role="alert"` et non un `div` nu.
+              Un refus de connexion annoncé à personne est le pire des refus
+              silencieux : c'est l'écran où celui qui n'entre pas n'a aucun
+              autre recours, et un lecteur d'écran n'y entendait rien du tout.
+              Trouvé par la sonde de `seConnecter`, qui relève les messages
+              annoncés à l'échec et n'en trouvait aucun sur un code faux.
+            */
+            <div role="alert" style={{
               padding: "0.6rem 0.8rem", marginBottom: "0.75rem",
               background: "color-mix(in srgb, var(--loss) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
               borderRadius: 4, fontSize: "0.82rem", color: "var(--loss)",

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
-import { sansLangue } from "./chemin";
 
 /**
  * Une séance payée sans réseau ne se perd pas.
@@ -36,13 +36,7 @@ test("ouvrir un compte, choisir la boxe, et se faire une dette", async ({ browse
   await bloc.waitFor({ timeout: 20_000 });
   const code = (await bloc.innerText()).trim();
 
-  await page.goto("/login");
-  await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
-  await page.getByPlaceholder(/ton code|your code/i).fill(code);
-  await Promise.all([
-    page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-    page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-  ]);
+  await seConnecter(page, COMPTE.pseudo, code);
   uid = (await (await page.request.get("/api/user")).json()).id as string;
 
   // Seuls les exercices comptés en temps alimentent le compteur : des pompes

@@ -1,7 +1,7 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
+import { seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
 import { passerIntro } from "./intro";
-import { sansLangue } from "./chemin";
 
 /**
  * Les trois parcours qui font l'application : entrer, enregistrer une défaite,
@@ -115,13 +115,7 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     const code = (await bloc.innerText()).trim();
     expect(code.length).toBeGreaterThan(3);
 
-    await page.goto("/login");
-    await page.getByPlaceholder(/ton pseudo|your username/i).fill(COMPTE.pseudo);
-    await page.getByPlaceholder(/ton code|your code/i).fill(code);
-    await Promise.all([
-      page.waitForURL((u) => !sansLangue(u.pathname).startsWith("/login"), { timeout: 30_000 }),
-      page.getByRole("button", { name: /^se connecter$|^sign in$/i }).click(),
-    ]);
+    await seConnecter(page, COMPTE.pseudo, code);
 
     // La session existe vraiment : c'est le serveur qui le dit, pas l'écran.
     const moi = await page.request.get("/api/user");
