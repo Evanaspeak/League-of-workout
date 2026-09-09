@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { sansCommentaires } from "@/test/sansCommentaires";
 
@@ -65,17 +65,33 @@ describe("le corps d'une requête ne fait jamais tomber une route", () => {
   });
 
   /**
-   * Le module partagé existe et refuse ce qui n'est pas un objet.
+   * Le module partagé est éprouvé en l'EXÉCUTANT, pas en lisant son texte.
    *
-   * Toutes les routes lisent des champs nommés : sur `null` la lecture lève,
-   * sur un nombre ou un tableau elle rend `undefined` et le refus tombe plus
-   * loin, sous un message qui parle d'autre chose.
+   * Ce contrôle épinglait deux motifs dans la source de `corpsRequete.ts` — le
+   * `catch` et `Array.isArray`. Il éprouvait donc le MOTIF et non la RÈGLE, et
+   * son motif ne couvrait que deux des trois conditions. Mesuré : la condition
+   * de TYPE retirée, il restait vert, la suite entière aussi — **2854 tests** —
+   * et la porte d'entrée du produit se mettait à répondre « Pseudo manquant »
+   * sur un corps qui est un nombre, une chaîne ou un booléen. Elle accusait la
+   * saisie de quelqu'un d'un défaut qui n'est pas le sien, c'est-à-dire
+   * exactement ce que ce module existe pour empêcher.
+   *
+   * Ce qu'un motif ne peut pas simuler, c'est d'être APPELÉ. Le garde exige
+   * donc que le module ait un test qui l'importe ET l'appelle — un import seul
+   * est une intention, pas un comportement, et c'est le défaut déjà payé sur
+   * le garde du nom publié comme sur celui de la porte des routes. Le
+   * comportement lui-même vit dans `src/lib/corpsRequete.test.ts`, une
+   * condition par cas.
+   *
+   * La règle est bornée à ce module-ci, avec sa raison : c'est le seul que
+   * dix-neuf routes appellent pour décider ce qu'elles font d'un corps qu'on
+   * leur a mal donné.
    */
-  it("le module partagé rattrape ET écarte ce qui n'est pas un objet", () => {
-    const texte = sansCommentaires(
-      readFileSync(join(process.cwd(), "src", "lib", "corpsRequete.ts"), "utf8"),
-    );
-    expect(texte).toMatch(/catch\s*\{[\s\S]{0,40}return null;/);
-    expect(texte).toMatch(/Array\.isArray\(brut\)/);
+  it("le module partagé a un test qui l'exécute", () => {
+    const test = join(process.cwd(), "src", "lib", "corpsRequete.test.ts");
+    expect(existsSync(test)).toBe(true);
+    const texte = sansCommentaires(readFileSync(test, "utf8"));
+    expect(texte).toMatch(/import\s*\{[^}]*\blireCorps\b[^}]*\}\s*from/);
+    expect((texte.match(/\blireCorps\s*\(/g) ?? []).length).toBeGreaterThanOrEqual(8);
   });
 });
