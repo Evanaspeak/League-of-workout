@@ -192,6 +192,80 @@ Monter jsdom est un **changement de stratégie de test**, pas un rattrapage.
 
 ---
 
+### 10 · D'autres défis absurdes, comme tu me l'as demandé (réf. 136)
+Ta réponse était « Montre-m'en d'autres », et le plan la porte depuis comme
+une dette : « je te dois la liste ». La voici. **Rien n'est construit** — tu
+choisis, et ce qui est retenu devient une ligne du plan.
+
+Trois contraintes gouvernent la liste, et elles viennent du code existant :
+
+- **un défi doit demander un GESTE.** « Solde ta dette » quand on ne doit rien
+  se lit comme une flatterie, et une flatterie quotidienne finit par ne plus
+  rien vouloir dire ;
+- **il ne rapporte pas de points d'effort**, seulement de l'XP. Un point donné
+  est une pompe que personne n'a faite, et la dette, le classement, les paliers
+  et le bilan deviendraient faux ensemble ;
+- **il est le même pour tout le monde**, décidé par le seul jour. Un défi
+  commun se raconte ; un défi personnel ne se raconte à personne.
+
+Le coût annoncé est réel : `/api/progression` charge déjà les parties du mois
+avec `{ result, jeu, date }`, donc un défi qui lit une colonne de plus de cette
+table coûte un champ, pas une requête.
+
+#### Ce qui se mesure aujourd'hui, sans rien ajouter
+| | le défi | ce qu'il mesure | coût |
+|---|---|---|---|
+| A | Paie avant minuit tout ce que tu as généré aujourd'hui | points payés du jour ≥ points générés du jour | les deux sont déjà calculés |
+| B | Solde plus de 300 points en une seule séance | un paiement de 300 ou plus | rien |
+| C | Fais-les en trois fois plutôt qu'en une | trois paiements dans la journée | rien |
+| D | Quatre jeux différents dans la journée | jeux distincts | la mesure existe déjà à deux |
+
+#### Ce qui coûte une colonne au chargement déjà fait
+| | le défi | ce qu'il mesure | coût |
+|---|---|---|---|
+| E | Une partie sans mourir | `deaths = 0` | un champ au `select` |
+| F | Gagne juste après deux défaites | l'ordre des parties dans la journée | deux champs |
+| G | Trois rôles différents | `role` | un champ |
+| H | Une partie classée, et une seule | `fileClassee` | un champ |
+
+#### La famille que ton exemple ouvre, et son prix
+Ton exemple était « paie ta dette avant la fin de l'écran de défaite ». C'est
+une mesure de DÉLAI entre la partie et le paiement, et elle est déjà prouvée :
+l'exploit du paiement éclair fait exactement ça, à une heure. Descendre à
+quelques minutes coûte le même mécanisme, plus finement.
+
+| | le défi | le délai |
+|---|---|---|
+| I | Paie dans les dix minutes qui suivent la partie | 10 min |
+| J | Paie avant la fin de l'écran de défaite | environ 60 s |
+
+**Une réserve sur le J, et elle est de fond.** Presque personne ne le
+remplira, et un défi que personne ne remplit cesse d'être lu au bout de trois
+jours. Il vaut peut-être mieux comme exploit permanent, à côté du paiement
+éclair, que comme défi du jour.
+
+#### Ce qui ne se mesure PAS honnêtement, et pourquoi
+C'est la moitié utile de cette liste. Trois idées naturelles sont fausses :
+
+- **« joue avant telle heure »** ne dit pas quand tu as joué. `Game.date` se
+  corrige à la main, et `Game.createdAt` dit quand tu as ENREGISTRÉ. Une partie
+  ajoutée le lendemain matin passerait le défi sans l'avoir mérité ;
+- **tout défi de RÔLE ou de KDA est vide pour cinq jeux du catalogue.**
+  Minecraft, World of Warcraft, GTA V, Elden Ring et Les Sims se comptent au
+  temps : ni rôle, ni mort, ni victoire. Le défi du jour étant le même pour
+  tout le monde, il serait impossible pour qui joue à ceux-là ;
+- **« ne perds aucune partie, ou paie double »** est un MALUS, c'est-à-dire de
+  la dette ajoutée qu'aucune partie n'a produite. C'est la réponse 137, et tu
+  l'as remise à plus tard : elle n'est pas proposée ici.
+
+#### Un que je n'ose pas proposer sans te le dire
+**« Pèse-toi. »** Techniquement gratuit — une ligne dans `Pesee` suffit. Mais
+c'est une donnée de santé, et en faire un défi commun affiché à tout le monde
+change sa nature : le rappel de pesée existe déjà, il est facultatif et il ne
+dit rien du poids. Un défi le rendrait public dans son principe. À toi.
+
+---
+
 ## Ce qui a été tranché, et où c'est parti
 
 Quatorze questions, répondues le 8 septembre. Le tableau existe pour qu'une

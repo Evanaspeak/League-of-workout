@@ -187,7 +187,7 @@ reste. Les efforts sont ceux estimés à l'écriture du plan.
 | [x] | 140 | Un mur des records par exercice et par période — **par période seulement**, l'exercice n'est pas retenu sur un paiement | 1 nuit |
 | [x] | 141 | Records publics ou entre amis, au choix | ½ nuit |
 | [x] | 144 | Classement hebdomadaire et cumul, deux onglets | ½ nuit |
-| [ ] | 136 | D'autres défis absurdes à te proposer | je te dois la liste |
+| [ ] | 136 | D'autres défis absurdes à te proposer — **la liste est rendue** : dix propositions dans `questions-ouvertes.md`, item 10, avec leur coût réel et les trois idées qui ne se mesurent PAS honnêtement. Il reste à choisir | à toi |
 
 ### Progression et récompenses
 *2 à faire · 8 faits.* Les paliers, le niveau de compte, le titre, l'exploit de la dette payée dans l'heure et la courbe de force.
@@ -412,7 +412,10 @@ rend dynamique toute route de l'application. 0 avant, 150 après.
 Trois choses promises et jamais rendues :
 
 - la liste des statistiques avancées de la version payante (réf. 007) ;
-- d'autres idées de défis absurdes (réf. 136) ;
+- ~~d'autres idées de défis absurdes (réf. 136)~~ — **rendue le 9 septembre**,
+  `questions-ouvertes.md` item 10 : dix propositions, leur coût mesuré sur ce
+  que `/api/progression` charge déjà, et les trois idées naturelles qui ne se
+  mesurent pas honnêtement ;
 - les deux maquettes de formulaire d'inscription.
 
 ## Ce qui n'appartient pas à ce plan
