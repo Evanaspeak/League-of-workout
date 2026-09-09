@@ -153,6 +153,60 @@ parce qu'aujourd'hui il n'en a pas et que rien n'empêche une cinquième version
 d'apparaître. Le coût est d'une demi-nuit dans les deux sens, et le garde de la
 palette est déjà là pour tenir la décision une fois prise.
 
+### 13 · Aucune bordure de champ n'atteint le contraste exigé (ligne 300)
+**Née en mesurant la seconde moitié de la ligne 300**, qui demande d'uniformiser
+les styles en ligne et les classes utilitaires. Trois écrans écrivent leur champ
+à la main — inscription, connexion, récupération — et le reste du produit emploie
+`.lol-input`. Je l'avais mise de côté comme une affaire de goût : passer à
+`.lol-input` fait passer la bordure de `--line-strong` (alpha 0,18) à `--line`
+(alpha 0,08), donc rend les champs plus pâles sur l'entonnoir d'acquisition.
+
+**Ce n'en est pas une, et la mesure le dit.** Le critère 1.4.11 des WCAG demande
+**3:1** entre ce qui identifie une commande et ce qui l'entoure. Mesuré au
+navigateur, sur les pixels réellement composés :
+
+| traitement | emplois | bordure / champ | fond / autour | verdict |
+|---|---|---|---|---|
+| `.lol-input`, `.lol-select` | 64 | **1,22:1** | **1:1** | échoue |
+| style en ligne (inscription, connexion, récupération) | 3 écrans | **1,67:1** | **1:1** | échoue |
+
+**Les deux échouent, et le fond ne rattrape RIEN.** Il rend `1:1`, et ce n'est
+pas une erreur de mesure : le fond d'un champ est `var(--ink)` à 60 % et le fond
+de la page est `--ink`. De l'encre sur de l'encre donne de l'encre. La bordure
+est donc le seul repère qui existe, et elle est à 1,22.
+
+Uniformiser sur `.lol-input` irait par conséquent dans le MAUVAIS sens — de 1,67
+à 1,22 — sur les trois écrans par lesquels tout le monde entre. Et `.lol-input`
+n'est pas réservé aux écrans connectés : l'outil le trouve aussi sur
+`/calculateur/league-of-legends`, une page publique.
+
+**Ce qu'il faudrait, calculé** : l'opacité de la bordure doit monter à **0,36**
+pour atteindre 3:1, contre 0,08 et 0,18 aujourd'hui. C'est un changement visible
+sur tous les écrans.
+
+**Pourquoi ça ne se décide pas seul.** `--line` est lu **91 fois** et
+`--line-strong` **46 fois** ; `.lol-panel` seul en compte 104. Monter le jeton
+commun redessine le chrome du produit entier — c'est l'apparence de
+l'application, pas un détail d'implémentation, et la réponse 251 dit que la
+marque visuelle est validée.
+
+**Trois options, chiffrées :**
+
+- **A — ne rien changer.** Le produit reste tel qu'il est, et l'écart est écrit
+  ici. Coût nul, et une non-conformité connue.
+- **B — un jeton propre aux CHAMPS.** `--line-champ` à 0,36, lu par
+  `.lol-input`, `.lol-select` et les trois styles en ligne ; les panneaux ne
+  bougent pas. Soixante-quatre éléments changent d'aspect, les 104 panneaux non.
+  Une demi-nuit, et c'est l'option qui corrige sans redessiner le produit.
+- **C — monter `--line` pour tout le monde.** Cohérent, et ça change chaque
+  écran. Une nuit, plus une campagne de comparaison de rendu.
+
+**Ce que je n'ai PAS mesuré, écrit plutôt que tu** : les boutons. Un bouton plein
+est identifié par son fond et passerait ; un bouton fantôme ne passerait
+probablement pas. Le contrôle ajouté à `scripts/accessibilite.mjs` les écarte
+donc explicitement, faute de les avoir regardés.
+
+
 ---
 
 ## Ce qui demande une machine qu'on n'a pas
