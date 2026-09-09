@@ -13,7 +13,7 @@ import { sansLocale } from "./cheminLocalise";
  * rien, la modale d'accueil s'inviterait sur les pages publiques, le rail
  * s'afficherait sur la page d'accueil.
  *
- * Un seul endroit retire le préfixe. `src/cheminSansLangue.test.ts` refuse
+ * Un seul endroit retire le préfixe. `src/liensLocalises.test.ts` refuse
  * `usePathname` partout ailleurs : deux composants qui décideraient chacun de
  * leur côté finiraient par ne pas décider pareil.
  *

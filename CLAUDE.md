@@ -1311,6 +1311,53 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Une adresse de garde qui n'existait pas, dans le fichier qu'elle explique
+
+Suite du même audit, descendu d'un étage : après les affirmations de
+`CLAUDE.md`, celles des COMMENTAIRES.
+
+`useChemin.ts` porte la règle la plus structurante du passage de la langue dans
+l'adresse — un seul endroit retire le préfixe, personne d'autre n'appelle
+`usePathname`. Son commentaire envoyait lire
+**`src/cheminSansLangue.test.ts`**, qui n'existe pas : le garde s'appelle
+`liensLocalises.test.ts`.
+
+**Une adresse qui ne mène nulle part fait cesser de chercher**, et la
+conclusion la plus naturelle est la pire : « la règle n'est gardée par
+personne, donc je peux écrire mon `usePathname` ». C'est le motif de la
+décision rangée à une adresse inexistante, et de la réf. qui RÉSOLVAIT vers la
+mauvaise réponse — le troisième de la même famille, dans le commentaire cette
+fois.
+
+**Le recensement est presque entièrement NÉGATIF, et c'est ce qui rend le garde
+possible.** Sur **735 fichiers** de `src`, `e2e`, `desktop/src`, `scripts` et
+`prisma`, une seule citation morte. Un garde qui crie sur une chose le jour de
+son écriture se lit ; celui des comptes en lettres, mesuré une heure plus tôt,
+en aurait crié quatre-vingts et n'aurait jamais été lu.
+
+`src/cheminsCites.test.ts` refuse donc un commentaire qui nomme un fichier
+absent, sous deux formes : le chemin complet (`src/lib/dette.ts`) et le nom seul
+d'un test ou d'un parcours (`historique.spec.ts`), qui est la façon dont ce
+dépôt les cite le plus souvent.
+
+**Il ne lit QUE les commentaires**, et le découpage a son propre contrôle : un
+chemin écrit dans une CHAÎNE est du code, jugé par le compilateur ou par le
+serveur de fichiers. Sabotage — le découpage rendu au fichier entier — et le
+contrôle tombe.
+
+**Et il se dispense de LUI-MÊME, ce qui est écrit plutôt que tu.** Il raconte
+l'adresse morte qu'il attrape, et ses cas fabriqués en citent d'autres : un
+garde qui lit les commentaires tombe sur sa propre explication. C'est le piège
+déjà payé trois fois ici — le commentaire qui CITE le motif fautif, celui qui
+le CALME, celui qui repousse la légende hors de la fenêtre de lecture — sous sa
+quatrième forme. Le prix est qu'une adresse morte ajoutée dans ce fichier-là ne
+serait pas attrapée ; c'est le seul, et il est nommé.
+
+**Les motifs s'éprouvent sur des cas FABRIQUÉS**, parce que l'état sain du dépôt
+est zéro trouvaille : les fichiers réels ne peuvent pas distinguer un motif
+juste d'un motif aveugle. Six sabotages, six échecs — dont les deux motifs
+aveuglés séparément, et le recensement vidé.
+
 ### « Toutes les routes ont un test » était faux de trois, et mon détecteur de douze
 
 Suite de l'audit des affirmations vérifiables de ce fichier. Celle-ci portait
