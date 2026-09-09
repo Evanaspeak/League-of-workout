@@ -1289,6 +1289,45 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture après V550 à V557, et quatre kilo-octets qui se nomment
+Passée sur un compte semé à soixante parties, créé après la vidange de
+`.next/cache` — le geste est dans la procédure depuis qu'une 404 gardée a fait
+conclure à une régression. Huit écrans, dont les trois de l'entonnoir
+d'acquisition.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | plus grand élément |
+|---|---|---|---|---|
+| `/settings` | 164 ms | 984 ms | 0,000 | la mention Riot, en pied |
+| `/bilan` | 260 ms | **2128 ms** | 0,000 | l'image de saison |
+| `/amis` | 292 ms | 1132 ms | 0,031 | le paragraphe du classement |
+| `/dashboard` | 304 ms | 1140 ms | 0,000 | le bandeau d'attente Riot |
+| `/beta` | 524 ms | 1128 ms | 0,000 | « Un pseudo suffit » |
+| `/login` | 504 ms | 1132 ms | 0,000 | la mention des CGU |
+| `/history` | 552 ms | 1136 ms | 0,000 | le titre |
+| `/` | 1044 ms | 1340 ms | 0,000 | l'image de l'application |
+
+Les huit sont dans les seuils. `/bilan` reste le plancher pour la raison écrite
+une douzaine de fois — son plus grand élément est l'image de saison — et
+2 128 ms se compare aux 2 116, 2 120 et 2 132 des campagnes comparables : il ne
+bouge pas.
+
+**Le poids au chargement bouge de trois à quatre kilo-octets sur QUATRE écrans
+sur cinq**, et le cinquième ne bouge pas : tableau de bord 235 → 239, amis
+212 → 216, historique 206 → 210, bilan 192 → 195, réglages 270 → 270. **Mesuré
+trois fois**, stable au kilo-octet.
+
+C'est la signature d'un dictionnaire qui grossit, pas d'un module qui arrive —
+et cette fois elle se NOMME : V551 ajoute soixante-douze lignes de dictionnaire
+dans six langues (`settings`, `confidentialite`, `betaAccess`, `adminMesures`)
+pour la question de la montre. Les réglages ne bougent pas parce que leur
+chiffre était déjà arrondi à 270 à la campagne d'avant.
+
+**Ce que la campagne n'exerce PAS**, écrit plutôt que laissé à croire : le
+`<select>` de la montre vit dans le bloc FACULTATIF replié de `/beta`, que le
+balayage n'ouvre pas. Ce qui le tient est le parcours navigateur, pas cette
+mesure — c'est l'angle mort déjà payé deux fois sur les rubriques repliées des
+réglages.
+
 ### La liste d'avant le lancement a rouillé une SECONDE fois, au même endroit
 `docs/lancement.md` est le document qu'on relit juste avant d'inviter cent
 personnes — donc au moment où l'on a le moins envie de vérifier ce qu'il
