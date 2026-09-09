@@ -225,6 +225,196 @@ affichage, pas un barème.
 **Ce que ça ne fait PAS** : ça ne s'affiche que dans l'application Windows. Sur
 le site il n'y a pas de « avant la partie » — on y arrive après.
 
+### 15 · Si Riot coupe son API du jour au lendemain (réf. 292)
+Ta réponse est **« Je ne sais pas »**. C'est une question de FAIT, donc elle se
+recense : voici ce qui dépend de l'API web de Riot, et ce qui n'en dépend pas.
+
+**Toute la dépendance tient en trois routes et deux écrans** — recensé sur tout
+`src`, par ce qui lit `RIOT_API_KEY` ou passe par `riotFetch` :
+
+| ce qui meurt | ce que ça enlève |
+|---|---|
+| `/api/riot/resolve-puuid` | on ne peut plus RATTACHER un compte Riot |
+| `/api/riot/match-history` | la liste des vingt dernières parties disparaît |
+| `/api/riot/last-game` | le mode session cesse de sonder |
+
+**Et voici ce qui ne bouge pas d'un pouce.** La détection automatique de
+l'application Windows **ne passe pas par l'API web de Riot** : `liveclient.js`
+lit `https://127.0.0.1:2999`, `lcu.js` lit le lanceur sur `127.0.0.1`. Ce sont
+deux services LOCAUX, sur la machine du joueur, sans clé et sans réseau. Riot
+peut fermer son API publique demain : **une partie de League jouée avec
+l'application ouverte continue de s'enregistrer toute seule**, avec son score,
+son rôle, sa file et son issue.
+
+Survivent aussi, sans rien avoir à changer : la saisie à la main, les seize
+jeux du catalogue — un seul porte `riot: true` —, la dette, les paiements, les
+exercices, les amis, les groupes, le classement, les paliers, les défis, le
+bilan de saison, la pastille en jeu, les notifications, le courriel
+hebdomadaire.
+
+**La réponse tient donc en une phrase : le produit survit, la COMMODITÉ
+meurt.** Ce qui disparaît est le rattrapage — reprendre les parties jouées
+sans l'application ouverte — et le rattachement du compte, qui ne sert
+aujourd'hui qu'à ça.
+
+**Et ce n'est pas une hypothèse : c'est l'état actuel.** La clé de production
+n'est pas arrivée, donc les trois routes rendent déjà **503** avec leur message
+(« le suivi Riot est indisponible, le reste marche, les parties s'enregistrent
+à la main »). Le produit tourne dans le scénario 292 depuis le premier jour.
+
+**Un seul point à surveiller, et il est ailleurs.** Les icônes de champion
+viennent de Data Dragon (`ddragon.leagueoflegends.com`), qui est un dépôt de
+fichiers STATIQUE, sans clé — donc un service différent, avec une autre
+probabilité de fermeture. Si celui-là tombait, `ChampionIcon` retombe déjà sur
+la première lettre du champion dans un carré, et c'est éprouvé.
+
+**Ce qui reste à décider** : rien d'urgent. La seule chose qui se déciderait
+est de savoir si l'on garde l'écran de rattachement de compte quand il ne peut
+plus rien rattacher — aujourd'hui il dit pourquoi, ce qui est le bon
+comportement.
+
+### 16 · Deux mois sans toi : ce qui s'arrête tout seul (réf. 293)
+Ta réponse est **« Je ne sais pas »**, et la question porte un chiffre qui n'est
+pas anodin : **deux mois, c'est soixante jours**, et soixante jours est
+exactement le seuil auquel GitHub désactive un workflow programmé quand le
+dépôt n'a plus d'activité. *(Règle documentée par GitHub, pas mesurée ici : elle
+prévient par courriel avant de couper — un courriel adressé à la personne qui,
+par hypothèse, a lâché.)*
+
+Le dépôt porte **trois travaux programmés**, et les trois tombent sous cette
+règle :
+
+| travail | rythme | ce que sa mort coûte |
+|---|---|---|
+| `supervision.yml` | 4 fois par heure | **plus rien ne dit que le site est tombé** |
+| `sauvegarde.yml` | tous les jours à 03 h 17 | plus aucune archive n'est produite |
+| `envois-programmes.yml` | toutes les heures | voir ci-dessous : c'est le moins grave |
+
+**La supervision est la perte qui compte.** C'est la seule chose du système qui
+crie, et elle a été conçue pour ne crier qu'au CHANGEMENT d'état — donc pour
+qu'on la lise. Sans elle, une panne de deux semaines ne se voit que si
+quelqu'un ouvre le site.
+
+**La sauvegarde a un second compte à rebours, et il est écrit dans le
+workflow** : `retention-days: 90`. La dernière archive est produite au
+soixantième jour et expire quatre-vingt-dix jours plus tard. **Au cent
+cinquantième jour, il n'existe plus aucune sauvegarde restaurable, nulle
+part.** Les données, elles, vivent toujours dans Neon — ce qui disparaît est le
+moyen de les remettre en état après un incident, pas les données.
+
+**Les envois, eux, survivent — et c'est la bonne nouvelle du recensement.**
+`vercel.json` porte deux tâches planifiées vers `/api/cron/matin`, à 8 h et 9 h
+UTC, et Vercel ne les désactive pas pour cause d'inactivité. Le rappel du matin,
+le bilan hebdomadaire et **la relance des absents** continuent donc de partir.
+Ce que la mort du travail GitHub enlève est la COUVERTURE DES AUTRES FUSEAUX :
+deux heures UTC fixes couvrent la matinée française, pas celle de Tokyo. Un
+compte japonais cesse d'être notifié ; un compte français non.
+
+Sans les crons Vercel, la conclusion aurait été bien plus sombre : **la relance
+des absents est précisément le mécanisme qui rattrape une absence**, et il
+serait mort de l'absence qu'il existe pour rattraper.
+
+#### Les autres horloges, recensées et sans danger
+- **la clé Riot de développement** expire toutes les vingt-quatre heures. C'est
+  déjà le cas, et la question 15 dit exactement ce que ça coûte ;
+- **Neon** suspend son calcul quand personne ne se connecte — c'est ce que
+  `/api/sante` appelle `reveil`, et le premier appel du matin met six cents
+  millisecondes au lieu de vingt. Ça ne perd aucune donnée ;
+- **Vercel** ne périme pas un déploiement, et renouvelle le certificat seul ;
+- **l'application de bureau installée** continue de se mettre à jour par
+  `latest.yml`, et de fonctionner si plus rien ne bouge ;
+- **le nom de domaine**, lui, se renouvelle et ça t'appartient. C'est la seule
+  horloge de la liste qui puisse tout éteindre d'un coup.
+
+#### Ce qui se décide, et ce que ça coûterait
+**A · Ne rien faire.** Tu reçois le courriel de GitHub, tu cliques pour
+réactiver. Coût nul, et ça suppose de lire ce courriel-là.
+
+**B · Déplacer la supervision sur Vercel.** C'est le travail dont la mort coûte
+le plus. Mais le plan Hobby n'autorise que **deux** tâches planifiées, et les
+deux sont prises par les envois du matin. Il faudrait donc arbitrer entre la
+supervision et la couverture des fuseaux, ou passer au plan payant.
+
+**C · Un travail qui entretient les autres.** Un workflow programmé qui écrit
+quelque chose dans le dépôt remet le compteur à zéro. Ça marche, et ça salit
+l'historique avec des commits vides — ce qui est précisément ce que ce dépôt
+refuse ailleurs, le marqueur de version étant déjà posé par commit vide en cas
+de besoin.
+
+**Rien n'est fait** : les trois options changent le comportement du système
+hors de l'application, et c'est ta décision.
+
+### 17 · Le référencement naturel : ce qui est construit, et ce que personne ne regarde (réf. 241)
+Ta réponse est **« Explique »**. La réponse courte est : c'est déjà construit,
+mesuré en production ce matin — et **personne ne peut dire si ça marche**,
+faute d'un compte Search Console.
+
+**Ce qui est en ligne**, relevé sur `winorworkout.com` :
+
+| | mesuré |
+|---|---|
+| pages de calculateur | **96** — seize jeux × six langues |
+| adresses au plan du site | 132, avec **924 alternatives de langue** et 132 `x-default` |
+| une page servie | 200, **`x-vercel-cache: HIT`** — prérendue, servie par le bord |
+| son titre | « Combien de pompes pour une défaite sur League of Legends ? » |
+| en allemand | « Wie viele Liegestütze für eine Niederlage in Rocket League? » |
+| en japonais | 「Minecraft で1敗すると腕立て何回？」 |
+| canonique, `hreflang`, description | présents sur chaque page ET au plan du site |
+
+**Le titre EST la question**, dans les six langues. C'est exactement la requête
+que tu cites, et il y en a quatre-vingt-seize variantes — une par jeu et par
+langue. Chaque page reçoit huit liens entrants depuis les autres (l'anneau posé
+en V503), donc aucune n'est orpheline.
+
+**Ce que ça ne dit PAS, et c'est la moitié qui manque.** Tout ce qui précède est
+l'OFFRE : des pages qui répondent à la question. Rien ne mesure la DEMANDE —
+combien de gens tapent cette requête — ni le RÉSULTAT — si Google a indexé ces
+pages, à quelle position, avec combien de clics.
+
+**Et ça ne se mesure pas depuis ici.** Il n'y a **aucune balise de vérification
+Google** sur le site, donc aucun compte Search Console rattaché : le seul
+endroit qui répondrait à ta question est celui qui n'existe pas.
+
+**Ce que ça coûterait** : dix minutes. Créer la propriété dans Search Console,
+poser la balise que Google donne dans les métadonnées racines, déclarer
+`sitemap.xml`. À partir de là, la question 241 cesse d'être une question et
+devient un tableau qu'on relit. C'est le seul canal d'acquisition qui travaille
+sans qu'on s'en occupe, et le seul dont on ne sait rien.
+
+**Ce qui reste à toi** : le compte Google, et la décision de le rattacher.
+
+### 18 · Trois « aucune idée » : deux ont leur instrument, la troisième n'en a pas (réfs 034, 079, 271)
+Trois questions de l'interrogatoire portent la même réponse — **« Aucune
+idée »** — et les trois demandent un chiffre sur les gens qui se servent du
+produit. La question n'est donc pas ce que tu en penses, c'est de savoir si le
+produit sait répondre.
+
+- **034, la proportion qui porte une montre** → **l'instrument existe depuis
+  V551.** `/api/admin/mesures` rend le décompte par `groupBy`, en TROIS états
+  séparés : oui, non, pas répondu. Ranger « pas répondu » avec l'un des deux
+  fausserait la proportion, et c'est exactement pour ça que la colonne est un
+  `Boolean?`. Le panneau `/admin` l'affiche.
+- **079, le délai entre l'arrivée et la première partie** → **l'instrument
+  existe aussi.** La même route rend la médiane et les quartiles du délai entre
+  la création du compte et sa première partie, correction du délai négatif
+  comprise — une partie rattrapée se date la veille.
+- **271, l'export RGPD a-t-il déjà servi** → **il n'y a aucun instrument, et il
+  ne peut pas y en avoir aujourd'hui.** La route ne laisse aucune trace : le
+  champ `exportLe` qu'elle écrit est DANS le fichier remis, pas en base. La
+  question est donc sans réponse par construction, et elle le restera.
+
+**Ce que ça coûterait** de la rendre answerable : une colonne
+`User.dernierExportLe`, posée par la route, et une ligne au panneau — une
+demi-heure. Mais c'est une donnée de plus sur quelqu'un, à décrire dans la
+politique de confidentialité, pour répondre à une question de curiosité. **Rien
+n'est fait** : ça se décide.
+
+**Ce que le trio apprend au-delà des trois lignes** : deux questions sur trois
+avaient déjà leur réponse dans le produit, et personne n'était allé la lire.
+C'est le motif que ce journal trouve le plus — un instrument construit en
+passant, pendant un chantier voisin, et jamais rebranché sur la question qui
+l'avait motivé.
+
 ### 5 · La distance du consentement santé, dans une seule langue
 **Née de la décision du 8 septembre.** « Tutoie partout, c'était un oubli » a
 fait tomber six dispenses de vouvoiement. La septième porte une raison d'une

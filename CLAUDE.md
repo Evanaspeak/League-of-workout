@@ -1289,6 +1289,123 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le référencement est construit, et rien ne peut dire s'il marche
+Réponse 241, « **Explique** », et trois réponses « **Aucune idée** » (034, 079,
+271). Même méthode que pour les quatre d'avant : ce sont des questions de fait.
+Réponses dans `docs/questions-ouvertes.md`, questions 17 et 18.
+
+**L'offre est là, mesurée en production** : quatre-vingt-seize pages de
+calculateur, cent trente-deux adresses au plan du site avec **924 alternatives
+de langue** et 132 `x-default`, chaque page en 200 avec `x-vercel-cache: HIT` —
+donc prérendue et servie par le bord. Et le titre EST la requête, dans les six
+langues : « Combien de pompes pour une défaite sur League of Legends ? »,
+« Wie viele Liegestütze für eine Niederlage in Rocket League? »,
+「Minecraft で1敗すると腕立て何回？」.
+
+**Ce qui manque n'est pas l'offre, c'est le RÉSULTAT.** Il n'y a **aucune
+balise de vérification Google** sur le site — vérifié sur la page servie, sur
+`public/` et sur les métadonnées racines — donc aucun compte Search Console.
+Le seul endroit qui dirait si ces quatre-vingt-seize pages sont indexées, à
+quelle position et avec combien de clics, est celui qui n'existe pas. Dix
+minutes, et une décision qui appartient au propriétaire puisqu'il faut son
+compte Google.
+
+**Un faux positif écarté en vérifiant plutôt qu'en concluant.** `grep -c
+hreflang` rend **zéro** sur la page servie, et j'allais écrire que les
+alternatives manquaient dans le HTML. Elles y sont : Next les rend en
+`hrefLang`, en camelCase, sur une seule ligne. Les deux canaux — la page et le
+plan du site — portent bien les sept alternatives. Une lettre de casse, et on
+part corriger ce qui marche.
+
+**Et le trio des « aucune idée » se répartit proprement.** La proportion de
+comptes qui portent une montre (034) et le délai avant la première partie (079)
+ont **tous deux leur instrument dans `/api/admin/mesures`**, l'un depuis V551,
+l'autre depuis longtemps — personne n'était allé les lire. Le troisième, « est-ce
+que quelqu'un a déjà employé l'export RGPD » (271), **n'a aucun instrument et
+ne peut pas en avoir** : la route ne laisse aucune trace, le champ `exportLe`
+qu'elle écrit vivant DANS le fichier remis et pas en base. La question est sans
+réponse par construction.
+
+C'est le motif que ce journal trouve le plus, sous une forme de plus : un
+instrument construit en passant, pendant un chantier voisin, et jamais rebranché
+sur la question qui l'avait motivé.
+
+### La relance des absents aurait été tuée par l'absence, sans les deux crons Vercel
+Réponses 292 et 293, toutes deux **« Je ne sais pas »**. Ce ne sont pas des
+arbitrages : ce sont des questions de FAIT, donc elles se recensent. Les deux
+réponses vivent dans `docs/questions-ouvertes.md`, questions 15 et 16.
+
+**« Riot coupe son API » : le produit survit, la COMMODITÉ meurt.** Recensé sur
+tout `src` par ce qui lit `RIOT_API_KEY` ou passe par `riotFetch` — la
+dépendance entière tient en **trois routes** : rattacher un compte, la liste
+des vingt dernières parties, et le sondage du mode session.
+
+**Et la détection automatique n'en fait PAS partie**, ce qui est la trouvaille.
+`liveclient.js` lit `https://127.0.0.1:2999`, `lcu.js` lit le lanceur sur
+`127.0.0.1` : deux services LOCAUX, sans clé et sans réseau. Riot peut fermer
+son API publique demain, **une partie jouée avec l'application ouverte
+continue de s'enregistrer toute seule**, score, rôle, file et issue compris.
+
+**Ce n'est d'ailleurs pas une hypothèse : c'est l'état actuel.** La clé de
+production n'est pas arrivée, les trois routes rendent 503 avec leur message
+depuis le premier jour. Le produit TOURNE dans le scénario 292, et personne ne
+l'avait dit sous cette forme.
+
+**« Deux mois sans toi » porte un chiffre qui n'est pas anodin.** Deux mois
+font soixante jours, et soixante jours est le seuil auquel GitHub désactive un
+workflow programmé quand le dépôt n'a plus d'activité. *(Règle documentée par
+GitHub, pas mesurée ici.)* Le dépôt en porte **trois**, et les trois tombent
+sous cette règle : la supervision, la sauvegarde, les envois.
+
+**La supervision est la perte qui compte** : c'est la seule chose du système
+qui crie, et sans elle une panne de deux semaines ne se voit que si quelqu'un
+ouvre le site.
+
+**La sauvegarde a un SECOND compte à rebours, écrit dans son propre
+workflow** : `retention-days: 90`. La dernière archive est produite au
+soixantième jour et expire quatre-vingt-dix jours plus tard. **Au cent
+cinquantième jour, il n'existe plus aucune sauvegarde restaurable nulle part.**
+Les données vivent toujours dans Neon ; ce qui disparaît est le moyen de les
+remettre en état.
+
+**Et la bonne nouvelle est celle qu'on n'attendait pas.** `vercel.json` porte
+deux tâches planifiées vers `/api/cron/matin`, et Vercel ne les désactive pas
+pour inactivité : le rappel du matin, le bilan hebdomadaire et **la relance des
+absents** continuent de partir. Sans elles, la conclusion aurait été bien plus
+dure — **le mécanisme qui existe pour rattraper une absence serait mort de
+l'absence qu'il rattrape.** Ce que la mort du travail GitHub enlève est la
+couverture des autres fuseaux : deux heures UTC fixes couvrent la matinée
+française, pas celle de Tokyo.
+
+**Les autres horloges sont recensées et sans danger** : la clé Riot de
+développement (vingt-quatre heures, déjà le cas), Neon qui suspend son calcul
+sans rien perdre — c'est le `reveil` de `/api/sante`, six cents millisecondes au
+premier appel contre vingt ensuite —, Vercel qui ne périme pas un déploiement,
+et l'application installée qui continue de se mettre à jour. **La seule horloge
+qui puisse tout éteindre d'un coup est le nom de domaine**, et elle appartient
+au propriétaire.
+
+**Rien n'est fait**, et les trois options sont chiffrées dans les questions :
+ne rien faire et cliquer sur le courriel d'avertissement de GitHub, déplacer la
+supervision sur Vercel — le plan Hobby n'autorisant que deux tâches, il
+faudrait arbitrer contre les envois —, ou un travail qui entretient les autres
+en salissant l'historique.
+
+**Ce que la nuit apprend au-delà des quatre réponses** : sur les quatre
+questions retournées par le propriétaire — 052, 057, 292, 293 — **aucune ne
+demandait une décision de ma part, et les quatre se répondaient par un
+recensement.** « Explique l'effet », « pas compris l'intérêt » et deux « je ne
+sais pas » ressemblent à des blocages ; ce sont des mesures qui n'avaient pas
+été faites.
+
+**Dépendances du 9 septembre au matin, second passage** : `npm audit` rend les
+deux mêmes vulnérabilités `mysql2`, inatteignables et gardées par
+`src/dependanceMysql.test.ts` ; **zéro côté application de bureau**. Rien à
+prendre : tout ce qui est en retard l'est d'une MAJEURE (`typescript` 7,
+`eslint` 10, `@types/node` 26, `electron` 44), d'un `0.x` dont la mineure est
+le créneau des ruptures (`@libsql/client` 0.18), ou d'une version candidate
+(`prisma` 8). Donc **aucune version d'application de bureau à publier**.
+
 ### Le barème facture DÉJÀ le temps, et la durée n'arrive que par un chemin sur trois
 Réponse 052, « **Explique l'effet** », et réponse 057, « **pas compris
 l'intérêt** ». Ce sont deux questions RETOURNÉES par le propriétaire, donc deux
