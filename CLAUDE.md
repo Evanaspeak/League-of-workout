@@ -1337,6 +1337,64 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le panneau vidait la liste des champions, et rien ne se passait
+
+Trouvé en cherchant ce qui, autour du chantier du champion, n'avait aucun test.
+`PUT /api/admin/config/champions` n'en avait **aucun** — pas un fichier, pas une
+ligne — alors qu'elle décide de ce que le produit accepte comme nom de champion.
+
+**Et elle acceptait la liste VIDE.** Elle la nettoyait, la rangeait en base, et
+répondait `{ ok: true, count: 0 }`.
+
+**Le résultat n'était pas une liste vide, c'était RIEN.** Les deux lecteurs
+retombent sur la liste du code dès qu'elle est vide, et c'est délibéré des deux
+côtés :
+
+```ts
+/api/champions        if (Array.isArray(list) && list.length > 0) …
+chargerChampions()    if (Array.isArray(list) && list.length > 0) cache = list
+```
+
+Le panneau annonçait donc un enregistrement réussi, montrait un champ vide au
+rechargement — `GET` rend bien `{ champions: [], isDefault: false }` — et le
+produit continuait de proposer les cent soixante-treize. **Deux vérités sur le
+même écran**, et celle qui a l'air d'avoir marché est la fausse.
+
+**Ce n'est pas un cas de bord : c'est le geste qu'on fait pour tout effacer.**
+On sélectionne le contenu du champ, on le supprime, on enregistre. Et la vraie
+façon de revenir à la liste livrée existe déjà — c'est le bouton d'à côté, qui
+appelle `DELETE`. Deux façons d'exprimer la même chose finissent par diverger,
+et ici l'une des deux ne faisait déjà rien.
+
+Le refus le DIT, et il dit quoi faire à la place : « pour revenir à la liste
+livrée, employer la remise par défaut ». Un refus qui ne nomme pas le geste
+qu'on cherchait envoie chercher une panne.
+
+**Les DEUX moitiés du contrôle comptent**, et c'est ce que le sabotage a
+montré : un refus qui écrirait quand même laisserait exactement l'état d'avant,
+avec un message en plus. Le test vérifie donc le code de réponse ET qu'aucune
+écriture ne part.
+
+**Ce que le recensement des lecteurs a écarté**, écrit plutôt que tu : accepter
+la liste vide côté LECTURE aurait été la correction inverse, et elle est bien
+pire — un panneau mal enregistré priverait alors tout le monde de champions, et
+le bouton d'enregistrement d'une partie resterait éteint sans qu'un mot
+l'explique. Le repli des deux lecteurs est bon ; c'est la porte d'écriture qui
+laissait entrer ce qu'il rattrape.
+
+Quinze tests, six sabotages, six échecs : le refus retiré, le refus qui écrit
+quand même, la porte d'administration ouverte à tout compte connecté, le
+nettoyage des lignes vides retiré, `isDefault` qui ment sur la liste rendue, et
+la remise à zéro qui supprime la clé du voisin — celle des ratios d'exercices,
+qui est dans la même table.
+
+**Aucun parcours navigateur ne couvre ce panneau**, et c'est la limite déjà
+écrite ici : il résiste à l'emprunt d'adresse administrateur, deux méthodes
+essayées et documentées. Ce qui le tient est ce test et le compilateur.
+
+**Et le garde des messages d'API a mordu**, ce qui est son travail : le refus
+neuf n'était traduit dans aucune des cinq autres langues.
+
 ### Nos cent soixante-treize champions contre ceux de Riot : rien, et ça se dit
 
 Suite du fil du champion. Trois correspondances vivent maintenant dans
