@@ -1369,6 +1369,26 @@ même cache fait tomber neuf parcours d'un coup et désigne le dernier changemen
 comme coupable. Cache vidé, serveur relancé, les cent quatorze parcours des
 trois fichiers passent.
 
+**Ce que la chasse a rendu, et ce qu'elle n'a PAS rendu.** Le journal du
+serveur porte des dizaines de `Error: Internal: NoFallbackError`, ce qui est le
+défaut de Next quand une route dynamique a besoin d'un repli qu'elle n'a pas —
+et la route des jeux déclare `dynamicParams = false`. L'explication semblait
+tenir. **Elle n'est pas établie** : après reconstruction propre et cache vidé,
+les pages ne retombent en 404 ni après **641 secondes** de sondage séquentiel — donc
+deux fois la fenêtre de régénération — ni sous douze requêtes
+SIMULTANÉES sur six langues, qui est ce que fait la suite. Le déclencheur n'est
+donc pas nommé, et l'écrire aurait été inventer un mécanisme.
+
+**Ce qui EST établi, et qui évitera l'expérience à qui la referait** :
+`export const revalidate = false` posé sur la PAGE ne l'emporte pas sur le
+`revalidate = 300` de la mise en page. Mesuré dans `prerender-manifest.json`
+après construction : la route des jeux y reste à **300**. Next retient la plus
+BASSE valeur de la route, et l'infini n'est pas la plus basse. Les deux leviers
+sont donc fermés — le second, `dynamicParams`, portant une décision MESURÉE
+(sans lui, un jeu inventé rend la 404 anglaise intégrée au lieu de celle du
+site, dans sa langue). Il n'y a pas de correction gratuite ici, et le prix
+local est un cache à vider.
+
 **Et le projet `bareme` n'avait pas tourné du tout** — ses `dependencies` le
 sautent dès qu'un fichier amont échoue, ce qui est écrit ici depuis V532. Les
 « 2 did not run » du rapport étaient ses deux tests, c'est-à-dire précisément
