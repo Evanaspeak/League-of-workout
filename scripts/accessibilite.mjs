@@ -60,19 +60,49 @@ async function deplierTout(page) {
    */
   for (let passe = 0; passe < 3; passe++) {
     /**
-     * Le recensement lui-même se rattrape.
+     * On ne clique que ce qui est VISIBLE, et le prix de l'oubli est mesuré.
      *
-     * Un clic de dépliage peut faire NAVIGUER — tous les `aria-expanded` ne
-     * sont pas des rubriques — et la page suivante n'a plus rien à voir avec
-     * celle qu'on préparait. `locator.all()` lève alors « Target page […] has
-     * been closed », et l'audit ENTIER s'arrête à sa dernière passe : vingt et
-     * une pages mesurées, et un code de sortie qui dit l'inverse.
+     * `[aria-expanded="false"]` trouve aussi ce que la feuille de style
+     * CACHE. Deux dépliants sont dans ce cas sur tous les écrans connectés —
+     * `.nav-burger`, montrée sous 720 px, et `.rail-bascule`, montrée sous
+     * 1180 px — et l'audit tourne à 1280 px : les deux y sont `display:
+     * none`, donc un clic dessus ne peut qu'expirer, trois fois par page.
      *
-     * On s'arrête donc de déplier, sans rien masquer : si la page est
-     * réellement perdue, la mesure qui suit le dira à sa place, et c'est elle
-     * qui doit le dire.
+     * Mesuré sur un compte semé à soixante parties, huit pages :
+     *
+     *   | page          | tous les dépliants | les visibles seuls |
+     *   |---------------|--------------------|--------------------|
+     *   | /dashboard    |            3796 ms |              26 ms |
+     *   | /settings     |            3788 ms |              27 ms |
+     *   | /amis         |            3793 ms |              25 ms |
+     *   | /history      |           86262 ms |            8718 ms |
+     *   | TOTAL         |          105558 ms |            9176 ms |
+     *
+     * L'historique est le cas extrême, et il s'explique : il rend ses lignes
+     * DEUX fois — en cartes et en tableau — et c'est la feuille de style qui
+     * choisit. À 1280 px, cinquante de ses cent chevrons sont donc cachés.
+     *
+     * Ce n'est pas qu'une affaire de temps. Un bouton que la feuille de style
+     * cache n'est cliquable par personne, donc ce qu'il déplie n'est pas à
+     * l'écran, donc il n'y a rien à auditer dessous : le clic ne manquait pas
+     * seulement sa cible, il n'avait pas de cible.
      */
-    const plies = await page.locator('[aria-expanded="false"]').all().catch(() => []);
+    /**
+     * Le recensement se rattrape, et la RAISON a changé.
+     *
+     * Elle était écrite comme un fait — « un clic de dépliage peut faire
+     * NAVIGUER » — et la mesure la RÉFUTE : sur les vingt et une pages
+     * auditées, les dix dépliants recensés ne naviguent pas, et le seul
+     * réellement cliqué hors historique est « Infos optionnelles » de `/beta`.
+     *
+     * Ce qu'on garde est donc le `catch`, pas son explication. `locator.all()`
+     * lève sur une page fermée QUELLE QU'EN SOIT LA CAUSE, et l'audit ENTIER
+     * s'arrêtait alors à sa dernière passe : vingt et une pages mesurées, et
+     * un code de sortie qui disait l'inverse. On s'arrête de déplier sans
+     * rien masquer — si la page est réellement perdue, la mesure qui suit le
+     * dira à sa place, et c'est elle qui doit le dire.
+     */
+    const plies = await page.locator('[aria-expanded="false"]:visible').all().catch(() => []);
     if (!plies.length) break;
     for (const bouton of plies) {
       await bouton.click({ timeout: 500 }).catch(() => {});
@@ -312,6 +342,30 @@ let total = 0;
 let nonMesurees = 0;
 
 const aVisiter = JETON ? [...PAGES, ...PAGES_CONNECTEES] : PAGES;
+
+/**
+ * Les trois passes de fin visitent l'adresse NUE, donc une seule fois chacune.
+ *
+ * Elles mesurent des choses qui ne dépendent pas du fragment — durées
+ * d'animation, couleur employée seule, frontières de commande — d'où le
+ * `.split("#")[0]` qu'elles écrivaient toutes les trois. Sans déduplication,
+ * `/fr/settings` s'y chargeait SIX fois de suite à l'identique : la rubrique
+ * nue, plus ses cinq fragments.
+ *
+ * Ce n'est pas gratuit, et la cause du prix est nommée. Ces trois passes
+ * RÉEMPLOIENT une seule page, contrairement à la première qui ouvre un
+ * contexte par adresse — et dans une page réemployée, le second chargement de
+ * `/fr/settings` et les suivants mettent huit à trente secondes au lieu d'une
+ * seconde deux. Le journal du réseau dit pourquoi : le routeur de Next
+ * PRÉCHARGE les pages liées depuis la navigation (`?_rsc=…`), ces requêtes
+ * restent en vol et finissent en `ERR_ABORTED` au bout de huit à trente
+ * secondes — c'est leur abandon, et lui seul, qui déclenche `networkidle`.
+ *
+ * On ne touche PAS à `networkidle` pour autant : le rabattre sur `load`
+ * mesurerait des écrans dont les données ne sont pas revenues, c'est-à-dire
+ * exactement ce que cet outil existe pour ne pas faire.
+ */
+const aVisiterNu = [...new Set(aVisiter.map((c) => c.split("#")[0]))];
 if (!JETON) console.log("(pas de jeton : seules les pages publiques sont mesurées)");
 
 for (const langue of aTester) {
@@ -552,16 +606,16 @@ let horsLangue = 0;
   const ctx = await navigateur.newContext({ reducedMotion: "reduce" });
   const page = await ctx.newPage();
   page.setDefaultNavigationTimeout(60_000);
-  for (const chemin of aVisiter) {
+  for (const chemin of aVisiterNu) {
     if (JETON) {
       await ctx.addCookies([{
         name: "authjs.session-token", value: JETON,
         domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
       }]);
     }
-    // Ces deux passes-ci ne dépendent pas de la langue du texte : une seule
-    // suffit, en français, qui est la langue écrite d'abord.
-    const adresse = enLangue("fr", chemin).split("#")[0];
+    // Les trois passes de fin ne dépendent pas de la langue du texte : une
+    // seule suffit, en français, qui est la langue écrite d'abord.
+    const adresse = enLangue("fr", chemin);
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
@@ -606,16 +660,16 @@ let horsLangue = 0;
   const ctx = await navigateur.newContext();
   const page = await ctx.newPage();
   page.setDefaultNavigationTimeout(60_000);
-  for (const chemin of aVisiter) {
+  for (const chemin of aVisiterNu) {
     if (JETON) {
       await ctx.addCookies([{
         name: "authjs.session-token", value: JETON,
         domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
       }]);
     }
-    // Ces deux passes-ci ne dépendent pas de la langue du texte : une seule
-    // suffit, en français, qui est la langue écrite d'abord.
-    const adresse = enLangue("fr", chemin).split("#")[0];
+    // Les trois passes de fin ne dépendent pas de la langue du texte : une
+    // seule suffit, en français, qui est la langue écrite d'abord.
+    const adresse = enLangue("fr", chemin);
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;
@@ -703,14 +757,14 @@ let horsLangue = 0;
   const traitements = new Map();
   let examines = 0;
 
-  for (const chemin of aVisiter) {
+  for (const chemin of aVisiterNu) {
     if (JETON) {
       await ctx.addCookies([{
         name: "authjs.session-token", value: JETON,
         domain: new URL(BASE).hostname, path: "/", httpOnly: true, sameSite: "Lax",
       }]);
     }
-    const adresse = enLangue("fr", chemin).split("#")[0];
+    const adresse = enLangue("fr", chemin);
     await page.goto(`${BASE}${adresse}`, { waitUntil: "networkidle" }).catch(() => {});
     const arrivee = new URL(page.url()).pathname.replace(/\/+$/, "") || "/";
     if (arrivee !== (adresse.replace(/\/+$/, "") || "/")) continue;

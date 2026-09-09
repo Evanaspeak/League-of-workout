@@ -904,7 +904,7 @@ porter quoi que ce soit venu d'un compte, c'est cet arbitrage qu'il faudrait
 reprendre, pas seulement échapper la valeur.
 
 ## Tests
-2719 tests unitaires, 265 suites (au 9 septembre — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
+2766 tests unitaires, 271 suites (au 9 septembre au soir — ce nombre vieillit d'une nuit sur l'autre, et il n'a aucun garde : le relire avant de s'en servir). Base et session doublées : aucune dépendance à
 PostgreSQL ni aux variables d'environnement, `npx jest` suffit. La CI
 (`.github/workflows/tests.yml`) lance types et tests à chaque poussée, puis les
 parcours navigateur dans un second job avec un PostgreSQL de service.
@@ -1288,6 +1288,164 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### L'audit cliquait trois fois sur ce que la feuille de style cache
+
+Moitié restante d'un chantier laissé en plan, et elle commence par une
+hypothèse à retirer. `deplierTout` portait, dans son commentaire, un fait :
+« un clic de dépliage peut faire NAVIGUER — tous les `aria-expanded` ne sont
+pas des rubriques ». **La mesure le RÉFUTE** : sur les vingt et une pages
+auditées, les dix dépliants recensés ne naviguent nulle part, et le seul
+réellement cliqué hors historique est « Infos optionnelles » de `/beta`.
+
+C'est le défaut que ce fichier reproche partout — une description qui a vieilli
+en garantie — dans le commentaire d'un outil de mesure. Le `catch` reste, parce
+qu'il protège autre chose : `locator.all()` lève sur une page fermée quelle
+qu'en soit la cause. C'est son EXPLICATION qui est fausse, et une explication
+fausse fait cesser de chercher.
+
+**Le recensement a rendu bien pire que l'hypothèse.** À 1280 px — le gabarit de
+l'audit — les dépliants de tous les écrans connectés sont `.nav-burger`
+(montrée sous 720 px) et `.rail-bascule` (montrée sous 1180 px), c'est-à-dire
+**deux boutons que la feuille de style met à `display: none`**. Chaque clic ne
+pouvait qu'expirer à son demi-tour d'horloge, trois fois par page, sur chacune
+des quatre passes.
+
+**Et l'historique est le cas extrême, pour une raison qui est une décision du
+produit** : il rend ses lignes DEUX fois — en cartes et en tableau — et c'est
+la feuille de style qui choisit. Sur un compte à soixante parties, il porte
+donc **cent chevrons dont cinquante sont cachés**.
+
+Mesuré des deux côtés, huit pages, même compte, même construction :
+
+| page | tous les dépliants | les visibles seuls |
+|---|---|---|
+| `/dashboard` | 3 796 ms | 26 ms |
+| `/settings` | 3 788 ms | 27 ms |
+| `/amis` | 3 793 ms | 25 ms |
+| **`/history`** | **86 262 ms** | **8 718 ms** |
+| **TOTAL** | **105 558 ms** | **9 176 ms** |
+
+**Ce n'est pas qu'une lenteur, et c'est ce qui rend la correction obligatoire.**
+Un bouton que la feuille de style cache n'est cliquable par personne, donc ce
+qu'il déplie n'est pas à l'écran, donc il n'y a rien à auditer dessous : le
+clic ne manquait pas seulement sa cible, il n'avait pas de cible. Et le journal
+porte déjà la fois où le dépliage a fait DÉBORDER l'audit de son quart d'heure,
+avec les dernières passes coupées en route — un outil qui s'arrête avant la fin
+ne dit pas qu'il s'est arrêté.
+
+**Le contrôle qui compte est le VERDICT, pas le chrono.** L'audit français
+complet, avant et après :
+
+| | avant | après |
+|---|---|---|
+| durée | **22 min 40** | **7 min 13** |
+| pages « rien à signaler » | 21 | 21 |
+| pages NON MESURÉES | 0 | 0 |
+| constats | 0 | 0 |
+| traitements sous 3:1 | 6, aux mêmes ratios | 6, aux mêmes ratios |
+
+**Soixante-huit pour cent de moins pour exactement le même rapport.** Le seul
+chiffre qui bouge est le nombre de commandes examinées par la passe des
+frontières — 118 puis 78 — et il bouge pour la seconde correction.
+
+**`/fr/settings` se chargeait SIX fois de suite, à l'identique.** Les trois
+passes de fin mesurent des choses qui ne dépendent pas du fragment — durées
+d'animation, couleur employée seule, frontières de commande — donc elles
+écrivaient toutes les trois `.split("#")[0]`. La rubrique nue et ses cinq
+fragments s'y ramenaient à la même adresse. Le retrait se fait maintenant UNE
+fois, dans la liste, et les six lignes identiques du rapport deviennent une.
+
+**Le prix de ces six visites est nommé, et il ne vient pas du produit.** Ces
+trois passes RÉEMPLOIENT une seule page, contrairement à la première qui ouvre
+un contexte par adresse. Dans une page réemployée, le second chargement de
+`/fr/settings` et les suivants mettent **huit à trente secondes** au lieu d'une
+seconde deux — et le journal du réseau donne la cause du premier coup :
+
+```
+28791 ms  échec net::ERR_ABORTED  /fr?_rsc=mMjFZ1aEd0l1dl-y
+28738 ms  échec net::ERR_ABORTED  /fr/cgu?_rsc=mMjFZ1aEd0l1dl-y
+28734 ms  échec net::ERR_ABORTED  /fr/confidentialite?_rsc=mMjFZ1aEd0l1dl-y
+DERNIÈRE à se taire : fin +28939 ms  (échec net::ERR_ABORTED)
+```
+
+Ce sont les PRÉCHARGEMENTS du routeur de Next (`?_rsc=…`) vers les pages liées
+depuis la navigation. Ils restent en vol, finissent en `ERR_ABORTED` au bout de
+huit à trente secondes, et c'est leur abandon — et lui seul — qui déclenche
+`networkidle`. Rien de ce que l'utilisateur voit n'attend : c'est l'outil qui
+attend, et il attend le mauvais signal.
+
+**On ne touche PAS à `networkidle` pour autant, et la raison est écrite plutôt
+que tue.** Le rabattre sur `load` mesurerait des écrans dont les données ne
+sont pas revenues, c'est-à-dire exactement ce que cet outil existe pour ne pas
+faire — le journal porte déjà l'entrée où l'audit ne voyait aucun champ des
+réglages parce que les rubriques étaient repliées.
+
+**L'hypothèse de la page qui se ferme est RÉFUTÉE**, et il vaut mieux l'écrire
+que de la laisser traîner. La piste était que le renderer meure sur six
+chargements consécutifs de `/fr/settings`. Éprouvé à huit chargements dans une
+seule page, sur un compte vivant : **jamais fermée, jamais plantée, les huit
+sur `/fr/settings`**. Ce qu'on prenait pour une agonie était la file de
+préchargements ci-dessus.
+
+**Et ma première sonde a mesuré la mauvaise page**, ce qui est le premier piège
+écrit pour ces outils et le seul qu'on retombe à chaque fois. Le jeton de
+`/tmp` désignait un compte que la suite navigateur avait purgé : les quatre
+écrans SERVEUR redirigeaient vers `/fr/login`, et `/settings`, qui est client,
+se rendait quand même — c'est le défaut que `SessionGuard` corrige, et il
+rendait la sonde crédible. La seconde version porte un contrôle
+d'atterrissage sur CHAQUE section, pas seulement sur la première.
+
+Quatre sabotages, quatre échecs : le `:visible` retiré, le retrait du fragment
+refait au vol, une passe de fin qui repasse sur la liste non dédupliquée, et le
+sélecteur renommé — ce dernier devant faire tomber le TÉMOIN plutôt que de
+rendre le contrôle vert en n'examinant rien.
+
+**Un témoin qui ne pouvait pas s'allumer, au passage.** La reprise annonçait
+`grep -c 'aria-label="Ton pseudo"' | doit valoir 2` sur `/fr/login`. `grep -c`
+compte des LIGNES, et le HTML servi n'en a qu'une : il rend 1 quoi qu'il
+arrive. Le témoin est bien là — une occurrence, plus « Ton code », les deux
+champs de l'onglet ouvert — mais la valeur attendue était inatteignable, donc
+il aurait dit « pas déployé » sur une version parfaitement en ligne. C'est
+l'entrée « un témoin qui ne peut pas s'allumer est pire que pas de témoin »,
+sous sa forme la plus bête : une option de `grep`.
+
+**Dépendances du 9 septembre au soir** : `npm audit` rend les deux mêmes
+vulnérabilités `mysql2`, inatteignables et gardées par
+`src/dependanceMysql.test.ts` ; **zéro côté application de bureau**. Rien à
+prendre — tout ce qui est en retard l'est d'une MAJEURE (`typescript` 7,
+`eslint` 10, `@types/node` 26, `electron` 44), d'un `0.x` dont la mineure est
+le créneau des ruptures (`@libsql/client` 0.18), ou d'une version candidate
+(`prisma` 8). Donc **aucune version d'application de bureau à publier**.
+
+**Campagne de clôture après V559 à V562**, sur un compte semé à soixante
+parties :
+
+| écran | LCP poste | LCP téléphone bridé | CLS | script au `load` |
+|---|---|---|---|---|
+| `/settings` | 192 ms | 936 ms | 0,000 | 271 ko |
+| `/amis` | 268 ms | 1132 ms | 0,029 | 216 ko |
+| `/bilan` | 272 ms | **2104 ms** | 0,000 | 195 ko |
+| `/dashboard` | 292 ms | 1140 ms | 0,000 | 239 ko |
+| `/history` | 532 ms | 1288 ms | 0,000 | 210 ko |
+| `/beta` | 524 ms | 1136 ms | 0,000 | 207 ko |
+| `/` | 988 ms | 1324 ms | 0,000 | 206 ko |
+
+Les sept sont dans les seuils, et `/bilan` reste le plancher pour la raison
+écrite une douzaine de fois — son plus grand élément est l'image de saison.
+
+**Le poids au chargement est IDENTIQUE au kilo-octet** à celui de la campagne
+d'avant : 239, 216, 210, 195 sur quatre écrans, et 271 contre 270 sur les
+réglages. C'est ce qu'on venait vérifier : V562 a ajouté un module lu par
+**104 appels dans 48 fichiers**, et il coûte un kilo-octet sur un écran et rien
+sur les quatre autres.
+
+**Et la comparaison de rendu n'a PAS été passée, avec sa raison.** Le `git
+diff` de V562 sur la couche d'affichage ne porte que des commentaires, des
+imports, des `fetch` devenus `fetchBorne`, et l'enveloppe de file des réglages.
+**Aucune balise n'a changé.** Une comparaison de pixels y est un résultat écrit
+d'avance, et dix minutes de construction pour confirmer ce qu'une lecture du
+diff établit — c'est la discipline déjà appliquée après V495, V510 et V523.
 
 ### Trois tapes sur « + » envoyaient trois écritures concurrentes
 
@@ -1739,13 +1897,22 @@ sous « inscription (style en ligne) ». L'audit groupe par balise et par classe
 donc la même déclaration paraît sous deux lignes dès que le second type de
 commande devient visible.
 
-**Le dépliage se paie, et le prix est mesuré** : l'audit d'une langue passe de
-onze à **douze minutes quarante**. Le premier jet en coûtait davantage — six
-tours et un clic borné à une seconde et demie ont fait déborder le quart
-d'heure de `timeout`, et vingt et une pages étaient mesurées pendant que les
-dernières passes se faisaient couper. Trois tours et un demi-tour d'horloge par
-clic suffisent : les rubriques de ce produit ne s'emboîtent jamais à plus de
-deux niveaux.
+**Le dépliage se paie, et le prix a GRANDI sous le chiffre écrit ici.** Il
+annonçait « de onze à douze minutes quarante », mesuré le jour où il a été
+posé. Remesuré le 9 septembre au soir sur un compte semé à soixante parties :
+**vingt-deux minutes quarante**. L'écart n'est pas une régression du produit,
+c'est l'historique — il rend ses cinquante lignes DEUX fois, en cartes et en
+tableau, donc cinquante chevrons cachés à 1280 px, et ils n'existent que
+lorsqu'il y a des parties. Un coût d'outil mesuré sur un compte vide est un
+coût mesuré sur un compte vide.
+
+Le premier jet en coûtait davantage encore — six tours et un clic borné à une
+seconde et demie ont fait déborder le quart d'heure de `timeout`, et vingt et
+une pages étaient mesurées pendant que les dernières passes se faisaient
+couper. Trois tours et un demi-tour d'horloge par clic suffisent : les
+rubriques de ce produit ne s'emboîtent jamais à plus de deux niveaux. Et
+depuis que le clic ne vise plus que le VISIBLE, la même passe rend le même
+verdict en **sept minutes treize** — voir le journal.
 
 **Un défaut de ma correction, attrapé par l'exécution et non par la
 relecture** : un clic de dépliage peut faire NAVIGUER — tous les
