@@ -1337,6 +1337,95 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Deux descriptions Google vouvoyaient sous des écrans qui tutoient
+
+Suite du recensement des gardes bornés à `dictionaries/`. Six d'entre eux n'y
+lisent que le sous-dossier alors que huit modules portent du texte par langue
+un dossier au-dessus. **La caveat que je m'étais transmise était fausse sur le
+point le plus décisif** : elle annonçait deux FORMES différentes — `{clé: {fr,
+en}}` dans le sous-dossier contre `Record<Locale, …>` au-dessus. Il n'y en a
+qu'une : les cinquante-neuf fichiers de `dictionaries/` ont tous la langue au
+premier niveau, exactement comme les modules du dessus. **Une caveat qu'on se
+transmet sans la vérifier vaut exactement autant qu'un commentaire périmé.**
+
+**Le crible a été fait à la main AVANT d'élargir quoi que ce soit**, sur les
+six règles et les dix fichiers hors dossier — c'est la seule façon de savoir
+s'il y a quelque chose à trouver, et un garde qu'on écrit sans le savoir peut
+crier sur ce qui va bien.
+
+| règle | trouvé |
+|---|---|
+| `pluriel` | 0 |
+| `pronomGenre` | 0 — deux faux positifs, 其他 « autre » et un « ihn » qui reprend *der Zähler* |
+| `genreDuLecteur` | 0 — « amis » n'est pas un participe, « la courbe s'est arrêtée » s'accorde avec la courbe |
+| `gabaritsNombres` | hors champ : il importe des dictionnaires nommés, pas un balayage |
+| **`motActivite`** | **1 défaut vivant** |
+| **`registre`** | **2 défauts vivants** |
+
+**Le premier est le mot « activité », six jours après son renommage.**
+`/api/games/[id]` refusait une correction de résultat par « Cette activité n'a
+pas de résultat », et le commentaire du code employait DÉJÀ le bon mot deux
+lignes plus haut — « une séance au temps n'a pas de résultat ». `apiErrors.ts`
+vit hors du dossier balayé : les deux passes de renommage ne l'ont jamais
+ouvert.
+
+**Et le garde ne pouvait pas le voir même élargi**, ce qui est la partie
+instructive. Son discriminant exige que le FRANÇAIS de la même clé dise
+« partie » — or ici c'est le français lui-même qui est fautif. Sabotage fait :
+le défaut remis à l'identique laisse les deux contrôles au vert. La limite est
+écrite dans le garde plutôt que tue, avec sa mesure : quinze occurrences
+françaises du mot, quatorze couvertes par « physique », « niveau d' » ou
+« estimation d' », une qui ne l'est pas — « il ne dit rien de votre activité »,
+dans la politique de confidentialité, est parfaitement juste. **Un garde de
+cette forme-là n'est pas écrivable ; ce qui l'attrape est de LIRE.**
+
+**Le mot retenu n'est pas « séance »**, et la raison vaut d'être écrite : ce
+produit appelle séance un effort d'EXERCICE. Le réemployer aurait refait deux
+sens pour un mot, c'est-à-dire le défaut qu'on corrige. Les six formulations
+viennent de `dashboard.ts`, clé `sessionModeDesc`, où chaque langue dit déjà
+comment elle nomme un jeu compté au temps — « un jeu au temps », « a
+time-based game », 「時間で数えるゲーム」.
+
+**Les deux autres sont sur ce que Google affiche**, et c'est la même famille :
+une correction de registre qui a repris le sous-dossier et n'a jamais ouvert
+celui du dessus.
+
+- **le CALCULATEUR** : « réglez votre partie, obtenez le nombre de pompes »,
+  sous un écran qui tutoie **neuf fois et ne vouvoie jamais**. Le témoin est
+  celui déjà employé ici — l'espagnol dit « configura **tu** partida », le
+  chinois 你的 : le français était SEUL, donc c'est un oubli, pas un choix de
+  marque ;
+- **la RÉCUPÉRATION de compte** : vouvoiement en français, en espagnol ET en
+  allemand, alors que son écran tutoie dans les six langues (es 9, de 11,
+  zh 3). C'est l'écran de celui qui ne peut plus entrer, et il lit un résultat
+  de recherche qui le vouvoie avant d'arriver sur une page qui le tutoie.
+
+**Deux causes distinctes, et il fallait les deux.** La RACINE, et le LECTEUR
+de blocs : il n'en cherchait qu'un, à deux espaces, quand `metadonnees.ts` en
+porte huit à quatre espaces — une page par clé, puis les six langues sous
+chacune. Le fichier entier était donc sauté, et élargir la portée seule
+n'aurait rien changé. Plus la forme d'`apiErrors.ts`, qui n'a aucun bloc `fr:`
+parce que la clé EST le message français.
+
+**Les dispenses portent le chemin RELATIF et non le nom de base**, et ce
+n'est pas une élégance : `notifications.ts` existe dans les deux dossiers.
+
+**Deux sabotages sur six passaient d'abord, et ce sont eux qui ont appris
+quelque chose.** Le compte de fichiers ne distingue pas les deux formes : sept
+fichiers hors sous-dossier suffisent à satisfaire la borne, donc elle reste
+verte quand l'une des deux devient aveugle. Un témoin par FORME les sépare —
+au moins un fichier à quatre blocs français, au moins un fichier sans bloc et
+à plus de vingt clés françaises. C'est la règle déjà écrite ici pour le
+découpage : **le témoin de la FORME est distinct de celui du recensement.**
+
+Six sabotages sur `registre`, six échecs. Trois sur `motActivite`, trois
+échecs, plus celui qui passe et qui est la limite.
+
+**Le témoin public de V578 a basculé en moins de cinq minutes** — fusion à
+21 h 44 min 30 UTC, « Quinze jeux » présent huit fois sur `/fr` et absent à
+21 h 49 min 19, « 16 jeux » passé de deux occurrences à dix. La description que
+Google affiche dit maintenant « 16 jeux ».
+
 ### « Quinze jeux » sur ce que Google affiche, six jours après Overwatch
 
 Trouvé en poursuivant le recensement des modules sans test : deux dictionnaires

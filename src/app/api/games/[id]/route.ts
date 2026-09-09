@@ -81,7 +81,7 @@ async function corrigerResultat(id: string, userId: string, brut: unknown) {
   // sien du classement. Les laisser passer écrirait une lettre que plus rien
   // ne recalculerait — c'est-à-dire un affichage qui ment sur le coût.
   if (toTypeJeu(game.typeJeu) !== "parties") {
-    return NextResponse.json({ error: "Cette activité n'a pas de résultat" }, { status: 400 });
+    return NextResponse.json({ error: "Un jeu au temps n'a pas de résultat" }, { status: 400 });
   }
   const capacites = capacitesDuJeu(game.jeu, game.typeJeu);
   if (capacites.br) {

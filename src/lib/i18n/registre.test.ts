@@ -49,14 +49,42 @@ import { estCheminPublic } from "@/lib/routesPubliques";
  * Tout le reste — c'est-à-dire l'application entière, porte comprise — tutoie.
  */
 
-const RACINE = join(process.cwd(), "src/lib/i18n/dictionaries");
+/**
+ * Le balayage porte sur `src/lib/i18n` ENTIER.
+ *
+ * Il ne lisait que `dictionaries/`, et deux descriptions que Google affiche y
+ * ont échappé : le calculateur disait « réglez votre partie » sous un écran
+ * qui tutoie neuf fois, et la récupération de compte vouvoyait en français, en
+ * espagnol et en allemand sous un écran qui tutoie dans les six langues.
+ *
+ * C'est la même famille que le mot « activité » : une correction de registre
+ * qui a repris le sous-dossier et n'a jamais ouvert celui du dessus. Sur le
+ * calculateur, le témoin est net — l'espagnol dit déjà « configura tu
+ * partida », le chinois 你的 : le français était SEUL, donc c'est un oubli et
+ * non un choix de marque.
+ */
+const RACINE = join(process.cwd(), "src/lib/i18n");
+
+/** Les `.ts` de `src/lib/i18n`, sous-dossiers compris, chemins relatifs. */
+function fichiersLangue(dossier: string, prefixe = ""): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dossier, { withFileTypes: true })) {
+    const rel = prefixe ? `${prefixe}/${e.name}` : e.name;
+    if (e.isDirectory()) out.push(...fichiersLangue(join(dossier, e.name), rel));
+    else if (e.name.endsWith(".ts") && !e.name.endsWith(".test.ts")) out.push(rel);
+  }
+  return out;
+}
 
 /** Ce qui vouvoie, et pourquoi. Une exemption sans raison n'en est pas une. */
 const VOUVOIENT: Record<string, string> = {
-  "cgu.ts": "document juridique",
-  "confidentialite.ts": "document juridique",
-  "consentementSante.ts": "consentement santé : la distance est voulue",
-  "layout.ts": "pied de page et mentions, communs aux pages publiques",
+  // Le chemin est RELATIF à `src/lib/i18n` et non un nom de base :
+  // `notifications.ts` existe dans les deux dossiers, et un nom seul ne les
+  // distinguerait pas.
+  "dictionaries/cgu.ts": "document juridique",
+  "dictionaries/confidentialite.ts": "document juridique",
+  "dictionaries/consentementSante.ts": "consentement santé : la distance est voulue",
+  "dictionaries/layout.ts": "pied de page et mentions, communs aux pages publiques",
 };
 
 /**
@@ -81,6 +109,7 @@ const CLES_TOLEREES: Record<string, string> = {
   veilleJour: "mise en garde de santé : la distance est voulue",
   veilleSemaine: "mise en garde de santé : la distance est voulue",
   accepteeAvec: "« vous êtes amis » est un pluriel, pas un vouvoiement",
+  "Vous êtes déjà amis": "le même pluriel, côté message d'API : les deux personnes, pas un vouvoiement",
   smartScreenIntro: "cite le message de Windows mot pour mot ; le reformuler enverrait chercher une phrase qui n'existe pas",
 };
 
@@ -121,36 +150,95 @@ const TUTOIE = new RegExp(
   + `|(?<![${LETTRE}])(?:${IMPERATIFS})(?![${LETTRE}])`,
 );
 
-function blocFrancais(source: string): string | null {
+/**
+ * TOUS les blocs français, à n'importe quelle indentation.
+ *
+ * Il n'en cherchait qu'un, à deux espaces. `metadonnees.ts` en porte huit, à
+ * quatre espaces — une page par clé, puis les six langues sous chacune — donc
+ * il rendait `null` et le fichier entier était sauté. C'est par là que les
+ * deux descriptions vouvoyantes ont survécu.
+ */
+function blocsFrancais(source: string): string[] {
   // `[\s\S]` plutôt que le drapeau `s` : la cible de compilation du projet est
   // antérieure à ES2018, et `tsc` refuse le drapeau.
-  const m = /\n {2}fr: \{([\s\S]*?)\n {2}[a-z]{2}: \{/.exec(source);
-  return m ? m[1] : null;
+  const out: string[] = [];
+  for (const m of source.matchAll(/\n( +)fr: \{([\s\S]*?)\n\1[a-z]{2}: \{/g)) out.push(m[2]);
+  return out;
+}
+
+/**
+ * Le français d'`apiErrors.ts`, qui n'a pas de bloc du tout : la clé EST le
+ * message français, parce que c'est lui qui circule sur le réseau.
+ */
+function clesFrancaises(source: string): string[] {
+  // La LIGNE entière, guillemets compris : les deux formes deviennent
+  // homogènes, et `cleDeLigne` sait alors lire l'une comme l'autre. Rendre la
+  // clé nue faisait perdre la tolérance — elle ne ressemblait plus à une clé.
+  return [...source.matchAll(/^ {2}"(?:[^"\\]|\\.)*":\s*\{/gm)].map((m) => m[0]);
+}
+
+/** Le français d'un fichier, quelle que soit sa forme. */
+function francais(source: string): string[] {
+  const blocs = blocsFrancais(source);
+  return blocs.length ? blocs : clesFrancaises(source);
+}
+
+/**
+ * La clé d'une ligne, dans les DEUX formes.
+ *
+ * Un identifiant nu dans les dictionnaires (`veilleJour: "…"`), et une chaîne
+ * entre guillemets dans `apiErrors.ts`, où le message français EST la clé.
+ */
+function cleDeLigne(ligne: string): string {
+  return /^\s*"((?:[^"\\]|\\.)*)"\s*:/.exec(ligne)?.[1]
+    ?? /^\s*([A-Za-z0-9_]+)\s*:/.exec(ligne)?.[1]
+    ?? "";
 }
 
 describe("le registre du produit", () => {
-  const fichiers = readdirSync(RACINE)
-    .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+  const fichiers = fichiersLangue(RACINE);
 
   it("lit bien les dictionnaires", () => {
     // Sans ce témoin, un dossier renommé rendrait le contrôle vert en
     // n'examinant aucun fichier — le défaut que ce projet trouve le plus.
     expect(fichiers.length).toBeGreaterThan(20);
-    expect(fichiers.filter((f) => blocFrancais(readFileSync(join(RACINE, f), "utf8"))).length)
+    expect(fichiers.filter((f) => francais(readFileSync(join(RACINE, f), "utf8")).length).length)
       .toBeGreaterThan(20);
+    // Témoin SÉPARÉ pour ce qui vit hors de `dictionaries/` : le premier est
+    // satisfait par le sous-dossier à lui seul, donc il resterait vert le jour
+    // où la racine y reviendrait — c'est-à-dire là où le défaut a vécu.
+    const sources = fichiers.map((f) => [f, readFileSync(join(RACINE, f), "utf8")] as const);
+    expect(sources.filter(([f, src]) => !f.startsWith("dictionaries/") && francais(src).length).length)
+      .toBeGreaterThanOrEqual(6);
+
+    /**
+     * Et un témoin par FORME, parce que le compte de fichiers ne les distingue
+     * pas : sept fichiers hors sous-dossier suffisent à satisfaire la borne
+     * ci-dessus, donc elle reste verte quand l'une des deux formes devient
+     * aveugle. Sabotage fait des deux côtés — les deux passaient.
+     *
+     *  - PLUSIEURS blocs français dans un fichier : `metadonnees.ts` en porte
+     *    huit, à quatre espaces. Un lecteur qui n'en cherche qu'un, à deux
+     *    espaces, saute le fichier entier ;
+     *  - la clé qui EST le français : `apiErrors.ts`, et rien d'autre.
+     */
+    expect(sources.filter(([, src]) => blocsFrancais(src).length >= 4).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(sources.filter(([, src]) => !blocsFrancais(src).length && clesFrancaises(src).length > 20).length)
+      .toBeGreaterThanOrEqual(1);
   });
 
   it("tutoie partout, sauf là où le vouvoiement porte sa raison", () => {
     const fautifs: string[] = [];
     for (const f of fichiers) {
       if (VOUVOIENT[f]) continue;
-      const bloc = blocFrancais(readFileSync(join(RACINE, f), "utf8"));
-      if (!bloc) continue;
-      for (const ligne of bloc.split("\n")) {
-        if (!VOUS.test(ligne)) continue;
-        const cle = /^\s*([A-Za-z0-9_]+)\s*:/.exec(ligne)?.[1] ?? "";
-        if (CLES_TOLEREES[cle]) continue;
-        fautifs.push(`${f} · ${ligne.trim().slice(0, 90)}`);
+      for (const bloc of francais(readFileSync(join(RACINE, f), "utf8"))) {
+        for (const ligne of bloc.split("\n")) {
+          if (!VOUS.test(ligne)) continue;
+          const cle = cleDeLigne(ligne);
+          if (CLES_TOLEREES[cle]) continue;
+          fautifs.push(`${f} · ${ligne.trim().slice(0, 90)}`);
+        }
       }
     }
     expect(fautifs).toEqual([]);
@@ -182,14 +270,16 @@ describe("le registre du produit", () => {
     const fautifs: string[] = [];
     const toleres = new Set<string>();
     for (const f of Object.keys(VOUVOIENT)) {
-      const bloc = blocFrancais(readFileSync(join(RACINE, f), "utf8"));
-      if (!bloc) continue;
+      const blocs = francais(readFileSync(join(RACINE, f), "utf8"));
+      if (!blocs.length) continue;
       examines += 1;
-      for (const ligne of bloc.split("\n")) {
-        if (!TUTOIE.test(ligne)) continue;
-        const cle = /^\s*([A-Za-z0-9_]+)\s*:/.exec(ligne)?.[1] ?? "";
-        if (TUTOIEMENT_TOLERE[cle]) { toleres.add(cle); continue; }
-        fautifs.push(`${f} · ${ligne.trim().slice(0, 90)}`);
+      for (const bloc of blocs) {
+        for (const ligne of bloc.split("\n")) {
+          if (!TUTOIE.test(ligne)) continue;
+          const cle = cleDeLigne(ligne);
+          if (TUTOIEMENT_TOLERE[cle]) { toleres.add(cle); continue; }
+          fautifs.push(`${f} · ${ligne.trim().slice(0, 90)}`);
+        }
       }
     }
     // Témoin : une liste de dispenses vidée rendrait le contrôle vert en

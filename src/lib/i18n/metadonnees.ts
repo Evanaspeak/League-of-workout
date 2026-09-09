@@ -77,7 +77,7 @@ const PAGES = {
   calculateur: {
     fr: {
       titre: "Combien de pompes pour une défaite ?",
-      description: "Le calculateur de Win or Workout, jeu par jeu : réglez votre partie, obtenez le nombre de pompes. Sans compte et sans inscription.",
+      description: "Le calculateur de Win or Workout, jeu par jeu : règle ta partie, obtiens le nombre de pompes. Sans compte et sans inscription.",
     },
     en: {
       titre: "How many push-ups for a loss?",
@@ -127,10 +127,10 @@ const PAGES = {
     },
   },
   recuperation: {
-    fr: { titre: "Récupération de compte", description: "Récupérez l'accès à votre compte Win or Workout : un lien vous est envoyé par courriel, et il remplace votre code d'accès." },
+    fr: { titre: "Récupération de compte", description: "Récupère l'accès à ton compte Win or Workout : un lien t'est envoyé par courriel, et il remplace ton code d'accès." },
     en: { titre: "Account recovery", description: "Recover access to your Win or Workout account: a link is sent to you by email, and it replaces your access code." },
-    es: { titre: "Recuperación de cuenta", description: "Recupere el acceso a su cuenta de Win or Workout: se le envía un enlace por correo, y sustituye a su código de acceso." },
-    de: { titre: "Kontowiederherstellung", description: "Stellen Sie den Zugang zu Ihrem Win-or-Workout-Konto wieder her: Sie erhalten einen Link per E-Mail, der Ihren Zugangscode ersetzt." },
+    es: { titre: "Recuperación de cuenta", description: "Recupera el acceso a tu cuenta de Win or Workout: se te envía un enlace por correo, y sustituye a tu código de acceso." },
+    de: { titre: "Kontowiederherstellung", description: "Stell den Zugang zu deinem Win-or-Workout-Konto wieder her: Du erhältst einen Link per E-Mail, der deinen Zugangscode ersetzt." },
     zh: { titre: "找回账号", description: "找回你的 Win or Workout 账号：我们会给你发送一个链接，它会替换你的访问码。" },
     ja: { titre: "アカウントの復旧", description: "Win or Workout のアカウントへのアクセスを取り戻します。メールでリンクをお送りし、アクセスコードを置き換えます。" },
   },
