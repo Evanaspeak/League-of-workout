@@ -1289,6 +1289,73 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne de clôture après V563 et V564, et la suite entière enfin verte
+
+**272 passés sur 272, en 16 min 12**, sur une construction neuve — `.next/cache`
+vidé, serveur tué par son PID puis relancé. Elle n'avait pas tourné depuis
+V562, qui avait rendu 264 passés, **un échec et deux non joués**.
+
+**Les deux non joués étaient ceux du projet `bareme`**, et c'est ce qui rend ce
+tour utile : leurs `dependencies` les sautent dès qu'un fichier amont échoue,
+donc ils n'avaient pas tourné en local depuis deux versions. Ils ont tourné.
+
+**Et l'intermittent de `historique.spec.ts` n'est pas retombé.** Ce n'est pas
+une preuve qu'il a disparu — il tombe une fois sur plusieurs exécutions
+complètes — mais l'instrumentation posée en V562 attend toujours sa première
+occurrence, et elle dira d'elle-même « détournées N, émises M » au lieu
+d'accuser le produit.
+
+**L'audit d'accessibilité était la mesure qui comptait**, puisque V563 change
+l'OUTIL lui-même. Rejoué sur un compte semé à soixante parties : **vingt et une
+pages, vingt et une « rien à signaler », aucune page laissée de côté, 0
+constat, en 7 min 39** — contre 7 min 13 pour la passe de V563. Les six
+frontières de commande remontent en `::warning::` aux mêmes ratios (1,35 · 1,64
+· 1,61 · 1,20 · 1,20 · 1,70) et la passe des frontières examine les mêmes
+**78 commandes**. L'outil corrigé mesure exactement la même chose ; c'est tout
+ce qu'on lui demandait.
+
+| écran | LCP poste | LCP téléphone bridé | CLS | script au `load` |
+|---|---|---|---|---|
+| `/settings` | 136 ms | 936 ms | 0,000 | 271 ko |
+| `/bilan` | 280 ms | **2116 ms** | 0,000 | 195 ko |
+| `/amis` | 312 ms | 1128 ms | 0,031 | 216 ko |
+| `/dashboard` | 336 ms | 1128 ms | 0,000 | 239 ko |
+| `/history` | 548 ms | 1112 ms | 0,000 | 210 ko |
+| `/beta` | 560 ms | 1136 ms | 0,000 | 207 ko |
+| `/` | 1000 ms | 1460 ms | 0,000 | 206 ko |
+
+**Le poids au chargement est IDENTIQUE au kilo-octet** à celui de la campagne
+d'après V559 à V562, sur les sept écrans : 271, 239, 210, 216, 195, 207, 206.
+C'est ce qu'on venait vérifier — V563 et V564 ne touchent que
+`scripts/accessibilite.mjs`, `scripts/coutures.mjs` et `src/scriptsMesure.test.ts`,
+donc rien de ce qui part au navigateur. Et `/bilan` reste le plancher pour la
+raison écrite une douzaine de fois : son plus grand élément est l'image de
+saison, et 2 116 ms se compare aux 2 104, 2 116, 2 120, 2 128 et 2 132 des
+campagnes comparables.
+
+**`/history` a d'abord rendu 1 636 ms, et c'était un chiffre isolé.** Remesuré
+deux fois une fois la machine tranquille : **1 112 puis 1 124 ms**. La première
+mesure a été prise dans la minute qui suivait la fin de l'audit — c'est la
+troisième occurrence de ce cas sur cette page précise, et le journal l'écrit
+déjà : une mesure unique n'est pas une mesure, et celle-ci est la page qui
+demande le plus au processeur bridé.
+
+**La comparaison de rendu n'a PAS été passée, avec sa raison.** Le `git diff`
+de V563 et V564 ne porte sur **aucun fichier de `src/app` ni de
+`src/components`** : trois fichiers, deux outils de mesure et un garde. Une
+comparaison de pixels y est un résultat écrit d'avance, et dix minutes de
+construction pour confirmer ce qu'une ligne de `git diff --stat` établit. C'est
+la discipline déjà appliquée après V495, V510, V523 et V562.
+
+**Et l'environnement local est retombé, pour la sixième fois recensée ici.**
+PostgreSQL ET `next start` étaient morts tous les deux au moment d'ouvrir la
+campagne, sans que rien ne les tue — le conteneur les reprend pendant les
+périodes d'inactivité, et il y en avait eu une pendant les seize minutes de la
+suite navigateur. Les deux contrôles d'une seconde écrits au journal l'ont dit
+tout de suite : `pg_isready -h 127.0.0.1 -p 5433` et un `curl` sur le port du
+serveur. Sans eux, `compte-mesure.mjs` aurait échoué sur un symptôme qui ne
+ressemble en rien à sa cause.
+
 ### Les trois autres outils de mesure, passés au même crible : rien
 
 Suite de V563. Un défaut trouvé dans un outil se cherche chez ses voisins —
