@@ -1,5 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { seConnecter } from "./compte";
+import { remplirInscription, seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
 import { passerIntro } from "./intro";
 
@@ -105,8 +105,7 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     // e-mail de /login est réservé aux invités, et il le dit maintenant.
     await purgerTentatives();
     await page.goto("/beta");
-    await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
-    await page.locator('input[type="email"]').first().fill(COMPTE.email);
+    await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
     await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
 
     // Le code s'affiche une fois, et une seule : c'est le seul moyen d'entrer.

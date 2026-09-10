@@ -1,6 +1,6 @@
 import { test, expect, type Browser } from "@playwright/test";
 import { purgerTentatives } from "./limiteur";
-import { ouvrirCompte, seConnecter } from "./compte";
+import { ouvrirCompte, remplirInscription, seConnecter } from "./compte";
 
 /**
  * L'historique sur téléphone.
@@ -30,8 +30,7 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
   });
   await purgerTentatives();
   await page.goto("/beta");
-  await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
-  await page.locator('input[type="email"]').first().fill(COMPTE.email);
+  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
   await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });

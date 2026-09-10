@@ -1157,6 +1157,13 @@ changement comme coupable. Le témoin qui distingue ça d'une régression est
 l'EN-TÊTE : un `HIT` sur une page qu'on vient de reconstruire dit qu'on regarde
 le passé.
 
+**Et on le vide SERVEUR ÉTEINT.** Le geste lancé pendant que `next-server`
+tourne remplace un cache périmé par un cache INCOHÉRENT : le serveur vivant
+garde son magasin de régénération en mémoire, et les pages sortent alors en
+404 avec `lang="en"` — huit parcours rouges le 10 septembre, tous faux. La
+séquence entière est donc : tuer le serveur PAR SON PID, vider le cache,
+`next build`, relancer.
+
 ```bash
 node scripts/accessibilite.mjs   # les pages du produit, six langues, WCAG
 node scripts/performance.mjs     # LCP, CLS, poids du JavaScript par page
@@ -1336,6 +1343,155 @@ qu'en la cherchant au mot près.
 Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
+
+### V581 est partie ROUGE, et la reprise qui devait l'empêcher ne réparait rien
+
+Lue en appliquant la règle de la fusion — la CI de la version PRÉCÉDENTE.
+**10 min 30, donc les parcours ont joué**, et un seul travail sur neuf :
+`bareme`, un seul test, `bareme-gele.spec.ts:125`.
+
+**Le message dit la cause sans détour, et c'est rare** :
+
+```
+locator resolved to <button disabled ...>Obtenir mon code</button>
+  - element is not enabled
+111 × retrying click action
+```
+
+Cent onze reprises de clic sur un bouton désactivé, une minute de délai pour
+un test qui met sept secondes.
+
+**Le bouton dépend de l'ÉTAT React, pas du DOM** :
+`disabled={pseudo.trim().length < 2 || loading}`. Une saisie qui arrive avant
+l'hydratation n'atteint donc aucun état, et le bouton reste éteint.
+
+**La reprise existait, et dix fichiers sur onze ne l'avaient pas.**
+`ouvrirCompte` porte `remplirJusquACeQueCaPrenne` depuis des semaines ; les
+onze fichiers qui remplissent le formulaire à la main recopient trois lignes
+identiques au caractère près, et un seul — `montre.spec.ts` — reprenait la
+saisie. C'est le motif que ce journal reproche partout, et le commentaire
+d'`ouvrirCompte` écrivait noir sur blanc pourquoi les autres n'avaient pas été
+convertis : « le défaut qui aurait justifié d'y toucher n'existait pas ».
+
+**Il existe. Et la partie instructive est que la reprise ne le réparait pas
+non plus.**
+
+**Deux hypothèses écrites étaient fausses, et c'est l'instrument qui l'a
+dit.** La première est celle du journal — « le champ se vide TOUT SEUL, parce
+que l'état React n'a jamais reçu la saisie ». La seconde est celle du
+commentaire — « quand le bouton reste désactivé, c'est en général qu'il n'y a
+pas de JavaScript du tout, et reprendre la saisie n'y peut rien ».
+
+La course a été rendue DÉTERMINISTE — les quinze fragments de la page retardés
+de deux secondes, la saisie posée avant l'hydratation — et la sonde rend
+l'inverse des deux :
+
+| | relevé |
+|---|---|
+| le champ | **porte sa valeur**, il ne se vide pas |
+| le JavaScript | présent, React hydraté |
+| le bouton | **éteint** |
+| une frappe au CLAVIER | **l'allume** |
+
+**L'état est stable et faux** : le DOM porte la valeur, l'état React est vide,
+et rien ne les réconcilie — React ne relit pas le DOM en s'hydratant, et sans
+changement d'état il ne rerend pas. Le champ n'a donc aucune raison de revenir
+à vide, et le bouton aucune de s'allumer.
+
+**Ce qui rendait la reprise inopérante est que `fill` ne fait RIEN quand la
+valeur est déjà la bonne** : pas de changement, pas d'événement, pas d'état.
+La boucle tournait trente secondes et rendait le même écran. Mesuré sur les
+trois façons de reprendre :
+
+| reprise | bouton après |
+|---|---|
+| **`fill` répété** — la version en place | **éteint** |
+| vider puis remplir | actif |
+| frappe au clavier | actif |
+
+`reposer()` vide le champ avant de le remplir, et les deux formulaires y
+passent. Éprouvé dans les deux sens sur la course reproduite : **avec le
+vidage le bouton s'allume, sans lui il reste éteint.** C'est la seule preuve
+qui vaille ici — une correction dont on n'a pas vu échouer l'absence n'est pas
+éprouvée.
+
+**Le vidage est retenu plutôt que la frappe** : il coûte deux appels au lieu
+d'un caractère par lettre, et il ne dépend pas de ce que le champ contient
+déjà.
+
+**La connexion porte le même motif, et sa condition l'aggravait.** Elle ne
+refaisait le `fill` que si la valeur DIFFÉRAIT — c'est-à-dire jamais dans
+l'état ci-dessus. Elle ne pouvait donc rattraper que la moitié où le champ
+s'est vidé tout seul. Ce que le vidage y change n'est PAS mesuré, et c'est
+écrit comme tel : le bouton de connexion vaut `disabled={loading}` et rien
+d'autre, donc il ne dit pas si l'état a reçu la saisie. Il est repris parce
+que le mécanisme est le même et qu'il ne coûte rien ; l'affirmer réparé serait
+aller au-delà de ce qu'on a vu.
+
+**Le garde exige le VIDAGE, pas seulement la boucle**, et ce contrôle-là a
+manqué à ma première correction : un garde qui n'aurait demandé que
+`expect.poll` aurait accepté la version dont on vient de mesurer qu'elle ne
+répare rien. `src/inscriptionReprise.test.ts` refuse en plus qu'un parcours
+remplisse le formulaire en clair — `compte.ts` seul en a le droit, puisqu'il
+PORTE la règle.
+
+**Deux de mes contrôles étaient trop lâches, et le sabotage les a nommés.**
+Le premier exigeait un `.fill(` quelconque dans la boucle : retirer la ligne
+du PSEUDO laisse celle de l'e-mail, donc il passait au vert — alors que
+`disabled` ne dépend que du pseudo. Le second était le témoin, qui comptait
+les APPELS et pas ce que le motif trouve : `SAISIE` vidée de son objet laissait
+tout au vert. Il exige maintenant que le motif désigne exactement `compte.ts`,
+qui en porte une par construction.
+
+Sept sabotages, sept échecs : la copie remise dans un parcours, la boucle
+vidée, le pseudo sorti de la reprise, `isEnabled` remplacé par vrai, **le
+vidage retiré**, la connexion rendue à sa condition d'avant, et le recensement
+rendu aveugle.
+
+**Et quatre sabotages antérieurs n'avaient rien sabordé**, ce que seul le
+contrôle d'empreinte a dit — mes motifs `perl` étaient faux dans le
+heredoc. C'est le piège écrit ici depuis la lecture d'issue de Riot, et il
+vaut d'être noté une fois de plus : quatre verts d'affilée ne sont pas un
+garde qui ne mord pas, c'est un harnais qui ne mord pas. Les sabotages sont
+repassés en Python sur des chaînes littérales.
+
+**Un piège d'outillage, déjà écrit ici** : une sonde posée dans le scratchpad
+ne résout pas `playwright`, ESM cherchant `node_modules` depuis le dossier du
+SCRIPT. Une copie temporaire dans `scripts/`, effacée après — ce que
+`src/scriptsRacine.test.ts` exige de toute façon.
+
+**Et la suite entière a rendu huit parcours rouges après la correction, tous
+faux.** Les cinq langues du calculateur en `lang="en"`, plus trois contrôles de
+référencement. Aucun ne touche à l'inscription, et mon changement ne porte que
+sur `e2e/` et un test unitaire — donc rien qui atteigne le navigateur. Le
+témoin qui tranche est l'EN-TÊTE, comme le journal l'écrit déjà :
+
+```
+fr : 404  x-nextjs-cache: HIT   <html lang="en"
+de : 404  x-nextjs-cache: HIT   <html lang="en"
+```
+
+**Un `HIT` sur une page qu'on vient de reconstruire dit qu'on regarde le
+passé.** La cause est mon propre geste : `rm -rf .next/cache` lancé pendant que
+`next-server` TOURNAIT, ce qui laisse le serveur vivant devant un magasin de
+régénération qu'on vient de lui retirer sous les pieds. Le journal écrivait
+« le cache SURVIT à `next build` » ; ce qu'il n'écrivait pas, c'est que le
+vider ne suffit pas non plus — **il faut que le serveur soit ÉTEINT au moment
+où on le vide**, sinon on remplace un cache périmé par un cache incohérent.
+
+Serveur tué par son PID, cache vidé, reconstruit, relancé : les six langues
+rendent 200 avec leur propre `lang`, et les deux fichiers passent **110 sur
+110**. Les huit échecs n'étaient donc pas une régression — et c'est établi
+plutôt que supposé, ce qui est toute la raison d'aller lire l'en-tête au lieu
+de relancer.
+
+**Ce que ça apprend au-delà du cas.** Le défaut a survécu parce qu'une
+correction avait été écrite pour lui, et que personne n'avait vu échouer son
+absence : la reprise était en place, elle avait l'air juste, et elle ne
+réparait rien. C'est la forme la plus coûteuse de ce que ce journal appelle
+« une garantie décrite qui n'existe pas » — non pas un commentaire qui ment
+sur du code absent, mais un commentaire qui décrit fidèlement du code qui ne
+fait pas ce qu'on croit.
 
 ### Dépendances du 10 septembre : React 19.3, et la mesure qui va avec
 

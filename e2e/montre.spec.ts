@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { requeteSql } from "./base";
 import { purgerTentatives } from "./limiteur";
+import { boutonInscription, remplirInscription } from "./compte";
 
 /**
  * « Portes-tu une montre connectée ? » — réponse 035, ligne 035 du plan.
@@ -29,13 +30,8 @@ async function inscrire(page: Page, montre: "oui" | "non" | null) {
 
   await purgerTentatives();
   await page.goto("/beta");
-  const envoyer = page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first();
-
-  await expect.poll(async () => {
-    await page.getByPlaceholder(/pseudo/i).first().fill(compte.pseudo);
-    await page.locator('input[type="email"]').first().fill(compte.email);
-    return envoyer.isEnabled();
-  }, { timeout: 30_000, intervals: [500, 1_000, 2_000] }).toBe(true);
+  const envoyer = boutonInscription(page);
+  await remplirInscription(page, compte);
 
   if (montre !== null) {
     // Le bloc facultatif est REPLIÉ : sans ce geste, le champ n'existe pas.
