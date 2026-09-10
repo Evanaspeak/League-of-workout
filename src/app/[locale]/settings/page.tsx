@@ -784,7 +784,7 @@ export default function SettingsPage() {
         {/* Le compte Riot a rejoint le bloc « League of Legends » : c'est une
             information sur un jeu, pas sur la personne. */}
 
-        {profileError && <p className="text-sm loss-text">{profileError}</p>}
+        {profileError && <p role="alert" className="text-sm loss-text">{profileError}</p>}
         <button className="lol-btn w-full" onClick={handleSaveProfile} disabled={savingProfile}>
           {savingProfile ? t.enregistrementEnCours : savedProfile ? t.profilEnregistre : t.enregistrerProfil}
         </button>

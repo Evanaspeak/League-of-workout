@@ -1344,6 +1344,132 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dix-sept messages d'erreur annoncés à personne, dont les deux portes
+
+Le journal porte **trois occurrences** du même défaut, en deux entrées,
+chacune corrigée sur son écran et jamais gardée : le refus de connexion dans un `<div>` nu, les
+messages du signalement et de la mise de côté « annoncés à personne […] sous
+un bouton redevenu cliquable », et la suppression de compte en `role="status"`
+— qui est POLI — sur l'action la plus irréversible du produit.
+
+Trois fois le même geste, trois fois sur un seul de ses lieux. Personne n'avait
+demandé combien il en restait.
+
+**Dix-sept.** Et les deux qui comptent le plus sont les VOISINES de celle que
+V547 avait corrigée :
+
+- **`/beta`**, la SEULE porte d'entrée du produit. Un pseudo déjà pris, un
+  corps illisible, le limiteur : le refus paraît, et un lecteur d'écran
+  n'entend rien ;
+- **`/recuperation`**, le seul chemin de retour pour qui ne peut plus entrer.
+
+**`/beta` et `/recuperation` portent le MÊME objet de style au caractère
+près** — fond à 8 %, bordure à 30 %, rayon 8, `var(--loss)` — et `/login` la
+même famille à deux valeurs près (10 %, rayon 4). Trois portes, un objet de
+style recopié, et une seule corrigée. C'est le motif que ce journal reproche
+partout sous sa forme la plus difficile à voir : la correction est juste, elle
+est écrite au journal, et elle ne répare qu'un tiers de son sujet.
+
+**Sept sur dix-sept étaient invisibles à un garde indexé sur le NOM**, et
+c'est la vraie leçon. Ils ne s'appellent ni `erreur` ni `echec` mais `msg` ou
+`message`, et portent le succès ET l'échec sous un drapeau (`type: "err"`,
+`ok: false`). Parmi eux :
+
+| écran | ce que son message dit |
+|---|---|
+| `CompteRiot` | le seul écran où l'on relie son compte Riot — 503 sans clé, 404 sur un pseudo, 403 sur la nôtre |
+| `CorrectionDates` | combien de dates ont RÉELLEMENT bougé, ce que le journal exige déjà en toutes lettres |
+| `ReglageNotifications` | pourquoi la notification d'essai n'est pas partie |
+| les quatre panneaux d'administration | ce qu'un enregistrement a fait ou n'a pas fait |
+
+Le discriminant du garde n'est donc pas le nom : c'est ce que l'état
+**REÇOIT**. `translateApiError`, `.error`, `t.echec`, `t.erreur`, un drapeau
+d'échec. Mesuré des deux côtés sur les cent quarante fichiers d'affichage :
+le tri par la POSE trouve **trente-quatre** rendus d'erreur, celui par le NOM
+n'en voit que **vingt-sept**. Les sept qui manquent sont exactement les sept
+défauts ci-dessus — sur dix-sept, dix se reconnaissaient au nom.
+
+**Ce que le garde ne fait PAS, écrit plutôt que laissé à croire** : il
+n'arbitre pas entre `alert` (assertif) et `status` (poli). Le critère est écrit
+dans `ReglagesCorps` — « on attend ce message, il n'a aucun intérêt s'il attend
+le prochain moment calme d'un lecteur d'écran » — et il demande de savoir si la
+personne ATTEND, ce qu'aucun motif ne dit. Les refus purs prennent `alert`, les
+messages qui portent aussi le succès prennent `status`.
+
+**Et il tombait sur sa propre explication.** La correction de `/beta` porte un
+commentaire qui CITE `role="alert"` pour dire pourquoi il est là : un garde qui
+lit le texte brut est satisfait par sa propre justification. C'est le piège
+déjà payé trois fois ici, dans les deux sens, et `src/test/sansCommentaires.ts`
+existe pour lui — c'est son quatrième lecteur. Un cas fabriqué le tient.
+
+**Zéro dispense**, et c'est l'état sain : un garde qui naît avec une liste
+d'exemptions naît déjà usé.
+
+**Le tri s'éprouve sur des cas FABRIQUÉS**, parce que l'état sain du dépôt est
+désormais zéro trouvaille : les fichiers réels ne distinguent plus un tri juste
+d'un tri aveugle. Huit cas, dont celui du `msg` — sans lui, on ne saurait pas
+si le garde voit la forme qui portait sept défauts sur dix-sept.
+
+**Deux parcours pour le branchement**, dans le fichier qui existe pour ça. Le
+premier n'INTERCEPTE rien : il ouvre un compte, puis en redemande un avec le
+même pseudo, et lit le vrai 409 de la route — c'est le cas qui arrive, et il
+traverse toute la chaîne du formulaire au message annoncé. Il vérifie les deux
+moitiés, comme tout ce fichier : que le refus se DIT, et qu'aucun code ne
+s'affiche — le bloc du code étant ce qui paraît quand l'inscription aboutit, et
+lui seul.
+
+**Deux gardes existants ont mordu, et chacun sur une limite différente.** Ce
+n'était pas du bruit : les deux disaient quelque chose de vrai.
+
+`inscriptionReprise` refusait qu'un parcours emploie les deux pièces de
+l'inscription séparément — la seule exception, `montre.spec.ts`, était écrite
+en dur dans un `toEqual`. Mon parcours en est une SECONDE, et elle est
+structurelle elle aussi : il éprouve une inscription REFUSÉE, or `inscrire`
+attend le bloc du code vingt secondes et ce bloc ne paraît jamais. La liste
+devient un dictionnaire où chaque exception porte sa raison, avec le contrôle
+habituel — une exemption qui ne désigne plus rien tombe.
+
+**`absenceApresPresence`, lui, a rendu un FAUX POSITIF, et c'est plus
+instructif.** Il refuse un `toHaveCount(0)` qui n'est pas précédé d'un marqueur
+de présence ; mon attente est rangée dans `messageDEchec`, un helper local qui
+fait `toBeVisible()`. Le garde ne voyait qu'un appel. Ce n'est pas propre à ce
+fichier : **sept fichiers de `e2e/` portent à la fois un helper local et un
+contrôle d'absence**, donc la classe est réelle — et un faux positif est
+exactement la façon dont un garde se fait dispenser.
+
+Il suit donc UN saut, comme le contrat du pont et le garde du nom publié : un
+appel vaut le marqueur que le helper CONTIENT, jamais son nom.
+
+**Et mes deux cas fabriqués ont trouvé deux trous dans ma propre
+correction**, l'un après l'autre :
+
+- la fenêtre de douze lignes contient la DÉCLARATION du helper voisin, donc son
+  `toBeVisible`. Un fichier qui range une attente dans un helper se gardait
+  alors tout seul, quel que soit l'ordre. Les lignes d'un helper sont blanchies
+  POUR LES AUTRES, et gardées pour lui-même ;
+- corrigé, le cas tombait encore : la ligne de DÉCLARATION restait dans la
+  fenêtre, et son NOM suffisait à déclencher le saut. Un helper déclaré à côté
+  calmait le garde sans avoir été appelé. La plage part de la déclaration et
+  non de l'accolade.
+
+Aucun des deux ne se voyait sur les fichiers réels — ils passaient tous les
+deux au vert. C'est la règle déjà écrite ici : un tri qu'aucun fichier réel ne
+distingue d'un tri cassé se prouve sur des cas construits pour ça.
+
+**Huit sabotages, huit échecs.** Le rôle retiré de `/beta` et de `CompteRiot`,
+le tri ramené au nom seul, le retrait des commentaires débranché, la balise
+englobante rendue aveugle, le balayage vidé, le saut retiré du garde des
+absences, et une exception d'inscription qui ne désigne plus rien.
+
+**Le premier a d'abord PASSÉ, et pour une raison qui vaut d'être écrite.**
+Ma substitution visait la première occurrence de `role="alert"` dans le
+fichier — et c'est celle du COMMENTAIRE qui explique la correction. Le fichier
+avait donc bien changé, l'empreinte le disait, et rien n'était saboté. C'est le
+piège du « sabotage qui ne sabote pas » sous une forme nouvelle : **un contrôle
+d'empreinte prouve que le fichier a BOUGÉ, pas que la cible a été touchée.**
+Et le commentaire qui l'a avalé est précisément celui contre lequel
+`sansCommentaires` existe — le même texte, deux fois, des deux côtés.
+
 ### La première page d'une campagne paie le démarrage à froid du serveur
 
 Seconde moitié de la clôture de V572 à V582, sur le même compte semé à soixante

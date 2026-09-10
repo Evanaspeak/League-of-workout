@@ -52,7 +52,7 @@ export default function AdminMesures() {
         <p className="text-xs mt-1" style={{ color: "var(--steel)" }}>{t.aide}</p>
       </div>
 
-      {erreur && <p className="text-sm loss-text">{t.echec}</p>}
+      {erreur && <p role="alert" className="text-sm loss-text">{t.echec}</p>}
       {!erreur && m === null && (
         <p className="text-sm" style={{ color: "var(--steel)" }}>{t.chargement}</p>
       )}

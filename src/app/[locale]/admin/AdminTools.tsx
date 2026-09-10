@@ -108,7 +108,7 @@ export default function AdminTools() {
           </button>
         </div>
         {msg && (
-          <p style={{
+          <p role="status" style={{
             fontSize: "0.78rem", marginBottom: 8, display: "flex", alignItems: "center", gap: 6,
             color: msg.ok ? "var(--victory)" : "var(--loss)",
           }}>

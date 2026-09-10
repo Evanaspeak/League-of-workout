@@ -155,7 +155,7 @@ export function MesuresPhysiques() {
             {champ("sportsHoursPerWeek", t.sport, 0, 40)}
           </div>
 
-          {erreur && <p className="text-sm loss-text">{erreur}</p>}
+          {erreur && <p role="alert" className="text-sm loss-text">{erreur}</p>}
 
           <button className="lol-btn w-full" onClick={enregistrer} disabled={enregistrement}>
             {enregistrement ? t.enCours : enregistre ? t.enregistre : t.enregistrer}

@@ -488,7 +488,7 @@ export function AjoutActivite({
             <button className="lol-btn lol-btn-blue w-full text-sm" onClick={handleRiotFetch} disabled={riotLoading}>
               {riotLoading ? t.fetchingLastGame : t.fetchLastGameBtn}
             </button>
-            {riotError && <p className="text-sm loss-text">{riotError}</p>}
+            {riotError && <p role="alert" className="text-sm loss-text">{riotError}</p>}
 
             <div className="flex items-start gap-3 p-3 rounded" style={{ background: "color-mix(in srgb, var(--steel) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--steel) 16%, transparent)" }}>
               <Icone nom="alerte" taille={18} couleur="var(--amber)" />
@@ -857,7 +857,12 @@ export function AjoutActivite({
                   <button className="lol-btn w-full" onClick={handleAddLog} disabled={addLogging}>
                     {addLogging ? t.saving : (typeJeu === "temps" ? tJeux.ajouterSession : t.logThisGame)}
                   </button>
-                  {addError && <p className="text-sm loss-text text-center">{addError}</p>}
+                  {/*
+            `role="alert"` : tant que la clé Riot de production n'est pas
+            arrivée, cette saisie est le SEUL moyen d'enregistrer une partie.
+            Un refus annoncé à personne y coûte la partie elle-même.
+          */}
+          {addError && <p role="alert" className="text-sm loss-text text-center">{addError}</p>}
                 </div>
               )}
             </div>
@@ -867,7 +872,7 @@ export function AjoutActivite({
           {loadingMatches ? (
             <div className="text-center py-10 gold-text">{t.loadingRiotGames}</div>
           ) : matchError ? (
-            <div className="lol-panel p-6 text-center loss-text">{matchError}</div>
+            <div role="alert" className="lol-panel p-6 text-center loss-text">{matchError}</div>
           ) : matches.length === 0 ? (
             <div className="lol-panel p-8 text-center">
               <p style={{ color: "var(--faint)" }}>{t.noGameFound}</p>

@@ -138,7 +138,7 @@ export default function AdminSeuilDette() {
         {sansExercice ? t.sansExercice : t.desactive}
       </p>
       {msg && (
-        <p className="text-sm mt-2" style={{ color: msg === t.enregistre ? "var(--victory)" : "var(--ember)" }}>
+        <p role="status" className="text-sm mt-2" style={{ color: msg === t.enregistre ? "var(--victory)" : "var(--ember)" }}>
           {msg}
         </p>
       )}

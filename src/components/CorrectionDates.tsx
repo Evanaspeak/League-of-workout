@@ -166,7 +166,7 @@ export function CorrectionDates({
         </p>
       )}
       <p className="text-xs" style={{ color: "var(--steel)" }}>{t.avertissement}</p>
-      {message && <p className="text-sm" style={{ color: "var(--gold)" }}>{message}</p>}
+      {message && <p role="status" className="text-sm" style={{ color: "var(--gold)" }}>{message}</p>}
 
       <div className="flex flex-wrap gap-3">
         <button

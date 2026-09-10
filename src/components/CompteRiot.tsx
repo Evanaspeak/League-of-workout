@@ -120,7 +120,7 @@ export function CompteRiot() {
       </button>
 
       {message && (
-        <p className={`text-sm flex items-center gap-2 ${message.ok ? "blue-text" : "loss-text"}`}>
+        <p role="status" className={`text-sm flex items-center gap-2 ${message.ok ? "blue-text" : "loss-text"}`}>
           <Icone nom={message.ok ? "coche" : "croix"} taille={15} />
           {message.texte}
         </p>

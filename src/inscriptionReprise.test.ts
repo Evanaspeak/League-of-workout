@@ -100,17 +100,29 @@ describe("la saisie de l'inscription", () => {
     // Dix fichiers de parcours plus `compte.ts` lui-même.
     expect(appellent.length).toBeGreaterThanOrEqual(10);
     /**
-     * `montre.spec.ts` est la seule exception, et elle est STRUCTURELLE : il
-     * doit déplier le bloc facultatif de `/beta` ENTRE la saisie et l'envoi,
-     * donc il ne peut pas passer par un appel unique. Il emploie les deux
-     * pièces — c'est la bonne façon de dire la différence, à l'endroit où elle
-     * existe — et c'est lui qui prouve que `boutonInscription` n'est pas mort.
+     * Les exceptions sont STRUCTURELLES, et chacune porte sa raison ici — un
+     * fichier qui emploie les deux pièces dit une différence, et il doit
+     * dire laquelle. Ce sont elles qui prouvent en passant que
+     * `boutonInscription` n'est pas mort.
      */
+    const PIECES_SEPAREES: Record<string, string> = {
+      "montre.spec.ts":
+        "déplie le bloc facultatif de /beta ENTRE la saisie et l'envoi, " +
+        "donc il ne peut pas passer par un appel unique",
+      "refus-silencieux.spec.ts":
+        "éprouve une inscription REFUSÉE : `inscrire` attend le bloc du code " +
+        "vingt secondes, et ce bloc ne paraît jamais — c'est tout le sujet",
+    };
     const piecesSeparees = sources
       .filter(([f]) => f !== "compte.ts")
       .filter(([, s]) => /boutonInscription\s*\(/.test(s))
       .map(([f]) => f);
-    expect(piecesSeparees).toEqual(["montre.spec.ts"]);
+    expect(piecesSeparees.sort()).toEqual(Object.keys(PIECES_SEPAREES).sort());
+
+    // Une exception qui ne désigne plus rien est du code mort dans le garde
+    // qui existe pour l'attraper.
+    const mortes = Object.keys(PIECES_SEPAREES).filter((f) => !piecesSeparees.includes(f));
+    expect(mortes).toEqual([]);
   });
 
   it("la fonction partagée reprend vraiment tant que le bouton est éteint", () => {
