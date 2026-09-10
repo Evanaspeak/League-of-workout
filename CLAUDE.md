@@ -1344,6 +1344,92 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### L'audit jugeait le texte des graphiques, et il le jugeait faux
+
+Suite du contraste des messages de refus, sur la seconde famille que l'audit
+ne voit pas : ce qui est peint en SVG. Le tableau de bord en porte sept
+graphiques, les réglages deux courbes, et le texte des graduations d'axe est
+sur l'écran le plus vu du produit.
+
+**Le premier constat est que ce n'est PAS un angle mort au sens ordinaire.**
+Le balayage `body *` retient déjà les `<text>` de recharts : ils portent du
+texte propre, ils ont une boîte, ils passent tous les filtres. Ce que l'audit
+lisait dessus était `style.color`.
+
+**Un `<text>` SVG ne se peint pas par `color`, il se peint par `fill`.**
+Mesuré sur une page fabriquée, deux textes à 2,83:1 et 1,67:1 :
+
+```
+#a  color=rgb(236, 239, 244)   fill=rgb(90, 96, 104)
+#b  color=rgb(236, 239, 244)   fill=rgb(58, 62, 68)
+```
+
+`color` y rend la couleur HÉRITÉE du conteneur — `--bone` sur un panneau,
+c'est-à-dire 15:1 — quelle que soit la couleur réelle. L'audit ne s'abstenait
+donc pas sur le SVG : **il le jugeait, et il concluait que tout allait bien**.
+C'est un cran plus grave que « confondre rien trouvé et rien regardé », le
+motif que ce journal recense partout : ici l'outil ne se tait pas, il affirme.
+
+**Éprouvé dans les deux sens, en jouant le contrôle RÉEL** — extrait du script
+plutôt que recopié, parce qu'une sonde qui réécrit ce qu'elle éprouve
+n'éprouve que sa copie :
+
+| | constats sur trois textes |
+|---|---|
+| sans la correction | **1** (le HTML seul) |
+| avec | **3** |
+
+Les deux textes SVG à bas contraste sortent, celui à 15:1 reste. Et sans la
+correction, l'audit ne dit pas qu'il en a sauté deux : il en rend un.
+
+**La couleur RAPPORTÉE a dû suivre.** Le premier jet trouvait bien les deux
+textes et les annonçait en `rgb(236, 239, 244)`, c'est-à-dire la couleur qu'il
+venait de ne PAS mesurer. Un rapport qui nomme le mauvais jeton envoie
+corriger ailleurs — c'est la leçon « un chiffre sans nom ne se diagnostique
+pas », sous sa forme la plus retorse : le chiffre était juste, le nom faux.
+
+**Et `fill-opacity` est une propriété DISTINCTE d'`opacity`**, qui se
+multiplie à l'alpha de la couleur. La sauter ferait juger un texte à demi
+transparent comme s'il était plein.
+
+**axe-core, vérifié plutôt que supposé.** Sur la même page fabriquée, il range
+les deux `<text>` dans `incomplete` — « à vérifier à la main » — et le texte
+HTML de même contraste dans `violations`. Il ne se trompe donc pas ; il
+s'abstient. Ça ne concerne pas cet audit-ci, qui n'emploie pas axe-core et
+porte son propre contrôle, mais le dire évite qu'on aille chercher la réponse
+là-bas la prochaine fois.
+
+**Le garde porte sur le BRANCHEMENT**, pas sur la présence du mot : une
+fonction `teinteDe` parfaitement écrite et jamais appelée laisserait
+exactement le défaut d'origine. `src/scriptsMesure.test.ts` exige donc qu'elle
+distingue le SVG, qu'elle lise `fill`, qu'elle tienne compte de
+`fill-opacity`, qu'elle soit la source de la couleur d'avant-plan, et que ni
+le contrôle ni le rapport ne relisent `style.color`.
+Cinq sabotages, cinq échecs : `teinteDe` débranchée, la branche SVG retirée,
+`fill-opacity` ignorée, la couleur rapportée rendue à `style.color`, et le
+bloc renommé — ce dernier devant faire tomber le contrôle plutôt que de le
+rendre vert sur un motif qui ne trouve plus rien.
+
+**Le verdict sur le VRAI produit est ENTIÈREMENT NÉGATIF**, et c'est ce qu'on
+venait chercher : vingt et une pages en français, sur un compte semé à
+soixante parties, **zéro constat, zéro page laissée de côté**. Le texte des
+sept graphiques du tableau de bord et des deux courbes des réglages passe le
+seuil du texte ordinaire — et c'est MESURÉ maintenant, là où c'était affirmé
+par un outil qui lisait la mauvaise couleur. Les six frontières de commande
+remontent aux mêmes ratios qu'à la campagne d'avant (1,35 · 1,64 · 1,61 ·
+1,20 · 1,20 · 1,70) sur **78 commandes examinées** : l'outil corrigé mesure
+exactement la même chose partout ailleurs, ce qui est la seconde moitié de ce
+qu'on lui demandait.
+
+**Et l'en-tête du script avait rouillé sur deux points.** Il annonçait « trois
+choses seulement » quand l'outil en mesure cinq familles, et sa ligne d'usage
+écrivait `[adresse] [langue]` — la forme d'AVANT le passage au drapeau
+`--langue=xx` du 4 septembre. Recopiée telle quelle, elle fait passer la
+langue au rang de l'adresse : l'outil mesure alors n'importe quoi en rendant
+un rapport d'allure normale, ce que `src/scriptsMesure.test.ts` refuse déjà
+par ailleurs. Une ligne d'usage périmée est une invitation à retomber dans le
+piège que le garde d'à côté existe pour fermer.
+
 ### Le contraste des messages de refus, jamais mesuré — et il tient
 
 Suite de V583, sur l'autre moitié du même sujet. Poser `role="alert"` fait

@@ -235,6 +235,43 @@ describe("les outils de mesure lisent leurs arguments de la même façon", () =>
     expect(texte).not.toMatch(/enLangue\([^)]*\)\.split\("#"\)/);
   });
 
+  /**
+   * Un `<text>` SVG ne se peint pas par `color`, et l'audit le jugeait quand
+   * même.
+   *
+   * Son balayage `body *` RETENAIT déjà les `<text>` de recharts — ils ont du
+   * texte propre, une boîte, et passent tous les filtres. Ce qu'il lisait
+   * dessus était `style.color`, c'est-à-dire la couleur HÉRITÉE du conteneur
+   * (`--bone` sur un panneau, 15:1), quelle que soit leur vraie couleur.
+   *
+   * Ce n'est donc pas « l'audit ne voit pas le SVG » — c'est pire : **il le
+   * juge, et il conclut que tout va bien**. Sept graphiques du tableau de
+   * bord et les deux courbes des réglages étaient dans ce cas.
+   *
+   * Le contrôle porte sur le BRANCHEMENT, pas sur la présence du mot : une
+   * fonction `teinteDe` parfaitement écrite et jamais appelée laisserait
+   * exactement le défaut d'origine.
+   */
+  it("accessibilite.mjs lit le fill d'un texte SVG, pas son color", () => {
+    const texte = sansCommentaires(readFileSync(join(SCRIPTS, "accessibilite.mjs"), "utf8"));
+    // La fonction existe, elle distingue le SVG, et elle lit `fill`.
+    const bloc = /const teinteDe = \([\s\S]*?\n  \};/.exec(texte);
+    expect(bloc).not.toBeNull();
+    expect(bloc![0]).toMatch(/ownerSVGElement/);
+    expect(bloc![0]).toMatch(/style\.fill\b/);
+    // `fill-opacity` est une propriété DISTINCTE d'`opacity` et se multiplie à
+    // l'alpha : la sauter ferait juger un texte à demi transparent comme s'il
+    // était plein.
+    expect(bloc![0]).toMatch(/fillOpacity/);
+    // Et elle est BRANCHÉE : c'est elle qui donne la couleur d'avant-plan.
+    expect(texte).toMatch(/const avant = teinteDe\(el, style\);/);
+    // Le contrôle de contraste ne lit plus `style.color` de son côté.
+    expect(texte).not.toMatch(/const avant = lire\(style\.color\)/);
+    // La couleur RAPPORTÉE est celle qu'on a mesurée : nommer `style.color`
+    // sur un `<text>` enverrait corriger un jeton qui n'y est pour rien.
+    expect(texte).not.toMatch(/couleur:\s*style\.color/);
+  });
+
   it("la dispense désigne encore un fichier vivant", () => {
     // Une dispense qui ne désigne plus rien est du code mort qu'on a admis.
     const presents = new Set(fichiers());
