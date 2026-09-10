@@ -1344,6 +1344,123 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le contraste des messages de refus, jamais mesuré — et il tient
+
+Suite de V583, sur l'autre moitié du même sujet. Poser `role="alert"` fait
+qu'un message est ANNONCÉ ; ça ne dit rien de sa LISIBILITÉ, et personne
+n'avait jamais mesuré la seconde.
+
+**L'audit d'accessibilité ne pouvait pas la dire, et sa limite est écrite au
+journal depuis la campagne de V571** : il ne TAPE nulle part, donc aucun refus
+ne paraît jamais pendant qu'il regarde. Les « 126 pages, zéro constat » sont
+honnêtes et ne couvrent pas cette famille — exactement comme le menu déroulant
+des suggestions de champion, nommé au même endroit pour la même raison.
+
+**Les trois portes mesurées AU NAVIGATEUR**, seules surfaces qu'une sonde peut
+atteindre sans compte :
+
+| écran | message | rapport |
+|---|---|---|
+| `/beta` | « Ce pseudo est déjà pris » | 5,81:1 |
+| `/recuperation` | « Une erreur est survenue » | 5,81:1 |
+| `/login` | « Pseudo ou code incorrect » | 5,20:1 |
+
+**Puis les onze traitements du produit, sur les DEUX fonds** — le fond de page
+et celui d'un panneau — parce qu'on ne sait pas statiquement où un message se
+pose, et que c'est le pire des deux qui compte :
+
+| traitement | page | panneau |
+|---|---|---|
+| `--bone` | 16,77 | 15,58 |
+| `--gold` | 10,96 | 10,19 |
+| `--win` / `--victory` | 10,50 | 9,76 |
+| `--steel` | 7,48 | 6,95 |
+| `--signal` | 7,17 | 6,67 |
+| `--muted` | 6,43 | 6,25 |
+| `--loss` | 6,26 | 5,82 |
+| `--ember` | 5,85 | 5,43 |
+| `--loss` sur voile 8 % | 5,81 | 5,34 |
+| `--loss` sur voile 10 % | 5,67 | **5,20** |
+| `#e05555` | 5,15 | 4,79 |
+| **`--faint`** | 4,78 | **4,72** |
+
+**Le recensement est ENTIÈREMENT NÉGATIF**, et c'est écrit ici pour qu'on ne
+le refasse pas : les onze passent le seuil du texte ordinaire sur les deux
+fonds. Le plancher est `--faint` à 4,72 — vingt-deux centièmes de marge — et
+c'est la ligne d'aide qui accompagne un refus, pas le refus lui-même.
+
+**Et mon calcul à la main s'est trompé sur ce plancher-là.** J'avais obtenu
+4,42:1, c'est-à-dire SOUS le seuil, et j'allais écrire qu'il y avait un défaut
+à corriger. Le navigateur a mesuré 4,72. C'est la leçon que ce journal écrit
+partout, retombée sur son auteur : **un calcul n'est pas une mesure**, et
+quand les deux divergent c'est la mesure qui a raison.
+
+**Le modèle a trouvé une chose que la mesure ne disait pas.** `/login` rend
+5,20 quand `/beta` et `/recuperation` rendent 5,81, et j'avais mis la
+différence sur le compte du voile — 10 % contre 8 %. C'est faux : le voile à
+10 % sur le fond de PAGE rend 5,67. Le seul fond qui donne 5,20 est celui d'un
+PANNEAU, et la carte de connexion en est un. Les deux autres portes tombent
+sur le fond de page au centième près, celle-ci sur l'autre — c'est le modèle
+qui a nommé la surface, pas l'inverse.
+
+**Le garde tient la DIRECTION**, comme `bordureChamps.test.ts` la tient pour
+le critère 1.4.11 : le jour où quelqu'un monte l'opacité de `--faint` ou
+remplace `--loss` par un rouge plus sombre, il tombe. Rien d'autre ne le
+dirait, puisque ces messages ne paraissent qu'au moment d'un refus.
+
+**Ce qu'il ne fait PAS**, écrit plutôt que laissé à croire : il ne connaît pas
+la TAILLE du texte, donc il applique 4,5:1 à tout le monde. C'est le bon sens
+de l'erreur — le seuil du grand texte est plus BAS, donc l'exiger partout ne
+peut pas laisser passer un défaut.
+
+**Et la liste des traitements est DÉRIVÉE du code, ce que le sabotage a
+imposé.** Ma première version la tenait à la main, avec un témoin de longueur.
+Retirer `--loss` — le rouge de **trente-six** éléments annoncés sur soixante —
+laissait les dix autres et le témoin au vert : le garde cessait de couvrir la
+couleur principale sans que rien ne le dise. Le recensement lit donc
+maintenant la couleur RÉELLEMENT posée sur chaque balise annoncée, et refuse
+celle qui n'est pas dans la table. Il attrape du même coup l'autre sens — une
+couleur nouvelle posée demain vient se faire mesurer.
+
+**Deux chemins de résolution, et il faut les deux.** La couleur arrive en
+style EN LIGNE (`color: "var(--loss)"`, ternaire compris) ou par une CLASSE
+utilitaire (`loss-text`, `blue-text`), résolue contre les feuilles de style.
+Le second couvre à lui seul **vingt balises sur soixante** : un recensement
+qui ne lirait que le style en ligne en manquerait le tiers. Les deux ont leur
+propre témoin, parce qu'ils se cassent séparément.
+
+**Sept balises ne se résolvent pas, et le compte est BORNÉ.** Deux
+`lecture-ecran` — hors écran par construction, donc sans contraste à juger —
+quatre qui HÉRITENT de leur parent, et le bandeau de mise à jour de
+l'application, dont la couleur vit sur son enfant. Les cinq dernières
+reçoivent `--bone`, qui est dans la table. Si cette famille grossit, ce n'est
+plus une poignée de cas hérités : c'est un extracteur qui a cessé de voir.
+
+**La machinerie de couleur vit à part maintenant.** `bordureChamps.test.ts`
+portait la luminance, le rapport de contraste, la composition sous
+transparence et la lecture de la palette ; le garde du texte en a besoin des
+quatre, à l'identique. `src/test/couleurs.ts` les porte — quatrième module de
+`src/test/` après `api.ts`, `sansCommentaires.ts` et `fichiersLangue.ts`, et
+la même raison qu'eux : **une règle écrite deux fois finit avec une version en
+retard**, et ç'aurait été celle du second garde.
+
+**Il a fallu lui apprendre les ALIAS de palette**, ce qui n'était pas prévu :
+`--gold: var(--amber)` est le pont de la migration de palette, et c'est sous
+ce nom-là que la correction de dates écrit sa couleur. `hexDe` levait dessus,
+donc le garde tombait sur un jeton parfaitement déclaré.
+
+Dix sabotages, dix échecs : l'opacité de `--faint` baissée, `--loss` rendu
+sombre, la CLASSE `loss-text` pointée sur une couleur inconnue de la table, le
+rapport rendu aveugle, la composition qui ignore le fond, les alias qu'on ne
+suit plus, un traitement retiré de la table, chacune des deux résolutions
+débranchée séparément, et le balayage restreint à un dossier sans `.tsx`.
+
+**Et un piège de sonde, celui que ce journal écrit depuis les tests de
+réglages.** Ma propre sonde a rendu trois mesures dont deux valaient 18,22:1
+sur un texte VIDE : `getByRole("alert")` attrape l'annonceur de route de Next,
+qui est vide et posé sur chaque page. J'ai failli publier deux chiffres qui ne
+mesuraient rien. La sonde exige un texte non vide depuis.
+
 ### Dix-sept messages d'erreur annoncés à personne, dont les deux portes
 
 Le journal porte **trois occurrences** du même défaut, en deux entrées,

@@ -54,6 +54,12 @@ const TOLERES: string[] = [
   // voyaient ni les huit blocs à quatre espaces de `metadonnees.ts`, ni la
   // forme sans bloc d'`apiErrors.ts`.
   "test/fichiersLangue.ts",
+  // Même raison, quatrième fois : la luminance, le rapport de contraste, la
+  // composition sous transparence et la lecture de la palette servent aux
+  // DEUX gardes de contraste — celui des bordures (1.4.11) et celui du texte
+  // des messages (1.4.3). Écrites deux fois, elles auraient fini avec une
+  // version en retard, et c'est le second garde qui l'aurait eue.
+  "test/couleurs.ts",
 ];
 
 /**
