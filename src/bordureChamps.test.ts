@@ -40,40 +40,11 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { alphaDe, contraste, hexDe, sur } from "./test/couleurs";
 
 const RACINE = join(__dirname, "..");
 const lire = (p: string) => readFileSync(join(RACINE, p), "utf8");
-
-/** Luminance relative, définition WCAG. */
-function luminance([r, g, b]: number[]): number {
-  const c = [r, g, b].map((v) => {
-    const s = v / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
-}
-function contraste(a: number[], b: number[]): number {
-  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
-  return (x + 0.05) / (y + 0.05);
-}
-/** Compose une couleur transparente sur un fond opaque. */
-const sur = (rgb: number[], alpha: number, fond: number[]) =>
-  rgb.map((c, i) => c * alpha + fond[i] * (1 - alpha));
-
 const base = lire("src/app/styles/base.css");
-
-/** L'opacité déclarée d'un jeton `rgba(...)` de la palette. */
-function alphaDe(jeton: string): number {
-  const m = base.match(new RegExp(`--${jeton}:\\s*rgba\\(([^)]+)\\)`));
-  if (!m) throw new Error(`--${jeton} introuvable dans base.css`);
-  const v = m[1].split(",").map((x) => parseFloat(x));
-  return v[3];
-}
-function hexDe(jeton: string): number[] {
-  const m = base.match(new RegExp(`--${jeton}:\\s*#([0-9A-Fa-f]{6})`));
-  if (!m) throw new Error(`--${jeton} introuvable dans base.css`);
-  return [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
-}
 
 /**
  * Les cinq traitements de champ du produit, et le PLANCHER de chacun.
