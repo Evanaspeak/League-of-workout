@@ -18,10 +18,19 @@
  * Daten » — et où aucun motif ne distingue la chose de la personne. Les deux
  * libellés allemands ont été repris à la main, avec leur raison au journal.
  */
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const DICOS = join(__dirname, "lib", "i18n", "dictionaries");
+import { RACINE_I18N, fichiersLangue } from "@/test/fichiersLangue";
+
+/**
+ * La portée est `src/lib/i18n` ENTIER, sous-dossiers compris.
+ *
+ * Elle était bornée à `dictionaries/` jusqu'au 10 septembre, alors que quinze
+ * modules porteurs de texte vivent un dossier au-dessus. Le crible manuel des
+ * quinze est NÉGATIF pour CETTE règle — aucun pronom genré, ni chinois ni
+ * japonais — donc ce qu'on ferme est le fichier qu'on ajoutera demain.
+ */
 
 /**
  * Un pronom personnel chinois de la troisième personne, SEUL.
@@ -35,27 +44,51 @@ const DICOS = join(__dirname, "lib", "i18n", "dictionaries");
 export const PRONOM_GENRE = /(?<![其])[他她](?![人们])/;
 
 /**
- * Le bloc CHINOIS d'un dictionnaire, et lui seul.
+ * TOUS les blocs CHINOIS d'un fichier, et eux seuls.
  *
  * Le japonais écrit 他 pour « autre » — « その他 », « 他の言語 », « 他と分けて »
  * — et il vit dans les mêmes fichiers. Aucun motif ne sépare le 他 chinois du
  * 他 japonais : ce qui les sépare est le BLOC où ils se trouvent. C'est la même
  * décision que pour les initiales de résultat, qui ne lisent que le français.
+ *
+ * Il n'en cherchait qu'UN, au premier `indexOf`. `metadonnees.ts` en porte
+ * huit — une page par clé, puis les six langues sous chacune — donc sept
+ * étaient invisibles. Et l'indentation n'est pas fixe : deux espaces dans les
+ * dictionnaires, quatre là-bas.
  */
-export function blocChinois(source: string): string {
-  const debut = source.indexOf("zh: {");
-  if (debut === -1) return "";
-  const suite = source.indexOf("ja: {", debut);
-  return source.slice(debut, suite === -1 ? source.length : suite);
+export function blocsChinois(source: string): string[] {
+  const out: string[] = [];
+  // La borne est la FERMETURE au même niveau d'indentation, et non le bloc de
+  // langue suivant : le chinois est l'avant-dernier des six, mais rien ne
+  // garantit qu'un bloc le suive — et deux motifs, l'un pour chaque cas,
+  // capturaient le même bloc deux fois.
+  for (const m of source.matchAll(/\n( +)zh: \{([\s\S]*?)\n\1\}/g)) out.push(m[2]);
+  return out;
+}
+
+/**
+ * Le chinois de la SECONDE forme, celle d'`apiErrors.ts`.
+ *
+ * La clé y EST le message français, et les traductions sont des propriétés à
+ * valeur CHAÎNE : il n'y a aucun bloc `zh: {` à découper. Un pronom genré y
+ * serait tout aussi invisible que dans un bloc — et c'est précisément la forme
+ * qui a laissé « Cette activité n'a pas de résultat » six jours durant.
+ */
+export function chinoisParCle(source: string): string[] {
+  return [...source.matchAll(/\bzh:\s*("(?:[^"\\]|\\.)*")/g)].map((m) => m[1]);
 }
 
 export function pronomsGenres(source: string): string[] {
-  return (blocChinois(source).match(/"[^"\n]*"/g) ?? []).filter((s) => PRONOM_GENRE.test(s));
+  const blocs = blocsChinois(source);
+  const chaines = blocs.length
+    ? blocs.flatMap((b) => b.match(/"[^"\n]*"/g) ?? [])
+    : chinoisParCle(source);
+  return chaines.filter((s) => PRONOM_GENRE.test(s));
 }
 
 describe("aucune traduction ne donne de genre à quelqu'un", () => {
-  const fichiers = readdirSync(DICOS).filter((f) => f.endsWith(".ts") && !f.includes(".test."));
-  const sources = fichiers.map((f) => [f, readFileSync(join(DICOS, f), "utf8")] as const);
+  const fichiers = fichiersLangue();
+  const sources = fichiers.map((f) => [f, readFileSync(join(RACINE_I18N, f), "utf8")] as const);
 
   it("le chinois n'emploie pas de pronom de la troisième personne", () => {
     const fautifs = sources.flatMap(([f, s]) => pronomsGenres(s).map((x) => `${f} : ${x}`));
@@ -71,10 +104,25 @@ describe("aucune traduction ne donne de genre à quelqu'un", () => {
     expect(chinois.length).toBeGreaterThan(15);
   });
 
+  it("les deux formes sont lues, et hors du sous-dossier aussi", () => {
+    /**
+     * Un témoin PAR FORME, sinon deux aveuglements passent au vert.
+     *
+     * Le compte de fichiers ne les distingue pas : les cinquante-neuf du
+     * sous-dossier suffisent à le satisfaire, donc il reste vert le jour où
+     * le lecteur cesse de voir les huit blocs à quatre espaces de
+     * `metadonnees.ts`, ou la forme par clé d'`apiErrors.ts`.
+     */
+    expect(sources.filter(([, s]) => blocsChinois(s).length >= 4).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(sources.filter(([, s]) => !blocsChinois(s).length && chinoisParCle(s).length > 20).length)
+      .toBeGreaterThanOrEqual(1);
+  });
+
   it("le motif distingue le pronom des composés qui le contiennent", () => {
     // L'état sain est ZÉRO trouvaille : les fichiers réels ne peuvent pas
     // distinguer un motif juste d'un motif aveugle.
-    const zh = (s: string) => `x = { zh: { a: ${s} }, ja: { a: "他の言語" } }`;
+    const zh = (s: string) => `x = {\n  zh: {\n    a: ${s},\n  },\n  ja: {\n    a: "他の言語",\n  },\n}`;
     for (const cas of ['"他的昵称"', '"抵消他的欠账"', '"她已经付清"'])
       expect(pronomsGenres(zh(cas))).toHaveLength(1);
     for (const cas of [
@@ -87,10 +135,13 @@ describe("aucune traduction ne donne de genre à quelqu'un", () => {
     // Et le 他 JAPONAIS, qui veut dire « autre », ne compte pas : c'est le
     // faux positif que le découpage par bloc existe pour écarter, et il
     // apparaît vraiment dans deux dictionnaires du dépôt.
-    expect(pronomsGenres('x = { zh: { a: "对方" }, ja: { a: "その他" } }')).toHaveLength(0);
-    // Le découpage doit vraiment couper : sans ça les deux contrôles
-    // au-dessus passeraient pour la mauvaise raison.
-    expect(blocChinois('x = { zh: { a: 1 }, ja: { a: 2 } }')).toContain("a: 1");
-    expect(blocChinois('x = { zh: { a: 1 }, ja: { a: 2 } }')).not.toContain("a: 2");
+    expect(pronomsGenres(zh('"对方"'))).toHaveLength(0);
+    // Le découpage doit vraiment couper : sans ça les contrôles au-dessus
+    // passeraient pour la mauvaise raison.
+    expect(blocsChinois(zh('"对方"')).join("")).toContain("对方");
+    expect(blocsChinois(zh('"对方"')).join("")).not.toContain("他の言語");
+    // Et la forme par clé se lit aussi, sans qu'un bloc japonais s'y glisse.
+    const parCle = '  "Erreur": {\n    en: "x", zh: "他的昵称", ja: "その他",\n  },\n';
+    expect(pronomsGenres(parCle)).toHaveLength(1);
   });
 });

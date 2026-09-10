@@ -1,5 +1,7 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
+
+import { RACINE_I18N, fichiersLangue } from "@/test/fichiersLangue";
 
 /**
  * « Activité » ne désigne plus une partie, et pas seulement en français.
@@ -50,19 +52,9 @@ import { join } from "node:path";
  * le français dit « partie ». Le défaut trouvé était d'une autre nature, et il
  * est nommé dans la limite plus bas.
  */
-const RACINE = join(process.cwd(), "src", "lib", "i18n");
+
 const LANGUES = ["fr", "en", "es", "de", "zh", "ja"] as const;
 
-/** Les `.ts` de `src/lib/i18n`, sous-dossiers compris, tests exclus. */
-function fichiersLangue(dossier: string): string[] {
-  const out: string[] = [];
-  for (const e of readdirSync(dossier, { withFileTypes: true })) {
-    const chemin = join(dossier, e.name);
-    if (e.isDirectory()) out.push(...fichiersLangue(chemin));
-    else if (e.name.endsWith(".ts") && !e.name.includes(".test.")) out.push(chemin);
-  }
-  return out;
-}
 
 /**
  * Les mots de l'ACTIVITÉ dans chaque langue.
@@ -153,9 +145,8 @@ describe("le mot « activité »", () => {
     const fautifs: string[] = [];
     let examinees = 0;
     let parCle = 0;
-    for (const chemin of fichiersLangue(RACINE)) {
-      const f = chemin.slice(RACINE.length + 1);
-      const source = readFileSync(chemin, "utf8");
+    for (const f of fichiersLangue()) {
+      const source = readFileSync(join(RACINE_I18N, f), "utf8");
       const b = blocs(source);
       if (!b.fr) {
         for (const [frTexte, l, valeur] of pairesParCle(source)) {

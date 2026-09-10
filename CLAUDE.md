@@ -1337,6 +1337,57 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le balayage des gardes de langue était écrit cinq fois, avec cinq angles morts
+
+Fin du crible ouvert par « Deux descriptions Google vouvoyaient ». Les trois
+gardes qui restaient — `genreDuLecteur`, `pronomGenre`, `pluriel` — balayaient
+`dictionaries/` SEUL, comme les deux corrigés la veille.
+
+**Le crible manuel a été refait AVANT d'élargir quoi que ce soit**, et il est
+**entièrement NÉGATIF** : les trois motifs, passés sur les quinze fichiers hors
+sous-dossier, ne trouvent rien. Ni participe accordé sur le lecteur, ni pronom
+genré, ni gabarit à seuil. C'est écrit ici pour qu'on ne le refasse pas — et
+c'est le critère qui décide de la forme : ce qu'on ferme est le fichier qu'on
+ajoutera demain, pas un défaut vivant.
+
+**Ce que le chantier a vraiment trouvé est la DUPLICATION.** Le balayage
+récursif était sur le point d'être écrit une quatrième fois, et les lecteurs de
+blocs français une troisième. Or ce sont précisément ces copies qui portaient
+les angles morts : celui de `registre` ne cherchait qu'un bloc `fr:` à deux
+espaces, celui de `pronomGenre` un seul `zh:` au premier `indexOf`, celui de
+`genreDuLecteur` coupait au premier `\n  en: {`. Trois lecteurs, trois façons
+différentes de rater `metadonnees.ts`.
+
+`src/test/fichiersLangue.ts` porte le balayage et les quatre lecteurs, et les
+**cinq** gardes le lisent. C'est le motif que ce journal reproche partout :
+cinq exemplaires d'une même règle finissent avec quatre versions en retard, et
+la version en retard est celle qu'on relit le moins.
+
+**Un double comptage attrapé par un cas fabriqué, et il valait le détour.**
+Ma première version de `blocsChinois` bornait le bloc de deux façons — le bloc
+de langue suivant, et la fermeture au même niveau — pour couvrir le cas du
+dernier bloc d'un fichier. Les deux motifs capturaient alors le MÊME bloc, et
+un pronom y était compté deux fois. Le cas fabriqué l'a dit tout de suite
+(`Expected length: 1, Received: 2`), là où les fichiers réels ne l'auraient
+jamais montré : leur compte de fautifs est zéro, et deux fois zéro fait zéro.
+La borne est la fermeture au même niveau, et elle seule.
+
+**Le témoin PAR FORME est repris tel quel, et il est nécessaire aux trois.**
+Le compte de fichiers ne distingue rien : les cinquante-neuf du sous-dossier
+suffisent à le satisfaire, donc il reste vert le jour où l'une des deux formes
+devient invisible. Chaque garde exige donc, séparément, au moins un fichier à
+quatre blocs français et au moins un fichier sans bloc à plus de vingt clés.
+
+**Et `codeMort.test.ts` a mordu**, ce qui est son travail : un module de
+`src/test/` que seuls des tests importent doit être déclaré, avec sa raison, à
+côté de `test/api.ts` et `test/sansCommentaires.ts`.
+
+Six sabotages sur `pluriel`, six échecs. Six sur `genreDuLecteur`, six échecs.
+Cinq sur `pronomGenre`, cinq échecs. Et deux de plus sur `registre`, après le
+remaniement, pour vérifier qu'il mord toujours : le vouvoiement remis dans
+`metadonnees.ts`, et le lecteur multi-blocs ramené à deux espaces. Les deux
+tombent.
+
 ### V579 est partie ROUGE, et le test ne tenait que par la vitesse de la machine
 
 Lue en appliquant la règle de la fusion. **10 min 48, donc les parcours ont
