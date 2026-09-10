@@ -1344,6 +1344,79 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le rituel d'inscription recopié douze fois, et le helper que personne n'employait
+
+Trouvé par un recensement mécanique lancé juste après V582 : les fragments de
+trois lignes partagés par trois fichiers ou plus de `e2e/`. C'est la méthode
+que ce journal préfère partout — un défaut trouvé dans une porte se cherche
+chez ses voisines — et elle a rendu **trente-deux fragments**, dont un qui
+n'est pas du bruit.
+
+**Sept lignes, DOUZE copies, dix fichiers** :
+
+```ts
+await purgerTentatives();
+await page.goto("/beta");
+await remplirInscription(page, { pseudo, email });
+await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
+const bloc = page.locator(".mono-num").first();
+await bloc.waitFor({ timeout: 20_000 });
+const code = (await bloc.innerText()).trim();
+```
+
+**V582 n'en avait partagé que la SAISIE**, parce que c'est là que le défaut
+vivait. Le reste du rituel est resté recopié, et c'est exactement la forme que
+prend ce motif ici : pas une copie qu'on remarque, une correction qui n'en
+répare qu'une part.
+
+**Le témoin de ce que ça coûte est `boutonInscription`.** Il est exporté depuis
+des semaines et **employé par UN fichier sur onze**, pendant que les dix autres
+réécrivent son motif à la main. Un helper qui existe et qu'on n'emploie pas est
+exactement ce qu'était la reprise avant V581 — et V581 a montré la facture :
+dix fichiers sur onze sans la correction, et c'est l'un des dix qui est tombé
+en intégration continue.
+
+**Les douze copies n'ont PAS divergé, et c'est écrit plutôt que tu** : treize
+motifs de bouton identiques, seize délais identiques. C'est le cas normal, et
+c'est précisément ce qui rend une duplication chère — elle ne se remarque
+jamais tant qu'elle n'a pas divergé. Ce chantier est donc de la PRÉVENTION, et
+son précédent a une entrée de journal d'âge.
+
+**`.mono-num` ne peut pas servir de discriminant**, ce qu'il fallait vérifier
+avant de poser le garde : la récupération de compte le lit pour son code neuf,
+la fenêtre de séance pour son chrono. Le motif du BOUTON, lui, ne désigne que
+ce formulaire-là.
+
+**Une exception, et elle est STRUCTURELLE.** `montre.spec.ts` doit déplier le
+bloc facultatif de `/beta` ENTRE la saisie et l'envoi : il ne peut pas passer
+par un appel unique. Il emploie les deux pièces — `remplirInscription` et
+`boutonInscription` — ce qui est la bonne façon de dire une différence, à
+l'endroit où elle existe, et c'est lui qui prouve que le helper n'est pas mort.
+Son `inscrire` local est renommé : deux fonctions du même nom pour deux choses
+différentes est le malentendu que ce journal reproche partout.
+
+**Ce que le compilateur a fait tout seul** : les dix imports de
+`purgerTentatives` devenus inutiles ont été nommés un par un par
+`noUnusedLocals`. C'est ce qu'un remaniement de ce genre a de mieux — la liste
+des endroits à reprendre se demande, elle ne se cherche pas.
+
+**Ce qui reste ouvert, mesuré et laissé.** `premier-ecran.spec.ts` ouvre son
+compte, se connecte et range son état **sans sonder `/api/user`** — c'est le
+mode d'échec que `ouvrirCompte` documente, « un état sans cookie, et tous les
+tests qui s'en servent échouent bien plus loin, sur *élément introuvable* ».
+La sonde reste dans `ouvrirCompte` et non dans `inscrire`, pour une raison de
+portée : `inscrire` s'arrête à l'inscription et n'ouvre aucune session — la
+preuve en est `montre.spec.ts`, qui ne se connecte jamais. Le trou restant est
+étroit, `seConnecter` levant déjà avec un relevé complet quand l'adresse ne
+change pas ; il ne couvre que le cas où elle change et où le cookie ne tient
+pas.
+
+Six sabotages, six échecs : le motif du bouton remis dans un parcours,
+l'exception de `montre` supprimée, le motif `BOUTON` rendu aveugle, le
+recensement des appels vidé, le vidage retiré de `reposer`, et la saisie
+recopiée dans un parcours. Les deux premiers font tomber DEUX contrôles chacun,
+ce qui est le signe que les témoins ne se recouvrent pas.
+
 ### V581 est partie ROUGE, et la reprise qui devait l'empêcher ne réparait rien
 
 Lue en appliquant la règle de la fusion — la CI de la version PRÉCÉDENTE.

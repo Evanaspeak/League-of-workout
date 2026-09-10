@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { remplirInscription, seConnecter } from "./compte";
-import { purgerTentatives } from "./limiteur";
+import { inscrire, seConnecter } from "./compte";
 import { sansLangue } from "./chemin";
 
 /**
@@ -23,13 +22,7 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
-  await purgerTentatives();
-  await page.goto("/beta");
-  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
-  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
-  const bloc = page.locator(".mono-num").first();
-  await bloc.waitFor({ timeout: 20_000 });
-  const code = (await bloc.innerText()).trim();
+  const code = await inscrire(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
 
   await seConnecter(page, COMPTE.pseudo, code);
 
@@ -108,14 +101,8 @@ test("un compte sans partie ne précharge pas d'image", async ({ browser }) => {
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
-  await purgerTentatives();
   const neuf = `Vide${Date.now().toString(36)}`;
-  await page.goto("/beta");
-  await remplirInscription(page, { pseudo: neuf, email: `${neuf.toLowerCase()}@example.test` });
-  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
-  const bloc = page.locator(".mono-num").first();
-  await bloc.waitFor({ timeout: 20_000 });
-  const code = (await bloc.innerText()).trim();
+  const code = await inscrire(page, { pseudo: neuf, email: `${neuf.toLowerCase()}@example.test` });
   await seConnecter(page, neuf, code);
 
   const html = await (await ctx.request.get("/bilan")).text();

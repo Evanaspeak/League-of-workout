@@ -1,6 +1,5 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { remplirInscription, seConnecter } from "./compte";
-import { purgerTentatives } from "./limiteur";
+import { inscrire, seConnecter } from "./compte";
 import { passerIntro } from "./intro";
 
 /**
@@ -103,15 +102,7 @@ test.describe(`parcours complet · ${ecran.nom}`, () => {
     const page = await ouvrir(browser, ecran.contexte);
     // C'est le chemin réellement ouvert pour un nouveau venu : le formulaire
     // e-mail de /login est réservé aux invités, et il le dit maintenant.
-    await purgerTentatives();
-    await page.goto("/beta");
-    await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
-    await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
-
-    // Le code s'affiche une fois, et une seule : c'est le seul moyen d'entrer.
-    const bloc = page.locator(".mono-num").first();
-    await bloc.waitFor({ timeout: 20_000 });
-    const code = (await bloc.innerText()).trim();
+    const code = await inscrire(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
     expect(code.length).toBeGreaterThan(3);
 
     await seConnecter(page, COMPTE.pseudo, code);

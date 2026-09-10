@@ -180,21 +180,7 @@ export async function ouvrirCompte(
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
-  await purgerTentatives();
-
-  /**
-   * Le code de parrainage passe par l'ADRESSE, comme pour quelqu'un qui suit
-   * un lien reçu. Le poser dans le corps de la requête éprouverait la route et
-   * non le chemin : c'est la traversée du formulaire qui peut se perdre.
-   */
-  await page.goto(options.parrain ? `/beta?p=${options.parrain}` : "/beta");
-  const envoyer = boutonInscription(page);
-  await remplirInscription(page, compte);
-  await envoyer.click();
-
-  const bloc = page.locator(".mono-num").first();
-  await bloc.waitFor({ timeout: 20_000 });
-  const code = (await bloc.innerText()).trim();
+  const code = await inscrire(page, compte, { parrain: options.parrain });
 
   await seConnecter(page, compte.pseudo, code);
 
@@ -229,6 +215,52 @@ export async function ouvrirCompte(
 
 export function boutonInscription(page: Page) {
   return page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first();
+}
+
+/**
+ * Le rituel d'inscription entier, en un appel — et c'est la suite de V581.
+ *
+ * V582 a partagé la SAISIE parce que c'est là que le défaut vivait : dix
+ * fichiers sur onze recopiaient le `fill` sans la reprise, et le onzième était
+ * celui qui avait la correction. Ce qu'elle n'a pas partagé, c'est le reste du
+ * rituel — la purge du limiteur, l'ouverture de `/beta`, le clic d'envoi, la
+ * lecture du code — **sept lignes, recopiées DOUZE fois dans dix fichiers.**
+ *
+ * Les douze copies sont aujourd'hui identiques au caractère près : treize
+ * motifs de bouton et seize délais, tous les mêmes. C'est le cas normal, et
+ * c'est précisément ce qui rend une duplication chère — elle ne se remarque
+ * jamais tant qu'elle n'a pas divergé, et V581 vient de montrer ce que la
+ * divergence coûte.
+ *
+ * Le TÉMOIN de ce chantier est `boutonInscription` : il était exporté depuis
+ * des semaines et employé par UN fichier sur onze, pendant que les dix autres
+ * réécrivaient son motif à la main. Un helper qui existe et qu'on n'emploie
+ * pas est exactement ce qu'était la reprise avant V581.
+ *
+ * Ce qui reste légitimement à part est `montre.spec.ts` : il doit déplier le
+ * bloc facultatif ENTRE la saisie et l'envoi, donc il ne peut pas passer par
+ * un appel unique. Il emploie `remplirInscription` et `boutonInscription`, ce
+ * qui est la bonne façon de dire la différence — à l'endroit où elle existe.
+ */
+export async function inscrire(
+  page: Page,
+  compte: { pseudo: string; email: string },
+  options: { parrain?: string } = {},
+): Promise<string> {
+  await purgerTentatives();
+  /**
+   * Le code de parrainage passe par l'ADRESSE, comme pour quelqu'un qui suit
+   * un lien reçu. Le poser dans le corps de la requête éprouverait la route et
+   * non le chemin : c'est la traversée du formulaire qui peut se perdre.
+   */
+  await page.goto(options.parrain ? `/beta?p=${options.parrain}` : "/beta");
+  await remplirInscription(page, compte);
+  await boutonInscription(page).click();
+
+  // Le code s'affiche une fois, et une seule : c'est le seul moyen d'entrer.
+  const bloc = page.locator(".mono-num").first();
+  await bloc.waitFor({ timeout: 20_000 });
+  return (await bloc.innerText()).trim();
 }
 
 export async function remplirInscription(

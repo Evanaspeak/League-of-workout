@@ -24,7 +24,7 @@ import { boutonInscription, remplirInscription } from "./compte";
  * plus.
  */
 
-async function inscrire(page: Page, montre: "oui" | "non" | null) {
+async function inscrireAvecMontre(page: Page, montre: "oui" | "non" | null) {
   const marque = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
   const compte = { pseudo: `mtr${marque}`, email: `mtr-${marque}@example.test` };
 
@@ -59,12 +59,12 @@ async function montreEnBase(pseudo: string) {
 test.describe.configure({ mode: "serial" });
 
 test("« oui » traverse le bloc replié et atteint la base", async ({ page }) => {
-  const { pseudo } = await inscrire(page, "oui");
+  const { pseudo } = await inscrireAvecMontre(page, "oui");
   expect(await montreEnBase(pseudo)).toBe(true);
 });
 
 test("« non » n'est pas la même chose que rien", async ({ page }) => {
-  const { pseudo } = await inscrire(page, "non");
+  const { pseudo } = await inscrireAvecMontre(page, "non");
   expect(await montreEnBase(pseudo)).toBe(false);
 });
 
@@ -73,6 +73,6 @@ test("ne pas répondre laisse la colonne NULLE, jamais fausse", async ({ page })
   // un défaut `false` au schéma, rendrait « n'en porte pas » pour quelqu'un à
   // qui on n'a rien demandé — et le compte au panneau d'administration
   // fausserait la proportion dans le sens qu'on aurait choisi.
-  const { pseudo } = await inscrire(page, null);
+  const { pseudo } = await inscrireAvecMontre(page, null);
   expect(await montreEnBase(pseudo)).toBeNull();
 });

@@ -1,7 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import { remplirInscription, seConnecter } from "./compte";
+import { inscrire, seConnecter } from "./compte";
 import { Client } from "pg";
-import { purgerTentatives } from "./limiteur";
 import { viderLesFenetres } from "./intro";
 
 /**
@@ -45,14 +44,7 @@ test("changer un ratio ne réécrit pas ce que les parties passées ont coûté"
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
 
-  await purgerTentatives();
-
-  await page.goto("/beta");
-  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
-  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
-  const bloc = page.locator(".mono-num").first();
-  await bloc.waitFor({ timeout: 20_000 });
-  const code = (await bloc.innerText()).trim();
+  const code = await inscrire(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
 
   await seConnecter(page, COMPTE.pseudo, code);
   const uid = (await (await page.request.get("/api/user")).json()).id as string;
@@ -127,13 +119,7 @@ test("la pastille de dette et son décompte annoncent le même nombre", async ({
   const page = await ctx.newPage();
   const compte = { pseudo: `Pas${Date.now().toString(36)}`, email: `pas-${Date.now().toString(36)}@example.test` };
 
-  await purgerTentatives();
-  await page.goto("/beta");
-  await remplirInscription(page, { pseudo: compte.pseudo, email: compte.email });
-  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
-  const bloc = page.locator(".mono-num").first();
-  await bloc.waitFor({ timeout: 20_000 });
-  const code = (await bloc.innerText()).trim();
+  const code = await inscrire(page, { pseudo: compte.pseudo, email: compte.email });
 
   await seConnecter(page, compte.pseudo, code);
   const uid = (await (await page.request.get("/api/user")).json()).id as string;
