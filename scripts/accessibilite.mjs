@@ -1,12 +1,24 @@
 /**
  * Mesure d'accessibilité sur les pages réelles.
  *
- * Trois choses seulement, mais mesurées et non devinées : le contraste de
- * chaque texte visible, les commandes sans nom accessible, et les images sans
- * description. Ce sont celles qui décident si quelqu'un peut se servir de
- * l'application, et ce sont celles qu'un humain ne peut pas vérifier à l'œil.
+ * Ce qu'il mesure, et il ne le devine pas : le contraste de chaque texte
+ * visible, les commandes et les champs sans nom accessible, les images sans
+ * description, les pages qu'une fenêtre recouvre, et le contraste des
+ * FRONTIÈRES de commande (critère 1.4.11, que le contrôle du texte ne peut
+ * pas voir). Ce sont celles qui décident si quelqu'un peut se servir de
+ * l'application, et celles qu'un humain ne peut pas vérifier à l'œil.
  *
- * Usage : node scripts/accessibilite.mjs [adresse] [langue]
+ * **L'en-tête annonçait « trois choses seulement » et un usage qui n'existe
+ * plus**, et le second coûtait le plus cher : « [adresse] [langue] » date
+ * d'avant le 4 septembre, où la langue est passée au drapeau commun. Suivi à
+ * la lettre, il fait tourner les SIX langues en croyant en faire une — sans
+ * rien dire, puisqu'un second positionnel est simplement ignoré. C'est le
+ * défaut que ce fichier vient de corriger sur le SVG, dans son propre
+ * commentaire.
+ *
+ *   node scripts/accessibilite.mjs                    → les six langues
+ *   node scripts/accessibilite.mjs --langue=de        → l'allemand seul
+ *   node scripts/accessibilite.mjs http://... --langue=fr
  */
 import { readFileSync, existsSync } from "node:fs";
 import { chromium } from "playwright";
@@ -252,6 +264,37 @@ const mesure = () => {
     return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
   };
 
+  /**
+   * La couleur du texte — et un `<text>` SVG ne se peint PAS par `color`.
+   *
+   * Le balayage `body *` retenait déjà les `<text>` de recharts : ils portent
+   * du texte propre, ils ont une boîte, ils passaient tous les filtres. Ce
+   * qu'on lisait dessus était `style.color`, c'est-à-dire la couleur HÉRITÉE
+   * du conteneur — `--bone` sur un panneau — quelle que soit leur vraie
+   * couleur, qui vit dans `fill`.
+   *
+   * Mesuré sur une page fabriquée, deux `<text>` à 3,7:1 et 1,8:1 :
+   *
+   *     #a  color=rgb(236, 239, 244)   fill=rgb(90, 96, 104)
+   *     #b  color=rgb(236, 239, 244)   fill=rgb(58, 62, 68)
+   *
+   * L'audit calculait donc 15:1 sur les deux. Ce n'est pas « il ne voit pas
+   * le SVG » — c'est pire : **il le juge, et il conclut que tout va bien**.
+   * Sept graphiques du tableau de bord et les deux courbes des réglages sont
+   * dans ce cas, graduations d'axe comprises, depuis que l'audit existe.
+   *
+   * `fill-opacity` est une propriété distincte d'`opacity` et se multiplie à
+   * l'alpha de la couleur : la sauter ferait juger un texte à demi transparent
+   * comme s'il était plein.
+   */
+  const teinteDe = (el, style) => {
+    if (!(el.ownerSVGElement || el.tagName === "svg")) return lire(style.color);
+    const remplissage = lire(style.fill);
+    if (!remplissage) return null;
+    const fo = parseFloat(style.fillOpacity);
+    return Number.isFinite(fo) ? { ...remplissage, a: remplissage.a * fo } : remplissage;
+  };
+
   const contrastes = [];
   const sansNom = [];
   const sansAlt = [];
@@ -307,7 +350,7 @@ const mesure = () => {
       .trim();
     if (!propre) continue;
 
-    const avant = lire(style.color);
+    const avant = teinteDe(el, style);
     if (!avant || avant.a < 0.5) continue;
     const taille = parseFloat(style.fontSize);
     const gras = parseInt(style.fontWeight, 10) >= 700;
@@ -320,7 +363,10 @@ const mesure = () => {
         ratio: Math.round(r * 100) / 100,
         seuil,
         taille: Math.round(taille * 10) / 10,
-        couleur: style.color,
+        // La couleur RAPPORTÉE est celle qu'on a mesurée, pas `style.color` :
+        // sur un `<text>` SVG les deux diffèrent, et nommer la seconde envoie
+        // corriger un jeton qui n'y est pour rien.
+        couleur: `rgb(${[avant.r, avant.g, avant.b].map(Math.round).join(", ")})`,
       });
     }
   }
