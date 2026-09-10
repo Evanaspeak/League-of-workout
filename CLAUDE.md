@@ -1462,11 +1462,34 @@ déploiement COURANT — avec l'ancien texte, pendant que `/fr` sert le témoin 
 V578 (« 16 jeux » ×10). Le déploiement courant est donc V578.
 
 Ce que ça n'est pas : un cache. Un `PRERENDER` vient du déploiement, pas d'une
-régénération gardée. Ce que ça pourrait être et qui ne se vérifie pas d'ici :
-le quota de déploiements du plan Hobby, atteint après dix-sept versions dans
-la journée — Vercel déploie TOUTE branche poussée, donc chaque commit de
-branche en consomme un. **V580 est le témoin de cette hypothèse** : si elle se
-déploie ce matin, le pipeline marche et c'est V579 seule qui a été perdue.
+régénération gardée.
+
+**Et le témoin a parlé vingt minutes plus tard.** V580 fusionnée à 07 h 06
+min 41 ; à 07 h 16 min 36, `/fr/calculateur` et `/de/recuperation` servent le
+texte neuf, toutes deux en `PRERENDER`. Le déploiement a donc repris à la
+poussée SUIVANTE, et il a emporté les deux versions d'un coup — une
+construction de `main` déploie l'état de `main`.
+
+**Le retard aura duré au moins huit heures cinquante-cinq**, et il s'est levé
+en moins de dix minutes une fois qu'une nouvelle version est passée. C'est le
+troisième épisode recensé ici, après les 2 h 40 du 4 septembre et les 66 à 84
+minutes du 5.
+
+**La lecture la plus simple est que la construction Vercel de V579 a
+ÉCHOUÉ**, et non qu'une file a traîné : une attente se résorbe seule, et
+celle-ci a attendu la poussée suivante. Ce qui l'écarte comme cause est écrit
+plutôt que supposé — la CI GitHub était rouge sur un PARCOURS, que Vercel ne
+lance pas, et `next build` sur le même arbre rend zéro en local. La cause
+exacte demande le tableau de bord Vercel, qui n'est pas lisible d'ici.
+
+**L'hypothèse que j'avais écrite ici — le quota du plan Hobby — n'est pas
+retenue**, et elle est laissée en toutes lettres plutôt qu'effacée : elle
+prédisait une reprise à l'heure du renouvellement, pas à la poussée suivante.
+C'est le témoin qui a tranché, pas le raisonnement.
+
+**Ce que l'épisode ajoute à la procédure** : une version qui n'a pas de témoin
+public ne dit rien de son propre déploiement, mais elle sert de témoin à la
+PRÉCÉDENTE — et c'est le seul geste qui ait fait repartir celui-ci.
 
 ### Deux descriptions Google vouvoyaient sous des écrans qui tutoient
 
