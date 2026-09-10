@@ -783,6 +783,63 @@ garde refuse leur retour.
 
 ---
 
+### 25 · `--faint` passe le seuil sur un fond de page, et pas sur un fond plus clair
+
+`--faint: rgba(236, 239, 244, 0.50)` est le gris le plus pâle de la palette, et
+il est **lu 230 fois** — c'est le jeton du texte secondaire, des lignes d'aide,
+des libellés d'unité.
+
+Mesuré, une fois l'alpha réellement composé (V586) :
+
+| fond | rapport |
+|---|---|
+| la page (`--ink`) | 4,78 |
+| un panneau (`--steel` 6 %) | 4,72 |
+| une carte d'exercice | **4,50** |
+| l'icône de champion (`--steel` 10 %) | **4,44** |
+
+Le jeton n'est pas fautif : il passe le seuil de 4,5 partout où le fond est
+celui de la page ou d'un panneau. **Il le rate dès que le fond s'éclaircit d'un
+cheveu**, et c'est arrivé deux fois sur les vingt et une pages auditées.
+
+Les deux emplois fautifs sont corrigés un par un — la lettre de repli du
+champion passe à `--steel`, la description d'un exercice à `--muted` — donc il
+n'y a **rien de cassé aujourd'hui**. Ce qui reste est la question de fond : un
+jeton dont la marge est de vingt-deux centièmes retombera sous le seuil au
+prochain fond légèrement plus clair, et personne ne le verra avant la campagne
+suivante.
+
+**Ce que coûterait de le relever**, mesuré sur les trois fonds :
+
+| alpha | page | panneau | icône |
+|---|---|---|---|
+| 0,50 (aujourd'hui) | 4,78 | 4,72 | 4,63 |
+| **0,55** | 5,56 | 5,45 | 5,32 |
+| 0,60 (c'est-à-dire `--muted`) | 6,43 | 6,26 | 6,07 |
+
+À 0,55, la marge passe de vingt-deux centièmes à près d'un point sur tous les
+fonds, et `--faint` reste distinct de `--muted`. À 0,60 les deux jetons se
+confondent, ce qui n'est pas une correction mais une fusion.
+
+**Ce que ça touche** : 230 emplois, c'est-à-dire tout le texte secondaire du
+produit d'un coup. La réponse 251 dit que la marque visuelle est validée, donc
+un jeton relevé sur tout le chrome est une décision qui t'appartient — c'est le
+même arbitrage que la question 13 sur les frontières de commande.
+
+**Trois options :**
+
+1. **Ne rien faire.** Rien n'est cassé, l'audit corrigé attrape désormais chaque
+   emploi qui tombe sous le seuil, et on corrige au cas par cas. Coût : une
+   campagne d'accessibilité par série de versions, ce qui se fait déjà.
+2. **Relever `--faint` à 0,55.** Une ligne, et tous les emplois y gagnent. Le
+   texte secondaire devient légèrement plus clair partout ; c'est visible si on
+   compare deux captures côte à côte, pas en regardant l'écran.
+3. **Un second jeton pour les fonds clairs** — `--faint-strong` à 0,58, employé
+   sur les cartes et les icônes. Corrige exactement les cas qui posent problème
+   et n'en crée pas d'autre, au prix d'un jeton de plus à choisir correctement.
+
+---
+
 ## Ce qui demande une machine qu'on n'a pas
 
 ### 7 · La branche POST du canal de connexion local

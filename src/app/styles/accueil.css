@@ -373,7 +373,7 @@
   font-size: 2rem; font-weight: 700; color: var(--ember); line-height: 1;
 }
 .vign-total-val i, .vign-paie-val i {
-  font-style: normal; font-size: 0.7rem; font-weight: 500; margin-left: 6px; opacity: 0.75;
+  font-style: normal; font-size: 0.7rem; font-weight: 500; margin-left: 6px;
 }
 .vign-paie-titre {
   font-family: var(--font-heading, 'Chakra Petch', sans-serif);

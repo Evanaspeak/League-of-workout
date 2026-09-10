@@ -789,7 +789,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                               title={t.detailToggleTitle}
                               aria-label={t.detailToggleTitle}
                               aria-expanded={depliee}
-                              style={{ color: depliee ? "var(--amber)" : "color-mix(in srgb, var(--steel) 60%, transparent)" }}
+                              style={{ color: depliee ? "var(--amber)" : "var(--steel)" }}
                             >{depliee ? "▲" : "▼"}</button>
                             <button
                               onClick={() => handleDelete(g.id)}
@@ -1028,7 +1028,7 @@ export default function HistoryPage({ depart }: { depart: { aucuneActivite: bool
                                       aria-label={t.detailToggleTitle}
                                   aria-expanded={depliee}
                                   style={{
-                                    color: depliee ? "var(--amber)" : "color-mix(in srgb, var(--steel) 50%, transparent)",
+                                    color: depliee ? "var(--amber)" : "var(--steel)",
                                     background: "none", border: "none", cursor: "pointer",
                                     fontSize: "0.7rem", padding: "2px 6px", lineHeight: 1,
                                   }}

@@ -143,7 +143,7 @@ export function Paliers() {
           </span>
           <span
             className="mono-num"
-            style={{ fontSize: "0.9rem", color: "var(--loss)", opacity: 0.8 }}
+            style={{ fontSize: "0.9rem", color: "var(--loss)" }}
           >
             {`${nombre.format(etat.souffrance.points)} ${tt.points}`}
           </span>

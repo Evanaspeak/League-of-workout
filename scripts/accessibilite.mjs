@@ -295,6 +295,42 @@ const mesure = () => {
     return Number.isFinite(fo) ? { ...remplissage, a: remplissage.a * fo } : remplissage;
   };
 
+  /**
+   * L'opacité HÉRITÉE, que `color` ne porte pas.
+   *
+   * `opacity` posée sur un conteneur fait pâlir tout ce qu'il contient, texte
+   * compris, et elle se multiplie de proche en proche. Le style calculé de la
+   * feuille, lui, rend la couleur PLEINE : un `--loss` à 5,82:1 sous un
+   * `opacity: 0.8` se lit 4,11:1 à l'écran, et l'audit annonçait 5,82.
+   *
+   * Mesuré sur le produit, trois cas stables — « · optionnel » de `/beta` à
+   * 3,37, le « pts » de l'accueil à 3,68, la ligne de souffrance du rail à
+   * 4,11 — tous sous le seuil, tous annoncés conformes.
+   */
+  const opaciteHeritee = (el) => {
+    let cumul = 1;
+    for (let n = el; n && n !== document.documentElement; n = n.parentElement) {
+      const o = parseFloat(getComputedStyle(n).opacity);
+      if (Number.isFinite(o)) cumul *= o;
+    }
+    return cumul;
+  };
+
+  /**
+   * Ce qui est INACTIF sort du champ, et c'est la norme qui le dit.
+   *
+   * WCAG 1.4.3 exempte « le texte d'un composant d'interface inactif ». Sans
+   * cette exemption, `.lol-btn:disabled` — 0,35 d'opacité, partout dans le
+   * produit — remonterait à chaque page, et un garde qui crie sur ce qui va
+   * bien finit par ne plus se lire.
+   */
+  const estInactif = (el) =>
+    // `:read-only` n'a rien à faire ici : en CSS il désigne tout ce qui n'est
+    // pas éditable, donc chaque `div` de la page. L'y mettre exempterait le
+    // produit entier — la vérification a rendu ce piège avant la première
+    // exécution.
+    !!el.closest("[disabled], [aria-disabled='true'], [readonly], :disabled");
+
   const contrastes = [];
   const sansNom = [];
   const sansAlt = [];
@@ -350,12 +386,33 @@ const mesure = () => {
       .trim();
     if (!propre) continue;
 
-    const avant = teinteDe(el, style);
-    if (!avant || avant.a < 0.5) continue;
+    const brut = teinteDe(el, style);
+    if (!brut || estInactif(el)) continue;
+    /**
+     * La teinte se COMPOSE sur le fond, elle ne se juge pas en plein.
+     *
+     * L'ancienne version écartait tout ce qui était sous une demi-opacité et
+     * jugeait le reste à pleine force. C'était une approximation dans les deux
+     * sens : un texte à 0,6 était surévalué, et un texte à 0,4 — c'est-à-dire
+     * le pire cas — n'était pas mesuré du tout. Composer donne la couleur
+     * RÉELLEMENT peinte, et le seuil fait le tri tout seul.
+     */
+    const alpha = brut.a * opaciteHeritee(el);
+    // Invisible : rien à juger. Le contrôle du haut ne regarde que l'élément
+    // lui-même ; un ancêtre à `opacity: 0` — un bloc de révélation encore
+    // replié — passait au travers.
+    if (alpha <= 0) continue;
+    const fond = fondDe(el);
+    const avant = {
+      r: brut.r * alpha + fond.r * (1 - alpha),
+      g: brut.g * alpha + fond.g * (1 - alpha),
+      b: brut.b * alpha + fond.b * (1 - alpha),
+      a: 1,
+    };
     const taille = parseFloat(style.fontSize);
     const gras = parseInt(style.fontWeight, 10) >= 700;
     const grand = taille >= 24 || (taille >= 18.66 && gras);
-    const r = ratio(avant, fondDe(el));
+    const r = ratio(avant, fond);
     const seuil = grand ? 3 : 4.5;
     if (r < seuil) {
       contrastes.push({
@@ -416,7 +473,17 @@ if (!JETON) console.log("(pas de jeton : seules les pages publiques sont mesuré
 
 for (const langue of aTester) {
 for (const chemin of aVisiter) {
-  const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, locale: "fr-FR" });
+  /**
+   * `reducedMotion` sur la passe principale, et ce n'est pas une commodité.
+   *
+   * Une fois l'opacité héritée prise en compte, un fondu en cours devient un
+   * constat : la boucle de l'accueil traverse 0,27 et 0,73 à chaque tour, donc
+   * elle rendrait une vingtaine de faux constats par exécution. Ce qu'on veut
+   * juger est l'état POSÉ, et c'est exactement ce que ce mode donne — les
+   * animations de ce produit honorent `prefers-reduced-motion`, la passe des
+   * durées le vérifie de son côté.
+   */
+  const ctx = await navigateur.newContext({ viewport: { width: 1280, height: 900 }, locale: "fr-FR", reducedMotion: "reduce" });
   if (JETON) {
     await ctx.addCookies([{
       name: "authjs.session-token", value: JETON,

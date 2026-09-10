@@ -124,7 +124,7 @@ export function ExerciceSelector({
                 {noms[id]}
               </span>
               {!compact && (
-                <span style={{ display: "block", fontSize: "0.76rem", color: "var(--faint)", lineHeight: 1.5 }}>
+                <span style={{ display: "block", fontSize: "0.76rem", color: "var(--muted)", lineHeight: 1.5 }}>
                   {descs[id]}
                 </span>
               )}

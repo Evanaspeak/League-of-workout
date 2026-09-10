@@ -264,12 +264,84 @@ describe("les outils de mesure lisent leurs arguments de la même façon", () =>
     // était plein.
     expect(bloc![0]).toMatch(/fillOpacity/);
     // Et elle est BRANCHÉE : c'est elle qui donne la couleur d'avant-plan.
-    expect(texte).toMatch(/const avant = teinteDe\(el, style\);/);
+    expect(texte).toMatch(/const brut = teinteDe\(el, style\);/);
     // Le contrôle de contraste ne lit plus `style.color` de son côté.
-    expect(texte).not.toMatch(/const avant = lire\(style\.color\)/);
+    expect(texte).not.toMatch(/const \w+ = lire\(style\.color\);\s*\n\s*if \(!/);
     // La couleur RAPPORTÉE est celle qu'on a mesurée : nommer `style.color`
     // sur un `<text>` enverrait corriger un jeton qui n'y est pour rien.
     expect(texte).not.toMatch(/couleur:\s*style\.color/);
+  });
+
+  it("accessibilite.mjs compose l'opacité HÉRITÉE avant de juger un contraste", () => {
+    const texte = sansCommentaires(readFileSync(join(SCRIPTS, "accessibilite.mjs"), "utf8"));
+
+    /**
+     * `opacity` posée sur un conteneur fait pâlir tout ce qu'il contient, et
+     * le style calculé du texte rend la couleur PLEINE. L'audit annonçait donc
+     * 5,82:1 sur une ligne qui se lit 4,11 à l'écran — pas « il ne voit pas »,
+     * mais « il juge, et il conclut que tout va bien ».
+     *
+     * Le garde porte sur le BRANCHEMENT : une fonction parfaitement écrite et
+     * jamais appelée laisserait exactement le défaut d'origine.
+     */
+    const cumul = /const opaciteHeritee = \(el\) => \{[\s\S]*?\n  \};/.exec(texte);
+    expect(cumul).not.toBeNull();
+    /**
+     * Elle remonte les ANCÊTRES et MULTIPLIE. La CONDITION d'arrêt est
+     * épinglée, pas seulement le mot `parentElement` : le sabotage l'a exigé.
+     * Ramener la boucle à `n === el` — donc à l'élément seul, qui est le
+     * défaut d'origine — laisse `n = n.parentElement` en place dans
+     * l'incrément, et un garde qui cherche le mot passe alors au vert.
+     *
+     * Le prix est qu'un remaniement de la boucle fait tomber le contrôle.
+     * C'est le bon sens de l'échec : il dit « viens me remettre à jour » au
+     * lieu de se taire le jour où la remontée cesse.
+     */
+    expect(cumul![0]).toMatch(
+      /for \(let n = el; n && n !== document\.documentElement; n = n\.parentElement\)/,
+    );
+    expect(cumul![0]).toMatch(/cumul \*= o/);
+    expect(cumul![0]).toMatch(/\.opacity/);
+
+    // Elle est branchée sur l'alpha de la teinte, et la teinte est COMPOSÉE
+    // sur le fond avant que le rapport ne soit calculé.
+    expect(texte).toMatch(/const alpha = brut\.a \* opaciteHeritee\(el\);/);
+    expect(texte).toMatch(/const avant = \{[\s\S]*?brut\.r \* alpha \+ fond\.r \* \(1 - alpha\)/);
+    expect(texte).toMatch(/const r = ratio\(avant, fond\);/);
+
+    /**
+     * L'ancien plancher est parti, et c'est la moitié qu'on oublierait.
+     *
+     * `avant.a < 0.5` écartait le PIRE cas — un texte à quarante pour cent
+     * n'était pas mesuré du tout — et jugeait le reste à pleine force. Le
+     * remettre rendrait la composition inopérante sur la moitié basse.
+     */
+    expect(texte).not.toMatch(/avant\.a < 0\.5/);
+    // Reste le seul cas sans objet : ce qui est parfaitement invisible.
+    expect(texte).toMatch(/if \(alpha <= 0\) continue;/);
+
+    /**
+     * Ce qui est INACTIF sort du champ — WCAG 1.4.3 l'exempte — et le motif
+     * ne peut PAS contenir `:read-only` : en CSS il désigne tout ce qui n'est
+     * pas éditable, donc chaque `div`, donc le produit entier.
+     */
+    const inactif = /const estInactif = \(el\) =>[\s\S]*?;\n/.exec(texte);
+    expect(inactif).not.toBeNull();
+    expect(inactif![0]).toMatch(/\[disabled\]/);
+    expect(inactif![0]).toMatch(/aria-disabled/);
+    expect(inactif![0]).not.toMatch(/:read-only/);
+    expect(texte).toMatch(/estInactif\(el\)\) continue;/);
+
+    /**
+     * Et la passe principale mesure l'état POSÉ.
+     *
+     * Sans `reducedMotion`, un fondu en cours devient un constat : la boucle
+     * de l'accueil traverse 0,27 et 0,73 à chaque tour, soit une vingtaine de
+     * faux constats par exécution — de quoi faire dispenser la règle.
+     */
+    const principale = /const ctx = await navigateur\.newContext\(\{ viewport[^)]*\)/.exec(texte);
+    expect(principale).not.toBeNull();
+    expect(principale![0]).toMatch(/reducedMotion: "reduce"/);
   });
 
   it("la dispense désigne encore un fichier vivant", () => {

@@ -236,7 +236,7 @@ export default function BetaPage() {
 
               <div>
                 <label style={LABEL_STYLE} htmlFor="beta-email">
-                  {t.emailLabel} <span style={{ opacity: 0.6, textTransform: "none", letterSpacing: 0 }}>· {t.emailOptional}</span>
+                  {t.emailLabel} <span style={{ color: "var(--muted)", textTransform: "none", letterSpacing: 0 }}>· {t.emailOptional}</span>
                 </label>
                 <input id="beta-email" style={FIELD_STYLE} type="email" placeholder={t.emailPlaceholder} value={email}
                   onChange={e => setEmail(e.target.value)} autoComplete="email" />

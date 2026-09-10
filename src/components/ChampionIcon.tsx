@@ -62,7 +62,7 @@ export function ChampionIcon({ name, size = 38 }: Props) {
         background: "color-mix(in srgb, var(--steel) 10%, transparent)",
         border: "1px solid color-mix(in srgb, var(--steel) 20%, transparent)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: size * 0.42, fontWeight: 600, color: "var(--faint)",
+        fontSize: size * 0.42, fontWeight: 600, color: "var(--steel)",
         fontFamily: "var(--font-heading, 'Chakra Petch', sans-serif)",
       }}>
         {name ? name.charAt(0).toUpperCase() : "?"}
