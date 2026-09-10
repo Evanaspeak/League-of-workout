@@ -1337,6 +1337,86 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### V579 est partie ROUGE, et le test ne tenait que par la vitesse de la machine
+
+Lue en appliquant la règle de la fusion. **10 min 48, donc les parcours ont
+joué**, et un seul travail sur neuf : `parcours (1)`, un seul test —
+`depense-jour.spec.ts`, « les calories actives sont refusées en disant
+lesquelles on attend ».
+
+**Le message d'échec ne dit rien, et c'est l'artefact qui a tranché.** Il
+annonce « element(s) not found » sur une alerte cherchée par son texte. Le
+`error-context.md` téléversé par le job porte le snapshot de la page, et
+l'alerte y EST :
+
+```
+- alert: Dépense invalide
+```
+
+Ce n'est pas l'alerte absente, c'est **le mauvais des deux refus**. Or l'ordre
+des trois refus est une décision écrite au journal : « six cents kilocalories
+est à la fois "en dessous de mille" et "en dessous du métabolisme de base" ;
+les deux règles s'appliquent, et c'est la plus PRÉCISE qui doit parler. »
+
+**La plus précise n'a pas parlé parce que le PROFIL n'était pas encore en
+base.** `verdictDepense(kcal, mesuresDe(user))` ne peut rendre
+« sous-le-metabolisme » que si les cinq mesures sont là — poids, taille, âge,
+variante de formule, niveau d'activité. Sans elles il retombe sur le plancher
+générique de mille, et six cents passe dessous.
+
+**`profilComplet` rendait la main sans attendre.** Il pose les trois premières
+par un `PUT` attendu, puis les deux dernières par des CLICS — que
+`fileEcritures` sérialise depuis V562, donc qui s'attendent l'une l'autre. Le
+test cliquait « Enregistrer » pendant qu'elles étaient en vol.
+
+**Reproduit avant de corriger**, en retardant chaque `PUT /api/settings` de
+trois secondes :
+
+| | message rendu |
+|---|---|
+| sonde, écritures retardées | **« Dépense invalide »** |
+| production locale, machine libre | « Dépense de la journée entière attendue » |
+
+C'est le mot pour mot du snapshot de CI. **Ce n'est donc pas un aléa : c'est
+un test qui tenait par la vitesse de la machine**, comme le `toHaveCount(0)`
+de `force.spec.ts` tenait par l'ordre de ses deux lignes.
+
+**La correction attend l'ÉTAT en base, pas une réponse.** `expect.poll` sur
+`GET /api/settings` jusqu'à ce que les cinq champs y soient. Attendre la
+requête prouverait qu'elle est passée ; attendre l'état prouve qu'elle a
+abouti, et ça ne dépend pas de l'ordre interne de la file.
+
+**Éprouvé dans les deux sens, ce qui est la seule preuve qui vaille ici :**
+
+| | verdict |
+|---|---|
+| écritures retardées, attente en place | **2 passés** |
+| les mêmes écritures retardées, attente retirée | **2 échecs** |
+
+Le second fait tomber les DEUX tests du fichier, ce qui dit que le premier
+avait le même trou sous une forme plus tolérante — il rechargeait la page, et
+le rechargement laissait à la file le temps de finir.
+
+**Le recensement de la famille est NÉGATIF, et c'est écrit pour qu'on ne le
+refasse pas.** Le motif est « un réglage posé par CLIC, puis une action dont
+le résultat SERVEUR en dépend ». Les autres parcours qui touchent aux réglages
+passent par l'API et attendent la réponse — `hors-ligne.spec.ts` choisit la
+boxe par `page.request.put`, `bareme-gele` pose son barème par la route — ou
+portent déjà leur attente d'état. `depense-jour` était le seul dans ce cas.
+
+**Et la production ne sert PAS V579**, mesuré neuf heures après la fusion.
+C'est établi et non déduit : `/es/recuperation` et `/de/recuperation` sortent
+en `x-vercel-cache: PRERENDER` — donc depuis le magasin de prérendu du
+déploiement COURANT — avec l'ancien texte, pendant que `/fr` sert le témoin de
+V578 (« 16 jeux » ×10). Le déploiement courant est donc V578.
+
+Ce que ça n'est pas : un cache. Un `PRERENDER` vient du déploiement, pas d'une
+régénération gardée. Ce que ça pourrait être et qui ne se vérifie pas d'ici :
+le quota de déploiements du plan Hobby, atteint après dix-sept versions dans
+la journée — Vercel déploie TOUTE branche poussée, donc chaque commit de
+branche en consomme un. **V580 est le témoin de cette hypothèse** : si elle se
+déploie ce matin, le pipeline marche et c'est V579 seule qui a été perdue.
+
 ### Deux descriptions Google vouvoyaient sous des écrans qui tutoient
 
 Suite du recensement des gardes bornés à `dictionaries/`. Six d'entre eux n'y

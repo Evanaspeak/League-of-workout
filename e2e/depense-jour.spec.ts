@@ -48,6 +48,28 @@ async function profilComplet(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /^perdre$|^lose$/i }).click();
   await page.getByRole("button", { name: /variante « homme »|male variant/i }).click();
   await page.getByLabel(/niveau d'activité|activity level/i).selectOption("modere");
+
+  /**
+   * On attend que les cinq mesures soient EN BASE, et pas seulement à l'écran.
+   *
+   * Les trois clics ci-dessus posent l'état de React tout de suite et envoient
+   * chacun un `PUT /api/settings`, que `fileEcritures` SÉRIALISE. Rendre la
+   * main ici laissait donc la formule et le niveau d'activité en vol — et le
+   * refus qui suit dépend d'eux : sans profil complet, `verdictDepense`
+   * retombe sur le plancher générique de mille et rend « Dépense invalide »
+   * au lieu de « Dépense de la journée entière attendue ».
+   *
+   * Ce n'est pas un délai de confort : le test tenait par la vitesse de la
+   * machine, et il est tombé en intégration continue à V579 — le snapshot y
+   * montre l'alerte « Dépense invalide », c'est-à-dire le mauvais des deux
+   * refus. Reproduit en local en retardant les écritures de trois secondes.
+   */
+  await expect.poll(async () => {
+    const r = await page.request.get("/api/settings");
+    if (r.status() !== 200) return `statut ${r.status()}`;
+    const u = (await r.json()).user ?? {};
+    return [u.poids, u.taille, u.age, u.formuleCalorique, u.niveauActivite].join("/");
+  }, { timeout: 15_000 }).toBe("80/180/30/h/modere");
 }
 
 /**
