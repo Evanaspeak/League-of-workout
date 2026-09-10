@@ -1337,6 +1337,78 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dépendances du 10 septembre : React 19.3, et la mesure qui va avec
+
+`react` et `react-dom` 19.2.8 → 19.3.0, leurs types, `resend` 6.26 → 6.27.
+Toutes mineures, toutes dans la fourchette de `package.json`.
+
+**React rend TOUT le produit, donc il se mesure.** C'est la règle déjà
+appliquée à `recharts` le 5 septembre et à `lucide-react` le 7 : une
+bibliothèque qui DESSINE ne se juge pas sur un « ça compile ». Un changement de
+rendu n'y fait tomber aucun test — les parcours cherchent des libellés et des
+rôles, pas des pixels — et le seul instrument qui le voie est la comparaison de
+rendu.
+
+**Sur un compte SEMÉ à soixante parties, et c'est la moitié qui compte.** Un
+compte neuf n'aurait rien prouvé : l'historique n'a aucune ligne à dessiner, les
+graphiques aucune barre, le rail aucune pastille de dette. C'est le piège écrit
+ici pour `routes.mjs` — « avec un compte frais, `/api/games` rend deux octets » —
+et pour le CLS de l'historique, resté à 0,000 pendant des campagnes entières
+faute de lignes à déplacer.
+
+**Trente-neuf captures, aucune différence**, sur huit pages et trois largeurs.
+Et le reste au chiffre d'avant : `tsc`, 2 874 tests, construction verte,
+**161 pages prérendues**.
+
+**La suite navigateur ENTIÈRE a été jouée, et c'est ce que la règle demande.**
+CLAUDE.md réserve la suite complète à « ce qui touche une fondation — middleware,
+authentification, schéma Prisma, plomberie des langues, mise en page racine — là
+où une régression peut sortir n'importe où ». React est cette fondation au sens
+le plus littéral : il n'y a pas un écran du produit qu'il ne rende pas.
+**277 passés en 16 min 36.**
+
+**`npm audit` rend les deux mêmes `mysql2`**, inatteignables et gardées par
+`src/dependanceMysql.test.ts` ; **zéro côté application de bureau**, et
+`desktop/` n'a pas été touché — donc **aucune version d'application de bureau à
+publier**. Écartées, toutes majeures : `typescript` 7, `eslint` 10,
+`@types/node` 22, `@libsql/client` 0.18, `prisma` 8 en version candidate,
+`electron` 44.
+
+**Deux pièges d'outillage, tous deux les miens, tous deux déjà écrits ici.**
+
+Le compte de mesure avait été purgé par une suite navigateur — la préparation
+efface les comptes `@example.test`, dont celui de la mesure. Le contrôle
+d'atterrissage l'a dit AVANT qu'aucun chiffre ne soit relevé : `/fr/dashboard`
+rendait 307 vers `/fr/login`. Sans lui, la comparaison aurait rendu
+« aucune différence » sur trente-neuf captures de la page de connexion, ce qui
+est la conclusion inverse de celle qu'on cherchait. L'ordre n'admet toujours
+aucune exception : la suite d'abord, le compte ensuite, le semis, la mesure
+enfin.
+
+Et **ma commande de vérification a échoué là où l'installation avait réussi**.
+`node -p "require(m + '/package.json').version"` lève
+`ERR_PACKAGE_PATH_NOT_EXPORTED` sur `resend`, qui n'exporte pas ce chemin — un
+paquet parfaitement installé, une vérification qui refuse de le lire, et un
+message qui ressemble à une installation cassée. Les versions se lisent
+maintenant par chemin relatif direct. C'est la forme la plus discrète du défaut
+que ce journal reproche partout : **un instrument qui échoue ne dit pas qu'il a
+échoué, il dit que le sujet est cassé.**
+
+**Un troisième, et c'est le garde qui avait raison.**
+`node scripts/semer-parties.mjs http://127.0.0.1:3311 60` rend « Nombre de
+parties attendu entre 1 et 5000 » : l'adresse vient de `BASE`, une variable
+d'environnement, et non d'un positionnel — donc l'adresse passée au rang du
+compte devenait le compte. Le contrôle a refusé plutôt que de semer `NaN`
+parties en rendant un rapport d'allure normale. C'est exactement ce que ce
+journal demande d'un outil de mesure, et ça vaut d'être noté quand ça mord sur
+son auteur.
+
+**V581 n'a pas de témoin public à elle** — tests, gardes et journal seulement —
+donc on se rabat sur celui de la version précédente, comme la procédure le
+demande. `/fr/calculateur` et `/de/recuperation` sortent toutes deux en
+`x-vercel-cache: PRERENDER`, avec « règle ta partie » ×6 et « réglez votre » ×0 :
+la production sert bien la version qui a corrigé le vouvoiement.
+
 ### Le balayage des gardes de langue était écrit cinq fois, avec cinq angles morts
 
 Fin du crible ouvert par « Deux descriptions Google vouvoyaient ». Les trois
