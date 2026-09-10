@@ -1337,6 +1337,57 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Le balayage des gardes de langue était écrit cinq fois, avec cinq angles morts
+
+Fin du crible ouvert par « Deux descriptions Google vouvoyaient ». Les trois
+gardes qui restaient — `genreDuLecteur`, `pronomGenre`, `pluriel` — balayaient
+`dictionaries/` SEUL, comme les deux corrigés la veille.
+
+**Le crible manuel a été refait AVANT d'élargir quoi que ce soit**, et il est
+**entièrement NÉGATIF** : les trois motifs, passés sur les quinze fichiers hors
+sous-dossier, ne trouvent rien. Ni participe accordé sur le lecteur, ni pronom
+genré, ni gabarit à seuil. C'est écrit ici pour qu'on ne le refasse pas — et
+c'est le critère qui décide de la forme : ce qu'on ferme est le fichier qu'on
+ajoutera demain, pas un défaut vivant.
+
+**Ce que le chantier a vraiment trouvé est la DUPLICATION.** Le balayage
+récursif était sur le point d'être écrit une quatrième fois, et les lecteurs de
+blocs français une troisième. Or ce sont précisément ces copies qui portaient
+les angles morts : celui de `registre` ne cherchait qu'un bloc `fr:` à deux
+espaces, celui de `pronomGenre` un seul `zh:` au premier `indexOf`, celui de
+`genreDuLecteur` coupait au premier `\n  en: {`. Trois lecteurs, trois façons
+différentes de rater `metadonnees.ts`.
+
+`src/test/fichiersLangue.ts` porte le balayage et les quatre lecteurs, et les
+**cinq** gardes le lisent. C'est le motif que ce journal reproche partout :
+cinq exemplaires d'une même règle finissent avec quatre versions en retard, et
+la version en retard est celle qu'on relit le moins.
+
+**Un double comptage attrapé par un cas fabriqué, et il valait le détour.**
+Ma première version de `blocsChinois` bornait le bloc de deux façons — le bloc
+de langue suivant, et la fermeture au même niveau — pour couvrir le cas du
+dernier bloc d'un fichier. Les deux motifs capturaient alors le MÊME bloc, et
+un pronom y était compté deux fois. Le cas fabriqué l'a dit tout de suite
+(`Expected length: 1, Received: 2`), là où les fichiers réels ne l'auraient
+jamais montré : leur compte de fautifs est zéro, et deux fois zéro fait zéro.
+La borne est la fermeture au même niveau, et elle seule.
+
+**Le témoin PAR FORME est repris tel quel, et il est nécessaire aux trois.**
+Le compte de fichiers ne distingue rien : les cinquante-neuf du sous-dossier
+suffisent à le satisfaire, donc il reste vert le jour où l'une des deux formes
+devient invisible. Chaque garde exige donc, séparément, au moins un fichier à
+quatre blocs français et au moins un fichier sans bloc à plus de vingt clés.
+
+**Et `codeMort.test.ts` a mordu**, ce qui est son travail : un module de
+`src/test/` que seuls des tests importent doit être déclaré, avec sa raison, à
+côté de `test/api.ts` et `test/sansCommentaires.ts`.
+
+Six sabotages sur `pluriel`, six échecs. Six sur `genreDuLecteur`, six échecs.
+Cinq sur `pronomGenre`, cinq échecs. Et deux de plus sur `registre`, après le
+remaniement, pour vérifier qu'il mord toujours : le vouvoiement remis dans
+`metadonnees.ts`, et le lecteur multi-blocs ramené à deux espaces. Les deux
+tombent.
+
 ### V579 est partie ROUGE, et le test ne tenait que par la vitesse de la machine
 
 Lue en appliquant la règle de la fusion. **10 min 48, donc les parcours ont
@@ -1411,11 +1462,34 @@ déploiement COURANT — avec l'ancien texte, pendant que `/fr` sert le témoin 
 V578 (« 16 jeux » ×10). Le déploiement courant est donc V578.
 
 Ce que ça n'est pas : un cache. Un `PRERENDER` vient du déploiement, pas d'une
-régénération gardée. Ce que ça pourrait être et qui ne se vérifie pas d'ici :
-le quota de déploiements du plan Hobby, atteint après dix-sept versions dans
-la journée — Vercel déploie TOUTE branche poussée, donc chaque commit de
-branche en consomme un. **V580 est le témoin de cette hypothèse** : si elle se
-déploie ce matin, le pipeline marche et c'est V579 seule qui a été perdue.
+régénération gardée.
+
+**Et le témoin a parlé vingt minutes plus tard.** V580 fusionnée à 07 h 06
+min 41 ; à 07 h 16 min 36, `/fr/calculateur` et `/de/recuperation` servent le
+texte neuf, toutes deux en `PRERENDER`. Le déploiement a donc repris à la
+poussée SUIVANTE, et il a emporté les deux versions d'un coup — une
+construction de `main` déploie l'état de `main`.
+
+**Le retard aura duré au moins huit heures cinquante-cinq**, et il s'est levé
+en moins de dix minutes une fois qu'une nouvelle version est passée. C'est le
+troisième épisode recensé ici, après les 2 h 40 du 4 septembre et les 66 à 84
+minutes du 5.
+
+**La lecture la plus simple est que la construction Vercel de V579 a
+ÉCHOUÉ**, et non qu'une file a traîné : une attente se résorbe seule, et
+celle-ci a attendu la poussée suivante. Ce qui l'écarte comme cause est écrit
+plutôt que supposé — la CI GitHub était rouge sur un PARCOURS, que Vercel ne
+lance pas, et `next build` sur le même arbre rend zéro en local. La cause
+exacte demande le tableau de bord Vercel, qui n'est pas lisible d'ici.
+
+**L'hypothèse que j'avais écrite ici — le quota du plan Hobby — n'est pas
+retenue**, et elle est laissée en toutes lettres plutôt qu'effacée : elle
+prédisait une reprise à l'heure du renouvellement, pas à la poussée suivante.
+C'est le témoin qui a tranché, pas le raisonnement.
+
+**Ce que l'épisode ajoute à la procédure** : une version qui n'a pas de témoin
+public ne dit rien de son propre déploiement, mais elle sert de témoin à la
+PRÉCÉDENTE — et c'est le seul geste qui ait fait repartir celui-ci.
 
 ### Deux descriptions Google vouvoyaient sous des écrans qui tutoient
 

@@ -2,6 +2,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
 import { estCheminPublic } from "@/lib/routesPubliques";
+import {
+  RACINE_I18N, fichiersLangue, blocsFrancais, clesFrancaises, francais, cleDeLigne,
+} from "@/test/fichiersLangue";
 
 /**
  * Le produit TUTOIE, sauf là où il a de bonnes raisons de vouvoyer.
@@ -63,18 +66,8 @@ import { estCheminPublic } from "@/lib/routesPubliques";
  * partida », le chinois 你的 : le français était SEUL, donc c'est un oubli et
  * non un choix de marque.
  */
-const RACINE = join(process.cwd(), "src/lib/i18n");
+const RACINE = RACINE_I18N;
 
-/** Les `.ts` de `src/lib/i18n`, sous-dossiers compris, chemins relatifs. */
-function fichiersLangue(dossier: string, prefixe = ""): string[] {
-  const out: string[] = [];
-  for (const e of readdirSync(dossier, { withFileTypes: true })) {
-    const rel = prefixe ? `${prefixe}/${e.name}` : e.name;
-    if (e.isDirectory()) out.push(...fichiersLangue(join(dossier, e.name), rel));
-    else if (e.name.endsWith(".ts") && !e.name.endsWith(".test.ts")) out.push(rel);
-  }
-  return out;
-}
 
 /** Ce qui vouvoie, et pourquoi. Une exemption sans raison n'en est pas une. */
 const VOUVOIENT: Record<string, string> = {
@@ -150,50 +143,9 @@ const TUTOIE = new RegExp(
   + `|(?<![${LETTRE}])(?:${IMPERATIFS})(?![${LETTRE}])`,
 );
 
-/**
- * TOUS les blocs français, à n'importe quelle indentation.
- *
- * Il n'en cherchait qu'un, à deux espaces. `metadonnees.ts` en porte huit, à
- * quatre espaces — une page par clé, puis les six langues sous chacune — donc
- * il rendait `null` et le fichier entier était sauté. C'est par là que les
- * deux descriptions vouvoyantes ont survécu.
- */
-function blocsFrancais(source: string): string[] {
-  // `[\s\S]` plutôt que le drapeau `s` : la cible de compilation du projet est
-  // antérieure à ES2018, et `tsc` refuse le drapeau.
-  const out: string[] = [];
-  for (const m of source.matchAll(/\n( +)fr: \{([\s\S]*?)\n\1[a-z]{2}: \{/g)) out.push(m[2]);
-  return out;
-}
 
-/**
- * Le français d'`apiErrors.ts`, qui n'a pas de bloc du tout : la clé EST le
- * message français, parce que c'est lui qui circule sur le réseau.
- */
-function clesFrancaises(source: string): string[] {
-  // La LIGNE entière, guillemets compris : les deux formes deviennent
-  // homogènes, et `cleDeLigne` sait alors lire l'une comme l'autre. Rendre la
-  // clé nue faisait perdre la tolérance — elle ne ressemblait plus à une clé.
-  return [...source.matchAll(/^ {2}"(?:[^"\\]|\\.)*":\s*\{/gm)].map((m) => m[0]);
-}
 
-/** Le français d'un fichier, quelle que soit sa forme. */
-function francais(source: string): string[] {
-  const blocs = blocsFrancais(source);
-  return blocs.length ? blocs : clesFrancaises(source);
-}
 
-/**
- * La clé d'une ligne, dans les DEUX formes.
- *
- * Un identifiant nu dans les dictionnaires (`veilleJour: "…"`), et une chaîne
- * entre guillemets dans `apiErrors.ts`, où le message français EST la clé.
- */
-function cleDeLigne(ligne: string): string {
-  return /^\s*"((?:[^"\\]|\\.)*)"\s*:/.exec(ligne)?.[1]
-    ?? /^\s*([A-Za-z0-9_]+)\s*:/.exec(ligne)?.[1]
-    ?? "";
-}
 
 describe("le registre du produit", () => {
   const fichiers = fichiersLangue(RACINE);

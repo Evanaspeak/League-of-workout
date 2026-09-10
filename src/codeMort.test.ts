@@ -48,6 +48,12 @@ const TOLERES: string[] = [
   // Même raison : le retrait des commentaires n'existe que pour les gardes qui
   // lisent du source, et ils sont trois à en avoir besoin.
   "test/sansCommentaires.ts",
+  // Même raison encore : le balayage des fichiers de langue et la lecture de
+  // leurs blocs français n'existent que pour les cinq gardes de langue. Ils
+  // écrivaient chacun leur copie, et c'est ainsi que deux d'entre eux ne
+  // voyaient ni les huit blocs à quatre espaces de `metadonnees.ts`, ni la
+  // forme sans bloc d'`apiErrors.ts`.
+  "test/fichiersLangue.ts",
 ];
 
 /**

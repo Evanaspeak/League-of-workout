@@ -1,5 +1,7 @@
-import fs from "fs";
-import path from "path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { RACINE_I18N, fichiersLangue, blocsFrancais, clesFrancaises, francais, cleDeLigne } from "@/test/fichiersLangue";
 
 /**
  * Le français n'accorde pas un participe sur son lecteur.
@@ -21,7 +23,16 @@ import path from "path";
  * tout ce qui demanderait de réécrire une phrase.
  */
 
-const DICOS = path.join(__dirname, "lib", "i18n", "dictionaries");
+/**
+ * La portée est `src/lib/i18n` ENTIER, sous-dossiers compris.
+ *
+ * Elle était bornée à `dictionaries/` jusqu'au 10 septembre, alors que quinze
+ * modules porteurs de texte vivent un dossier au-dessus — et c'est là que
+ * deux descriptions Google ont vouvoyé sous des écrans qui tutoient. Le crible
+ * manuel des quinze est NÉGATIF pour CETTE règle-ci : aucun n'accorde de
+ * participe sur son lecteur aujourd'hui. Ce qu'on ferme est le fichier qu'on
+ * ajoutera demain.
+ */
 
 /**
  * Ce qui est toléré, avec sa raison.
@@ -58,41 +69,61 @@ const TOLERE: Record<string, string> = {
 const ACCORDE_SUR_LE_LECTEUR =
   /(?:tu (?:es|étais|seras)|vous (?:êtes|étiez|serez))\s+[a-zàâçèêëîïôûùüÿñ]+é(?:e|s|es)?(?![a-zàâçéèêëîïôûùüÿñ])/i;
 
-function blocFrancais(source: string): string {
-  const fin = source.indexOf("\n  en: {");
-  return fin > 0 ? source.slice(0, fin) : source;
-}
 
 describe("le français ne donne pas de genre à son lecteur", () => {
-  const dicos = fs.readdirSync(DICOS).filter((f) => f.endsWith(".ts") && !f.includes(".test."));
+  const fichiers = fichiersLangue();
+  const sources = fichiers.map((f) => [f, readFileSync(join(RACINE_I18N, f), "utf8")] as const);
 
-  it("le recensement lit les dictionnaires, et il y en a", () => {
+  it("le recensement lit les fichiers de langue, et il y en a", () => {
     // Sans ce témoin, un dossier renommé rendrait le contrôle vert en
     // n'ouvrant aucun fichier.
-    expect(dicos.length).toBeGreaterThanOrEqual(20);
+    expect(fichiers.length).toBeGreaterThanOrEqual(20);
   });
 
-  it("le découpage trouve un bloc français plus court que le fichier", () => {
-    // Si `blocFrancais` cessait de trouver sa borne, il rendrait le fichier
+  it("les deux formes sont lues, et hors du sous-dossier aussi", () => {
+    /**
+     * Un témoin PAR FORME, sinon deux aveuglements passent au vert.
+     *
+     * Le compte de fichiers ne les distingue pas : les cinquante-neuf du
+     * sous-dossier suffisent à le satisfaire. Il reste donc vert le jour où le
+     * lecteur de blocs cesse de voir les huit blocs à quatre espaces de
+     * `metadonnees.ts`, ou la forme sans bloc d'`apiErrors.ts`, où la clé EST
+     * le message français.
+     */
+    expect(sources.filter(([, s]) => blocsFrancais(s).length >= 4).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(sources.filter(([, s]) => !blocsFrancais(s).length && clesFrancaises(s).length > 20).length)
+      .toBeGreaterThanOrEqual(1);
+  });
+
+  it("le découpage coupe vraiment, il ne rend pas le fichier entier", () => {
+    // Si `blocsFrancais` cessait de trouver ses bornes, il rendrait le fichier
     // ENTIER — donc le contrôle chercherait aussi dans l'anglais, où il ne
     // trouverait rien de son motif, et passerait au vert pour la mauvaise
-    // raison. On vérifie qu'il coupe vraiment.
-    const coupes = dicos
-      .map((f) => fs.readFileSync(path.join(DICOS, f), "utf8"))
-      .filter((s) => blocFrancais(s).length < s.length);
+    // raison.
+    const coupes = sources.filter(([, s]) => {
+      const b = blocsFrancais(s);
+      return b.length > 0 && b.join("").length < s.length;
+    });
     expect(coupes.length).toBeGreaterThanOrEqual(20);
   });
 
   it("aucun participe ne s'accorde derrière « tu es » ou « vous êtes »", () => {
     const fautifs: string[] = [];
-    for (const f of dicos) {
-      for (const ligne of blocFrancais(fs.readFileSync(path.join(DICOS, f), "utf8")).split("\n")) {
-        if (!ACCORDE_SUR_LE_LECTEUR.test(ligne)) continue;
-        const cle = ligne.trim().match(/^([A-Za-z0-9_]+)\s*:/)?.[1];
-        if (cle && TOLERE[cle]) continue;
-        fautifs.push(f + " : " + ligne.trim().slice(0, 110));
+    let examinees = 0;
+    for (const [f, source] of sources) {
+      for (const morceau of francais(source)) {
+        for (const ligne of morceau.split("\n")) {
+          examinees += 1;
+          if (!ACCORDE_SUR_LE_LECTEUR.test(ligne)) continue;
+          if (TOLERE[cleDeLigne(ligne)]) continue;
+          fautifs.push(f + " : " + ligne.trim().slice(0, 110));
+        }
       }
     }
+    // Sans ce témoin, un lecteur devenu muet rendrait le contrôle vert en
+    // n'ayant lu aucune ligne française.
+    expect(examinees).toBeGreaterThan(2000);
     expect(fautifs).toEqual([]);
   });
 
@@ -113,7 +144,7 @@ describe("le français ne donne pas de genre à son lecteur", () => {
   });
 
   it("la tolérance désigne encore une clé vivante", () => {
-    const tout = dicos.map((f) => fs.readFileSync(path.join(DICOS, f), "utf8")).join("\n");
+    const tout = sources.map(([, s]) => s).join("\n");
     const mortes = Object.keys(TOLERE).filter((c) => !new RegExp("\\b" + c + "\\s*:").test(tout));
     expect(mortes).toEqual([]);
   });
