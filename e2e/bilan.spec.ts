@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { seConnecter } from "./compte";
+import { remplirInscription, seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
 import { sansLangue } from "./chemin";
 
@@ -25,8 +25,7 @@ test("ouvrir un compte et enregistrer des parties", async ({ browser }) => {
   });
   await purgerTentatives();
   await page.goto("/beta");
-  await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
-  await page.locator('input[type="email"]').first().fill(COMPTE.email);
+  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
   await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });
@@ -112,8 +111,7 @@ test("un compte sans partie ne précharge pas d'image", async ({ browser }) => {
   await purgerTentatives();
   const neuf = `Vide${Date.now().toString(36)}`;
   await page.goto("/beta");
-  await page.getByPlaceholder(/pseudo/i).first().fill(neuf);
-  await page.locator('input[type="email"]').first().fill(`${neuf.toLowerCase()}@example.test`);
+  await remplirInscription(page, { pseudo: neuf, email: `${neuf.toLowerCase()}@example.test` });
   await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });

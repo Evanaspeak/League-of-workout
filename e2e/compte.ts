@@ -79,8 +79,21 @@ async function remplirVraiment(
   code: string,
 ) {
   await expect(async () => {
-    if ((await champPseudo.inputValue()) !== pseudo) await champPseudo.fill(pseudo);
-    if ((await champCode.inputValue()) !== code) await champCode.fill(code);
+    /**
+     * Le vidage vaut ici aussi, et la condition d'avant l'empêchait.
+     *
+     * Elle ne refaisait le `fill` que si la valeur DIFFÉRAIT — c'est-à-dire
+     * jamais dans l'état qui nous occupe, où le champ porte déjà ce qu'on a
+     * tapé et où seul l'état React est vide. Elle ne pouvait donc rattraper
+     * que le cas où le champ s'est vidé tout seul, qui est l'autre moitié.
+     *
+     * Ce que ça change côté connexion n'est PAS mesuré : le bouton y vaut
+     * `disabled={loading}` et rien d'autre, donc il ne dit pas si l'état a
+     * reçu la saisie. Le vidage est repris parce que le mécanisme est le même
+     * et qu'il ne coûte rien ; l'affirmer réparé serait aller au-delà.
+     */
+    await reposer(champPseudo, pseudo);
+    await reposer(champCode, code);
     expect(await champPseudo.inputValue()).toBe(pseudo);
     expect(await champCode.inputValue()).toBe(code);
   }).toPass({ timeout: 15_000 });
@@ -119,15 +132,19 @@ async function releverLEcran(
 /**
  * Ouvre un compte neuf et rend son état de session.
  *
- * Les huit autres fichiers de parcours recopient les mêmes vingt lignes. Ils
- * n'ont pas été convertis, et la raison est écrite dans CLAUDE.md : le défaut
- * qui aurait justifié d'y toucher n'existait pas.
+ * La saisie est reprise tant que le bouton ne s'active pas, et **ce n'est plus
+ * une précaution** : le commentaire écrit ici disait « pas la correction d'un
+ * défaut constaté », et le défaut s'est constaté en CI sur V581 — le bouton
+ * « Obtenir mon code » est resté désactivé pendant cent onze reprises de
+ * Playwright, sur `bareme-gele.spec.ts`, qui recopiait les trois lignes SANS
+ * la reprise.
  *
- * La saisie est reprise tant que le bouton ne s'active pas. C'est une
- * précaution, pas la correction d'un défaut constaté : quand le bouton reste
+ * L'hypothèse écrite alors était fausse elle aussi : « quand le bouton reste
  * désactivé, c'est en général qu'il n'y a pas de JavaScript du tout, et
- * reprendre la saisie n'y peut rien. La reprise ne coûte qu'un tour de boucle
- * dans le cas normal.
+ * reprendre la saisie n'y peut rien ». Il y en avait — c'est bien React qui
+ * avait posé le `disabled` — et ce qui manquait était un second `fill` APRÈS
+ * l'hydratation. La reprise n'y peut donc rien seulement dans le cas qu'on
+ * croyait ; dans celui qui arrive, elle est tout ce qui répare.
  */
 export async function ouvrirCompte(
   browser: Browser,
@@ -171,8 +188,8 @@ export async function ouvrirCompte(
    * non le chemin : c'est la traversée du formulaire qui peut se perdre.
    */
   await page.goto(options.parrain ? `/beta?p=${options.parrain}` : "/beta");
-  const envoyer = page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first();
-  await remplirJusquACeQueCaPrenne(page, envoyer, compte);
+  const envoyer = boutonInscription(page);
+  await remplirInscription(page, compte);
   await envoyer.click();
 
   const bloc = page.locator(".mono-num").first();
@@ -210,14 +227,47 @@ export async function ouvrirCompte(
   return { etat, compte, code };
 }
 
-async function remplirJusquACeQueCaPrenne(
+export function boutonInscription(page: Page) {
+  return page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first();
+}
+
+export async function remplirInscription(
   page: Page,
-  envoyer: ReturnType<Page["getByRole"]>,
   compte: { pseudo: string; email: string },
 ) {
+  const envoyer = boutonInscription(page);
   await expect.poll(async () => {
-    await page.getByPlaceholder(/pseudo/i).first().fill(compte.pseudo);
-    await page.locator('input[type="email"]').first().fill(compte.email);
+    await reposer(page.getByPlaceholder(/pseudo/i).first(), compte.pseudo);
+    await reposer(page.locator('input[type="email"]').first(), compte.email);
     return envoyer.isEnabled();
   }, { timeout: 30_000, intervals: [500, 1_000, 2_000] }).toBe(true);
+}
+
+/**
+ * Vide le champ AVANT de le remplir, et c'est toute la correction.
+ *
+ * **Mesuré, parce que l'hypothèse écrite ici était fausse.** La saisie qui
+ * arrive avant l'hydratation laisse un état stable et faux : le DOM porte la
+ * valeur, l'état React est vide, et rien ne les réconcilie — React ne relit
+ * pas le DOM en s'hydratant, et sans changement d'état il ne rerend pas. Le
+ * champ garde donc ce qu'on a tapé pendant que le bouton reste éteint.
+ *
+ * Ce qui rendait la reprise INOPÉRANTE est que `fill` ne fait rien quand la
+ * valeur est déjà la bonne : pas de changement, pas d'événement, pas d'état.
+ * La boucle tournait trente secondes et rendait le même écran. Mesuré sur les
+ * trois façons de reprendre, fragments retardés de deux secondes :
+ *
+ * | reprise                | bouton après |
+ * |------------------------|--------------|
+ * | `fill` répété          | **éteint**   |
+ * | vider puis remplir     | actif        |
+ * | frappe au clavier      | actif        |
+ *
+ * Le vidage est retenu plutôt que la frappe : il coûte deux appels au lieu
+ * d'un caractère par lettre, et il ne dépend pas de ce que le champ contient
+ * déjà.
+ */
+async function reposer(champ: ReturnType<Page["locator"]>, valeur: string) {
+  await champ.fill("");
+  await champ.fill(valeur);
 }

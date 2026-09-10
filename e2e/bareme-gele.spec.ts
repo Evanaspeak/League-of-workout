@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { seConnecter } from "./compte";
+import { remplirInscription, seConnecter } from "./compte";
 import { Client } from "pg";
 import { purgerTentatives } from "./limiteur";
 import { viderLesFenetres } from "./intro";
@@ -48,8 +48,7 @@ test("changer un ratio ne réécrit pas ce que les parties passées ont coûté"
   await purgerTentatives();
 
   await page.goto("/beta");
-  await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
-  await page.locator('input[type="email"]').first().fill(COMPTE.email);
+  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
   await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });
@@ -130,8 +129,7 @@ test("la pastille de dette et son décompte annoncent le même nombre", async ({
 
   await purgerTentatives();
   await page.goto("/beta");
-  await page.getByPlaceholder(/pseudo/i).first().fill(compte.pseudo);
-  await page.locator('input[type="email"]').first().fill(compte.email);
+  await remplirInscription(page, { pseudo: compte.pseudo, email: compte.email });
   await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });

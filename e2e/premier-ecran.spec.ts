@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { seConnecter } from "./compte";
+import { remplirInscription, seConnecter } from "./compte";
 import { purgerTentatives } from "./limiteur";
 import { passerIntro } from "./intro";
 
@@ -30,8 +30,7 @@ test("ouvrir un compte", async ({ browser }) => {
   });
   await purgerTentatives();
   await page.goto("/beta");
-  await page.getByPlaceholder(/pseudo/i).first().fill(COMPTE.pseudo);
-  await page.locator('input[type="email"]').first().fill(COMPTE.email);
+  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
   await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
   const bloc = page.locator(".mono-num").first();
   await bloc.waitFor({ timeout: 20_000 });
