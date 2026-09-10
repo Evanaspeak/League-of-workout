@@ -1344,6 +1344,313 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Dix-sept messages d'erreur annoncés à personne, dont les deux portes
+
+Le journal porte **trois occurrences** du même défaut, en deux entrées,
+chacune corrigée sur son écran et jamais gardée : le refus de connexion dans un `<div>` nu, les
+messages du signalement et de la mise de côté « annoncés à personne […] sous
+un bouton redevenu cliquable », et la suppression de compte en `role="status"`
+— qui est POLI — sur l'action la plus irréversible du produit.
+
+Trois fois le même geste, trois fois sur un seul de ses lieux. Personne n'avait
+demandé combien il en restait.
+
+**Dix-sept.** Et les deux qui comptent le plus sont les VOISINES de celle que
+V547 avait corrigée :
+
+- **`/beta`**, la SEULE porte d'entrée du produit. Un pseudo déjà pris, un
+  corps illisible, le limiteur : le refus paraît, et un lecteur d'écran
+  n'entend rien ;
+- **`/recuperation`**, le seul chemin de retour pour qui ne peut plus entrer.
+
+**`/beta` et `/recuperation` portent le MÊME objet de style au caractère
+près** — fond à 8 %, bordure à 30 %, rayon 8, `var(--loss)` — et `/login` la
+même famille à deux valeurs près (10 %, rayon 4). Trois portes, un objet de
+style recopié, et une seule corrigée. C'est le motif que ce journal reproche
+partout sous sa forme la plus difficile à voir : la correction est juste, elle
+est écrite au journal, et elle ne répare qu'un tiers de son sujet.
+
+**Sept sur dix-sept étaient invisibles à un garde indexé sur le NOM**, et
+c'est la vraie leçon. Ils ne s'appellent ni `erreur` ni `echec` mais `msg` ou
+`message`, et portent le succès ET l'échec sous un drapeau (`type: "err"`,
+`ok: false`). Parmi eux :
+
+| écran | ce que son message dit |
+|---|---|
+| `CompteRiot` | le seul écran où l'on relie son compte Riot — 503 sans clé, 404 sur un pseudo, 403 sur la nôtre |
+| `CorrectionDates` | combien de dates ont RÉELLEMENT bougé, ce que le journal exige déjà en toutes lettres |
+| `ReglageNotifications` | pourquoi la notification d'essai n'est pas partie |
+| les quatre panneaux d'administration | ce qu'un enregistrement a fait ou n'a pas fait |
+
+Le discriminant du garde n'est donc pas le nom : c'est ce que l'état
+**REÇOIT**. `translateApiError`, `.error`, `t.echec`, `t.erreur`, un drapeau
+d'échec. Mesuré des deux côtés sur les cent quarante fichiers d'affichage :
+le tri par la POSE trouve **trente-quatre** rendus d'erreur, celui par le NOM
+n'en voit que **vingt-sept**. Les sept qui manquent sont exactement les sept
+défauts ci-dessus — sur dix-sept, dix se reconnaissaient au nom.
+
+**Ce que le garde ne fait PAS, écrit plutôt que laissé à croire** : il
+n'arbitre pas entre `alert` (assertif) et `status` (poli). Le critère est écrit
+dans `ReglagesCorps` — « on attend ce message, il n'a aucun intérêt s'il attend
+le prochain moment calme d'un lecteur d'écran » — et il demande de savoir si la
+personne ATTEND, ce qu'aucun motif ne dit. Les refus purs prennent `alert`, les
+messages qui portent aussi le succès prennent `status`.
+
+**Et il tombait sur sa propre explication.** La correction de `/beta` porte un
+commentaire qui CITE `role="alert"` pour dire pourquoi il est là : un garde qui
+lit le texte brut est satisfait par sa propre justification. C'est le piège
+déjà payé trois fois ici, dans les deux sens, et `src/test/sansCommentaires.ts`
+existe pour lui — c'est son quatrième lecteur. Un cas fabriqué le tient.
+
+**Zéro dispense**, et c'est l'état sain : un garde qui naît avec une liste
+d'exemptions naît déjà usé.
+
+**Le tri s'éprouve sur des cas FABRIQUÉS**, parce que l'état sain du dépôt est
+désormais zéro trouvaille : les fichiers réels ne distinguent plus un tri juste
+d'un tri aveugle. Huit cas, dont celui du `msg` — sans lui, on ne saurait pas
+si le garde voit la forme qui portait sept défauts sur dix-sept.
+
+**Deux parcours pour le branchement**, dans le fichier qui existe pour ça. Le
+premier n'INTERCEPTE rien : il ouvre un compte, puis en redemande un avec le
+même pseudo, et lit le vrai 409 de la route — c'est le cas qui arrive, et il
+traverse toute la chaîne du formulaire au message annoncé. Il vérifie les deux
+moitiés, comme tout ce fichier : que le refus se DIT, et qu'aucun code ne
+s'affiche — le bloc du code étant ce qui paraît quand l'inscription aboutit, et
+lui seul.
+
+**Deux gardes existants ont mordu, et chacun sur une limite différente.** Ce
+n'était pas du bruit : les deux disaient quelque chose de vrai.
+
+`inscriptionReprise` refusait qu'un parcours emploie les deux pièces de
+l'inscription séparément — la seule exception, `montre.spec.ts`, était écrite
+en dur dans un `toEqual`. Mon parcours en est une SECONDE, et elle est
+structurelle elle aussi : il éprouve une inscription REFUSÉE, or `inscrire`
+attend le bloc du code vingt secondes et ce bloc ne paraît jamais. La liste
+devient un dictionnaire où chaque exception porte sa raison, avec le contrôle
+habituel — une exemption qui ne désigne plus rien tombe.
+
+**`absenceApresPresence`, lui, a rendu un FAUX POSITIF, et c'est plus
+instructif.** Il refuse un `toHaveCount(0)` qui n'est pas précédé d'un marqueur
+de présence ; mon attente est rangée dans `messageDEchec`, un helper local qui
+fait `toBeVisible()`. Le garde ne voyait qu'un appel. Ce n'est pas propre à ce
+fichier : **sept fichiers de `e2e/` portent à la fois un helper local et un
+contrôle d'absence**, donc la classe est réelle — et un faux positif est
+exactement la façon dont un garde se fait dispenser.
+
+Il suit donc UN saut, comme le contrat du pont et le garde du nom publié : un
+appel vaut le marqueur que le helper CONTIENT, jamais son nom.
+
+**Et mes deux cas fabriqués ont trouvé deux trous dans ma propre
+correction**, l'un après l'autre :
+
+- la fenêtre de douze lignes contient la DÉCLARATION du helper voisin, donc son
+  `toBeVisible`. Un fichier qui range une attente dans un helper se gardait
+  alors tout seul, quel que soit l'ordre. Les lignes d'un helper sont blanchies
+  POUR LES AUTRES, et gardées pour lui-même ;
+- corrigé, le cas tombait encore : la ligne de DÉCLARATION restait dans la
+  fenêtre, et son NOM suffisait à déclencher le saut. Un helper déclaré à côté
+  calmait le garde sans avoir été appelé. La plage part de la déclaration et
+  non de l'accolade.
+
+Aucun des deux ne se voyait sur les fichiers réels — ils passaient tous les
+deux au vert. C'est la règle déjà écrite ici : un tri qu'aucun fichier réel ne
+distingue d'un tri cassé se prouve sur des cas construits pour ça.
+
+**Huit sabotages, huit échecs.** Le rôle retiré de `/beta` et de `CompteRiot`,
+le tri ramené au nom seul, le retrait des commentaires débranché, la balise
+englobante rendue aveugle, le balayage vidé, le saut retiré du garde des
+absences, et une exception d'inscription qui ne désigne plus rien.
+
+**Le premier a d'abord PASSÉ, et pour une raison qui vaut d'être écrite.**
+Ma substitution visait la première occurrence de `role="alert"` dans le
+fichier — et c'est celle du COMMENTAIRE qui explique la correction. Le fichier
+avait donc bien changé, l'empreinte le disait, et rien n'était saboté. C'est le
+piège du « sabotage qui ne sabote pas » sous une forme nouvelle : **un contrôle
+d'empreinte prouve que le fichier a BOUGÉ, pas que la cible a été touchée.**
+Et le commentaire qui l'a avalé est précisément celui contre lequel
+`sansCommentaires` existe — le même texte, deux fois, des deux côtés.
+
+### La première page d'une campagne paie le démarrage à froid du serveur
+
+Seconde moitié de la clôture de V572 à V582, sur le même compte semé à soixante
+parties. **Les sept écrans sont dans les seuils, CLS négligeable partout.**
+
+| écran | LCP poste | LCP téléphone bridé | CLS | script au `load` |
+|---|---|---|---|---|
+| `/settings` | 140 à 168 ms | 936 ms | 0,000 | 271 ko |
+| `/` | 244 ms | 1336 ms | 0,000 | 206 ko |
+| `/bilan` | 284 ms | **2148 ms** | 0,000 | 195 ko |
+| `/amis` | 288 ms | 1136 ms | 0,032 | 216 ko |
+| `/dashboard` | 296 ms | 1164 ms | 0,000 | 242 ko |
+| `/history` | 500 ms | 1128 ms | 0,000 | 211 ko |
+| `/beta` | 548 ms | 1144 à 1672 ms | 0,000 | 207 ko |
+
+**Le poids au chargement bouge de trois kilo-octets sur UN écran et d'un sur un
+autre** : tableau de bord 239 → 242, historique 210 → 211, les cinq autres
+identiques au kilo-octet. C'est la signature d'un dictionnaire qui grossit —
+`apiErrors.ts` a pris trente lignes dans six langues avec le refus de la liste
+de champions vide — et non d'un module qui arrive.
+
+**`/bilan` reste le plancher pour la raison écrite une douzaine de fois** : son
+plus grand élément est l'image de saison, et 2 148 ms se compare aux 2 104,
+2 116, 2 120, 2 128 et 2 132 des campagnes comparables.
+
+**Et `/settings` a d'abord rendu 796 ms sur poste, contre 136 à la campagne
+d'avant.** Remesuré trois fois une fois la machine tranquille : **168, 140,
+144 ms**. La cause n'est pas la page — c'est que le serveur avait été relancé
+soixante secondes plus tôt, et que `/settings` était la PREMIÈRE page de la
+campagne. Elle a payé la compilation à la demande de Next pour tout le monde.
+
+C'est une variante du piège déjà écrit ici — « une mesure unique n'est pas une
+mesure » — sous une forme qui frappe toujours au même endroit : **le premier
+écran mesuré est systématiquement pénalisé**, donc l'ordre de la liste décide
+de qui porte le coût. Un chiffre isolé sur la première page d'une campagne se
+remesure avant d'être publié.
+
+**`/beta` oscille entre 1 144 et 1 672 ms sur téléphone bridé**, deux mesures
+consécutives, et c'est sa bande habituelle : 1 128, 1 136, 1 648, 1 672, 1 696
+selon les campagnes. Ce n'est pas une régression, et le dire évite de la
+chercher à la prochaine.
+
+**Un outil retrouvé par un autre chemin.** Le serveur MCP GitHub s'est
+déconnecté en cours de session, et la procédure de fusion NOMME son appel
+(`mcp__github__actions_list`) pour lire la CI de la version précédente.
+L'API publique du dépôt répond à travers le mandataire et donne la même chose :
+
+```bash
+curl -s -A "Mozilla/5.0" \
+  "https://api.github.com/repos/evanaspeak/league-of-workout/actions/workflows/tests.yml/runs?branch=main&per_page=4"
+```
+
+**V582 est VERTE en 11 min 01** — donc les parcours ont joué, et la correction
+de la reprise d'inscription tient là où V581 était tombée. Le dépôt étant
+public, aucun jeton n'entre dans cette requête ; c'est ce qui la rend
+utilisable quand le serveur MCP n'est pas là.
+
+### Campagne d'accessibilité SIX langues après V572 à V582, et zéro
+
+Les campagnes précédentes auditaient le FRANÇAIS seul — « vingt et une pages en
+français » à la clôture de V571. Ce tour-ci en fait six, et la raison n'est pas
+la conscience professionnelle : depuis V571, ce qui a changé n'est pas
+seulement la structure, c'est le TEXTE dans les six langues. Le vouvoiement du
+calculateur et de la récupération, le compte de jeux passé à seize, les
+descriptions de `metadonnees.ts` — un libellé qui s'allonge en allemand déborde,
+un libellé qu'on réécrit peut perdre son contraste, et un audit français ne le
+verrait dans aucun des deux cas.
+
+**126 pages « rien à signaler » — vingt et une par langue, dans les six — zéro
+page NON MESURÉE, zéro constat.** C'est le second chiffre qui compte, et il
+compte double ici : cinq composants d'affichage ont bougé depuis la dernière
+campagne (`settings/page.tsx`, `AjoutActivite`, `ChampionIcon`, `ChampionInput`,
+`ListeReglages`, `PremiersPas`).
+
+**Sur un compte SEMÉ à soixante parties**, vérifié en base plutôt que supposé :
+un compte vide ne rend aucune ligne d'historique, donc aucun des cent chevrons
+que la page porte à cette échelle — et c'est précisément là que le coût de
+l'audit se voyait.
+
+**Et les six frontières de commande rendent EXACTEMENT les mêmes ratios**, dans
+les six langues, sur **78 commandes examinées** par langue :
+
+| traitement | bordure | où |
+|---|---|---|
+| `button` (style en ligne) | 1,35:1 | 14 pages |
+| `input` (style en ligne) | 1,64:1 | `/login`, `/beta`, `/recuperation` |
+| `select` (style en ligne) | 1,61:1 | `/beta` |
+| `.lol-input` | 1,20:1 | `/calculateur/…`, `/amis` |
+| `.lol-select` | 1,20:1 | `/calculateur/…`, `/history` |
+| `.lol-btn-danger` | 1,70:1 | `/settings` |
+
+C'est la réponse qu'on venait chercher : rien n'a bougé de ce que l'audit
+mesure. Elles remontent toujours en `::warning::`, la question 13 n'étant pas
+tranchée, et la DIRECTION est gardée par `src/bordureChamps.test.ts`.
+
+**Ce que la campagne n'exerce PAS**, écrit plutôt que laissé à croire : elle ne
+TAPE nulle part, donc le menu déroulant des suggestions de champion ne s'ouvre
+jamais — c'est la limite déjà écrite à la campagne de V571, et `ChampionInput`
+fait justement partie des cinq composants qui ont bougé. Ce qui le tient est le
+parcours navigateur, pas cet audit.
+
+**Et l'environnement local est retombé, septième fois recensée ici.**
+PostgreSQL et `next start` étaient morts tous les deux onze minutes après la
+fin de l'audit — le conteneur les reprend pendant les périodes d'inactivité, et
+une campagne de fond de trente-huit minutes ressemble à une inactivité dès
+qu'elle a fini. Les résultats, eux, sont antérieurs : la campagne est sortie en
+code 0 avec ses six verdicts écrits.
+
+### Le rituel d'inscription recopié douze fois, et le helper que personne n'employait
+
+Trouvé par un recensement mécanique lancé juste après V582 : les fragments de
+trois lignes partagés par trois fichiers ou plus de `e2e/`. C'est la méthode
+que ce journal préfère partout — un défaut trouvé dans une porte se cherche
+chez ses voisines — et elle a rendu **trente-deux fragments**, dont un qui
+n'est pas du bruit.
+
+**Sept lignes, DOUZE copies, dix fichiers** :
+
+```ts
+await purgerTentatives();
+await page.goto("/beta");
+await remplirInscription(page, { pseudo, email });
+await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
+const bloc = page.locator(".mono-num").first();
+await bloc.waitFor({ timeout: 20_000 });
+const code = (await bloc.innerText()).trim();
+```
+
+**V582 n'en avait partagé que la SAISIE**, parce que c'est là que le défaut
+vivait. Le reste du rituel est resté recopié, et c'est exactement la forme que
+prend ce motif ici : pas une copie qu'on remarque, une correction qui n'en
+répare qu'une part.
+
+**Le témoin de ce que ça coûte est `boutonInscription`.** Il est exporté depuis
+des semaines et **employé par UN fichier sur onze**, pendant que les dix autres
+réécrivent son motif à la main. Un helper qui existe et qu'on n'emploie pas est
+exactement ce qu'était la reprise avant V581 — et V581 a montré la facture :
+dix fichiers sur onze sans la correction, et c'est l'un des dix qui est tombé
+en intégration continue.
+
+**Les douze copies n'ont PAS divergé, et c'est écrit plutôt que tu** : treize
+motifs de bouton identiques, seize délais identiques. C'est le cas normal, et
+c'est précisément ce qui rend une duplication chère — elle ne se remarque
+jamais tant qu'elle n'a pas divergé. Ce chantier est donc de la PRÉVENTION, et
+son précédent a une entrée de journal d'âge.
+
+**`.mono-num` ne peut pas servir de discriminant**, ce qu'il fallait vérifier
+avant de poser le garde : la récupération de compte le lit pour son code neuf,
+la fenêtre de séance pour son chrono. Le motif du BOUTON, lui, ne désigne que
+ce formulaire-là.
+
+**Une exception, et elle est STRUCTURELLE.** `montre.spec.ts` doit déplier le
+bloc facultatif de `/beta` ENTRE la saisie et l'envoi : il ne peut pas passer
+par un appel unique. Il emploie les deux pièces — `remplirInscription` et
+`boutonInscription` — ce qui est la bonne façon de dire une différence, à
+l'endroit où elle existe, et c'est lui qui prouve que le helper n'est pas mort.
+Son `inscrire` local est renommé : deux fonctions du même nom pour deux choses
+différentes est le malentendu que ce journal reproche partout.
+
+**Ce que le compilateur a fait tout seul** : les dix imports de
+`purgerTentatives` devenus inutiles ont été nommés un par un par
+`noUnusedLocals`. C'est ce qu'un remaniement de ce genre a de mieux — la liste
+des endroits à reprendre se demande, elle ne se cherche pas.
+
+**Ce qui reste ouvert, mesuré et laissé.** `premier-ecran.spec.ts` ouvre son
+compte, se connecte et range son état **sans sonder `/api/user`** — c'est le
+mode d'échec que `ouvrirCompte` documente, « un état sans cookie, et tous les
+tests qui s'en servent échouent bien plus loin, sur *élément introuvable* ».
+La sonde reste dans `ouvrirCompte` et non dans `inscrire`, pour une raison de
+portée : `inscrire` s'arrête à l'inscription et n'ouvre aucune session — la
+preuve en est `montre.spec.ts`, qui ne se connecte jamais. Le trou restant est
+étroit, `seConnecter` levant déjà avec un relevé complet quand l'adresse ne
+change pas ; il ne couvre que le cas où elle change et où le cookie ne tient
+pas.
+
+Six sabotages, six échecs : le motif du bouton remis dans un parcours,
+l'exception de `montre` supprimée, le motif `BOUTON` rendu aveugle, le
+recensement des appels vidé, le vidage retiré de `reposer`, et la saisie
+recopiée dans un parcours. Les deux premiers font tomber DEUX contrôles chacun,
+ce qui est le signe que les témoins ne se recouvrent pas.
+
 ### V581 est partie ROUGE, et la reprise qui devait l'empêcher ne réparait rien
 
 Lue en appliquant la règle de la fusion — la CI de la version PRÉCÉDENTE.

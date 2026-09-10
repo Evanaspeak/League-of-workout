@@ -308,7 +308,15 @@ export default function BetaPage() {
               </div>
 
               {error && (
-                <div style={{
+                /*
+                `role="alert"` et non un `div` nu — c'est la correction faite à
+                `/login` en V547, laissée à ses deux voisines. Les trois écrans
+                partagent le même objet de style et la même raison d'être : une
+                porte. Un refus annoncé à personne y est le pire des refus
+                silencieux — le bouton redevient cliquable, le message paraît, et
+                un lecteur d'écran n'entend rien.
+              */
+              <div role="alert" style={{
                   background: "color-mix(in srgb, var(--loss) 8%, transparent)", border: "1px solid color-mix(in srgb, var(--loss) 30%, transparent)",
                   borderRadius: 8, padding: "10px 16px", fontSize: "0.875rem", color: "var(--loss)",
                 }}>

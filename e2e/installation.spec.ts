@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { remplirInscription, seConnecter } from "./compte";
-import { purgerTentatives } from "./limiteur";
+import { inscrire, seConnecter } from "./compte";
 import { CLE_REFUS, CLE_VISITES } from "../src/lib/installation";
 
 /**
@@ -37,14 +36,7 @@ test("ouvrir un compte", async ({ browser }) => {
   await page.addInitScript(() => {
     try { sessionStorage.setItem("splash", "1"); } catch { /* stockage refusé */ }
   });
-  await purgerTentatives();
-  await page.goto("/beta");
-  await remplirInscription(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
-  await page.getByRole("button", { name: /rejoindre|obtenir|valider|envoyer|join/i }).first().click();
-
-  const bloc = page.locator(".mono-num").first();
-  await bloc.waitFor({ timeout: 20_000 });
-  const code = (await bloc.innerText()).trim();
+  const code = await inscrire(page, { pseudo: COMPTE.pseudo, email: COMPTE.email });
 
   await seConnecter(page, COMPTE.pseudo, code);
   const uid = (await (await page.request.get("/api/user")).json()).id as string;

@@ -35,6 +35,15 @@ const E2E = join(__dirname, "..", "e2e");
 /** Ce qui remplit le champ de pseudo de l'inscription, quelle que soit la forme. */
 const SAISIE = /getByPlaceholder\(\/pseudo\/i\)/;
 
+/**
+ * Le motif du bouton d'envoi — et c'est lui qui désigne l'inscription.
+ *
+ * `.mono-num` ne peut pas servir de discriminant : la récupération de compte
+ * le lit pour son code neuf, et la fenêtre de séance pour son chrono. Le motif
+ * du bouton, lui, ne désigne que ce formulaire-là.
+ */
+const BOUTON = /rejoindre\|obtenir\|valider\|envoyer\|join/;
+
 function fichiers(): string[] {
   return readdirSync(E2E).filter((f) => f.endsWith(".ts"));
 }
@@ -63,6 +72,57 @@ describe("la saisie de l'inscription", () => {
       .filter(([, s]) => SAISIE.test(s))
       .map(([f]) => f);
     expect(fautifs).toEqual([]);
+  });
+
+  it("le rituel ENTIER passe par la fonction partagée, pas seulement la saisie", () => {
+    /**
+     * La suite de V582, et le même défaut une couche plus loin.
+     *
+     * V582 a partagé la SAISIE parce que c'est là que la reprise manquait.
+     * Elle a laissé les six autres lignes du rituel — purge du limiteur,
+     * ouverture de `/beta`, clic d'envoi, lecture du code — recopiées DOUZE
+     * fois dans dix fichiers, au caractère près.
+     *
+     * Le témoin de ce que ça coûte est `boutonInscription` : exporté depuis
+     * des semaines, employé par UN fichier sur onze, pendant que les dix
+     * autres réécrivaient son motif à la main. Un helper qui existe et qu'on
+     * n'emploie pas est exactement ce qu'était la reprise avant V581.
+     */
+    const fautifs = sources
+      .filter(([f]) => f !== "compte.ts")
+      .filter(([, s]) => BOUTON.test(s))
+      .map(([f]) => f);
+    expect(fautifs).toEqual([]);
+  });
+
+  it("la fonction partagée est réellement employée, et son exception se déclare", () => {
+    const appellent = sources.filter(([, s]) => /\binscrire\s*\(/.test(s)).map(([f]) => f);
+    // Dix fichiers de parcours plus `compte.ts` lui-même.
+    expect(appellent.length).toBeGreaterThanOrEqual(10);
+    /**
+     * Les exceptions sont STRUCTURELLES, et chacune porte sa raison ici — un
+     * fichier qui emploie les deux pièces dit une différence, et il doit
+     * dire laquelle. Ce sont elles qui prouvent en passant que
+     * `boutonInscription` n'est pas mort.
+     */
+    const PIECES_SEPAREES: Record<string, string> = {
+      "montre.spec.ts":
+        "déplie le bloc facultatif de /beta ENTRE la saisie et l'envoi, " +
+        "donc il ne peut pas passer par un appel unique",
+      "refus-silencieux.spec.ts":
+        "éprouve une inscription REFUSÉE : `inscrire` attend le bloc du code " +
+        "vingt secondes, et ce bloc ne paraît jamais — c'est tout le sujet",
+    };
+    const piecesSeparees = sources
+      .filter(([f]) => f !== "compte.ts")
+      .filter(([, s]) => /boutonInscription\s*\(/.test(s))
+      .map(([f]) => f);
+    expect(piecesSeparees.sort()).toEqual(Object.keys(PIECES_SEPAREES).sort());
+
+    // Une exception qui ne désigne plus rien est du code mort dans le garde
+    // qui existe pour l'attraper.
+    const mortes = Object.keys(PIECES_SEPAREES).filter((f) => !piecesSeparees.includes(f));
+    expect(mortes).toEqual([]);
   });
 
   it("la fonction partagée reprend vraiment tant que le bouton est éteint", () => {
@@ -124,9 +184,18 @@ describe("la saisie de l'inscription", () => {
     // Sans témoin, un dossier renommé ou une extension qui change rendrait
     // les deux contrôles verts en n'ouvrant aucun fichier.
     expect(sources.length).toBeGreaterThan(20);
-    // Et il doit rester des fichiers qui INSCRIVENT : sinon le premier
-    // contrôle est vide, et son silence ne voudrait rien dire.
-    const inscrivent = sources.filter(([, s]) => /remplirInscription\s*\(/.test(s));
+    /**
+     * Et il doit rester des fichiers qui INSCRIVENT : sinon les contrôles
+     * ci-dessus sont vides, et leur silence ne voudrait rien dire.
+     *
+     * Le compte porte sur les DEUX portes d'entrée du rituel, parce que le
+     * partage vient de se déplacer d'une à l'autre : dix fichiers appelaient
+     * `remplirInscription` avant, ils appellent `inscrire` maintenant, et
+     * `montre.spec.ts` garde les pièces séparées. Un témoin écrit sur une
+     * seule des deux se serait tu au premier remaniement — c'est-à-dire au
+     * moment exact où l'on en a besoin.
+     */
+    const inscrivent = sources.filter(([, s]) => /\b(inscrire|remplirInscription)\s*\(/.test(s));
     expect(inscrivent.length).toBeGreaterThanOrEqual(10);
     /**
      * Le témoin du MOTIF, distinct de celui du recensement.
@@ -137,5 +206,9 @@ describe("la saisie de l'inscription", () => {
      * une par construction : c'est elle qui prouve que le motif voit encore.
      */
     expect(sources.filter(([, s]) => SAISIE.test(s)).map(([f]) => f)).toEqual(["compte.ts"]);
+    // Et le même témoin pour le second motif, pour la même raison : `BOUTON`
+    // vidé de son objet laisserait le contrôle du rituel vert sur zéro
+    // fichier examiné. `compte.ts` en porte une occurrence par construction.
+    expect(sources.filter(([, s]) => BOUTON.test(s)).map(([f]) => f)).toEqual(["compte.ts"]);
   });
 });

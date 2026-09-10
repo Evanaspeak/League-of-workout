@@ -215,7 +215,7 @@ export function ReglageNotifications() {
       )}
 
       {message && (
-        <p className="text-xs" style={{ color: "var(--muted)" }}>{message}</p>
+        <p role="status" className="text-xs" style={{ color: "var(--muted)" }}>{message}</p>
       )}
     </div>
   );

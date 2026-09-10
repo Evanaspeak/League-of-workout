@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
-import { ouvrirCompte } from "./compte";
+import { boutonInscription, inscrire, ouvrirCompte, remplirInscription } from "./compte";
+import { purgerTentatives } from "./limiteur";
 import { viderLesFenetres } from "./intro";
 
 /**
@@ -135,5 +136,60 @@ test("un jeton de diffusion non régénéré le dit, et l'adresse ne bouge pas",
    * direct — c'est une révocation imaginaire, et c'est pire que pas de bouton.
    */
   await expect(champ).toHaveValue(avant);
+  await ctx.close();
+});
+
+/**
+ * Les DEUX portes du produit, laissées derrière par la correction de V547.
+ *
+ * Elle avait posé `role="alert"` sur le refus de connexion, avec sa raison :
+ * « c'est l'écran où celui qui n'entre pas n'a aucun autre recours, et un
+ * lecteur d'écran n'y entendait rien du tout ». `/beta` et `/recuperation`
+ * partagent le même objet de style, la même forme et la même raison d'être —
+ * et sont restées en `<div>` nu pendant tout ce temps.
+ *
+ * `/beta` est la SEULE porte d'entrée, `/recuperation` le seul chemin de
+ * retour. Un refus muet y coûte le compte lui-même.
+ */
+test("un pseudo déjà pris le dit, et aucun code ne s'affiche", async ({ browser }) => {
+  const premier = { pseudo: `rDup${Date.now().toString(36)}`, email: `rdup${Date.now()}@example.test` };
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await inscrire(page, premier);
+
+  // Le REFUS est celui de la route, pas une panne simulée : 409 « Ce pseudo est
+  // déjà pris ». C'est le cas qui arrive pour de vrai, et il traverse toute la
+  // chaîne — du formulaire au message annoncé.
+  await purgerTentatives();
+  await page.goto("/beta");
+  await remplirInscription(page, { pseudo: premier.pseudo, email: `autre${Date.now()}@example.test` });
+  await boutonInscription(page).click();
+
+  // Le message vient de `translateApiError` : en français la clé EST le
+  // message, et l'anglais dit « is taken ». On lit les deux plutôt que la
+  // langue de la configuration du jour.
+  await messageDEchec(page, /déjà pris|is taken/i);
+
+  // Et aucun compte n'est né : le bloc du code est ce qui s'affiche quand
+  // l'inscription aboutit, et lui seul. Le contrôle vient APRÈS l'attente du
+  // message, donc après la réponse — une absence lue avant ne prouve rien.
+  await expect(page.locator(".mono-num")).toHaveCount(0);
+  await ctx.close();
+});
+
+test("une demande de récupération refusée le dit, au lieu de se taire", async ({ browser }) => {
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+  await page.route("**/api/auth/forgot-code", (r) => r.fulfill({ status: 500, body: "{}" }));
+
+  await page.goto("/recuperation");
+  const champ = page.locator('input[type="email"]').first();
+  await champ.fill("perdu@example.test");
+  await page.getByRole("button", { name: /envoyer|recevoir|send/i }).first().click();
+
+  await messageDEchec(page, /\S/);
+  // L'adresse reste : la retaper après un échec, sur l'écran de celui qui ne
+  // peut plus entrer, est le meilleur moyen de renoncer.
+  await expect(champ).toHaveValue("perdu@example.test");
   await ctx.close();
 });

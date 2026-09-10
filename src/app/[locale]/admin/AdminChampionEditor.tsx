@@ -133,7 +133,7 @@ export default function AdminChampionEditor() {
       )}
 
       {msg && (
-        <div className="text-sm px-3 py-2 rounded" style={{
+        <div role="status" className="text-sm px-3 py-2 rounded" style={{
           background: msg.type === "ok" ? "var(--victory-soft)" : "rgba(220,80,80,0.1)",
           border: `1px solid ${msg.type === "ok" ? "color-mix(in srgb, var(--victory) 30%, transparent)" : "rgba(220,80,80,0.3)"}`,
           color: msg.type === "ok" ? "var(--victory)" : "#e05555",

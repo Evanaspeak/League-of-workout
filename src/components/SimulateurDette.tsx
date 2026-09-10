@@ -174,7 +174,7 @@ export function SimulateurDette() {
         borderTop: "1px solid var(--line)", paddingTop: 12,
         display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
       }}>
-        {erreur && <p className="text-sm loss-text">{t.echec}</p>}
+        {erreur && <p role="alert" className="text-sm loss-text">{t.echec}</p>}
         {!erreur && enCours && !apercu && (
           <p className="text-sm" style={{ color: "var(--steel)" }}>{t.calcul}</p>
         )}
