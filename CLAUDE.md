@@ -1344,6 +1344,63 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### La première page d'une campagne paie le démarrage à froid du serveur
+
+Seconde moitié de la clôture de V572 à V582, sur le même compte semé à soixante
+parties. **Les sept écrans sont dans les seuils, CLS négligeable partout.**
+
+| écran | LCP poste | LCP téléphone bridé | CLS | script au `load` |
+|---|---|---|---|---|
+| `/settings` | 140 à 168 ms | 936 ms | 0,000 | 271 ko |
+| `/` | 244 ms | 1336 ms | 0,000 | 206 ko |
+| `/bilan` | 284 ms | **2148 ms** | 0,000 | 195 ko |
+| `/amis` | 288 ms | 1136 ms | 0,032 | 216 ko |
+| `/dashboard` | 296 ms | 1164 ms | 0,000 | 242 ko |
+| `/history` | 500 ms | 1128 ms | 0,000 | 211 ko |
+| `/beta` | 548 ms | 1144 à 1672 ms | 0,000 | 207 ko |
+
+**Le poids au chargement bouge de trois kilo-octets sur UN écran et d'un sur un
+autre** : tableau de bord 239 → 242, historique 210 → 211, les cinq autres
+identiques au kilo-octet. C'est la signature d'un dictionnaire qui grossit —
+`apiErrors.ts` a pris trente lignes dans six langues avec le refus de la liste
+de champions vide — et non d'un module qui arrive.
+
+**`/bilan` reste le plancher pour la raison écrite une douzaine de fois** : son
+plus grand élément est l'image de saison, et 2 148 ms se compare aux 2 104,
+2 116, 2 120, 2 128 et 2 132 des campagnes comparables.
+
+**Et `/settings` a d'abord rendu 796 ms sur poste, contre 136 à la campagne
+d'avant.** Remesuré trois fois une fois la machine tranquille : **168, 140,
+144 ms**. La cause n'est pas la page — c'est que le serveur avait été relancé
+soixante secondes plus tôt, et que `/settings` était la PREMIÈRE page de la
+campagne. Elle a payé la compilation à la demande de Next pour tout le monde.
+
+C'est une variante du piège déjà écrit ici — « une mesure unique n'est pas une
+mesure » — sous une forme qui frappe toujours au même endroit : **le premier
+écran mesuré est systématiquement pénalisé**, donc l'ordre de la liste décide
+de qui porte le coût. Un chiffre isolé sur la première page d'une campagne se
+remesure avant d'être publié.
+
+**`/beta` oscille entre 1 144 et 1 672 ms sur téléphone bridé**, deux mesures
+consécutives, et c'est sa bande habituelle : 1 128, 1 136, 1 648, 1 672, 1 696
+selon les campagnes. Ce n'est pas une régression, et le dire évite de la
+chercher à la prochaine.
+
+**Un outil retrouvé par un autre chemin.** Le serveur MCP GitHub s'est
+déconnecté en cours de session, et la procédure de fusion NOMME son appel
+(`mcp__github__actions_list`) pour lire la CI de la version précédente.
+L'API publique du dépôt répond à travers le mandataire et donne la même chose :
+
+```bash
+curl -s -A "Mozilla/5.0" \
+  "https://api.github.com/repos/evanaspeak/league-of-workout/actions/workflows/tests.yml/runs?branch=main&per_page=4"
+```
+
+**V582 est VERTE en 11 min 01** — donc les parcours ont joué, et la correction
+de la reprise d'inscription tient là où V581 était tombée. Le dépôt étant
+public, aucun jeton n'entre dans cette requête ; c'est ce qui la rend
+utilisable quand le serveur MCP n'est pas là.
+
 ### Campagne d'accessibilité SIX langues après V572 à V582, et zéro
 
 Les campagnes précédentes auditaient le FRANÇAIS seul — « vingt et une pages en
