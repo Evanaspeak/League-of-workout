@@ -1344,6 +1344,57 @@ Les plus récentes en haut. Ce qui décrit une fonctionnalité telle qu'elle est
 aujourd'hui va dans « Fonctionnalités implémentées » ; ce qui raconte une
 correction va ici.
 
+### Campagne d'accessibilité SIX langues après V572 à V582, et zéro
+
+Les campagnes précédentes auditaient le FRANÇAIS seul — « vingt et une pages en
+français » à la clôture de V571. Ce tour-ci en fait six, et la raison n'est pas
+la conscience professionnelle : depuis V571, ce qui a changé n'est pas
+seulement la structure, c'est le TEXTE dans les six langues. Le vouvoiement du
+calculateur et de la récupération, le compte de jeux passé à seize, les
+descriptions de `metadonnees.ts` — un libellé qui s'allonge en allemand déborde,
+un libellé qu'on réécrit peut perdre son contraste, et un audit français ne le
+verrait dans aucun des deux cas.
+
+**126 pages « rien à signaler » — vingt et une par langue, dans les six — zéro
+page NON MESURÉE, zéro constat.** C'est le second chiffre qui compte, et il
+compte double ici : cinq composants d'affichage ont bougé depuis la dernière
+campagne (`settings/page.tsx`, `AjoutActivite`, `ChampionIcon`, `ChampionInput`,
+`ListeReglages`, `PremiersPas`).
+
+**Sur un compte SEMÉ à soixante parties**, vérifié en base plutôt que supposé :
+un compte vide ne rend aucune ligne d'historique, donc aucun des cent chevrons
+que la page porte à cette échelle — et c'est précisément là que le coût de
+l'audit se voyait.
+
+**Et les six frontières de commande rendent EXACTEMENT les mêmes ratios**, dans
+les six langues, sur **78 commandes examinées** par langue :
+
+| traitement | bordure | où |
+|---|---|---|
+| `button` (style en ligne) | 1,35:1 | 14 pages |
+| `input` (style en ligne) | 1,64:1 | `/login`, `/beta`, `/recuperation` |
+| `select` (style en ligne) | 1,61:1 | `/beta` |
+| `.lol-input` | 1,20:1 | `/calculateur/…`, `/amis` |
+| `.lol-select` | 1,20:1 | `/calculateur/…`, `/history` |
+| `.lol-btn-danger` | 1,70:1 | `/settings` |
+
+C'est la réponse qu'on venait chercher : rien n'a bougé de ce que l'audit
+mesure. Elles remontent toujours en `::warning::`, la question 13 n'étant pas
+tranchée, et la DIRECTION est gardée par `src/bordureChamps.test.ts`.
+
+**Ce que la campagne n'exerce PAS**, écrit plutôt que laissé à croire : elle ne
+TAPE nulle part, donc le menu déroulant des suggestions de champion ne s'ouvre
+jamais — c'est la limite déjà écrite à la campagne de V571, et `ChampionInput`
+fait justement partie des cinq composants qui ont bougé. Ce qui le tient est le
+parcours navigateur, pas cet audit.
+
+**Et l'environnement local est retombé, septième fois recensée ici.**
+PostgreSQL et `next start` étaient morts tous les deux onze minutes après la
+fin de l'audit — le conteneur les reprend pendant les périodes d'inactivité, et
+une campagne de fond de trente-huit minutes ressemble à une inactivité dès
+qu'elle a fini. Les résultats, eux, sont antérieurs : la campagne est sortie en
+code 0 avec ses six verdicts écrits.
+
 ### Le rituel d'inscription recopié douze fois, et le helper que personne n'employait
 
 Trouvé par un recensement mécanique lancé juste après V582 : les fragments de
